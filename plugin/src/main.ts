@@ -1,6 +1,7 @@
 import { Platform, Plugin, TAbstractFile, TFile, View, WorkspaceLeaf, setIcon } from "obsidian";
 import { Store } from "./data/store";
 import { Router } from "./router";
+import { preloadRoleIcons } from "./ui";
 import { DEFAULTS, MnSettingTab, MnSettings } from "./settings";
 import { MnView, VIEW_TYPE } from "./view";
 
@@ -12,6 +13,7 @@ export default class MorellonomiconPlugin extends Plugin {
     private home!: HTMLElement;
 
     async onload(): Promise<void> {
+        preloadRoleIcons();   // start fetching the class icons before any view is drawn
         await this.loadSettings();
         this.router = new Router(this.app);
         this.store = new Store(this);

@@ -349,8 +349,176 @@ var Router = class {
   }
 };
 
-// src/settings.ts
+// src/ui.ts
 var import_obsidian2 = require("obsidian");
+var h = (parent, tag, cls, text) => {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== void 0) e.textContent = text;
+  parent?.appendChild(e);
+  return e;
+};
+var bubbleEl = null;
+var bubbleTimer = 0;
+var BUBBLE_MS = 2200;
+var closeBubble = () => {
+  window.clearTimeout(bubbleTimer);
+  bubbleEl?.remove();
+  bubbleEl = null;
+  document.removeEventListener("pointerdown", closeBubble, true);
+  document.removeEventListener("scroll", closeBubble, true);
+};
+var tip = (anchor, text) => {
+  closeBubble();
+  const t = h(anchor.closest(".mn-app") ?? document.body, "div", "mn-bubble", text);
+  bubbleEl = t;
+  const a = anchor.getBoundingClientRect();
+  t.style.left = `${Math.max(8, Math.min(window.innerWidth - t.offsetWidth - 8, a.left + a.width / 2 - t.offsetWidth / 2))}px`;
+  t.style.top = `${a.top - t.offsetHeight - 8 < 8 ? a.bottom + 8 : a.top - t.offsetHeight - 8}px`;
+  bubbleTimer = window.setTimeout(closeBubble, BUBBLE_MS);
+  window.setTimeout(() => {
+    if (bubbleEl !== t) return;
+    document.addEventListener("pointerdown", closeBubble, true);
+    document.addEventListener("scroll", closeBubble, true);
+  }, 0);
+};
+var icon = (parent, name, cls = "mn-ic") => {
+  const s = h(parent, "span", cls);
+  (0, import_obsidian2.setIcon)(s, name);
+  if (!s.querySelector("svg")) (0, import_obsidian2.setIcon)(s, "circle");
+  return s;
+};
+var page = (title) => {
+  const p = h(null, "div", "mn-page");
+  h(h(p, "div", "mn-title-row"), "h1", "mn-title", title);
+  return p;
+};
+var group = (parent, title, footer) => {
+  if (title) h(parent, "div", "mn-gh", title);
+  const g = h(parent, "div", "mn-group");
+  if (footer) h(parent, "div", "mn-gf", footer);
+  return g;
+};
+var AUG_CLASS = { \u9280: "aug-silver", \u91D1: "aug-gold", \u7A1C\u93E1: "aug-prism" };
+var TINTED = /_large\.png$|genericabilityaugmenticon/;
+var augIcon = (parent, src, rarity, cls = "") => {
+  const tinted = TINTED.test(src);
+  const box = h(parent, "span", `aug-icon ${AUG_CLASS[rarity] ?? ""} ${cls}`.trim());
+  if (tinted) {
+    const im = h(box, "img");
+    im.alt = "";
+    im.loading = "lazy";
+    im.src = src;
+  } else {
+    box.style.setProperty("--glyph", `url("${src}")`);
+    h(box, "span", "aug-glyph");
+  }
+  return box;
+};
+var row = (parent, r) => {
+  const el = h(parent, "div", "mn-row" + (r.onTap ? " is-tap" : "") + (r.muted ? " is-muted" : ""));
+  if (r.image && r.rarity && AUG_CLASS[r.rarity]) augIcon(el, r.image, r.rarity, "mn-row-aug");
+  else if (r.image) {
+    const im = h(el, "img", "mn-row-img");
+    im.src = r.image;
+    im.loading = "lazy";
+    im.alt = "";
+  } else if (r.icon) icon(el, r.icon, "mn-row-ic");
+  const main = h(el, "div", "mn-row-main");
+  h(main, "div", "mn-row-t", r.title);
+  if (r.sub) h(main, "div", "mn-row-s" + (r.clamp ? " is-clamp" : ""), r.sub);
+  if (r.value) h(el, "div", "mn-row-v", r.value);
+  if (r.chevron) icon(el, "chevron-right", "mn-row-chev");
+  if (r.onTap) {
+    const fn = r.onTap;
+    el.addEventListener("click", (e) => {
+      e.preventDefault();
+      fn();
+    });
+  }
+  return el;
+};
+var DAMAGE_COLOR = { \u7269\u7406: "var(--mn-phys)", \u9B54\u6CD5: "var(--mn-magic)", \u771F\u5BE6: "var(--mn-true)", \u6DF7\u5408: "var(--mn-mixed)" };
+var chip = (parent, text, o = {}) => {
+  const el = h(parent, o.onTap ? "button" : "span", "mn-chip" + (o.on ? " is-on" : "") + (o.color ? " has-color" : "") + (o.onTap ? " is-tap" : ""));
+  if (o.color && o.onTap && !o.on) h(el, "span", "mn-dot");
+  el.appendChild(document.createTextNode(text));
+  if (o.color) el.style.setProperty("--chip", o.color);
+  if (o.onTap) {
+    const fn = o.onTap;
+    el.addEventListener("click", (e) => {
+      e.preventDefault();
+      fn();
+    });
+  }
+  return el;
+};
+var ROLE_ICON = { \u6230\u58EB: "swords", \u5766\u514B: "shield", \u6CD5\u5E2B: "wand-sparkles", \u523A\u5BA2: "slice", \u5C04\u624B: "target", \u8F14\u52A9: "heart-handshake" };
+var ROLE_WIKI = "https://wiki.leagueoflegends.com/en-us/Special:FilePath/";
+var ROLE_FILE = { \u6230\u58EB: "Fighter_icon.png", \u5766\u514B: "Tank_icon.png", \u6CD5\u5E2B: "Mage_icon.png", \u523A\u5BA2: "Slayer_icon.png", \u5C04\u624B: "Marksman_icon.png", \u8F14\u52A9: "Controller_icon.png" };
+var preloaded = [];
+var preloadRoleIcons = () => {
+  if (preloaded.length) return;
+  for (const file of Object.values(ROLE_FILE)) {
+    const im = new Image();
+    im.src = ROLE_WIKI + file;
+    preloaded.push(im);
+  }
+};
+var roleChip = (parent, role, o) => {
+  let el = null;
+  el = chip(parent, "", { on: o.on, onTap: () => {
+    if (el) tip(el, role);
+    o.onTap();
+  } });
+  el.classList.add("mn-chip-ic");
+  el.setAttribute("aria-label", role);
+  const fallback = icon(el, ROLE_ICON[role] ?? "circle");
+  const file = ROLE_FILE[role];
+  if (!file) return el;
+  const im = document.createElement("img");
+  im.className = "mn-role-img";
+  im.alt = "";
+  im.addEventListener("load", () => {
+    fallback.replaceWith(im);
+  }, { once: true });
+  im.src = ROLE_WIKI + file;
+  return el;
+};
+var fgrid = (parent, cells) => {
+  const row2 = h(parent, "div", "mn-fgrid");
+  row2.style.setProperty("--n", String(cells));
+  return row2;
+};
+var SVG_NS = "http://www.w3.org/2000/svg";
+var svg = (parent, tag, attrs = {}, cls) => {
+  const e = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
+  if (cls) e.setAttribute("class", cls);
+  parent.appendChild(e);
+  return e;
+};
+var empty = (parent, o) => {
+  const box = h(parent, "div", "mn-empty");
+  icon(box, o.icon, "mn-empty-ic");
+  h(box, "div", "mn-empty-t", o.title);
+  if (o.text) h(box, "div", "mn-empty-s", o.text);
+  return box;
+};
+var segmented = (parent, options, value, onChange, cls = "") => {
+  const seg = h(parent, "div", "mn-seg " + cls);
+  for (const [id, label] of options) {
+    const b = h(seg, "button", "mn-seg-b" + (id === value ? " is-on" : ""), label);
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      onChange(id);
+    });
+  }
+  return seg;
+};
+
+// src/settings.ts
+var import_obsidian3 = require("obsidian");
 
 // src/themes.ts
 var THEMES = [
@@ -559,11 +727,11 @@ var DEFAULTS = {
   guideFolder: "\u65B0\u624B\u5165\u9580",
   augmentFolder: "\u5F37\u5316",
   patchFolder: "\u7248\u672C\u66F4\u65B0",
-  openOnStartup: import_obsidian2.Platform.isMobile,
+  openOnStartup: import_obsidian3.Platform.isMobile,
   read: [],
   roster: []
 };
-var MnSettingTab = class extends import_obsidian2.PluginSettingTab {
+var MnSettingTab = class extends import_obsidian3.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -573,21 +741,21 @@ var MnSettingTab = class extends import_obsidian2.PluginSettingTab {
     const s = this.plugin.settings;
     const save = () => this.plugin.saveSettings();
     c.empty();
-    new import_obsidian2.Setting(c).setName("Mode").setDesc("What the app shows. Rift is planned.").addDropdown((d) => {
+    new import_obsidian3.Setting(c).setName("Mode").setDesc("What the app shows. Rift is planned.").addDropdown((d) => {
       for (const id of MODE_ORDER) d.addOption(id, MODES[id].label + (MODES[id].enabled ? "" : " (coming soon)"));
       d.setValue(s.mode).onChange(async (v) => {
         s.mode = v;
         await save();
       });
     });
-    new import_obsidian2.Setting(c).setName("Color theme").setDesc("Colors of the app screen. Follows Obsidian's light / dark.").addDropdown((d) => {
+    new import_obsidian3.Setting(c).setName("Color theme").setDesc("Colors of the app screen. Follows Obsidian's light / dark.").addDropdown((d) => {
       for (const t of THEMES) d.addOption(t.id, t.name);
       d.setValue(s.theme).onChange(async (v) => {
         s.theme = v;
         await save();
       });
     });
-    const folder = (name, desc, key) => new import_obsidian2.Setting(c).setName(name).setDesc(desc).addText((x) => x.setValue(s[key]).onChange(async (v) => {
+    const folder = (name, desc, key) => new import_obsidian3.Setting(c).setName(name).setDesc(desc).addText((x) => x.setValue(s[key]).onChange(async (v) => {
       s[key] = v.trim() || DEFAULTS[key];
       await save();
     }));
@@ -596,7 +764,7 @@ var MnSettingTab = class extends import_obsidian2.PluginSettingTab {
     folder("Augment folder", "Notes made by tools/fetch_augments.py", "augmentFolder");
     folder("Patch notes folder", "Our own patch notes (frontmatter: patch, date, title, summary)", "patchFolder");
     folder("Guide folder", "Beginner guide notes", "guideFolder");
-    new import_obsidian2.Setting(c).setName("Open on startup").setDesc("Show the app when Obsidian starts (on by default on a phone).").addToggle((x) => x.setValue(s.openOnStartup).onChange(async (v) => {
+    new import_obsidian3.Setting(c).setName("Open on startup").setDesc("Show the app when Obsidian starts (on by default on a phone).").addToggle((x) => x.setValue(s.openOnStartup).onChange(async (v) => {
       s.openOnStartup = v;
       await save();
     }));
@@ -605,176 +773,6 @@ var MnSettingTab = class extends import_obsidian2.PluginSettingTab {
 
 // src/view.ts
 var import_obsidian8 = require("obsidian");
-
-// src/ui.ts
-var import_obsidian3 = require("obsidian");
-var h = (parent, tag, cls, text) => {
-  const e = document.createElement(tag);
-  if (cls) e.className = cls;
-  if (text !== void 0) e.textContent = text;
-  parent?.appendChild(e);
-  return e;
-};
-var bubbleEl = null;
-var bubbleTimer = 0;
-var BUBBLE_MS = 2200;
-var closeBubble = () => {
-  window.clearTimeout(bubbleTimer);
-  bubbleEl?.remove();
-  bubbleEl = null;
-  document.removeEventListener("pointerdown", closeBubble, true);
-  document.removeEventListener("scroll", closeBubble, true);
-};
-var tip = (anchor, text) => {
-  closeBubble();
-  const t = h(anchor.closest(".mn-app") ?? document.body, "div", "mn-bubble", text);
-  bubbleEl = t;
-  const a = anchor.getBoundingClientRect();
-  t.style.left = `${Math.max(8, Math.min(window.innerWidth - t.offsetWidth - 8, a.left + a.width / 2 - t.offsetWidth / 2))}px`;
-  t.style.top = `${a.top - t.offsetHeight - 8 < 8 ? a.bottom + 8 : a.top - t.offsetHeight - 8}px`;
-  bubbleTimer = window.setTimeout(closeBubble, BUBBLE_MS);
-  window.setTimeout(() => {
-    if (bubbleEl !== t) return;
-    document.addEventListener("pointerdown", closeBubble, true);
-    document.addEventListener("scroll", closeBubble, true);
-  }, 0);
-};
-var icon = (parent, name, cls = "mn-ic") => {
-  const s = h(parent, "span", cls);
-  (0, import_obsidian3.setIcon)(s, name);
-  if (!s.querySelector("svg")) (0, import_obsidian3.setIcon)(s, "circle");
-  return s;
-};
-var page = (title) => {
-  const p = h(null, "div", "mn-page");
-  h(h(p, "div", "mn-title-row"), "h1", "mn-title", title);
-  return p;
-};
-var group = (parent, title, footer) => {
-  if (title) h(parent, "div", "mn-gh", title);
-  const g = h(parent, "div", "mn-group");
-  if (footer) h(parent, "div", "mn-gf", footer);
-  return g;
-};
-var AUG_CLASS = { \u9280: "aug-silver", \u91D1: "aug-gold", \u7A1C\u93E1: "aug-prism" };
-var TINTED = /_large\.png$|genericabilityaugmenticon/;
-var augIcon = (parent, src, rarity, cls = "") => {
-  const tinted = TINTED.test(src);
-  const box = h(parent, "span", `aug-icon ${AUG_CLASS[rarity] ?? ""} ${cls}`.trim());
-  if (tinted) {
-    const im = h(box, "img");
-    im.alt = "";
-    im.loading = "lazy";
-    im.src = src;
-  } else {
-    box.style.setProperty("--glyph", `url("${src}")`);
-    h(box, "span", "aug-glyph");
-  }
-  return box;
-};
-var row = (parent, r) => {
-  const el = h(parent, "div", "mn-row" + (r.onTap ? " is-tap" : "") + (r.muted ? " is-muted" : ""));
-  if (r.image && r.rarity && AUG_CLASS[r.rarity]) augIcon(el, r.image, r.rarity, "mn-row-aug");
-  else if (r.image) {
-    const im = h(el, "img", "mn-row-img");
-    im.src = r.image;
-    im.loading = "lazy";
-    im.alt = "";
-  } else if (r.icon) icon(el, r.icon, "mn-row-ic");
-  const main = h(el, "div", "mn-row-main");
-  h(main, "div", "mn-row-t", r.title);
-  if (r.sub) h(main, "div", "mn-row-s" + (r.clamp ? " is-clamp" : ""), r.sub);
-  if (r.value) h(el, "div", "mn-row-v", r.value);
-  if (r.chevron) icon(el, "chevron-right", "mn-row-chev");
-  if (r.onTap) {
-    const fn = r.onTap;
-    el.addEventListener("click", (e) => {
-      e.preventDefault();
-      fn();
-    });
-  }
-  return el;
-};
-var DAMAGE_COLOR = { \u7269\u7406: "var(--mn-phys)", \u9B54\u6CD5: "var(--mn-magic)", \u771F\u5BE6: "var(--mn-true)", \u6DF7\u5408: "var(--mn-mixed)" };
-var chip = (parent, text, o = {}) => {
-  const el = h(parent, o.onTap ? "button" : "span", "mn-chip" + (o.on ? " is-on" : "") + (o.color ? " has-color" : "") + (o.onTap ? " is-tap" : ""));
-  if (o.color && o.onTap && !o.on) h(el, "span", "mn-dot");
-  el.appendChild(document.createTextNode(text));
-  if (o.color) el.style.setProperty("--chip", o.color);
-  if (o.onTap) {
-    const fn = o.onTap;
-    el.addEventListener("click", (e) => {
-      e.preventDefault();
-      fn();
-    });
-  }
-  return el;
-};
-var ROLE_ICON = { \u6230\u58EB: "swords", \u5766\u514B: "shield", \u6CD5\u5E2B: "wand-sparkles", \u523A\u5BA2: "slice", \u5C04\u624B: "target", \u8F14\u52A9: "heart-handshake" };
-var ROLE_WIKI = "https://wiki.leagueoflegends.com/en-us/Special:FilePath/";
-var ROLE_FILE = { \u6230\u58EB: "Fighter_icon.png", \u5766\u514B: "Tank_icon.png", \u6CD5\u5E2B: "Mage_icon.png", \u523A\u5BA2: "Slayer_icon.png", \u5C04\u624B: "Marksman_icon.png", \u8F14\u52A9: "Controller_icon.png" };
-var preloaded = [];
-var preloadRoleIcons = () => {
-  if (preloaded.length) return;
-  for (const file of Object.values(ROLE_FILE)) {
-    const im = new Image();
-    im.src = ROLE_WIKI + file;
-    preloaded.push(im);
-  }
-};
-var roleChip = (parent, role, o) => {
-  let el = null;
-  el = chip(parent, "", { on: o.on, onTap: () => {
-    if (el) tip(el, role);
-    o.onTap();
-  } });
-  el.classList.add("mn-chip-ic");
-  el.setAttribute("aria-label", role);
-  const file = ROLE_FILE[role];
-  if (!file) {
-    icon(el, ROLE_ICON[role] ?? "circle");
-    return el;
-  }
-  const im = h(el, "img", "mn-role-img");
-  im.alt = "";
-  im.addEventListener("error", () => {
-    im.remove();
-    if (el) icon(el, ROLE_ICON[role] ?? "circle");
-  }, { once: true });
-  im.src = ROLE_WIKI + file;
-  return el;
-};
-var fgrid = (parent, cells) => {
-  const row2 = h(parent, "div", "mn-fgrid");
-  row2.style.setProperty("--n", String(cells));
-  return row2;
-};
-var SVG_NS = "http://www.w3.org/2000/svg";
-var svg = (parent, tag, attrs = {}, cls) => {
-  const e = document.createElementNS(SVG_NS, tag);
-  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
-  if (cls) e.setAttribute("class", cls);
-  parent.appendChild(e);
-  return e;
-};
-var empty = (parent, o) => {
-  const box = h(parent, "div", "mn-empty");
-  icon(box, o.icon, "mn-empty-ic");
-  h(box, "div", "mn-empty-t", o.title);
-  if (o.text) h(box, "div", "mn-empty-s", o.text);
-  return box;
-};
-var segmented = (parent, options, value, onChange, cls = "") => {
-  const seg = h(parent, "div", "mn-seg " + cls);
-  for (const [id, label] of options) {
-    const b = h(seg, "button", "mn-seg-b" + (id === value ? " is-on" : ""), label);
-    b.addEventListener("click", (e) => {
-      e.preventDefault();
-      onChange(id);
-    });
-  }
-  return seg;
-};
 
 // src/pages/augments.ts
 var RARITIES = ["\u9280", "\u91D1", "\u7A1C\u93E1"];
@@ -2892,6 +2890,7 @@ var MorellonomiconPlugin = class extends import_obsidian9.Plugin {
     this.dataTimer = 0;
   }
   async onload() {
+    preloadRoleIcons();
     await this.loadSettings();
     this.router = new Router(this.app);
     this.store = new Store(this);

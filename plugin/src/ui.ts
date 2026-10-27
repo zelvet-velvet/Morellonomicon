@@ -124,11 +124,14 @@ export const roleChip = (parent: HTMLElement, role: string, o: { on: boolean; on
     el = chip(parent, "", { on: o.on, onTap: () => { if (el) tip(el, role); o.onTap(); } });
     el.classList.add("mn-chip-ic");
     el.setAttribute("aria-label", role);
+    // the look-alike shows at once; the game's icon replaces it as soon as it has loaded (instantly when already cached)
+    const fallback = icon(el, ROLE_ICON[role] ?? "circle");
     const file = ROLE_FILE[role];
-    if (!file) { icon(el, ROLE_ICON[role] ?? "circle"); return el; }
-    const im = h(el, "img", "mn-role-img");
+    if (!file) return el;
+    const im = document.createElement("img");
+    im.className = "mn-role-img";
     im.alt = "";
-    im.addEventListener("error", () => { im.remove(); if (el) icon(el, ROLE_ICON[role] ?? "circle"); }, { once: true });
+    im.addEventListener("load", () => { fallback.replaceWith(im); }, { once: true });
     im.src = ROLE_WIKI + file;
     return el;
 };
