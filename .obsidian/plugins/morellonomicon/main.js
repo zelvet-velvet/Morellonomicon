@@ -522,6 +522,7 @@ var GAME_ICON_FILE = {
   \u5766\u5EA6: "Armor_icon.png",
   \u5C04\u7A0B: "Range_icon.png"
 };
+var GAME_ICONS_ON = false;
 var preloaded = /* @__PURE__ */ new Map();
 var preloadRoleIcons = () => {
   if (preloaded.size) return;
@@ -530,14 +531,14 @@ var preloadRoleIcons = () => {
     im.src = ROLE_WIKI + file;
     preloaded.set(file, im);
   }
-  for (const file of Object.values(GAME_ICON_FILE)) {
+  if (GAME_ICONS_ON) for (const file of Object.values(GAME_ICON_FILE)) {
     const im = new Image();
     im.src = ROLE_WIKI + file;
     preloaded.set(file, im);
   }
 };
 var gameIcon = (parent, key, fallback, size) => {
-  const file = GAME_ICON_FILE[key];
+  const file = GAME_ICONS_ON ? GAME_ICON_FILE[key] : void 0;
   if (!file) return icon(parent, fallback);
   const slot = h(parent, "span", "mn-ic mn-gi-slot");
   const im = h(slot, "img", "mn-gi");
@@ -565,6 +566,7 @@ var iconChip = (parent, label, file, fallback, o) => {
   }
   const im = h(el, "img", "mn-role-img");
   im.alt = "";
+  im.draggable = false;
   const cached = preloaded.get(file);
   if (!(cached?.complete && cached.naturalWidth)) {
     im.classList.add("is-loading");

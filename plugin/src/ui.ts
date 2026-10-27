@@ -145,12 +145,17 @@ export const GAME_ICON_FILE: Record<string, string> = {
     物理: "Attack_damage_icon.png", 魔法: "Ability_power_icon.png", 坦度: "Armor_icon.png", 射程: "Range_icon.png",
 };
 
+// Off for now: the wiki's keyword / stat icons do not share one style (some white, some coloured, one on a red square) and a phone
+// will not recolour pictures from another site, so tags use the app's own icons in their tag colour. Turn on once the icons are
+// stored in the vault (then a CSS mask can draw them all in the tag colour).
+const GAME_ICONS_ON = false;
+
 // Fetch the class, lane and game icons once when the plugin loads, so they are ready when drawn
 const preloaded = new Map<string, HTMLImageElement>();
 export const preloadRoleIcons = (): void => {
     if (preloaded.size) return;
     for (const file of [...Object.values(ROLE_FILE), ...Object.values(LANE_FILE)]) { const im = new Image(); im.src = ROLE_WIKI + file; preloaded.set(file, im); }
-    for (const file of Object.values(GAME_ICON_FILE)) { const im = new Image(); im.src = ROLE_WIKI + file; preloaded.set(file, im); }
+    if (GAME_ICONS_ON) for (const file of Object.values(GAME_ICON_FILE)) { const im = new Image(); im.src = ROLE_WIKI + file; preloaded.set(file, im); }
 };
 
 // An icon slot (the class "mn-ic" like icon()): the game's picture for `key` in its own colours, at `size` px; shown at once when
@@ -158,7 +163,7 @@ export const preloadRoleIcons = (): void => {
 // (A tag-coloured silhouette needs a CSS mask, which phones refuse for pictures from another site; it can come back once the
 // icons are stored in the vault.)
 export const gameIcon = (parent: HTMLElement, key: string, fallback: string, size: number): HTMLElement => {
-    const file = GAME_ICON_FILE[key];
+    const file = GAME_ICONS_ON ? GAME_ICON_FILE[key] : undefined;
     if (!file) return icon(parent, fallback);
     const slot = h(parent, "span", "mn-ic mn-gi-slot");
     const im = h(slot, "img", "mn-gi");
@@ -184,6 +189,7 @@ const iconChip = (parent: HTMLElement, label: string, file: string | undefined, 
     if (!file) { icon(el, fallback); return el; }
     const im = h(el, "img", "mn-role-img");
     im.alt = "";
+    im.draggable = false;
     const cached = preloaded.get(file);
     if (!(cached?.complete && cached.naturalWidth)) {
         im.classList.add("is-loading");
