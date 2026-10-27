@@ -362,6 +362,13 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-fact-t { font-size: 20px; font-weight: 800; margin: 4px 0 2px; }
 .mn-fact-s { font-size: 14px; color: var(--mn-muted); line-height: 1.5; }
 
+/* next card at the end of a guide note */
+.mn-app .mn-nextcard { white-space: normal; display: flex; align-items: center; gap: 10px; width: 100%; margin: 18px 0 10px; padding: 16px 18px; border-radius: 18px; text-align: left; background: var(--mn-accent); color: var(--text-on-accent, #fff); }
+.mn-nextcard-k { font-size: 12px; font-weight: 700; opacity: 0.85; }
+.mn-nextcard-t { flex: 1; font-size: 17px; font-weight: 800; }
+.mn-nextcard-ic svg { width: 22px; height: 22px; }
+.mn-nextcard-done { margin: 18px 0 10px; text-align: center; font-weight: 700; color: var(--color-green); }
+
 /* augment rarity frames, drawn here (the game adds them in its own UI): metallic silver, metallic gold, prismatic = a metallic rainbow */
 /* an augment icon like in the game: the game's large icon (its glyph is already tinted for the rarity) on a dark teal square in the rarity's frame */
 .aug-icon { --ring: 4px; position: relative; display: inline-block; flex: none; width: 56px; height: 56px; box-sizing: border-box; border-radius: 16px; border: var(--ring) solid transparent;
