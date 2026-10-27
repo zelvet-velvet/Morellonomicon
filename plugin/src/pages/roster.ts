@@ -1,6 +1,6 @@
 import { Notice } from "obsidian";
 import type { Champion } from "../data/store";
-import { chip, empty, fgrid, h, icon, page } from "../ui";
+import { chip, empty, fgrid, h, icon, page, roleChip } from "../ui";
 import { entryDir, marker } from "./changes";
 import type { PageCtx, PageOut } from "./index";
 import { factsStrip, tagRow } from "./profile";
@@ -154,7 +154,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
 
     const drawRoles = () => {
         roles.empty();
-        for (const r of ROLES) chip(roles, r, { on: role === r, onTap: () => { role = role === r ? "" : r; drawRoles(); drawGrid(); } });
+        for (const r of ROLES) roleChip(roles, r, { on: role === r, onTap: () => { role = role === r ? "" : r; drawRoles(); drawGrid(); } });
     };
 
     search.addEventListener("input", () => { query = search.value; drawSuggest(); drawGrid(); });

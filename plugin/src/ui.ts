@@ -107,6 +107,17 @@ export const chip = (parent: HTMLElement, text: string, o: { color?: string; on?
     return el;
 };
 
+// Role filter chips show an icon (echoing the game's class icons) instead of the word; the word is the label and shows in a bubble on tap
+export const ROLE_ICON: Record<string, string> = { 戰士: "swords", 坦克: "shield", 法師: "wand-sparkles", 刺客: "slice", 射手: "target", 輔助: "heart-handshake" };
+export const roleChip = (parent: HTMLElement, role: string, o: { on: boolean; onTap: () => void }): HTMLElement => {
+    let el: HTMLElement | null = null;
+    el = chip(parent, "", { on: o.on, onTap: () => { if (el) tip(el, role); o.onTap(); } });
+    el.classList.add("mn-chip-ic");
+    el.setAttribute("aria-label", role);
+    icon(el, ROLE_ICON[role] ?? "circle");
+    return el;
+};
+
 // A row of equal-width cells that fills the page width (role chips, filter buttons)
 export const fgrid = (parent: HTMLElement, cells: number): HTMLElement => {
     const row = h(parent, "div", "mn-fgrid");

@@ -600,3 +600,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app.is-sub .mn-scroll > .mn-page > .mn-title-row, .mn-app.is-sub .mn-scroll > .mn-page > .mn-dhead { padding-left: 40px; }
 .mn-app.is-sub:has(.mn-scroll > .mn-page > .mn-dhead) .mn-top:not(.is-scrolled) .mn-back { transform: translateY(20px); }   /* centre Back on a tall icon header */
 .mn-app.is-sub .mn-back { transition: transform 0.2s; }
+
+/* role filter chips: icon only, centred */
+.mn-app .mn-chip.mn-chip-ic { justify-content: center; }
+.mn-chip-ic .mn-ic { display: flex; }
+.mn-chip-ic svg { width: 20px; height: 20px; }

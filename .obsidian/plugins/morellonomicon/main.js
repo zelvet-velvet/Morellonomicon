@@ -710,6 +710,18 @@ var chip = (parent, text, o = {}) => {
   }
   return el;
 };
+var ROLE_ICON = { \u6230\u58EB: "swords", \u5766\u514B: "shield", \u6CD5\u5E2B: "wand-sparkles", \u523A\u5BA2: "slice", \u5C04\u624B: "target", \u8F14\u52A9: "heart-handshake" };
+var roleChip = (parent, role, o) => {
+  let el = null;
+  el = chip(parent, "", { on: o.on, onTap: () => {
+    if (el) tip(el, role);
+    o.onTap();
+  } });
+  el.classList.add("mn-chip-ic");
+  el.setAttribute("aria-label", role);
+  icon(el, ROLE_ICON[role] ?? "circle");
+  return el;
+};
 var fgrid = (parent, cells) => {
   const row2 = h(parent, "div", "mn-fgrid");
   row2.style.setProperty("--n", String(cells));
@@ -1513,7 +1525,7 @@ function championPicker(parent, ctx) {
   const drawFilters = () => {
     filters.empty();
     const roleRow = fgrid(filters, ROLES.length);
-    for (const r of ROLES) chip(roleRow, r, { on: F.roles.has(r), onTap: () => {
+    for (const r of ROLES) roleChip(roleRow, r, { on: F.roles.has(r), onTap: () => {
       F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r);
       redraw();
     } });
@@ -2554,7 +2566,7 @@ function rosterPage(ctx) {
   };
   const drawRoles = () => {
     roles.empty();
-    for (const r of ROLES2) chip(roles, r, { on: role === r, onTap: () => {
+    for (const r of ROLES2) roleChip(roles, r, { on: role === r, onTap: () => {
       role = role === r ? "" : r;
       drawRoles();
       drawGrid();
