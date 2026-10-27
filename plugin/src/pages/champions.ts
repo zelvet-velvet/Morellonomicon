@@ -1,6 +1,6 @@
 import type { Champion } from "../data/store";
 import { DAMAGE_COLOR, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, tip } from "../ui";
-import { championProfile, iconFilter, tagFilter } from "./profile";
+import { TAG_GROUPS, championProfile, iconFilter, tagFilter } from "./profile";
 import { buildTab } from "./build";
 import type { PageCtx, PageOut } from "./index";
 import { badgeColor, badgeText, changesBlock, entryDir, marker } from "./changes";
@@ -9,7 +9,6 @@ import { skillStrip } from "./skills";
 
 const ROLES = ["戰士", "坦克", "法師", "刺客", "射手", "輔助"];
 const DAMAGES = ["物理", "魔法", "混合"];
-const FEATURES = ["控場", "緩速", "位移", "治療", "護盾", "吸血", "強化普攻", "攻擊特效"];   // tap = must have
 const REACH = ["近戰", "中程", "遠程"];
 const SORTS: [string, string][] = [["name", "名稱"], ["diff", "難度優先"], ["range", "射程優先"]];
 const SORT_DIR: Record<string, 1 | -1> = { name: 1, diff: 1, range: -1 };   // first direction when a sort is picked: A first, easy first, far first
@@ -132,10 +131,15 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
         }
         const roleRow = fgrid(roleSect, ROLES.length);
         for (const r of ROLES) roleChip(roleRow, r, { on: F.roles.has(r), onTap: () => { F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r); redraw(); } });
-        const ab = fgrid(sect("技能"), FEATURES.length);
-        for (const f of FEATURES) {
-            const on = F.feat.get(f) === 1;
-            tagFilter(ab, f, on, () => { if (on) F.feat.delete(f); else F.feat.set(f, 1); redraw(); });   // tap: must have / any
+        // the ability tags in their groups: a small label, then the group's icons (tap: must have / any)
+        const ab = sect("技能");
+        for (const [group, tags] of TAG_GROUPS) {
+            const line = h(ab, "div", "mn-fcat");
+            h(line, "span", "mn-fcat-l", group);
+            for (const f of tags) {
+                const on = F.feat.get(f) === 1;
+                tagFilter(line, f, on, () => { if (on) F.feat.delete(f); else F.feat.set(f, 1); redraw(); });
+            }
         }
         const kindRow = fgrid(sect("傷害"), DAMAGES.length);   // three icons spread across the width
         for (const d of DAMAGES) iconFilter(kindRow, d, DAMAGE_ICON[d], DAMAGE_COLOR[d], F.dmg === d, () => { F.dmg = F.dmg === d ? "" : d; redraw(); });

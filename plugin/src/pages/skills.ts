@@ -32,7 +32,13 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
         h(head, "span", "mn-sd-name", s.name);
         const types = h(head, "span", "mn-sd-types");
         for (const d of s.damage) chip(types, `${d}傷害`, { color: DAMAGE_COLOR[d] });
-        if (s.tags.includes("攻擊特效")) chip(types, "觸發攻擊特效", { color: "var(--mn-onhit)" });   // hand-set `onhit` in the champion note
+        if (s.tags.includes("攻擊特效")) chip(types, "觸發攻擊特效", { color: "var(--mn-onhit)" });
+        // what kind of crowd control / weakening, read from the skill's text (控場 · 擊飛、暈眩)
+        const text = s.desc + s.upgrade;
+        for (const [label, color, words] of EFFECT_WORDS) {
+            const found = [...new Set(words.filter(([re]) => re.test(text)).map(([, name]) => name))];
+            if (found.length) chip(types, `${label} · ${found.join("、")}`, { color });
+        }   // hand-set `onhit` in the champion note
         rankTable(detail, s, changes.filter((x) => x.scope === s.key));
         if (s.desc) h(detail, "p", "mn-sd-desc", s.desc);
         if (s.upgrade) {
@@ -72,6 +78,14 @@ export function demo(parent: HTMLElement, c: Champion, s: { key: string }): void
     const webm = h(v, "source"); webm.src = `${url}.webm`; webm.type = "video/webm";
     webm.addEventListener("error", () => v.remove());   // neither format loaded
 }
+
+// Kinds of crowd control and weakening, by the words Riot's zh_TW text uses
+const EFFECT_WORDS: [string, string, [RegExp, string][]][] = [
+    ["控場", "var(--mn-cc)", [[/暈眩|眩暈|擊暈/, "暈眩"], [/擊飛|擊倒/, "擊飛"], [/擊退/, "擊退"], [/定身|禁錮|束縛/, "定身"], [/沉默/, "沉默"], [/恐懼/, "恐懼"],
+        [/魅惑/, "魅惑"], [/嘲諷/, "嘲諷"], [/睡眠/, "睡眠"], [/壓制/, "壓制"], [/變形/, "變形"], [/牽引|拉向/, "拉扯"]]],
+    ["削弱", "var(--mn-weak)", [[/致盲/, "致盲"], [/近視|(降低|減少|縮小)[^。]{0,4}(視線|視野)/, "近視"], [/重傷/, "重傷"],
+        [/(降低|減少|削減)[^。]{0,8}(護甲|魔法防禦|魔抗|物理防禦)|破甲/, "降防"], [/(降低|減少|削減)[^。]{0,8}(攻速|攻擊速度)/, "降攻速"]]],
+];
 
 const ROW_COLOR: [string, string][] = [["魔法", DAMAGE_COLOR["魔法"]], ["物理", DAMAGE_COLOR["物理"]], ["真實", DAMAGE_COLOR["真實"]], ["治療", "var(--color-green)"], ["護盾", "var(--color-cyan)"]];
 

@@ -60,14 +60,30 @@ export function profileRadar(parent: HTMLElement, axes: Axis[], color: string, m
 // 攻擊特效 (on-hit) is not in the skill text we have, so it only shows when a champion note lists it in `features_extra`.
 interface Tag { tag: string; color: string; icon: string; en: string; abbr: string; what: string }
 const TAGS: Tag[] = [
-    { tag: "控場", color: "var(--mn-cc)", icon: "lock", en: "Crowd Control", abbr: "CC", what: "暈眩、擊飛、定身、沉默、恐懼等,讓敵人動不了或不能放技能" },
+    // 傷害方式
+    { tag: "強化普攻", color: "var(--mn-aa)", icon: "sword", en: "Empowered attack", abbr: "AA+", what: "技能讓下一次(或接下來幾次)普攻更強,例如額外傷害" },
+    { tag: "攻擊特效", color: "var(--mn-onhit)", icon: "crosshair", en: "On-hit", abbr: "On-hit", what: "技能會觸發攻擊特效,適合出攻擊特效裝備(人工標註)" },
+    { tag: "斬殺", color: "var(--mn-exec)", icon: "skull", en: "Execute", abbr: "Execute", what: "對生命值低的敵人造成更高傷害或直接擊殺" },
+    // 控制
+    { tag: "控場", color: "var(--mn-cc)", icon: "lock", en: "Crowd Control", abbr: "CC", what: "暈眩、擊飛、定身、沉默、恐懼、魅惑等,讓敵人動不了或不能放技能" },
     { tag: "緩速", color: "var(--mn-slow)", icon: "snowflake", en: "Slow", abbr: "Slow", what: "降低敵人的移動速度" },
-    { tag: "位移", color: "var(--mn-dash)", icon: "arrow-big-right-dash", en: "Dash / Mobility", abbr: "Dash", what: "衝刺、閃現、瞬步、跳躍等,讓自己快速移動" },
+    { tag: "削弱", color: "var(--mn-weak)", icon: "trending-down", en: "Debuff", abbr: "Debuff", what: "致盲、近視、重傷、降低護甲 / 魔抗 / 攻速,讓敵人變弱但還能行動" },
+    // 移動
+    { tag: "位移", color: "var(--mn-dash)", icon: "arrow-big-right-dash", en: "Dash / Blink", abbr: "Dash", what: "衝刺、閃現、瞬步、跳躍等,讓自己快速移動" },
+    { tag: "加速", color: "var(--mn-haste)", icon: "wind", en: "Movement speed", abbr: "MS", what: "提高自己或隊友的移動速度" },
+    { tag: "隱身", color: "var(--mn-stealth)", icon: "eye-off", en: "Stealth / Camouflage", abbr: "Stealth", what: "隱形或偽裝,讓敵人看不到你" },
+    // 生存
     { tag: "治療", color: "var(--mn-heal)", icon: "heart-pulse", en: "Heal", abbr: "Heal", what: "回復自己或隊友的生命" },
     { tag: "護盾", color: "var(--mn-shield)", icon: "shield-plus", en: "Shield", abbr: "Shield", what: "給自己或隊友一層可吸收傷害的護盾" },
     { tag: "吸血", color: "var(--mn-ls)", icon: "syringe", en: "Lifesteal / Omnivamp", abbr: "LS", what: "造成傷害時回復自己的生命" },
-    { tag: "強化普攻", color: "var(--mn-aa)", icon: "sword", en: "Empowered attack", abbr: "AA+", what: "技能讓下一次(或接下來幾次)普攻更強,例如額外傷害" },
-    { tag: "攻擊特效", color: "var(--mn-onhit)", icon: "crosshair", en: "On-hit", abbr: "On-hit", what: "每次普攻都會觸發效果,適合出攻擊特效裝備(人工標註)" },
+    { tag: "免傷", color: "var(--mn-guard)", icon: "shield-half", en: "Damage reduction / Untargetable", abbr: "DR", what: "減少受到的傷害,或短時間無法被選取 / 無敵" },
+    // 團隊
+    { tag: "幫隊友", color: "var(--mn-team)", icon: "users", en: "Helps allies", abbr: "Ally", what: "治療、護盾或加速也能給隊友" },
+];
+// The tags in groups (filter panel, legend), in the order above
+export const TAG_GROUPS: [string, string[]][] = [
+    ["傷害方式", ["強化普攻", "攻擊特效", "斬殺"]], ["控制", ["控場", "緩速", "削弱"]], ["移動", ["位移", "加速", "隱身"]],
+    ["生存", ["治療", "護盾", "吸血", "免傷"]], ["團隊", ["幫隊友"]],
 ];
 const TAG = new Map(TAGS.map((t) => [t.tag, t] as const));
 
@@ -81,7 +97,9 @@ class TagLegend extends Modal {
         const app = document.querySelector<HTMLElement>(".mn-app");
         const css = app ? getComputedStyle(app) : null;
         const resolve = (v: string): string => v.replace(/var\((--[\w-]+)\)/, (_m, name: string) => css?.getPropertyValue(name).trim() || "currentColor");
-        for (const a of TAGS) {
+        for (const [group, tags] of TAG_GROUPS) {
+            h(table, "div", "mn-lg-g", group);
+            for (const a of TAGS.filter((x) => tags.includes(x.tag))) {
             const color = resolve(a.color);
             const r = h(table, "div", "mn-lg-r");
             const ic = h(r, "span", "mn-lg-ic");
@@ -91,6 +109,7 @@ class TagLegend extends Modal {
             name.style.color = color;
             h(name, "div", "mn-lg-w", a.what);
             h(r, "span", "mn-lg-e", `${a.en} · ${a.abbr}`);
+            }
         }
     }
     onClose(): void { this.contentEl.empty(); }
@@ -134,9 +153,9 @@ function tagChip(parent: HTMLElement, c: Champion, t: Tag): HTMLElement {
 }
 
 // A row of tag chips (all of them, or the ones named)
-export function tagRow(parent: HTMLElement, c: Champion, only?: string[]): HTMLElement {
+export function tagRow(parent: HTMLElement, c: Champion, only?: string[], litOnly = false): HTMLElement {
     const row = h(parent, "div", "mn-tgs");
-    for (const t of TAGS) if (!only || only.includes(t.tag)) tagChip(row, c, t);
+    for (const t of TAGS) if ((!only || only.includes(t.tag)) && (!litOnly || hasTag(c, t.tag))) tagChip(row, c, t);
     return row;
 }
 
@@ -266,7 +285,7 @@ function styleChart(parent: HTMLElement, c: Champion): void {
 }
 
 // The 戰鬥風格 card: header with the key and the legend button, the chart, then the tags that are not corners of the chart
-const OFF_CHART = ["緩速", "吸血", "強化普攻", "攻擊特效"];
+const OFF_CHART = TAGS.map((x) => x.tag).filter((x) => !["控場", "位移", "治療", "護盾"].includes(x));   // the chart's corners show the rest
 export function styleCard(parent: HTMLElement, c: Champion, app?: App): void {
     const card = h(parent, "div", "mn-panel mn-style");
     const head = h(card, "div", "mn-style-h");
@@ -276,7 +295,8 @@ export function styleCard(parent: HTMLElement, c: Champion, app?: App): void {
     icon(key, "info");
     if (app) key.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); new TagLegend(app).open(); });
     styleChart(card, c);
-    tagRow(h(card, "div", "mn-style-f"), c, OFF_CHART);
+    // only the ones it has (with 14 tags, the missing ones would crowd the card)
+    if (OFF_CHART.some((x) => hasTag(c, x))) tagRow(h(card, "div", "mn-style-f"), c, OFF_CHART, true);
 }
 
 // the whole block of the champion card: the facts strip, then the style card

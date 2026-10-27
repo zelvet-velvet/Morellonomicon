@@ -511,7 +511,7 @@ var ROLE_FILE = { \u6230\u58EB: "Fighter_icon.png", \u5766\u514B: "Tank_icon.png
 var GAME_ICON_FILE = {
   \u63A7\u5834: "Stun_icon.png",
   \u7DE9\u901F: "Slow_icon.png",
-  \u4F4D\u79FB: "Movement_speed_icon.png",
+  \u52A0\u901F: "Movement_speed_icon.png",
   \u6CBB\u7642: "Heal_power_icon.png",
   \u8B77\u76FE: "Heal_and_shield_power_icon.png",
   \u5438\u8840: "Life_steal_icon.png",
@@ -987,14 +987,32 @@ function profileRadar(parent, axes, color, max = 10) {
   });
 }
 var TAGS = [
-  { tag: "\u63A7\u5834", color: "var(--mn-cc)", icon: "lock", en: "Crowd Control", abbr: "CC", what: "\u6688\u7729\u3001\u64CA\u98DB\u3001\u5B9A\u8EAB\u3001\u6C89\u9ED8\u3001\u6050\u61FC\u7B49,\u8B93\u6575\u4EBA\u52D5\u4E0D\u4E86\u6216\u4E0D\u80FD\u653E\u6280\u80FD" },
+  // 傷害方式
+  { tag: "\u5F37\u5316\u666E\u653B", color: "var(--mn-aa)", icon: "sword", en: "Empowered attack", abbr: "AA+", what: "\u6280\u80FD\u8B93\u4E0B\u4E00\u6B21(\u6216\u63A5\u4E0B\u4F86\u5E7E\u6B21)\u666E\u653B\u66F4\u5F37,\u4F8B\u5982\u984D\u5916\u50B7\u5BB3" },
+  { tag: "\u653B\u64CA\u7279\u6548", color: "var(--mn-onhit)", icon: "crosshair", en: "On-hit", abbr: "On-hit", what: "\u6280\u80FD\u6703\u89F8\u767C\u653B\u64CA\u7279\u6548,\u9069\u5408\u51FA\u653B\u64CA\u7279\u6548\u88DD\u5099(\u4EBA\u5DE5\u6A19\u8A3B)" },
+  { tag: "\u65AC\u6BBA", color: "var(--mn-exec)", icon: "skull", en: "Execute", abbr: "Execute", what: "\u5C0D\u751F\u547D\u503C\u4F4E\u7684\u6575\u4EBA\u9020\u6210\u66F4\u9AD8\u50B7\u5BB3\u6216\u76F4\u63A5\u64CA\u6BBA" },
+  // 控制
+  { tag: "\u63A7\u5834", color: "var(--mn-cc)", icon: "lock", en: "Crowd Control", abbr: "CC", what: "\u6688\u7729\u3001\u64CA\u98DB\u3001\u5B9A\u8EAB\u3001\u6C89\u9ED8\u3001\u6050\u61FC\u3001\u9B45\u60D1\u7B49,\u8B93\u6575\u4EBA\u52D5\u4E0D\u4E86\u6216\u4E0D\u80FD\u653E\u6280\u80FD" },
   { tag: "\u7DE9\u901F", color: "var(--mn-slow)", icon: "snowflake", en: "Slow", abbr: "Slow", what: "\u964D\u4F4E\u6575\u4EBA\u7684\u79FB\u52D5\u901F\u5EA6" },
-  { tag: "\u4F4D\u79FB", color: "var(--mn-dash)", icon: "arrow-big-right-dash", en: "Dash / Mobility", abbr: "Dash", what: "\u885D\u523A\u3001\u9583\u73FE\u3001\u77AC\u6B65\u3001\u8DF3\u8E8D\u7B49,\u8B93\u81EA\u5DF1\u5FEB\u901F\u79FB\u52D5" },
+  { tag: "\u524A\u5F31", color: "var(--mn-weak)", icon: "trending-down", en: "Debuff", abbr: "Debuff", what: "\u81F4\u76F2\u3001\u8FD1\u8996\u3001\u91CD\u50B7\u3001\u964D\u4F4E\u8B77\u7532 / \u9B54\u6297 / \u653B\u901F,\u8B93\u6575\u4EBA\u8B8A\u5F31\u4F46\u9084\u80FD\u884C\u52D5" },
+  // 移動
+  { tag: "\u4F4D\u79FB", color: "var(--mn-dash)", icon: "arrow-big-right-dash", en: "Dash / Blink", abbr: "Dash", what: "\u885D\u523A\u3001\u9583\u73FE\u3001\u77AC\u6B65\u3001\u8DF3\u8E8D\u7B49,\u8B93\u81EA\u5DF1\u5FEB\u901F\u79FB\u52D5" },
+  { tag: "\u52A0\u901F", color: "var(--mn-haste)", icon: "wind", en: "Movement speed", abbr: "MS", what: "\u63D0\u9AD8\u81EA\u5DF1\u6216\u968A\u53CB\u7684\u79FB\u52D5\u901F\u5EA6" },
+  { tag: "\u96B1\u8EAB", color: "var(--mn-stealth)", icon: "eye-off", en: "Stealth / Camouflage", abbr: "Stealth", what: "\u96B1\u5F62\u6216\u507D\u88DD,\u8B93\u6575\u4EBA\u770B\u4E0D\u5230\u4F60" },
+  // 生存
   { tag: "\u6CBB\u7642", color: "var(--mn-heal)", icon: "heart-pulse", en: "Heal", abbr: "Heal", what: "\u56DE\u5FA9\u81EA\u5DF1\u6216\u968A\u53CB\u7684\u751F\u547D" },
   { tag: "\u8B77\u76FE", color: "var(--mn-shield)", icon: "shield-plus", en: "Shield", abbr: "Shield", what: "\u7D66\u81EA\u5DF1\u6216\u968A\u53CB\u4E00\u5C64\u53EF\u5438\u6536\u50B7\u5BB3\u7684\u8B77\u76FE" },
   { tag: "\u5438\u8840", color: "var(--mn-ls)", icon: "syringe", en: "Lifesteal / Omnivamp", abbr: "LS", what: "\u9020\u6210\u50B7\u5BB3\u6642\u56DE\u5FA9\u81EA\u5DF1\u7684\u751F\u547D" },
-  { tag: "\u5F37\u5316\u666E\u653B", color: "var(--mn-aa)", icon: "sword", en: "Empowered attack", abbr: "AA+", what: "\u6280\u80FD\u8B93\u4E0B\u4E00\u6B21(\u6216\u63A5\u4E0B\u4F86\u5E7E\u6B21)\u666E\u653B\u66F4\u5F37,\u4F8B\u5982\u984D\u5916\u50B7\u5BB3" },
-  { tag: "\u653B\u64CA\u7279\u6548", color: "var(--mn-onhit)", icon: "crosshair", en: "On-hit", abbr: "On-hit", what: "\u6BCF\u6B21\u666E\u653B\u90FD\u6703\u89F8\u767C\u6548\u679C,\u9069\u5408\u51FA\u653B\u64CA\u7279\u6548\u88DD\u5099(\u4EBA\u5DE5\u6A19\u8A3B)" }
+  { tag: "\u514D\u50B7", color: "var(--mn-guard)", icon: "shield-half", en: "Damage reduction / Untargetable", abbr: "DR", what: "\u6E1B\u5C11\u53D7\u5230\u7684\u50B7\u5BB3,\u6216\u77ED\u6642\u9593\u7121\u6CD5\u88AB\u9078\u53D6 / \u7121\u6575" },
+  // 團隊
+  { tag: "\u5E6B\u968A\u53CB", color: "var(--mn-team)", icon: "users", en: "Helps allies", abbr: "Ally", what: "\u6CBB\u7642\u3001\u8B77\u76FE\u6216\u52A0\u901F\u4E5F\u80FD\u7D66\u968A\u53CB" }
+];
+var TAG_GROUPS = [
+  ["\u50B7\u5BB3\u65B9\u5F0F", ["\u5F37\u5316\u666E\u653B", "\u653B\u64CA\u7279\u6548", "\u65AC\u6BBA"]],
+  ["\u63A7\u5236", ["\u63A7\u5834", "\u7DE9\u901F", "\u524A\u5F31"]],
+  ["\u79FB\u52D5", ["\u4F4D\u79FB", "\u52A0\u901F", "\u96B1\u8EAB"]],
+  ["\u751F\u5B58", ["\u6CBB\u7642", "\u8B77\u76FE", "\u5438\u8840", "\u514D\u50B7"]],
+  ["\u5718\u968A", ["\u5E6B\u968A\u53CB"]]
 ];
 var TAG = new Map(TAGS.map((t) => [t.tag, t]));
 var TagLegend = class extends import_obsidian4.Modal {
@@ -1007,16 +1025,19 @@ var TagLegend = class extends import_obsidian4.Modal {
     const app = document.querySelector(".mn-app");
     const css = app ? getComputedStyle(app) : null;
     const resolve = (v) => v.replace(/var\((--[\w-]+)\)/, (_m, name) => css?.getPropertyValue(name).trim() || "currentColor");
-    for (const a of TAGS) {
-      const color = resolve(a.color);
-      const r = h(table, "div", "mn-lg-r");
-      const ic = h(r, "span", "mn-lg-ic");
-      ic.style.setProperty("--p", color);
-      gameIcon(ic, a.tag, a.icon, 22);
-      const name = h(r, "span", "mn-lg-n", a.tag);
-      name.style.color = color;
-      h(name, "div", "mn-lg-w", a.what);
-      h(r, "span", "mn-lg-e", `${a.en} \xB7 ${a.abbr}`);
+    for (const [group2, tags] of TAG_GROUPS) {
+      h(table, "div", "mn-lg-g", group2);
+      for (const a of TAGS.filter((x) => tags.includes(x.tag))) {
+        const color = resolve(a.color);
+        const r = h(table, "div", "mn-lg-r");
+        const ic = h(r, "span", "mn-lg-ic");
+        ic.style.setProperty("--p", color);
+        gameIcon(ic, a.tag, a.icon, 22);
+        const name = h(r, "span", "mn-lg-n", a.tag);
+        name.style.color = color;
+        h(name, "div", "mn-lg-w", a.what);
+        h(r, "span", "mn-lg-e", `${a.en} \xB7 ${a.abbr}`);
+      }
     }
   }
   onClose() {
@@ -1057,9 +1078,9 @@ function tagChip(parent, c, t) {
   });
   return el;
 }
-function tagRow(parent, c, only) {
+function tagRow(parent, c, only, litOnly = false) {
   const row2 = h(parent, "div", "mn-tgs");
-  for (const t of TAGS) if (!only || only.includes(t.tag)) tagChip(row2, c, t);
+  for (const t of TAGS) if ((!only || only.includes(t.tag)) && (!litOnly || hasTag(c, t.tag))) tagChip(row2, c, t);
   return row2;
 }
 var KINDS = ["\u7269\u7406", "\u9B54\u6CD5", "\u771F\u5BE6"];
@@ -1199,7 +1220,7 @@ function styleChart(parent, c) {
     });
   });
 }
-var OFF_CHART = ["\u7DE9\u901F", "\u5438\u8840", "\u5F37\u5316\u666E\u653B", "\u653B\u64CA\u7279\u6548"];
+var OFF_CHART = TAGS.map((x) => x.tag).filter((x) => !["\u63A7\u5834", "\u4F4D\u79FB", "\u6CBB\u7642", "\u8B77\u76FE"].includes(x));
 function styleCard(parent, c, app) {
   const card = h(parent, "div", "mn-panel mn-style");
   const head = h(card, "div", "mn-style-h");
@@ -1213,7 +1234,7 @@ function styleCard(parent, c, app) {
     new TagLegend(app).open();
   });
   styleChart(card, c);
-  tagRow(h(card, "div", "mn-style-f"), c, OFF_CHART);
+  if (OFF_CHART.some((x) => hasTag(c, x))) tagRow(h(card, "div", "mn-style-f"), c, OFF_CHART, true);
 }
 function championProfile(parent, c, app) {
   factsStrip(parent, c);
@@ -1485,6 +1506,11 @@ function skillStrip(parent, c, changes = []) {
     const types = h(head, "span", "mn-sd-types");
     for (const d of s.damage) chip(types, `${d}\u50B7\u5BB3`, { color: DAMAGE_COLOR[d] });
     if (s.tags.includes("\u653B\u64CA\u7279\u6548")) chip(types, "\u89F8\u767C\u653B\u64CA\u7279\u6548", { color: "var(--mn-onhit)" });
+    const text = s.desc + s.upgrade;
+    for (const [label, color, words] of EFFECT_WORDS) {
+      const found = [...new Set(words.filter(([re]) => re.test(text)).map(([, name]) => name))];
+      if (found.length) chip(types, `${label} \xB7 ${found.join("\u3001")}`, { color });
+    }
     rankTable(detail, s, changes.filter((x) => x.scope === s.key));
     if (s.desc) h(detail, "p", "mn-sd-desc", s.desc);
     if (s.upgrade) {
@@ -1529,6 +1555,29 @@ function demo(parent, c, s) {
   webm.type = "video/webm";
   webm.addEventListener("error", () => v.remove());
 }
+var EFFECT_WORDS = [
+  ["\u63A7\u5834", "var(--mn-cc)", [
+    [/暈眩|眩暈|擊暈/, "\u6688\u7729"],
+    [/擊飛|擊倒/, "\u64CA\u98DB"],
+    [/擊退/, "\u64CA\u9000"],
+    [/定身|禁錮|束縛/, "\u5B9A\u8EAB"],
+    [/沉默/, "\u6C89\u9ED8"],
+    [/恐懼/, "\u6050\u61FC"],
+    [/魅惑/, "\u9B45\u60D1"],
+    [/嘲諷/, "\u5632\u8AF7"],
+    [/睡眠/, "\u7761\u7720"],
+    [/壓制/, "\u58D3\u5236"],
+    [/變形/, "\u8B8A\u5F62"],
+    [/牽引|拉向/, "\u62C9\u626F"]
+  ]],
+  ["\u524A\u5F31", "var(--mn-weak)", [
+    [/致盲/, "\u81F4\u76F2"],
+    [/近視|(降低|減少|縮小)[^。]{0,4}(視線|視野)/, "\u8FD1\u8996"],
+    [/重傷/, "\u91CD\u50B7"],
+    [/(降低|減少|削減)[^。]{0,8}(護甲|魔法防禦|魔抗|物理防禦)|破甲/, "\u964D\u9632"],
+    [/(降低|減少|削減)[^。]{0,8}(攻速|攻擊速度)/, "\u964D\u653B\u901F"]
+  ]]
+];
 var ROW_COLOR = [["\u9B54\u6CD5", DAMAGE_COLOR["\u9B54\u6CD5"]], ["\u7269\u7406", DAMAGE_COLOR["\u7269\u7406"]], ["\u771F\u5BE6", DAMAGE_COLOR["\u771F\u5BE6"]], ["\u6CBB\u7642", "var(--color-green)"], ["\u8B77\u76FE", "var(--color-cyan)"]];
 function rankTable(parent, s, changes) {
   const rows = s.range ? [...s.rows, { label: "\u5C04\u7A0B", vals: s.range.split("/"), note: "" }] : s.rows;
@@ -1562,7 +1611,6 @@ function rankTable(parent, s, changes) {
 // src/pages/champions.ts
 var ROLES = ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u5C04\u624B", "\u8F14\u52A9"];
 var DAMAGES = ["\u7269\u7406", "\u9B54\u6CD5", "\u6DF7\u5408"];
-var FEATURES = ["\u63A7\u5834", "\u7DE9\u901F", "\u4F4D\u79FB", "\u6CBB\u7642", "\u8B77\u76FE", "\u5438\u8840", "\u5F37\u5316\u666E\u653B", "\u653B\u64CA\u7279\u6548"];
 var REACH = ["\u8FD1\u6230", "\u4E2D\u7A0B", "\u9060\u7A0B"];
 var SORTS2 = [["name", "\u540D\u7A31"], ["diff", "\u96E3\u5EA6\u512A\u5148"], ["range", "\u5C04\u7A0B\u512A\u5148"]];
 var SORT_DIR = { name: 1, diff: 1, range: -1 };
@@ -1712,14 +1760,18 @@ function championPicker(parent, ctx) {
       F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r);
       redraw();
     } });
-    const ab = fgrid(sect("\u6280\u80FD"), FEATURES.length);
-    for (const f of FEATURES) {
-      const on = F.feat.get(f) === 1;
-      tagFilter(ab, f, on, () => {
-        if (on) F.feat.delete(f);
-        else F.feat.set(f, 1);
-        redraw();
-      });
+    const ab = sect("\u6280\u80FD");
+    for (const [group2, tags] of TAG_GROUPS) {
+      const line = h(ab, "div", "mn-fcat");
+      h(line, "span", "mn-fcat-l", group2);
+      for (const f of tags) {
+        const on = F.feat.get(f) === 1;
+        tagFilter(line, f, on, () => {
+          if (on) F.feat.delete(f);
+          else F.feat.set(f, 1);
+          redraw();
+        });
+      }
     }
     const kindRow = fgrid(sect("\u50B7\u5BB3"), DAMAGES.length);
     for (const d of DAMAGES) iconFilter(kindRow, d, DAMAGE_ICON[d], DAMAGE_COLOR[d], F.dmg === d, () => {
@@ -2641,7 +2693,7 @@ function rosterPage(ctx) {
       b.style.setProperty("--m", m.color);
     }
     factsStrip(r, c);
-    tagRow(r, c);
+    tagRow(r, c, void 0, true);
     r.addEventListener("click", () => ctx.openChampion(c.id));
   };
   const drawResults = () => {

@@ -140,7 +140,7 @@ const ROLE_FILE: Record<string, string> = { 戰士: "Fighter_icon.png", 坦克: 
 // The game's own icons for tags, damage kinds and stats (the wiki's keyword and stat icons, e.g. its "Champion stat assets").
 // Same rule as the class icons: shown by address, never stored; a file that does not load falls back to the look-alike.
 export const GAME_ICON_FILE: Record<string, string> = {
-    控場: "Stun_icon.png", 緩速: "Slow_icon.png", 位移: "Movement_speed_icon.png", 治療: "Heal_power_icon.png", 護盾: "Heal_and_shield_power_icon.png",
+    控場: "Stun_icon.png", 緩速: "Slow_icon.png", 加速: "Movement_speed_icon.png", 治療: "Heal_power_icon.png", 護盾: "Heal_and_shield_power_icon.png",
     吸血: "Life_steal_icon.png", 強化普攻: "Basic_attack_icon.png", 攻擊特效: "On-hit_icon.png",
     物理: "Attack_damage_icon.png", 魔法: "Ability_power_icon.png", 坦度: "Armor_icon.png", 射程: "Range_icon.png",
 };

@@ -12,7 +12,7 @@
     --mn-line: color-mix(in srgb, var(--text-normal) 12%, transparent);
     /* tag and damage colours come from the colour theme (design 4c), so every theme keeps one family */
     --mn-phys: var(--color-orange); --mn-magic: var(--color-blue); --mn-true: var(--color-yellow); --mn-mixed: var(--color-purple);
-    --mn-cc: var(--color-yellow); --mn-slow: var(--color-blue); --mn-dash: var(--color-cyan); --mn-heal: var(--color-green); --mn-shield: var(--color-purple); --mn-ls: var(--color-red); --mn-onhit: var(--color-orange); --mn-aa: var(--color-pink); --mn-tank: var(--mn-muted); --mn-range: var(--mn-muted);
+    --mn-cc: var(--color-yellow); --mn-slow: var(--color-blue); --mn-dash: var(--color-cyan); --mn-heal: var(--color-green); --mn-shield: var(--color-purple); --mn-ls: var(--color-red); --mn-onhit: var(--color-orange); --mn-aa: var(--color-pink); --mn-exec: #e0605a; --mn-weak: #b98bd6; --mn-haste: #5ec2b7; --mn-stealth: #9aa3b8; --mn-guard: #d4a95f; --mn-team: #7ccf8f; --mn-tank: var(--mn-muted); --mn-range: var(--mn-muted);
     --mn-serif: "Noto Serif TC", "Source Han Serif TC", "Songti TC", "PMingLiU", serif;   /* headings, tabs (the client pairs a serif with a sans) */
     --mn-radius: 18px;
     --mn-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
@@ -631,3 +631,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-gi { display: block; object-fit: contain; transition: opacity 0.2s; }
 .mn-gi.is-loading { opacity: 0; }
 .mn-tg:not(.is-on) .mn-gi, .mn-scc:not(.is-on) .mn-gi { opacity: 0.45; }
+
+/* the 技能 filters in groups: a small label, then up to four icons */
+.mn-fcat { display: grid; grid-template-columns: 56px repeat(4, minmax(0, 1fr)); align-items: center; gap: 0 4px; }
+.mn-fcat-l { font-size: 11px; color: var(--mn-muted); }
+.mn-lg-g { margin-top: 6px; font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.06em; }

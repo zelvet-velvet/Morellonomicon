@@ -97,7 +97,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
         const rd = recent.get(c.name);
         if (rd) { const m = marker(rd); const b = h(roles, "span", "mn-rq-role mn-rq-mark", `${m.mark} 本版調整`); b.style.setProperty("--m", m.color); }
         factsStrip(r, c);
-        tagRow(r, c);
+        tagRow(r, c, undefined, true);   // only the abilities it has
         r.addEventListener("click", () => ctx.openChampion(c.id));
     };
 
