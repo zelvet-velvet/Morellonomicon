@@ -160,6 +160,7 @@ export class MnView extends ItemView {
         this.titleEl.textContent = out.title;
         const titleRow = this.router.depth() === 0 ? out.el.querySelector(":scope > .mn-title-row") : null;
         (titleRow ?? this.topEl).appendChild(this.actsEl);
+        this.actsEl.toggleClass("is-hidden", !titleRow);   // only a tab's first page has them
         this.topEl.toggleClass("has-back", this.router.depth() > 0);
         this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > 36);
     }

@@ -41,8 +41,10 @@ body.is-mobile:not(.mn-on) .mn-home svg { width: 24px; height: 24px; }
     background: color-mix(in srgb, var(--mn-bg) 80%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
     border-bottom: 0.5px solid transparent; transition: border-color 0.15s; }
 .mn-top.is-scrolled { border-bottom-color: var(--mn-line); }
-.mn-btn { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; color: var(--mn-accent); background: var(--mn-card); }
-.mn-btn svg { width: 20px; height: 20px; }
+.mn-app .mn-btn { display: inline-flex; flex: none; padding: 0; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; color: var(--mn-accent); background: var(--mn-card); }
+.mn-btn .mn-ic { display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; }
+.mn-btn svg { display: block; width: 100%; height: 100%; }
+.mn-acts.is-hidden { display: none; }
 .mn-btn:active { background: var(--mn-card-hi); }
 .mn-back { justify-self: start; visibility: hidden; }
 .mn-top.has-back .mn-back { visibility: visible; }
@@ -51,8 +53,8 @@ body.is-mobile:not(.mn-on) .mn-home svg { width: 24px; height: 24px; }
 .mn-acts { justify-self: end; display: flex; gap: 8px; }
 .mn-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 2px 14px; }
 .mn-title-row .mn-title { margin: 0; }
-.mn-title-row .mn-btn { width: 40px; height: 40px; background: var(--mn-card-hi); }
-.mn-title-row .mn-btn svg { width: 22px; height: 22px; }
+.mn-app .mn-title-row .mn-btn { width: 40px; height: 40px; background: var(--mn-card-hi); }
+.mn-title-row .mn-btn .mn-ic { width: 22px; height: 22px; }
 
 /* page */
 .mn-scroll { flex: 1; min-height: 0; overflow-x: hidden; overflow-x: clip; touch-action: pan-y; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: none; }

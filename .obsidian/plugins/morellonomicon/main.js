@@ -2660,6 +2660,7 @@ var MnView = class extends import_obsidian8.ItemView {
     this.titleEl.textContent = out.title;
     const titleRow = this.router.depth() === 0 ? out.el.querySelector(":scope > .mn-title-row") : null;
     (titleRow ?? this.topEl).appendChild(this.actsEl);
+    this.actsEl.toggleClass("is-hidden", !titleRow);
     this.topEl.toggleClass("has-back", this.router.depth() > 0);
     this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > 36);
   }
