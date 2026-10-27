@@ -667,3 +667,22 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 
 /* no text selection on buttons and chips: iOS starts selecting (with a haptic tap) when a finger rests on text */
 .mn-app button, .mn-app .mn-chip, .mn-app .mn-tg, .mn-app .mn-scc, .mn-app .mn-ftg { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+
+/* button bars: the chosen option's highlight slides (slideSeg in ui.ts); dragging along the bar previews with .is-pv */
+.mn-seg.has-hl { position: relative; touch-action: pan-y; }
+.mn-seg-hl { position: absolute; top: 4px; bottom: 4px; left: 0; width: 0; opacity: 0; border-radius: 12px; background: var(--mn-accent); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    pointer-events: none; transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.mn-seg.is-sm .mn-seg-hl { border-radius: 10px; }
+.mn-app .mn-seg.has-hl .mn-seg-b { position: relative; z-index: 1; transition: color 0.2s; }
+.mn-app .mn-seg.has-hl .mn-seg-b.is-on { background: none; box-shadow: none; }
+.mn-app .mn-seg.is-drag .mn-seg-b.is-on:not(.is-pv) { color: var(--mn-muted); }
+.mn-app .mn-seg.is-drag .mn-seg-b.is-pv { color: var(--text-on-accent, #fff); }
+/* line tabs: the highlight is the accent underline */
+.mn-seg-line .mn-seg-hl { top: auto; bottom: -1px; height: 2px; border-radius: 0; box-shadow: none; }
+.mn-app .mn-seg-line.has-hl .mn-seg-b.is-on { box-shadow: none; }
+.mn-app .mn-seg-line.is-drag .mn-seg-b.is-pv { color: var(--mn-text); }
+/* the hidden switch whose toggle gives iOS its tick (haptic in ui.ts) */
+.mn-tick { position: fixed; left: -100px; top: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; overflow: hidden; }
+/* a picture still loading is clear, then fades in (the page itself shows at once) */
+.mn-app img { transition: opacity 0.25s ease-out; }
+.mn-app img.is-loading { opacity: 0; }

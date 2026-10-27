@@ -13,20 +13,17 @@ export const VIEW_TYPE = "morellonomicon";
 // or the data changes; scroll positions are kept per page so Back returns to where you were.
 const OVERLAY_PAGES = new Set(["champion"]);
 const OVERLAY_SCROLL = 220;   // px scrolled before the top bar gets its background back over a splash
-const SPINNER_DELAY = 140;   // ms a page may take before the spinner shows (a quick load never flashes it)
-const IMAGE_WAIT = 8000;     // ms before a page is shown even if a picture has not arrived
 const ARRIVE_MS = 240;
 
 // Pictures in the first screen of a page that have not loaded yet, each as a promise that settles when it loads or fails
-function pendingImages(page: HTMLElement): Promise<void>[] {
-    const out: Promise<void>[] = [];
-    const urls = [...page.querySelectorAll<HTMLElement>(".mn-hero-bg")].map((e) => /url\("?([^")]+)"?\)/.exec(e.style.backgroundImage)?.[1]).filter((u): u is string => !!u);
-    for (const u of urls) out.push(new Promise<void>((r) => { const im = new Image(); im.onload = im.onerror = () => r(); im.src = u; if (im.complete) r(); }));
+function fadeInImages(page: HTMLElement): void {
     for (const im of page.querySelectorAll<HTMLImageElement>("img")) {
-        if (!im.src || im.complete || im.getBoundingClientRect().top > window.innerHeight) continue;
-        out.push(new Promise<void>((r) => { im.addEventListener("load", () => r(), { once: true }); im.addEventListener("error", () => r(), { once: true }); }));
+        if (!im.src || im.complete) continue;
+        im.addClass("is-loading");
+        const shown = () => im.removeClass("is-loading");
+        im.addEventListener("load", shown, { once: true });
+        im.addEventListener("error", shown, { once: true });
     }
-    return out;
 }
 
 function arrive(page: HTMLElement, anim: "push" | "back" | "tab"): void {
@@ -211,18 +208,10 @@ export class MnView extends ItemView {
         this.markScrolled();
         requestAnimationFrame(() => requestAnimationFrame(() => this.appEl.removeClass("is-switching")));
         if (anim === "none") { this.loaderEl.removeClass("is-on"); return; }
-        // pictures that are in view and not here yet: keep the page hidden under a spinner until they arrive (or give up after a while)
-        const waiting = pendingImages(out.el);
-        if (!waiting.length) { this.loaderEl.removeClass("is-on"); arrive(out.el, anim); return; }
-        out.el.style.opacity = "0";
-        const spin = window.setTimeout(() => { if (id === this.drawId) this.loaderEl.addClass("is-on"); }, SPINNER_DELAY);
-        const done = (): void => {
-            window.clearTimeout(spin);
-            if (id !== this.drawId) return;   // another page was opened meanwhile
-            this.loaderEl.removeClass("is-on");
-            out.el.style.opacity = "";
-            arrive(out.el, anim);
-        };
-        void Promise.race([Promise.all(waiting), new Promise<void>((r) => window.setTimeout(r, IMAGE_WAIT))]).then(done);
+                // the page comes in at once; a picture still loading stays clear and fades in when it arrives (hiding the whole page
+        // until then made a quick load blink: blank, then the page)
+        this.loaderEl.removeClass("is-on");
+        fadeInImages(out.el);
+        arrive(out.el, anim);
     }
 }

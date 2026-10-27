@@ -1,7 +1,7 @@
 import { Notice } from "obsidian";
 import type { Champion } from "../data/store";
 import { findSaid, type Said, type Sounds, soundScore } from "../data/sound";
-import { chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, tip } from "../ui";
+import { chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, slideSeg, tip } from "../ui";
 import { entryDir, marker } from "./changes";
 import type { PageCtx, PageOut } from "./index";
 import { factsStrip, tagRow } from "./profile";
@@ -179,6 +179,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
     };
     pickTab.addEventListener("click", (e) => { e.preventDefault(); show("pick"); });
     listTab.addEventListener("click", (e) => { e.preventDefault(); show("list"); });
+    slideSeg(tabs, "roster-tabs");
     const drawCount = () => { listTab.textContent = picks.length ? `已選 ${picks.length}` : "已選"; };
 
     const toggle = (id: string) => {

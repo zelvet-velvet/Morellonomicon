@@ -1,5 +1,5 @@
 import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, tip } from "../ui";
+import { DAMAGE_COLOR, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, slideSeg, tip } from "../ui";
 import { TAG_GROUPS, championProfile, iconFilter, tagFilter } from "./profile";
 import { buildTab } from "./build";
 import type { PageCtx, PageOut } from "./index";
@@ -213,6 +213,7 @@ export function championCard(ctx: PageCtx): PageOut {
         b.dataset.t = t;
         b.addEventListener("click", (e) => { e.preventDefault(); show(t); });
     }
+    slideSeg(seg);
     show(lastSub.get(c.id) ?? "skills");
     return { title: "", el };   // the name is in the banner; no second copy in the top bar
 }

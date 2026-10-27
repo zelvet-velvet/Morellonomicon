@@ -258,5 +258,85 @@ export const segmented = (parent: HTMLElement, options: [string, string][], valu
         const b = h(seg, "button", "mn-seg-b" + (id === value ? " is-on" : ""), label);
         b.addEventListener("click", (e) => { e.preventDefault(); onChange(id); });
     }
+    slideSeg(seg, options.map(([id]) => id).join("|"));
     return seg;
 };
+
+// A small tick from the phone, where it can give one: Obsidian's Capacitor Haptics if present, the vibration API, or on iOS 18+
+// the tick a switch-style checkbox makes when it is toggled. Silent elsewhere.
+let tickBox: HTMLLabelElement | null = null;
+export function haptic(): void {
+    try {
+        const hp = (window as unknown as { Capacitor?: { Plugins?: { Haptics?: { selectionChanged?: () => void } } } }).Capacitor?.Plugins?.Haptics;
+        if (hp?.selectionChanged) { hp.selectionChanged(); return; }
+    } catch { /* not there */ }
+    try { if (navigator.vibrate?.(8)) return; } catch { /* not there */ }
+    if (!tickBox) {
+        tickBox = document.createElement("label");
+        tickBox.className = "mn-tick";
+        tickBox.setAttribute("aria-hidden", "true");
+        const box = document.createElement("input");
+        box.type = "checkbox";
+        box.setAttribute("switch", "");
+        box.tabIndex = -1;
+        tickBox.appendChild(box);
+        document.body.appendChild(tickBox);
+    }
+    tickBox.click();
+}
+
+// The chosen option's highlight slides between buttons instead of jumping, and a finger can drag along the bar: the highlight
+// follows it (a tick on each new option) and letting go picks the option under it. A bar drawn again (same options) starts
+// from where the last one's highlight was, so a redraw still slides. Works on any .mn-seg whose buttons toggle .is-on.
+const segLast = new Map<string, { x: number; w: number }>();
+export function slideSeg(seg: HTMLElement, key = ""): void {
+    const hl = document.createElement("div");
+    hl.className = "mn-seg-hl";
+    seg.prepend(hl);
+    seg.addClass("has-hl");
+    const buttons = () => Array.from(seg.querySelectorAll<HTMLElement>(":scope > .mn-seg-b"));
+    key = key || buttons().map((b) => b.textContent ?? "").join("|");
+    const place = (b: HTMLElement | undefined, animate: boolean) => {
+        if (!b || !b.offsetWidth) { hl.style.opacity = b ? hl.style.opacity : "0"; return; }
+        if (!animate) hl.style.transition = "none";
+        hl.style.opacity = "1";
+        hl.style.width = `${b.offsetWidth}px`;
+        hl.style.transform = `translateX(${b.offsetLeft}px)`;
+        if (!animate) { void hl.offsetWidth; hl.style.transition = ""; }
+        if (key) segLast.set(key, { x: b.offsetLeft, w: b.offsetWidth });
+    };
+    const on = () => buttons().find((b) => b.hasClass("is-on"));
+    requestAnimationFrame(() => {
+        const last = segLast.get(key);
+        if (last) { hl.style.transition = "none"; hl.style.opacity = "1"; hl.style.width = `${last.w}px`; hl.style.transform = `translateX(${last.x}px)`; void hl.offsetWidth; hl.style.transition = ""; place(on(), true); }
+        else place(on(), false);
+    });
+    new MutationObserver(() => { if (!seg.hasClass("is-drag")) place(on(), true); }).observe(seg, { subtree: true, attributes: true, attributeFilter: ["class"] });
+    if (typeof ResizeObserver !== "undefined") new ResizeObserver(() => place(on(), false)).observe(seg);
+
+    // drag: the button under the finger, previewed until the finger lifts
+    let at: HTMLElement | null = null, moved = false, startX = 0;
+    const under = (x: number) => buttons().find((b) => { const r = b.getBoundingClientRect(); return x >= r.left && x < r.right; }) ?? null;
+    seg.addEventListener("pointerdown", (e) => { at = under(e.clientX); moved = false; startX = e.clientX; });
+    seg.addEventListener("pointermove", (e) => {
+        if (!at || (!moved && Math.abs(e.clientX - startX) < 8)) return;
+        if (!moved) { moved = true; seg.addClass("is-drag"); }
+        const b = under(e.clientX);
+        if (b && b !== at) { at = b; buttons().forEach((x) => x.toggleClass("is-pv", x === b)); place(b, true); haptic(); }
+    });
+    const end = () => {
+        const target = moved ? at : null;
+        at = null;
+        if (!moved) return;
+        moved = false;
+        seg.removeClass("is-drag");
+        buttons().forEach((x) => x.removeClass("is-pv"));
+        if (target && !target.hasClass("is-on")) target.click();
+        else place(on(), true);
+        quietUntil = Date.now() + 400;   // the click a drag may still fire (target.click() above is not a real one, so it passes)
+    };
+    let quietUntil = 0;
+    seg.addEventListener("click", (e) => { if (e.isTrusted && Date.now() < quietUntil) { e.stopPropagation(); e.preventDefault(); } }, { capture: true });
+    seg.addEventListener("pointerup", end);
+    seg.addEventListener("pointercancel", end);
+}

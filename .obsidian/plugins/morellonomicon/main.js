@@ -693,8 +693,121 @@ var segmented = (parent, options, value, onChange, cls = "") => {
       onChange(id);
     });
   }
+  slideSeg(seg, options.map(([id]) => id).join("|"));
   return seg;
 };
+var tickBox = null;
+function haptic() {
+  try {
+    const hp = window.Capacitor?.Plugins?.Haptics;
+    if (hp?.selectionChanged) {
+      hp.selectionChanged();
+      return;
+    }
+  } catch {
+  }
+  try {
+    if (navigator.vibrate?.(8)) return;
+  } catch {
+  }
+  if (!tickBox) {
+    tickBox = document.createElement("label");
+    tickBox.className = "mn-tick";
+    tickBox.setAttribute("aria-hidden", "true");
+    const box = document.createElement("input");
+    box.type = "checkbox";
+    box.setAttribute("switch", "");
+    box.tabIndex = -1;
+    tickBox.appendChild(box);
+    document.body.appendChild(tickBox);
+  }
+  tickBox.click();
+}
+var segLast = /* @__PURE__ */ new Map();
+function slideSeg(seg, key = "") {
+  const hl = document.createElement("div");
+  hl.className = "mn-seg-hl";
+  seg.prepend(hl);
+  seg.addClass("has-hl");
+  const buttons = () => Array.from(seg.querySelectorAll(":scope > .mn-seg-b"));
+  key = key || buttons().map((b) => b.textContent ?? "").join("|");
+  const place = (b, animate) => {
+    if (!b || !b.offsetWidth) {
+      hl.style.opacity = b ? hl.style.opacity : "0";
+      return;
+    }
+    if (!animate) hl.style.transition = "none";
+    hl.style.opacity = "1";
+    hl.style.width = `${b.offsetWidth}px`;
+    hl.style.transform = `translateX(${b.offsetLeft}px)`;
+    if (!animate) {
+      void hl.offsetWidth;
+      hl.style.transition = "";
+    }
+    if (key) segLast.set(key, { x: b.offsetLeft, w: b.offsetWidth });
+  };
+  const on = () => buttons().find((b) => b.hasClass("is-on"));
+  requestAnimationFrame(() => {
+    const last = segLast.get(key);
+    if (last) {
+      hl.style.transition = "none";
+      hl.style.opacity = "1";
+      hl.style.width = `${last.w}px`;
+      hl.style.transform = `translateX(${last.x}px)`;
+      void hl.offsetWidth;
+      hl.style.transition = "";
+      place(on(), true);
+    } else place(on(), false);
+  });
+  new MutationObserver(() => {
+    if (!seg.hasClass("is-drag")) place(on(), true);
+  }).observe(seg, { subtree: true, attributes: true, attributeFilter: ["class"] });
+  if (typeof ResizeObserver !== "undefined") new ResizeObserver(() => place(on(), false)).observe(seg);
+  let at = null, moved = false, startX = 0;
+  const under = (x) => buttons().find((b) => {
+    const r = b.getBoundingClientRect();
+    return x >= r.left && x < r.right;
+  }) ?? null;
+  seg.addEventListener("pointerdown", (e) => {
+    at = under(e.clientX);
+    moved = false;
+    startX = e.clientX;
+  });
+  seg.addEventListener("pointermove", (e) => {
+    if (!at || !moved && Math.abs(e.clientX - startX) < 8) return;
+    if (!moved) {
+      moved = true;
+      seg.addClass("is-drag");
+    }
+    const b = under(e.clientX);
+    if (b && b !== at) {
+      at = b;
+      buttons().forEach((x) => x.toggleClass("is-pv", x === b));
+      place(b, true);
+      haptic();
+    }
+  });
+  const end = () => {
+    const target = moved ? at : null;
+    at = null;
+    if (!moved) return;
+    moved = false;
+    seg.removeClass("is-drag");
+    buttons().forEach((x) => x.removeClass("is-pv"));
+    if (target && !target.hasClass("is-on")) target.click();
+    else place(on(), true);
+    quietUntil = Date.now() + 400;
+  };
+  let quietUntil = 0;
+  seg.addEventListener("click", (e) => {
+    if (e.isTrusted && Date.now() < quietUntil) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  }, { capture: true });
+  seg.addEventListener("pointerup", end);
+  seg.addEventListener("pointercancel", end);
+}
 
 // src/settings.ts
 var import_obsidian3 = require("obsidian");
@@ -1960,6 +2073,7 @@ function championCard(ctx) {
       show(t);
     });
   }
+  slideSeg(seg);
   show(lastSub.get(c.id) ?? "skills");
   return { title: "", el };
 }
@@ -2863,6 +2977,7 @@ function rosterPage(ctx) {
     e.preventDefault();
     show("list");
   });
+  slideSeg(tabs, "roster-tabs");
   const drawCount = () => {
     listTab.textContent = picks.length ? `\u5DF2\u9078 ${picks.length}` : "\u5DF2\u9078";
   };
@@ -3058,26 +3173,15 @@ function renderPage(tab2, ctx) {
 var VIEW_TYPE = "morellonomicon";
 var OVERLAY_PAGES = /* @__PURE__ */ new Set(["champion"]);
 var OVERLAY_SCROLL = 220;
-var SPINNER_DELAY = 140;
-var IMAGE_WAIT = 8e3;
 var ARRIVE_MS = 240;
-function pendingImages(page2) {
-  const out = [];
-  const urls = [...page2.querySelectorAll(".mn-hero-bg")].map((e) => /url\("?([^")]+)"?\)/.exec(e.style.backgroundImage)?.[1]).filter((u) => !!u);
-  for (const u of urls) out.push(new Promise((r) => {
-    const im = new Image();
-    im.onload = im.onerror = () => r();
-    im.src = u;
-    if (im.complete) r();
-  }));
+function fadeInImages(page2) {
   for (const im of page2.querySelectorAll("img")) {
-    if (!im.src || im.complete || im.getBoundingClientRect().top > window.innerHeight) continue;
-    out.push(new Promise((r) => {
-      im.addEventListener("load", () => r(), { once: true });
-      im.addEventListener("error", () => r(), { once: true });
-    }));
+    if (!im.src || im.complete) continue;
+    im.addClass("is-loading");
+    const shown = () => im.removeClass("is-loading");
+    im.addEventListener("load", shown, { once: true });
+    im.addEventListener("error", shown, { once: true });
   }
-  return out;
 }
 function arrive(page2, anim) {
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || !page2.animate) return;
@@ -3292,24 +3396,9 @@ var MnView = class extends import_obsidian8.ItemView {
       this.loaderEl.removeClass("is-on");
       return;
     }
-    const waiting = pendingImages(out.el);
-    if (!waiting.length) {
-      this.loaderEl.removeClass("is-on");
-      arrive(out.el, anim);
-      return;
-    }
-    out.el.style.opacity = "0";
-    const spin = window.setTimeout(() => {
-      if (id === this.drawId) this.loaderEl.addClass("is-on");
-    }, SPINNER_DELAY);
-    const done = () => {
-      window.clearTimeout(spin);
-      if (id !== this.drawId) return;
-      this.loaderEl.removeClass("is-on");
-      out.el.style.opacity = "";
-      arrive(out.el, anim);
-    };
-    void Promise.race([Promise.all(waiting), new Promise((r) => window.setTimeout(r, IMAGE_WAIT))]).then(done);
+    this.loaderEl.removeClass("is-on");
+    fadeInImages(out.el);
+    arrive(out.el, anim);
   }
 };
 
