@@ -4,7 +4,7 @@ import type { Frame } from "../router";
 import type { TabId } from "../modes";
 import { championsPage } from "./champions";
 import { augmentsPage } from "./augments";
-import { learnPage } from "./learn";
+import { handbookPage } from "./handbook";
 
 export interface PageOut { title: string; el: HTMLElement }
 export interface PageCtx {
@@ -22,5 +22,5 @@ export type PageRender = (ctx: PageCtx) => PageOut;
 export const PAGES: Record<TabId, PageRender> = {
     champions: championsPage,
     augments: augmentsPage,
-    learn: learnPage,
+    handbook: handbookPage,
 };

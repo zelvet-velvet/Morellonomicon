@@ -1,5 +1,5 @@
 import type { Champion } from "../data/store";
-import { chip, empty, h } from "../ui";
+import { chip, empty, group, h, row } from "../ui";
 import type { PageCtx } from "./index";
 
 const TOP_SETS = 3;
@@ -36,7 +36,18 @@ export function buildTab(body: HTMLElement, c: Champion, ctx: PageCtx): void {
     }
     if (alt.length) { section(body, "有趣替代"); for (const b of alt) setCard(body, c, ctx, b); }
     if (synergy.length) { section(body, "搭配"); for (const b of synergy) setCard(body, c, ctx, b); }
-    if (!stats && !mine.length) empty(body, { icon: "package-open", title: "No builds yet", text: "Match data and hand-written builds appear here." });
+    if (!stats && !mine.length) empty(body, { icon: "package-open", title: "No builds of ours yet", text: "Our own builds and ideas for this champion will appear here." });
+    if (mode === "mayhem") liveStats(body, c);
+}
+
+// Live win rates and builds live on other sites; we only link to them (their terms do not allow copying their numbers).
+const OPGG_SLUG: Record<string, string> = { MonkeyKing: "wukong" };   // ids that differ from the site's address
+function liveStats(body: HTMLElement, c: Champion): void {
+    const slug = OPGG_SLUG[c.id] ?? c.id.toLowerCase();
+    section(body, "Live stats");
+    const g = group(body);
+    row(g, { icon: "external-link", title: "OP.GG Mayhem build", chevron: true, onTap: () => window.open(`https://op.gg/lol/modes/aram-mayhem/${slug}/build`) });
+    row(g, { icon: "external-link", title: "Mobalytics Mayhem builds", chevron: true, onTap: () => window.open(`https://mobalytics.gg/lol/champions/${slug}/mayhem-builds`) });
 }
 
 function section(body: HTMLElement, title: string): void { h(body, "div", "mn-gh", title); }

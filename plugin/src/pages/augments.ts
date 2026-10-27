@@ -15,6 +15,9 @@ export function augmentsPage(ctx: PageCtx): PageOut {
     const search = h(box, "input");
     search.type = "search";
     search.placeholder = "Search";
+    const links = group(el);
+    row(links, { icon: "external-link", title: "OP.GG Mayhem tier list", chevron: true, onTap: () => window.open("https://op.gg/lol/modes/aram-mayhem") });
+    row(links, { icon: "external-link", title: "U.GG augment tier list", chevron: true, onTap: () => window.open("https://u.gg/lol/aram-mayhem-augment-tier-list") });
     const chips = h(el, "div", "mn-chips");
     const list = h(el, "div");
     const draw = () => {

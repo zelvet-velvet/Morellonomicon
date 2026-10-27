@@ -30,12 +30,12 @@ var import_obsidian = require("obsidian");
 
 // src/modes.ts
 var MODES = {
-  mayhem: { id: "mayhem", label: "Mayhem", icon: "zap", enabled: true, itemFlag: "aram", tabs: ["champions", "augments", "learn"] },
-  rift: { id: "rift", label: "Rift", icon: "map", enabled: false, itemFlag: "rift", tabs: ["champions", "learn"] }
+  mayhem: { id: "mayhem", label: "Mayhem", icon: "zap", enabled: true, itemFlag: "aram", tabs: ["champions", "augments", "handbook"] },
+  rift: { id: "rift", label: "Rift", icon: "map", enabled: false, itemFlag: "rift", tabs: ["champions", "handbook"] }
 };
 var MODE_ORDER = ["mayhem", "rift"];
-var TAB_LABEL = { champions: "Champions", augments: "Augments", learn: "Learn" };
-var TAB_ICON = { champions: "users", augments: "sparkles", learn: "graduation-cap" };
+var TAB_LABEL = { champions: "Champions", augments: "Augments", handbook: "Handbook" };
+var TAB_ICON = { champions: "users", augments: "sparkles", handbook: "book-open" };
 
 // src/data/store.ts
 var str = (v, d = "") => typeof v === "string" ? v : d;
@@ -434,7 +434,16 @@ function buildTab(body, c, ctx) {
     section(body, "\u642D\u914D");
     for (const b of synergy) setCard(body, c, ctx, b);
   }
-  if (!stats && !mine.length) empty(body, { icon: "package-open", title: "No builds yet", text: "Match data and hand-written builds appear here." });
+  if (!stats && !mine.length) empty(body, { icon: "package-open", title: "No builds of ours yet", text: "Our own builds and ideas for this champion will appear here." });
+  if (mode === "mayhem") liveStats(body, c);
+}
+var OPGG_SLUG = { MonkeyKing: "wukong" };
+function liveStats(body, c) {
+  const slug = OPGG_SLUG[c.id] ?? c.id.toLowerCase();
+  section(body, "Live stats");
+  const g = group(body);
+  row(g, { icon: "external-link", title: "OP.GG Mayhem build", chevron: true, onTap: () => window.open(`https://op.gg/lol/modes/aram-mayhem/${slug}/build`) });
+  row(g, { icon: "external-link", title: "Mobalytics Mayhem builds", chevron: true, onTap: () => window.open(`https://mobalytics.gg/lol/champions/${slug}/mayhem-builds`) });
 }
 function section(body, title) {
   h(body, "div", "mn-gh", title);
@@ -584,7 +593,23 @@ function rankTable(parent, s) {
 // src/pages/champions.ts
 var ROLES = ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u5C04\u624B", "\u8F14\u52A9"];
 var DAMAGES = ["\u7269\u7406", "\u9B54\u6CD5", "\u6DF7\u5408"];
+var FEATURES = ["\u63A7\u5834", "\u6CBB\u7642", "\u8B77\u76FE", "\u4F4D\u79FB"];
+var REACH = ["\u8FD1\u6230", "\u4E2D\u7A0B", "\u9060\u7A0B"];
+var SORTS = [["name", "\u540D\u7A31"], ["easy", "\u7C21\u55AE\u512A\u5148"], ["range", "\u5C04\u7A0B\u9060\u512A\u5148"]];
 var SEARCH_EXTRA = 8;
+var F = { roles: /* @__PURE__ */ new Set(), dmg: "", feat: /* @__PURE__ */ new Map(), reach: "", sort: "name", open: false };
+var activeFilters = () => F.roles.size + (F.dmg ? 1 : 0) + F.feat.size + (F.reach ? 1 : 0);
+function matches(c) {
+  if (F.roles.size && !c.roles.some((r) => F.roles.has(r))) return false;
+  if (F.dmg && c.damageType !== F.dmg) return false;
+  for (const [f, want] of F.feat) if (c.features.includes(f) !== (want === 1)) return false;
+  return !F.reach || c.archetypes.includes(F.reach);
+}
+function sorted(list2) {
+  if (F.sort === "easy") return [...list2].sort((a, b) => a.difficulty - b.difficulty || a.name.localeCompare(b.name, "zh-Hant"));
+  if (F.sort === "range") return [...list2].sort((a, b) => b.range - a.range || a.name.localeCompare(b.name, "zh-Hant"));
+  return list2;
+}
 function championPicker(parent, ctx) {
   const store = ctx.plugin.store;
   const all = store.champions();
@@ -592,7 +617,7 @@ function championPicker(parent, ctx) {
     empty(parent, { icon: "database", title: "No champion notes yet", text: "Run python3 tools/fetch_data.py" });
     return;
   }
-  let query = "", role = "", dmg = "";
+  let query = "";
   const box = h(parent, "div", "mn-search");
   icon(box, "search", "mn-search-ic");
   const search = h(box, "input");
@@ -600,13 +625,16 @@ function championPicker(parent, ctx) {
   search.placeholder = "Search champions, augments, items";
   search.setAttribute("enterkeyhint", "search");
   const filters = h(parent, "div", "mn-chips");
+  const panel = h(parent, "div", "mn-fpanel");
+  const count = h(parent, "div", "mn-count");
   const grid = h(parent, "div", "mn-grid");
   const extra = h(parent, "div");
   const draw = () => {
     grid.empty();
     extra.empty();
     const q = query.trim().toLowerCase();
-    const hits = all.filter((c) => (!role || c.roles.includes(role)) && (!dmg || c.damageType === dmg) && (!q || c.name.toLowerCase().includes(q) || c.title.toLowerCase().includes(q) || c.id.toLowerCase().includes(q)));
+    const hits = sorted(all.filter((c) => matches(c) && (!q || c.name.toLowerCase().includes(q) || c.title.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))));
+    count.textContent = `${hits.length} / ${all.length}`;
     for (const c of hits) {
       const tile = h(grid, "button", "mn-tile");
       const im = h(tile, "img");
@@ -632,25 +660,74 @@ function championPicker(parent, ctx) {
       for (const i of items) row(g, { image: i.icon, title: i.name, sub: i.desc || void 0, value: `${i.goldTotal}`, chevron: true, onTap: () => ctx.openNote(i.path) });
     }
   };
+  const redraw = () => {
+    drawFilters();
+    drawPanel();
+    draw();
+  };
   const drawFilters = () => {
     filters.empty();
-    for (const r of ROLES) chip(filters, r, { on: role === r, onTap: () => {
-      role = role === r ? "" : r;
-      drawFilters();
-      draw();
+    for (const r of ROLES) chip(filters, r, { on: F.roles.has(r), onTap: () => {
+      F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r);
+      redraw();
     } });
-    for (const d of DAMAGES) chip(filters, d, { on: dmg === d, color: DAMAGE_COLOR[d], onTap: () => {
-      dmg = dmg === d ? "" : d;
+    for (const d of DAMAGES) chip(filters, d, { on: F.dmg === d, color: DAMAGE_COLOR[d], onTap: () => {
+      F.dmg = F.dmg === d ? "" : d;
+      redraw();
+    } });
+    const n = activeFilters();
+    chip(filters, F.open ? "More \u25B2" : n ? `More (${n}) \u25BC` : "More \u25BC", { on: F.open, onTap: () => {
+      F.open = !F.open;
       drawFilters();
-      draw();
+      drawPanel();
+    } });
+    if (n || F.sort !== "name") chip(filters, "Clear", { color: "var(--color-red)", onTap: () => {
+      F.roles.clear();
+      F.dmg = "";
+      F.feat.clear();
+      F.reach = "";
+      F.sort = "name";
+      redraw();
+    } });
+  };
+  const drawPanel = () => {
+    panel.empty();
+    panel.toggleClass("is-open", F.open);
+    if (!F.open) return;
+    const sect = (title) => {
+      h(panel, "div", "mn-fp-t", title);
+      return h(panel, "div", "mn-chips");
+    };
+    const ab = sect("\u6280\u80FD(\u9EDE\u4E00\u4E0B=\u8981\u6709,\u518D\u9EDE=\u4E0D\u8981\u6709)");
+    for (const f of FEATURES) {
+      const st = F.feat.get(f);
+      chip(ab, (st === 1 ? "\u2713 " : st === -1 ? "\u2715 " : "") + f, {
+        on: st !== void 0,
+        color: st === -1 ? "var(--color-red)" : void 0,
+        onTap: () => {
+          if (st === void 0) F.feat.set(f, 1);
+          else if (st === 1) F.feat.set(f, -1);
+          else F.feat.delete(f);
+          redraw();
+        }
+      });
+    }
+    const rg = sect("\u8DDD\u96E2");
+    for (const r of REACH) chip(rg, r, { on: F.reach === r, onTap: () => {
+      F.reach = F.reach === r ? "" : r;
+      redraw();
+    } });
+    const so = sect("\u6392\u5E8F");
+    for (const [id, label] of SORTS) chip(so, label, { on: F.sort === id, onTap: () => {
+      F.sort = id;
+      redraw();
     } });
   };
   search.addEventListener("input", () => {
     query = search.value;
     draw();
   });
-  drawFilters();
-  draw();
+  redraw();
 }
 function championsPage(ctx) {
   if (ctx.frame.key === "champion") return championCard(ctx);
@@ -661,6 +738,9 @@ function championsPage(ctx) {
   return { title: "Champions", el };
 }
 var lastSub = /* @__PURE__ */ new Map();
+function rememberSub(id, sub) {
+  lastSub.set(id, sub);
+}
 function championCard(ctx) {
   const c = ctx.plugin.store.champion(String(ctx.frame.params?.id ?? ""));
   const el = h(null, "div", "mn-page");
@@ -760,6 +840,9 @@ function augmentsPage(ctx) {
   const search = h(box, "input");
   search.type = "search";
   search.placeholder = "Search";
+  const links = group(el);
+  row(links, { icon: "external-link", title: "OP.GG Mayhem tier list", chevron: true, onTap: () => window.open("https://op.gg/lol/modes/aram-mayhem") });
+  row(links, { icon: "external-link", title: "U.GG augment tier list", chevron: true, onTap: () => window.open("https://u.gg/lol/aram-mayhem-augment-tier-list") });
   const chips = h(el, "div", "mn-chips");
   const list2 = h(el, "div");
   const draw = () => {
@@ -788,24 +871,103 @@ function augmentsPage(ctx) {
   return { title: "Augments", el };
 }
 
-// src/pages/learn.ts
-function learnPage(ctx) {
-  const el = page("Learn");
-  const notes = ctx.plugin.store.guideNotes();
-  if (!notes.length) {
-    empty(el, { icon: "graduation-cap", title: "Nothing here yet", text: "Guide notes go in the guide folder." });
-    return { title: "Learn", el };
+// src/pages/handbook.ts
+var SNIPPET = 46;
+var MAX_PER_NOTE = 2;
+function handbookPage(ctx) {
+  const store = ctx.plugin.store;
+  const el = page("Handbook");
+  const box = h(el, "div", "mn-search");
+  icon(box, "search", "mn-search-ic");
+  const search = h(box, "input");
+  search.type = "search";
+  search.placeholder = "Search the handbook, e.g. \u63A7\u5834, \u8B77\u7532";
+  const out = h(el, "div");
+  const notes = store.guideNotes();
+  let texts = null;
+  const openChampion = (id, name, sub) => {
+    rememberSub(id, sub);
+    ctx.goTab("champions");
+    ctx.push({ key: "champion", title: name, params: { id } });
+  };
+  const cards = () => {
+    out.empty();
+    if (!notes.length) {
+      empty(out, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." });
+      return;
+    }
+    const g = group(out);
+    for (const n of notes) row(g, { icon: n.icon, title: n.title, sub: n.summary || void 0, chevron: true, onTap: () => ctx.openNote(n.file.path) });
+  };
+  const results = async (q) => {
+    if (!texts) {
+      texts = /* @__PURE__ */ new Map();
+      for (const n of notes) texts.set(n.file.path, (await ctx.app.vault.cachedRead(n.file)).replace(/^---[\s\S]*?---\n/, "").split("\n").map(clean).filter(Boolean));
+    }
+    if (search.value.trim().toLowerCase() !== q) return;
+    out.empty();
+    let found = 0;
+    const guide = notes.map((n) => ({ n, lines: (texts.get(n.file.path) ?? []).filter((l) => l.toLowerCase().includes(q)), title: n.title.toLowerCase().includes(q) })).filter((x) => x.title || x.lines.length);
+    if (guide.length) {
+      const g = group(out, "Guide");
+      for (const { n, lines } of guide) {
+        const r = row(g, { icon: n.icon, title: n.title, chevron: true, onTap: () => ctx.openNote(n.file.path) });
+        const main = r.querySelector(".mn-row-main");
+        for (const l of lines.slice(0, MAX_PER_NOTE)) marked(h(main, "div", "mn-row-s"), snippet(l, q), q);
+        found++;
+      }
+    }
+    const tipHits = store.champions().flatMap((c) => c.tips.filter((t) => `${t.title} ${t.text}`.toLowerCase().includes(q)).map((t) => ({ c, t })));
+    if (tipHits.length) {
+      const g = group(out, "Tips");
+      for (const { c, t } of tipHits) {
+        const r = row(g, { image: c.icon, title: `${c.name}:${t.title}`, chevron: true, onTap: () => openChampion(c.id, c.name, "tips") });
+        marked(h(r.querySelector(".mn-row-main"), "div", "mn-row-s"), snippet(t.text, q), q);
+        found++;
+      }
+    }
+    const buildHits = store.champions().flatMap((c) => c.builds.filter((b) => `${b.name} ${b.note}`.toLowerCase().includes(q)).map((b) => ({ c, b })));
+    if (buildHits.length) {
+      const g = group(out, "Builds");
+      for (const { c, b } of buildHits) {
+        const r = row(g, { image: c.icon, title: `${c.name}:${b.name}`, chevron: true, onTap: () => openChampion(c.id, c.name, "build") });
+        if (b.note) marked(h(r.querySelector(".mn-row-main"), "div", "mn-row-s"), snippet(b.note, q), q);
+        found++;
+      }
+    }
+    if (!found) empty(out, { icon: "search-x", title: "Nothing found", text: "Try a shorter word." });
+  };
+  search.addEventListener("input", () => {
+    const q = search.value.trim().toLowerCase();
+    if (!q) cards();
+    else void results(q);
+  });
+  cards();
+  return { title: "Handbook", el };
+}
+var clean = (l) => l.replace(/^\s*(?:[-*]|\d+\.|>)\s*/, "").replace(/[*_`]/g, "").replace(/!?\[\[?([^\]|]*)(?:\|[^\]]*)?\]\]?/g, "$1").trim();
+function snippet(line, q) {
+  const i = line.toLowerCase().indexOf(q);
+  if (i < 0 || line.length <= SNIPPET * 2) return line;
+  const from = Math.max(0, i - SNIPPET), to = Math.min(line.length, i + q.length + SNIPPET);
+  return (from ? "\u2026" : "") + line.slice(from, to) + (to < line.length ? "\u2026" : "");
+}
+function marked(parent, text, q) {
+  const lower = text.toLowerCase();
+  let at = 0;
+  for (let i = lower.indexOf(q); i >= 0; i = lower.indexOf(q, at)) {
+    if (i > at) parent.appendChild(document.createTextNode(text.slice(at, i)));
+    h(parent, "mark", "mn-hl", text.slice(i, i + q.length));
+    at = i + q.length;
   }
-  const g = group(el);
-  for (const n of notes) row(g, { icon: n.icon, title: n.title, sub: n.summary || void 0, chevron: true, onTap: () => ctx.openNote(n.file.path) });
-  return { title: "Learn", el };
+  if (at < text.length) parent.appendChild(document.createTextNode(text.slice(at)));
 }
 
 // src/pages/index.ts
 var PAGES = {
   champions: championsPage,
   augments: augmentsPage,
-  learn: learnPage
+  handbook: handbookPage
 };
 
 // src/view.ts

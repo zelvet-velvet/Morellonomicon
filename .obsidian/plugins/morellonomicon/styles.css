@@ -197,3 +197,12 @@ button.mn-skill-box.is-on { box-shadow: 0 0 0 3px color-mix(in srgb, var(--chip)
 .mn-tip-t { font-weight: 700; margin-bottom: 2px; }
 .mn-tip-s { font-size: 14px; line-height: 1.55; color: var(--mn-text); }
 .mn-tip-v { margin-top: 6px; font-size: 13px; color: var(--mn-accent); font-weight: 600; }
+
+/* champion filters */
+.mn-fpanel { display: none; background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: var(--mn-radius); padding: 4px 14px 6px; margin: 4px 0 8px; }
+.mn-fpanel.is-open { display: block; animation: mn-pop 0.16s ease-out; }
+.mn-fp-t { font-size: 12px; font-weight: 600; color: var(--mn-muted); margin-top: 8px; }
+.mn-count { font-size: 12px; color: var(--mn-faint); margin: 2px 4px 0; }
+
+/* handbook search */
+mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
