@@ -238,3 +238,12 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-chg-diff.is-open { display: block; }
 .mn-chg-diff .mn-chg-old { text-decoration: line-through; display: block; margin-bottom: 6px; }
 .mn-chg-diff .mn-chg-new { display: block; font-weight: 500; }
+
+/* official patch notes card */
+.mn-pn { background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: 22px; overflow: hidden; margin: 4px 0 12px; box-shadow: var(--mn-shadow); }
+.mn-pn-img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: var(--mn-card-hi); }
+.mn-pn-body { padding: 14px 16px 16px; }
+.mn-pn-t { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; margin: 2px 0 4px; }
+.mn-pn-btn { margin-top: 12px; padding: 9px 16px; border-radius: 999px; background: var(--mn-accent); color: var(--text-on-accent, #fff); font-size: 14px; font-weight: 600; }
+.mn-pn-src { margin-top: 10px; font-size: 11px; color: var(--mn-faint); }
+.mn-showall { display: block; width: 100%; padding: 12px; font-size: 14px; font-weight: 600; color: var(--mn-accent); border-top: 0.5px solid var(--mn-line); }

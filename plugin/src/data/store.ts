@@ -25,6 +25,14 @@ export interface BuildStats { mode: string; queue: number; date: string; matches
 export interface Change { scope: string; field: string; old: string; new: string; dir: "buff" | "nerf" | "mixed" | "change" | "text" }
 export interface PatchChange { patch: string; from: string; items: Change[] }
 export interface ChangeData { current: string; patches: string[]; date: string; champions: Record<string, PatchChange[]> }
+// Riot's own patch notes in short (_data/patches.json, from tools/fetch_patch_notes.py)
+export interface NoteChange { label: string; old: string; new: string }
+export interface NoteEntry { name: string; changes: NoteChange[]; more: number }
+export interface PatchNote {
+    patch: string; title: string; url: string; summary: string; image: string; date: string; sections: string[];
+    champions?: NoteEntry[]; items?: NoteEntry[]; mayhem_champions?: NoteEntry[];
+    augments_new?: { rarity: string; name: string; text: string }[]; augments_removed?: string[];
+}
 export interface Skill { key: string; name: string; damage: string[]; icon: string; desc: string; upgrade: string; range: string; rows: SkillRow[] }
 export interface Augment { id: number; name: string; rarity: string; icon: string; effect: string; fits: string[]; tier: string; path: string }
 export interface Item {
@@ -74,6 +82,7 @@ export class Store {
     private augs: Augment[] | null = null;
     stats: BuildStats | null = null;
     changes: ChangeData | null = null;
+    riotNotes: PatchNote[] = [];
 
     constructor(private plugin: MorellonomiconPlugin) {}
     private get app() { return this.plugin.app; }
@@ -85,6 +94,10 @@ export class Store {
             const path = normalizePath(`_data/builds.${mode}.json`);
             this.stats = (await this.app.vault.adapter.exists(path)) ? (JSON.parse(await this.app.vault.adapter.read(path)) as BuildStats) : null;
         } catch { this.stats = null; }
+        try {
+            const path = normalizePath("_data/patches.json");
+            this.riotNotes = (await this.app.vault.adapter.exists(path)) ? ((JSON.parse(await this.app.vault.adapter.read(path)) as { patches: PatchNote[] }).patches ?? []) : [];
+        } catch { this.riotNotes = []; }
         try {
             const path = normalizePath("_data/changes.json");
             this.changes = (await this.app.vault.adapter.exists(path)) ? (JSON.parse(await this.app.vault.adapter.read(path)) as ChangeData) : null;
@@ -137,10 +150,19 @@ export class Store {
     }
     item(id: number): Item | undefined { return this.items().find((i) => i.id === id); }
 
+    // Riot's effect text for an augment, from the patch notes where it was introduced (newest patch wins)
+    officialEffect(name: string): string {
+        for (const n of this.riotNotes) {
+            const a = n.augments_new?.find((x) => x.name === name);
+            if (a?.text) return a.text;
+        }
+        return "";
+    }
+
     augments(): Augment[] {
         if (!this.augs) {
             this.augs = this.notes(this.s.augmentFolder).filter((n) => n.fm.type === "augment").map(({ file, fm }) => ({
-                id: num(fm.id), name: str(fm.name, file.basename), rarity: str(fm.rarity), icon: str(fm.icon), effect: str(fm.effect),
+                id: num(fm.id), name: str(fm.name, file.basename), rarity: str(fm.rarity), icon: str(fm.icon), effect: str(fm.effect) || this.officialEffect(str(fm.name, file.basename)),
                 fits: list(fm.fits), tier: str(fm.tier), path: file.path,
             })).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
         }
@@ -153,6 +175,9 @@ export class Store {
 
     // The game patch the notes were generated from, as "16.21" (Data Dragon numbering)
     currentPatch(): string { return this.champions()[0]?.patch.split(".").slice(0, 2).join(".") ?? ""; }
+
+    // The same patch in Riot's own numbering ("16.21" -> "26.21"; the patch notes and videos use that one)
+    riotPatch(): string { const p = this.currentPatch(); return p.replace(/^(\d+)/, (m) => String(Number(m) + (Number(m) < 20 ? 10 : 0))); }
 
     // Our own patch notes, newest first
     patchNotes(): { file: TFile; title: string; patch: string; date: string; summary: string }[] {

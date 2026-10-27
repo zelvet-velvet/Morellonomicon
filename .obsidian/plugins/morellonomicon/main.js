@@ -79,6 +79,7 @@ var Store = class {
     this.augs = null;
     this.stats = null;
     this.changes = null;
+    this.riotNotes = [];
   }
   get app() {
     return this.plugin.app;
@@ -93,6 +94,12 @@ var Store = class {
       this.stats = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)) : null;
     } catch {
       this.stats = null;
+    }
+    try {
+      const path = (0, import_obsidian.normalizePath)("_data/patches.json");
+      this.riotNotes = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)).patches ?? [] : [];
+    } catch {
+      this.riotNotes = [];
     }
     try {
       const path = (0, import_obsidian.normalizePath)("_data/changes.json");
@@ -178,6 +185,14 @@ var Store = class {
   item(id) {
     return this.items().find((i) => i.id === id);
   }
+  // Riot's effect text for an augment, from the patch notes where it was introduced (newest patch wins)
+  officialEffect(name) {
+    for (const n of this.riotNotes) {
+      const a = n.augments_new?.find((x) => x.name === name);
+      if (a?.text) return a.text;
+    }
+    return "";
+  }
   augments() {
     if (!this.augs) {
       this.augs = this.notes(this.s.augmentFolder).filter((n) => n.fm.type === "augment").map(({ file, fm }) => ({
@@ -185,7 +200,7 @@ var Store = class {
         name: str(fm.name, file.basename),
         rarity: str(fm.rarity),
         icon: str(fm.icon),
-        effect: str(fm.effect),
+        effect: str(fm.effect) || this.officialEffect(str(fm.name, file.basename)),
         fits: list(fm.fits),
         tier: str(fm.tier),
         path: file.path
@@ -203,6 +218,11 @@ var Store = class {
   // The game patch the notes were generated from, as "16.21" (Data Dragon numbering)
   currentPatch() {
     return this.champions()[0]?.patch.split(".").slice(0, 2).join(".") ?? "";
+  }
+  // The same patch in Riot's own numbering ("16.21" -> "26.21"; the patch notes and videos use that one)
+  riotPatch() {
+    const p = this.currentPatch();
+    return p.replace(/^(\d+)/, (m) => String(Number(m) + (Number(m) < 20 ? 10 : 0)));
   }
   // Our own patch notes, newest first
   patchNotes() {
@@ -1107,42 +1127,34 @@ function marked(parent, text, q) {
 }
 
 // src/pages/patch.ts
-var OFFICIAL = "https://www.leagueoflegends.com/zh-tw/news/tags/patch-notes/";
+var SHOWN = 6;
 function patchPage(ctx) {
   const store = ctx.plugin.store;
   const el = page("Patch");
-  const now = store.currentPatch();
-  const hero = h(el, "div", "mn-patch");
-  h(hero, "div", "mn-patch-k", "Data from patch");
-  h(hero, "div", "mn-patch-v", now || "\u2014");
-  h(hero, "div", "mn-patch-s", "Champions, skills and items are regenerated per patch. Tips and builds below show the patch they were written for.");
-  const links = group(el);
-  row(links, { icon: "external-link", title: "Official patch notes (\u7E41\u4E2D)", chevron: true, onTap: () => window.open(OFFICIAL) });
-  const notes = store.patchNotes();
-  if (notes.length) {
-    const g2 = group(el, "Our patch notes");
-    for (const n of notes) row(g2, { icon: "file-text", title: n.title, sub: n.summary || void 0, value: n.patch, chevron: true, onTap: () => ctx.openNote(n.file.path) });
+  const [latest, ...older] = store.riotNotes;
+  if (latest) latestCard(el, latest);
+  else {
+    const hero = h(el, "div", "mn-patch");
+    h(hero, "div", "mn-patch-k", "Data from patch");
+    h(hero, "div", "mn-patch-v", store.riotPatch() || "\u2014");
+    h(hero, "div", "mn-patch-s", "Run tools/fetch_patch_notes.py to show Riot's patch notes here.");
   }
-  const changed = store.champions().map((c) => ({ c, items: store.currentChanges(c.id) })).filter((x) => x.items.length);
-  if (changed.length) {
-    const g2 = group(el, `Changed in ${now}`);
-    for (const { c, items } of changed.sort((a, b) => b.items.length - a.items.length)) {
-      const r = row(g2, { image: c.icon, title: c.name, chevron: true, onTap: () => {
-        rememberSub(c.id, "skills");
-        ctx.goTab("champions");
-        ctx.push({ key: "champion", title: c.name, params: { id: c.id } });
-      } });
-      const badge = h(r, "span", "mn-row-v", badgeText(items) || "\u270E");
-      badge.style.color = badgeColor(items);
-      r.insertBefore(badge, r.querySelector(".mn-row-chev"));
-    }
-    h(el, "div", "mn-gf", "Stats, cooldowns, costs, ranges and skill text compared with the previous patch. Damage numbers are not compared yet.");
+  if (latest && ctx.plugin.settings.mode === "mayhem") mayhemSection(el, ctx, latest);
+  if (latest?.champions?.length) entries(el, ctx, "Champions", latest.champions, (name) => championOf(ctx, name));
+  if (latest?.items?.length) entries(el, ctx, "Items", latest.items, (name) => itemOf(ctx, name));
+  if (older.length) {
+    const g2 = group(el, "Earlier patches");
+    for (const n of older) row(g2, { icon: "newspaper", title: n.title, sub: n.summary || void 0, value: n.date, chevron: true, onTap: () => window.open(n.url) });
+  }
+  const mine = store.patchNotes();
+  if (mine.length) {
+    const g2 = group(el, "Our patch notes");
+    for (const n of mine) row(g2, { icon: "file-text", title: n.title, sub: n.summary || void 0, value: n.patch, chevron: true, onTap: () => ctx.openNote(n.file.path) });
   }
   const stale = store.staleEntries();
   const g = group(el, "Check these tricks");
-  if (!stale.length) {
-    empty(g, { icon: "check-circle", title: "Nothing to recheck", text: "Every tip and build matches the current patch." });
-  } else {
+  if (!stale.length) empty(g, { icon: "check-circle", title: "Nothing to recheck", text: "Every tip and build matches the current patch." });
+  else {
     for (const s of stale.slice(0, 30)) {
       row(g, { image: s.champion.icon, title: `${s.champion.name}:${s.title}`, sub: s.patch ? `Written for ${s.patch}` : "No patch given", value: s.kind === "tip" ? "Tip" : "Build", chevron: true, onTap: () => {
         rememberSub(s.champion.id, s.kind === "tip" ? "tips" : "build");
@@ -1152,8 +1164,84 @@ function patchPage(ctx) {
     }
     if (stale.length > 30) h(el, "div", "mn-gf", `${stale.length - 30} more`);
   }
-  void icon;
   return { title: "Patch", el };
+}
+function latestCard(el, n) {
+  const card = h(el, "div", "mn-pn");
+  if (n.image) {
+    const im = h(card, "img", "mn-pn-img");
+    im.src = n.image;
+    im.alt = "";
+    im.loading = "lazy";
+  }
+  const body = h(card, "div", "mn-pn-body");
+  h(body, "div", "mn-patch-k", `Patch ${n.patch} \xB7 ${n.date}`);
+  h(body, "div", "mn-pn-t", n.title);
+  if (n.summary) h(body, "div", "mn-patch-s", n.summary);
+  const btn = h(body, "button", "mn-pn-btn", "Read the full notes \u2197");
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    window.open(n.url);
+  });
+  h(body, "div", "mn-pn-src", "Riot Games \xB7 \u7248\u672C\u66F4\u65B0\u516C\u544A");
+}
+function mayhemSection(el, ctx, n) {
+  const added = n.augments_new ?? [], removed = n.augments_removed ?? [];
+  if (!added.length && !removed.length) return;
+  const byName = new Map(ctx.plugin.store.augments().map((a) => [a.name, a]));
+  if (added.length) {
+    const g = group(el, `Mayhem \xB7 ${added.length} new augments`);
+    const list2 = (limit) => {
+      g.empty();
+      for (const a of added.slice(0, limit)) row(g, { image: byName.get(a.name)?.icon, title: a.name, sub: a.text || void 0, value: a.rarity, chevron: !!byName.get(a.name), onTap: byName.get(a.name) ? () => ctx.openNote(byName.get(a.name).path) : void 0 });
+      if (added.length > limit) {
+        const more = h(g, "button", "mn-showall", `Show all ${added.length}`);
+        more.addEventListener("click", (e) => {
+          e.preventDefault();
+          list2(added.length);
+        });
+      }
+    };
+    list2(SHOWN);
+  }
+  if (removed.length) {
+    h(el, "div", "mn-gh", `Removed augments \xB7 ${removed.length}`);
+    const chips = h(el, "div", "mn-chips");
+    for (const r of removed) chip(chips, r, { color: RARITY_COLOR["\u9280"] });
+  }
+}
+function championOf(ctx, name) {
+  const c = ctx.plugin.store.champions().find((x) => x.name === name);
+  if (!c) return null;
+  return { icon: c.icon, open: () => {
+    rememberSub(c.id, "skills");
+    ctx.goTab("champions");
+    ctx.push({ key: "champion", title: c.name, params: { id: c.id } });
+  } };
+}
+function itemOf(ctx, name) {
+  const i = ctx.plugin.store.items().find((x) => x.name === name);
+  return i ? { icon: i.icon, open: () => ctx.openNote(i.path) } : null;
+}
+function entries(el, ctx, title, list2, find) {
+  const g = group(el, `${title} \xB7 ${list2.length}`);
+  const draw = (limit) => {
+    g.empty();
+    for (const e of list2.slice(0, limit)) {
+      const hit = find(e.name);
+      const c = e.changes[0];
+      const extra = e.changes.length - 1 + e.more;
+      row(g, { image: hit?.icon, title: e.name, sub: c ? `${c.label}  ${c.old} \u2192 ${c.new}` : void 0, value: extra > 0 ? `+${extra}` : void 0, chevron: !!hit, onTap: hit?.open });
+    }
+    if (list2.length > limit) {
+      const more = h(g, "button", "mn-showall", `Show all ${list2.length}`);
+      more.addEventListener("click", (e) => {
+        e.preventDefault();
+        draw(list2.length);
+      });
+    }
+  };
+  draw(SHOWN);
 }
 
 // src/pages/index.ts

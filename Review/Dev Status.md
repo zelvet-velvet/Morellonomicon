@@ -25,6 +25,9 @@ sticker: lucide//activity
 - **Reframe**: Morellonomicon is a newbie guide with its own sorting, plus the strategy that stat sites do not have. Champions can be narrowed by role, damage type, abilities (must have / must not have 控場, 治療, 護盾, 位移), reach (近戰 / 中程 / 遠程) and sorted (name, easiest, longest range). The tab is now **Handbook**: the beginner cards plus one search box over the guide cards, champion tips and our builds, with the match highlighted. Build shows OP.GG and Mobalytics links (their terms forbid copying their numbers; OP.GG's also forbids scraping and framing).
 - **Patch tab and freshness**: a Patch tab shows the patch the data is from, the official patch notes link, our own patch notes (`版本更新/`) and a "Check these tricks" list. Every tip and build shows its patch (green current, yellow one behind, red older or none), date, status and source link. `Inbox/技巧收件匣.md` is the place to jot tricks (format inside) for me to process.
 - **Changes since the last patch**: `tools/fetch_changes.py` compares the last 4 patches from Data Dragon (base stats, skill cooldown / cost / range, skill text) into `_data/changes.json` (28 champions changed, 9 in 16.21). A champion with changes this patch gets a ▲▼ badge by its roles; changed cooldown / cost / range values are coloured green or red with the old value struck through; a collapsed "Recent changes" block in Skills lists the last patches (rewritten skill text shows old and new wording, uncoloured); the Patch tab lists "Changed in 16.21". Damage numbers and Mayhem-specific adjustments are not compared yet.
+- **Official patch notes in the Patch tab**: `tools/fetch_patch_notes.py` reads Riot's zh-TW patch notes (robots.txt allows it; read once per patch, cached) into `_data/patches.json`: Riot's one-line blurb, the headline image (shown from Riot's site, not copied into the repo), a link to the full notes, what changed in short (champions and items with the numbers before and after) and, for Mayhem, the new augments with Riot's own effect text and the removed ones. The Patch tab shows the latest patch as a card, then Mayhem, Champions and Items sections with "Show all", earlier patches as links, our own notes and the tricks to recheck. The augment list now shows Riot's effect text for the augments introduced in the last 3 patches (26.21 added 35).
+- **One command per patch**: `python3 -I tools/update_patch.py` runs fetch_data, fetch_augments, fetch_changes and fetch_patch_notes; add `--commit` to commit and push the result.
+- **Patch numbers**: Riot's official number is 26.21 and Data Dragon's is 16.21 (same patch); the app shows Riot's.
 - **Workflow**: Copied the LLM Guide, Dev Status / Dev Log / Day note from clawd-room, simplified for a solo project (commit to `main`, no PRs) and added a Start Guide.
 
 ## 📅 Yesterday's Progress (—)
@@ -54,9 +57,10 @@ sticker: lucide//activity
 
 ### 🔁 Patch changes
 - [ ] **Damage diffs**: compare per-rank damage using CommunityDragon's old game data (`raw.communitydragon.org/<patch>/game/data/characters/...`, about 11 MB per patch); most balance patches change damage, so the badge undercounts until this is in.
-- [ ] **Mayhem-specific balance**: damage dealt / taken adjustments per champion and augment changes are not in Data Dragon; find a source (the League wiki?) before building.
+- [>] **Mayhem-specific balance**: the official notes list Mayhem champion adjustments under the Mayhem heading (none in 26.21); `mayhem_champions` is read but not shown yet.
 - [ ] **Item and augment changes**: the same diff for items (price, stats, text).
-- [ ] **Run it each patch**: `python3 -I tools/fetch_data.py && python3 -I tools/fetch_changes.py` then commit.
+- [x] **Run it each patch**: `python3 -I tools/update_patch.py --commit`.
+- [ ] **Augment effects before 26.19**: only augments introduced in the last 3 patches have Riot's effect text; run `fetch_patch_notes.py --patches 12` to reach further back, or write `effect` by hand.
 
 ### 🧮 Match data
 - [x] **Mayhem match data is not available**: Riot's Match-V5 lists none of the seed account's Mayhem games (checked 2026-10-27; OP.GG shows the same gap). `tools/fetch_builds.py` stays for Summoner's Rift.
