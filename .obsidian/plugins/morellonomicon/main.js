@@ -890,7 +890,7 @@ function abilityPills(parent, c, onlyLit = false) {
     p.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      tip(p, `${a.tag} \xB7 ${a.abbr}${lit ? "" : "(\u6C92\u6709)"}`);
+      tip(p, `${a.tag} \xB7 ${a.abbr}`);
     });
   }
   return row2;

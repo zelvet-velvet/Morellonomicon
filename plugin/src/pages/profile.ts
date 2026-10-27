@@ -100,7 +100,7 @@ export function abilityPills(parent: HTMLElement, c: Champion, onlyLit = false):
         icon(p, a.icon);
         if (lit && n > 1) h(p, "span", "mn-pill-n", String(n));
         p.style.setProperty("--p", a.color);
-        p.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); tip(p, `${a.tag} · ${a.abbr}${lit ? "" : "(沒有)"}`); });
+        p.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); tip(p, `${a.tag} · ${a.abbr}`); });
     }
     return row;
 }

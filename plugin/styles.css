@@ -460,7 +460,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-head { display: flex; align-items: center; justify-content: space-between; margin: 0 4px 6px; }
 .mn-rq-count { font-size: 13px; font-weight: 700; }
 .mn-rq { position: relative; background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: var(--mn-radius); padding: 12px 14px; margin: 0 0 10px; cursor: pointer; }
-.mn-rq:active { background: var(--mn-card-hi); }
+.mn-rq:active:not(:has(.mn-pill:active, .mn-rq-x:active, .mn-lg-btn:active)) { background: var(--mn-card-hi); }
+.mn-app .mn-pill, .mn-app .mn-rq-x, .mn-app .mn-lg-btn { -webkit-tap-highlight-color: transparent; }
 .mn-rq-top { display: flex; align-items: center; gap: 12px; }
 .mn-rq-img { width: 52px; height: 52px; border-radius: 14px; flex: none; }
 .mn-rq-who { flex: 1; min-width: 0; }
