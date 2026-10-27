@@ -878,12 +878,17 @@ var TagLegend = class extends import_obsidian4.Modal {
   onOpen() {
     this.titleEl.setText("\u5716\u793A\u8AAA\u660E");
     const table = h(this.contentEl, "div", "mn-lg");
+    const app = document.querySelector(".mn-app");
+    const css = app ? getComputedStyle(app) : null;
+    const resolve = (v) => v.replace(/var\((--[\w-]+)\)/, (_m, name) => css?.getPropertyValue(name).trim() || "currentColor");
     for (const a of TAGS) {
+      const color = resolve(a.color);
       const r = h(table, "div", "mn-lg-r");
       const ic = h(r, "span", "mn-lg-ic");
-      ic.style.setProperty("--p", a.color);
+      ic.style.setProperty("--p", color);
       icon(ic, a.icon);
       const name = h(r, "span", "mn-lg-n", a.tag);
+      name.style.color = color;
       h(name, "div", "mn-lg-w", a.what);
       h(r, "span", "mn-lg-e", `${a.en} \xB7 ${a.abbr}`);
     }

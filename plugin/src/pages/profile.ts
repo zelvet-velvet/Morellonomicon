@@ -77,12 +77,18 @@ class TagLegend extends Modal {
     onOpen(): void {
         this.titleEl.setText("圖示說明");
         const table = h(this.contentEl, "div", "mn-lg");
+        // the window lives outside the app, so the tag colours (CSS variables on the app) are read from the app and copied in
+        const app = document.querySelector<HTMLElement>(".mn-app");
+        const css = app ? getComputedStyle(app) : null;
+        const resolve = (v: string): string => v.replace(/var\((--[\w-]+)\)/, (_m, name: string) => css?.getPropertyValue(name).trim() || "currentColor");
         for (const a of TAGS) {
+            const color = resolve(a.color);
             const r = h(table, "div", "mn-lg-r");
             const ic = h(r, "span", "mn-lg-ic");
-            ic.style.setProperty("--p", a.color);
+            ic.style.setProperty("--p", color);
             icon(ic, a.icon);
             const name = h(r, "span", "mn-lg-n", a.tag);
+            name.style.color = color;
             h(name, "div", "mn-lg-w", a.what);
             h(r, "span", "mn-lg-e", `${a.en} · ${a.abbr}`);
         }
