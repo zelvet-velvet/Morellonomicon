@@ -40,9 +40,13 @@ var TAB_ICON = { champions: "users", items: "package", guide: "book-open" };
 // src/data/store.ts
 var str = (v, d = "") => typeof v === "string" ? v : d;
 var num = (v, d = 0) => typeof v === "number" ? v : d;
+var rowList = (v) => Array.isArray(v) ? v.flatMap((x) => {
+  const o = x;
+  return o && typeof o === "object" ? [{ label: str(o.label), vals: list(o.vals), note: str(o.note) }] : [];
+}) : [];
 var skillList = (v) => Array.isArray(v) ? v.flatMap((x) => {
   const o = x;
-  return o && typeof o === "object" ? [{ key: str(o.key), name: str(o.name), damage: list(o.damage), icon: str(o.icon), desc: str(o.desc), upgrade: str(o.upgrade), cd: str(o.cd), cost: str(o.cost), range: str(o.range) }] : [];
+  return o && typeof o === "object" ? [{ key: str(o.key), name: str(o.name), damage: list(o.damage), icon: str(o.icon), desc: str(o.desc), upgrade: str(o.upgrade), range: str(o.range), rows: rowList(o.rows) }] : [];
 }) : [];
 var list = (v) => Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
 var Store = class {
@@ -504,18 +508,13 @@ function skillStrip(parent, c) {
     h(head, "span", "mn-sd-name", s.name);
     const types = h(head, "span", "mn-sd-types");
     for (const d of s.damage) chip(types, `${d}\u50B7\u5BB3`, { color: DAMAGE_COLOR[d] });
-    const meta = [];
-    if (s.cd) meta.push(["\u51B7\u537B", `${s.cd} \u79D2`]);
-    if (s.cost) meta.push(["\u6D88\u8017", s.cost === "0" ? "\u7121" : `${s.cost} ${c.resource}`]);
-    if (s.range) meta.push(["\u5C04\u7A0B", s.range]);
-    if (meta.length) {
+    if (s.range) {
       const m = h(detail, "div", "mn-sd-meta");
-      for (const [k, v] of meta) {
-        const cell = h(m, "div", "mn-sd-cell");
-        h(cell, "span", "mn-sd-k", k);
-        h(cell, "span", "mn-sd-v", v);
-      }
+      const cell = h(m, "div", "mn-sd-cell");
+      h(cell, "span", "mn-sd-k", "\u5C04\u7A0B");
+      h(cell, "span", "mn-sd-v", s.range);
     }
+    rankTable(detail, s);
     if (s.desc) h(detail, "p", "mn-sd-desc", s.desc);
     if (s.upgrade) {
       const up = h(detail, "div", "mn-sd-up");
@@ -546,6 +545,28 @@ function demo(parent, c, s) {
   webm.src = `${url}.webm`;
   webm.type = "video/webm";
   webm.addEventListener("error", () => v.remove());
+}
+var ROW_COLOR = [["\u9B54\u6CD5", DAMAGE_COLOR["\u9B54\u6CD5"]], ["\u7269\u7406", DAMAGE_COLOR["\u7269\u7406"]], ["\u771F\u5BE6", DAMAGE_COLOR["\u771F\u5BE6"]], ["\u6CBB\u7642", "var(--color-green)"], ["\u8B77\u76FE", "var(--color-cyan)"]];
+function rankTable(parent, s) {
+  if (!s.rows.length) return;
+  const ranks = Math.max(1, ...s.rows.map((r) => r.vals.length));
+  const grid = h(parent, "div", "mn-rk");
+  grid.style.setProperty("--r", String(ranks));
+  if (ranks > 1) {
+    h(grid, "div", "mn-rk-h");
+    for (let i = 1; i <= ranks; i++) h(grid, "div", "mn-rk-h", String(i));
+  }
+  for (const r of s.rows) {
+    const name = h(grid, "div", "mn-rk-l");
+    const label = h(name, "span", "mn-rk-name", r.label);
+    const color = ROW_COLOR.find(([k]) => r.label.startsWith(k))?.[1];
+    if (color) label.style.color = color;
+    if (r.note) h(name, "span", "mn-rk-note", r.note);
+    if (r.vals.length === 1) {
+      const v = h(grid, "div", "mn-rk-v mn-rk-all", r.vals[0]);
+      v.style.gridColumn = `span ${ranks}`;
+    } else for (const v of r.vals) h(grid, "div", "mn-rk-v", v);
+  }
 }
 
 // src/pages/guide.ts

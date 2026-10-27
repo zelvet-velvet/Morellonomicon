@@ -19,6 +19,7 @@ sticker: lucide//activity
 - **Radar and look**: the champion card uses a 5-axis radar (物理 魔法 防禦 射程 難度) and a splash-art banner; softer cards, pill search, glassy bars. Seen on the phone and liked.
 - **Mayhem augments**: `tools/fetch_augments.py` writes 249 augment notes (`強化/`: 銀 71, 金 104, 稜鏡 74) from CommunityDragon's KIWI pool with zh_TW names, rarity and icons; the plugin has an Augments list (Mayhem home → Augments).
 - **Skill panel**: tap a skill icon on the champion card to open its details under the strip: damage types, cooldown, cost, range (hidden when meaningless), description, an 進化 / 升級 block for skills that evolve (Kha'Zix, Kai'Sa, Heimerdinger… found by wording in Riot's text) and Riot's ability demo clip; the "Full note" row is gone.
+- **Skill numbers by rank**: `tools/spells.py` reads CommunityDragon's game data and gives every skill a rank grid (damage / heal / shield with its scaling, cooldown, cost); 94% of the damaging skills (531 of 565) have numbers, anything unresolved is left out, never guessed; costs that are not plain resource points (% health, per second) use Riot's own wording or are left out.
 - **Workflow**: Copied the LLM Guide, Dev Status / Dev Log / Day note from clawd-room, simplified for a solo project (commit to `main`, no PRs) and added a Start Guide.
 
 ## 📅 Yesterday's Progress (—)
@@ -35,6 +36,10 @@ sticker: lucide//activity
 - [ ] **Augment effects**: hand-write a one-line `effect` per augment (strongest first) or pull from the League wiki with a named source; never invent them.
 - [ ] **Augment fit**: `fits` (archetypes the augment suits), `tier`, `combos` on the augment notes; then the champion card's "Best augments" block matches them to a champion's archetypes.
 - [ ] **Statistics**: win / pick rates for Mayhem augments need either Match-V5 (developer key, queue for ARAM Mayhem, many matches) or a cited community source. Decide in phase 2.
+
+### 🔢 Skill numbers
+- [ ] **Unresolved damage (34 skills)**: level-based or conditional formulas (Kha'Zix Q, Jhin, Jayce… ); check a few against the in-game tooltip and extend `tools/spells.py` where it is cheap.
+- [ ] **Stat codes**: only 0 (AP) and 2 (AD, formula 2 = bonus) are named; other stats show as "+其他加成" (66 rows) until their codes are confirmed.
 
 ### 🎬 Videos
 - [>] **Skill demo clips**: played from Riot's ability CDN (`champion-abilities/<key>/ability_<key>_Q1.mp4`); unofficial path, so check on the phone (iOS plays the mp4) and that a missing clip just disappears.

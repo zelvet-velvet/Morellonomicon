@@ -11,6 +11,7 @@ HAND_KEYS in the frontmatter and everything after GEN_END (your own advice) are 
 Raw downloads are cached in .cache/ (not in git). Standard library only.
 """
 import argparse
+import datetime
 import json
 import re
 import sys
@@ -19,6 +20,8 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))   # python3 -I does not add the script folder
+import spells  # noqa: E402
 VAULT = ROOT   # the repo root is the Obsidian vault
 CACHE = ROOT / ".cache" / "ddragon"
 DD = "https://ddragon.leagueoflegends.com"
@@ -55,6 +58,25 @@ def fetch(url, cache_name):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(raw)
     return json.loads(raw)
+
+
+CDRAGON_BIN = "https://raw.communitydragon.org/latest/game/data/characters/{n}/{n}.bin.json"
+
+
+def champion_bin(cid):
+    """The champion's game data (per-rank numbers), cached for the day; {} if it cannot be fetched."""
+    path = ROOT / ".cache" / f"cdragon-bin-{datetime.date.today().isoformat()}" / f"{cid.lower()}.json"
+    try:
+        if not path.exists():
+            req = urllib.request.Request(CDRAGON_BIN.format(n=cid.lower()), headers={"User-Agent": "Morellonomicon/0.1 (+https://github.com/zelvet-velvet/Morellonomicon)"})
+            with urllib.request.urlopen(req, timeout=60) as r:
+                raw = r.read()
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(raw)
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception as e:   # the note is still made, without the per-rank numbers
+        print(f"! {cid}: no game data ({e})", file=sys.stderr)
+        return {}
 
 
 def yaml(value):
@@ -172,21 +194,22 @@ def clean_range(spell):
     return r
 
 
-def skills_fm(c, version):
+def skills_fm(c, version, bin_data=None):
     """Passive + Q W E R as small objects for the plugin (key, name, damage types, description, cooldown, cost, range, icon)."""
     p = c["passive"]
+    objs = spells.spell_objects(bin_data or {})
     base, up = split_upgrade(p["description"])
     out = [{"key": "P", "name": p["name"], "damage": [], "desc": base, "upgrade": up,
             "icon": f"{DD}/cdn/{version}/img/passive/{p['image']['full']}"}]
     for key, s in zip("QWER", c["spells"]):
         base, up = split_upgrade(s["description"])
         out.append({"key": key, "name": s["name"], "damage": spell_damage(s), "desc": base, "upgrade": up,
-                    "cd": s["cooldownBurn"], "cost": s["costBurn"], "range": clean_range(s),
+                    "range": clean_range(s), "rows": spells.rank_rows(s, objs.get(s["id"].lower(), {}).get("mSpell") or {}, c["partype"]),
                     "icon": f"{DD}/cdn/{version}/img/spell/{s['image']['full']}"})
     return out
 
 
-def champion_note(c, version):
+def champion_note(c, version, bin_data):
     info, st = c["info"], c["stats"]
     spells = c["spells"]
     dmg_all = sorted({d for s in spells for d in spell_damage(s)})
@@ -197,7 +220,7 @@ def champion_note(c, version):
         "features": spell_features(spells, c["passive"]), "resource": c["partype"],
         "attack": info["attack"], "magic": info["magic"], "defense": info["defense"], "difficulty": info["difficulty"],
         "range": st["attackrange"], "icon": f"{DD}/cdn/{version}/img/champion/{c['image']['full']}",
-        "skills": skills_fm(c, version),
+        "skills": skills_fm(c, version, bin_data),
         "patch": version, "generated": True,
     }
     desc = lambda t: strip_html(t).replace("\n", " ")
@@ -284,7 +307,7 @@ def main():
         with ThreadPoolExecutor(WORKERS) as pool:
             champions = list(pool.map(one, ids))
         for c in champions:
-            fm, gen, tail = champion_note(c, version)
+            fm, gen, tail = champion_note(c, version, champion_bin(c['id']))
             changed += write_note(VAULT / "英雄" / f"{safe_name(c['name'])}.md", fm, gen, tail)
         print(f"champions: {len(champions)}")
 

@@ -124,14 +124,11 @@ function skillStrip(parent: HTMLElement, c: Champion): void {
         h(head, "span", "mn-sd-name", s.name);
         const types = h(head, "span", "mn-sd-types");
         for (const d of s.damage) chip(types, `${d}傷害`, { color: DAMAGE_COLOR[d] });
-        const meta: [string, string][] = [];
-        if (s.cd) meta.push(["冷卻", `${s.cd} 秒`]);
-        if (s.cost) meta.push(["消耗", s.cost === "0" ? "無" : `${s.cost} ${c.resource}`]);
-        if (s.range) meta.push(["射程", s.range]);
-        if (meta.length) {
+        if (s.range) {
             const m = h(detail, "div", "mn-sd-meta");
-            for (const [k, v] of meta) { const cell = h(m, "div", "mn-sd-cell"); h(cell, "span", "mn-sd-k", k); h(cell, "span", "mn-sd-v", v); }
+            const cell = h(m, "div", "mn-sd-cell"); h(cell, "span", "mn-sd-k", "射程"); h(cell, "span", "mn-sd-v", s.range);
         }
+        rankTable(detail, s);
         if (s.desc) h(detail, "p", "mn-sd-desc", s.desc);
         if (s.upgrade) {
             const up = h(detail, "div", "mn-sd-up");
@@ -157,4 +154,28 @@ function demo(parent: HTMLElement, c: Champion, s: Skill): void {
     const mp4 = h(v, "source"); mp4.src = `${url}.mp4`; mp4.type = "video/mp4";
     const webm = h(v, "source"); webm.src = `${url}.webm`; webm.type = "video/webm";
     webm.addEventListener("error", () => v.remove());   // neither format loaded
+}
+
+const ROW_COLOR: [string, string][] = [["魔法", DAMAGE_COLOR["魔法"]], ["物理", DAMAGE_COLOR["物理"]], ["真實", DAMAGE_COLOR["真實"]], ["治療", "var(--color-green)"], ["護盾", "var(--color-cyan)"]];
+
+// Per-rank numbers as a small grid: one row per damage / heal / shield value, then cooldown and cost.
+// A row with one value is the same on every rank and spans the grid; the scaling (+50% 魔法攻擊) sits under the row's name.
+function rankTable(parent: HTMLElement, s: Skill): void {
+    if (!s.rows.length) return;
+    const ranks = Math.max(1, ...s.rows.map((r) => r.vals.length));
+    const grid = h(parent, "div", "mn-rk");
+    grid.style.setProperty("--r", String(ranks));
+    if (ranks > 1) {
+        h(grid, "div", "mn-rk-h");
+        for (let i = 1; i <= ranks; i++) h(grid, "div", "mn-rk-h", String(i));
+    }
+    for (const r of s.rows) {
+        const name = h(grid, "div", "mn-rk-l");
+        const label = h(name, "span", "mn-rk-name", r.label);
+        const color = ROW_COLOR.find(([k]) => r.label.startsWith(k))?.[1];
+        if (color) label.style.color = color;
+        if (r.note) h(name, "span", "mn-rk-note", r.note);
+        if (r.vals.length === 1) { const v = h(grid, "div", "mn-rk-v mn-rk-all", r.vals[0]); v.style.gridColumn = `span ${ranks}`; }
+        else for (const v of r.vals) h(grid, "div", "mn-rk-v", v);
+    }
 }
