@@ -1008,7 +1008,7 @@ function styleCard(parent, c, app) {
   const head = h(card, "div", "mn-style-h");
   h(head, "span", "mn-style-t", "\u6230\u9B25\u98A8\u683C");
   const key = h(head, "button", "mn-lg-btn");
-  h(key, "span", "", "\u5BE6\u7DDA \u6709 \xB7 \u865B\u7DDA \u7121 \xB7 \u5B57\u6BCD = \u6280\u80FD");
+  key.setAttribute("aria-label", "\u5716\u793A\u8AAA\u660E");
   icon(key, "circle-help");
   if (app) key.addEventListener("click", (e) => {
     e.preventDefault();

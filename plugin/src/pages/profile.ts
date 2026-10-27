@@ -205,8 +205,8 @@ export function styleCard(parent: HTMLElement, c: Champion, app?: App): void {
     const card = h(parent, "div", "mn-panel mn-style");
     const head = h(card, "div", "mn-style-h");
     h(head, "span", "mn-style-t", "戰鬥風格");
-    const key = h(head, "button", "mn-lg-btn");
-    h(key, "span", "", "實線 有 · 虛線 無 · 字母 = 技能");
+    const key = h(head, "button", "mn-lg-btn");   // the key (solid = has it, dashed = not, letters = skills) lives in the legend
+    key.setAttribute("aria-label", "圖示說明");
     icon(key, "circle-help");
     if (app) key.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); new TagLegend(app).open(); });
     styleChart(card, c);
