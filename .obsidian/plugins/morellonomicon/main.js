@@ -989,7 +989,7 @@ function profileRadar(parent, axes, color, max = 10) {
   });
 }
 var TAGS = [
-  // 傷害方式
+  // 傷害
   { tag: "\u5F37\u5316\u666E\u653B", color: "var(--mn-aa)", icon: "sword", en: "Empowered attack", abbr: "AA+", what: "\u6280\u80FD\u8B93\u4E0B\u4E00\u6B21(\u6216\u63A5\u4E0B\u4F86\u5E7E\u6B21)\u666E\u653B\u66F4\u5F37,\u4F8B\u5982\u984D\u5916\u50B7\u5BB3" },
   { tag: "\u653B\u64CA\u7279\u6548", color: "var(--mn-onhit)", icon: "crosshair", en: "On-hit", abbr: "On-hit", what: "\u6280\u80FD\u6703\u89F8\u767C\u653B\u64CA\u7279\u6548,\u9069\u5408\u51FA\u653B\u64CA\u7279\u6548\u88DD\u5099(\u4EBA\u5DE5\u6A19\u8A3B)" },
   { tag: "\u65AC\u6BBA", color: "var(--mn-exec)", icon: "skull", en: "Execute", abbr: "Execute", what: "\u5C0D\u751F\u547D\u503C\u4F4E\u7684\u6575\u4EBA\u9020\u6210\u66F4\u9AD8\u50B7\u5BB3\u6216\u76F4\u63A5\u64CA\u6BBA" },
@@ -1010,7 +1010,7 @@ var TAGS = [
   { tag: "\u5E6B\u968A\u53CB", color: "var(--mn-team)", icon: "users", en: "Helps allies", abbr: "Ally", what: "\u6CBB\u7642\u3001\u8B77\u76FE\u6216\u52A0\u901F\u4E5F\u80FD\u7D66\u968A\u53CB" }
 ];
 var TAG_GROUPS = [
-  ["\u50B7\u5BB3\u65B9\u5F0F", ["\u5F37\u5316\u666E\u653B", "\u653B\u64CA\u7279\u6548", "\u65AC\u6BBA"]],
+  ["\u50B7\u5BB3", ["\u5F37\u5316\u666E\u653B", "\u653B\u64CA\u7279\u6548", "\u65AC\u6BBA"]],
   ["\u63A7\u5236", ["\u63A7\u5834", "\u7DE9\u901F", "\u524A\u5F31"]],
   ["\u79FB\u52D5", ["\u4F4D\u79FB", "\u52A0\u901F", "\u96B1\u8EAB"]],
   ["\u751F\u5B58", ["\u6CBB\u7642", "\u8B77\u76FE", "\u5438\u8840", "\u514D\u50B7"]],
@@ -1614,7 +1614,7 @@ function rankTable(parent, s, changes) {
 var ROLES = ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u5C04\u624B", "\u8F14\u52A9"];
 var DAMAGES = ["\u7269\u7406", "\u9B54\u6CD5", "\u6DF7\u5408"];
 var REACH = ["\u8FD1\u6230", "\u4E2D\u7A0B", "\u9060\u7A0B"];
-var SORTS2 = [["name", "\u540D\u7A31"], ["diff", "\u96E3\u5EA6\u512A\u5148"], ["range", "\u5C04\u7A0B\u512A\u5148"]];
+var SORTS2 = [["name", "\u540D\u7A31"], ["diff", "\u96E3\u5EA6"], ["range", "\u5C04\u7A0B"]];
 var SORT_DIR = { name: 1, diff: 1, range: -1 };
 var DAMAGE_ICON = { \u7269\u7406: "sword", \u9B54\u6CD5: "sparkles", \u6DF7\u5408: "blend" };
 var SEARCH_EXTRA = 8;

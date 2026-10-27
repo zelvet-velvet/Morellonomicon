@@ -642,3 +642,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* 全部清除 on the 定位 line, out of the flow so the line keeps its height when it appears */
 .mn-fp-h { position: relative; }
 .mn-app .mn-fp-h .mn-clear { position: absolute; right: 0; top: 50%; transform: translateY(-50%); padding: 4px 0; line-height: 1.2; }
+
+/* no text selection on buttons and chips: iOS starts selecting (with a haptic tap) when a finger rests on text */
+.mn-app button, .mn-app .mn-chip, .mn-app .mn-tg, .mn-app .mn-scc, .mn-app .mn-ftg { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }

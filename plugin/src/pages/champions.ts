@@ -10,7 +10,7 @@ import { skillStrip } from "./skills";
 const ROLES = ["戰士", "坦克", "法師", "刺客", "射手", "輔助"];
 const DAMAGES = ["物理", "魔法", "混合"];
 const REACH = ["近戰", "中程", "遠程"];
-const SORTS: [string, string][] = [["name", "名稱"], ["diff", "難度優先"], ["range", "射程優先"]];
+const SORTS: [string, string][] = [["name", "名稱"], ["diff", "難度"], ["range", "射程"]];
 const SORT_DIR: Record<string, 1 | -1> = { name: 1, diff: 1, range: -1 };   // first direction when a sort is picked: A first, easy first, far first
 const DAMAGE_ICON: Record<string, string> = { 物理: "sword", 魔法: "sparkles", 混合: "blend" };
 const SEARCH_EXTRA = 8;   // augments / items listed under the champions when the search box has text

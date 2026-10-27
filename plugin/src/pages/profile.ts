@@ -60,7 +60,7 @@ export function profileRadar(parent: HTMLElement, axes: Axis[], color: string, m
 // 攻擊特效 (on-hit) is not in the skill text we have, so it only shows when a champion note lists it in `features_extra`.
 interface Tag { tag: string; color: string; icon: string; en: string; abbr: string; what: string }
 const TAGS: Tag[] = [
-    // 傷害方式
+    // 傷害
     { tag: "強化普攻", color: "var(--mn-aa)", icon: "sword", en: "Empowered attack", abbr: "AA+", what: "技能讓下一次(或接下來幾次)普攻更強,例如額外傷害" },
     { tag: "攻擊特效", color: "var(--mn-onhit)", icon: "crosshair", en: "On-hit", abbr: "On-hit", what: "技能會觸發攻擊特效,適合出攻擊特效裝備(人工標註)" },
     { tag: "斬殺", color: "var(--mn-exec)", icon: "skull", en: "Execute", abbr: "Execute", what: "對生命值低的敵人造成更高傷害或直接擊殺" },
@@ -82,7 +82,7 @@ const TAGS: Tag[] = [
 ];
 // The tags in groups (filter panel, legend), in the order above
 export const TAG_GROUPS: [string, string[]][] = [
-    ["傷害方式", ["強化普攻", "攻擊特效", "斬殺"]], ["控制", ["控場", "緩速", "削弱"]], ["移動", ["位移", "加速", "隱身"]],
+    ["傷害", ["強化普攻", "攻擊特效", "斬殺"]], ["控制", ["控場", "緩速", "削弱"]], ["移動", ["位移", "加速", "隱身"]],
     ["生存", ["治療", "護盾", "吸血", "免傷"]], ["團隊", ["幫隊友"]],
 ];
 const TAG = new Map(TAGS.map((t) => [t.tag, t] as const));
