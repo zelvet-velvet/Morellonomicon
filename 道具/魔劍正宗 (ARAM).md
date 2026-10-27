@@ -10,13 +10,13 @@ gold_total: 2100
 gold_base: 1000
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773004.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3004.png"
 patch: "16.21.1"
 generated: true
 variant_of: "魔劍正宗"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![魔劍正宗|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773004.png)
+![魔劍正宗|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3004.png)
 
 > [!info] ARAM 版本
 > 這是 [[魔劍正宗]] 在 ARAM 的專用版本,價格與數值不同。

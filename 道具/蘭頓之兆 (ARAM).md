@@ -10,13 +10,13 @@ gold_total: 3125
 gold_base: 1000
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773143.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3143.png"
 patch: "16.21.1"
 generated: true
 variant_of: "蘭頓之兆"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![蘭頓之兆|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773143.png)
+![蘭頓之兆|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3143.png)
 
 > [!info] ARAM 版本
 > 這是 [[蘭頓之兆]] 在 ARAM 的專用版本,價格與數值不同。

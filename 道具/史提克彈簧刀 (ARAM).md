@@ -10,13 +10,13 @@ gold_total: 2500
 gold_base: 525
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773087.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3087.png"
 patch: "16.21.1"
 generated: true
 variant_of: "史提克彈簧刀"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![史提克彈簧刀|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773087.png)
+![史提克彈簧刀|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3087.png)
 
 > [!info] ARAM 版本
 > 這是 [[史提克彈簧刀]] 在 ARAM 的專用版本,價格與數值不同。

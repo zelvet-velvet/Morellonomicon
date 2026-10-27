@@ -10,13 +10,13 @@ gold_total: 1250
 gold_base: 375
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773044.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3044.png"
 patch: "16.21.1"
 generated: true
 variant_of: "淨蝕之槌"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![淨蝕之槌|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773044.png)
+![淨蝕之槌|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3044.png)
 
 > [!info] ARAM 版本
 > 這是 [[淨蝕之槌]] 在 ARAM 的專用版本,價格與數值不同。

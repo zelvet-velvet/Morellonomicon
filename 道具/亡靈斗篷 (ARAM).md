@@ -10,13 +10,13 @@ gold_total: 1400
 gold_base: 205
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773211.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3211.png"
 patch: "16.21.1"
 generated: true
 variant_of: "亡靈斗篷"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![亡靈斗篷|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773211.png)
+![亡靈斗篷|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3211.png)
 
 > [!info] ARAM 版本
 > 這是 [[亡靈斗篷]] 在 ARAM 的專用版本,價格與數值不同。

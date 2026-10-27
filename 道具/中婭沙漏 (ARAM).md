@@ -10,13 +10,13 @@ gold_total: 3260
 gold_base: 500
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773157.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3157.png"
 patch: "16.21.1"
 generated: true
 variant_of: "中婭沙漏"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![中婭沙漏|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773157.png)
+![中婭沙漏|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3157.png)
 
 > [!info] ARAM 版本
 > 這是 [[中婭沙漏]] 在 ARAM 的專用版本,價格與數值不同。

@@ -10,13 +10,13 @@ gold_total: 1350
 gold_base: 230
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773024.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3024.png"
 patch: "16.21.1"
 generated: true
 variant_of: "冰川圓盾"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![冰川護甲|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773024.png)
+![冰川護甲|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3024.png)
 
 > [!info] ARAM 版本
 > 這是 [[冰川圓盾]] 在 ARAM 的專用版本,價格與數值不同。

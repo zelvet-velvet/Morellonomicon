@@ -10,13 +10,13 @@ gold_total: 1600
 gold_base: 1600
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/771058.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/1058.png"
 patch: "16.21.1"
 generated: true
 variant_of: "巨型魔棒"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![巨型魔棒|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/771058.png)
+![巨型魔棒|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/1058.png)
 
 > [!info] ARAM 版本
 > 這是 [[巨型魔棒]] 在 ARAM 的專用版本,價格與數值不同。

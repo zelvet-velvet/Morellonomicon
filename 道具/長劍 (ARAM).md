@@ -10,13 +10,13 @@ gold_total: 400
 gold_base: 400
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/771036.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/1036.png"
 patch: "16.21.1"
 generated: true
 variant_of: "長劍"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![長劍|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/771036.png)
+![長劍|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/1036.png)
 
 > [!info] ARAM 版本
 > 這是 [[長劍]] 在 ARAM 的專用版本,價格與數值不同。

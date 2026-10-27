@@ -10,13 +10,13 @@ gold_total: 3000
 gold_base: 1188
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773071.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3071.png"
 patch: "16.21.1"
 generated: true
 variant_of: "黑色切割者"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![黑色切割者|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773071.png)
+![黑色切割者|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3071.png)
 
 > [!info] ARAM 版本
 > 這是 [[黑色切割者]] 在 ARAM 的專用版本,價格與數值不同。

@@ -10,13 +10,13 @@ gold_total: 3300
 gold_base: 840
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773089.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3089.png"
 patch: "16.21.1"
 generated: true
 variant_of: "死亡之帽"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![死亡之帽|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773089.png)
+![死亡之帽|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3089.png)
 
 > [!info] ARAM 版本
 > 這是 [[死亡之帽]] 在 ARAM 的專用版本,價格與數值不同。

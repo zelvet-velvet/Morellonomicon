@@ -10,13 +10,13 @@ gold_total: 2550
 gold_base: 900
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773050.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3050.png"
 patch: "16.21.1"
 generated: true
 variant_of: "錫柯的聚合之力"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![斯塔克的狂熱|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773050.png)
+![斯塔克的狂熱|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3050.png)
 
 > [!info] ARAM 版本
 > 這是 [[錫柯的聚合之力]] 在 ARAM 的專用版本,價格與數值不同。

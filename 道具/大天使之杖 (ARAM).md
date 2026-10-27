@@ -10,13 +10,13 @@ gold_total: 2700
 gold_base: 1140
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773003.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3003.png"
 patch: "16.21.1"
 generated: true
 variant_of: "大天使之杖"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![大天使之杖|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773003.png)
+![大天使之杖|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3003.png)
 
 > [!info] ARAM 版本
 > 這是 [[大天使之杖]] 在 ARAM 的專用版本,價格與數值不同。

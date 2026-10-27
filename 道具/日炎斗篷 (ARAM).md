@@ -10,13 +10,13 @@ gold_total: 2650
 gold_base: 930
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773068.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3068.png"
 patch: "16.21.1"
 generated: true
 variant_of: "日炎聖盾"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![日炎斗篷|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773068.png)
+![日炎斗篷|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3068.png)
 
 > [!info] ARAM 版本
 > 這是 [[日炎聖盾]] 在 ARAM 的專用版本,價格與數值不同。

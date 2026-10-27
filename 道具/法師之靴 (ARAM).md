@@ -10,13 +10,13 @@ gold_total: 1100
 gold_base: 775
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773020.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3020.png"
 patch: "16.21.1"
 generated: true
 variant_of: "法師之靴"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![法師之靴|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773020.png)
+![法師之靴|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3020.png)
 
 > [!info] ARAM 版本
 > 這是 [[法師之靴]] 在 ARAM 的專用版本,價格與數值不同。

@@ -10,13 +10,13 @@ gold_total: 2225
 gold_base: 750
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773190.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3190.png"
 patch: "16.21.1"
 generated: true
 variant_of: "日輪的加冕"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![日輪的加冕|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773190.png)
+![日輪的加冕|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3190.png)
 
 > [!info] ARAM 版本
 > 這是 [[日輪的加冕]] 在 ARAM 的專用版本,價格與數值不同。

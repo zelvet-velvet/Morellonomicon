@@ -10,13 +10,13 @@ gold_total: 900
 gold_base: 900
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/771043.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/1043.png"
 patch: "16.21.1"
 generated: true
 variant_of: "反曲弓"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![反曲弓|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/771043.png)
+![反曲弓|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/1043.png)
 
 > [!info] ARAM 版本
 > 這是 [[反曲弓]] 在 ARAM 的專用版本,價格與數值不同。

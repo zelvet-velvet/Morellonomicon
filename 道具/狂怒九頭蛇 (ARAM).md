@@ -10,13 +10,13 @@ gold_total: 3300
 gold_base: 600
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773074.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3074.png"
 patch: "16.21.1"
 generated: true
 variant_of: "狂怒九頭蛇"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![狂怒九頭蛇|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773074.png)
+![狂怒九頭蛇|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3074.png)
 
 > [!info] ARAM 版本
 > 這是 [[狂怒九頭蛇]] 在 ARAM 的專用版本,價格與數值不同。

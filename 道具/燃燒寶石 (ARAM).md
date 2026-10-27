@@ -10,13 +10,13 @@ gold_total: 850
 gold_base: 375
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773067.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3067.png"
 patch: "16.21.1"
 generated: true
 variant_of: "燃燒寶石"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![燃燒寶石|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773067.png)
+![燃燒寶石|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3067.png)
 
 > [!info] ARAM 版本
 > 這是 [[燃燒寶石]] 在 ARAM 的專用版本,價格與數值不同。

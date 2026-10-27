@@ -10,13 +10,13 @@ gold_total: 3700
 gold_base: 600
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773139.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3139.png"
 patch: "16.21.1"
 generated: true
 variant_of: "水星彎刀"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![水星彎刀|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773139.png)
+![水星彎刀|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3139.png)
 
 > [!info] ARAM 版本
 > 這是 [[水星彎刀]] 在 ARAM 的專用版本,價格與數值不同。

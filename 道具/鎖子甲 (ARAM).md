@@ -10,13 +10,13 @@ gold_total: 720
 gold_base: 720
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/771031.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/1031.png"
 patch: "16.21.1"
 generated: true
 variant_of: "鎖子甲"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![鎖子甲|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/771031.png)
+![鎖子甲|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/1031.png)
 
 > [!info] ARAM 版本
 > 這是 [[鎖子甲]] 在 ARAM 的專用版本,價格與數值不同。

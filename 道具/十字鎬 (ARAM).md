@@ -10,13 +10,13 @@ gold_total: 875
 gold_base: 875
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/771037.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/1037.png"
 patch: "16.21.1"
 generated: true
 variant_of: "十字鎬"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![十字鎬|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/771037.png)
+![十字鎬|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/1037.png)
 
 > [!info] ARAM 版本
 > 這是 [[十字鎬]] 在 ARAM 的專用版本,價格與數值不同。

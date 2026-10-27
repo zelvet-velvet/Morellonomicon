@@ -10,13 +10,13 @@ gold_total: 3200
 gold_base: 975
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773156.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3156.png"
 patch: "16.21.1"
 generated: true
 variant_of: "魔提斯深淵"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![魔提斯深淵|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773156.png)
+![魔提斯深淵|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3156.png)
 
 > [!info] ARAM 版本
 > 這是 [[魔提斯深淵]] 在 ARAM 的專用版本,價格與數值不同。

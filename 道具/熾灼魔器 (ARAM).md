@@ -10,13 +10,13 @@ gold_total: 2200
 gold_base: 895
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773504.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3504.png"
 patch: "16.21.1"
 generated: true
 variant_of: "熾灼魔器"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![熾灼魔器|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/773504.png)
+![熾灼魔器|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/3504.png)
 
 > [!info] ARAM 版本
 > 這是 [[熾灼魔器]] 在 ARAM 的專用版本,價格與數值不同。

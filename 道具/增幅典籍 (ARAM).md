@@ -10,13 +10,13 @@ gold_total: 435
 gold_base: 435
 aram: true
 rift: false
-icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/771052.png"
+icon: "https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/1052.png"
 patch: "16.21.1"
 generated: true
 variant_of: "增幅典籍"
 ---
 <!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->
-![增幅典籍|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/771052.png)
+![增幅典籍|48](https://ddragon.leagueoflegends.com/cdn/16.21.1/img/item/1052.png)
 
 > [!info] ARAM 版本
 > 這是 [[增幅典籍]] 在 ARAM 的專用版本,價格與數值不同。
