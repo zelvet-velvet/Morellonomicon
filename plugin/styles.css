@@ -540,18 +540,20 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq .mn-fs { margin-top: 12px; }
 .mn-rq .mn-tgs { margin-top: 10px; }
 
-/* League palette for champion pages (champion card, 速查): Hextech navy, gold accent, saturated tag and damage colours.
+/* League palette for champion pages (champion card, 速查). Sources:
+   base = the League client style guide (community copy, vitorsammarco/league-of-legends-css-styles): Hextech Black #010A13, Blue 7 #0A142B,
+   Blue 6 #0A323C, Grey Cool #1E282D, Blue 1 #CDFAFA, Grey 1 #A09B8C, Grey 2 #5B5A56, Blue 3 #0AC8B9, Paladin Blue 2 #16CAE5, Yellow #FABE0A, Mage Red 2 #FF2345;
+   damage and stat keywords = the League Wiki's Module:Color: physical #FF8C34, magic #00B0F0, true #F9966B, ability power #7A6DFF,
+   heal #60E08F, life steal #CC2051, attack speed #F5EE99.
    !important because the colour theme sets its variables inline on the app element. */
 .mn-app.is-lol {
-    --mn-bg: #010a13 !important; --mn-card: #0a1428 !important; --mn-card-hi: #12223b !important;
-    --mn-text: #f0e6d2 !important; --mn-muted: #a09b8c !important; --mn-faint: #77736a !important;
-    --mn-line: rgba(200, 170, 110, 0.2) !important; --mn-accent: #c8aa6e !important; --interactive-accent: #c8aa6e !important; --text-on-accent: #010a13 !important;
-    --mn-phys: #ff7a3d; --mn-magic: #4aa8ff; --mn-true: #f4f1e8; --mn-mixed: #c67cff;
-    --mn-cc: #b57bff; --mn-slow: #38c8f0; --mn-dash: #0ac8b9; --mn-heal: #4fd86b; --mn-shield: #f5c443; --mn-ls: #ff4d6a; --mn-onhit: #ff9a2e; --mn-aa: #ff6bd0;
-    --mn-tank: #7fa7d6; --mn-range: #c8aa6e;
+    --mn-bg: #010a13 !important; --mn-card: #0a142b !important; --mn-card-hi: #0a323c !important;
+    --mn-text: #cdfafa !important; --mn-muted: #a09b8c !important; --mn-faint: #5b5a56 !important;
+    --mn-line: #1e282d !important; --mn-accent: #0ac8b9 !important; --interactive-accent: #0ac8b9 !important; --text-on-accent: #010a13 !important;
+    --mn-phys: #ff8c34; --mn-magic: #00b0f0; --mn-true: #f9966b; --mn-mixed: #7a6dff;
+    --mn-cc: #fabe0a; --mn-slow: #16cae5; --mn-dash: #0ac8b9; --mn-heal: #60e08f; --mn-shield: #cdfafa; --mn-ls: #cc2051; --mn-aa: #f5ee99; --mn-onhit: #ff2345;
+    --mn-tank: #a09b8c; --mn-range: #a09b8c;
 }
-.mn-app.is-lol .mn-seg { background: #0a1428; border-color: rgba(200, 170, 110, 0.35); }
+.mn-app.is-lol .mn-seg { background: #0a142b; border-color: #1e282d; }
 .mn-app.is-lol .mn-seg-b { color: #a09b8c; }
-.mn-app.is-lol .mn-seg-b.is-on { background: linear-gradient(180deg, #c8aa6e, #a07c3b); color: #010a13; font-weight: 800; box-shadow: 0 0 0 1px #f0e6d2 inset, 0 2px 10px rgba(200, 170, 110, 0.25); }
-.mn-app.is-lol .mn-tabs { border-top-color: rgba(200, 170, 110, 0.3); }
-.mn-app.is-lol .mn-panel, .mn-app.is-lol .mn-fs { border-color: rgba(200, 170, 110, 0.22); }
+.mn-app.is-lol .mn-seg-b.is-on { background: #0a323c; color: #cdfafa; box-shadow: inset 0 0 0 1px #0ac8b9; }
