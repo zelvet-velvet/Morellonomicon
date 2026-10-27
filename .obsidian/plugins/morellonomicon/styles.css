@@ -123,7 +123,7 @@ button.mn-chip:active { transform: scale(0.96); }
 .mn-rd-label { fill: var(--mn-muted); font-size: 11px; font-weight: 500; }
 .mn-rd-val { fill: var(--mn-text); font-weight: 800; font-size: 12px; }
 .mn-skills { display: flex; justify-content: space-between; gap: 8px; margin: 14px 0; }
-.mn-skill-box { padding: 0; --chip: var(--mn-line); position: relative; flex: 1; max-width: 62px; aspect-ratio: 1; border: 2px solid var(--chip); border-radius: 16px; overflow: hidden;
+.mn-skill-box { padding: 0; --chip: var(--mn-line); position: relative; flex: 1; max-width: 62px; aspect-ratio: 1; border: 2px solid var(--chip); border-radius: 8px; overflow: hidden;
     box-shadow: 0 0 14px color-mix(in srgb, var(--chip) 35%, transparent); }
 .mn-skill-box img { width: 100%; height: 100%; display: block; }
 .mn-skill-k { position: absolute; right: 3px; bottom: 3px; min-width: 16px; padding: 0 4px; border-radius: 8px; text-align: center; font-size: 10px; font-weight: 700; line-height: 16px;
@@ -131,7 +131,9 @@ button.mn-chip:active { transform: scale(0.96); }
 
 button.mn-skill-box { transition: transform 0.12s, box-shadow 0.12s; }
 button.mn-skill-box:active { transform: scale(0.94); }
-button.mn-skill-box.is-on { box-shadow: 0 0 0 3px color-mix(in srgb, var(--chip) 45%, transparent), 0 0 18px color-mix(in srgb, var(--chip) 55%, transparent); }
+/* the chosen skill: an accent border, same size as the others (no outer ring, so the row stays even); the rest dim slightly */
+.mn-skills:has(.is-on) button.mn-skill-box:not(.is-on) { opacity: 0.6; }
+button.mn-skill-box.is-on::after { content: ""; position: absolute; inset: 0; border: 2px solid var(--mn-accent); border-radius: inherit; pointer-events: none; }
 .mn-skill-detail { scroll-margin-top: 84px; display: none; background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: var(--mn-radius); padding: 14px 16px; margin: -2px 0 14px; }
 .mn-skill-detail.is-open { display: block; animation: mn-pop 0.16s ease-out; }
 @keyframes mn-pop { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
@@ -519,7 +521,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app .mn-scc { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 62px; padding: 5px 9px 4px; border-radius: 6px; border: 1px dashed var(--mn-line); color: var(--mn-faint); background: var(--mn-card); }
 .mn-app .mn-scc.is-on { border: 1px solid color-mix(in srgb, var(--mn-text) 16%, transparent); color: var(--mn-text); }
 .mn-scc.is-on .mn-ic { color: var(--p); }
-.mn-scc-t { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.mn-scc-t { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; line-height: 1; white-space: nowrap; }
 .mn-scc-t .mn-ic { display: flex; }
 .mn-scc-t svg { width: 14px; height: 14px; }
 .mn-scc-t b { color: var(--mn-text); font-variant-numeric: tabular-nums; }
@@ -532,7 +534,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app .mn-tg { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; border: 1px dashed var(--mn-line); color: var(--mn-faint); }
 .mn-app .mn-tg.is-on { border: 1px solid color-mix(in srgb, var(--mn-text) 16%, transparent); background: var(--mn-card); color: var(--mn-text); }
 .mn-tg.is-on .mn-ic { color: var(--p); }
+.mn-app .mn-tg { line-height: 1; }
 .mn-tg .mn-ic { display: flex; }
+.mn-tg svg, .mn-scc-t svg { display: block; }
 .mn-tg svg { width: 14px; height: 14px; }
 .mn-tg-k { font-size: 10px; font-weight: 400; color: var(--mn-muted); }
 .mn-lg-ic { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--p); color: var(--p); }
