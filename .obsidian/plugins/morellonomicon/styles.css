@@ -597,10 +597,11 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app.is-sub .mn-top .mn-back { pointer-events: auto; }
 .mn-app.is-sub .mn-top.is-scrolled { pointer-events: auto; background: color-mix(in srgb, var(--mn-bg) 80%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom-color: var(--mn-line); }
 .mn-app.is-sub .mn-scroll > .mn-page { padding-top: calc(var(--mn-safe-top) + 6px); }
-.mn-app.is-sub .mn-scroll > .mn-page > .mn-title-row, .mn-app.is-sub .mn-scroll > .mn-page > .mn-dhead { padding-left: 40px; }
+.mn-app.is-sub .mn-scroll > .mn-page > .mn-title-row, .mn-app.is-sub .mn-scroll > .mn-page > .mn-dhead { padding-left: 14px; }   /* title starts a short step after the chevron */
 .mn-app.is-sub:has(.mn-scroll > .mn-page > .mn-dhead) .mn-top:not(.is-scrolled) .mn-back { transform: translateY(20px); }   /* centre Back on a tall icon header */
 .mn-app.is-sub .mn-back { transition: transform 0.2s; }
-.mn-app.is-sub .mn-top { min-height: 0; }   /* the bar is the safe area plus Back, so Back's middle is safe area + 18px */
+.mn-app.is-sub .mn-top { min-height: 0; padding-left: 0; }   /* the chevron's stroke on the page's left text edge (16px) */   /* the bar is the safe area plus Back, so Back's middle is safe area + 18px */
+.mn-app.is-sub .mn-back .mn-ic { width: 24px; height: 24px; }   /* a chevron in scale with the 30px title */
 .mn-app.is-sub .mn-scroll > .mn-page > .mn-title-row { margin-top: -5px; }   /* the big title's middle on the same line as Back */
 .mn-app.is-switching .mn-top, .mn-app.is-switching .mn-top *, .mn-app.is-switching .mn-title-row { transition: none !important; }   /* a page switch flips its bar state at once */
 
