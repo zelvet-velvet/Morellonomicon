@@ -12,7 +12,7 @@ const DAMAGES = ["物理", "魔法", "混合"];
 const FEATURES = ["控場", "緩速", "位移", "治療", "護盾", "吸血", "強化普攻", "攻擊特效"];   // tap = must have
 const REACH = ["近戰", "中程", "遠程"];
 const SORTS: [string, string][] = [["name", "名稱"], ["diff", "難度優先"], ["range", "射程優先"]];
-const SORT_DIR: Record<string, 1 | -1> = { diff: 1, range: -1 };   // first direction when a sort is picked: easy first, far first
+const SORT_DIR: Record<string, 1 | -1> = { name: 1, diff: 1, range: -1 };   // first direction when a sort is picked: A first, easy first, far first
 const DAMAGE_ICON: Record<string, string> = { 物理: "sword", 魔法: "sparkles", 混合: "blend" };
 const SEARCH_EXTRA = 8;   // augments / items listed under the champions when the search box has text
 
@@ -33,7 +33,7 @@ function sorted(list: Champion[]): Champion[] {
     const byName = (a: Champion, b: Champion) => a.name.localeCompare(b.name, "zh-Hant");
     if (F.sort === "diff") return [...list].sort((a, b) => F.dir * (a.difficulty - b.difficulty) || byName(a, b));
     if (F.sort === "range") return [...list].sort((a, b) => F.dir * (a.range - b.range) || byName(a, b));
-    return list;
+    return F.dir === 1 ? list : [...list].reverse();   // by name (the list comes sorted by name)
 }
 
 // The home screen: a tap-to-pick grid of champions you can narrow down (role, damage, abilities, reach) and sort.
@@ -116,13 +116,6 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
         panel.empty();
         panel.toggleClass("is-open", F.open);
         if (!F.open) return;
-        // clear everything (only when something is set)
-        const on = activeFilters();
-        if (on || F.sort !== "name") {
-            const top = h(panel, "div", "mn-fp-top");
-            const clear = h(top, "button", "mn-clear", "全部清除");
-            clear.addEventListener("click", (e) => { e.preventDefault(); F.roles.clear(); F.dmg = ""; F.feat.clear(); F.reach = ""; F.sort = "name"; F.dir = 1; redraw(); });
-        }
         const sect = (title: string, hint = "") => {
             const s = h(panel, "div", "mn-fp-s");
             const head = h(s, "div", "mn-fp-h");
@@ -131,7 +124,13 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
             return s;
         };
         // top to bottom: 定位, 技能, 傷害, 攻擊距離, 排序
-        const roleRow = fgrid(sect("定位"), ROLES.length);
+        const roleSect = sect("定位");
+        // clear everything, on the 定位 line (only when something is set)
+        if (activeFilters() || F.sort !== "name" || F.dir !== 1) {
+            const clear = h(roleSect.querySelector<HTMLElement>(".mn-fp-h") ?? roleSect, "button", "mn-clear", "全部清除");
+            clear.addEventListener("click", (e) => { e.preventDefault(); F.roles.clear(); F.dmg = ""; F.feat.clear(); F.reach = ""; F.sort = "name"; F.dir = 1; redraw(); });
+        }
+        const roleRow = fgrid(roleSect, ROLES.length);
         for (const r of ROLES) roleChip(roleRow, r, { on: F.roles.has(r), onTap: () => { F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r); redraw(); } });
         const ab = fgrid(sect("技能"), FEATURES.length);
         for (const f of FEATURES) {
@@ -142,9 +141,9 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
         for (const d of DAMAGES) iconFilter(kindRow, d, DAMAGE_ICON[d], DAMAGE_COLOR[d], F.dmg === d, () => { F.dmg = F.dmg === d ? "" : d; redraw(); });
         segmented(sect("攻擊距離"), [["", "全部"], ...REACH.map((r): [string, string] => [r, r])], F.reach, (id) => { F.reach = id; redraw(); }, "is-sm");
         // sort: tapping the chosen one again flips its direction (the arrow shows which way)
-        const arrow = (id: string) => (id === "name" ? "" : (F.sort === id ? F.dir : SORT_DIR[id]) === 1 ? " ↑" : " ↓");
+        const arrow = (id: string) => (F.sort !== id ? "" : F.dir === 1 ? " ↑" : " ↓");   // only the chosen one shows its direction
         segmented(sect("排序"), SORTS.map(([id, l]): [string, string] => [id, l + arrow(id)]), F.sort, (id) => {
-            if (id === F.sort && id !== "name") F.dir = F.dir === 1 ? -1 : 1;
+            if (id === F.sort) F.dir = F.dir === 1 ? -1 : 1;
             else { F.sort = id; F.dir = SORT_DIR[id] ?? 1; }
             redraw();
         }, "is-sm");

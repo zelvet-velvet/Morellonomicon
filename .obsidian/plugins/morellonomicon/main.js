@@ -1572,7 +1572,7 @@ var DAMAGES = ["\u7269\u7406", "\u9B54\u6CD5", "\u6DF7\u5408"];
 var FEATURES = ["\u63A7\u5834", "\u7DE9\u901F", "\u4F4D\u79FB", "\u6CBB\u7642", "\u8B77\u76FE", "\u5438\u8840", "\u5F37\u5316\u666E\u653B", "\u653B\u64CA\u7279\u6548"];
 var REACH = ["\u8FD1\u6230", "\u4E2D\u7A0B", "\u9060\u7A0B"];
 var SORTS2 = [["name", "\u540D\u7A31"], ["diff", "\u96E3\u5EA6\u512A\u5148"], ["range", "\u5C04\u7A0B\u512A\u5148"]];
-var SORT_DIR = { diff: 1, range: -1 };
+var SORT_DIR = { name: 1, diff: 1, range: -1 };
 var DAMAGE_ICON = { \u7269\u7406: "sword", \u9B54\u6CD5: "sparkles", \u6DF7\u5408: "blend" };
 var SEARCH_EXTRA = 8;
 var F = { lanes: /* @__PURE__ */ new Set(), roles: /* @__PURE__ */ new Set(), dmg: "", feat: /* @__PURE__ */ new Map(), reach: "", sort: "name", dir: 1, open: false };
@@ -1588,7 +1588,7 @@ function sorted(list2) {
   const byName = (a, b) => a.name.localeCompare(b.name, "zh-Hant");
   if (F.sort === "diff") return [...list2].sort((a, b) => F.dir * (a.difficulty - b.difficulty) || byName(a, b));
   if (F.sort === "range") return [...list2].sort((a, b) => F.dir * (a.range - b.range) || byName(a, b));
-  return list2;
+  return F.dir === 1 ? list2 : [...list2].reverse();
 }
 function championPicker(parent, ctx) {
   const store = ctx.plugin.store;
@@ -1693,10 +1693,16 @@ function championPicker(parent, ctx) {
     panel.empty();
     panel.toggleClass("is-open", F.open);
     if (!F.open) return;
-    const on = activeFilters();
-    if (on || F.sort !== "name") {
-      const top = h(panel, "div", "mn-fp-top");
-      const clear = h(top, "button", "mn-clear", "\u5168\u90E8\u6E05\u9664");
+    const sect = (title, hint = "") => {
+      const s = h(panel, "div", "mn-fp-s");
+      const head = h(s, "div", "mn-fp-h");
+      h(head, "span", "mn-fp-t", title);
+      if (hint) h(head, "span", "mn-fp-hint", hint);
+      return s;
+    };
+    const roleSect = sect("\u5B9A\u4F4D");
+    if (activeFilters() || F.sort !== "name" || F.dir !== 1) {
+      const clear = h(roleSect.querySelector(".mn-fp-h") ?? roleSect, "button", "mn-clear", "\u5168\u90E8\u6E05\u9664");
       clear.addEventListener("click", (e) => {
         e.preventDefault();
         F.roles.clear();
@@ -1708,23 +1714,16 @@ function championPicker(parent, ctx) {
         redraw();
       });
     }
-    const sect = (title, hint = "") => {
-      const s = h(panel, "div", "mn-fp-s");
-      const head = h(s, "div", "mn-fp-h");
-      h(head, "span", "mn-fp-t", title);
-      if (hint) h(head, "span", "mn-fp-hint", hint);
-      return s;
-    };
-    const roleRow = fgrid(sect("\u5B9A\u4F4D"), ROLES.length);
+    const roleRow = fgrid(roleSect, ROLES.length);
     for (const r of ROLES) roleChip(roleRow, r, { on: F.roles.has(r), onTap: () => {
       F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r);
       redraw();
     } });
     const ab = fgrid(sect("\u6280\u80FD"), FEATURES.length);
     for (const f of FEATURES) {
-      const on2 = F.feat.get(f) === 1;
-      tagFilter(ab, f, on2, () => {
-        if (on2) F.feat.delete(f);
+      const on = F.feat.get(f) === 1;
+      tagFilter(ab, f, on, () => {
+        if (on) F.feat.delete(f);
         else F.feat.set(f, 1);
         redraw();
       });
@@ -1738,9 +1737,9 @@ function championPicker(parent, ctx) {
       F.reach = id;
       redraw();
     }, "is-sm");
-    const arrow = (id) => id === "name" ? "" : (F.sort === id ? F.dir : SORT_DIR[id]) === 1 ? " \u2191" : " \u2193";
+    const arrow = (id) => F.sort !== id ? "" : F.dir === 1 ? " \u2191" : " \u2193";
     segmented(sect("\u6392\u5E8F"), SORTS2.map(([id, l]) => [id, l + arrow(id)]), F.sort, (id) => {
-      if (id === F.sort && id !== "name") F.dir = F.dir === 1 ? -1 : 1;
+      if (id === F.sort) F.dir = F.dir === 1 ? -1 : 1;
       else {
         F.sort = id;
         F.dir = SORT_DIR[id] ?? 1;
