@@ -817,7 +817,7 @@ function profileAxes(c) {
 }
 var uid = 0;
 function profileRadar(parent, axes, color, max = 10) {
-  const W = 340, H = 300, cx = W / 2, cy = 150, R = 96, LABEL = 28, n = axes.length;
+  const W = 300, H = 204, cx = W / 2, cy = 102, R = 66, LABEL = 22, n = axes.length;
   const pt = (i, r) => {
     const a = -Math.PI / 2 + i * 2 * Math.PI / n;
     return [cx + r * Math.cos(a), cy + r * Math.sin(a)];

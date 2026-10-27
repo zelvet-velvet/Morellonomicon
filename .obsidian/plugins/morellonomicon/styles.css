@@ -114,13 +114,13 @@ button.mn-chip:active { transform: scale(0.96); }
 .mn-card-who .mn-chips { margin: 8px 0 0; }
 .mn-app .mn-card-who .mn-chip:not(.has-color) { background: rgba(10, 12, 20, 0.62); color: #fff; border-color: rgba(255, 255, 255, 0.22); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 .mn-panel { overflow: hidden; background: var(--mn-card); border-radius: var(--mn-radius); padding: 8px 8px 4px; margin: 14px 0; border: 1px solid var(--mn-line); }
-.mn-radar { display: block; width: 100%; max-width: 340px; margin: 0 auto; overflow: visible; }
+.mn-radar { display: block; width: 100%; max-width: 300px; margin: 0 auto; overflow: visible; }
 .mn-rd-ring { fill: none; stroke: var(--mn-line); stroke-width: 1; }
 .mn-rd-axis { stroke: var(--mn-line); stroke-width: 1; }
 .mn-rd-area { fill: color-mix(in srgb, var(--rd) 30%, transparent); stroke: var(--rd); stroke-width: 2; stroke-linejoin: round; }
 .mn-rd-dot { fill: var(--rd); stroke: var(--mn-bg); stroke-width: 1.5; }
-.mn-rd-label { fill: var(--mn-muted); font-size: 12px; font-weight: 500; }
-.mn-rd-val { fill: var(--mn-text); font-weight: 800; font-size: 13px; }
+.mn-rd-label { fill: var(--mn-muted); font-size: 11px; font-weight: 500; }
+.mn-rd-val { fill: var(--mn-text); font-weight: 800; font-size: 12px; }
 .mn-skills { display: flex; justify-content: space-between; gap: 8px; margin: 14px 0; }
 .mn-skill-box { padding: 0; --chip: var(--mn-line); position: relative; flex: 1; max-width: 62px; aspect-ratio: 1; border: 2px solid var(--chip); border-radius: 16px; overflow: hidden;
     box-shadow: 0 0 14px color-mix(in srgb, var(--chip) 35%, transparent); }
@@ -432,7 +432,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* champion card: a taller banner, then the profile (style line, hexagon chart, abilities) */
 .mn-hero { min-height: 250px; }
 .mn-hero-bg { background-position: center 12%; }
-.mn-profile { padding: 14px 12px 12px; }
+.mn-profile { padding: 10px 14px 12px; }
 .mn-hard i { width: 7px; height: 7px; border-radius: 50%; background: var(--mn-line); display: inline-block; }
 .mn-hard i.is-on { background: var(--mn-text); }
 .mn-pro { max-width: 360px; }

@@ -28,7 +28,7 @@ let uid = 0;   // gradient ids must be unique on the page
 
 // A hexagon chart: soft rings, a gradient-filled shape in the champion's damage colour, a dot and the number on each axis.
 export function profileRadar(parent: HTMLElement, axes: Axis[], color: string, max = 10): void {
-    const W = 340, H = 300, cx = W / 2, cy = 150, R = 96, LABEL = 28, n = axes.length;
+    const W = 300, H = 204, cx = W / 2, cy = 102, R = 66, LABEL = 22, n = axes.length;
     const pt = (i: number, r: number): [number, number] => {
         const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
         return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
