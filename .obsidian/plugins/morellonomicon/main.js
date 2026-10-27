@@ -1775,7 +1775,7 @@ function championPicker(parent, ctx) {
         });
       }
     }
-    const kindRow = fgrid(sect("\u50B7\u5BB3"), DAMAGES.length);
+    const kindRow = fgrid(sect("\u50B7\u5BB3\u985E\u578B"), DAMAGES.length);
     for (const d of DAMAGES) iconFilter(kindRow, d, DAMAGE_ICON[d], DAMAGE_COLOR[d], F.dmg === d, () => {
       F.dmg = F.dmg === d ? "" : d;
       redraw();
