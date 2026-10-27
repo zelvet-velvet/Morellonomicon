@@ -10,7 +10,7 @@ const STACK_TTL = 30 * 60 * 1000;   // detail pages are restored for 30 minutes 
 
 // Which tab is open and the page stack of every tab. Plain state, no DOM.
 export class Router {
-    tab: TabId = "home";
+    tab: TabId = "champions";
     private stacks: Partial<Record<TabId, Frame[]>> = {};
 
     constructor(private app: App) {
@@ -24,7 +24,7 @@ export class Router {
     }
 
     // the open tab must exist in the current mode
-    fix(tabs: TabId[]): void { if (!tabs.includes(this.tab)) this.tab = tabs[0] ?? "home"; }
+    fix(tabs: TabId[]): void { if (!tabs.includes(this.tab)) this.tab = tabs[0] ?? "champions"; }
 
     reset(): void { this.stacks = {}; this.save(); }
     stack(tab: TabId = this.tab): Frame[] { return (this.stacks[tab] ??= []); }

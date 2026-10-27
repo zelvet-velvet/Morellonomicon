@@ -3,6 +3,7 @@ type: "item"
 id: 771052
 name: "增幅典籍"
 tags: ["SpellDamage"]
+desc: "20 魔法攻擊"
 gold_total: 435
 gold_base: 435
 aram: true

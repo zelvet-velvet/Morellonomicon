@@ -3,6 +3,7 @@ type: "item"
 id: 771029
 name: "布甲"
 tags: ["Armor"]
+desc: "15 物理防禦"
 gold_total: 300
 gold_base: 300
 aram: true

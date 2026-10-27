@@ -3,6 +3,7 @@ type: "item"
 id: 773100
 name: "巫妖之禍"
 tags: ["SpellDamage", "Mana", "NonbootsMovement"]
+desc: "80 魔法攻擊 / 250 魔力 / 5% 跑速 / 奧術魔法彎刀：施放技能後，下一次普攻命中時對目標造成0額外魔法傷害(冷卻時間2秒)。"
 gold_total: 3000
 gold_base: 940
 aram: true

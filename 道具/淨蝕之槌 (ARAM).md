@@ -3,6 +3,7 @@ type: "item"
 id: 773044
 name: "淨蝕之槌"
 tags: ["Health", "Damage", "OnHit"]
+desc: "200 生命 / 20 物理攻擊 / 暴虐：普攻命中時，賦予20跑速，持續2秒。 / 擊殺可獲得60跑速，持續2秒。"
 gold_total: 1250
 gold_base: 375
 aram: true

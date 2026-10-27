@@ -3,6 +3,7 @@ type: "item"
 id: 771026
 name: "爆裂魔杖"
 tags: ["SpellDamage"]
+desc: "40 魔法攻擊"
 gold_total: 860
 gold_base: 860
 aram: true

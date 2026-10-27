@@ -3,6 +3,7 @@ type: "item"
 id: 773145
 name: "海克斯科技左輪"
 tags: ["SpellDamage", "SpellVamp"]
+desc: "40 魔法攻擊 / 海克斯子彈：12%技能吸血"
 gold_total: 1200
 gold_base: 330
 aram: true

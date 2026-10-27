@@ -3,6 +3,7 @@ type: "item"
 id: 771038
 name: "暴風之劍"
 tags: ["Damage"]
+desc: "45 物理攻擊"
 gold_total: 1550
 gold_base: 1550
 aram: true

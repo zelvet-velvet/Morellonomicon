@@ -3,6 +3,7 @@ type: "item"
 id: 773041
 name: "靈魂竊取者"
 tags: ["SpellDamage"]
+desc: "20 魔法攻擊 / 靈魂捕獲：每層賦予8魔攻。擊殺可獲得2層，助攻可獲得1層(上限20層)。死亡時會失去三分之一堆層。在20層時，獲得15%冷卻時間減免。"
 gold_total: 1235
 gold_base: 800
 aram: true

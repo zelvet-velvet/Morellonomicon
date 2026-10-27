@@ -3,6 +3,7 @@ type: "item"
 id: 773108
 name: "惡魔法典"
 tags: ["SpellDamage", "CooldownReduction"]
+desc: "30 魔法攻擊 / 惡魔召回： 10%冷卻時間減免"
 gold_total: 820
 gold_base: 385
 aram: true

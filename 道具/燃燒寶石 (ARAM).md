@@ -3,6 +3,7 @@ type: "item"
 id: 773067
 name: "燃燒寶石"
 tags: ["Health", "CooldownReduction"]
+desc: "200 生命 / 燼火火花：10%冷卻時間減免"
 gold_total: 850
 gold_base: 375
 aram: true

@@ -3,6 +3,7 @@ type: "item"
 id: 773153
 name: "殞落王者之劍"
 tags: ["Damage", "AttackSpeed", "LifeSteal", "OnHit"]
+desc: "25 物理攻擊 / 40% 攻擊速度 / 15% 普攻吸血 / 毀壞：普攻命中時造成目標5%當前生命的額外物理傷害。(對士兵及野怪傷害上限為60)。主動90秒 / 對目標英雄造成15%最大生命的傷害(最少100點傷害)，並竊取其30%跑速，持續3秒。"
 gold_total: 3200
 gold_base: 1000
 aram: true

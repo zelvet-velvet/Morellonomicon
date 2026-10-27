@@ -3,6 +3,7 @@ type: "item"
 id: 773152
 name: "遠古意志"
 tags: ["SpellDamage", "Aura", "SpellVamp"]
+desc: "50 魔法攻擊 / 靈氣－傳統：賦予鄰近友方英雄30魔攻和20%技能吸血。"
 gold_total: 2550
 gold_base: 585
 aram: true

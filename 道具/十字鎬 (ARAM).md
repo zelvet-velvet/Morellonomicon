@@ -3,6 +3,7 @@ type: "item"
 id: 771037
 name: "十字鎬"
 tags: ["Damage"]
+desc: "25 物理攻擊"
 gold_total: 875
 gold_base: 875
 aram: true

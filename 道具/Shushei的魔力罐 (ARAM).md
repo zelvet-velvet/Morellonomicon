@@ -3,6 +3,7 @@ type: "item"
 id: 773174
 name: "Shushei的魔力罐"
 tags: ["SpellBlock", "SpellDamage", "ManaRegen", "CooldownReduction"]
+desc: "60 魔法攻擊 / 40 魔法防禦 / 20%冷卻時間減免 / 每5秒+15魔力回復 / 煽動群眾：參與擊殺時回復0生命和0魔力。 / 魔法湧泉：每損失1%魔力，魔力回復提升1%。"
 gold_total: 2600
 gold_base: 900
 aram: true

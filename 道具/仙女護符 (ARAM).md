@@ -3,6 +3,7 @@ type: "item"
 id: 771004
 name: "仙女護符"
 tags: ["ManaRegen"]
+desc: "每5秒+3魔力回復"
 gold_total: 180
 gold_base: 180
 aram: true

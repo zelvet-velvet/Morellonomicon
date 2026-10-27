@@ -3,6 +3,7 @@ type: "item"
 id: 773085
 name: "芮蘭颶風箭"
 tags: ["AttackSpeed", "OnHit"]
+desc: "70% 攻擊速度 / 颶風齊射：普攻時，向目標附近最多2名敵軍發射箭矢，每支箭矢造成0物理傷害。這些箭矢會觸發命中效果。"
 gold_total: 2400
 gold_base: 700
 aram: true

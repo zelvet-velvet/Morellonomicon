@@ -3,6 +3,7 @@ type: "item"
 id: 773143
 name: "蘭頓之兆"
 tags: ["Health", "Armor"]
+desc: "500 生命 / 70 物理防禦 / 冷鋼：遭普攻命中時，使攻擊者攻速減緩15%、跑速減緩10%，持續1秒。主動60秒 / 使鄰近敵軍單位緩速35%，持續0秒。"
 gold_total: 3125
 gold_base: 1000
 aram: true

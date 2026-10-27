@@ -3,6 +3,7 @@ type: "item"
 id: 773142
 name: "妖夢鬼刀"
 tags: ["Damage", "CriticalStrike", "AttackSpeed", "NonbootsMovement", "CooldownReduction", "ArmorPenetration"]
+desc: "30 物理攻擊 / 15% 暴擊率 / 10%冷卻時間減免 / 活力之刃：20物理致命主動45秒 / 獲得20%跑速與40%攻速(近戰英雄持續6秒，遠程英雄持續4秒)。"
 gold_total: 2700
 gold_base: 563
 aram: true

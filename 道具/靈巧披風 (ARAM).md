@@ -3,6 +3,7 @@ type: "item"
 id: 771018
 name: "靈巧披風"
 tags: ["CriticalStrike"]
+desc: "15% 暴擊率"
 gold_total: 730
 gold_base: 730
 aram: true

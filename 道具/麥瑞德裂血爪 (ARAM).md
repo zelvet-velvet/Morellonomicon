@@ -3,6 +3,7 @@ type: "item"
 id: 773109
 name: "麥瑞德裂血爪"
 tags: ["Armor", "Damage", "AttackSpeed", "OnHit"]
+desc: "40 物理攻擊 / 40% 攻擊速度 / 25 物理防禦 / 殺紅眼：普攻命中時對目標造成其最大生命4%的額外魔法傷害。 / 對野怪最多造成120額外傷害。"
 gold_total: 3800
 gold_base: 1325
 aram: true

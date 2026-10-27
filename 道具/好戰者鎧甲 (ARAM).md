@@ -3,6 +3,7 @@ type: "item"
 id: 773083
 name: "好戰者鎧甲"
 tags: ["Health", "HealthRegen"]
+desc: "920 生命 / 每5秒30生命回復 / 被動：每層永久賦予3.5生命和每5秒0.1生命回復。每擊殺一個士兵或野怪可獲得1層，參與擊殺可獲得10層。最大加成：0生命且每5秒回復0生命。"
 gold_total: 3000
 gold_base: 995
 aram: true

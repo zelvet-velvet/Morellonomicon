@@ -30,7 +30,7 @@ WORKERS = 16
 
 GEN_START = "<!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->"
 GEN_END = "<!-- generated:end -->"
-HAND_KEYS = ("video", "archetypes_extra", "pinned", "avoid", "effect", "fits", "tier", "combos")   # kept when a note is regenerated
+HAND_KEYS = ("video", "archetypes_extra", "pinned", "avoid", "effect", "fits", "tier", "combos", "builds", "tips")   # kept when a note is regenerated
 ARAM_MAP = "12"          # Howling Abyss; ARAM Mayhem uses its item list
 ARAM_TWIN_PREFIX = "77"  # id 77NNNN is the ARAM-only copy of item NNNN (other price/stats)
 RIFT_DUPLICATE_PREFIXES = ("32", "66")   # 32NNNN / 66NNNN: Summoner's Rift variants of item NNNN, not needed here
@@ -250,6 +250,12 @@ def twin_of(item_id, keep):
     return base if item_id.startswith(ARAM_TWIN_PREFIX) and len(item_id) == 6 and base in keep else None
 
 
+def item_desc(it, limit=140):
+    """One short line of the item's stats and effect for the app's item panel."""
+    text = re.sub(r"\s*\n+\s*", " / ", strip_html(it.get("description", ""))).replace("**", "")
+    return text if len(text) <= limit else text[: limit - 1] + "…"
+
+
 def item_note(item_id, it, version, names, keep):
     maps = it.get("maps", {})
     gold = it["gold"]
@@ -257,7 +263,7 @@ def item_note(item_id, it, version, names, keep):
     has_twin = ARAM_TWIN_PREFIX + item_id in keep
     fm = {
         "type": "item", "id": int(item_id), "name": it["name"], "tags": it.get("tags", []),
-        "gold_total": gold["total"], "gold_base": gold["base"],
+        "desc": item_desc(it), "gold_total": gold["total"], "gold_base": gold["base"],
         "aram": bool(maps.get(ARAM_MAP)) and not has_twin, "rift": bool(maps.get(RIFT_MAP)),
         "icon": f"{DD}/cdn/{version}/img/item/{it['image']['full']}", "patch": version, "generated": True,
     }

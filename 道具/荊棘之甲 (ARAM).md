@@ -3,6 +3,7 @@ type: "item"
 id: 773075
 name: "荊棘之甲"
 tags: ["Armor"]
+desc: "100 物理防禦 / 附魔尖刺：當你被普攻命中時，會將所承受傷害的30%(防禦減免前)以魔法傷害回敬給攻擊者。"
 gold_total: 2200
 gold_base: 1180
 aram: true

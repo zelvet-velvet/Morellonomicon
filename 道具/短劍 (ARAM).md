@@ -3,6 +3,7 @@ type: "item"
 id: 771042
 name: "短劍"
 tags: ["AttackSpeed"]
+desc: "12% 攻擊速度"
 gold_total: 400
 gold_base: 400
 aram: true

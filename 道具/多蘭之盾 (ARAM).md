@@ -3,6 +3,7 @@ type: "item"
 id: 771054
 name: "多蘭之盾"
 tags: ["Health", "HealthRegen"]
+desc: "100 生命 / 每5秒10生命回復 / 盾牆：格擋來自英雄普攻的8點傷害。"
 gold_total: 440
 gold_base: 440
 aram: true

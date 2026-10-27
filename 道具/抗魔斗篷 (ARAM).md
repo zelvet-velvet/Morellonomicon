@@ -3,6 +3,7 @@ type: "item"
 id: 771033
 name: "抗魔斗篷"
 tags: ["SpellBlock"]
+desc: "20 魔法防禦"
 gold_total: 400
 gold_base: 400
 aram: true

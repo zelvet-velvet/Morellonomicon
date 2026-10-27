@@ -3,6 +3,7 @@ type: "item"
 id: 771028
 name: "紅水晶"
 tags: ["Health"]
+desc: "180 生命"
 gold_total: 475
 gold_base: 475
 aram: true

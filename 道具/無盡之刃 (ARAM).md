@@ -3,6 +3,7 @@ type: "item"
 id: 773031
 name: "無盡之刃"
 tags: ["Damage", "CriticalStrike"]
+desc: "70 物理攻擊 / 25% 暴擊率 / Infinite Precision：暴擊將造成250%傷害，而非200%傷害。"
 gold_total: 3800
 gold_base: 645
 aram: true

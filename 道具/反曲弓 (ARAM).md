@@ -3,6 +3,7 @@ type: "item"
 id: 771043
 name: "反曲弓"
 tags: ["AttackSpeed"]
+desc: "30% 攻擊速度"
 gold_total: 900
 gold_base: 900
 aram: true

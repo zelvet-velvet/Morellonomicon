@@ -3,6 +3,7 @@ type: "item"
 id: 771031
 name: "鎖子甲"
 tags: ["Armor"]
+desc: "40 物理防禦"
 gold_total: 720
 gold_base: 720
 aram: true

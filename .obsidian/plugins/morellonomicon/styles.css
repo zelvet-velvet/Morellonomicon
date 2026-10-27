@@ -164,3 +164,36 @@ button.mn-skill-box.is-on { box-shadow: 0 0 0 3px color-mix(in srgb, var(--chip)
 .mn-tab-l { font-size: 10px; font-weight: 600; }
 .mn-tab.is-on { color: var(--mn-accent); }
 .mn-tab.is-on .mn-ic { background: color-mix(in srgb, var(--mn-accent) 16%, transparent); }
+
+/* champion card sub-tabs */
+.mn-chips-top { margin: -6px 0 6px; }
+.mn-seg { display: flex; gap: 4px; padding: 4px; margin: 4px 0 6px; border-radius: 14px; background: var(--mn-card); border: 1px solid var(--mn-line); }
+.mn-seg-b { flex: 1; padding: 8px 0; border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--mn-muted); }
+.mn-seg-b.is-on { background: var(--mn-bg); color: var(--mn-text); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18); }
+
+/* build sets */
+.mn-set { background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: var(--mn-radius); padding: 12px 14px; margin: 10px 0; }
+.mn-set-t { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+.mn-set-m { font-size: 12px; color: var(--mn-muted); margin-top: 8px; }
+.mn-set-n { font-size: 13px; color: var(--mn-muted); margin-top: 8px; line-height: 1.5; }
+.mn-items { display: flex; flex-wrap: wrap; gap: 8px; }
+.mn-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.mn-item img { width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--mn-line); background: var(--mn-card-hi); }
+.mn-item.is-on img { border-color: var(--mn-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--mn-accent) 30%, transparent); }
+.mn-item-c { font-size: 10px; color: var(--mn-muted); }
+.mn-item-panel { display: none; margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--mn-card-hi); }
+.mn-item-panel.is-open { display: block; animation: mn-pop 0.16s ease-out; }
+.mn-ip-head { display: flex; justify-content: space-between; gap: 8px; }
+.mn-ip-name { font-weight: 700; }
+.mn-ip-gold { color: var(--color-yellow); font-weight: 600; font-variant-numeric: tabular-nums; }
+.mn-with { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.mn-with-b { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: 999px; background: var(--mn-card-hi); font-size: 12px; }
+.mn-with-b img { width: 24px; height: 24px; border-radius: 50%; }
+
+/* tips */
+.mn-tip { display: flex; gap: 12px; background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: var(--mn-radius); padding: 12px 14px; margin: 10px 0; }
+.mn-tip-ic { flex: none; display: flex; color: var(--color-yellow); }
+.mn-tip-ic svg { width: 20px; height: 20px; }
+.mn-tip-t { font-weight: 700; margin-bottom: 2px; }
+.mn-tip-s { font-size: 14px; line-height: 1.55; color: var(--mn-text); }
+.mn-tip-v { margin-top: 6px; font-size: 13px; color: var(--mn-accent); font-weight: 600; }

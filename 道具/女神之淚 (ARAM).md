@@ -3,6 +3,7 @@ type: "item"
 id: 773070
 name: "女神之淚"
 tags: ["Mana", "ManaRegen"]
+desc: "250 魔力 / 每5秒+7魔力回復 / 魔力補充：每次施放技能與消耗魔力時，獲得4最大魔力(最多750魔力，每4秒最多2次)。"
 gold_total: 700
 gold_base: 120
 aram: true

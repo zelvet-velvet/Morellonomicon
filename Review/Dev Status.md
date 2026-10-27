@@ -20,6 +20,8 @@ sticker: lucide//activity
 - **Mayhem augments**: `tools/fetch_augments.py` writes 249 augment notes (`強化/`: 銀 71, 金 104, 稜鏡 74) from CommunityDragon's KIWI pool with zh_TW names, rarity and icons; the plugin has an Augments list (Mayhem home → Augments).
 - **Skill panel**: tap a skill icon on the champion card to open its details under the strip: damage types, cooldown, cost, range (hidden when meaningless), description, an 進化 / 升級 block for skills that evolve (Kha'Zix, Kai'Sa, Heimerdinger… found by wording in Riot's text) and Riot's ability demo clip; the "Full note" row is gone.
 - **Skill numbers by rank**: `tools/spells.py` reads CommunityDragon's game data and gives every skill a rank grid (damage / heal / shield with its scaling, cooldown, cost); 94% of the damaging skills (531 of 565) have numbers, anything unresolved is left out, never guessed; costs that are not plain resource points (% health, per second) use Riot's own wording or are left out.
+- **App restructure**: tabs are now Champions · Augments · Learn (Items tab dropped; typing in the Champions search also finds augments and items). A champion card has sub-tabs Skills · Build · Augments (Runes in Rift) · Tips. Mayhem / Rift stays a mode switch (top right). Learn is six short beginner cards from `新手入門/`.
+- **Builds**: Build sub-tab shows counted builds (games, win rate, top core sets, most common items, tap an item for its effect) plus hand-written alternative / synergy builds; Tips shows hand-written cards. `tools/fetch_builds.py` counts real Mayhem matches from Riot's Match-V5 (queue 2400); its counting is tested on made-up matches only, the Riot calls are not tested yet.
 - **Workflow**: Copied the LLM Guide, Dev Status / Dev Log / Day note from clawd-room, simplified for a solo project (commit to `main`, no PRs) and added a Start Guide.
 
 ## 📅 Yesterday's Progress (—)
@@ -40,6 +42,11 @@ sticker: lucide//activity
 ### 🔢 Skill numbers
 - [ ] **Unresolved damage (34 skills)**: level-based or conditional formulas (Kha'Zix Q, Jhin, Jayce… ); check a few against the in-game tooltip and extend `tools/spells.py` where it is cheap.
 - [ ] **Stat codes**: only 0 (AP) and 2 (AD, formula 2 = bonus) are named; other stats show as "+其他加成" (66 rows) until their codes are confirmed.
+
+### 🧮 Match data
+- [ ] **First real run**: needs a Riot key in `.env` (`RIOT_API_KEY=RGAPI-...`) and a seed Riot ID; `python3 tools/fetch_builds.py --seed "Name#TW2" --matches 300`. A development key expires every 24 hours; a personal key does not. Check that the augment ids in the matches match the notes' ids and that final items include the ARAM `77NNNN` ids.
+- [ ] **Hand-written builds and tips**: `builds` (kind meta / alt / synergy, mode, name, items, note, with) and `tips` (title, text, video) in a champion note's frontmatter; none written yet.
+- [ ] **Augments sub-tab**: use the counted augment picks (and `fits`) once there is data.
 
 ### 🎬 Videos
 - [>] **Skill demo clips**: played from Riot's ability CDN (`champion-abilities/<key>/ability_<key>_Q1.mp4`); unofficial path, so check on the phone (iOS plays the mp4) and that a missing clip just disappears.

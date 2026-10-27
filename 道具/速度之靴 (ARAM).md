@@ -3,6 +3,7 @@ type: "item"
 id: 771001
 name: "速度之靴"
 tags: ["Boots"]
+desc: "僅限1件 / 強化跑速：25跑速"
 gold_total: 325
 gold_base: 325
 aram: true

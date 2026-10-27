@@ -3,6 +3,7 @@ type: "item"
 id: 771027
 name: "藍水晶"
 tags: ["Mana"]
+desc: "200 魔力 / 「有人說藍寶石是古典魔法的起源。」"
 gold_total: 400
 gold_base: 400
 aram: true

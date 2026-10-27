@@ -3,6 +3,7 @@ type: "item"
 id: 773504
 name: "熾灼魔器"
 tags: ["AttackSpeed", "SpellDamage", "ManaRegen", "NonbootsMovement", "AbilityHaste"]
+desc: "40 魔法攻擊 / 10%冷卻時間減免 / 每5秒+10魔力回復 / 專心致志：8%跑速 / 熾熱蒸氣：賦予其他單位治療和護盾時，使其提升25%攻速，持續6秒。不包含回復效果或對自身產生的效果。"
 gold_total: 2200
 gold_base: 895
 aram: true

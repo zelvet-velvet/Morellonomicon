@@ -3,6 +3,7 @@ type: "item"
 id: 773115
 name: "納什之牙"
 tags: ["AttackSpeed", "SpellDamage", "CooldownReduction"]
+desc: "65 魔法攻擊 / 50% 攻擊速度 / 20%冷卻時間減免"
 gold_total: 2500
 gold_base: 430
 aram: true

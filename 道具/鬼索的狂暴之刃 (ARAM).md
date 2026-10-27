@@ -3,6 +3,7 @@ type: "item"
 id: 773124
 name: "鬼索的狂暴之刃"
 tags: ["Damage", "AttackSpeed", "LifeSteal", "SpellDamage", "OnHit", "SpellVamp"]
+desc: "30 物理攻擊 / 40 魔法攻擊 / 狂怒增長：普攻(攻擊時)和施放技能賦予4%攻速和4魔攻，持續8秒(最多累加8層)。 / 狂暴：生命低於50%時，獲得20%攻速、10%普攻吸血和10%技能吸血，直到脫離戰鬥(冷卻時間30秒)。"
 gold_total: 2600
 gold_base: 865
 aram: true

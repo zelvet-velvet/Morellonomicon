@@ -3,9 +3,8 @@ import type MorellonomiconPlugin from "../main";
 import type { Frame } from "../router";
 import type { TabId } from "../modes";
 import { championsPage } from "./champions";
-import { guidePage } from "./guide";
-import { homePage } from "./home";
-import { itemsPage } from "./items";
+import { augmentsPage } from "./augments";
+import { learnPage } from "./learn";
 
 export interface PageOut { title: string; el: HTMLElement }
 export interface PageCtx {
@@ -21,8 +20,7 @@ export type PageRender = (ctx: PageCtx) => PageOut;
 
 // One renderer per tab. A page branches on the mode (ctx.plugin.settings.mode) where Mayhem and Rift differ.
 export const PAGES: Record<TabId, PageRender> = {
-    home: homePage,
     champions: championsPage,
-    items: itemsPage,
-    guide: guidePage,
+    augments: augmentsPage,
+    learn: learnPage,
 };

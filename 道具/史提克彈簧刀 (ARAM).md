@@ -3,6 +3,7 @@ type: "item"
 id: 773087
 name: "史提克彈簧刀"
 tags: ["CriticalStrike", "AttackSpeed", "NonbootsMovement", "OnHit"]
+desc: "40% 攻擊速度 / 20% 暴擊率 / 6% 跑速 / 史提克彈跳：移動或普攻時會獲得靜電充能。當充能達到100時，普攻會消耗所有充能，對至多4個目標造成100額外魔法傷害(此傷害可暴擊)。"
 gold_total: 2500
 gold_base: 525
 aram: true

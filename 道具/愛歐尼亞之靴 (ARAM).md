@@ -3,6 +3,7 @@ type: "item"
 id: 773158
 name: "愛歐尼亞之靴"
 tags: ["Boots", "CooldownReduction"]
+desc: "輕盈步伐：15%冷卻時間減免 / 強化跑速：45跑速 / 「此道具用於紀念聯盟曆20年12月10日，愛歐尼亞在南部領土爭奪戰的再戰中擊敗諾克薩斯所獲得的勝利。」"
 gold_total: 1000
 gold_base: 675
 aram: true

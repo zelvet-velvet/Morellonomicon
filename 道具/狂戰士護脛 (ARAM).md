@@ -3,6 +3,7 @@ type: "item"
 id: 773006
 name: "狂戰士護脛"
 tags: ["AttackSpeed", "Boots"]
+desc: "20% 攻擊速度 / 強化跑速：45跑速"
 gold_total: 900
 gold_base: 175
 aram: true

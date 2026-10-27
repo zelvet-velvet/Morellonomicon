@@ -3,6 +3,7 @@ type: "item"
 id: 771055
 name: "多蘭之劍"
 tags: ["Health", "Damage", "LifeSteal", "OnHit"]
+desc: "80 生命 / 10 物理攻擊 / 被動：普攻命中時回復5點生命。"
 gold_total: 475
 gold_base: 475
 aram: true

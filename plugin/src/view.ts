@@ -64,8 +64,8 @@ export class MnView extends ItemView {
         menu.showAtMouseEvent(e);
     }
 
-    private tabLabel(id: TabId): string { return id === "home" ? MODES[this.plugin.settings.mode].label : TAB_LABEL[id]; }
-    private tabIcon(id: TabId): string { return id === "home" ? MODES[this.plugin.settings.mode].icon : TAB_ICON[id]; }
+    private tabLabel(id: TabId): string { return TAB_LABEL[id]; }
+    private tabIcon(id: TabId): string { return TAB_ICON[id]; }
 
     buildTabs(): void {
         const tabs = MODES[this.plugin.settings.mode].tabs;

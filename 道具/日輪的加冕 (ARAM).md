@@ -3,6 +3,7 @@ type: "item"
 id: 773190
 name: "日輪的加冕"
 tags: ["Health", "HealthRegen", "Armor", "Aura"]
+desc: "300 生命 / 35 物理防禦 / 日輪韌性：每5秒賦予鄰近友方英雄15生命回復。主動60秒 / 賦予鄰近友軍一道最多可吸收0傷害的護盾，持續5秒。"
 gold_total: 2225
 gold_base: 750
 aram: true

@@ -3,6 +3,7 @@ type: "item"
 id: 771036
 name: "長劍"
 tags: ["Damage"]
+desc: "10 物理攻擊"
 gold_total: 400
 gold_base: 400
 aram: true

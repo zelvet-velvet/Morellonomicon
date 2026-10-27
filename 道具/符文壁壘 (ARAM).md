@@ -3,6 +3,7 @@ type: "item"
 id: 773107
 name: "符文壁壘"
 tags: ["Health", "SpellBlock", "HealthRegen", "Armor", "Aura"]
+desc: "300 生命 / 20 物理防禦 / 30 魔法防禦 / 靈氣－軍團：賦予鄰近友軍10物防和25魔防。此效果在友方士兵身上提升50%。"
 gold_total: 2950
 gold_base: 400
 aram: true

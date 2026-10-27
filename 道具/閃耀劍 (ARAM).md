@@ -3,6 +3,7 @@ type: "item"
 id: 773057
 name: "閃耀劍"
 tags: ["SpellDamage", "Mana"]
+desc: "200 魔力 / 25 魔法攻擊 / 魔法彎刀：施放技能後，下一次普攻命中時會對敵軍造成額外物理傷害，數值等同於物理傷害(2秒冷卻時間)。"
 gold_total: 1200
 gold_base: 365
 aram: true

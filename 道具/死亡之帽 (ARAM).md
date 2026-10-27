@@ -3,6 +3,7 @@ type: "item"
 id: 773089
 name: "死亡之帽"
 tags: ["SpellDamage"]
+desc: "120 魔法攻擊 / 魔法心血：增加30%魔攻。"
 gold_total: 3300
 gold_base: 840
 aram: true

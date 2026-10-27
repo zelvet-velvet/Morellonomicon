@@ -3,6 +3,7 @@ type: "item"
 id: 773211
 name: "亡靈斗篷"
 tags: ["Health", "SpellBlock", "HealthRegen"]
+desc: "200 生命 / 45 魔法防禦 / 暗影修復：受到敵方英雄的傷害後，每5秒獲得15生命回復，最多持續10秒。"
 gold_total: 1400
 gold_base: 205
 aram: true

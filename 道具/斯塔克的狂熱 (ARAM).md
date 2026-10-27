@@ -3,6 +3,7 @@ type: "item"
 id: 773050
 name: "斯塔克的狂熱"
 tags: ["Health", "Damage", "LifeSteal", "CooldownReduction", "Aura"]
+desc: "250 生命 / 20%冷卻時間減免 / 靈氣－凱旋：賦予鄰近友方英雄10%普攻吸血和20物攻。"
 gold_total: 2550
 gold_base: 900
 aram: true

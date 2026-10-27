@@ -3,6 +3,7 @@ type: "item"
 id: 773144
 name: "比爾吉沃特彎刀"
 tags: ["Damage", "LifeSteal", "Slow"]
+desc: "25 物理攻擊 / 12% 普攻吸血 / 主動90秒 / 對目標英雄造成100魔法傷害，並使其跑速減緩25%，持續2秒。"
 gold_total: 1400
 gold_base: 200
 aram: true

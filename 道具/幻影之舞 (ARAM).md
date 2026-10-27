@@ -3,6 +3,7 @@ type: "item"
 id: 773046
 name: "幻影之舞"
 tags: ["CriticalStrike", "AttackSpeed", "NonbootsMovement"]
+desc: "50% 攻擊速度 / 30% 暴擊率 / 5% 跑速 / 幽靈華爾滋：英雄可以穿越單位。"
 gold_total: 2800
 gold_base: 495
 aram: true

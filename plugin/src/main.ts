@@ -39,6 +39,7 @@ export default class MorellonomiconPlugin extends Plugin {
         this.registerEvent(this.app.workspace.on("layout-change", () => this.updateBody()));
 
         this.app.workspace.onLayoutReady(() => {
+            void this.store.loadStats().then(() => this.views().forEach((v) => v.refresh()));
             if (this.settings.openOnStartup) void this.activate(true);
             this.updateBody();
         });
@@ -68,7 +69,7 @@ export default class MorellonomiconPlugin extends Plugin {
 
     private dataChanged(): void {
         window.clearTimeout(this.dataTimer);
-        this.dataTimer = window.setTimeout(() => { this.store.invalidate(); this.views().forEach((v) => v.refresh()); }, 300);
+        this.dataTimer = window.setTimeout(() => { this.store.invalidate(); void this.store.loadStats().then(() => this.views().forEach((v) => v.refresh())); }, 300);
     }
 
     // Show the app: the existing screen if there is one, else in the current tab (start-up, phone) or a new tab (desktop).
@@ -100,6 +101,7 @@ export default class MorellonomiconPlugin extends Plugin {
 
     async saveSettings(): Promise<void> {
         await this.saveData(this.settings);
+        await this.store.loadStats();
         this.views().forEach((v) => v.refresh(true));
     }
 }

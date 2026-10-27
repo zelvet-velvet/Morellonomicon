@@ -3,6 +3,7 @@ type: "item"
 id: 773102
 name: "女妖面紗"
 tags: ["Health", "SpellBlock", "HealthRegen"]
+desc: "450 生命 / 55 魔法防禦 / 難以捉摸：獲得一道法術護盾，可阻擋下一個敵方技能。若在25秒內未受到敵方英雄的傷害，此護盾會重置。 / 暗影修復：受到敵方英雄的傷害或法術護盾破裂後，每5秒獲得45生命回復，最多持續10秒。"
 gold_total: 2750
 gold_base: 875
 aram: true

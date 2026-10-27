@@ -3,6 +3,7 @@ type: "item"
 id: 771058
 name: "巨型魔棒"
 tags: ["SpellDamage"]
+desc: "80 魔法攻擊"
 gold_total: 1600
 gold_base: 1600
 aram: true

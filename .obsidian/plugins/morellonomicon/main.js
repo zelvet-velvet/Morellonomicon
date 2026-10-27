@@ -30,12 +30,12 @@ var import_obsidian = require("obsidian");
 
 // src/modes.ts
 var MODES = {
-  mayhem: { id: "mayhem", label: "Mayhem", icon: "zap", enabled: true, itemFlag: "aram", tabs: ["home", "champions", "items", "guide"] },
-  rift: { id: "rift", label: "Rift", icon: "map", enabled: false, itemFlag: "rift", tabs: ["home", "champions", "items", "guide"] }
+  mayhem: { id: "mayhem", label: "Mayhem", icon: "zap", enabled: true, itemFlag: "aram", tabs: ["champions", "augments", "learn"] },
+  rift: { id: "rift", label: "Rift", icon: "map", enabled: false, itemFlag: "rift", tabs: ["champions", "learn"] }
 };
 var MODE_ORDER = ["mayhem", "rift"];
-var TAB_LABEL = { champions: "Champions", items: "Items", guide: "Guide" };
-var TAB_ICON = { champions: "users", items: "package", guide: "book-open" };
+var TAB_LABEL = { champions: "Champions", augments: "Augments", learn: "Learn" };
+var TAB_ICON = { champions: "users", augments: "sparkles", learn: "graduation-cap" };
 
 // src/data/store.ts
 var str = (v, d = "") => typeof v === "string" ? v : d;
@@ -43,6 +43,17 @@ var num = (v, d = 0) => typeof v === "number" ? v : d;
 var rowList = (v) => Array.isArray(v) ? v.flatMap((x) => {
   const o = x;
   return o && typeof o === "object" ? [{ label: str(o.label), vals: list(o.vals), note: str(o.note) }] : [];
+}) : [];
+var numList = (v) => Array.isArray(v) ? v.filter((x) => typeof x === "number") : [];
+var buildList = (v) => Array.isArray(v) ? v.flatMap((x) => {
+  const o = x;
+  if (!o || typeof o !== "object") return [];
+  const kind = o.kind === "alt" || o.kind === "synergy" ? o.kind : "meta";
+  return [{ kind, mode: str(o.mode, "mayhem"), name: str(o.name), items: numList(o.items), note: str(o.note), with: list(o.with) }];
+}) : [];
+var tipList = (v) => Array.isArray(v) ? v.flatMap((x) => {
+  const o = x;
+  return o && typeof o === "object" ? [{ title: str(o.title), text: str(o.text), video: str(o.video) }] : [];
 }) : [];
 var skillList = (v) => Array.isArray(v) ? v.flatMap((x) => {
   const o = x;
@@ -55,12 +66,22 @@ var Store = class {
     this.champs = null;
     this.its = null;
     this.augs = null;
+    this.stats = null;
   }
   get app() {
     return this.plugin.app;
   }
   get s() {
     return this.plugin.settings;
+  }
+  // The counted builds for the current mode, if tools/fetch_builds.py has made them (read from the vault's _data folder)
+  async loadStats(mode = this.s.mode) {
+    try {
+      const path = (0, import_obsidian.normalizePath)(`_data/builds.${mode}.json`);
+      this.stats = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)) : null;
+    } catch {
+      this.stats = null;
+    }
   }
   invalidate() {
     this.champs = null;
@@ -69,7 +90,7 @@ var Store = class {
   }
   inData(path) {
     const s = this.s;
-    return [s.championFolder, s.itemFolder, s.guideFolder, s.augmentFolder].some((f) => path.startsWith((0, import_obsidian.normalizePath)(f) + "/"));
+    return path.startsWith("_data/") || [s.championFolder, s.itemFolder, s.guideFolder, s.augmentFolder].some((f) => path.startsWith((0, import_obsidian.normalizePath)(f) + "/"));
   }
   notes(folder) {
     const prefix = (0, import_obsidian.normalizePath)(folder) + "/";
@@ -104,6 +125,8 @@ var Store = class {
         pinned: list(fm.pinned),
         avoid: list(fm.avoid),
         video: typeof fm.video === "string" ? fm.video : void 0,
+        builds: buildList(fm.builds),
+        tips: tipList(fm.tips),
         path: file.path
       })).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
     }
@@ -119,6 +142,7 @@ var Store = class {
         id: num(fm.id),
         name: str(fm.name, file.basename),
         tags: list(fm.tags),
+        desc: str(fm.desc),
         goldTotal: num(fm.gold_total),
         aram: fm.aram === true,
         rift: fm.rift === true,
@@ -151,8 +175,9 @@ var Store = class {
     }
     return this.augs;
   }
+  // The Learn cards: notes in the guide folder, ordered by their `order` (then name); `icon` and `summary` come from frontmatter
   guideNotes() {
-    return this.notes(this.s.guideFolder).map((n) => n.file).sort((a, b) => a.path.localeCompare(b.path, "zh-Hant"));
+    return this.notes(this.s.guideFolder).map(({ file, fm }) => ({ file, title: file.basename, icon: str(fm.icon, "file-text"), summary: str(fm.summary), order: num(fm.order, 99) })).sort((a, b) => a.order - b.order || a.title.localeCompare(b.title, "zh-Hant"));
   }
 };
 
@@ -162,7 +187,7 @@ var STACK_TTL = 30 * 60 * 1e3;
 var Router = class {
   constructor(app) {
     this.app = app;
-    this.tab = "home";
+    this.tab = "champions";
     this.stacks = {};
     try {
       const s = this.app.loadLocalStorage(KEY);
@@ -175,7 +200,7 @@ var Router = class {
   }
   // the open tab must exist in the current mode
   fix(tabs) {
-    if (!tabs.includes(this.tab)) this.tab = tabs[0] ?? "home";
+    if (!tabs.includes(this.tab)) this.tab = tabs[0] ?? "champions";
   }
   reset() {
     this.stacks = {};
@@ -371,111 +396,98 @@ var empty = (parent, o) => {
   return box;
 };
 
-// src/pages/champions.ts
-var ROLES = ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u5C04\u624B", "\u8F14\u52A9"];
-var DAMAGES = ["\u7269\u7406", "\u9B54\u6CD5", "\u6DF7\u5408"];
-function championPicker(parent, ctx, withFilters) {
-  const all = ctx.plugin.store.champions();
-  if (!all.length) {
-    empty(parent, { icon: "database", title: "No champion notes yet", text: "Run python3 tools/fetch_data.py" });
-    return;
+// src/pages/build.ts
+var TOP_SETS = 3;
+var TOP_ITEMS = 8;
+var pct = (wins, games) => games ? Math.round(wins / games * 100) : 0;
+function buildTab(body, c, ctx) {
+  const store = ctx.plugin.store;
+  const mode = ctx.plugin.settings.mode;
+  const stats = store.stats?.champions[c.id];
+  const mine = c.builds.filter((b) => b.mode === mode);
+  const meta = mine.filter((b) => b.kind === "meta");
+  const alt = mine.filter((b) => b.kind === "alt");
+  const synergy = mine.filter((b) => b.kind === "synergy");
+  if (stats || meta.length) {
+    section(body, "\u5E38\u7528");
+    if (stats) {
+      const top = h(body, "div", "mn-chips");
+      chip(top, `${stats.games} \u5834`);
+      chip(top, `\u52DD\u7387 ${pct(stats.wins, stats.games)}%`, { color: "var(--color-green)" });
+      if (store.stats?.date) chip(top, store.stats.date);
+      for (const s of stats.sets.slice(0, TOP_SETS)) {
+        const card2 = h(body, "div", "mn-set");
+        itemRow(card2, c, ctx, s.items);
+        h(card2, "div", "mn-set-m", `${s.games} \u5834 \xB7 \u52DD\u7387 ${pct(s.wins, s.games)}%`);
+      }
+      const card = h(body, "div", "mn-set");
+      h(card, "div", "mn-set-t", "\u6700\u5E38\u51FA\u7684\u88DD\u5099");
+      itemRow(card, c, ctx, stats.items.slice(0, TOP_ITEMS).map((i) => i.id), stats.items.slice(0, TOP_ITEMS).map((i) => `${pct(i.games, stats.games)}%`));
+    }
+    for (const b of meta) setCard(body, c, ctx, b);
   }
-  let query = "", role = "", dmg = "";
-  const box = h(parent, "div", "mn-search");
-  icon(box, "search", "mn-search-ic");
-  const search = h(box, "input");
-  search.type = "search";
-  search.placeholder = "Search";
-  search.setAttribute("enterkeyhint", "search");
-  let filters = null;
-  if (withFilters) filters = h(parent, "div", "mn-chips");
-  const grid = h(parent, "div", "mn-grid");
-  const drawGrid = () => {
-    grid.empty();
-    const q = query.trim().toLowerCase();
-    const hits = all.filter((c) => (!role || c.roles.includes(role)) && (!dmg || c.damageType === dmg) && (!q || c.name.toLowerCase().includes(q) || c.title.toLowerCase().includes(q) || c.id.toLowerCase().includes(q)));
-    for (const c of hits) {
-      const tile = h(grid, "button", "mn-tile");
-      const im = h(tile, "img");
-      im.src = c.icon;
-      im.loading = "lazy";
+  if (alt.length) {
+    section(body, "\u6709\u8DA3\u66FF\u4EE3");
+    for (const b of alt) setCard(body, c, ctx, b);
+  }
+  if (synergy.length) {
+    section(body, "\u642D\u914D");
+    for (const b of synergy) setCard(body, c, ctx, b);
+  }
+  if (!stats && !mine.length) empty(body, { icon: "package-open", title: "No builds yet", text: "Match data and hand-written builds appear here." });
+}
+function section(body, title) {
+  h(body, "div", "mn-gh", title);
+}
+function setCard(body, c, ctx, b) {
+  const card = h(body, "div", "mn-set");
+  if (b.name) h(card, "div", "mn-set-t", b.name);
+  if (b.with.length) {
+    const row2 = h(card, "div", "mn-with");
+    for (const id of b.with) {
+      const mate = ctx.plugin.store.champion(id);
+      const btn = h(row2, "button", "mn-with-b");
+      const im = h(btn, "img");
+      im.src = mate?.icon ?? "";
       im.alt = "";
-      h(tile, "span", "mn-tile-n", c.name);
-      tile.addEventListener("click", (e) => {
+      h(btn, "span", "", mate?.name ?? id);
+      if (mate) btn.addEventListener("click", (e) => {
         e.preventDefault();
-        ctx.push({ key: "champion", title: c.name, params: { id: c.id } });
+        ctx.push({ key: "champion", title: mate.name, params: { id: mate.id } });
       });
     }
-    if (!hits.length) empty(grid, { icon: "search-x", title: "No match" });
-  };
-  const drawFilters = () => {
-    if (!filters) return;
-    filters.empty();
-    for (const r of ROLES) chip(filters, r, { on: role === r, onTap: () => {
-      role = role === r ? "" : r;
-      drawFilters();
-      drawGrid();
-    } });
-    for (const d of DAMAGES) chip(filters, d, { on: dmg === d, color: DAMAGE_COLOR[d], onTap: () => {
-      dmg = dmg === d ? "" : d;
-      drawFilters();
-      drawGrid();
-    } });
-  };
-  search.addEventListener("input", () => {
-    query = search.value;
-    drawGrid();
+  }
+  itemRow(card, c, ctx, b.items);
+  if (b.note) h(card, "div", "mn-set-n", b.note);
+}
+function itemRow(parent, c, ctx, ids, captions = []) {
+  const store = ctx.plugin.store;
+  const row2 = h(parent, "div", "mn-items");
+  const panel = h(parent, "div", "mn-item-panel");
+  let open = -1;
+  ids.forEach((id, i) => {
+    const item = store.item(id);
+    const btn = h(row2, "button", "mn-item");
+    const im = h(btn, "img");
+    im.src = item?.icon || `https://ddragon.leagueoflegends.com/cdn/${c.patch}/img/item/${id}.png`;
+    im.alt = item?.name ?? String(id);
+    if (captions[i]) h(btn, "span", "mn-item-c", captions[i]);
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      open = open === i ? -1 : i;
+      row2.querySelectorAll(".mn-item").forEach((b, j) => b.toggleClass("is-on", j === open));
+      panel.empty();
+      panel.toggleClass("is-open", open >= 0);
+      if (open < 0) return;
+      const head = h(panel, "div", "mn-ip-head");
+      h(head, "span", "mn-ip-name", item?.name ?? `#${id}`);
+      if (item) h(head, "span", "mn-ip-gold", `${item.goldTotal}`);
+      if (item?.desc) h(panel, "p", "mn-sd-desc", item.desc);
+    });
   });
-  drawFilters();
-  drawGrid();
 }
-function championsPage(ctx) {
-  if (ctx.frame.key === "champion") return championCard(ctx);
-  const el = page("Champions");
-  championPicker(el, ctx, true);
-  return { title: "Champions", el };
-}
-function championCard(ctx) {
-  const c = ctx.plugin.store.champion(String(ctx.frame.params?.id ?? ""));
-  const el = h(null, "div", "mn-page");
-  if (!c) {
-    empty(el, { icon: "user-x", title: "Champion not found" });
-    return { title: "", el };
-  }
-  const dmgColor = DAMAGE_COLOR[c.damageType] ?? "var(--interactive-accent)";
-  const hero = h(el, "div", "mn-hero");
-  const bg = h(hero, "div", "mn-hero-bg");
-  bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
-  const head = h(hero, "div", "mn-card-head");
-  const im = h(head, "img", "mn-card-img");
-  im.src = c.icon;
-  im.alt = "";
-  const who = h(head, "div", "mn-card-who");
-  h(who, "h1", "mn-title", c.name);
-  h(who, "div", "mn-card-sub", c.title);
-  const tags = h(who, "div", "mn-chips");
-  for (const r of c.roles) chip(tags, r);
-  chip(tags, c.damageType, { color: dmgColor });
-  const panel = h(el, "div", "mn-panel");
-  radar(panel, [
-    { label: "\u7269\u7406", value: c.attack },
-    { label: "\u9B54\u6CD5", value: c.magic },
-    { label: "\u9632\u79A6", value: c.defense },
-    { label: "\u5C04\u7A0B", value: Math.min(10, Math.round(c.range / 65)) },
-    { label: "\u96E3\u5EA6", value: c.difficulty }
-  ], 10, dmgColor);
-  skillStrip(el, c);
-  if (c.archetypes.length || c.features.length) {
-    const tg = h(el, "div", "mn-chips");
-    for (const a of c.archetypes) chip(tg, a);
-    for (const f of c.features) chip(tg, f, { color: "var(--color-cyan)" });
-  }
-  const mode = MODES[ctx.plugin.settings.mode];
-  const g = group(el, mode.id === "mayhem" ? "Augments" : "Build");
-  row(g, { icon: mode.id === "mayhem" ? "sparkles" : "swords", title: mode.id === "mayhem" ? "Best augments" : "Core build", value: "Soon", muted: true });
-  if (c.video) row(group(el), { icon: "play-circle", title: "Combo video", chevron: true, onTap: () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video)}`) });
-  return { title: c.name, el };
-}
+
+// src/pages/skills.ts
 function skillStrip(parent, c) {
   if (!c.skills.length) return;
   const strip = h(parent, "div", "mn-skills");
@@ -569,17 +581,167 @@ function rankTable(parent, s) {
   }
 }
 
-// src/pages/guide.ts
-function guidePage(ctx) {
-  const el = page("Guide");
-  const notes = ctx.plugin.store.guideNotes();
-  if (!notes.length) {
-    empty(el, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." });
-    return { title: "Guide", el };
+// src/pages/champions.ts
+var ROLES = ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u5C04\u624B", "\u8F14\u52A9"];
+var DAMAGES = ["\u7269\u7406", "\u9B54\u6CD5", "\u6DF7\u5408"];
+var SEARCH_EXTRA = 8;
+function championPicker(parent, ctx) {
+  const store = ctx.plugin.store;
+  const all = store.champions();
+  if (!all.length) {
+    empty(parent, { icon: "database", title: "No champion notes yet", text: "Run python3 tools/fetch_data.py" });
+    return;
   }
-  const g = group(el);
-  for (const n of notes) row(g, { icon: "file-text", title: n.basename, chevron: true, onTap: () => ctx.openNote(n.path) });
-  return { title: "Guide", el };
+  let query = "", role = "", dmg = "";
+  const box = h(parent, "div", "mn-search");
+  icon(box, "search", "mn-search-ic");
+  const search = h(box, "input");
+  search.type = "search";
+  search.placeholder = "Search champions, augments, items";
+  search.setAttribute("enterkeyhint", "search");
+  const filters = h(parent, "div", "mn-chips");
+  const grid = h(parent, "div", "mn-grid");
+  const extra = h(parent, "div");
+  const draw = () => {
+    grid.empty();
+    extra.empty();
+    const q = query.trim().toLowerCase();
+    const hits = all.filter((c) => (!role || c.roles.includes(role)) && (!dmg || c.damageType === dmg) && (!q || c.name.toLowerCase().includes(q) || c.title.toLowerCase().includes(q) || c.id.toLowerCase().includes(q)));
+    for (const c of hits) {
+      const tile = h(grid, "button", "mn-tile");
+      const im = h(tile, "img");
+      im.src = c.icon;
+      im.loading = "lazy";
+      im.alt = "";
+      h(tile, "span", "mn-tile-n", c.name);
+      tile.addEventListener("click", (e) => {
+        e.preventDefault();
+        ctx.push({ key: "champion", title: c.name, params: { id: c.id } });
+      });
+    }
+    if (!q) return;
+    if (!hits.length) empty(grid, { icon: "search-x", title: "No champion" });
+    const augs = ctx.plugin.settings.mode === "mayhem" ? store.augments().filter((a) => a.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA) : [];
+    if (augs.length) {
+      const g = group(extra, "Augments");
+      for (const a of augs) row(g, { image: a.icon, title: a.name, value: a.rarity, chevron: true, onTap: () => ctx.openNote(a.path) });
+    }
+    const items = store.modeItems().filter((i) => i.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA);
+    if (items.length) {
+      const g = group(extra, "Items");
+      for (const i of items) row(g, { image: i.icon, title: i.name, sub: i.desc || void 0, value: `${i.goldTotal}`, chevron: true, onTap: () => ctx.openNote(i.path) });
+    }
+  };
+  const drawFilters = () => {
+    filters.empty();
+    for (const r of ROLES) chip(filters, r, { on: role === r, onTap: () => {
+      role = role === r ? "" : r;
+      drawFilters();
+      draw();
+    } });
+    for (const d of DAMAGES) chip(filters, d, { on: dmg === d, color: DAMAGE_COLOR[d], onTap: () => {
+      dmg = dmg === d ? "" : d;
+      drawFilters();
+      draw();
+    } });
+  };
+  search.addEventListener("input", () => {
+    query = search.value;
+    draw();
+  });
+  drawFilters();
+  draw();
+}
+function championsPage(ctx) {
+  if (ctx.frame.key === "champion") return championCard(ctx);
+  const mode = MODES[ctx.plugin.settings.mode];
+  const el = page("Champions");
+  chip(h(el, "div", "mn-chips mn-chips-top"), mode.label, { color: "var(--interactive-accent)" });
+  championPicker(el, ctx);
+  return { title: "Champions", el };
+}
+var lastSub = /* @__PURE__ */ new Map();
+function championCard(ctx) {
+  const c = ctx.plugin.store.champion(String(ctx.frame.params?.id ?? ""));
+  const el = h(null, "div", "mn-page");
+  if (!c) {
+    empty(el, { icon: "user-x", title: "Champion not found" });
+    return { title: "", el };
+  }
+  const dmgColor = DAMAGE_COLOR[c.damageType] ?? "var(--interactive-accent)";
+  const hero = h(el, "div", "mn-hero");
+  const bg = h(hero, "div", "mn-hero-bg");
+  bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
+  const head = h(hero, "div", "mn-card-head");
+  const im = h(head, "img", "mn-card-img");
+  im.src = c.icon;
+  im.alt = "";
+  const who = h(head, "div", "mn-card-who");
+  h(who, "h1", "mn-title", c.name);
+  h(who, "div", "mn-card-sub", c.title);
+  const tags = h(who, "div", "mn-chips");
+  for (const r of c.roles) chip(tags, r);
+  chip(tags, c.damageType, { color: dmgColor });
+  const panel = h(el, "div", "mn-panel");
+  radar(panel, [
+    { label: "\u7269\u7406", value: c.attack },
+    { label: "\u9B54\u6CD5", value: c.magic },
+    { label: "\u9632\u79A6", value: c.defense },
+    { label: "\u5C04\u7A0B", value: Math.min(10, Math.round(c.range / 65)) },
+    { label: "\u96E3\u5EA6", value: c.difficulty }
+  ], 10, dmgColor);
+  const mayhem = ctx.plugin.settings.mode === "mayhem";
+  const tabs = [["skills", "Skills"], ["build", "Build"], ["augments", mayhem ? "Augments" : "Runes"], ["tips", "Tips"]];
+  const seg = h(el, "div", "mn-seg");
+  const body = h(el, "div", "mn-sub");
+  const show = (t) => {
+    lastSub.set(c.id, t);
+    seg.querySelectorAll(".mn-seg-b").forEach((b) => b.toggleClass("is-on", b.dataset.t === t));
+    body.empty();
+    if (t === "skills") skills(body, c, ctx);
+    else if (t === "build") buildTab(body, c, ctx);
+    else if (t === "augments") soon(body, mayhem ? "Best augments" : "Runes");
+    else tips(body, c, ctx);
+  };
+  for (const [t, label] of tabs) {
+    const b = h(seg, "button", "mn-seg-b", label);
+    b.dataset.t = t;
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      show(t);
+    });
+  }
+  show(lastSub.get(c.id) ?? "skills");
+  return { title: c.name, el };
+}
+function skills(body, c, ctx) {
+  skillStrip(body, c);
+  if (c.video) row(group(body), { icon: "play-circle", title: "Combo video", chevron: true, onTap: () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video)}`) });
+  void ctx;
+}
+function soon(body, title) {
+  row(group(body), { icon: "sparkles", title, value: "Soon", muted: true });
+}
+function tips(body, c, ctx) {
+  void ctx;
+  if (!c.tips.length) {
+    empty(body, { icon: "lightbulb", title: "No tips yet", text: "Add tips to this champion's note." });
+    return;
+  }
+  for (const t of c.tips) {
+    const card = h(body, "div", "mn-tip");
+    icon(card, "lightbulb", "mn-tip-ic");
+    const main = h(card, "div", "mn-tip-main");
+    h(main, "div", "mn-tip-t", t.title);
+    h(main, "div", "mn-tip-s", t.text);
+    if (t.video) {
+      const v = h(main, "button", "mn-tip-v", "\u25B6 Video");
+      v.addEventListener("click", (e) => {
+        e.preventDefault();
+        window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(t.video)}`);
+      });
+    }
+  }
 }
 
 // src/pages/augments.ts
@@ -626,72 +788,24 @@ function augmentsPage(ctx) {
   return { title: "Augments", el };
 }
 
-// src/pages/home.ts
-function homePage(ctx) {
-  if (ctx.frame.key === "augments") return augmentsPage(ctx);
-  const mode = MODES[ctx.plugin.settings.mode];
-  const el = page(mode.id === "mayhem" ? "Who are you playing?" : "Summoner's Rift");
-  if (!mode.enabled) {
-    row(group(el), { icon: "construction", title: "Rift is not built yet", sub: "Switch to Mayhem (top right).", muted: true });
-    return { title: mode.label, el };
+// src/pages/learn.ts
+function learnPage(ctx) {
+  const el = page("Learn");
+  const notes = ctx.plugin.store.guideNotes();
+  if (!notes.length) {
+    empty(el, { icon: "graduation-cap", title: "Nothing here yet", text: "Guide notes go in the guide folder." });
+    return { title: "Learn", el };
   }
-  championPicker(el, ctx, false);
   const g = group(el);
-  row(g, { icon: "sparkles", title: "Augments", chevron: true, onTap: () => ctx.push({ key: "augments", title: "Augments" }) });
-  row(g, { icon: "flame", title: "Combos", value: "Soon", muted: true });
-  row(g, { icon: "package", title: "ARAM items", chevron: true, onTap: () => ctx.goTab("items") });
-  return { title: mode.label, el };
-}
-
-// src/pages/items.ts
-var KINDS = [["AP", "SpellDamage"], ["AD", "Damage"], ["Armor", "Armor"], ["MR", "SpellBlock"], ["HP", "Health"], ["Speed", "Boots"]];
-function itemsPage(ctx) {
-  const el = page("Items");
-  const all = ctx.plugin.store.modeItems().filter((i) => i.goldTotal > 0);
-  if (!all.length) {
-    empty(el, { icon: "database", title: "No item notes yet", text: "Run python3 tools/fetch_data.py" });
-    return { title: "Items", el };
-  }
-  let query = "", kind = "";
-  const box = h(el, "div", "mn-search");
-  icon(box, "search", "mn-search-ic");
-  const search = h(box, "input");
-  search.type = "search";
-  search.placeholder = "Search";
-  const chips = h(el, "div", "mn-chips");
-  const list2 = h(el, "div");
-  const draw = () => {
-    list2.empty();
-    const q = query.trim().toLowerCase();
-    const hits = all.filter((i) => (!kind || i.tags.includes(kind)) && (!q || i.name.toLowerCase().includes(q)));
-    const g = group(list2);
-    for (const i of hits.slice(0, 80)) row(g, { image: i.icon, title: i.name, value: `${i.goldTotal}`, chevron: true, onTap: () => ctx.openNote(i.path) });
-    if (!hits.length) empty(list2, { icon: "search-x", title: "No match" });
-    else if (hits.length > 80) h(list2, "div", "mn-gf", `${hits.length - 80} more: search or filter`);
-  };
-  const drawChips = () => {
-    chips.empty();
-    for (const [label, tag] of KINDS) chip(chips, label, { on: kind === tag, onTap: () => {
-      kind = kind === tag ? "" : tag;
-      drawChips();
-      draw();
-    } });
-  };
-  search.addEventListener("input", () => {
-    query = search.value;
-    draw();
-  });
-  drawChips();
-  draw();
-  return { title: "Items", el };
+  for (const n of notes) row(g, { icon: n.icon, title: n.title, sub: n.summary || void 0, chevron: true, onTap: () => ctx.openNote(n.file.path) });
+  return { title: "Learn", el };
 }
 
 // src/pages/index.ts
 var PAGES = {
-  home: homePage,
   champions: championsPage,
-  items: itemsPage,
-  guide: guidePage
+  augments: augmentsPage,
+  learn: learnPage
 };
 
 // src/view.ts
@@ -761,10 +875,10 @@ var MnView = class extends import_obsidian4.ItemView {
     menu.showAtMouseEvent(e);
   }
   tabLabel(id) {
-    return id === "home" ? MODES[this.plugin.settings.mode].label : TAB_LABEL[id];
+    return TAB_LABEL[id];
   }
   tabIcon(id) {
-    return id === "home" ? MODES[this.plugin.settings.mode].icon : TAB_ICON[id];
+    return TAB_ICON[id];
   }
   buildTabs() {
     const tabs = MODES[this.plugin.settings.mode].tabs;
@@ -881,6 +995,7 @@ var MorellonomiconPlugin = class extends import_obsidian5.Plugin {
     this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.updateBody()));
     this.registerEvent(this.app.workspace.on("layout-change", () => this.updateBody()));
     this.app.workspace.onLayoutReady(() => {
+      void this.store.loadStats().then(() => this.views().forEach((v) => v.refresh()));
       if (this.settings.openOnStartup) void this.activate(true);
       this.updateBody();
     });
@@ -913,7 +1028,7 @@ var MorellonomiconPlugin = class extends import_obsidian5.Plugin {
     window.clearTimeout(this.dataTimer);
     this.dataTimer = window.setTimeout(() => {
       this.store.invalidate();
-      this.views().forEach((v) => v.refresh());
+      void this.store.loadStats().then(() => this.views().forEach((v) => v.refresh()));
     }, 300);
   }
   // Show the app: the existing screen if there is one, else in the current tab (start-up, phone) or a new tab (desktop).
@@ -946,6 +1061,7 @@ var MorellonomiconPlugin = class extends import_obsidian5.Plugin {
   }
   async saveSettings() {
     await this.saveData(this.settings);
+    await this.store.loadStats();
     this.views().forEach((v) => v.refresh(true));
   }
 };
