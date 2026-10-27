@@ -10,9 +10,10 @@
     --mn-faint: var(--text-faint);
     --mn-accent: var(--interactive-accent);
     --mn-line: color-mix(in srgb, var(--text-normal) 12%, transparent);
-    /* one muted palette for damage kinds and abilities (mid tones: readable on dark and light, white text on a solid fill still reads) */
-    --mn-phys: #c4684f; --mn-magic: #6f7ad0; --mn-true: #b8973f; --mn-mixed: #9a6db5;
-    --mn-cc: #8e6bc2; --mn-slow: #3f9ab8; --mn-dash: #36a089; --mn-heal: #5fa24a; --mn-shield: #c09a30; --mn-ls: #c4546a; --mn-onhit: #d17b3e; --mn-aa: #c46bb0; --mn-tank: #8a9bb5; --mn-range: #b0b8c8;
+    /* tag and damage colours come from the colour theme (design 4c), so every theme keeps one family */
+    --mn-phys: var(--color-orange); --mn-magic: var(--color-blue); --mn-true: var(--color-yellow); --mn-mixed: var(--color-purple);
+    --mn-cc: var(--color-yellow); --mn-slow: var(--color-blue); --mn-dash: var(--color-cyan); --mn-heal: var(--color-green); --mn-shield: var(--color-purple); --mn-ls: var(--color-red); --mn-onhit: var(--color-orange); --mn-aa: var(--color-pink); --mn-tank: var(--mn-muted); --mn-range: var(--mn-muted);
+    --mn-serif: "Noto Serif TC", "Source Han Serif TC", "Songti TC", "PMingLiU", serif;   /* headings, tabs (the client pairs a serif with a sans) */
     --mn-radius: 18px;
     --mn-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
     --mn-safe-top: 0px;
@@ -62,7 +63,7 @@ body.is-mobile:not(.mn-on) .mn-home svg { width: 24px; height: 24px; }
 /* page */
 .mn-scroll { flex: 1; min-height: 0; overflow-x: hidden; overflow-x: clip; touch-action: pan-y; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: none; }
 .mn-page { max-width: 760px; margin: 0 auto; padding: 4px 16px 36px; }
-.mn-title { font-size: 32px; font-weight: 800; line-height: 1.12; letter-spacing: -0.03em; margin: 4px 2px 14px; }
+.mn-title { font-family: var(--mn-serif); font-size: 30px; font-weight: 700; line-height: 1.15; letter-spacing: 0.02em; margin: 4px 2px 14px; }
 
 /* search and chips */
 .mn-fgroup { display: grid; gap: 6px; margin: 12px 0; }
@@ -192,7 +193,6 @@ button.mn-skill-box.is-on { box-shadow: 0 0 0 3px color-mix(in srgb, var(--chip)
 .mn-tab svg { width: 22px; height: 22px; }
 .mn-tab-l { font-size: 10px; font-weight: 600; }
 .mn-tab.is-on { color: var(--mn-accent); }
-.mn-tab.is-on .mn-ic { background: color-mix(in srgb, var(--mn-accent) 16%, transparent); }
 
 /* champion card sub-tabs */
 .mn-chips-top { margin: -6px 0 6px; }
@@ -495,21 +495,19 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-mt-n { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* champion facts strip: damage meters, reach, difficulty */
-.mn-fs { display: grid; grid-template-columns: 1.35fr 1fr 1fr; margin: 14px 0 0; border: 1px solid var(--mn-line); border-radius: 14px; background: var(--mn-card); }
+.mn-fs { display: grid; grid-template-columns: 1.35fr 1fr 1fr; margin: 14px 0 0; border: 1px solid var(--mn-line); border-radius: 8px; background: var(--mn-card); }
 .mn-fs-c { display: grid; gap: 5px; align-content: start; min-width: 0; padding: 10px 12px; }
 .mn-fs-c + .mn-fs-c { border-left: 1px solid var(--mn-line); }
 .mn-fs-l { font-size: 11px; color: var(--mn-muted); }
-.mn-fs-v { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.mn-fs-v { font-family: var(--mn-serif); font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; color: var(--mn-text); }
+.mn-fs-of { font-family: var(--text-font, sans-serif); }
 .mn-fs-of { font-size: 11px; font-weight: 500; color: var(--mn-muted); }
 .mn-fs-s { font-size: 11px; color: var(--mn-muted); font-variant-numeric: tabular-nums; }
-.mn-segs { display: flex; gap: 2px; }
-.mn-segs i { flex: 1; height: 3px; border-radius: 2px; background: var(--mn-line); }
-.mn-segs i.is-on { background: var(--mn-accent); }
 
 /* 戰鬥風格 card: hexagon chart with coloured corner chips, then the other tags */
-.mn-app .mn-style { padding: 12px 0 14px; }
+.mn-app .mn-style { padding: 12px 0 14px; border-radius: 10px; }
 .mn-style-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 0 14px; }
-.mn-style-t { font-size: 13px; font-weight: 700; }
+.mn-style-t { font-family: var(--mn-serif); font-size: 14px; font-weight: 700; letter-spacing: 0.06em; }
 .mn-sc { position: relative; width: 100%; max-width: 350px; margin: 0 auto; aspect-ratio: 350 / 356; }
 .mn-sc-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .mn-sc-ring { fill: none; stroke: color-mix(in srgb, var(--mn-text) 6%, transparent); }
@@ -518,8 +516,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-sc-axis.is-on { stroke: color-mix(in srgb, var(--p) 45%, transparent); }
 .mn-sc-shape { stroke-width: 1.6; stroke-linejoin: round; }
 .mn-sc-dot { stroke: var(--mn-card); stroke-width: 2; }
-.mn-app .mn-scc { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 62px; padding: 5px 9px 4px; border-radius: 10px; border: 1px dashed color-mix(in srgb, var(--mn-text) 16%, transparent); color: color-mix(in srgb, var(--mn-text) 40%, transparent); }
-.mn-app .mn-scc.is-on { border-style: solid; border-color: var(--p); color: var(--p); background: var(--mn-card-hi); }
+.mn-app .mn-scc { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 62px; padding: 5px 9px 4px; border-radius: 6px; border: 1px dashed var(--mn-line); color: var(--mn-faint); background: var(--mn-card); }
+.mn-app .mn-scc.is-on { border: 1px solid color-mix(in srgb, var(--mn-text) 16%, transparent); color: var(--mn-text); }
+.mn-scc.is-on .mn-ic { color: var(--p); }
 .mn-scc-t { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; white-space: nowrap; }
 .mn-scc-t .mn-ic { display: flex; }
 .mn-scc-t svg { width: 14px; height: 14px; }
@@ -530,8 +529,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 
 /* tag chips: solid in the tag's colour when the champion has it, dashed and faint when not */
 .mn-tgs { display: flex; flex-wrap: wrap; gap: 8px; }
-.mn-app .mn-tg { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 9px; font-size: 12px; font-weight: 700; border: 1px dashed color-mix(in srgb, var(--mn-text) 16%, transparent); color: color-mix(in srgb, var(--mn-text) 40%, transparent); }
-.mn-app .mn-tg.is-on { border-style: solid; border-color: var(--p); color: var(--p); background: var(--mn-card-hi); }
+.mn-app .mn-tg { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; border: 1px dashed var(--mn-line); color: var(--mn-faint); }
+.mn-app .mn-tg.is-on { border: 1px solid color-mix(in srgb, var(--mn-text) 16%, transparent); background: var(--mn-card); color: var(--mn-text); }
+.mn-tg.is-on .mn-ic { color: var(--p); }
 .mn-tg .mn-ic { display: flex; }
 .mn-tg svg { width: 14px; height: 14px; }
 .mn-tg-k { font-size: 10px; font-weight: 400; color: var(--mn-muted); }
@@ -540,20 +540,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq .mn-fs { margin-top: 12px; }
 .mn-rq .mn-tgs { margin-top: 10px; }
 
-/* League palette for champion pages (champion card, 速查). Sources:
-   base = the League client style guide (community copy, vitorsammarco/league-of-legends-css-styles): Hextech Black #010A13, Blue 7 #0A142B,
-   Blue 6 #0A323C, Grey Cool #1E282D, Blue 1 #CDFAFA, Grey 1 #A09B8C, Grey 2 #5B5A56, Blue 3 #0AC8B9, Paladin Blue 2 #16CAE5, Yellow #FABE0A, Mage Red 2 #FF2345;
-   damage and stat keywords = the League Wiki's Module:Color: physical #FF8C34, magic #00B0F0, true #F9966B, ability power #7A6DFF,
-   heal #60E08F, life steal #CC2051, attack speed #F5EE99.
-   !important because the colour theme sets its variables inline on the app element. */
-.mn-app.is-lol {
-    --mn-bg: #010a13 !important; --mn-card: #0a142b !important; --mn-card-hi: #0a323c !important;
-    --mn-text: #cdfafa !important; --mn-muted: #a09b8c !important; --mn-faint: #5b5a56 !important;
-    --mn-line: #1e282d !important; --mn-accent: #0ac8b9 !important; --interactive-accent: #0ac8b9 !important; --text-on-accent: #010a13 !important;
-    --mn-phys: #ff8c34; --mn-magic: #00b0f0; --mn-true: #f9966b; --mn-mixed: #7a6dff;
-    --mn-cc: #fabe0a; --mn-slow: #16cae5; --mn-dash: #0ac8b9; --mn-heal: #60e08f; --mn-shield: #cdfafa; --mn-ls: #cc2051; --mn-aa: #f5ee99; --mn-onhit: #ff2345;
-    --mn-tank: #a09b8c; --mn-range: #a09b8c;
-}
-.mn-app.is-lol .mn-seg { background: #0a142b; border-color: #1e282d; }
-.mn-app.is-lol .mn-seg-b { color: #a09b8c; }
-.mn-app.is-lol .mn-seg-b.is-on { background: #0a323c; color: #cdfafa; box-shadow: inset 0 0 0 1px #0ac8b9; }
+/* line tabs (design 4c): serif labels, the chosen one gets a thin accent underline; no filled block */
+.mn-app .mn-seg.mn-seg-line { gap: 0; padding: 0; margin: 14px 0 8px; border: none; border-bottom: 1px solid var(--mn-line); border-radius: 0; background: none; }
+.mn-app .mn-seg-line .mn-seg-b { min-height: 42px; border-radius: 0; font-family: var(--mn-serif); font-size: 15px; letter-spacing: 0.08em; color: var(--mn-muted); }
+.mn-app .mn-seg-line .mn-seg-b.is-on { background: none; color: var(--mn-text); font-weight: 700; box-shadow: inset 0 -2px 0 var(--mn-accent); }

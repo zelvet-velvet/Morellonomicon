@@ -935,9 +935,6 @@ function factsStrip(parent, c) {
   const hard = cell("\u96E3\u5EA6");
   const v = h(hard, "div", "mn-fs-v", String(c.difficulty));
   h(v, "span", "mn-fs-of", " / 10");
-  const segs = h(hard, "div", "mn-segs");
-  const level = Math.max(1, Math.min(5, Math.ceil(c.difficulty / 2)));
-  for (let i = 1; i <= 5; i++) h(segs, "i", i <= level ? "is-on" : "");
 }
 function styleAxes(c) {
   const tough = c.defense >= 7 ? "\u5F88\u786C" : c.defense >= 4 ? "\u666E\u901A" : "\u8106";
@@ -1588,7 +1585,7 @@ function championCard(ctx) {
   const mayhem = ctx.plugin.settings.mode === "mayhem";
   const tabs = [["skills", "Skills"], ["build", "Build"], ["augments", mayhem ? "Augments" : "Runes"], ["tips", "Tips"]];
   let block = null;
-  const seg = h(el, "div", "mn-seg");
+  const seg = h(el, "div", "mn-seg mn-seg-line");
   const body = h(el, "div", "mn-sub");
   const show = (t) => {
     lastSub.set(c.id, t);
@@ -2550,7 +2547,6 @@ function renderPage(tab, ctx) {
 
 // src/view.ts
 var VIEW_TYPE = "morellonomicon";
-var LOL_PAGES = /* @__PURE__ */ new Set(["champion", "roster"]);
 var SPINNER_DELAY = 140;
 var IMAGE_WAIT = 8e3;
 var ARRIVE_MS = 240;
@@ -2766,7 +2762,6 @@ var MnView = class extends import_obsidian8.ItemView {
     (titleRow ?? this.topEl).appendChild(this.actsEl);
     this.actsEl.toggleClass("is-hidden", !titleRow);
     this.topEl.toggleClass("has-back", this.router.depth() > 0);
-    this.appEl.toggleClass("is-lol", LOL_PAGES.has(f.key));
     this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > 36);
     if (anim === "none") {
       this.loaderEl.removeClass("is-on");

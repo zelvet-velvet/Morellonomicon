@@ -137,9 +137,6 @@ export function factsStrip(parent: HTMLElement, c: Champion): void {
     const hard = cell("難度");
     const v = h(hard, "div", "mn-fs-v", String(c.difficulty));
     h(v, "span", "mn-fs-of", " / 10");
-    const segs = h(hard, "div", "mn-segs");
-    const level = Math.max(1, Math.min(5, Math.ceil(c.difficulty / 2)));
-    for (let i = 1; i <= 5; i++) h(segs, "i", i <= level ? "is-on" : "");
 }
 
 // The six axes of the style chart, each with its colour, icon and a short line under it (main damage, how tough, which skills, reach)

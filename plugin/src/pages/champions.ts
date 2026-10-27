@@ -184,7 +184,7 @@ export function championCard(ctx: PageCtx): PageOut {
     const mayhem = ctx.plugin.settings.mode === "mayhem";
     const tabs: [SubTab, string][] = [["skills", "Skills"], ["build", "Build"], ["augments", mayhem ? "Augments" : "Runes"], ["tips", "Tips"]];
     let block: { el: HTMLElement; open(): void } | null = null;   // the Recent changes block of the Skills sub-tab
-    const seg = h(el, "div", "mn-seg");
+    const seg = h(el, "div", "mn-seg mn-seg-line");
     const body = h(el, "div", "mn-sub");
     const show = (t: SubTab) => {
         lastSub.set(c.id, t);
