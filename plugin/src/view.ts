@@ -192,6 +192,7 @@ export class MnView extends ItemView {
         }
         // forget the old page's scrolled state first: restoring the scroll below lays the new page out at once, and a stale
         // "scrolled" would draw the title row's bottom line and then fade it out (a blink)
+        this.appEl.addClass("is-switching");   // and no fades while the classes flip: a line fading out on the new page reads as a blink
         this.appEl.removeClass("has-scrolled");
         this.topEl.removeClass("is-scrolled");
         this.scrollEl.replaceChildren(out.el);
@@ -208,6 +209,7 @@ export class MnView extends ItemView {
         this.appEl.toggleClass("is-float", this.router.depth() === 0);
         this.appEl.toggleClass("is-sub", this.router.depth() > 0 && !OVERLAY_PAGES.has(f.key));   // Back sits on the title's line   // a tab's first page: no empty strip above its big title
         this.markScrolled();
+        requestAnimationFrame(() => requestAnimationFrame(() => this.appEl.removeClass("is-switching")));
         if (anim === "none") { this.loaderEl.removeClass("is-on"); return; }
         // pictures that are in view and not here yet: keep the page hidden under a spinner until they arrive (or give up after a while)
         const waiting = pendingImages(out.el);

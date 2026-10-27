@@ -600,6 +600,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app.is-sub .mn-scroll > .mn-page > .mn-title-row, .mn-app.is-sub .mn-scroll > .mn-page > .mn-dhead { padding-left: 40px; }
 .mn-app.is-sub:has(.mn-scroll > .mn-page > .mn-dhead) .mn-top:not(.is-scrolled) .mn-back { transform: translateY(20px); }   /* centre Back on a tall icon header */
 .mn-app.is-sub .mn-back { transition: transform 0.2s; }
+.mn-app.is-sub .mn-top { min-height: 0; }   /* the bar is the safe area plus Back, so Back's middle is safe area + 18px */
+.mn-app.is-sub .mn-scroll > .mn-page > .mn-title-row { margin-top: -5px; }   /* the big title's middle on the same line as Back */
+.mn-app.is-switching .mn-top, .mn-app.is-switching .mn-top *, .mn-app.is-switching .mn-title-row { transition: none !important; }   /* a page switch flips its bar state at once */
 
 /* role filters: a plain row of the game's class icons (no pill); dim when off, bright with a short accent line when on */
 .mn-app .mn-chip.mn-chip-ic { position: relative; justify-content: center; justify-self: center; width: 44px; height: 44px; padding: 0; border: none; border-radius: 0; background: none; }

@@ -3023,6 +3023,7 @@ var MnView = class extends import_obsidian8.ItemView {
       empty(el, { icon: "alert-triangle", title: "This page could not be drawn", text: String(e instanceof Error ? e.message : e).slice(0, 200) });
       out = { title: "Error", el };
     }
+    this.appEl.addClass("is-switching");
     this.appEl.removeClass("has-scrolled");
     this.topEl.removeClass("is-scrolled");
     this.scrollEl.replaceChildren(out.el);
@@ -3038,6 +3039,7 @@ var MnView = class extends import_obsidian8.ItemView {
     this.appEl.toggleClass("is-float", this.router.depth() === 0);
     this.appEl.toggleClass("is-sub", this.router.depth() > 0 && !OVERLAY_PAGES.has(f.key));
     this.markScrolled();
+    requestAnimationFrame(() => requestAnimationFrame(() => this.appEl.removeClass("is-switching")));
     if (anim === "none") {
       this.loaderEl.removeClass("is-on");
       return;
