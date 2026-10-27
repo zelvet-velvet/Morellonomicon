@@ -27,7 +27,7 @@ def retag(path, fresh=()):
     skills = json.loads(m.group(1))
     for s in skills:
         blob = s.get("desc", "") + s.get("upgrade", "")
-        s["tags"] = [n for n, rx in FEATURES.items() if (n in s.get("tags", []) and n not in fresh) or re.search(rx, blob)]
+        s["tags"] = [n for n in FEATURES if (n in s.get("tags", []) and n not in fresh) or fetch_data.tag_search(n, blob)]
     features = [n for n in FEATURES if any(n in s["tags"] for s in skills)]
     new = text.replace(m.group(0), "skills: " + json.dumps(skills, ensure_ascii=False))
     new = re.sub(r"^features: .*$", lambda _: "features: " + json.dumps(features, ensure_ascii=False), new, count=1, flags=re.M)

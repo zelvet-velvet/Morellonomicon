@@ -42,23 +42,42 @@ MELEE_MAX_RANGE = 250    # attack range up to this counts as melee
 RANGED_MIN_RANGE = 450
 # Features read from spell text; each regex is run on the description and tooltip
 FEATURES = {
-    "控場": r"暈眩|眩暈|擊暈|擊飛|擊倒|定身|禁錮|束縛|沉默|恐懼|魅惑|嘲諷|睡眠|擊退|牽引|拉向|變形",   # hard crowd control
+    "控場": r"暈眩|眩暈|擊暈|擊飛|擊倒|定身|禁錮|束縛|沉默|恐懼|魅惑|嘲諷|睡眠|擊退|牽引|拉向|(目標|敵人|敵軍)變形",   # 變形 alone is also a champion changing form   # hard crowd control
     "緩速": r"緩速|減速",
     "治療": r"<healing>|治療|回復.{0,6}生命",   # not mana or energy restores
     "護盾": r"<shield>|護盾",
     "位移": r"衝刺|閃現|傳送|躍|突進|瞬步|瞬移|瞬間移動|閃爍|衝向|飛向|跳向|跳到|跳至|翻滾|往後退|向後退|向後跳",
-    "吸血": r"吸血|生命偷取|偷取生命|汲取",
+    "吸血": r"吸血|生命偷取|偷取生命|汲取[^。，]{0,6}(生命|靈魂)",   # not 汲取靈感 (drawing inspiration)
     "加速": r"(跑速|移動速度|移速)[^。，]{0,8}(提升|增加|加成|提高)|(提升|增加|提高)[^。，]{0,8}(跑速|移動速度|移速)|加速",
     "隱身": r"隱形|偽裝|隱身|不可見|匿蹤",
     "免傷": r"傷害減免|減少[^。]{0,8}受到的傷害|受到的傷害[^。]{0,6}(降低|減少)|無法被選取|無敵|免疫",
     "斬殺": r"斬殺|處決|立即擊殺|直接擊殺|擊殺生命值",
     # weakens enemies without stopping them: blind, nearsight, grievous wounds, armour / magic resist / attack speed shred
-    "減益": r"致盲|近視|重傷|(降低|減少|縮小)[^。]{0,4}(視線|視野)|(降低|減少|削減)[^。]{0,8}(護甲|魔法防禦|魔抗|物理防禦|攻速|攻擊速度)|破甲",
+    "減益": r"致盲|近視|重傷|(降低|減少|縮小)[^。]{0,4}(視線|視野)|(降低|減少|削減)[^。]{0,8}(護甲|魔法防禦|魔抗|物理防禦)|(降低|減少|削減)[^。，]{0,4}(敵人|敵方|目標|他們|其)[^。，]{0,4}(攻速|攻擊速度)|破甲",
     # its heal, shield or speed also reaches allies
     "隊友增益": r"(友軍|隊友|友方)[^。]{0,16}(治療|回復|護盾|跑速|移動速度)|(治療|回復|護盾|跑速|移動速度)[^。]{0,16}(友軍|隊友|友方)",
-    # skills that empower basic attacks (next attack, extra damage on attack). Not on-hit: that one is set by hand (`features_extra`)
-    "強化普攻": r"(下[一二]?次|接下來[ 0-9]*次)[^。，]{0,4}(基本攻擊|普通攻擊|普攻|攻擊)|(基本攻擊|普通攻擊|普攻)[^。]{0,8}(附帶|附加|額外造成|額外魔法|額外物理|額外傷害|會造成額外|會額外|造成額外)",
+    # skills that empower basic attacks: the next one(s), every Nth one, or an attack the text calls 強化. Not a lasting "attacks deal
+    # extra damage" passive (that is an on-hit effect), and not on-hit itself: that one is set by hand (`onhit`, `features_extra`)
+    "強化普攻": r"(下[一二三]?次|接下來的?[ 0-9一二三兩]*次?)[^。，]{0,8}(基本攻擊|普通攻擊|普攻|攻擊)|注入[^。]{0,10}(普攻|基本攻擊)|(每|第|連續)[ 0-9一二三四]*[次下][^。，]{0,2}(基本攻擊|普攻)|(首次|最後一次)[^。，]{0,2}(基本攻擊|普攻)|強化[^。，]{0,6}(普攻|基本攻擊)|普攻將被強化",
 }
+
+# Phrases that contain a tag's words without meaning it (found with tools/audit_tags.py): they are blanked out before the tag is looked for
+NOT_FEATURES = {
+    "緩速": r"(免疫|解除|移除|淨化)[^。，]{0,8}(緩速|減速)",
+    "護盾": r"(移除|摧毀|擊破)[^。]{0,8}護盾",
+    "位移": r"的敵(方|人|軍)衝刺|敵(方|人|軍)從[^。，]{0,6}衝刺|敵方的衝刺|(打斷|中斷|阻止)[^。，]{0,8}衝刺|跳躍的水柱|跳躍一次|虛空的傳送門",   # enemies dashing, not this champion
+    "加速": r"技能加速|(飛行途中|直線|隨時間)加速",
+    "隱身": r"偽裝成|在偽裝的狀態下|不可見的敵",
+    "免傷": r"免疫[^。，]{0,4}(控場|緩速|硬控場)|(控場|緩速|行動限制)[^。，]{0,4}免疫",
+    "隊友增益": r"友方防禦塔|獲得友軍的治療",
+}
+
+
+def tag_search(tag, text):
+    """The first place `text` shows the ability `tag`, or None."""
+    if tag in NOT_FEATURES:
+        text = re.sub(NOT_FEATURES[tag], "。", text)
+    return re.search(FEATURES[tag], text)
 
 
 def fetch(url, cache_name):
@@ -162,7 +181,7 @@ def spell_damage(spell):
 def spell_features(spells, passive):
     texts = [s.get("description", "") + s.get("tooltip", "") for s in spells] + [passive.get("description", "")]
     blob = "\n".join(texts)
-    return [name for name, rx in FEATURES.items() if re.search(rx, blob)]
+    return [name for name in FEATURES if tag_search(name, blob)]
 
 
 def archetypes(c):
@@ -209,7 +228,7 @@ def clean_range(spell):
 def skill_tags(spell):
     """The abilities one skill has (控場, 治療, 護盾, 位移, 吸血), read from its own text."""
     blob = spell.get("description", "") + spell.get("tooltip", "")
-    return [name for name, rx in FEATURES.items() if re.search(rx, blob)]
+    return [name for name in FEATURES if tag_search(name, blob)]
 
 
 def skills_fm(c, version, bin_data=None):
