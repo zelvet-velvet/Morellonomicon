@@ -149,11 +149,14 @@ def damage_type(info):
 
 
 def skills_fm(c, version):
-    """Passive + Q W E R as small objects for the plugin (key, name, damage types, icon)."""
+    """Passive + Q W E R as small objects for the plugin (key, name, damage types, description, cooldown, cost, range, icon)."""
     p = c["passive"]
-    out = [{"key": "P", "name": p["name"], "damage": [], "icon": f"{DD}/cdn/{version}/img/passive/{p['image']['full']}"}]
+    out = [{"key": "P", "name": p["name"], "damage": [], "desc": strip_html(p["description"]).replace("\n", " "),
+            "icon": f"{DD}/cdn/{version}/img/passive/{p['image']['full']}"}]
     for key, s in zip("QWER", c["spells"]):
-        out.append({"key": key, "name": s["name"], "damage": spell_damage(s), "icon": f"{DD}/cdn/{version}/img/spell/{s['image']['full']}"})
+        out.append({"key": key, "name": s["name"], "damage": spell_damage(s), "desc": strip_html(s["description"]).replace("\n", " "),
+                    "cd": s["cooldownBurn"], "cost": s["costBurn"], "range": s["rangeBurn"],
+                    "icon": f"{DD}/cdn/{version}/img/spell/{s['image']['full']}"})
     return out
 
 

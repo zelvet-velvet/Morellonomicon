@@ -10,7 +10,7 @@ export interface Champion {
     archetypes: string[]; features: string[]; resource: string; attack: number; magic: number; defense: number; difficulty: number;
     range: number; icon: string; skills: Skill[]; patch: string; pinned: string[]; avoid: string[]; video?: string; path: string;
 }
-export interface Skill { key: string; name: string; damage: string[]; icon: string }
+export interface Skill { key: string; name: string; damage: string[]; icon: string; desc: string; cd: string; cost: string; range: string }
 export interface Augment { id: number; name: string; rarity: string; icon: string; effect: string; fits: string[]; tier: string; path: string }
 export interface Item {
     id: number; name: string; tags: string[]; goldTotal: number; aram: boolean; rift: boolean; icon: string; variantOf?: string; path: string;
@@ -20,7 +20,7 @@ const str = (v: unknown, d = ""): string => (typeof v === "string" ? v : d);
 const num = (v: unknown, d = 0): number => (typeof v === "number" ? v : d);
 const skillList = (v: unknown): Skill[] => (Array.isArray(v) ? v.flatMap((x) => {
     const o = x as Record<string, unknown> | null;
-    return o && typeof o === "object" ? [{ key: str(o.key), name: str(o.name), damage: list(o.damage), icon: str(o.icon) }] : [];
+    return o && typeof o === "object" ? [{ key: str(o.key), name: str(o.name), damage: list(o.damage), icon: str(o.icon), desc: str(o.desc), cd: str(o.cd), cost: str(o.cost), range: str(o.range) }] : [];
 }) : []);
 const list = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 

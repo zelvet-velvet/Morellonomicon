@@ -97,14 +97,42 @@ function championCard(ctx: PageCtx): PageOut {
     return { title: c.name, el };
 }
 
-// Passive + Q W E R as icons; the frame colour is the damage type of the skill (orange physical, blue magic, yellow true)
+// Passive + Q W E R as icons; the frame colour is the damage type of the skill (orange physical, blue magic, yellow true).
+// Tap an icon to open its details right below (tap again to close); no new page.
 function skillStrip(parent: HTMLElement, c: Champion): void {
     if (!c.skills.length) return;
     const strip = h(parent, "div", "mn-skills");
-    for (const s of c.skills) {
-        const box = h(strip, "div", "mn-skill-box");
+    const detail = h(parent, "div", "mn-skill-detail");
+    let open = -1;
+    const boxes = c.skills.map((s, i) => {
+        const box = h(strip, "button", "mn-skill-box");
+        box.setAttribute("aria-label", `${s.key} ${s.name}`);
         const im = h(box, "img"); im.src = s.icon; im.alt = "";
         box.style.setProperty("--chip", DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--background-modifier-border)");
         h(box, "span", "mn-skill-k", s.key);
-    }
+        box.addEventListener("click", (e) => { e.preventDefault(); show(open === i ? -1 : i); });
+        return box;
+    });
+    const show = (i: number) => {
+        open = i;
+        boxes.forEach((b, j) => b.toggleClass("is-on", j === i));
+        detail.empty();
+        detail.toggleClass("is-open", i >= 0);
+        if (i < 0) return;
+        const s = c.skills[i];
+        const head = h(detail, "div", "mn-sd-head");
+        h(head, "span", "mn-sd-key", s.key);
+        h(head, "span", "mn-sd-name", s.name);
+        const types = h(head, "span", "mn-sd-types");
+        for (const d of s.damage) chip(types, `${d}傷害`, { color: DAMAGE_COLOR[d] });
+        const meta: [string, string][] = [];
+        if (s.cd) meta.push(["冷卻", `${s.cd} 秒`]);
+        if (s.cost) meta.push(["消耗", s.cost === "0" ? "無" : `${s.cost} ${c.resource}`]);
+        if (s.range) meta.push(["射程", s.range === "self" ? "自身" : s.range]);
+        if (meta.length) {
+            const m = h(detail, "div", "mn-sd-meta");
+            for (const [k, v] of meta) { const cell = h(m, "div", "mn-sd-cell"); h(cell, "span", "mn-sd-k", k); h(cell, "span", "mn-sd-v", v); }
+        }
+        h(detail, "p", "mn-sd-desc", s.desc);
+    };
 }

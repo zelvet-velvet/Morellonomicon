@@ -42,7 +42,7 @@ var str = (v, d = "") => typeof v === "string" ? v : d;
 var num = (v, d = 0) => typeof v === "number" ? v : d;
 var skillList = (v) => Array.isArray(v) ? v.flatMap((x) => {
   const o = x;
-  return o && typeof o === "object" ? [{ key: str(o.key), name: str(o.name), damage: list(o.damage), icon: str(o.icon) }] : [];
+  return o && typeof o === "object" ? [{ key: str(o.key), name: str(o.name), damage: list(o.damage), icon: str(o.icon), desc: str(o.desc), cd: str(o.cd), cost: str(o.cost), range: str(o.range) }] : [];
 }) : [];
 var list = (v) => Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
 var Store = class {
@@ -476,14 +476,48 @@ function championCard(ctx) {
 function skillStrip(parent, c) {
   if (!c.skills.length) return;
   const strip = h(parent, "div", "mn-skills");
-  for (const s of c.skills) {
-    const box = h(strip, "div", "mn-skill-box");
+  const detail = h(parent, "div", "mn-skill-detail");
+  let open = -1;
+  const boxes = c.skills.map((s, i) => {
+    const box = h(strip, "button", "mn-skill-box");
+    box.setAttribute("aria-label", `${s.key} ${s.name}`);
     const im = h(box, "img");
     im.src = s.icon;
     im.alt = "";
     box.style.setProperty("--chip", DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--background-modifier-border)");
     h(box, "span", "mn-skill-k", s.key);
-  }
+    box.addEventListener("click", (e) => {
+      e.preventDefault();
+      show(open === i ? -1 : i);
+    });
+    return box;
+  });
+  const show = (i) => {
+    open = i;
+    boxes.forEach((b, j) => b.toggleClass("is-on", j === i));
+    detail.empty();
+    detail.toggleClass("is-open", i >= 0);
+    if (i < 0) return;
+    const s = c.skills[i];
+    const head = h(detail, "div", "mn-sd-head");
+    h(head, "span", "mn-sd-key", s.key);
+    h(head, "span", "mn-sd-name", s.name);
+    const types = h(head, "span", "mn-sd-types");
+    for (const d of s.damage) chip(types, `${d}\u50B7\u5BB3`, { color: DAMAGE_COLOR[d] });
+    const meta = [];
+    if (s.cd) meta.push(["\u51B7\u537B", `${s.cd} \u79D2`]);
+    if (s.cost) meta.push(["\u6D88\u8017", s.cost === "0" ? "\u7121" : `${s.cost} ${c.resource}`]);
+    if (s.range) meta.push(["\u5C04\u7A0B", s.range === "self" ? "\u81EA\u8EAB" : s.range]);
+    if (meta.length) {
+      const m = h(detail, "div", "mn-sd-meta");
+      for (const [k, v] of meta) {
+        const cell = h(m, "div", "mn-sd-cell");
+        h(cell, "span", "mn-sd-k", k);
+        h(cell, "span", "mn-sd-v", v);
+      }
+    }
+    h(detail, "p", "mn-sd-desc", s.desc);
+  };
 }
 
 // src/pages/guide.ts
