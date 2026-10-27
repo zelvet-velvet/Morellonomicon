@@ -81,7 +81,7 @@ export const chip = (parent: HTMLElement, text: string, o: { color?: string; on?
 };
 
 const SVG_NS = "http://www.w3.org/2000/svg";
-const svg = (parent: Element, tag: string, attrs: Record<string, string | number> = {}, cls?: string): SVGElement => {
+export const svg = (parent: Element, tag: string, attrs: Record<string, string | number> = {}, cls?: string): SVGElement => {
     const e = document.createElementNS(SVG_NS, tag);
     for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
     if (cls) e.setAttribute("class", cls);

@@ -1,6 +1,7 @@
 import type { Champion } from "../data/store";
 import { MODES } from "../modes";
-import { DAMAGE_COLOR, chip, empty, group, h, icon, page, radar, row, segmented } from "../ui";
+import { DAMAGE_COLOR, chip, empty, group, h, icon, page, row, segmented } from "../ui";
+import { championProfile } from "./profile";
 import { buildTab } from "./build";
 import type { PageCtx, PageOut } from "./index";
 import { badgeColor, badgeText, changesBlock, entryDir, marker } from "./changes";
@@ -9,7 +10,7 @@ import { skillStrip } from "./skills";
 
 const ROLES = ["戰士", "坦克", "法師", "刺客", "射手", "輔助"];
 const DAMAGES = ["物理", "魔法", "混合"];
-const FEATURES = ["控場", "治療", "護盾", "位移"];   // tap once = must have, twice = must not have
+const FEATURES = ["控場", "緩速", "位移", "治療", "護盾", "吸血"];   // tap once = must have, twice = must not have
 const REACH = ["近戰", "中程", "遠程"];
 const SORTS: [string, string][] = [["name", "名稱"], ["easy", "簡單優先"], ["range", "射程遠優先"]];
 const SEARCH_EXTRA = 8;   // augments / items listed under the champions when the search box has text
@@ -166,12 +167,8 @@ export function championCard(ctx: PageCtx): PageOut {
     if (badgeText(now)) chip(tags, badgeText(now), { color: badgeColor(now), onTap: openChanges });
     else if (official) { const m = marker(entryDir(official.entry)); chip(tags, `${m.mark} ${official.patch}`, { color: m.color, onTap: openChanges }); }
 
-    // 射程 is derived from the attack range (650 = full); the other four are Riot's own 1-10 ratings
-    const panel = h(el, "div", "mn-panel");
-    radar(panel, [
-        { label: "物理", value: c.attack }, { label: "魔法", value: c.magic }, { label: "防禦", value: c.defense },
-        { label: "射程", value: Math.min(10, Math.round(c.range / 65)) }, { label: "難度", value: c.difficulty },
-    ], 10, dmgColor);
+    // what the champion can do at a glance: reach, damage kind, difficulty, a six-axis profile and its abilities (see profile.ts)
+    championProfile(h(el, "div", "mn-panel mn-profile"), c, dmgColor);
 
     const mayhem = ctx.plugin.settings.mode === "mayhem";
     const tabs: [SubTab, string][] = [["skills", "Skills"], ["build", "Build"], ["augments", mayhem ? "Augments" : "Runes"], ["tips", "Tips"]];

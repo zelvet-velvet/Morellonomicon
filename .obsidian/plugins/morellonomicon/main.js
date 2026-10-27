@@ -23,7 +23,7 @@ __export(main_exports, {
   default: () => MorellonomiconPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian7 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 
 // src/data/store.ts
 var import_obsidian = require("obsidian");
@@ -68,7 +68,7 @@ var tipList = (v) => Array.isArray(v) ? v.flatMap((x) => {
 }) : [];
 var skillList = (v) => Array.isArray(v) ? v.flatMap((x) => {
   const o = x;
-  return o && typeof o === "object" ? [{ key: str(o.key), name: str(o.name), damage: list(o.damage), icon: str(o.icon), desc: str(o.desc), upgrade: str(o.upgrade), range: str(o.range), rows: rowList(o.rows) }] : [];
+  return o && typeof o === "object" ? [{ key: str(o.key), name: str(o.name), damage: list(o.damage), tags: list(o.tags), icon: str(o.icon), desc: str(o.desc), upgrade: str(o.upgrade), range: str(o.range), rows: rowList(o.rows) }] : [];
 }) : [];
 var list = (v) => Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
 var Store = class {
@@ -557,7 +557,8 @@ var DEFAULTS = {
   augmentFolder: "\u5F37\u5316",
   patchFolder: "\u7248\u672C\u66F4\u65B0",
   openOnStartup: import_obsidian2.Platform.isMobile,
-  read: []
+  read: [],
+  roster: []
 };
 var MnSettingTab = class extends import_obsidian2.PluginSettingTab {
   constructor(app, plugin) {
@@ -600,7 +601,7 @@ var MnSettingTab = class extends import_obsidian2.PluginSettingTab {
 };
 
 // src/view.ts
-var import_obsidian6 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 
 // src/ui.ts
 var import_obsidian3 = require("obsidian");
@@ -690,33 +691,6 @@ var svg = (parent, tag, attrs = {}, cls) => {
   parent.appendChild(e);
   return e;
 };
-var radar = (parent, axes, max = 10, color = "var(--interactive-accent)") => {
-  const W = 300, H = 250, cx = W / 2, cy = 128, R = 80, LABEL = 26, n = axes.length;
-  const pt = (i, r) => {
-    const a = -Math.PI / 2 + i * 2 * Math.PI / n;
-    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
-  };
-  const poly = (r) => axes.map((_, i) => pt(i, typeof r === "number" ? r : r(i)).map((v) => v.toFixed(1)).join(",")).join(" ");
-  const root = svg(parent, "svg", { viewBox: `0 0 ${W} ${H}` }, "mn-radar");
-  root.style.setProperty("--rd", color);
-  for (const k of [0.25, 0.5, 0.75, 1]) svg(root, "polygon", { points: poly(R * k) }, "mn-rd-ring");
-  axes.forEach((_, i) => {
-    const [x, y] = pt(i, R);
-    svg(root, "line", { x1: cx, y1: cy, x2: x, y2: y }, "mn-rd-axis");
-  });
-  svg(root, "polygon", { points: poly((i) => R * Math.max(0, Math.min(max, axes[i].value)) / max) }, "mn-rd-area");
-  axes.forEach((ax, i) => {
-    const [dx, dy] = pt(i, R * Math.max(0, Math.min(max, ax.value)) / max);
-    svg(root, "circle", { cx: dx, cy: dy, r: 3.5 }, "mn-rd-dot");
-    const [lx, ly] = pt(i, R + LABEL);
-    const t = svg(root, "text", { x: lx, y: ly, "text-anchor": "middle", "dominant-baseline": "middle" }, "mn-rd-label");
-    const name = svg(t, "tspan");
-    name.textContent = ax.label + " ";
-    const val = svg(t, "tspan", {}, "mn-rd-val");
-    val.textContent = String(ax.value);
-  });
-  return root;
-};
 var empty = (parent, o) => {
   const box = h(parent, "div", "mn-empty");
   icon(box, o.icon, "mn-empty-ic");
@@ -803,6 +777,90 @@ function augmentsPage(ctx) {
   drawChips();
   draw();
   return { title: "Augments", el };
+}
+
+// src/pages/profile.ts
+var SKILL_STEPS = [0, 4, 7, 9, 10];
+var count = (c, ...tags) => c.skills.filter((s) => s.key !== "P" && tags.some((t) => s.tags.includes(t))).length;
+var score = (n) => SKILL_STEPS[Math.min(n, SKILL_STEPS.length - 1)];
+function profileAxes(c) {
+  return [
+    { label: "\u8F38\u51FA", value: Math.max(c.attack, c.magic) },
+    { label: "\u5766\u5EA6", value: c.defense },
+    { label: "\u63A7\u5834", value: score(count(c, "\u63A7\u5834")) },
+    { label: "\u4F4D\u79FB", value: score(count(c, "\u4F4D\u79FB")) },
+    { label: "\u8F14\u52A9", value: score(count(c, "\u6CBB\u7642", "\u8B77\u76FE")) },
+    { label: "\u5C04\u7A0B", value: Math.min(10, Math.round(c.range / 65)) }
+  ];
+}
+var uid = 0;
+function profileRadar(parent, axes, color, max = 10) {
+  const W = 340, H = 300, cx = W / 2, cy = 150, R = 96, LABEL = 28, n = axes.length;
+  const pt = (i, r) => {
+    const a = -Math.PI / 2 + i * 2 * Math.PI / n;
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+  };
+  const poly = (r) => axes.map((_, i) => pt(i, r(i)).map((v) => v.toFixed(1)).join(",")).join(" ");
+  const val = (i) => R * Math.max(0, Math.min(max, axes[i].value)) / max;
+  const root = svg(parent, "svg", { viewBox: `0 0 ${W} ${H}` }, "mn-radar mn-pro");
+  root.style.setProperty("--rd", color);
+  const id = `mn-grad-${++uid}`;
+  const defs = svg(root, "defs");
+  const grad = svg(defs, "linearGradient", { id, x1: 0, y1: 0, x2: 0, y2: 1 });
+  svg(grad, "stop", { offset: "0%", "stop-opacity": 0.62 }, "mn-rd-stop").setAttribute("style", `stop-color:${color}`);
+  svg(grad, "stop", { offset: "100%", "stop-opacity": 0.14 }, "mn-rd-stop").setAttribute("style", `stop-color:${color}`);
+  for (let k = 5; k >= 1; k--) svg(root, "polygon", { points: poly(() => R * k / 5) }, k === 5 ? "mn-rd-ring is-outer" : "mn-rd-ring");
+  axes.forEach((_, i) => {
+    const [x, y] = pt(i, R);
+    svg(root, "line", { x1: cx, y1: cy, x2: x, y2: y }, "mn-rd-axis");
+  });
+  svg(root, "polygon", { points: poly(val), fill: `url(#${id})` }, "mn-rd-shape");
+  axes.forEach((ax, i) => {
+    const [dx, dy] = pt(i, val(i));
+    svg(root, "circle", { cx: dx, cy: dy, r: 6.5 }, "mn-rd-halo");
+    svg(root, "circle", { cx: dx, cy: dy, r: 3.6 }, "mn-rd-dot");
+    const [lx, ly] = pt(i, R + LABEL);
+    const t = svg(root, "text", { x: lx, y: ly, "text-anchor": "middle", "dominant-baseline": "middle" }, "mn-rd-label");
+    const name = svg(t, "tspan");
+    name.textContent = ax.label;
+    const v = svg(t, "tspan", { dx: 5 }, "mn-rd-val");
+    v.textContent = String(ax.value);
+  });
+}
+var ABILITIES = [
+  { tag: "\u63A7\u5834", color: "var(--color-purple)" },
+  { tag: "\u7DE9\u901F", color: "var(--color-blue)" },
+  { tag: "\u4F4D\u79FB", color: "var(--color-cyan)" },
+  { tag: "\u6CBB\u7642", color: "var(--color-green)" },
+  { tag: "\u8B77\u76FE", color: "var(--color-yellow)" },
+  { tag: "\u5438\u8840", color: "var(--color-red)" }
+];
+function abilityPills(parent, c, onlyLit = false) {
+  const row2 = h(parent, "div", "mn-pills");
+  for (const a of ABILITIES) {
+    const n = count(c, a.tag);
+    const lit = c.features.includes(a.tag);
+    if (onlyLit && !lit) continue;
+    const p = h(row2, "span", "mn-pill" + (lit ? " is-lit" : " is-off"), a.tag + (lit && n > 1 ? ` \xD7${n}` : ""));
+    p.style.setProperty("--p", a.color);
+  }
+  return row2;
+}
+function styleLine(parent, c) {
+  const row2 = h(parent, "div", "mn-pro-line");
+  const reach = c.archetypes.find((a) => a === "\u8FD1\u6230" || a === "\u4E2D\u7A0B" || a === "\u9060\u7A0B") ?? "";
+  if (reach) h(row2, "span", "mn-pro-i", reach);
+  const dmg = h(row2, "span", "mn-pro-i", `${c.damageType}\u8F38\u51FA`);
+  dmg.style.color = DAMAGE_COLOR[c.damageType] ?? "inherit";
+  const dots = h(row2, "span", "mn-pro-i mn-hard");
+  h(dots, "span", "", "\u96E3\u5EA6");
+  const level = Math.max(1, Math.min(5, Math.ceil(c.difficulty / 2)));
+  for (let i = 1; i <= 5; i++) h(dots, "i", i <= level ? "is-on" : "");
+}
+function championProfile(parent, c, color) {
+  styleLine(parent, c);
+  profileRadar(parent, profileAxes(c), color);
+  abilityPills(parent, c);
 }
 
 // src/pages/fresh.ts
@@ -1144,7 +1202,7 @@ function rankTable(parent, s, changes) {
 // src/pages/champions.ts
 var ROLES = ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u5C04\u624B", "\u8F14\u52A9"];
 var DAMAGES = ["\u7269\u7406", "\u9B54\u6CD5", "\u6DF7\u5408"];
-var FEATURES = ["\u63A7\u5834", "\u6CBB\u7642", "\u8B77\u76FE", "\u4F4D\u79FB"];
+var FEATURES = ["\u63A7\u5834", "\u7DE9\u901F", "\u4F4D\u79FB", "\u6CBB\u7642", "\u8B77\u76FE", "\u5438\u8840"];
 var REACH = ["\u8FD1\u6230", "\u4E2D\u7A0B", "\u9060\u7A0B"];
 var SORTS2 = [["name", "\u540D\u7A31"], ["easy", "\u7C21\u55AE\u512A\u5148"], ["range", "\u5C04\u7A0B\u9060\u512A\u5148"]];
 var SEARCH_EXTRA = 8;
@@ -1178,7 +1236,7 @@ function championPicker(parent, ctx) {
   search.setAttribute("enterkeyhint", "search");
   const filters = h(parent, "div", "mn-chips");
   const panel = h(parent, "div", "mn-fpanel");
-  const count = h(parent, "div", "mn-count");
+  const count2 = h(parent, "div", "mn-count");
   const grid = h(parent, "div", "mn-grid");
   const extra = h(parent, "div");
   const draw = () => {
@@ -1186,7 +1244,7 @@ function championPicker(parent, ctx) {
     extra.empty();
     const q = query.trim().toLowerCase();
     const hits = sorted(all.filter((c) => matches(c) && (!q || c.name.toLowerCase().includes(q) || c.title.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))));
-    count.textContent = `${hits.length} / ${all.length}`;
+    count2.textContent = `${hits.length} / ${all.length}`;
     for (const c of hits) {
       const tile2 = h(grid, "button", "mn-tile");
       const im = h(tile2, "img");
@@ -1346,14 +1404,7 @@ function championCard(ctx) {
     const m = marker(entryDir(official.entry));
     chip(tags, `${m.mark} ${official.patch}`, { color: m.color, onTap: openChanges });
   }
-  const panel = h(el, "div", "mn-panel");
-  radar(panel, [
-    { label: "\u7269\u7406", value: c.attack },
-    { label: "\u9B54\u6CD5", value: c.magic },
-    { label: "\u9632\u79A6", value: c.defense },
-    { label: "\u5C04\u7A0B", value: Math.min(10, Math.round(c.range / 65)) },
-    { label: "\u96E3\u5EA6", value: c.difficulty }
-  ], 10, dmgColor);
+  championProfile(h(el, "div", "mn-panel mn-profile"), c, dmgColor);
   const mayhem = ctx.plugin.settings.mode === "mayhem";
   const tabs = [["skills", "Skills"], ["build", "Build"], ["augments", mayhem ? "Augments" : "Runes"], ["tips", "Tips"]];
   let block = null;
@@ -1473,9 +1524,9 @@ function deckPage(ctx, file) {
       });
     }
     h(dots, "span", "mn-dot2");
-    const count = slides.length + 1;
+    const count2 = slides.length + 1;
     const prev = h(nav, "button", "mn-navb", "\u2039");
-    const label = h(nav, "span", "mn-navl", `1 / ${count}`);
+    const label = h(nav, "span", "mn-navl", `1 / ${count2}`);
     const fwd = h(nav, "button", "mn-navb", "\u203A");
     const go = (d) => pager.scrollBy({ left: d * pager.clientWidth, behavior: "smooth" });
     prev.addEventListener("click", (e) => {
@@ -1487,10 +1538,10 @@ function deckPage(ctx, file) {
       go(1);
     });
     pager.addEventListener("scroll", () => {
-      const i = Math.max(0, Math.min(count - 1, Math.round(pager.scrollLeft / Math.max(1, pager.clientWidth))));
+      const i = Math.max(0, Math.min(count2 - 1, Math.round(pager.scrollLeft / Math.max(1, pager.clientWidth))));
       Array.from(dots.children).forEach((d, j) => d.toggleClass("is-on", j === i));
-      label.textContent = `${i + 1} / ${count}`;
-      if (i >= count - 1) void ctx.plugin.markRead(file.path);
+      label.textContent = `${i + 1} / ${count2}`;
+      if (i >= count2 - 1) void ctx.plugin.markRead(file.path);
     }, { passive: true });
   });
   return { title: "", el };
@@ -1516,14 +1567,7 @@ function visual(ctx, box, s) {
   } else if (kind === "radar") {
     const c = champ(args[0]);
     if (c) {
-      const p = h(box, "div", "mn-sl-radar");
-      radar(p, [
-        { label: "\u7269\u7406", value: c.attack },
-        { label: "\u9B54\u6CD5", value: c.magic },
-        { label: "\u9632\u79A6", value: c.defense },
-        { label: "\u5C04\u7A0B", value: Math.min(10, Math.round(c.range / 65)) },
-        { label: "\u96E3\u5EA6", value: c.difficulty }
-      ], 10, DAMAGE_COLOR[c.damageType]);
+      profileRadar(h(box, "div", "mn-sl-radar"), profileAxes(c), DAMAGE_COLOR[c.damageType] ?? "var(--interactive-accent)");
       return;
     }
   } else if (kind === "skills") {
@@ -1785,6 +1829,163 @@ function recipe(el, ctx, title, items) {
   }
 }
 
+// src/pages/roster.ts
+var import_obsidian6 = require("obsidian");
+var MAX_PICKS = 15;
+var ROLES2 = ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u5C04\u624B", "\u8F14\u52A9"];
+var SPLIT = /[\s,，、;；和跟與及]+/;
+function matchScore(c, raw) {
+  const q = raw.trim().toLowerCase();
+  if (!q) return 0;
+  const name = c.name.toLowerCase(), title = c.title.toLowerCase(), id = c.id.toLowerCase();
+  if (name === q || id === q) return 100;
+  if (name.startsWith(q) || id.startsWith(q)) return 90;
+  if (name.includes(q) || id.includes(q)) return 80;
+  if (title.includes(q)) return 60;
+  const chars = [...q];
+  let at = 0;
+  for (const ch of name) if (ch === chars[at]) at++;
+  if (at === chars.length && chars.length >= 2) return 50;
+  const shared = chars.filter((ch) => name.includes(ch)).length;
+  return chars.length >= 3 && shared / chars.length >= 0.66 ? 20 + shared : 0;
+}
+function rosterPage(ctx) {
+  const store = ctx.plugin.store;
+  const el = page("\u901F\u67E5");
+  const all = store.champions();
+  let picks = ctx.plugin.settings.roster.filter((id) => all.some((c) => c.id === id)).slice(0, MAX_PICKS);
+  let query = "", role = "";
+  const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)]));
+  const save = () => {
+    void ctx.plugin.setRoster(picks);
+  };
+  h(el, "p", "mn-rq-hint", "\u5927\u6DF7\u6230\u6703\u96A8\u6A5F\u7D66\u4F60\u82F1\u96C4\u3002\u9EDE\u4F60\u62FF\u5230\u7684(\u6700\u591A 15 \u4F4D),\u99AC\u4E0A\u770B\u5230\u5B9A\u4F4D\u548C\u80FD\u529B\u3002");
+  const results = h(el, "div", "mn-rq-results");
+  const box = h(el, "div", "mn-search");
+  icon(box, "search", "mn-search-ic");
+  const search = h(box, "input");
+  search.type = "search";
+  search.placeholder = "\u6253\u5B57,\u6216\u7528\u9375\u76E4\u7684\u9EA5\u514B\u98A8\u8AAA\u540D\u5B57(\u53EF\u4EE5\u4E00\u6B21\u8AAA\u597D\u5E7E\u500B)";
+  search.setAttribute("enterkeyhint", "search");
+  const suggest2 = h(el, "div", "mn-chips");
+  const roles = h(el, "div", "mn-chips");
+  const grid = h(el, "div", "mn-grid");
+  const toggle = (id) => {
+    if (picks.includes(id)) picks = picks.filter((p) => p !== id);
+    else if (picks.length >= MAX_PICKS) {
+      new import_obsidian6.Notice(`\u6700\u591A\u9078 ${MAX_PICKS} \u4F4D`);
+      return;
+    } else picks = [...picks, id];
+    save();
+    drawResults();
+    drawGrid();
+  };
+  const card = (c) => {
+    const r = h(results, "div", "mn-rq");
+    const top = h(r, "div", "mn-rq-top");
+    const im = h(top, "img", "mn-rq-img");
+    im.src = c.icon;
+    im.alt = "";
+    const who = h(top, "div", "mn-rq-who");
+    h(who, "div", "mn-rq-name", c.name);
+    h(who, "div", "mn-rq-title", c.title);
+    const rm = h(top, "button", "mn-rq-x");
+    icon(rm, "x");
+    rm.setAttribute("aria-label", "\u79FB\u9664");
+    rm.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggle(c.id);
+    });
+    const tags = h(r, "div", "mn-chips mn-rq-tags");
+    for (const role_ of c.roles) chip(tags, role_);
+    chip(tags, `${c.damageType}\u8F38\u51FA`, { color: DAMAGE_COLOR[c.damageType] });
+    const rd = recent.get(c.name);
+    if (rd) {
+      const m = marker(rd);
+      chip(tags, `${m.mark} \u672C\u7248\u8ABF\u6574`, { color: m.color });
+    }
+    styleLine(r, c);
+    abilityPills(r, c);
+    r.addEventListener("click", () => ctx.openChampion(c.id));
+  };
+  const drawResults = () => {
+    results.empty();
+    if (!picks.length) return;
+    const head = h(results, "div", "mn-rq-head");
+    h(head, "span", "mn-rq-count", `\u4F60\u7684\u82F1\u96C4 ${picks.length} / ${MAX_PICKS}`);
+    const clear = h(head, "button", "mn-clear", "\u5168\u90E8\u6E05\u9664");
+    clear.addEventListener("click", (e) => {
+      e.preventDefault();
+      picks = [];
+      save();
+      drawResults();
+      drawGrid();
+    });
+    for (const id of picks) {
+      const c = all.find((x) => x.id === id);
+      if (c) card(c);
+    }
+  };
+  const drawSuggest = () => {
+    suggest2.empty();
+    const tokens = query.split(SPLIT).filter(Boolean);
+    if (tokens.length < 2) return;
+    const found = tokens.map((t) => all.map((c) => ({ c, s: matchScore(c, t) })).sort((a, b) => b.s - a.s)[0]).filter((x) => x && x.s >= 50).map((x) => x.c);
+    const unique = [...new Map(found.map((c) => [c.id, c])).values()];
+    if (!unique.length) return;
+    for (const c of unique) chip(suggest2, `${picks.includes(c.id) ? "\u2713 " : "+ "}${c.name}`, { color: "var(--color-green)", onTap: () => toggle(c.id) });
+    chip(suggest2, "\u5168\u90E8\u52A0\u5165", { on: true, onTap: () => {
+      for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) picks = [...picks, c.id];
+      save();
+      drawResults();
+      drawGrid();
+    } });
+  };
+  const drawGrid = () => {
+    grid.empty();
+    const tokens = query.split(SPLIT).filter(Boolean);
+    let list2 = all.filter((c) => !role || c.roles.includes(role));
+    if (tokens.length) {
+      const scored = list2.map((c) => ({ c, s: Math.max(...tokens.map((t) => matchScore(c, t))) })).filter((x) => x.s > 0);
+      scored.sort((a, b) => b.s - a.s || a.c.name.localeCompare(b.c.name, "zh-Hant"));
+      list2 = scored.map((x) => x.c);
+    }
+    for (const c of list2) {
+      const on = picks.includes(c.id);
+      const t = h(grid, "button", "mn-tile mn-pick" + (on ? " is-pick" : ""));
+      const im = h(t, "img");
+      im.src = c.icon;
+      im.alt = "";
+      im.loading = "lazy";
+      if (on) icon(h(t, "span", "mn-pick-ok"), "check");
+      h(t, "span", "mn-tile-n", c.name);
+      t.addEventListener("click", (e) => {
+        e.preventDefault();
+        toggle(c.id);
+      });
+    }
+    if (!list2.length) empty(grid, { icon: "search-x", title: "\u627E\u4E0D\u5230", text: "\u63DB\u500B\u8AAA\u6CD5,\u6216\u5C11\u6253\u5E7E\u500B\u5B57\u8A66\u8A66\u3002" });
+  };
+  const drawRoles = () => {
+    roles.empty();
+    for (const r of ROLES2) chip(roles, r, { on: role === r, onTap: () => {
+      role = role === r ? "" : r;
+      drawRoles();
+      drawGrid();
+    } });
+  };
+  search.addEventListener("input", () => {
+    query = search.value;
+    drawSuggest();
+    drawGrid();
+  });
+  drawResults();
+  drawRoles();
+  drawGrid();
+  return { title: "\u901F\u67E5", el };
+}
+
 // src/pages/handbook.ts
 var SNIPPET = 46;
 var MAX_PER_NOTE = 2;
@@ -1800,6 +2001,7 @@ function firstSentence(blurb) {
   return s.length > 64 ? s.slice(0, 62) + "\u2026" : s;
 }
 function handbookPage(ctx) {
+  if (ctx.frame.key === "roster") return rosterPage(ctx);
   const store = ctx.plugin.store;
   const el = page("Handbook");
   const box = h(el, "div", "mn-search");
@@ -1825,6 +2027,25 @@ function handbookPage(ctx) {
       empty(out, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." });
       return;
     }
+    const picked = ctx.plugin.settings.roster.map((id) => store.champion(id)).filter((c) => !!c);
+    const qk = h(out, "button", "mn-qk");
+    icon(h(qk, "span", "mn-qk-ic"), "scan-search");
+    const qt = h(qk, "div", "mn-qk-main");
+    h(qt, "div", "mn-qk-t", "\u5927\u6DF7\u6230\u901F\u67E5");
+    h(qt, "div", "mn-qk-s", picked.length ? `\u4F60\u9078\u4E86 ${picked.length} \u4F4D\u82F1\u96C4,\u9EDE\u958B\u770B\u5404\u81EA\u7684\u5B9A\u4F4D\u548C\u80FD\u529B` : "\u62FF\u5230\u4E0D\u8A8D\u8B58\u7684\u82F1\u96C4?\u9EDE\u4E00\u4E0B\u5C31\u77E5\u9053\u5B9A\u4F4D\u548C\u80FD\u529B");
+    if (picked.length) {
+      const strip2 = h(qt, "div", "mn-qk-strip");
+      for (const c of picked.slice(0, 8)) {
+        const im = h(strip2, "img");
+        im.src = c.icon;
+        im.alt = "";
+      }
+    }
+    icon(qk, "chevron-right", "mn-row-chev");
+    qk.addEventListener("click", (e) => {
+      e.preventDefault();
+      ctx.push({ key: "roster", title: "\u901F\u67E5" });
+    });
     const done = notes.filter((n) => read.has(n.file.path)).length;
     const next = notes.find((n) => !read.has(n.file.path)) ?? notes[Math.floor(Math.random() * notes.length)];
     const hero = h(out, "button", "mn-hh");
@@ -2144,7 +2365,7 @@ function renderPage(tab, ctx) {
 
 // src/view.ts
 var VIEW_TYPE = "morellonomicon";
-var MnView = class extends import_obsidian6.ItemView {
+var MnView = class extends import_obsidian7.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.plugin = plugin;
@@ -2173,7 +2394,7 @@ var MnView = class extends import_obsidian6.ItemView {
     c.addClass("mn-host");
     const app = h(c, "div", "mn-app");
     this.appEl = app;
-    app.toggleClass("is-full", import_obsidian6.Platform.isMobile);
+    app.toggleClass("is-full", import_obsidian7.Platform.isMobile);
     this.topEl = h(app, "div", "mn-top");
     this.backEl = h(this.topEl, "button", "mn-btn mn-back");
     icon(this.backEl, "chevron-left");
@@ -2216,7 +2437,7 @@ var MnView = class extends import_obsidian6.ItemView {
     for (const [k, v] of Object.entries(vars)) this.appEl.style.setProperty(k, v);
   }
   themeMenu(e) {
-    const menu = new import_obsidian6.Menu();
+    const menu = new import_obsidian7.Menu();
     for (const t of THEMES) menu.addItem((i) => i.setTitle(t.name).setChecked(this.plugin.settings.theme === t.id).onClick(() => {
       this.plugin.settings.theme = t.id;
       void this.plugin.saveTheme();
@@ -2224,7 +2445,7 @@ var MnView = class extends import_obsidian6.ItemView {
     menu.showAtMouseEvent(e);
   }
   modeMenu(e) {
-    const menu = new import_obsidian6.Menu();
+    const menu = new import_obsidian7.Menu();
     for (const id of MODE_ORDER) {
       const m = MODES[id];
       menu.addItem((i) => i.setTitle(m.label + (m.enabled ? "" : " (coming soon)")).setIcon(m.icon).setChecked(this.plugin.settings.mode === id).setDisabled(!m.enabled).onClick(() => {
@@ -2328,7 +2549,7 @@ var MnView = class extends import_obsidian6.ItemView {
 };
 
 // src/main.ts
-var MorellonomiconPlugin = class extends import_obsidian7.Plugin {
+var MorellonomiconPlugin = class extends import_obsidian8.Plugin {
   constructor() {
     super(...arguments);
     this.settings = { ...DEFAULTS };
@@ -2354,7 +2575,7 @@ var MorellonomiconPlugin = class extends import_obsidian7.Plugin {
     this.registerEvent(this.app.vault.on("rename", (f, old) => onFile(f, old)));
     this.registerEvent(this.app.metadataCache.on("resolved", () => this.dataChanged()));
     this.home = createEl("button", { cls: "mn-home", attr: { "aria-label": "Open Morellonomicon" } });
-    (0, import_obsidian7.setIcon)(this.home, "book-open");
+    (0, import_obsidian8.setIcon)(this.home, "book-open");
     this.home.addEventListener("click", (e) => {
       e.preventDefault();
       void this.activate(false);
@@ -2377,9 +2598,9 @@ var MorellonomiconPlugin = class extends import_obsidian7.Plugin {
     const ws = this.app.workspace;
     const on = !!ws.getActiveViewOfType(MnView);
     document.body.toggleClass("mn-on", on);
-    document.body.toggleClass("mn-full", on && import_obsidian7.Platform.isMobile);
-    if (!import_obsidian7.Platform.isMobile) return;
-    const v = ws.getActiveViewOfType(import_obsidian7.View);
+    document.body.toggleClass("mn-full", on && import_obsidian8.Platform.isMobile);
+    if (!import_obsidian8.Platform.isMobile) return;
+    const v = ws.getActiveViewOfType(import_obsidian8.View);
     if (!v || v instanceof MnView || v.leaf.getRoot() !== ws.rootSplit) {
       this.home.remove();
       return;
@@ -2404,7 +2625,7 @@ var MorellonomiconPlugin = class extends import_obsidian7.Plugin {
     const ws = this.app.workspace;
     let leaf = ws.getLeavesOfType(VIEW_TYPE)[0] ?? null;
     if (!leaf) {
-      leaf = ws.getLeaf(startup || import_obsidian7.Platform.isMobile ? false : "tab");
+      leaf = ws.getLeaf(startup || import_obsidian8.Platform.isMobile ? false : "tab");
       await leaf.setViewState({ type: VIEW_TYPE, active: true });
     }
     await ws.revealLeaf(leaf);
@@ -2414,7 +2635,7 @@ var MorellonomiconPlugin = class extends import_obsidian7.Plugin {
   // A note in a tab of its own; a tab that already shows it is brought forward instead of opening a second one
   async openPath(path) {
     const f = this.app.vault.getAbstractFileByPath(path);
-    if (!(f instanceof import_obsidian7.TFile)) return;
+    if (!(f instanceof import_obsidian8.TFile)) return;
     const ws = this.app.workspace;
     const open = ws.getLeavesOfType("markdown").find((l) => l.view.file?.path === path);
     if (open) {
@@ -2428,6 +2649,11 @@ var MorellonomiconPlugin = class extends import_obsidian7.Plugin {
   async saveTheme() {
     await this.saveData(this.settings);
     this.views().forEach((v) => v.applyTheme());
+  }
+  // The Quick Look picks changed: remember them without redrawing the screen
+  async setRoster(ids) {
+    this.settings.roster = ids;
+    await this.saveData(this.settings);
   }
   // A guide card was opened: remember it without redrawing the screen
   async markRead(path) {

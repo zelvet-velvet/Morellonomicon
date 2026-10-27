@@ -42,10 +42,12 @@ MELEE_MAX_RANGE = 250    # attack range up to this counts as melee
 RANGED_MIN_RANGE = 450
 # Features read from spell text; each regex is run on the description and tooltip
 FEATURES = {
-    "控場": r"<status>|暈眩|擊飛|定身|緩速|減速|沉默|恐懼|魅惑|嘲諷|擊退|擊暈",
-    "治療": r"<healing>|治療|回復",
+    "控場": r"暈眩|眩暈|擊暈|擊飛|擊倒|定身|禁錮|束縛|沉默|恐懼|魅惑|嘲諷|睡眠|擊退|牽引|拉向|變形",   # hard crowd control
+    "緩速": r"緩速|減速",
+    "治療": r"<healing>|治療|回復.{0,6}生命",   # not mana or energy restores
     "護盾": r"<shield>|護盾",
     "位移": r"衝刺|閃現|傳送|躍|突進",
+    "吸血": r"吸血|生命偷取|偷取生命|汲取",
 }
 
 
@@ -194,16 +196,22 @@ def clean_range(spell):
     return r
 
 
+def skill_tags(spell):
+    """The abilities one skill has (控場, 治療, 護盾, 位移, 吸血), read from its own text."""
+    blob = spell.get("description", "") + spell.get("tooltip", "")
+    return [name for name, rx in FEATURES.items() if re.search(rx, blob)]
+
+
 def skills_fm(c, version, bin_data=None):
-    """Passive + Q W E R as small objects for the plugin (key, name, damage types, description, cooldown, cost, range, icon)."""
+    """Passive + Q W E R as small objects for the plugin (key, name, damage types, abilities, description, cooldown, cost, range, icon)."""
     p = c["passive"]
     objs = spells.spell_objects(bin_data or {})
     base, up = split_upgrade(p["description"])
-    out = [{"key": "P", "name": p["name"], "damage": [], "desc": base, "upgrade": up,
+    out = [{"key": "P", "name": p["name"], "damage": [], "tags": skill_tags(p), "desc": base, "upgrade": up,
             "icon": f"{DD}/cdn/{version}/img/passive/{p['image']['full']}"}]
     for key, s in zip("QWER", c["spells"]):
         base, up = split_upgrade(s["description"])
-        out.append({"key": key, "name": s["name"], "damage": spell_damage(s), "desc": base, "upgrade": up,
+        out.append({"key": key, "name": s["name"], "damage": spell_damage(s), "tags": skill_tags(s), "desc": base, "upgrade": up,
                     "range": clean_range(s), "rows": spells.rank_rows(s, objs.get(s["id"].lower(), {}).get("mSpell") or {}, c["partype"]),
                     "icon": f"{DD}/cdn/{version}/img/spell/{s['image']['full']}"})
     return out

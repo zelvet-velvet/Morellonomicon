@@ -13,6 +13,7 @@ export interface MnSettings {
     patchFolder: string;
     openOnStartup: boolean;
     read: string[];            // guide cards you have opened (their note paths)
+    roster: string[];          // the champions picked in Quick Look (ids), at most 15
 }
 
 export const DEFAULTS: MnSettings = {
@@ -25,6 +26,7 @@ export const DEFAULTS: MnSettings = {
     patchFolder: "版本更新",
     openOnStartup: Platform.isMobile,
     read: [],
+    roster: [],
 };
 
 export class MnSettingTab extends PluginSettingTab {

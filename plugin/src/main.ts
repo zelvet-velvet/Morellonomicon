@@ -101,6 +101,12 @@ export default class MorellonomiconPlugin extends Plugin {
         this.views().forEach((v) => v.applyTheme());
     }
 
+    // The Quick Look picks changed: remember them without redrawing the screen
+    async setRoster(ids: string[]): Promise<void> {
+        this.settings.roster = ids;
+        await this.saveData(this.settings);
+    }
+
     // A guide card was opened: remember it without redrawing the screen
     async markRead(path: string): Promise<void> {
         if (this.settings.read.includes(path)) return;

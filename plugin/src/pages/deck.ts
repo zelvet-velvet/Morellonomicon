@@ -1,6 +1,7 @@
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, augIcon, h, icon, radar } from "../ui";
+import { DAMAGE_COLOR, augIcon, h, icon } from "../ui";
+import { profileAxes, profileRadar } from "./profile";
 import type { PageCtx, PageOut } from "./index";
 import { demo } from "./skills";
 
@@ -101,9 +102,7 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
     } else if (kind === "radar") {
         const c = champ(args[0]);
         if (c) {
-            const p = h(box, "div", "mn-sl-radar");
-            radar(p, [{ label: "物理", value: c.attack }, { label: "魔法", value: c.magic }, { label: "防禦", value: c.defense },
-                { label: "射程", value: Math.min(10, Math.round(c.range / 65)) }, { label: "難度", value: c.difficulty }], 10, DAMAGE_COLOR[c.damageType]);
+            profileRadar(h(box, "div", "mn-sl-radar"), profileAxes(c), DAMAGE_COLOR[c.damageType] ?? "var(--interactive-accent)");
             return;
         }
     } else if (kind === "skills") {
