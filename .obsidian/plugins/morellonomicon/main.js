@@ -2854,16 +2854,17 @@ function rosterPage(ctx) {
     drawResults();
     drawGrid();
   };
+  let named = [];
   const pickFromSearch = (id) => {
     const adding = !picks.includes(id);
     toggle(id);
-    if (adding && query) {
+    if (adding && query && named.every((n) => picks.includes(n))) {
       search.value = "";
       query = "";
       drawSuggest();
       drawGrid();
       search.focus();
-    }
+    } else if (query) drawSuggest();
   };
   const card = (c) => {
     const r = h(results, "div", "mn-rq");
@@ -2914,6 +2915,7 @@ function rosterPage(ctx) {
   };
   const drawSuggest = () => {
     suggest2.empty();
+    named = [];
     const tokens = query.split(SPLIT).filter(Boolean);
     if (!tokens.length) return;
     const best = (t) => {
@@ -2927,9 +2929,10 @@ function rosterPage(ctx) {
     };
     const found = tokens.map(best);
     const unique = [...new Map(found.flatMap((f) => f.list).map((c) => [c.id, c])).values()];
+    named = found.every((f) => f.exact) ? unique.map((c) => c.id) : [];
     if (!unique.length) return;
     const guessed = found.some((f) => !f.exact && f.list.length);
-    if (tokens.length === 1 && !guessed) return;
+    if (unique.length === 1 && !guessed) return;
     if (guessed) h(suggest2, "span", "mn-dym", "\u4F60\u662F\u4E0D\u662F\u5728\u627E:");
     for (const c of unique) chip(suggest2, `${picks.includes(c.id) ? "\u2713 " : "+ "}${c.name}`, { color: "var(--color-green)", onTap: () => pickFromSearch(c.id) });
     if (unique.length > 1) chip(suggest2, "\u5168\u90E8\u52A0\u5165", { on: true, onTap: () => {

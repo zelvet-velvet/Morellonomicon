@@ -175,11 +175,14 @@ export function rosterPage(ctx: PageCtx): PageOut {
         drawResults();
         drawGrid();
     };
-    // a face tapped while searching: add it, empty the box and keep the keyboard up for the next name
+    // a face tapped while searching: add it; once every name that was said is picked, empty the box and keep the keyboard up
+    // for the next one (several names said together stay until each is added)
+    let named: string[] = [];   // the champions the search heard, from drawSuggest
     const pickFromSearch = (id: string) => {
         const adding = !picks.includes(id);
         toggle(id);
-        if (adding && query) { search.value = ""; query = ""; drawSuggest(); drawGrid(); search.focus(); }
+        if (adding && query && named.every((n) => picks.includes(n))) { search.value = ""; query = ""; drawSuggest(); drawGrid(); search.focus(); }
+        else if (query) drawSuggest();   // its ✓ marks
     };
 
     const card = (c: Champion) => {
@@ -216,6 +219,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
     // For each word: the best name that matches well; when none does, the nearest names ("did you mean"). Several words add up.
     const drawSuggest = () => {
         suggest.empty();
+        named = [];
         const tokens = query.split(SPLIT).filter(Boolean);
         if (!tokens.length) return;
         const best = (t: string): { list: Champion[]; exact: boolean } => {
@@ -229,10 +233,11 @@ export function rosterPage(ctx: PageCtx): PageOut {
         };
         const found = tokens.map(best);
         const unique = [...new Map(found.flatMap((f) => f.list).map((c) => [c.id, c])).values()];
+        named = found.every((f) => f.exact) ? unique.map((c) => c.id) : [];
         if (!unique.length) return;
         const guessed = found.some((f) => !f.exact && f.list.length);
         // a single word that already matches well needs no suggestion row: the grid shows it
-        if (tokens.length === 1 && !guessed) return;
+        if (unique.length === 1 && !guessed) return;
         if (guessed) h(suggest, "span", "mn-dym", "你是不是在找:");
         for (const c of unique) chip(suggest, `${picks.includes(c.id) ? "✓ " : "+ "}${c.name}`, { color: "var(--color-green)", onTap: () => pickFromSearch(c.id) });
         if (unique.length > 1) chip(suggest, "全部加入", { on: true, onTap: () => { for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) picks = [...picks, c.id]; save(); search.value = ""; query = ""; drawSuggest(); drawResults(); drawGrid(); } });
