@@ -1,0 +1,44 @@
+# Keeps the generated notes and data current: after each patch (every two weeks, on Tuesday or Wednesday) this runs
+# tools/update_patch.py and commits what changed, so the phone only has to pull. Start it by hand from the Actions tab if needed.
+name: Update patch data
+
+on:
+  schedule:
+    - cron: "0 3 * * 3,4,5"   # Wednesday, Thursday, Friday 03:00 UTC (11:00 Taipei)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-patch
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Keep downloaded game data between runs
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: patch-cache-${{ github.run_id }}
+          restore-keys: patch-cache-
+      - name: Regenerate the notes and data
+        run: python3 -I tools/update_patch.py
+      - name: Commit what changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "nothing changed"
+          else
+            git commit -m "data(patch): update the generated notes and data"
+            git push
+          fi
