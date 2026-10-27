@@ -26,7 +26,7 @@ The repo is public, so the phone only needs to pull.
 1. In Obsidian mobile, create a **new empty vault** (any name, local storage, not synced).
 2. Settings → Community plugins → turn off Restricted Mode → Browse → install and enable **Obsidian Git**.
 3. Command palette → **Obsidian Git: Clone an existing remote repo** → `https://github.com/zelvet-velvet/Morellonomicon.git` → choose to clone into the vault folder. Wait until it finishes (a few hundred notes, a few MB).
-4. Close and reopen the vault so the theme and the plugin load. Settings → Community plugins: enable the plugins you want (**Morellonomicon**, Dataview, Style Settings, Minimal Settings, Templater). Plugins other than Morellonomicon and Obsidian Git are not in git, so install the ones you want from Browse.
+4. Close and reopen the vault so the theme and the plugin load. On the phone you only need **Morellonomicon** (the app) and **Obsidian Git** (to pull updates); the other plugins in the list (Dataview, Templater, Style Settings…) are for editing on the PC and are not installed by the clone. Obsidian ignores the missing ones.
 5. Tap the book icon (ribbon, or the command palette: **Open Morellonomicon**).
 6. Later: command palette → **Obsidian Git: Pull** to get new notes and plugin builds.
 
