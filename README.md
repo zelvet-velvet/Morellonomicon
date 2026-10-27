@@ -17,7 +17,7 @@ Champion, skill and item data come from Riot's public [Data Dragon](https://deve
 
 ## 開發 / Development
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Status and plan: `Morellonomicon Note/Review/Dev Status.md`. AI assistants start at `Morellonomicon Note/Start/LLM Guide.md`.
+Start at `Morellonomicon Note/Start/Start Guide.md`. Status and plan: `Morellonomicon Note/Review/Dev Status.md`. AI assistants: `Morellonomicon Note/Start/LLM Guide.md`.
 
 ---
 *Morellonomicon isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.*

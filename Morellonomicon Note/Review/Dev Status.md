@@ -11,7 +11,7 @@ sticker: lucide//activity
 ## 🚀 Today's Progress (2026-10-27)
 - **Project start**: Chose an Obsidian vault over a C desktop app (opens on a phone); named it Morellonomicon (黑魔禁書).
 - **Vault setup**: Copied the Minimal theme, 4 CSS snippets and the plugin list from clawd-room; folders for beginner guide, champions, augments and modes.
-- **Workflow**: Copied the LLM Guide, Dev Status / Dev Log / Day note, PR template and contributing rules from clawd-room, adapted to this project.
+- **Workflow**: Copied the LLM Guide, Dev Status / Dev Log / Day note from clawd-room, simplified for a solo project (commit to `main`, no PRs) and added a Start Guide.
 
 ## 📅 Yesterday's Progress (—)
 
