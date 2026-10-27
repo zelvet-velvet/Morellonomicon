@@ -33,6 +33,11 @@ export interface PatchNote {
     champions?: NoteEntry[]; items?: NoteEntry[]; mayhem_champions?: NoteEntry[];
     augments_new?: { rarity: string; name: string; text: string }[]; augments_removed?: string[];
 }
+// `onhit: [R]` (hand-written in a champion note): those abilities apply on-hit effects; they get the 攻擊特效 tag like any read tag
+function withOnHit(skills: Skill[], keys: string[]): Skill[] {
+    return keys.length ? skills.map((s) => (keys.includes(s.key) && !s.tags.includes("攻擊特效") ? { ...s, tags: [...s.tags, "攻擊特效"] } : s)) : skills;
+}
+
 export interface Skill { key: string; name: string; damage: string[]; tags: string[]; icon: string; desc: string; upgrade: string; range: string; rows: SkillRow[] }
 export interface Augment { id: number; name: string; rarity: string; icon: string; effect: string; partial: boolean; fits: string[]; tier: string; path: string }
 export interface Item {
@@ -130,9 +135,9 @@ export class Store {
         if (!this.champs) {
             this.champs = this.notes(this.s.championFolder).filter((n) => n.fm.type === "champion").map(({ file, fm }) => ({
                 id: str(fm.id), key: num(fm.key), name: str(fm.name, file.basename), title: str(fm.title), blurb: str(fm.blurb), tier: str(fm.tier), roles: list(fm.roles), damageType: str(fm.damage_type),
-                skillDamage: list(fm.skill_damage), archetypes: [...list(fm.archetypes), ...list(fm.archetypes_extra)], features: [...list(fm.features), ...list(fm.features_extra)],
+                skillDamage: list(fm.skill_damage), archetypes: [...list(fm.archetypes), ...list(fm.archetypes_extra)], features: [...list(fm.features), ...list(fm.features_extra), ...(list(fm.onhit).length ? ["攻擊特效"] : [])],
                 resource: str(fm.resource), attack: num(fm.attack), magic: num(fm.magic), defense: num(fm.defense), difficulty: num(fm.difficulty),
-                range: num(fm.range), icon: str(fm.icon), skills: skillList(fm.skills), patch: str(fm.patch), pinned: list(fm.pinned), avoid: list(fm.avoid),
+                range: num(fm.range), icon: str(fm.icon), skills: withOnHit(skillList(fm.skills), list(fm.onhit)), patch: str(fm.patch), pinned: list(fm.pinned), avoid: list(fm.avoid),
                 video: typeof fm.video === "string" ? fm.video : undefined, builds: buildList(fm.builds), tips: tipList(fm.tips), path: file.path,
             })).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
         }

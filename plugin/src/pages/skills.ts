@@ -32,6 +32,7 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
         h(head, "span", "mn-sd-name", s.name);
         const types = h(head, "span", "mn-sd-types");
         for (const d of s.damage) chip(types, `${d}傷害`, { color: DAMAGE_COLOR[d] });
+        if (s.tags.includes("攻擊特效")) chip(types, "觸發攻擊特效", { color: "var(--mn-onhit)" });   // hand-set `onhit` in the champion note
         rankTable(detail, s, changes.filter((x) => x.scope === s.key));
         if (s.desc) h(detail, "p", "mn-sd-desc", s.desc);
         if (s.upgrade) {

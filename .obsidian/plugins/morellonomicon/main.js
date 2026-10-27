@@ -38,6 +38,9 @@ var TAB_LABEL = { champions: "Champions", augments: "Augments", patch: "Patch", 
 var TAB_ICON = { champions: "users", augments: "sparkles", patch: "newspaper", handbook: "book-open" };
 
 // src/data/store.ts
+function withOnHit(skills2, keys) {
+  return keys.length ? skills2.map((s) => keys.includes(s.key) && !s.tags.includes("\u653B\u64CA\u7279\u6548") ? { ...s, tags: [...s.tags, "\u653B\u64CA\u7279\u6548"] } : s) : skills2;
+}
 var patchNo = (p) => {
   const m = /^(\d+)\.(\d+)/.exec(p.trim());
   if (!m) return null;
@@ -148,7 +151,7 @@ var Store = class {
         damageType: str(fm.damage_type),
         skillDamage: list(fm.skill_damage),
         archetypes: [...list(fm.archetypes), ...list(fm.archetypes_extra)],
-        features: [...list(fm.features), ...list(fm.features_extra)],
+        features: [...list(fm.features), ...list(fm.features_extra), ...list(fm.onhit).length ? ["\u653B\u64CA\u7279\u6548"] : []],
         resource: str(fm.resource),
         attack: num(fm.attack),
         magic: num(fm.magic),
@@ -156,7 +159,7 @@ var Store = class {
         difficulty: num(fm.difficulty),
         range: num(fm.range),
         icon: str(fm.icon),
-        skills: skillList(fm.skills),
+        skills: withOnHit(skillList(fm.skills), list(fm.onhit)),
         patch: str(fm.patch),
         pinned: list(fm.pinned),
         avoid: list(fm.avoid),
@@ -920,7 +923,7 @@ function damageLines(c) {
   for (const s of c.skills) for (const kind of KINDS) {
     const rows = s.rows.filter((r) => r.label.startsWith(`${kind}\u50B7\u5BB3`));
     if (!rows.length && s.key === "P" && s.desc.includes(`${kind}\u50B7\u5BB3`)) {
-      out.push({ key: s.key, name: s.name, kind, base: 0, ad: 0, ap: 0 });
+      out.push({ key: s.key, name: s.name, kind, base: 0, ad: 0, ap: 0, onHit: s.tags.includes("\u653B\u64CA\u7279\u6548") });
       continue;
     }
     if (!rows.length) continue;
@@ -930,7 +933,7 @@ function damageLines(c) {
       if (m[2] === "\u9B54\u6CD5\u653B\u64CA") ap += lastNum(m[1]);
       else ad += lastNum(m[1]);
     }
-    out.push({ key: s.key, name: s.name, kind, base: lastNum(best.vals[best.vals.length - 1]), ad, ap });
+    out.push({ key: s.key, name: s.name, kind, base: lastNum(best.vals[best.vals.length - 1]), ad, ap, onHit: s.tags.includes("\u653B\u64CA\u7279\u6548") });
   }
   return out;
 }
@@ -954,7 +957,13 @@ function factsStrip(parent, c) {
       h(row2, "span", "mn-dl-sc", "\u88AB\u52D5,\u6578\u503C\u672A\u6536\u9304");
       continue;
     }
-    h(row2, "span", "mn-dl-sc", [d.ad ? `+${d.ad}% \u7269\u653B` : "", d.ap ? `+${d.ap}% \u9B54\u653B` : ""].filter(Boolean).join("  "));
+    const sc = h(row2, "span", "mn-dl-sc", [d.ad ? `+${d.ad}% \u7269\u653B` : "", d.ap ? `+${d.ap}% \u9B54\u653B` : ""].filter(Boolean).join("  "));
+    if (d.onHit) {
+      const gap = !!sc.textContent;
+      const oh = h(sc, "span", "mn-dl-oh", "\u89F8\u767C\u653B\u64CA\u7279\u6548");
+      oh.style.color = "var(--mn-onhit)";
+      if (gap) oh.style.marginLeft = "8px";
+    }
   }
   const ad = lines.reduce((n, d) => n + d.ad, 0), ap = lines.reduce((n, d) => n + d.ap, 0);
   if (ad + ap > 0) {
@@ -1333,6 +1342,7 @@ function skillStrip(parent, c, changes = []) {
     h(head, "span", "mn-sd-name", s.name);
     const types = h(head, "span", "mn-sd-types");
     for (const d of s.damage) chip(types, `${d}\u50B7\u5BB3`, { color: DAMAGE_COLOR[d] });
+    if (s.tags.includes("\u653B\u64CA\u7279\u6548")) chip(types, "\u89F8\u767C\u653B\u64CA\u7279\u6548", { color: "var(--mn-onhit)" });
     rankTable(detail, s, changes.filter((x) => x.scope === s.key));
     if (s.desc) h(detail, "p", "mn-sd-desc", s.desc);
     if (s.upgrade) {
