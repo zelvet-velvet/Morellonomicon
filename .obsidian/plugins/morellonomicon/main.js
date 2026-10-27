@@ -1063,7 +1063,7 @@ function styleCard(parent, c, app) {
   h(head, "span", "mn-style-t", "\u6230\u9B25\u98A8\u683C");
   const key = h(head, "button", "mn-lg-btn");
   key.setAttribute("aria-label", "\u5716\u793A\u8AAA\u660E");
-  icon(key, "circle-help");
+  icon(key, "info");
   if (app) key.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
