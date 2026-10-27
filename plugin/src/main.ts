@@ -1,4 +1,4 @@
-import { Platform, Plugin, TAbstractFile, TFile, WorkspaceLeaf } from "obsidian";
+import { Platform, Plugin, TAbstractFile, TFile, View, WorkspaceLeaf, setIcon } from "obsidian";
 import { Store } from "./data/store";
 import { Router } from "./router";
 import { DEFAULTS, MnSettingTab, MnSettings } from "./settings";
@@ -9,6 +9,7 @@ export default class MorellonomiconPlugin extends Plugin {
     router!: Router;
     store!: Store;
     private dataTimer = 0;
+    private home!: HTMLElement;
 
     async onload(): Promise<void> {
         await this.loadSettings();
@@ -28,10 +29,38 @@ export default class MorellonomiconPlugin extends Plugin {
         this.registerEvent(this.app.vault.on("rename", (f, old) => onFile(f, old)));
         this.registerEvent(this.app.metadataCache.on("resolved", () => this.dataChanged()));
 
-        this.app.workspace.onLayoutReady(() => { if (this.settings.openOnStartup) void this.activate(true); });
+        // Phone: the app covers the screen and Obsidian's floating bars hide while it is on screen (CSS keys off body.mn-full).
+        // On every other page a round button brings the app back.
+        this.home = createEl("button", { cls: "mn-home", attr: { "aria-label": "Open Morellonomicon" } });
+        setIcon(this.home, "book-open");
+        this.home.addEventListener("click", (e) => { e.preventDefault(); void this.activate(false); });
+        this.register(() => this.home.remove());
+        this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.updateBody()));
+        this.registerEvent(this.app.workspace.on("layout-change", () => this.updateBody()));
+
+        this.app.workspace.onLayoutReady(() => {
+            if (this.settings.openOnStartup) void this.activate(true);
+            this.updateBody();
+        });
     }
 
-    onunload(): void { window.clearTimeout(this.dataTimer); }
+    onunload(): void {
+        window.clearTimeout(this.dataTimer);
+        document.body.removeClass("mn-on", "mn-full");
+    }
+
+    // body.mn-on while the app is the active screen; mn-full (phone) additionally hides Obsidian's floating navigation
+    private updateBody(): void {
+        const ws = this.app.workspace;
+        const on = !!ws.getActiveViewOfType(MnView);
+        document.body.toggleClass("mn-on", on);
+        document.body.toggleClass("mn-full", on && Platform.isMobile);
+        if (!Platform.isMobile) return;
+        // the return button lives inside the note on screen (so it moves with the page); not on the app itself
+        const v = ws.getActiveViewOfType(View);
+        if (!v || v instanceof MnView || v.leaf.getRoot() !== ws.rootSplit) { this.home.remove(); return; }
+        if (this.home.parentElement !== v.containerEl) { v.containerEl.addClass("mn-home-host"); v.containerEl.appendChild(this.home); }
+    }
 
     views(): MnView[] {
         return this.app.workspace.getLeavesOfType(VIEW_TYPE).map((l) => l.view).filter((v): v is MnView => v instanceof MnView);
@@ -52,6 +81,7 @@ export default class MorellonomiconPlugin extends Plugin {
         }
         await ws.revealLeaf(leaf);
         ws.setActiveLeaf(leaf, { focus: true });
+        this.updateBody();
     }
 
     // A note in a tab of its own; a tab that already shows it is brought forward instead of opening a second one

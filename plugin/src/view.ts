@@ -1,4 +1,4 @@
-import { ItemView, Menu, WorkspaceLeaf } from "obsidian";
+import { ItemView, Menu, Platform, WorkspaceLeaf } from "obsidian";
 import type MorellonomiconPlugin from "./main";
 import { MODES, MODE_ORDER, TAB_ICON, TAB_LABEL, TabId } from "./modes";
 import { PAGES, PageOut } from "./pages";
@@ -32,6 +32,7 @@ export class MnView extends ItemView {
         c.empty();
         c.addClass("mn-host");
         const app = h(c, "div", "mn-app");
+        app.toggleClass("is-full", Platform.isMobile);   // phone: the app covers the display and adds the status-bar space itself
         this.topEl = h(app, "div", "mn-top");
         this.backEl = h(this.topEl, "button", "mn-btn mn-back");
         icon(this.backEl, "chevron-left");

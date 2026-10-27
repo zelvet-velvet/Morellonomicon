@@ -10,14 +10,32 @@
     --mn-accent: var(--interactive-accent);
     --mn-line: var(--background-modifier-border);
     --mn-radius: 12px;
+    --mn-safe-top: 0px;
+    --mn-safe-bottom: 0px;
     display: flex; flex-direction: column; height: 100%;
     background: var(--mn-bg); color: var(--mn-text);
     touch-action: manipulation; -webkit-tap-highlight-color: transparent;
 }
 .mn-app button { background: none; border: none; box-shadow: none; height: auto; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; }
 
+/* phone full screen: the app fills the display and Obsidian's floating bars hide while it is the active screen */
+.is-mobile .mn-app { --mn-safe-bottom: env(safe-area-inset-bottom, 0px); }
+.mn-app.is-full { position: fixed; inset: 0; z-index: 5; height: 100vh; height: 100lvh; --mn-safe-top: env(safe-area-inset-top, 0px); }
+body.mn-full .mobile-navbar, body.mn-full .mobile-toolbar { display: none !important; }
+.is-mobile .workspace-leaf-content[data-type="morellonomicon"] > .view-header { display: none; }
+
+/* round "back to Morellonomicon" button inside every other page (phone) */
+.mn-home { display: none; }
+body.is-mobile:not(.mn-on) .mn-home {
+    display: flex; align-items: center; justify-content: center; position: absolute; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 72px); z-index: 30;
+    width: 48px; height: 48px; padding: 0; border: none; border-radius: 50%;
+    background: var(--interactive-accent); color: var(--text-on-accent, #fff); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+body.is-mobile:not(.mn-on) .mn-home svg { width: 24px; height: 24px; }
+.mn-home-host { position: relative; }
+
 /* top bar */
-.mn-top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; min-height: 44px; padding: 0 8px; border-bottom: 0.5px solid transparent; transition: border-color 0.15s; }
+.mn-top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; min-height: 44px; padding: var(--mn-safe-top) 8px 0; border-bottom: 0.5px solid transparent; transition: border-color 0.15s; }
 .mn-top.is-scrolled { border-bottom-color: var(--mn-line); }
 .mn-btn { display: inline-flex; align-items: center; padding: 6px; color: var(--mn-accent); }
 .mn-btn svg { width: 22px; height: 22px; }
@@ -91,7 +109,7 @@ button.mn-chip.is-on { background: var(--chip); color: var(--mn-surface); }
 .mn-empty-s { font-size: 13px; }
 
 /* tab bar */
-.mn-tabs { flex: none; display: grid; grid-template-columns: repeat(var(--n, 4), 1fr); padding: 0 4px env(safe-area-inset-bottom, 0px); background: var(--mn-bg); border-top: 0.5px solid var(--mn-line); }
+.mn-tabs { flex: none; display: grid; grid-template-columns: repeat(var(--n, 4), 1fr); padding: 0 4px var(--mn-safe-bottom); background: var(--mn-bg); border-top: 0.5px solid var(--mn-line); }
 .mn-tab { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 7px 0 5px; color: var(--mn-muted); }
 .mn-tab svg { width: 24px; height: 24px; }
 .mn-tab-l { font-size: 10px; font-weight: 500; }

@@ -541,6 +541,7 @@ var MnView = class extends import_obsidian4.ItemView {
     c.empty();
     c.addClass("mn-host");
     const app = h(c, "div", "mn-app");
+    app.toggleClass("is-full", import_obsidian4.Platform.isMobile);
     this.topEl = h(app, "div", "mn-top");
     this.backEl = h(this.topEl, "button", "mn-btn mn-back");
     icon(this.backEl, "chevron-left");
@@ -688,12 +689,40 @@ var MorellonomiconPlugin = class extends import_obsidian5.Plugin {
     this.registerEvent(this.app.vault.on("delete", (f) => onFile(f)));
     this.registerEvent(this.app.vault.on("rename", (f, old) => onFile(f, old)));
     this.registerEvent(this.app.metadataCache.on("resolved", () => this.dataChanged()));
+    this.home = createEl("button", { cls: "mn-home", attr: { "aria-label": "Open Morellonomicon" } });
+    (0, import_obsidian5.setIcon)(this.home, "book-open");
+    this.home.addEventListener("click", (e) => {
+      e.preventDefault();
+      void this.activate(false);
+    });
+    this.register(() => this.home.remove());
+    this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.updateBody()));
+    this.registerEvent(this.app.workspace.on("layout-change", () => this.updateBody()));
     this.app.workspace.onLayoutReady(() => {
       if (this.settings.openOnStartup) void this.activate(true);
+      this.updateBody();
     });
   }
   onunload() {
     window.clearTimeout(this.dataTimer);
+    document.body.removeClass("mn-on", "mn-full");
+  }
+  // body.mn-on while the app is the active screen; mn-full (phone) additionally hides Obsidian's floating navigation
+  updateBody() {
+    const ws = this.app.workspace;
+    const on = !!ws.getActiveViewOfType(MnView);
+    document.body.toggleClass("mn-on", on);
+    document.body.toggleClass("mn-full", on && import_obsidian5.Platform.isMobile);
+    if (!import_obsidian5.Platform.isMobile) return;
+    const v = ws.getActiveViewOfType(import_obsidian5.View);
+    if (!v || v instanceof MnView || v.leaf.getRoot() !== ws.rootSplit) {
+      this.home.remove();
+      return;
+    }
+    if (this.home.parentElement !== v.containerEl) {
+      v.containerEl.addClass("mn-home-host");
+      v.containerEl.appendChild(this.home);
+    }
   }
   views() {
     return this.app.workspace.getLeavesOfType(VIEW_TYPE).map((l) => l.view).filter((v) => v instanceof MnView);
@@ -715,6 +744,7 @@ var MorellonomiconPlugin = class extends import_obsidian5.Plugin {
     }
     await ws.revealLeaf(leaf);
     ws.setActiveLeaf(leaf, { focus: true });
+    this.updateBody();
   }
   // A note in a tab of its own; a tab that already shows it is brought forward instead of opening a second one
   async openPath(path) {
