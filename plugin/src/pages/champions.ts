@@ -82,8 +82,16 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
         for (const r of ROLES) chip(filters, r, { on: F.roles.has(r), onTap: () => { F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r); redraw(); } });
         for (const d of DAMAGES) chip(filters, d, { on: F.dmg === d, color: DAMAGE_COLOR[d], onTap: () => { F.dmg = F.dmg === d ? "" : d; redraw(); } });
         const n = activeFilters();
-        chip(filters, n ? `篩選 · ${n}` : "篩選", { on: F.open || n > 0, color: "var(--interactive-accent)", onTap: () => { F.open = !F.open; drawFilters(); drawPanel(); } });
-        if (n || F.sort !== "name") chip(filters, "清除", { color: "var(--color-red)", onTap: () => { F.roles.clear(); F.dmg = ""; F.feat.clear(); F.reach = ""; F.sort = "name"; redraw(); } });
+        // a button of its own (not a chip): sliders icon, the number of active filters, opens the panel
+        const fb = h(filters, "button", "mn-filterbtn" + (F.open ? " is-open" : ""));
+        icon(fb, "sliders-horizontal", "mn-filterbtn-ic");
+        h(fb, "span", "", "篩選");
+        if (n) h(fb, "span", "mn-filterbtn-n", String(n));
+        fb.addEventListener("click", (e) => { e.preventDefault(); F.open = !F.open; drawFilters(); drawPanel(); });
+        if (n || F.sort !== "name") {
+            const clear = h(filters, "button", "mn-clear", "清除");
+            clear.addEventListener("click", (e) => { e.preventDefault(); F.roles.clear(); F.dmg = ""; F.feat.clear(); F.reach = ""; F.sort = "name"; redraw(); });
+        }
     };
     const drawPanel = () => {
         panel.empty();
@@ -96,7 +104,7 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
             if (hint) h(head, "span", "mn-fp-hint", hint);
             return s;
         };
-        const ab = h(sect("技能", "點一下 = 要有 · 再點 = 不要有"), "div", "mn-chips");
+        const ab = h(sect("技能"), "div", "mn-chips");
         for (const f of FEATURES) {
             const st = F.feat.get(f);
             chip(ab, (st === 1 ? "✓ " : st === -1 ? "✕ " : "") + f, {

@@ -47,6 +47,8 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
             h(up, "p", "mn-sd-desc", s.upgrade);
         }
         demo(detail, c, s);
+        // bring the details into view (the icon row stays just above them)
+        window.requestAnimationFrame(() => detail.scrollIntoView({ behavior: "smooth", block: "start" }));
     };
 }
 

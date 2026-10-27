@@ -48,7 +48,9 @@ export const row = (parent: HTMLElement, r: RowSpec): HTMLElement => {
 export const DAMAGE_COLOR: Record<string, string> = { 物理: "var(--color-orange)", 魔法: "var(--color-blue)", 真實: "var(--color-yellow)", 混合: "var(--color-purple)" };
 
 export const chip = (parent: HTMLElement, text: string, o: { color?: string; on?: boolean; onTap?: () => void } = {}): HTMLElement => {
-    const el = h(parent, o.onTap ? "button" : "span", "mn-chip" + (o.on ? " is-on" : ""), text);
+    const el = h(parent, o.onTap ? "button" : "span", "mn-chip" + (o.on ? " is-on" : "") + (o.color ? " has-color" : "") + (o.onTap ? " is-tap" : ""));
+    if (o.color && o.onTap && !o.on) h(el, "span", "mn-dot");   // a coloured dot on a choice that is not selected
+    el.appendChild(document.createTextNode(text));
     if (o.color) el.style.setProperty("--chip", o.color);
     if (o.onTap) { const fn = o.onTap; el.addEventListener("click", (e) => { e.preventDefault(); fn(); }); }
     return el;

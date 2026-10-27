@@ -80,8 +80,16 @@ export function augmentPage(ctx: PageCtx): PageOut {
     if (last) chip(tags, `${last.what === "added" ? "新增於" : "移除於"} ${last.patch}`, { color: last.what === "added" ? "var(--color-blue)" : "var(--color-red)" });
 
     const panel = h(el, "div", "mn-panel mn-dpanel");
-    h(panel, "p", "mn-dtext" + (a.effect ? "" : " mn-muted"), a.effect || "No effect text yet.");
-    if (a.effect && store.officialEffect(a.name) === a.effect) h(panel, "div", "mn-pn-src", "Effect text: Riot Games patch notes");
+    if (a.effect) {
+        h(panel, "p", "mn-dtext", a.effect);
+        if (store.officialEffect(a.name) === a.effect) h(panel, "div", "mn-pn-src", "Effect text: Riot Games patch notes");
+    } else {
+        // Riot's patch notes only describe an augment in the patch that adds or changes it; older ones have no text we can read yet
+        h(panel, "p", "mn-dtext mn-muted", "這個強化的效果說明還沒有收錄。");
+        const links = group(el);
+        row(links, { icon: "external-link", title: "在 League 維基查看效果", chevron: true, onTap: () => window.open("https://wiki.leagueoflegends.com/en-us/ARAM_Mayhem/Augments") });
+        row(links, { icon: "external-link", title: "OP.GG 強化列表", chevron: true, onTap: () => window.open("https://op.gg/lol/modes/aram-mayhem") });
+    }
 
     // which champions suit it: the hand-written `fits` when there is one, else a guess from the wording
     const all = store.champions();

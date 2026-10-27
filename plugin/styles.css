@@ -62,10 +62,19 @@ body.is-mobile:not(.mn-on) .mn-home svg { width: 24px; height: 24px; }
 .mn-search input { width: 100%; height: 44px; border-radius: 999px; font-size: 16px; padding: 0 16px 0 40px; border: 1px solid transparent; background: var(--mn-card); box-shadow: none; -webkit-user-select: text; user-select: text; }
 .mn-search input:focus { border-color: var(--mn-accent); background: var(--mn-card-hi); }
 .mn-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
-.mn-app .mn-chip { --chip: var(--mn-muted); display: inline-flex; align-items: center; white-space: nowrap; padding: 6px 13px; border-radius: 999px; font-size: 13px; font-weight: 500; line-height: 1.4;
-    color: var(--chip); background: color-mix(in srgb, var(--chip) 14%, transparent); border: 1px solid color-mix(in srgb, var(--chip) 22%, transparent); }
+/* chips: solid, never see-through. Neutral = a raised card colour; a choice that is on = solid accent (or its own colour); a coloured label = solid colour */
+.mn-app .mn-chip { --chip: var(--mn-muted); display: inline-flex; align-items: center; white-space: nowrap; padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; line-height: 1.4;
+    color: var(--mn-text); background: var(--mn-card-hi); border: 1px solid var(--mn-line); }
+.mn-app .mn-chip.has-color:not(.is-tap) { background: var(--chip); color: var(--text-on-accent, #fff); border-color: transparent; }
+.mn-app .mn-chip.is-on { background: var(--chip); color: var(--text-on-accent, #fff); border-color: transparent; font-weight: 700; }
+.mn-app .mn-chip.is-on:not(.has-color) { --chip: var(--mn-accent); }
+.mn-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--chip); margin-right: 7px; flex: none; }
 button.mn-chip:active { transform: scale(0.96); }
-button.mn-chip.is-on { background: color-mix(in srgb, var(--chip) 24%, transparent); border-color: var(--chip); font-weight: 700; }
+.mn-app .mn-filterbtn { display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 12px; font-size: 13px; font-weight: 700; color: var(--mn-text); background: var(--mn-card); border: 1.5px solid var(--mn-text); }
+.mn-app .mn-filterbtn.is-open { background: var(--mn-text); color: var(--mn-bg); }
+.mn-filterbtn-ic svg { width: 16px; height: 16px; }
+.mn-filterbtn-n { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--mn-accent); color: var(--text-on-accent, #fff); font-size: 11px; line-height: 18px; text-align: center; }
+.mn-app .mn-clear { padding: 7px 6px; font-size: 13px; font-weight: 600; color: var(--color-red); }
 
 /* champion grid */
 .mn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); gap: 14px 8px; margin-top: 10px; }
@@ -106,22 +115,22 @@ button.mn-chip.is-on { background: color-mix(in srgb, var(--chip) 24%, transpare
 button.mn-skill-box { transition: transform 0.12s, box-shadow 0.12s; }
 button.mn-skill-box:active { transform: scale(0.94); }
 button.mn-skill-box.is-on { box-shadow: 0 0 0 3px color-mix(in srgb, var(--chip) 45%, transparent), 0 0 18px color-mix(in srgb, var(--chip) 55%, transparent); }
-.mn-skill-detail { display: none; background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: var(--mn-radius); padding: 14px 16px; margin: -2px 0 14px; }
+.mn-skill-detail { scroll-margin-top: 84px; display: none; background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: var(--mn-radius); padding: 14px 16px; margin: -2px 0 14px; }
 .mn-skill-detail.is-open { display: block; animation: mn-pop 0.16s ease-out; }
 @keyframes mn-pop { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 .mn-sd-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .mn-sd-key { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 8px; background: var(--mn-text); color: var(--mn-bg); font-size: 12px; font-weight: 800; }
 .mn-sd-name { font-size: 17px; font-weight: 700; }
 .mn-sd-types { display: inline-flex; gap: 6px; flex-wrap: wrap; }
-.mn-sd-types .mn-chip { padding: 1px 9px; font-size: 12px; }
+.mn-app .mn-sd-types .mn-chip { padding: 2px 10px; font-size: 12px; }
 .mn-sd-meta { display: flex; gap: 8px; margin: 12px 0 4px; }
-.mn-sd-cell { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 12px; background: var(--mn-card-hi); }
+.mn-sd-cell { flex: 0 0 auto; min-width: 92px; display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 12px; background: var(--mn-card-hi); }
 .mn-sd-k { font-size: 11px; color: var(--mn-muted); }
 .mn-sd-v { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; word-break: break-all; }
 .mn-skill-up { position: absolute; left: 3px; top: 3px; display: flex; width: 16px; height: 16px; border-radius: 8px; align-items: center; justify-content: center; background: var(--color-green); color: #fff; }
 .mn-skill-up svg { width: 11px; height: 11px; }
 .mn-sd-video { display: block; width: 100%; border-radius: 12px; margin: 12px 0 2px; background: #000; aspect-ratio: 16 / 9; }
-.mn-sd-up { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--color-green) 12%, transparent); border: 1px solid color-mix(in srgb, var(--color-green) 28%, transparent); }
+.mn-sd-up { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--color-green) 14%, var(--mn-card)); border: 1px solid var(--color-green); }
 .mn-sd-up-t { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--color-green); }
 .mn-sd-up-ic svg { width: 16px; height: 16px; }
 .mn-rk { display: grid; grid-template-columns: minmax(88px, 1.5fr) repeat(var(--r, 5), 1fr); gap: 1px 4px; align-items: center; margin: 10px 0 2px; font-variant-numeric: tabular-nums; }
@@ -295,13 +304,13 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* handbook start page */
 .mn-keys { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 6px; }
 .mn-app .mn-key { flex: none; padding: 5px 13px; border-radius: 999px; font-size: 13px; background: var(--mn-card); border: 1px solid var(--mn-line); color: var(--mn-muted); }
-.mn-app .mn-hh { position: relative; display: block; width: 100%; text-align: left; overflow: hidden; margin: 8px 0 8px; padding: 20px 20px 18px;
-    border-radius: 24px; color: #fff; background: linear-gradient(135deg, var(--color-purple), var(--color-blue)); box-shadow: var(--mn-shadow); }
+.mn-app .mn-hh { position: relative; display: block; width: 100%; white-space: normal; text-align: left; overflow: hidden; margin: 8px 0 8px; padding: 20px 20px 18px;
+    border-radius: 24px; color: var(--text-on-accent, #fff); background: var(--mn-accent); box-shadow: var(--mn-shadow); }
 .mn-hh-body { position: relative; z-index: 1; padding-right: 64px; }
 .mn-hh-k { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; opacity: 0.85; }
 .mn-hh-t { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; margin: 6px 0 4px; }
 .mn-hh-s { font-size: 14px; opacity: 0.9; line-height: 1.45; }
-.mn-hh-go { display: inline-block; margin-top: 14px; padding: 7px 16px; border-radius: 999px; background: rgba(255, 255, 255, 0.22); font-size: 13px; font-weight: 700; }
+.mn-hh-go { display: inline-block; margin-top: 14px; padding: 8px 16px; border-radius: 999px; background: var(--text-on-accent, #fff); color: var(--mn-accent); font-size: 13px; font-weight: 800; }
 .mn-hh-ic { position: absolute; right: -6px; bottom: -14px; opacity: 0.22; }
 .mn-hh-ic svg { width: 120px; height: 120px; }
 .mn-prog { display: flex; align-items: center; gap: 10px; margin: 0 4px 14px; }
@@ -309,24 +318,25 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-prog-fill { height: 100%; border-radius: 3px; background: var(--color-green); transition: width 0.3s; }
 .mn-prog-t { font-size: 12px; color: var(--mn-muted); font-variant-numeric: tabular-nums; }
 .mn-ht-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.mn-app .mn-ht { --c: var(--color-blue); min-width: 0; overflow: hidden; display: flex; flex-direction: column; align-items: flex-start; text-align: left; padding: 14px 14px 12px; min-height: 150px; border-radius: 20px;
-    background: linear-gradient(160deg, color-mix(in srgb, var(--c) 24%, var(--mn-card)), var(--mn-card) 70%); border: 1px solid color-mix(in srgb, var(--c) 28%, var(--mn-line)); }
+/* topic tiles: a solid card with one colour on the icon and the read time (no gradient, nothing see-through) */
+.mn-app .mn-ht { --c: var(--color-blue); min-width: 0; overflow: hidden; display: flex; flex-direction: column; align-items: stretch; white-space: normal; text-align: left; padding: 14px 14px 12px; min-height: 150px; border-radius: 20px;
+    background: var(--mn-card); border: 1px solid var(--mn-line); }
 .mn-app .mn-ht:active { transform: scale(0.97); }
 .mn-ht-top { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px; }
-.mn-ht-ic { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 14px; color: var(--c); background: color-mix(in srgb, var(--c) 20%, transparent); }
+.mn-ht-ic { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 14px; color: var(--text-on-accent, #fff); background: var(--c); }
 .mn-ht-ic svg { width: 22px; height: 22px; }
 .mn-ht-done { display: flex; width: 22px; height: 22px; border-radius: 50%; align-items: center; justify-content: center; background: var(--color-green); color: #fff; }
 .mn-ht-done svg { width: 14px; height: 14px; }
-.mn-ht-t { font-size: 16px; font-weight: 800; line-height: 1.25; }
-.mn-ht-s { font-size: 12px; color: var(--mn-muted); line-height: 1.4; margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mn-ht-t { font-size: 16px; font-weight: 800; line-height: 1.25; white-space: normal; overflow-wrap: anywhere; }
+.mn-ht-s { font-size: 12px; color: var(--mn-muted); line-height: 1.45; margin-top: 4px; white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .mn-ht-m { margin-top: auto; padding-top: 8px; font-size: 11px; font-weight: 600; color: var(--c); }
-.mn-app .mn-fact { display: block; width: 100%; text-align: left; margin: 14px 0 4px; padding: 16px 18px; border-radius: 20px; background: var(--mn-card); border: 1px dashed var(--mn-line); }
+.mn-app .mn-fact { display: block; width: 100%; white-space: normal; text-align: left; margin: 14px 0 4px; padding: 16px 18px; border-radius: 20px; background: var(--mn-card); border: 1px solid var(--mn-line); }
 .mn-fact-k { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: var(--color-yellow); }
 .mn-fact-t { font-size: 20px; font-weight: 800; margin: 4px 0 2px; }
 .mn-fact-s { font-size: 14px; color: var(--mn-muted); line-height: 1.5; }
 
 /* next card at the end of a guide note */
-.mn-app .mn-nextcard { display: flex; align-items: center; gap: 10px; width: 100%; margin: 18px 0 10px; padding: 16px 18px; border-radius: 18px; text-align: left; background: var(--mn-accent); color: var(--text-on-accent, #fff); }
+.mn-app .mn-nextcard { white-space: normal; display: flex; align-items: center; gap: 10px; width: 100%; margin: 18px 0 10px; padding: 16px 18px; border-radius: 18px; text-align: left; background: var(--mn-accent); color: var(--text-on-accent, #fff); }
 .mn-nextcard-k { font-size: 12px; font-weight: 700; opacity: 0.85; }
 .mn-nextcard-t { flex: 1; font-size: 17px; font-weight: 800; }
 .mn-nextcard-ic svg { width: 22px; height: 22px; }

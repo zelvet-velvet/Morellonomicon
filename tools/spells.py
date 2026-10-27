@@ -188,20 +188,28 @@ def cost_row(spell, partype, calc, ranks):
         return None
     if res == "無消耗" or (costs and all(c == 0 for c in costs) and "{{ cost }}" in res):
         return {"label": "消耗", "vals": ["無"], "note": ""}
-    label = f"消耗({partype})" if partype and partype != "無" else "消耗"
+    unit = partype if partype and partype != "無" else ""
+    per_second = bool(re.search(r"每\s*秒|/\s*秒", res))
     vals = []
     for r, c in enumerate(costs, start=1):
         text = res.replace("{{ cost }}", num(c)).replace("{{ abilityresourcename }}", partype)
         text = re.sub(r"\{\{\s*([\w.:]+)(\*100)?\s*\}\}", lambda m: _var(calc, m, r), text)
         if "{{" in text:
             return None   # an unresolvable placeholder: better no row than a wrong one
-        vals.append(text)
-    std = res == "{{ cost }} {{ abilityresourcename }}"
-    if std:   # plain numbers; the resource is in the label
-        vals = [num(c) for c in costs]
-    elif len(costs) == 0:
+        # keep the table short: drop the words the label already says ("每秒消耗 30 魔力" becomes 30, label 消耗(魔力/秒))
+        bare = re.sub(r"每\s*秒|/\s*秒|消耗", "", text)
+        if unit:
+            bare = bare.replace(unit, "")
+        vals.append(re.sub(r"\s+", " ", bare).strip(" ,，、"))
+    if not vals:
         return None
-    return collapse({"label": label if std else "消耗", "vals": vals, "note": ""})
+    if all(re.fullmatch(r"[\d.]+( \+ [\d.]+)?", v) for v in vals):   # numbers only: the unit goes in the label
+        parts = unit + ("/秒" if per_second else "")
+        label = f"消耗({parts})" if parts else "消耗"
+    else:
+        vals = [v + "/秒" if per_second else v for v in vals]
+        label = "消耗"
+    return collapse({"label": label, "vals": vals, "note": ""})
 
 
 def _var(calc, m, rank):

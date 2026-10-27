@@ -639,7 +639,9 @@ var row = (parent, r) => {
 };
 var DAMAGE_COLOR = { \u7269\u7406: "var(--color-orange)", \u9B54\u6CD5: "var(--color-blue)", \u771F\u5BE6: "var(--color-yellow)", \u6DF7\u5408: "var(--color-purple)" };
 var chip = (parent, text, o = {}) => {
-  const el = h(parent, o.onTap ? "button" : "span", "mn-chip" + (o.on ? " is-on" : ""), text);
+  const el = h(parent, o.onTap ? "button" : "span", "mn-chip" + (o.on ? " is-on" : "") + (o.color ? " has-color" : "") + (o.onTap ? " is-tap" : ""));
+  if (o.color && o.onTap && !o.on) h(el, "span", "mn-dot");
+  el.appendChild(document.createTextNode(text));
   if (o.color) el.style.setProperty("--chip", o.color);
   if (o.onTap) {
     const fn = o.onTap;
@@ -1009,6 +1011,7 @@ function skillStrip(parent, c, changes = []) {
       h(up, "p", "mn-sd-desc", s.upgrade);
     }
     demo(detail, c, s);
+    window.requestAnimationFrame(() => detail.scrollIntoView({ behavior: "smooth", block: "start" }));
   };
 }
 var DEMO_BASE = "https://d28xe8vt774jo5.cloudfront.net/champion-abilities";
@@ -1146,19 +1149,28 @@ function championPicker(parent, ctx) {
       redraw();
     } });
     const n = activeFilters();
-    chip(filters, n ? `\u7BE9\u9078 \xB7 ${n}` : "\u7BE9\u9078", { on: F.open || n > 0, color: "var(--interactive-accent)", onTap: () => {
+    const fb = h(filters, "button", "mn-filterbtn" + (F.open ? " is-open" : ""));
+    icon(fb, "sliders-horizontal", "mn-filterbtn-ic");
+    h(fb, "span", "", "\u7BE9\u9078");
+    if (n) h(fb, "span", "mn-filterbtn-n", String(n));
+    fb.addEventListener("click", (e) => {
+      e.preventDefault();
       F.open = !F.open;
       drawFilters();
       drawPanel();
-    } });
-    if (n || F.sort !== "name") chip(filters, "\u6E05\u9664", { color: "var(--color-red)", onTap: () => {
-      F.roles.clear();
-      F.dmg = "";
-      F.feat.clear();
-      F.reach = "";
-      F.sort = "name";
-      redraw();
-    } });
+    });
+    if (n || F.sort !== "name") {
+      const clear = h(filters, "button", "mn-clear", "\u6E05\u9664");
+      clear.addEventListener("click", (e) => {
+        e.preventDefault();
+        F.roles.clear();
+        F.dmg = "";
+        F.feat.clear();
+        F.reach = "";
+        F.sort = "name";
+        redraw();
+      });
+    }
   };
   const drawPanel = () => {
     panel.empty();
@@ -1171,7 +1183,7 @@ function championPicker(parent, ctx) {
       if (hint) h(head, "span", "mn-fp-hint", hint);
       return s;
     };
-    const ab = h(sect("\u6280\u80FD", "\u9EDE\u4E00\u4E0B = \u8981\u6709 \xB7 \u518D\u9EDE = \u4E0D\u8981\u6709"), "div", "mn-chips");
+    const ab = h(sect("\u6280\u80FD"), "div", "mn-chips");
     for (const f of FEATURES) {
       const st = F.feat.get(f);
       chip(ab, (st === 1 ? "\u2713 " : st === -1 ? "\u2715 " : "") + f, {
@@ -1402,8 +1414,15 @@ function augmentPage(ctx) {
   const last = history[0];
   if (last) chip(tags, `${last.what === "added" ? "\u65B0\u589E\u65BC" : "\u79FB\u9664\u65BC"} ${last.patch}`, { color: last.what === "added" ? "var(--color-blue)" : "var(--color-red)" });
   const panel = h(el, "div", "mn-panel mn-dpanel");
-  h(panel, "p", "mn-dtext" + (a.effect ? "" : " mn-muted"), a.effect || "No effect text yet.");
-  if (a.effect && store.officialEffect(a.name) === a.effect) h(panel, "div", "mn-pn-src", "Effect text: Riot Games patch notes");
+  if (a.effect) {
+    h(panel, "p", "mn-dtext", a.effect);
+    if (store.officialEffect(a.name) === a.effect) h(panel, "div", "mn-pn-src", "Effect text: Riot Games patch notes");
+  } else {
+    h(panel, "p", "mn-dtext mn-muted", "\u9019\u500B\u5F37\u5316\u7684\u6548\u679C\u8AAA\u660E\u9084\u6C92\u6709\u6536\u9304\u3002");
+    const links = group(el);
+    row(links, { icon: "external-link", title: "\u5728 League \u7DAD\u57FA\u67E5\u770B\u6548\u679C", chevron: true, onTap: () => window.open("https://wiki.leagueoflegends.com/en-us/ARAM_Mayhem/Augments") });
+    row(links, { icon: "external-link", title: "OP.GG \u5F37\u5316\u5217\u8868", chevron: true, onTap: () => window.open("https://op.gg/lol/modes/aram-mayhem") });
+  }
   const all = store.champions();
   let tagList = [], list2 = [], label = "";
   if (a.fits.length) {
