@@ -110,9 +110,9 @@ export const chip = (parent: HTMLElement, text: string, o: { color?: string; on?
 // Role filter chips show an icon (echoing the game's class icons) instead of the word; the word is the label and shows in a bubble on tap
 export const ROLE_ICON: Record<string, string> = { 戰士: "swords", 坦克: "shield", 法師: "wand-sparkles", 刺客: "slice", 射手: "target", 輔助: "heart-handshake" };
 // The game's class icons, shown from the League of Legends Wiki by address (never stored in the vault). The wiki's classes differ
-// a little from Riot's role tags: 刺客 is its Assassin subclass, 輔助 its Controller class. A missing file falls back to ROLE_ICON.
+// a little from Riot's role tags: 刺客 is under its Slayer class, 輔助 its Controller class. A missing file falls back to ROLE_ICON.
 const ROLE_WIKI = "https://wiki.leagueoflegends.com/en-us/Special:FilePath/";
-const ROLE_FILE: Record<string, string> = { 戰士: "Fighter_icon.png", 坦克: "Tank_icon.png", 法師: "Mage_icon.png", 刺客: "Assassin_icon.png", 射手: "Marksman_icon.png", 輔助: "Controller_icon.png" };
+const ROLE_FILE: Record<string, string> = { 戰士: "Fighter_icon.png", 坦克: "Tank_icon.png", 法師: "Mage_icon.png", 刺客: "Slayer_icon.png", 射手: "Marksman_icon.png", 輔助: "Controller_icon.png" };
 export const roleChip = (parent: HTMLElement, role: string, o: { on: boolean; onTap: () => void }): HTMLElement => {
     let el: HTMLElement | null = null;
     el = chip(parent, "", { on: o.on, onTap: () => { if (el) tip(el, role); o.onTap(); } });
