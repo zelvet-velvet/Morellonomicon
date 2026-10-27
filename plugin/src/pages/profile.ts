@@ -59,13 +59,13 @@ export function profileRadar(parent: HTMLElement, axes: Axis[], color: string, m
 // The abilities a champion has, as icons: lit when it has them (with how many of its skills), dim when it does not.
 // Tap an icon for its name; the legend lists every icon with its full name and the usual abbreviation.
 const ABILITIES: { tag: string; color: string; icon: string; en: string; abbr: string; what: string }[] = [
-    { tag: "控場", color: "var(--color-purple)", icon: "hand", en: "Crowd Control", abbr: "CC", what: "暈眩、擊飛、定身、沉默、恐懼等,讓敵人動不了或不能放技能" },
+    { tag: "控場", color: "var(--color-purple)", icon: "lock", en: "Crowd Control", abbr: "CC", what: "暈眩、擊飛、定身、沉默、恐懼等,讓敵人動不了或不能放技能" },
     { tag: "緩速", color: "var(--color-blue)", icon: "snowflake", en: "Slow", abbr: "Slow", what: "降低敵人的移動速度" },
-    { tag: "位移", color: "var(--color-cyan)", icon: "chevrons-right", en: "Dash / Mobility", abbr: "Dash", what: "衝刺、閃現、瞬步、跳躍等,讓自己快速移動" },
+    { tag: "位移", color: "var(--color-cyan)", icon: "arrow-big-right-dash", en: "Dash / Mobility", abbr: "Dash", what: "衝刺、閃現、瞬步、跳躍等,讓自己快速移動" },
     { tag: "治療", color: "var(--color-green)", icon: "heart-pulse", en: "Heal", abbr: "Heal", what: "回復自己或隊友的生命" },
-    { tag: "護盾", color: "var(--color-yellow)", icon: "shield", en: "Shield", abbr: "Shield", what: "給自己或隊友一層可吸收傷害的護盾" },
-    { tag: "吸血", color: "var(--color-red)", icon: "droplet", en: "Lifesteal / Omnivamp", abbr: "LS", what: "造成傷害時回復自己的生命" },
-    { tag: "強化普攻", color: "var(--color-pink)", icon: "swords", en: "Empowered attacks (On-hit)", abbr: "On-hit", what: "技能會強化普通攻擊(下一次普攻、額外傷害)。依技能文字判斷,比「適合出攻擊特效裝」寬" },
+    { tag: "護盾", color: "var(--color-yellow)", icon: "shield-plus", en: "Shield", abbr: "Shield", what: "給自己或隊友一層可吸收傷害的護盾" },
+    { tag: "吸血", color: "var(--color-red)", icon: "syringe", en: "Lifesteal / Omnivamp", abbr: "LS", what: "造成傷害時回復自己的生命" },
+    { tag: "強化普攻", color: "var(--color-pink)", icon: "sword", en: "Empowered attacks (On-hit)", abbr: "On-hit", what: "技能會強化普通攻擊(下一次普攻、額外傷害)。依技能文字判斷,比「適合出攻擊特效裝」寬" },
 ];
 
 // The chart of every ability icon: icon, name, English name, abbreviation and what it means
@@ -89,7 +89,7 @@ class AbilityLegend extends Modal {
     onClose(): void { this.contentEl.empty(); }
 }
 
-export function abilityPills(parent: HTMLElement, c: Champion, onlyLit = false, app?: App): HTMLElement {
+export function abilityPills(parent: HTMLElement, c: Champion, onlyLit = false): HTMLElement {
     const row = h(parent, "div", "mn-pills");
     for (const a of ABILITIES) {
         const n = count(c, a.tag);
@@ -101,12 +101,6 @@ export function abilityPills(parent: HTMLElement, c: Champion, onlyLit = false, 
         if (lit && n > 1) h(p, "span", "mn-pill-n", String(n));
         p.style.setProperty("--p", a.color);
         p.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); tip(p, `${a.tag} · ${a.abbr}${lit ? "" : "(沒有)"}`); });
-    }
-    if (app) {
-        const q = h(row, "button", "mn-pill mn-pill-ic mn-pill-help");
-        q.setAttribute("aria-label", "圖示說明");
-        icon(q, "circle-help");
-        q.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); new AbilityLegend(app).open(); });
     }
     return row;
 }
@@ -158,8 +152,15 @@ export function factsRow(parent: HTMLElement, c: Champion): void {
 
 // The ability icons under a small label
 export function abilityBlock(parent: HTMLElement, c: Champion, app?: App): void {
-    h(parent, "div", "mn-rq-fl mn-rq-al", "技能(點圖示看名稱)");
-    abilityPills(parent, c, false, app);
+    const head = h(parent, "div", "mn-rq-al");
+    h(head, "span", "mn-rq-fl", "技能(點圖示看名稱)");
+    if (app) {
+        const q = h(head, "button", "mn-lg-btn");
+        icon(q, "circle-help");
+        h(q, "span", "", "圖示說明");
+        q.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); new AbilityLegend(app).open(); });
+    }
+    abilityPills(parent, c, false);
 }
 
 // the whole block of the champion card
