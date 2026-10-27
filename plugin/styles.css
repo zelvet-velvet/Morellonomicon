@@ -601,8 +601,10 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app.is-sub:has(.mn-scroll > .mn-page > .mn-dhead) .mn-top:not(.is-scrolled) .mn-back { transform: translateY(20px); }   /* centre Back on a tall icon header */
 .mn-app.is-sub .mn-back { transition: transform 0.2s; }
 
-/* role filter chips: icon only, centred */
-.mn-app .mn-chip.mn-chip-ic { justify-content: center; }
+/* role filters: a plain row of the game's class icons (no pill); dim when off, bright with a short accent line when on */
+.mn-app .mn-chip.mn-chip-ic { justify-content: center; height: 44px; padding: 0; border: none; border-radius: 0; background: none; opacity: 0.5; transition: opacity 0.15s; }
+.mn-app .mn-chip.mn-chip-ic.is-on { background: none; opacity: 1; box-shadow: inset 0 -2px 0 var(--mn-accent); }
 .mn-chip-ic .mn-ic { display: flex; }
-.mn-chip-ic svg { width: 20px; height: 20px; }
-.mn-role-img { display: block; width: 22px; height: 22px; object-fit: contain; }
+.mn-chip-ic svg { width: 24px; height: 24px; }
+.mn-role-img { display: block; width: 30px; height: 30px; object-fit: contain; transition: opacity 0.2s; }
+.mn-role-img.is-loading { opacity: 0; }

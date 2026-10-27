@@ -113,25 +113,28 @@ export const ROLE_ICON: Record<string, string> = { 戰士: "swords", 坦克: "sh
 // a little from Riot's role tags: 刺客 is under its Slayer class, 輔助 its Controller class. A missing file falls back to ROLE_ICON.
 const ROLE_WIKI = "https://wiki.leagueoflegends.com/en-us/Special:FilePath/";
 const ROLE_FILE: Record<string, string> = { 戰士: "Fighter_icon.png", 坦克: "Tank_icon.png", 法師: "Mage_icon.png", 刺客: "Slayer_icon.png", 射手: "Marksman_icon.png", 輔助: "Controller_icon.png" };
-// Fetch the class icons once when the app opens, so the role chips have them ready instead of popping in later
-const preloaded: HTMLImageElement[] = [];
+// Fetch the class icons once when the plugin loads, so the role chips have them ready
+const preloaded = new Map<string, HTMLImageElement>();
 export const preloadRoleIcons = (): void => {
-    if (preloaded.length) return;
-    for (const file of Object.values(ROLE_FILE)) { const im = new Image(); im.src = ROLE_WIKI + file; preloaded.push(im); }
+    if (preloaded.size) return;
+    for (const [role, file] of Object.entries(ROLE_FILE)) { const im = new Image(); im.src = ROLE_WIKI + file; preloaded.set(role, im); }
 };
 export const roleChip = (parent: HTMLElement, role: string, o: { on: boolean; onTap: () => void }): HTMLElement => {
     let el: HTMLElement | null = null;
     el = chip(parent, "", { on: o.on, onTap: () => { if (el) tip(el, role); o.onTap(); } });
     el.classList.add("mn-chip-ic");
     el.setAttribute("aria-label", role);
-    // the look-alike shows at once; the game's icon replaces it as soon as it has loaded (instantly when already cached)
-    const fallback = icon(el, ROLE_ICON[role] ?? "circle");
+    // the game's icon: drawn at once when cached; otherwise it fades in when it arrives. The look-alike only if it fails to load
     const file = ROLE_FILE[role];
-    if (!file) return el;
-    const im = document.createElement("img");
-    im.className = "mn-role-img";
+    if (!file) { icon(el, ROLE_ICON[role] ?? "circle"); return el; }
+    const im = h(el, "img", "mn-role-img");
     im.alt = "";
-    im.addEventListener("load", () => { fallback.replaceWith(im); }, { once: true });
+    const cached = preloaded.get(role);
+    if (!(cached?.complete && cached.naturalWidth)) {
+        im.classList.add("is-loading");
+        im.addEventListener("load", () => im.classList.remove("is-loading"), { once: true });
+    }
+    im.addEventListener("error", () => { im.remove(); if (el) icon(el, ROLE_ICON[role] ?? "circle"); }, { once: true });
     im.src = ROLE_WIKI + file;
     return el;
 };
