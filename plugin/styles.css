@@ -53,7 +53,7 @@ body.is-mobile:not(.mn-on) .mn-home svg { width: 24px; height: 24px; }
 .mn-back { justify-self: start; visibility: hidden; }
 .mn-top.has-back .mn-back { visibility: visible; }
 .mn-top-title { font-size: 16px; font-weight: 600; opacity: 0; transition: opacity 0.15s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60vw; }
-.mn-top.is-scrolled .mn-top-title, .mn-top.has-back .mn-top-title { opacity: 1; }
+.mn-top.is-scrolled .mn-top-title { opacity: 1; }   /* every page shows its own big title, so the bar repeats it only once that has scrolled away */
 .mn-acts { justify-self: end; display: flex; gap: 8px; }
 .mn-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 2px 14px; }
 .mn-title-row .mn-title { margin: 0; }
