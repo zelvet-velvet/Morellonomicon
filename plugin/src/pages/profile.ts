@@ -67,7 +67,7 @@ const TAGS: Tag[] = [
     // 控制
     { tag: "控場", color: "var(--mn-cc)", icon: "lock", en: "Crowd Control", abbr: "CC", what: "暈眩、擊飛、定身、沉默、恐懼、魅惑等,讓敵人動不了或不能放技能" },
     { tag: "緩速", color: "var(--mn-slow)", icon: "snowflake", en: "Slow", abbr: "Slow", what: "降低敵人的移動速度" },
-    { tag: "削弱", color: "var(--mn-weak)", icon: "trending-down", en: "Debuff", abbr: "Debuff", what: "致盲、近視、重傷、降低護甲 / 魔抗 / 攻速,讓敵人變弱但還能行動" },
+    { tag: "減益", color: "var(--mn-weak)", icon: "trending-down", en: "Debuff", abbr: "Debuff", what: "致盲、近視、重傷、降低護甲 / 魔抗 / 攻速,讓敵人變弱但還能行動" },
     // 移動
     { tag: "位移", color: "var(--mn-dash)", icon: "arrow-big-right-dash", en: "Dash / Blink", abbr: "Dash", what: "衝刺、閃現、瞬步、跳躍等,讓自己快速移動" },
     { tag: "加速", color: "var(--mn-haste)", icon: "wind", en: "Movement speed", abbr: "MS", what: "提高自己或隊友的移動速度" },
@@ -78,12 +78,12 @@ const TAGS: Tag[] = [
     { tag: "吸血", color: "var(--mn-ls)", icon: "syringe", en: "Lifesteal / Omnivamp", abbr: "LS", what: "造成傷害時回復自己的生命" },
     { tag: "免傷", color: "var(--mn-guard)", icon: "shield-half", en: "Damage reduction / Untargetable", abbr: "DR", what: "減少受到的傷害,或短時間無法被選取 / 無敵" },
     // 團隊
-    { tag: "幫隊友", color: "var(--mn-team)", icon: "users", en: "Helps allies", abbr: "Ally", what: "治療、護盾或加速也能給隊友" },
+    { tag: "隊友增益", color: "var(--mn-team)", icon: "users", en: "Helps allies", abbr: "Ally", what: "治療、護盾或加速也能給隊友" },
 ];
 // The tags in groups (filter panel, legend), in the order above
 export const TAG_GROUPS: [string, string[]][] = [
-    ["傷害", ["強化普攻", "攻擊特效", "斬殺"]], ["控制", ["控場", "緩速", "削弱"]], ["移動", ["位移", "加速", "隱身"]],
-    ["生存", ["治療", "護盾", "吸血", "免傷"]], ["團隊", ["幫隊友"]],
+    ["傷害", ["強化普攻", "攻擊特效", "斬殺"]], ["控制", ["控場", "緩速", "減益"]], ["移動", ["位移", "加速", "隱身"]],
+    ["生存", ["治療", "護盾", "吸血", "免傷"]], ["團隊", ["隊友增益"]],
 ];
 const TAG = new Map(TAGS.map((t) => [t.tag, t] as const));
 

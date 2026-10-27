@@ -996,7 +996,7 @@ var TAGS = [
   // 控制
   { tag: "\u63A7\u5834", color: "var(--mn-cc)", icon: "lock", en: "Crowd Control", abbr: "CC", what: "\u6688\u7729\u3001\u64CA\u98DB\u3001\u5B9A\u8EAB\u3001\u6C89\u9ED8\u3001\u6050\u61FC\u3001\u9B45\u60D1\u7B49,\u8B93\u6575\u4EBA\u52D5\u4E0D\u4E86\u6216\u4E0D\u80FD\u653E\u6280\u80FD" },
   { tag: "\u7DE9\u901F", color: "var(--mn-slow)", icon: "snowflake", en: "Slow", abbr: "Slow", what: "\u964D\u4F4E\u6575\u4EBA\u7684\u79FB\u52D5\u901F\u5EA6" },
-  { tag: "\u524A\u5F31", color: "var(--mn-weak)", icon: "trending-down", en: "Debuff", abbr: "Debuff", what: "\u81F4\u76F2\u3001\u8FD1\u8996\u3001\u91CD\u50B7\u3001\u964D\u4F4E\u8B77\u7532 / \u9B54\u6297 / \u653B\u901F,\u8B93\u6575\u4EBA\u8B8A\u5F31\u4F46\u9084\u80FD\u884C\u52D5" },
+  { tag: "\u6E1B\u76CA", color: "var(--mn-weak)", icon: "trending-down", en: "Debuff", abbr: "Debuff", what: "\u81F4\u76F2\u3001\u8FD1\u8996\u3001\u91CD\u50B7\u3001\u964D\u4F4E\u8B77\u7532 / \u9B54\u6297 / \u653B\u901F,\u8B93\u6575\u4EBA\u8B8A\u5F31\u4F46\u9084\u80FD\u884C\u52D5" },
   // 移動
   { tag: "\u4F4D\u79FB", color: "var(--mn-dash)", icon: "arrow-big-right-dash", en: "Dash / Blink", abbr: "Dash", what: "\u885D\u523A\u3001\u9583\u73FE\u3001\u77AC\u6B65\u3001\u8DF3\u8E8D\u7B49,\u8B93\u81EA\u5DF1\u5FEB\u901F\u79FB\u52D5" },
   { tag: "\u52A0\u901F", color: "var(--mn-haste)", icon: "wind", en: "Movement speed", abbr: "MS", what: "\u63D0\u9AD8\u81EA\u5DF1\u6216\u968A\u53CB\u7684\u79FB\u52D5\u901F\u5EA6" },
@@ -1007,14 +1007,14 @@ var TAGS = [
   { tag: "\u5438\u8840", color: "var(--mn-ls)", icon: "syringe", en: "Lifesteal / Omnivamp", abbr: "LS", what: "\u9020\u6210\u50B7\u5BB3\u6642\u56DE\u5FA9\u81EA\u5DF1\u7684\u751F\u547D" },
   { tag: "\u514D\u50B7", color: "var(--mn-guard)", icon: "shield-half", en: "Damage reduction / Untargetable", abbr: "DR", what: "\u6E1B\u5C11\u53D7\u5230\u7684\u50B7\u5BB3,\u6216\u77ED\u6642\u9593\u7121\u6CD5\u88AB\u9078\u53D6 / \u7121\u6575" },
   // 團隊
-  { tag: "\u5E6B\u968A\u53CB", color: "var(--mn-team)", icon: "users", en: "Helps allies", abbr: "Ally", what: "\u6CBB\u7642\u3001\u8B77\u76FE\u6216\u52A0\u901F\u4E5F\u80FD\u7D66\u968A\u53CB" }
+  { tag: "\u968A\u53CB\u589E\u76CA", color: "var(--mn-team)", icon: "users", en: "Helps allies", abbr: "Ally", what: "\u6CBB\u7642\u3001\u8B77\u76FE\u6216\u52A0\u901F\u4E5F\u80FD\u7D66\u968A\u53CB" }
 ];
 var TAG_GROUPS = [
   ["\u50B7\u5BB3", ["\u5F37\u5316\u666E\u653B", "\u653B\u64CA\u7279\u6548", "\u65AC\u6BBA"]],
-  ["\u63A7\u5236", ["\u63A7\u5834", "\u7DE9\u901F", "\u524A\u5F31"]],
+  ["\u63A7\u5236", ["\u63A7\u5834", "\u7DE9\u901F", "\u6E1B\u76CA"]],
   ["\u79FB\u52D5", ["\u4F4D\u79FB", "\u52A0\u901F", "\u96B1\u8EAB"]],
   ["\u751F\u5B58", ["\u6CBB\u7642", "\u8B77\u76FE", "\u5438\u8840", "\u514D\u50B7"]],
-  ["\u5718\u968A", ["\u5E6B\u968A\u53CB"]]
+  ["\u5718\u968A", ["\u968A\u53CB\u589E\u76CA"]]
 ];
 var TAG = new Map(TAGS.map((t) => [t.tag, t]));
 var TagLegend = class extends import_obsidian4.Modal {
@@ -1572,7 +1572,7 @@ var EFFECT_WORDS = [
     [/變形/, "\u8B8A\u5F62"],
     [/牽引|拉向/, "\u62C9\u626F"]
   ]],
-  ["\u524A\u5F31", "var(--mn-weak)", [
+  ["\u6E1B\u76CA", "var(--mn-weak)", [
     [/致盲/, "\u81F4\u76F2"],
     [/近視|(降低|減少|縮小)[^。]{0,4}(視線|視野)/, "\u8FD1\u8996"],
     [/重傷/, "\u91CD\u50B7"],
