@@ -11,6 +11,28 @@ export const VIEW_TYPE = "morellonomicon";
 
 // The app screen: top bar (back, title, mode switch), page area, tab bar. A page is drawn in one step when a tab, a detail page
 // or the data changes; scroll positions are kept per page so Back returns to where you were.
+const SPINNER_DELAY = 140;   // ms a page may take before the spinner shows (a quick load never flashes it)
+const IMAGE_WAIT = 8000;     // ms before a page is shown even if a picture has not arrived
+const ARRIVE_MS = 240;
+
+// Pictures in the first screen of a page that have not loaded yet, each as a promise that settles when it loads or fails
+function pendingImages(page: HTMLElement): Promise<void>[] {
+    const out: Promise<void>[] = [];
+    const urls = [...page.querySelectorAll<HTMLElement>(".mn-hero-bg")].map((e) => /url\("?([^")]+)"?\)/.exec(e.style.backgroundImage)?.[1]).filter((u): u is string => !!u);
+    for (const u of urls) out.push(new Promise<void>((r) => { const im = new Image(); im.onload = im.onerror = () => r(); im.src = u; if (im.complete) r(); }));
+    for (const im of page.querySelectorAll<HTMLImageElement>("img")) {
+        if (!im.src || im.complete || im.getBoundingClientRect().top > window.innerHeight) continue;
+        out.push(new Promise<void>((r) => { im.addEventListener("load", () => r(), { once: true }); im.addEventListener("error", () => r(), { once: true }); }));
+    }
+    return out;
+}
+
+function arrive(page: HTMLElement, anim: "push" | "back" | "tab"): void {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || !page.animate) return;
+    const from = anim === "push" ? "translateX(28px)" : anim === "back" ? "translateX(-28px)" : "translateY(10px)";
+    page.animate([{ opacity: 0, transform: from }, { opacity: 1, transform: "none" }], { duration: ARRIVE_MS, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" });
+}
+
 export class MnView extends ItemView {
     private appEl!: HTMLElement;
     private topEl!: HTMLElement;
@@ -54,6 +76,8 @@ export class MnView extends ItemView {
         this.modeBtn = modeBtn;
         this.scrollEl = h(app, "div", "mn-scroll");
         this.registerDomEvent(this.scrollEl, "scroll", () => this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > 36), { passive: true });
+        this.loaderEl = h(app, "div", "mn-loader");
+        h(this.loaderEl, "div", "mn-spin");
         this.tabsEl = h(app, "div", "mn-tabs");
         this.applyTheme();
         this.registerEvent(this.app.workspace.on("css-change", () => this.applyTheme()));   // Obsidian switched light / dark
@@ -64,6 +88,8 @@ export class MnView extends ItemView {
     async onClose(): Promise<void> { this.scrolls.clear(); }
 
     private modeBtn!: HTMLElement;
+    private drawId = 0;
+    private loaderEl!: HTMLElement;   // a spinner over the page while its pictures load
     private actsEl!: HTMLElement;   // theme and mode buttons: in the big title row of a tab's first page, in the top bar elsewhere
 
     // The chosen colour theme as variables on the app element (none = Obsidian's own colours)
@@ -114,17 +140,17 @@ export class MnView extends ItemView {
 
     tapTab(id: TabId): void {
         if (id === this.router.tab) {
-            if (this.router.popToRoot()) this.draw();
+            if (this.router.popToRoot()) this.draw("back");
             else this.scrollEl.scrollTo({ top: 0, behavior: "smooth" });
             return;
         }
         this.router.setTab(id);
         this.markTab();
-        this.draw();
+        this.draw("tab");
     }
-    goTab(id: TabId): void { this.router.popToRoot(); if (id !== this.router.tab) this.tapTab(id); else this.draw(); }
-    push(f: Frame): void { if (this.router.push(f)) this.draw(); }
-    back(): void { if (this.router.pop()) this.draw(); }
+    goTab(id: TabId): void { this.router.popToRoot(); if (id !== this.router.tab) this.tapTab(id); else this.draw("tab"); }
+    push(f: Frame): void { if (this.router.push(f)) this.draw("push"); }
+    back(): void { if (this.router.pop()) this.draw("back"); }
 
     // Data or settings changed: redraw from scratch (the mode may have changed the tabs)
     refresh(resetStack = false): void {
@@ -134,7 +160,9 @@ export class MnView extends ItemView {
         this.draw();
     }
 
-    draw(): void {
+    // How a new page arrives: slides in from the right (deeper), from the left (back), or rises in (another tab); "none" for a refresh
+    draw(anim: "none" | "push" | "back" | "tab" = "none"): void {
+        const id = ++this.drawId;
         if (this.shown) this.scrolls.set(this.shown, this.scrollEl.scrollTop);
         const key = this.key();
         const f = this.router.top();
@@ -163,5 +191,19 @@ export class MnView extends ItemView {
         this.actsEl.toggleClass("is-hidden", !titleRow);   // only a tab's first page has them
         this.topEl.toggleClass("has-back", this.router.depth() > 0);
         this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > 36);
+        if (anim === "none") { this.loaderEl.removeClass("is-on"); return; }
+        // pictures that are in view and not here yet: keep the page hidden under a spinner until they arrive (or give up after a while)
+        const waiting = pendingImages(out.el);
+        if (!waiting.length) { this.loaderEl.removeClass("is-on"); arrive(out.el, anim); return; }
+        out.el.style.opacity = "0";
+        const spin = window.setTimeout(() => { if (id === this.drawId) this.loaderEl.addClass("is-on"); }, SPINNER_DELAY);
+        const done = (): void => {
+            window.clearTimeout(spin);
+            if (id !== this.drawId) return;   // another page was opened meanwhile
+            this.loaderEl.removeClass("is-on");
+            out.el.style.opacity = "";
+            arrive(out.el, anim);
+        };
+        void Promise.race([Promise.all(waiting), new Promise<void>((r) => window.setTimeout(r, IMAGE_WAIT))]).then(done);
     }
 }

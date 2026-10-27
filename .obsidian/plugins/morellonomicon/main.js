@@ -2485,12 +2485,39 @@ function renderPage(tab, ctx) {
 
 // src/view.ts
 var VIEW_TYPE = "morellonomicon";
+var SPINNER_DELAY = 140;
+var IMAGE_WAIT = 8e3;
+var ARRIVE_MS = 240;
+function pendingImages(page2) {
+  const out = [];
+  const urls = [...page2.querySelectorAll(".mn-hero-bg")].map((e) => /url\("?([^")]+)"?\)/.exec(e.style.backgroundImage)?.[1]).filter((u) => !!u);
+  for (const u of urls) out.push(new Promise((r) => {
+    const im = new Image();
+    im.onload = im.onerror = () => r();
+    im.src = u;
+    if (im.complete) r();
+  }));
+  for (const im of page2.querySelectorAll("img")) {
+    if (!im.src || im.complete || im.getBoundingClientRect().top > window.innerHeight) continue;
+    out.push(new Promise((r) => {
+      im.addEventListener("load", () => r(), { once: true });
+      im.addEventListener("error", () => r(), { once: true });
+    }));
+  }
+  return out;
+}
+function arrive(page2, anim) {
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || !page2.animate) return;
+  const from = anim === "push" ? "translateX(28px)" : anim === "back" ? "translateX(-28px)" : "translateY(10px)";
+  page2.animate([{ opacity: 0, transform: from }, { opacity: 1, transform: "none" }], { duration: ARRIVE_MS, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" });
+}
 var MnView = class extends import_obsidian8.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.plugin = plugin;
     this.scrolls = /* @__PURE__ */ new Map();
     this.shown = "";
+    this.drawId = 0;
     this.themed = [];
   }
   getViewType() {
@@ -2541,6 +2568,8 @@ var MnView = class extends import_obsidian8.ItemView {
     this.modeBtn = modeBtn;
     this.scrollEl = h(app, "div", "mn-scroll");
     this.registerDomEvent(this.scrollEl, "scroll", () => this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > 36), { passive: true });
+    this.loaderEl = h(app, "div", "mn-loader");
+    h(this.loaderEl, "div", "mn-spin");
     this.tabsEl = h(app, "div", "mn-tabs");
     this.applyTheme();
     this.registerEvent(this.app.workspace.on("css-change", () => this.applyTheme()));
@@ -2606,24 +2635,24 @@ var MnView = class extends import_obsidian8.ItemView {
   }
   tapTab(id) {
     if (id === this.router.tab) {
-      if (this.router.popToRoot()) this.draw();
+      if (this.router.popToRoot()) this.draw("back");
       else this.scrollEl.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
     this.router.setTab(id);
     this.markTab();
-    this.draw();
+    this.draw("tab");
   }
   goTab(id) {
     this.router.popToRoot();
     if (id !== this.router.tab) this.tapTab(id);
-    else this.draw();
+    else this.draw("tab");
   }
   push(f) {
-    if (this.router.push(f)) this.draw();
+    if (this.router.push(f)) this.draw("push");
   }
   back() {
-    if (this.router.pop()) this.draw();
+    if (this.router.pop()) this.draw("back");
   }
   // Data or settings changed: redraw from scratch (the mode may have changed the tabs)
   refresh(resetStack = false) {
@@ -2632,7 +2661,9 @@ var MnView = class extends import_obsidian8.ItemView {
     this.buildTabs();
     this.draw();
   }
-  draw() {
+  // How a new page arrives: slides in from the right (deeper), from the left (back), or rises in (another tab); "none" for a refresh
+  draw(anim = "none") {
+    const id = ++this.drawId;
     if (this.shown) this.scrolls.set(this.shown, this.scrollEl.scrollTop);
     const key = this.key();
     const f = this.router.top();
@@ -2646,13 +2677,13 @@ var MnView = class extends import_obsidian8.ItemView {
         frame: f,
         push: (x) => this.push(x),
         pop: () => this.back(),
-        goTab: (id) => this.goTab(id),
-        openChampion: (id, sub) => {
-          if (sub) rememberSub(id, sub);
-          this.push({ key: "champion", title: store.champion(id)?.name ?? id, params: { id } });
+        goTab: (id2) => this.goTab(id2),
+        openChampion: (id2, sub) => {
+          if (sub) rememberSub(id2, sub);
+          this.push({ key: "champion", title: store.champion(id2)?.name ?? id2, params: { id: id2 } });
         },
-        openAugment: (id) => this.push({ key: "augment", title: store.augment(id)?.name ?? "Augment", params: { id } }),
-        openItem: (id) => this.push({ key: "item", title: store.item(id)?.name ?? "Item", params: { id } }),
+        openAugment: (id2) => this.push({ key: "augment", title: store.augment(id2)?.name ?? "Augment", params: { id: id2 } }),
+        openItem: (id2) => this.push({ key: "item", title: store.item(id2)?.name ?? "Item", params: { id: id2 } }),
         openNote: (path) => this.push({ key: "note", title: path.split("/").pop()?.replace(/\.md$/, "") ?? "Note", params: { path } })
       });
     } catch (e) {
@@ -2670,6 +2701,28 @@ var MnView = class extends import_obsidian8.ItemView {
     this.actsEl.toggleClass("is-hidden", !titleRow);
     this.topEl.toggleClass("has-back", this.router.depth() > 0);
     this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > 36);
+    if (anim === "none") {
+      this.loaderEl.removeClass("is-on");
+      return;
+    }
+    const waiting = pendingImages(out.el);
+    if (!waiting.length) {
+      this.loaderEl.removeClass("is-on");
+      arrive(out.el, anim);
+      return;
+    }
+    out.el.style.opacity = "0";
+    const spin = window.setTimeout(() => {
+      if (id === this.drawId) this.loaderEl.addClass("is-on");
+    }, SPINNER_DELAY);
+    const done = () => {
+      window.clearTimeout(spin);
+      if (id !== this.drawId) return;
+      this.loaderEl.removeClass("is-on");
+      out.el.style.opacity = "";
+      arrive(out.el, anim);
+    };
+    void Promise.race([Promise.all(waiting), new Promise((r) => window.setTimeout(r, IMAGE_WAIT))]).then(done);
   }
 };
 
