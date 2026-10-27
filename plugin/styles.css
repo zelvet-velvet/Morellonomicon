@@ -62,7 +62,7 @@ body.is-mobile:not(.mn-on) .mn-home svg { width: 24px; height: 24px; }
 
 /* page */
 .mn-scroll { flex: 1; min-height: 0; overflow-x: hidden; overflow-x: clip; touch-action: pan-y; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: none; }
-.mn-page { max-width: 760px; margin: 0 auto; padding: 4px 16px 36px; }
+.mn-page { max-width: 760px; margin: 0 auto; padding: 4px 16px 14px; }
 .mn-title { font-family: var(--mn-serif); font-size: 30px; font-weight: 700; line-height: 1.15; letter-spacing: 0.02em; margin: 4px 2px 14px; }
 
 /* search and chips */
@@ -136,7 +136,7 @@ button.mn-skill-box:active { transform: scale(0.94); }
 /* the chosen skill: an accent border, same size as the others (no outer ring, so the row stays even); the rest dim slightly */
 .mn-skills:has(.is-on) button.mn-skill-box:not(.is-on) { opacity: 0.6; }
 button.mn-skill-box.is-on::after { content: ""; position: absolute; inset: 0; border: 2px solid var(--mn-accent); border-radius: inherit; pointer-events: none; }
-.mn-skill-detail { scroll-margin-top: 84px; display: none; background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: var(--mn-radius); padding: 14px 16px; margin: -2px 0 14px; }
+.mn-skill-detail { scroll-margin-top: 84px; display: none; background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: var(--mn-radius); padding: 14px 16px; margin: -2px 0 6px; overflow: hidden; }
 .mn-skill-detail.is-open { display: block; animation: mn-pop 0.16s ease-out; }
 @keyframes mn-pop { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 .mn-sd-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
@@ -150,7 +150,9 @@ button.mn-skill-box.is-on::after { content: ""; position: absolute; inset: 0; bo
 .mn-sd-v { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; word-break: break-all; }
 .mn-skill-up { position: absolute; left: 3px; top: 3px; display: flex; width: 16px; height: 16px; border-radius: 8px; align-items: center; justify-content: center; background: var(--color-green); color: #fff; }
 .mn-skill-up svg { width: 11px; height: 11px; }
-.mn-sd-video { display: block; width: 100%; border-radius: 12px; margin: 12px 0 2px; background: #000; aspect-ratio: 16 / 9; }
+.mn-sd-video { display: block; width: 100%; height: auto; border-radius: 12px; margin: 12px 0 2px; background: none; }
+/* in a skill card the clip runs to the card edges at its own shape (no letterbox bars) and closes the card */
+.mn-skill-detail .mn-sd-video { width: calc(100% + 32px); margin: 12px -16px -14px; border-radius: 0 0 var(--mn-radius) var(--mn-radius); }
 .mn-sd-up { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--color-green) 14%, var(--mn-card)); border: 1px solid var(--color-green); }
 .mn-sd-up-t { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--color-green); }
 .mn-sd-up-ic svg { width: 16px; height: 16px; }
