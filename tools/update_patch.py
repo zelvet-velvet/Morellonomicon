@@ -9,6 +9,8 @@ Steps, in order: champions and items (fetch_data), Mayhem augments (fetch_augmen
 HAND_KEYS in fetch_data.py). If a step fails the rest still run and the failures are listed at the end. Standard library only.
 """
 import argparse
+import datetime
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -25,11 +27,25 @@ def run(cmd, **kw):
     return subprocess.run(cmd, cwd=ROOT, **kw)
 
 
+def prune_cache():
+    """The game files are downloaded once per day into .cache/cdragon-<date> and .cache/cdragon-bin-<date> (about 45 MB). Only today's are
+    ever read again, so older days are deleted (they also fill GitHub's cache)."""
+    today = datetime.date.today().isoformat()
+    freed = 0
+    for d in (ROOT / ".cache").glob("cdragon-*"):
+        if d.is_dir() and not d.name.endswith(today):
+            freed += sum(f.stat().st_size for f in d.rglob("*") if f.is_file())
+            shutil.rmtree(d)
+    if freed:
+        print(f"cleaned old downloads: {freed / 1e6:.0f} MB freed")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--commit", action="store_true", help="commit and push the changes to main afterwards")
     args = ap.parse_args()
     failed = []
+    prune_cache()
     for label, script in STEPS:
         print(f"\n== {label} ({script})")
         if run([sys.executable, "-I", str(TOOLS / script)]).returncode != 0:
