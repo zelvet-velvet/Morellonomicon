@@ -10,9 +10,6 @@ const TILE_COLORS = ["--color-blue", "--color-purple", "--color-orange", "--colo
 const GLOSSARY = "名詞表";
 const TRIVIA_AFTER = 4;   // topic cards above the lore trivia card
 
-// a stable pseudo-random number from a whole number (the day, then +1 per tap)
-const hash = (x: number): number => Math.imul(x ^ 0x9e3779b9, 2654435761) >>> 0;
-
 // the first sentence of a champion's lore, kept to one line or two
 function firstSentence(blurb: string): string {
     const s = blurb.split(/(?<=[。!?!?])/)[0] ?? blurb;
@@ -86,17 +83,20 @@ export function handbookPage(ctx: PageCtx): PageOut {
         }
     };
 
-    // "你知道嗎?": one line of a champion's lore on its splash art; tap for the next one
+    // "你知道嗎?": one line of a champion's lore on its splash art, a random one each time; a tap shows another, and none comes
+    // back until all of them have been shown
     const trivia = (parent: HTMLElement) => {
         const champs = store.champions().filter((c) => c.blurb);
         if (!champs.length) return;
-        let n = Math.floor(Date.now() / 86_400_000);
+        const order = champs.map((_, i) => i);
+        for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+        let n = 0;
         const card = h(parent, "button", "mn-trv");
         let seq = 0;   // a newer card replaces one still loading
         // The picture loads first behind a spinner; the text only appears together with it (never text on an empty card).
         const draw = () => {
             const mine = ++seq;
-            const c = champs[hash(n) % champs.length];
+            const c = champs[order[n % order.length]];
             const url = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg`;
             card.empty();
             card.addClass("is-loading");

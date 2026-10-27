@@ -362,13 +362,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-fact-t { font-size: 20px; font-weight: 800; margin: 4px 0 2px; }
 .mn-fact-s { font-size: 14px; color: var(--mn-muted); line-height: 1.5; }
 
-/* next card at the end of a guide note */
-.mn-app .mn-nextcard { white-space: normal; display: flex; align-items: center; gap: 10px; width: 100%; margin: 18px 0 10px; padding: 16px 18px; border-radius: 18px; text-align: left; background: var(--mn-accent); color: var(--text-on-accent, #fff); }
-.mn-nextcard-k { font-size: 12px; font-weight: 700; opacity: 0.85; }
-.mn-nextcard-t { flex: 1; font-size: 17px; font-weight: 800; }
-.mn-nextcard-ic svg { width: 22px; height: 22px; }
-.mn-nextcard-done { margin: 18px 0 10px; text-align: center; font-weight: 700; color: var(--color-green); }
-
 /* augment rarity frames, drawn here (the game adds them in its own UI): metallic silver, metallic gold, prismatic = a metallic rainbow */
 /* an augment icon like in the game: the game's large icon (its glyph is already tinted for the rarity) on a dark teal square in the rarity's frame */
 .aug-icon { --ring: 4px; position: relative; display: inline-block; flex: none; width: 56px; height: 56px; box-sizing: border-box; border-radius: 16px; border: var(--ring) solid transparent;
@@ -390,36 +383,57 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-dimg-aug { width: 80px; height: 80px; --ring: 5px; border-radius: 20px; }
 .mn-sl-aug { width: 58px; height: 58px; }
 
-/* guide decks: swipeable cards, a big picture and one or two lines each */
-.mn-dots { display: flex; justify-content: center; gap: 6px; margin: 0 0 12px; }
-.mn-dot2 { width: 7px; height: 7px; border-radius: 4px; background: var(--mn-line); transition: width 0.15s, background 0.15s; }
-.mn-dot2.is-on { width: 22px; background: var(--mn-accent); }
-.mn-pager { touch-action: pan-x pan-y; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scrollbar-width: none; margin: 0 -16px; }
+/* guide decks: one card per screen, swiped sideways (each swipe stops on the next card); story-style bars on top;
+   the picture takes the top of the card, the words sit at the bottom */
+.mn-deckpage .mn-title-row { margin-bottom: 8px; }
+.mn-bars { display: flex; gap: 4px; margin: 0 2px 12px; }
+.mn-bar { flex: 1; height: 3px; border-radius: 2px; background: var(--mn-line); transition: background 0.25s; }
+.mn-bar.is-on { background: var(--mn-accent); }
+.mn-pager { display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; touch-action: pan-x; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; margin: 0 -16px; height: 520px; }
 .mn-pager::-webkit-scrollbar { display: none; }
-.mn-slide { flex: 0 0 calc(100% - 12px); margin: 0 6px; scroll-snap-align: center; box-sizing: border-box; display: flex; flex-direction: column; min-height: 400px; padding: 18px 18px 22px;
-    background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: 24px; }
-.mn-slide-end { align-items: center; justify-content: center; text-align: center; }
-.mn-sl-vis { display: flex; align-items: center; justify-content: center; min-height: 200px; margin-bottom: 14px; }
-.mn-sl-hero { display: flex; align-items: center; justify-content: center; width: 128px; height: 128px; border-radius: 36px; font-size: 64px; color: var(--mn-accent);
-    background: color-mix(in srgb, var(--mn-accent) 20%, var(--mn-card-hi)); }
-.mn-sl-hero svg { width: 60px; height: 60px; }
-.mn-sl-video { width: 100%; }
-.mn-sl-video video { width: 100%; border-radius: 16px; background: #000; aspect-ratio: 16 / 9; display: block; }
-.mn-sl-img { max-width: 100%; max-height: 260px; border-radius: 16px; }
-.mn-sl-radar { width: 100%; max-width: 300px; }
-.mn-sl-skills { margin: 0; justify-content: center; }
-.mn-sl-strip { display: flex; flex-wrap: wrap; gap: 12px 10px; justify-content: center; }
-.mn-app .mn-sl-ic { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 68px; }
-.mn-sl-ic img { width: 58px; height: 58px; border-radius: 16px; background: var(--mn-card-hi); border: 1px solid var(--mn-line); }
-.mn-sl-ic span { max-width: 100%; font-size: 11px; color: var(--mn-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mn-sl-t { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 8px; text-align: left; }
-.mn-slide-end .mn-sl-t { text-align: center; }
-.mn-sl-x { font-size: 15px; line-height: 1.65; color: var(--mn-text); }
+.mn-slide { flex: 0 0 100%; box-sizing: border-box; padding: 0 10px; scroll-snap-align: center; scroll-snap-stop: always; display: flex; }
+.mn-sl-card { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 26px; background: var(--mn-card); border: 1px solid var(--mn-line); }
+.mn-sl-vis { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 22px 18px 10px; overflow: hidden;
+    background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--mn-accent) 10%, var(--mn-card-hi)), var(--mn-card) 70%); }
+.mn-sl-words { flex: none; padding: 6px 22px 26px; }
+.mn-sl-t { font-family: var(--mn-serif); font-size: 26px; font-weight: 700; letter-spacing: 0.02em; margin: 0 0 8px; color: var(--mn-text); }
+.mn-sl-x { font-size: 16px; line-height: 1.7; color: var(--mn-muted); }
 .mn-sl-x p { margin: 0 0 6px; }
+.mn-sl-x strong { color: var(--mn-text); }
 .mn-sl-x ul { margin: 0; padding-left: 1.2em; }
-.mn-decknav { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 14px 0 4px; }
-.mn-app .mn-navb { width: 46px; height: 46px; border-radius: 50%; background: var(--mn-card-hi); font-size: 26px; line-height: 1; color: var(--mn-text); }
-.mn-navl { font-size: 13px; color: var(--mn-muted); font-variant-numeric: tabular-nums; min-width: 48px; text-align: center; }
+.mn-sl-hero { display: flex; align-items: center; justify-content: center; width: 132px; height: 132px; border-radius: 38px; font-size: 64px; color: var(--mn-accent);
+    background: color-mix(in srgb, var(--mn-accent) 18%, var(--mn-card-hi)); }
+.mn-sl-hero svg { width: 62px; height: 62px; }
+.mn-sl-video { width: 100%; }
+.mn-sl-video video { width: 100%; border-radius: 18px; background: #000; aspect-ratio: 16 / 9; display: block; }
+.mn-sl-img { max-width: 100%; max-height: 100%; border-radius: 18px; }
+.mn-sl-radar { width: 100%; max-width: 300px; }
+.mn-sl-style, .mn-sl-facts { width: 100%; }
+.mn-sl-style .mn-panel { margin: 0; background: none; border: none; box-shadow: none; padding: 0; }
+.mn-sl-tags { display: flex; justify-content: center; }
+.mn-sl-icons { width: 100%; }
+.mn-sl-icons .mn-fgrid { margin: 0; row-gap: 6px; }
+.mn-sl-icon { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.mn-sl-icon-l { font-size: 12px; color: var(--mn-muted); }
+.mn-sl-skills { margin: 0; justify-content: center; }
+.mn-sl-strip { display: flex; flex-wrap: wrap; gap: 14px 10px; justify-content: center; }
+.mn-app .mn-sl-ic { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 72px; }
+.mn-sl-ic img { width: 62px; height: 62px; border-radius: 16px; background: var(--mn-card-hi); border: 1px solid var(--mn-line); }
+.mn-sl-ic span { max-width: 100%; font-size: 11px; color: var(--mn-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* the end card: the next topic, opened by itself once its bar has filled (swipe back to stay) */
+.mn-sl-end { align-items: center; justify-content: center; text-align: center; gap: 12px; padding: 24px; }
+.mn-sl-end-k { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; color: var(--mn-accent); }
+.mn-sl-end .mn-sl-t { margin: 4px 0 0; }
+.mn-sl-end-s { font-size: 15px; color: var(--mn-muted); }
+.mn-sl-go { width: 60%; height: 4px; margin-top: 14px; border-radius: 2px; background: var(--mn-line); overflow: hidden; }
+.mn-sl-go-fill { display: block; width: 100%; height: 100%; background: var(--mn-accent); transform: scaleX(0); transform-origin: left; }
+.mn-sl-end.is-go .mn-sl-go-fill { animation: mn-go 0.9s 0.15s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.mn-sl-end.is-go .mn-sl-hero { animation: mn-go-hero 1.05s ease-in forwards; }
+@keyframes mn-go { to { transform: scaleX(1); } }
+@keyframes mn-go-hero { 70% { transform: none; } 100% { transform: translateX(26px) scale(0.92); opacity: 0.6; } }
+.mn-sl-done { background: none; }
+.mn-app .mn-sl-back { margin-top: 10px; padding: 10px 22px; border-radius: 999px; background: var(--mn-card-hi); color: var(--mn-text); font-weight: 700; }
 
 /* "你知道嗎?" lore trivia between the topic cards, like a loading screen */
 .mn-app .mn-trv { position: relative; display: block; width: 100%; height: 168px; margin: 14px 0; padding: 0; overflow: hidden; border-radius: 22px; text-align: left; white-space: normal; background: var(--mn-card-hi); box-shadow: var(--mn-shadow); }

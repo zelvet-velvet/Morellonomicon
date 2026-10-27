@@ -308,6 +308,7 @@ def item_note(item_id, it, version, names, keep):
     if base:
         fm["aram"] = True
         fm["variant_of"] = names[base]
+        fm["icon"] = f"{DD}/cdn/{version}/img/item/{base}.png"   # the ARAM copy's own picture is often the item's old art
     link = lambda ids: [f"[[{names[i]}]]" for i in ids if i in names]
     lines = [f"![{it['name']}|48]({fm['icon']})", ""]
     if base:

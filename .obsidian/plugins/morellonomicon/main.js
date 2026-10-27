@@ -2171,56 +2171,71 @@ function deckPage(ctx, file) {
   const store = ctx.plugin.store;
   const el = h(null, "div", "mn-page mn-deckpage");
   h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
-  const dots = h(el, "div", "mn-dots");
+  const bars = h(el, "div", "mn-bars");
   const pager = h(el, "div", "mn-pager");
-  const nav = h(el, "div", "mn-decknav");
+  for (const ev of ["touchstart", "touchmove"]) pager.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
+  const fit = () => {
+    const scroll = el.closest(".mn-scroll");
+    if (!scroll) return;
+    const top = pager.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
+    pager.style.height = `${Math.max(380, scroll.clientHeight - top - 14)}px`;
+  };
   void ctx.app.vault.cachedRead(file).then((md) => {
     const slides = parseSlides(md);
-    const guide = store.guideNotes();
+    const guide = store.guideNotes().filter((n) => n.layout === "deck");
     const at = guide.findIndex((n) => n.file.path === file.path);
     const next = guide[at + 1];
-    slides.forEach((s, i) => {
-      h(dots, "span", "mn-dot2" + (i === 0 ? " is-on" : ""));
-      const sec = h(pager, "section", "mn-slide");
-      visual(ctx, h(sec, "div", "mn-sl-vis"), s);
-      h(sec, "h2", "mn-sl-t", s.title);
-      if (s.text) void import_obsidian5.MarkdownRenderer.render(ctx.app, s.text, h(sec, "div", "mn-sl-x markdown-rendered"), file.path, ctx.component);
-    });
-    const end = h(pager, "section", "mn-slide mn-slide-end");
-    h(h(end, "div", "mn-sl-vis"), "div", "mn-sl-hero").appendChild(document.createTextNode("\u{1F389}"));
-    h(end, "h2", "mn-sl-t", next ? "\u8B80\u5B8C\u4E86!" : "\u5168\u90E8\u8B80\u5B8C\u4E86!");
+    for (const s of slides) {
+      h(bars, "span", "mn-bar");
+      const card = h(h(pager, "section", "mn-slide"), "div", "mn-sl-card");
+      visual(ctx, h(card, "div", "mn-sl-vis"), s);
+      const words = h(card, "div", "mn-sl-words");
+      h(words, "h2", "mn-sl-t", s.title);
+      if (s.text) void import_obsidian5.MarkdownRenderer.render(ctx.app, s.text, h(words, "div", "mn-sl-x markdown-rendered"), file.path, ctx.component);
+    }
+    const end = h(h(pager, "section", "mn-slide"), "div", "mn-sl-card mn-sl-end");
+    let advance = null;
     if (next) {
-      const b = h(end, "button", "mn-nextcard");
-      h(b, "span", "mn-nextcard-k", "\u4E0B\u4E00\u7BC7");
-      h(b, "span", "mn-nextcard-t", next.title);
-      icon(b, "arrow-right", "mn-nextcard-ic");
-      b.addEventListener("click", (e) => {
-        e.preventDefault();
+      h(end, "div", "mn-sl-end-k", "\u4E0B\u4E00\u7BC7");
+      icon(h(end, "div", "mn-sl-hero"), next.icon);
+      h(end, "h2", "mn-sl-t", next.title);
+      if (next.summary) h(end, "div", "mn-sl-end-s", next.summary);
+      const fill = h(h(end, "div", "mn-sl-go"), "span", "mn-sl-go-fill");
+      fill.addEventListener("animationend", () => advance?.());
+      advance = () => {
+        advance = null;
         ctx.pop();
         ctx.openNote(next.file.path);
+      };
+    } else {
+      h(end, "div", "mn-sl-end-k", "\u8B80\u5B8C\u4E86");
+      h(end, "div", "mn-sl-hero mn-sl-done").appendChild(document.createTextNode("\u{1F389}"));
+      h(end, "h2", "mn-sl-t", "\u5168\u90E8\u4E3B\u984C\u90FD\u770B\u5B8C\u4E86");
+      const back = h(end, "button", "mn-sl-back", "\u56DE\u5230 Handbook");
+      back.addEventListener("click", (e) => {
+        e.preventDefault();
+        ctx.pop();
       });
     }
-    h(dots, "span", "mn-dot2");
     const count2 = slides.length + 1;
-    const prev = h(nav, "button", "mn-navb", "\u2039");
-    const label = h(nav, "span", "mn-navl", `1 / ${count2}`);
-    const fwd = h(nav, "button", "mn-navb", "\u203A");
-    const go = (d) => pager.scrollBy({ left: d * pager.clientWidth, behavior: "smooth" });
-    prev.addEventListener("click", (e) => {
-      e.preventDefault();
-      go(-1);
-    });
-    fwd.addEventListener("click", (e) => {
-      e.preventDefault();
-      go(1);
-    });
+    const show = (i) => {
+      Array.from(bars.children).forEach((b, j) => b.toggleClass("is-on", j <= i));
+      end.toggleClass("is-go", i === count2 - 1 && !!next);
+      if (i >= count2 - 1) void ctx.plugin.markRead(file.path);
+    };
+    let shown = -1;
     pager.addEventListener("scroll", () => {
       const i = Math.max(0, Math.min(count2 - 1, Math.round(pager.scrollLeft / Math.max(1, pager.clientWidth))));
-      Array.from(dots.children).forEach((d, j) => d.toggleClass("is-on", j === i));
-      label.textContent = `${i + 1} / ${count2}`;
-      if (i >= count2 - 1) void ctx.plugin.markRead(file.path);
+      if (i !== shown) {
+        shown = i;
+        show(i);
+      }
     }, { passive: true });
+    show(0);
+    requestAnimationFrame(fit);
   });
+  window.addEventListener("resize", fit);
+  ctx.component.register(() => window.removeEventListener("resize", fit));
   return { title: "", el };
 }
 function visual(ctx, box, s) {
@@ -2240,6 +2255,33 @@ function visual(ctx, box, s) {
     const im = h(box, "img", "mn-sl-img");
     im.src = url;
     im.alt = "";
+    return;
+  } else if (kind === "style") {
+    const c = champ(args[0]);
+    if (c) {
+      styleCard(h(box, "div", "mn-sl-style"), c, ctx.app);
+      return;
+    }
+  } else if (kind === "facts") {
+    const c = champ(args[0]);
+    if (c) {
+      factsStrip(h(box, "div", "mn-sl-facts"), c);
+      return;
+    }
+  } else if (kind === "tags") {
+    const c = champ(args[0]);
+    if (c) {
+      tagRow(h(box, "div", "mn-sl-tags"), c, void 0, true);
+      return;
+    }
+  } else if (kind === "roles" || kind === "lanes") {
+    const names = kind === "roles" ? ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u5C04\u624B", "\u8F14\u52A9"] : LANES;
+    const row2 = fgrid(h(box, "div", "mn-sl-icons"), names.length);
+    for (const n of names) {
+      const cell = h(row2, "div", "mn-sl-icon");
+      (kind === "roles" ? roleChip : laneChip)(cell, n, { on: false, onTap: () => void 0 });
+      h(cell, "span", "mn-sl-icon-l", n);
+    }
     return;
   } else if (kind === "radar") {
     const c = champ(args[0]);
@@ -2515,7 +2557,6 @@ var LOAD_TIMEOUT = 8e3;
 var TILE_COLORS = ["--color-blue", "--color-purple", "--color-orange", "--color-green", "--color-cyan", "--color-pink", "--color-yellow", "--color-red"];
 var GLOSSARY = "\u540D\u8A5E\u8868";
 var TRIVIA_AFTER = 4;
-var hash = (x) => Math.imul(x ^ 2654435769, 2654435761) >>> 0;
 function firstSentence(blurb) {
   const s = blurb.split(/(?<=[。!?!?])/)[0] ?? blurb;
   return s.length > 64 ? s.slice(0, 62) + "\u2026" : s;
@@ -2590,12 +2631,17 @@ function handbookPage(ctx) {
   const trivia = (parent) => {
     const champs = store.champions().filter((c) => c.blurb);
     if (!champs.length) return;
-    let n = Math.floor(Date.now() / 864e5);
+    const order = champs.map((_, i) => i);
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    let n = 0;
     const card = h(parent, "button", "mn-trv");
     let seq = 0;
     const draw = () => {
       const mine = ++seq;
-      const c = champs[hash(n) % champs.length];
+      const c = champs[order[n % order.length]];
       const url = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg`;
       card.empty();
       card.addClass("is-loading");
