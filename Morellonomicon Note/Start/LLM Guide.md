@@ -47,7 +47,7 @@ CLAUDE.md              points here
 ---
 ## ⚠️ Rules that prevent breakage
 
-- **Language.** Vault content for readers is Traditional Chinese (Taiwan wording; use the official zh_TW client names for champions, items and augments). Workflow notes (this guide, Dev Status, Dev Log, CONTRIBUTING) stay English.
+- **Language.** Vault content for readers is Traditional Chinese (Taiwan wording; use the official zh_TW client names for champions, items and augments). Workflow notes (this guide, Dev Status, Dev Log, Start Guide) stay English.
 - **Generated vs written.** Generated pages carry `generated: true` in the frontmatter and a marked block; scripts only rewrite inside the marked block, never the hand-written advice around it.
 - **Data sources are public and cited.** Riot Data Dragon (`ddragon.leagueoflegends.com`, `zh_TW`) and CommunityDragon. Every page shows the **patch version** it was generated from. Never invent statistics: win rates and pick rates come from a named source with a date, or are left out.
 - **Riot policy.** Do not commit a Riot API key. Keys go in an environment variable (`RIOT_API_KEY`) or an untracked `.env`. Include Riot's legal line in the README ("not endorsed by Riot Games"). Do not copy another site's tier lists wholesale; link to them.
@@ -87,9 +87,9 @@ The progress lives in two places: **[[Dev Status]]** (`Review/Dev Status.md`: �
 - **CMD_SYNC**: From the chat and `git log` / `git status`, update Dev Status: `Today`, `Yesterday` and `Ongoing` (`[x]` done, `[>]` in progress, `[ ]` not started; by area). Keep the `Today` heading date right: an earlier date with items → `CMD_ROLLOVER` first (or ask); empty → just set today. **Results, not steps**: one line per item, bold title, no file lists (details belong in the notes: link them).
 - **CMD_JOURNAL [YYYY-MM-DD]** (default today): Write that day's note from `Today's Progress` (or `Yesterday's` when its date matches). Make the note from [[Day note]] if it is missing (outside Obsidian: copy the last day's frontmatter, make the year / month / week folders). One `## ` entry per change, newest first: an emoji title with the author in brackets, two to four plain bullets of what changed **for the reader of the vault**, the branch if not merged, pictures if visual. Then add the day to the [[Dev Log]] list.
 - **CMD_ROLLOVER**: The day is over. If the day note has no entries for `Today`'s items, run `CMD_JOURNAL` for that date first. Then replace `Yesterday` with `Today`'s list and date, clear `Today` and set its heading to today. `Today` empty → change nothing and say to run `CMD_SYNC` first (never overwrite `Yesterday` with an empty list).
-- **CMD_NOTES_SYNC**: Bring the notes up to date, then retire finished work: update `README.md` / `CONTRIBUTING.md` / this guide if a rule or command changed; move `[x]` items from `Ongoing` to `Last Progress` (one line each, by area, result only). Leave `[>]` and `[ ]`.
+- **CMD_NOTES_SYNC**: Bring the notes up to date, then retire finished work: update `README.md` / the Start Guide / this guide if a rule or command changed; move `[x]` items from `Ongoing` to `Last Progress` (one line each, by area, result only). Leave `[>]` and `[ ]`.
 - **Trust order** (when sources disagree): the code, then today's chat and Dev Status, then other notes. If a note contradicts the code, say so and suggest `CMD_NOTES_SYNC`.
-- **Commit**: vault updates go on their own branch as `docs(vault): sync` (or the command's name), with a pull request.
+- **Commit**: vault updates are committed to `main` as `docs(vault): sync` (or the command's name).
 - **Notifications**: at the very end, only for what changed, one line each: `**[Today's Progress]** Updated in Dev Status`, `**[Journal]** 2 entries in 2026-10-27`. A blank line before and after.
 
 ---
