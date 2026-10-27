@@ -24,6 +24,7 @@ sticker: lucide//activity
 - **Builds**: Build sub-tab shows counted builds (games, win rate, top core sets, most common items, tap an item for its effect) plus hand-written alternative / synergy builds; Tips shows hand-written cards. `tools/fetch_builds.py` counts real Mayhem matches from Riot's Match-V5 (queue 2400); its counting is tested on made-up matches only, the Riot calls are not tested yet.
 - **Reframe**: Morellonomicon is a newbie guide with its own sorting, plus the strategy that stat sites do not have. Champions can be narrowed by role, damage type, abilities (must have / must not have 控場, 治療, 護盾, 位移), reach (近戰 / 中程 / 遠程) and sorted (name, easiest, longest range). The tab is now **Handbook**: the beginner cards plus one search box over the guide cards, champion tips and our builds, with the match highlighted. Build shows OP.GG and Mobalytics links (their terms forbid copying their numbers; OP.GG's also forbids scraping and framing).
 - **Patch tab and freshness**: a Patch tab shows the patch the data is from, the official patch notes link, our own patch notes (`版本更新/`) and a "Check these tricks" list. Every tip and build shows its patch (green current, yellow one behind, red older or none), date, status and source link. `Inbox/技巧收件匣.md` is the place to jot tricks (format inside) for me to process.
+- **Changes since the last patch**: `tools/fetch_changes.py` compares the last 4 patches from Data Dragon (base stats, skill cooldown / cost / range, skill text) into `_data/changes.json` (28 champions changed, 9 in 16.21). A champion with changes this patch gets a ▲▼ badge by its roles; changed cooldown / cost / range values are coloured green or red with the old value struck through; a collapsed "Recent changes" block in Skills lists the last patches (rewritten skill text shows old and new wording, uncoloured); the Patch tab lists "Changed in 16.21". Damage numbers and Mayhem-specific adjustments are not compared yet.
 - **Workflow**: Copied the LLM Guide, Dev Status / Dev Log / Day note from clawd-room, simplified for a solo project (commit to `main`, no PRs) and added a Start Guide.
 
 ## 📅 Yesterday's Progress (—)
@@ -50,6 +51,12 @@ sticker: lucide//activity
 - [ ] **Easy way to record it**: tips, builds and combos are frontmatter lists today; add a command / form ("Add tip", "Add build") so they can be written on the phone in a few taps.
 - [ ] **Review**: the Handbook search is the quick way back to a detail; consider a short quiz / saved list if forgetting remains a problem.
 - [ ] **First batch of content**: five champions you play often in Mayhem, with one alternative build and one trick each.
+
+### 🔁 Patch changes
+- [ ] **Damage diffs**: compare per-rank damage using CommunityDragon's old game data (`raw.communitydragon.org/<patch>/game/data/characters/...`, about 11 MB per patch); most balance patches change damage, so the badge undercounts until this is in.
+- [ ] **Mayhem-specific balance**: damage dealt / taken adjustments per champion and augment changes are not in Data Dragon; find a source (the League wiki?) before building.
+- [ ] **Item and augment changes**: the same diff for items (price, stats, text).
+- [ ] **Run it each patch**: `python3 -I tools/fetch_data.py && python3 -I tools/fetch_changes.py` then commit.
 
 ### 🧮 Match data
 - [x] **Mayhem match data is not available**: Riot's Match-V5 lists none of the seed account's Mayhem games (checked 2026-10-27; OP.GG shows the same gap). `tools/fetch_builds.py` stays for Summoner's Rift.

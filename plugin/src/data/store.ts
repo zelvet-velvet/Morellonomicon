@@ -21,6 +21,10 @@ export interface Tip extends Meta { title: string; text: string; video: string }
 export interface Count { id: number; games: number; wins: number }
 export interface ChampStats { games: number; wins: number; items: Count[]; sets: { items: number[]; games: number; wins: number }[]; augments: Count[] }
 export interface BuildStats { mode: string; queue: number; date: string; matches: number; champions: Record<string, ChampStats> }
+// What tools/fetch_changes.py found between patches (_data/changes.json); dir is from the player's point of view
+export interface Change { scope: string; field: string; old: string; new: string; dir: "buff" | "nerf" | "mixed" | "change" | "text" }
+export interface PatchChange { patch: string; from: string; items: Change[] }
+export interface ChangeData { current: string; patches: string[]; date: string; champions: Record<string, PatchChange[]> }
 export interface Skill { key: string; name: string; damage: string[]; icon: string; desc: string; upgrade: string; range: string; rows: SkillRow[] }
 export interface Augment { id: number; name: string; rarity: string; icon: string; effect: string; fits: string[]; tier: string; path: string }
 export interface Item {
@@ -69,6 +73,7 @@ export class Store {
     private its: Item[] | null = null;
     private augs: Augment[] | null = null;
     stats: BuildStats | null = null;
+    changes: ChangeData | null = null;
 
     constructor(private plugin: MorellonomiconPlugin) {}
     private get app() { return this.plugin.app; }
@@ -80,6 +85,10 @@ export class Store {
             const path = normalizePath(`_data/builds.${mode}.json`);
             this.stats = (await this.app.vault.adapter.exists(path)) ? (JSON.parse(await this.app.vault.adapter.read(path)) as BuildStats) : null;
         } catch { this.stats = null; }
+        try {
+            const path = normalizePath("_data/changes.json");
+            this.changes = (await this.app.vault.adapter.exists(path)) ? (JSON.parse(await this.app.vault.adapter.read(path)) as ChangeData) : null;
+        } catch { this.changes = null; }
     }
 
     invalidate(): void { this.champs = null; this.its = null; this.augs = null; }
@@ -137,6 +146,10 @@ export class Store {
         }
         return this.augs;
     }
+
+    // A champion's changes, newest patch first, and just the ones in the current patch
+    changesOf(id: string): PatchChange[] { return this.changes?.champions[id] ?? []; }
+    currentChanges(id: string): Change[] { return this.changesOf(id).find((p) => p.patch === this.changes?.current)?.items ?? []; }
 
     // The game patch the notes were generated from, as "16.21" (Data Dragon numbering)
     currentPatch(): string { return this.champions()[0]?.patch.split(".").slice(0, 2).join(".") ?? ""; }

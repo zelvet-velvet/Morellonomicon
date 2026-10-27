@@ -78,6 +78,7 @@ var Store = class {
     this.its = null;
     this.augs = null;
     this.stats = null;
+    this.changes = null;
   }
   get app() {
     return this.plugin.app;
@@ -92,6 +93,12 @@ var Store = class {
       this.stats = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)) : null;
     } catch {
       this.stats = null;
+    }
+    try {
+      const path = (0, import_obsidian.normalizePath)("_data/changes.json");
+      this.changes = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)) : null;
+    } catch {
+      this.changes = null;
     }
   }
   invalidate() {
@@ -185,6 +192,13 @@ var Store = class {
       })).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
     }
     return this.augs;
+  }
+  // A champion's changes, newest patch first, and just the ones in the current patch
+  changesOf(id) {
+    return this.changes?.champions[id] ?? [];
+  }
+  currentChanges(id) {
+    return this.changesOf(id).find((p) => p.patch === this.changes?.current)?.items ?? [];
   }
   // The game patch the notes were generated from, as "16.21" (Data Dragon numbering)
   currentPatch() {
@@ -546,8 +560,68 @@ function itemRow(parent, c, ctx, ids, captions = []) {
   });
 }
 
+// src/pages/changes.ts
+var DIR_COLOR = { buff: "var(--color-green)", nerf: "var(--color-red)", mixed: "var(--color-yellow)", change: "var(--color-blue)", text: "var(--color-blue)" };
+var DIR_MARK = { buff: "\u25B2", nerf: "\u25BC", mixed: "\u25C6", change: "\u25CF", text: "\u270E" };
+function tally(items) {
+  return { buff: items.filter((i) => i.dir === "buff").length, nerf: items.filter((i) => i.dir === "nerf").length, mixed: items.filter((i) => i.dir === "mixed").length };
+}
+function badgeText(items) {
+  const t = tally(items);
+  return [t.buff ? `\u25B2${t.buff}` : "", t.nerf ? `\u25BC${t.nerf}` : "", t.mixed ? `\u25C6${t.mixed}` : ""].filter(Boolean).join(" ");
+}
+function badgeColor(items) {
+  const t = tally(items);
+  if (t.mixed || t.buff && t.nerf) return DIR_COLOR.mixed;
+  return t.nerf ? DIR_COLOR.nerf : t.buff ? DIR_COLOR.buff : DIR_COLOR.change;
+}
+function changesBlock(parent, c, ctx) {
+  const patches = ctx.plugin.store.changesOf(c.id);
+  if (!patches.length) return null;
+  const el = h(parent, "div", "mn-chg");
+  const head = h(el, "button", "mn-chg-head");
+  icon(head, "history", "mn-chg-ic");
+  h(head, "span", "mn-chg-t", `Recent changes \xB7 ${patches.length} patch${patches.length > 1 ? "es" : ""}`);
+  const caret = icon(head, "chevron-down", "mn-chg-caret");
+  const body = h(el, "div", "mn-chg-body");
+  for (const p of patches) {
+    h(body, "div", "mn-chg-p", `${p.from} \u2192 ${p.patch}`);
+    for (const i of p.items) {
+      const row2 = h(body, "div", "mn-chg-row");
+      const mark = h(row2, "span", "mn-chg-m", DIR_MARK[i.dir] ?? "\u25CF");
+      mark.style.color = DIR_COLOR[i.dir];
+      h(row2, "span", "mn-chg-s", i.scope);
+      h(row2, "span", "mn-chg-f", i.field);
+      if (i.dir === "text") {
+        const more = h(row2, "button", "mn-chg-more", "Old / new wording");
+        const diff = h(body, "div", "mn-chg-diff");
+        more.addEventListener("click", (e) => {
+          e.preventDefault();
+          diff.toggleClass("is-open", !diff.hasClass("is-open"));
+        });
+        h(diff, "div", "mn-chg-old", i.old);
+        h(diff, "div", "mn-chg-new", i.new);
+      } else {
+        h(row2, "span", "mn-chg-old", i.old);
+        h(row2, "span", "mn-chg-arrow", "\u2192");
+        const nv = h(row2, "span", "mn-chg-new", i.new);
+        nv.style.color = DIR_COLOR[i.dir];
+      }
+    }
+  }
+  const set = (open) => {
+    el.toggleClass("is-open", open);
+    caret.toggleClass("is-up", open);
+  };
+  head.addEventListener("click", (e) => {
+    e.preventDefault();
+    set(!el.hasClass("is-open"));
+  });
+  return { el, open: () => set(true) };
+}
+
 // src/pages/skills.ts
-function skillStrip(parent, c) {
+function skillStrip(parent, c, changes = []) {
   if (!c.skills.length) return;
   const strip = h(parent, "div", "mn-skills");
   const detail = h(parent, "div", "mn-skill-detail");
@@ -583,9 +657,14 @@ function skillStrip(parent, c) {
       const m = h(detail, "div", "mn-sd-meta");
       const cell = h(m, "div", "mn-sd-cell");
       h(cell, "span", "mn-sd-k", "\u5C04\u7A0B");
-      h(cell, "span", "mn-sd-v", s.range);
+      const rv = h(cell, "span", "mn-sd-v", s.range);
+      const rc = changes.find((x) => x.scope === s.key && x.field === "\u5C04\u7A0B");
+      if (rc) {
+        rv.style.color = DIR_COLOR[rc.dir];
+        h(cell, "span", "mn-chg-was", `\u4E0A\u7248 ${rc.old}`);
+      }
     }
-    rankTable(detail, s);
+    rankTable(detail, s, changes.filter((x) => x.scope === s.key));
     if (s.desc) h(detail, "p", "mn-sd-desc", s.desc);
     if (s.upgrade) {
       const up = h(detail, "div", "mn-sd-up");
@@ -618,7 +697,7 @@ function demo(parent, c, s) {
   webm.addEventListener("error", () => v.remove());
 }
 var ROW_COLOR = [["\u9B54\u6CD5", DAMAGE_COLOR["\u9B54\u6CD5"]], ["\u7269\u7406", DAMAGE_COLOR["\u7269\u7406"]], ["\u771F\u5BE6", DAMAGE_COLOR["\u771F\u5BE6"]], ["\u6CBB\u7642", "var(--color-green)"], ["\u8B77\u76FE", "var(--color-cyan)"]];
-function rankTable(parent, s) {
+function rankTable(parent, s, changes) {
   if (!s.rows.length) return;
   const ranks = Math.max(1, ...s.rows.map((r) => r.vals.length));
   const grid = h(parent, "div", "mn-rk");
@@ -633,10 +712,16 @@ function rankTable(parent, s) {
     const color = ROW_COLOR.find(([k]) => r.label.startsWith(k))?.[1];
     if (color) label.style.color = color;
     if (r.note) h(name, "span", "mn-rk-note", r.note);
+    const ch = changes.find((x) => r.label.startsWith(x.field));
+    if (ch) h(name, "span", "mn-chg-was", `\u4E0A\u7248 ${ch.old}`);
+    const tint = (el) => {
+      if (ch) el.style.color = DIR_COLOR[ch.dir];
+    };
     if (r.vals.length === 1) {
       const v = h(grid, "div", "mn-rk-v mn-rk-all", r.vals[0]);
       v.style.gridColumn = `span ${ranks}`;
-    } else for (const v of r.vals) h(grid, "div", "mn-rk-v", v);
+      tint(v);
+    } else for (const v of r.vals) tint(h(grid, "div", "mn-rk-v", v));
   }
 }
 
@@ -812,6 +897,12 @@ function championCard(ctx) {
   const tags = h(who, "div", "mn-chips");
   for (const r of c.roles) chip(tags, r);
   chip(tags, c.damageType, { color: dmgColor });
+  const now = ctx.plugin.store.currentChanges(c.id);
+  if (badgeText(now)) chip(tags, badgeText(now), { color: badgeColor(now), onTap: () => {
+    show("skills");
+    block?.open();
+    block?.el.scrollIntoView({ behavior: "smooth", block: "start" });
+  } });
   const panel = h(el, "div", "mn-panel");
   radar(panel, [
     { label: "\u7269\u7406", value: c.attack },
@@ -822,13 +913,14 @@ function championCard(ctx) {
   ], 10, dmgColor);
   const mayhem = ctx.plugin.settings.mode === "mayhem";
   const tabs = [["skills", "Skills"], ["build", "Build"], ["augments", mayhem ? "Augments" : "Runes"], ["tips", "Tips"]];
+  let block = null;
   const seg = h(el, "div", "mn-seg");
   const body = h(el, "div", "mn-sub");
   const show = (t) => {
     lastSub.set(c.id, t);
     seg.querySelectorAll(".mn-seg-b").forEach((b) => b.toggleClass("is-on", b.dataset.t === t));
     body.empty();
-    if (t === "skills") skills(body, c, ctx);
+    if (t === "skills") block = skills(body, c, ctx);
     else if (t === "build") buildTab(body, c, ctx);
     else if (t === "augments") soon(body, mayhem ? "Best augments" : "Runes");
     else tips(body, c, ctx);
@@ -845,9 +937,9 @@ function championCard(ctx) {
   return { title: c.name, el };
 }
 function skills(body, c, ctx) {
-  skillStrip(body, c);
+  skillStrip(body, c, ctx.plugin.store.currentChanges(c.id));
   if (c.video) row(group(body), { icon: "play-circle", title: "Combo video", chevron: true, onTap: () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video)}`) });
-  void ctx;
+  return changesBlock(body, c, ctx);
 }
 function soon(body, title) {
   row(group(body), { icon: "sparkles", title, value: "Soon", muted: true });
@@ -1030,6 +1122,21 @@ function patchPage(ctx) {
   if (notes.length) {
     const g2 = group(el, "Our patch notes");
     for (const n of notes) row(g2, { icon: "file-text", title: n.title, sub: n.summary || void 0, value: n.patch, chevron: true, onTap: () => ctx.openNote(n.file.path) });
+  }
+  const changed = store.champions().map((c) => ({ c, items: store.currentChanges(c.id) })).filter((x) => x.items.length);
+  if (changed.length) {
+    const g2 = group(el, `Changed in ${now}`);
+    for (const { c, items } of changed.sort((a, b) => b.items.length - a.items.length)) {
+      const r = row(g2, { image: c.icon, title: c.name, chevron: true, onTap: () => {
+        rememberSub(c.id, "skills");
+        ctx.goTab("champions");
+        ctx.push({ key: "champion", title: c.name, params: { id: c.id } });
+      } });
+      const badge = h(r, "span", "mn-row-v", badgeText(items) || "\u270E");
+      badge.style.color = badgeColor(items);
+      r.insertBefore(badge, r.querySelector(".mn-row-chev"));
+    }
+    h(el, "div", "mn-gf", "Stats, cooldowns, costs, ranges and skill text compared with the previous patch. Damage numbers are not compared yet.");
   }
   const stale = store.staleEntries();
   const g = group(el, "Check these tricks");

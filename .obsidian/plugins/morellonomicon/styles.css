@@ -214,3 +214,27 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-patch-k { font-size: 12px; color: var(--mn-muted); text-transform: uppercase; letter-spacing: 0.06em; }
 .mn-patch-v { font-size: 40px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; }
 .mn-patch-s { font-size: 13px; color: var(--mn-muted); margin-top: 6px; line-height: 1.5; }
+
+/* changes since the last patch */
+.mn-chg-was { display: block; font-size: 10px; color: var(--mn-faint); text-decoration: line-through; font-weight: 400; }
+.mn-chg { background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: var(--mn-radius); margin: 12px 0; overflow: hidden; }
+.mn-chg-head { display: flex; align-items: center; gap: 8px; width: 100%; padding: 12px 14px; text-align: left; }
+.mn-chg-ic svg { width: 18px; height: 18px; color: var(--mn-accent); }
+.mn-chg-t { flex: 1; font-size: 14px; font-weight: 700; }
+.mn-chg-caret svg { width: 18px; height: 18px; color: var(--mn-faint); transition: transform 0.15s; }
+.mn-chg-caret.is-up svg { transform: rotate(180deg); }
+.mn-chg-body { display: none; padding: 0 14px 12px; }
+.mn-chg.is-open .mn-chg-body { display: block; animation: mn-pop 0.16s ease-out; }
+.mn-chg-p { font-size: 12px; font-weight: 700; color: var(--mn-muted); margin: 10px 0 4px; }
+.mn-chg-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; padding: 4px 0; font-size: 13px; font-variant-numeric: tabular-nums; }
+.mn-chg-m { width: 16px; text-align: center; font-weight: 800; }
+.mn-chg-s { padding: 0 6px; border-radius: 6px; background: var(--mn-card-hi); font-size: 11px; font-weight: 700; }
+.mn-chg-f { font-weight: 600; }
+.mn-chg-old { color: var(--mn-faint); text-decoration: line-through; }
+.mn-chg-arrow { color: var(--mn-faint); }
+.mn-chg-new { font-weight: 700; }
+.mn-chg-more { margin-left: auto; font-size: 12px; color: var(--mn-accent); }
+.mn-chg-diff { display: none; margin: 2px 0 6px 22px; padding: 8px 10px; border-radius: 10px; background: var(--mn-card-hi); font-size: 13px; line-height: 1.5; }
+.mn-chg-diff.is-open { display: block; }
+.mn-chg-diff .mn-chg-old { text-decoration: line-through; display: block; margin-bottom: 6px; }
+.mn-chg-diff .mn-chg-new { display: block; font-weight: 500; }

@@ -3,6 +3,7 @@ import { MODES } from "../modes";
 import { DAMAGE_COLOR, chip, empty, group, h, icon, page, radar, row } from "../ui";
 import { buildTab } from "./build";
 import type { PageCtx, PageOut } from "./index";
+import { badgeColor, badgeText, changesBlock } from "./changes";
 import { metaLine } from "./fresh";
 import { skillStrip } from "./skills";
 
@@ -138,6 +139,8 @@ function championCard(ctx: PageCtx): PageOut {
     const tags = h(who, "div", "mn-chips");
     for (const r of c.roles) chip(tags, r);
     chip(tags, c.damageType, { color: dmgColor });
+    const now = ctx.plugin.store.currentChanges(c.id);
+    if (badgeText(now)) chip(tags, badgeText(now), { color: badgeColor(now), onTap: () => { show("skills"); block?.open(); block?.el.scrollIntoView({ behavior: "smooth", block: "start" }); } });
 
     // 射程 is derived from the attack range (650 = full); the other four are Riot's own 1-10 ratings
     const panel = h(el, "div", "mn-panel");
@@ -148,13 +151,14 @@ function championCard(ctx: PageCtx): PageOut {
 
     const mayhem = ctx.plugin.settings.mode === "mayhem";
     const tabs: [SubTab, string][] = [["skills", "Skills"], ["build", "Build"], ["augments", mayhem ? "Augments" : "Runes"], ["tips", "Tips"]];
+    let block: { el: HTMLElement; open(): void } | null = null;   // the Recent changes block of the Skills sub-tab
     const seg = h(el, "div", "mn-seg");
     const body = h(el, "div", "mn-sub");
     const show = (t: SubTab) => {
         lastSub.set(c.id, t);
         seg.querySelectorAll<HTMLElement>(".mn-seg-b").forEach((b) => b.toggleClass("is-on", b.dataset.t === t));
         body.empty();
-        if (t === "skills") skills(body, c, ctx);
+        if (t === "skills") block = skills(body, c, ctx);
         else if (t === "build") buildTab(body, c, ctx);
         else if (t === "augments") soon(body, mayhem ? "Best augments" : "Runes");
         else tips(body, c, ctx);
@@ -168,10 +172,10 @@ function championCard(ctx: PageCtx): PageOut {
     return { title: c.name, el };
 }
 
-function skills(body: HTMLElement, c: Champion, ctx: PageCtx): void {
-    skillStrip(body, c);
+function skills(body: HTMLElement, c: Champion, ctx: PageCtx): { el: HTMLElement; open(): void } | null {
+    skillStrip(body, c, ctx.plugin.store.currentChanges(c.id));
     if (c.video) row(group(body), { icon: "play-circle", title: "Combo video", chevron: true, onTap: () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video!)}`) });
-    void ctx;
+    return changesBlock(body, c, ctx);
 }
 
 function soon(body: HTMLElement, title: string): void {

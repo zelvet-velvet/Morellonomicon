@@ -1,9 +1,10 @@
-import type { Champion, Skill } from "../data/store";
+import type { Champion, Change, Skill } from "../data/store";
+import { DIR_COLOR } from "./changes";
 import { DAMAGE_COLOR, chip, h, icon } from "../ui";
 
 // Passive + Q W E R as icons; the frame colour is the damage type of the skill (orange physical, blue magic, yellow true).
 // Tap an icon to open its details right below (tap again to close); no new page.
-export function skillStrip(parent: HTMLElement, c: Champion): void {
+export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] = []): void {
     if (!c.skills.length) return;
     const strip = h(parent, "div", "mn-skills");
     const detail = h(parent, "div", "mn-skill-detail");
@@ -32,9 +33,11 @@ export function skillStrip(parent: HTMLElement, c: Champion): void {
         for (const d of s.damage) chip(types, `${d}傷害`, { color: DAMAGE_COLOR[d] });
         if (s.range) {
             const m = h(detail, "div", "mn-sd-meta");
-            const cell = h(m, "div", "mn-sd-cell"); h(cell, "span", "mn-sd-k", "射程"); h(cell, "span", "mn-sd-v", s.range);
+            const cell = h(m, "div", "mn-sd-cell"); h(cell, "span", "mn-sd-k", "射程"); const rv = h(cell, "span", "mn-sd-v", s.range);
+            const rc = changes.find((x) => x.scope === s.key && x.field === "射程");
+            if (rc) { rv.style.color = DIR_COLOR[rc.dir]; h(cell, "span", "mn-chg-was", `上版 ${rc.old}`); }
         }
-        rankTable(detail, s);
+        rankTable(detail, s, changes.filter((x) => x.scope === s.key));
         if (s.desc) h(detail, "p", "mn-sd-desc", s.desc);
         if (s.upgrade) {
             const up = h(detail, "div", "mn-sd-up");
@@ -66,7 +69,7 @@ const ROW_COLOR: [string, string][] = [["魔法", DAMAGE_COLOR["魔法"]], ["物
 
 // Per-rank numbers as a small grid: one row per damage / heal / shield value, then cooldown and cost.
 // A row with one value is the same on every rank and spans the grid; the scaling (+50% 魔法攻擊) sits under the row's name.
-function rankTable(parent: HTMLElement, s: Skill): void {
+function rankTable(parent: HTMLElement, s: Skill, changes: Change[]): void {
     if (!s.rows.length) return;
     const ranks = Math.max(1, ...s.rows.map((r) => r.vals.length));
     const grid = h(parent, "div", "mn-rk");
@@ -81,7 +84,11 @@ function rankTable(parent: HTMLElement, s: Skill): void {
         const color = ROW_COLOR.find(([k]) => r.label.startsWith(k))?.[1];
         if (color) label.style.color = color;
         if (r.note) h(name, "span", "mn-rk-note", r.note);
-        if (r.vals.length === 1) { const v = h(grid, "div", "mn-rk-v mn-rk-all", r.vals[0]); v.style.gridColumn = `span ${ranks}`; }
-        else for (const v of r.vals) h(grid, "div", "mn-rk-v", v);
+        // changed since the last patch: the numbers take the colour (green = better for the player) and the old value is shown under the name
+        const ch = changes.find((x) => r.label.startsWith(x.field));
+        if (ch) h(name, "span", "mn-chg-was", `上版 ${ch.old}`);
+        const tint = (el: HTMLElement) => { if (ch) el.style.color = DIR_COLOR[ch.dir]; };
+        if (r.vals.length === 1) { const v = h(grid, "div", "mn-rk-v mn-rk-all", r.vals[0]); v.style.gridColumn = `span ${ranks}`; tint(v); }
+        else for (const v of r.vals) tint(h(grid, "div", "mn-rk-v", v));
     }
 }
