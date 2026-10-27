@@ -1,6 +1,5 @@
 import { empty, h, icon, page } from "../ui";
 import type { PageCtx, PageOut } from "./index";
-import { rosterPage } from "./roster";
 
 const SNIPPET = 46;      // characters of context around a match
 const MAX_PER_NOTE = 2;  // matching lines shown per guide card
@@ -23,7 +22,6 @@ function firstSentence(blurb: string): string {
 // The Handbook: a short, friendly start page (where to begin, topic tiles with a read time, a small fact of the day) and a search over
 // everything we have written (guide cards, champion tips and our own builds), so a detail read once can be found again in a couple of taps.
 export function handbookPage(ctx: PageCtx): PageOut {
-    if (ctx.frame.key === "roster") return rosterPage(ctx);
     const store = ctx.plugin.store;
     const el = page("Handbook");
     const box = h(el, "div", "mn-search");
@@ -48,20 +46,6 @@ export function handbookPage(ctx: PageCtx): PageOut {
     const home = () => {
         out.empty();
         if (!notes.length) { empty(out, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." }); return; }
-        // Quick Look first: the tool for the moment you are handed champions you do not know
-        const picked = ctx.plugin.settings.roster.map((id) => store.champion(id)).filter((c) => !!c);
-        const qk = h(out, "button", "mn-qk");
-        icon(h(qk, "span", "mn-qk-ic"), "scan-search");
-        const qt = h(qk, "div", "mn-qk-main");
-        h(qt, "div", "mn-qk-t", "大混戰速查");
-        h(qt, "div", "mn-qk-s", picked.length ? `你選了 ${picked.length} 位英雄,點開看各自的定位和能力` : "拿到不認識的英雄?點一下就知道定位和能力");
-        if (picked.length) {
-            const strip = h(qt, "div", "mn-qk-strip");
-            for (const c of picked.slice(0, 8)) { const im = h(strip, "img"); im.src = c!.icon; im.alt = ""; }
-        }
-        icon(qk, "chevron-right", "mn-row-chev");
-        qk.addEventListener("click", (e) => { e.preventDefault(); ctx.push({ key: "roster", title: "速查" }); });
-
         const done = notes.filter((n) => read.has(n.file.path)).length;
 
         // where to begin: the first card you have not opened (or a random one to review when you have read them all)

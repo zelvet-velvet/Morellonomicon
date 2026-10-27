@@ -3,7 +3,7 @@ import type { Champion } from "../data/store";
 import { DAMAGE_COLOR, chip, empty, h, icon, page } from "../ui";
 import { entryDir, marker } from "./changes";
 import type { PageCtx, PageOut } from "./index";
-import { abilityPills, styleLine } from "./profile";
+import { abilityPills, damageKinds, styleLine } from "./profile";
 
 const MAX_PICKS = 15;   // a Mayhem game can hand you a lot of champions
 const ROLES = ["戰士", "坦克", "法師", "刺客", "射手", "輔助"];
@@ -94,7 +94,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
         rm.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); toggle(c.id); });
         const tags = h(r, "div", "mn-chips mn-rq-tags");
         for (const role_ of c.roles) chip(tags, role_);
-        chip(tags, `${c.damageType}輸出`, { color: DAMAGE_COLOR[c.damageType] });
+        for (const d of damageKinds(c)) chip(tags, d.main ? `${d.kind}輸出` : `兼${d.kind}`, { color: DAMAGE_COLOR[d.kind] });
         const rd = recent.get(c.name);
         if (rd) { const m = marker(rd); chip(tags, `${m.mark} 本版調整`, { color: m.color }); }
         styleLine(r, c);

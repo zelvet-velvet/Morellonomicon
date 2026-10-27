@@ -58,7 +58,15 @@ export function profileRadar(parent: HTMLElement, axes: Axis[], color: string, m
 const ABILITIES: { tag: string; color: string }[] = [
     { tag: "控場", color: "var(--color-purple)" }, { tag: "緩速", color: "var(--color-blue)" }, { tag: "位移", color: "var(--color-cyan)" },
     { tag: "治療", color: "var(--color-green)" }, { tag: "護盾", color: "var(--color-yellow)" }, { tag: "吸血", color: "var(--color-red)" },
+    { tag: "強化普攻", color: "var(--color-pink)" },
 ];
+
+// Every damage kind a champion deals: its main one (Riot's ratings) first, then the others its skills also deal ("輸出" = main, "兼" = also)
+export function damageKinds(c: Champion): { kind: string; main: boolean }[] {
+    const main = c.damageType === "混合" ? ["物理", "魔法"] : [c.damageType];
+    const extra = c.skillDamage.filter((d) => !main.includes(d));
+    return [...main.map((kind) => ({ kind, main: true })), ...extra.map((kind) => ({ kind, main: false }))];
+}
 
 export function abilityPills(parent: HTMLElement, c: Champion, onlyLit = false): HTMLElement {
     const row = h(parent, "div", "mn-pills");
@@ -77,8 +85,10 @@ export function styleLine(parent: HTMLElement, c: Champion): void {
     const row = h(parent, "div", "mn-pro-line");
     const reach = c.archetypes.find((a) => a === "近戰" || a === "中程" || a === "遠程") ?? "";
     if (reach) h(row, "span", "mn-pro-i", reach);
-    const dmg = h(row, "span", "mn-pro-i", `${c.damageType}輸出`);
-    dmg.style.color = DAMAGE_COLOR[c.damageType] ?? "inherit";
+    for (const d of damageKinds(c)) {
+        const dmg = h(row, "span", "mn-pro-i", d.main ? `${d.kind}輸出` : `兼${d.kind}`);
+        dmg.style.color = DAMAGE_COLOR[d.kind] ?? "inherit";
+    }
     const dots = h(row, "span", "mn-pro-i mn-hard");
     h(dots, "span", "", "難度");
     const level = Math.max(1, Math.min(5, Math.ceil(c.difficulty / 2)));

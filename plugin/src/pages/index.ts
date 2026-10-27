@@ -7,6 +7,7 @@ import { championCard, championsPage, type SubTab } from "./champions";
 import { augmentPage, itemPage, notePage } from "./detail";
 import { handbookPage } from "./handbook";
 import { patchPage } from "./patch";
+import { rosterPage } from "./roster";
 
 export interface PageOut { title: string; el: HTMLElement }
 export interface PageCtx {
@@ -40,6 +41,7 @@ export function renderPage(tab: TabId, ctx: PageCtx): PageOut {
         case "augment": return augmentPage(ctx);
         case "item": return itemPage(ctx);
         case "note": return notePage(ctx);
+        case "roster": return rosterPage(ctx);
         default: return PAGES[tab](ctx);
     }
 }

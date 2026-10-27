@@ -1,7 +1,7 @@
 import type { Champion } from "../data/store";
 import { MODES } from "../modes";
 import { DAMAGE_COLOR, chip, empty, group, h, icon, page, row, segmented } from "../ui";
-import { championProfile } from "./profile";
+import { championProfile, damageKinds } from "./profile";
 import { buildTab } from "./build";
 import type { PageCtx, PageOut } from "./index";
 import { badgeColor, badgeText, changesBlock, entryDir, marker } from "./changes";
@@ -10,7 +10,7 @@ import { skillStrip } from "./skills";
 
 const ROLES = ["戰士", "坦克", "法師", "刺客", "射手", "輔助"];
 const DAMAGES = ["物理", "魔法", "混合"];
-const FEATURES = ["控場", "緩速", "位移", "治療", "護盾", "吸血"];   // tap once = must have, twice = must not have
+const FEATURES = ["控場", "緩速", "位移", "治療", "護盾", "吸血", "強化普攻"];   // tap once = must have, twice = must not have
 const REACH = ["近戰", "中程", "遠程"];
 const SORTS: [string, string][] = [["name", "名稱"], ["easy", "簡單優先"], ["range", "射程遠優先"]];
 const SEARCH_EXTRA = 8;   // augments / items listed under the champions when the search box has text
@@ -42,6 +42,19 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
     let query = "";
     // champions changed in the latest patch notes get a ▲ / ▼ / ◆ / ● mark on their icon
     const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)] as const));
+    // Quick Look: the tool for the moment the game hands you champions you do not know
+    const picked = ctx.plugin.settings.roster.map((id) => store.champion(id)).filter((c) => !!c);
+    const qk = h(parent, "button", "mn-qk");
+    icon(h(qk, "span", "mn-qk-ic"), "scan-search");
+    const qt = h(qk, "div", "mn-qk-main");
+    h(qt, "div", "mn-qk-t", "大混戰速查");
+    h(qt, "div", "mn-qk-s", picked.length ? `你選了 ${picked.length} 位英雄,點開看各自的定位和能力` : "拿到不認識的英雄?點一下就知道定位和能力");
+    if (picked.length) {
+        const strip = h(qt, "div", "mn-qk-strip");
+        for (const c of picked.slice(0, 8)) { const im = h(strip, "img"); im.src = c!.icon; im.alt = ""; }
+    }
+    icon(qk, "chevron-right", "mn-row-chev");
+    qk.addEventListener("click", (e) => { e.preventDefault(); ctx.push({ key: "roster", title: "速查" }); });
     const box = h(parent, "div", "mn-search");
     icon(box, "search", "mn-search-ic");
     const search = h(box, "input");
@@ -159,7 +172,7 @@ export function championCard(ctx: PageCtx): PageOut {
     h(who, "div", "mn-card-sub", c.title);
     const tags = h(who, "div", "mn-chips");
     for (const r of c.roles) chip(tags, r);
-    chip(tags, c.damageType, { color: dmgColor });
+    for (const d of damageKinds(c)) chip(tags, d.main ? d.kind : `兼${d.kind}`, { color: DAMAGE_COLOR[d.kind] ?? dmgColor });
     if (c.tier) chip(tags, `評價 ${c.tier}`, { color: "var(--color-green)" });   // optional, hand-written `tier` in the champion note
     const now = ctx.plugin.store.currentChanges(c.id);
     const openChanges = () => { show("skills"); block?.open(); block?.el.scrollIntoView({ behavior: "smooth", block: "start" }); };

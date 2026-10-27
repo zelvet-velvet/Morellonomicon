@@ -833,8 +833,14 @@ var ABILITIES = [
   { tag: "\u4F4D\u79FB", color: "var(--color-cyan)" },
   { tag: "\u6CBB\u7642", color: "var(--color-green)" },
   { tag: "\u8B77\u76FE", color: "var(--color-yellow)" },
-  { tag: "\u5438\u8840", color: "var(--color-red)" }
+  { tag: "\u5438\u8840", color: "var(--color-red)" },
+  { tag: "\u5F37\u5316\u666E\u653B", color: "var(--color-pink)" }
 ];
+function damageKinds(c) {
+  const main = c.damageType === "\u6DF7\u5408" ? ["\u7269\u7406", "\u9B54\u6CD5"] : [c.damageType];
+  const extra = c.skillDamage.filter((d) => !main.includes(d));
+  return [...main.map((kind) => ({ kind, main: true })), ...extra.map((kind) => ({ kind, main: false }))];
+}
 function abilityPills(parent, c, onlyLit = false) {
   const row2 = h(parent, "div", "mn-pills");
   for (const a of ABILITIES) {
@@ -850,8 +856,10 @@ function styleLine(parent, c) {
   const row2 = h(parent, "div", "mn-pro-line");
   const reach = c.archetypes.find((a) => a === "\u8FD1\u6230" || a === "\u4E2D\u7A0B" || a === "\u9060\u7A0B") ?? "";
   if (reach) h(row2, "span", "mn-pro-i", reach);
-  const dmg = h(row2, "span", "mn-pro-i", `${c.damageType}\u8F38\u51FA`);
-  dmg.style.color = DAMAGE_COLOR[c.damageType] ?? "inherit";
+  for (const d of damageKinds(c)) {
+    const dmg = h(row2, "span", "mn-pro-i", d.main ? `${d.kind}\u8F38\u51FA` : `\u517C${d.kind}`);
+    dmg.style.color = DAMAGE_COLOR[d.kind] ?? "inherit";
+  }
   const dots = h(row2, "span", "mn-pro-i mn-hard");
   h(dots, "span", "", "\u96E3\u5EA6");
   const level = Math.max(1, Math.min(5, Math.ceil(c.difficulty / 2)));
@@ -1202,7 +1210,7 @@ function rankTable(parent, s, changes) {
 // src/pages/champions.ts
 var ROLES = ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u5C04\u624B", "\u8F14\u52A9"];
 var DAMAGES = ["\u7269\u7406", "\u9B54\u6CD5", "\u6DF7\u5408"];
-var FEATURES = ["\u63A7\u5834", "\u7DE9\u901F", "\u4F4D\u79FB", "\u6CBB\u7642", "\u8B77\u76FE", "\u5438\u8840"];
+var FEATURES = ["\u63A7\u5834", "\u7DE9\u901F", "\u4F4D\u79FB", "\u6CBB\u7642", "\u8B77\u76FE", "\u5438\u8840", "\u5F37\u5316\u666E\u653B"];
 var REACH = ["\u8FD1\u6230", "\u4E2D\u7A0B", "\u9060\u7A0B"];
 var SORTS2 = [["name", "\u540D\u7A31"], ["easy", "\u7C21\u55AE\u512A\u5148"], ["range", "\u5C04\u7A0B\u9060\u512A\u5148"]];
 var SEARCH_EXTRA = 8;
@@ -1228,6 +1236,25 @@ function championPicker(parent, ctx) {
   }
   let query = "";
   const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)]));
+  const picked = ctx.plugin.settings.roster.map((id) => store.champion(id)).filter((c) => !!c);
+  const qk = h(parent, "button", "mn-qk");
+  icon(h(qk, "span", "mn-qk-ic"), "scan-search");
+  const qt = h(qk, "div", "mn-qk-main");
+  h(qt, "div", "mn-qk-t", "\u5927\u6DF7\u6230\u901F\u67E5");
+  h(qt, "div", "mn-qk-s", picked.length ? `\u4F60\u9078\u4E86 ${picked.length} \u4F4D\u82F1\u96C4,\u9EDE\u958B\u770B\u5404\u81EA\u7684\u5B9A\u4F4D\u548C\u80FD\u529B` : "\u62FF\u5230\u4E0D\u8A8D\u8B58\u7684\u82F1\u96C4?\u9EDE\u4E00\u4E0B\u5C31\u77E5\u9053\u5B9A\u4F4D\u548C\u80FD\u529B");
+  if (picked.length) {
+    const strip2 = h(qt, "div", "mn-qk-strip");
+    for (const c of picked.slice(0, 8)) {
+      const im = h(strip2, "img");
+      im.src = c.icon;
+      im.alt = "";
+    }
+  }
+  icon(qk, "chevron-right", "mn-row-chev");
+  qk.addEventListener("click", (e) => {
+    e.preventDefault();
+    ctx.push({ key: "roster", title: "\u901F\u67E5" });
+  });
   const box = h(parent, "div", "mn-search");
   icon(box, "search", "mn-search-ic");
   const search = h(box, "input");
@@ -1390,7 +1417,7 @@ function championCard(ctx) {
   h(who, "div", "mn-card-sub", c.title);
   const tags = h(who, "div", "mn-chips");
   for (const r of c.roles) chip(tags, r);
-  chip(tags, c.damageType, { color: dmgColor });
+  for (const d of damageKinds(c)) chip(tags, d.main ? d.kind : `\u517C${d.kind}`, { color: DAMAGE_COLOR[d.kind] ?? dmgColor });
   if (c.tier) chip(tags, `\u8A55\u50F9 ${c.tier}`, { color: "var(--color-green)" });
   const now = ctx.plugin.store.currentChanges(c.id);
   const openChanges = () => {
@@ -1829,186 +1856,6 @@ function recipe(el, ctx, title, items) {
   }
 }
 
-// src/pages/roster.ts
-var import_obsidian6 = require("obsidian");
-var MAX_PICKS = 15;
-var ROLES2 = ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u5C04\u624B", "\u8F14\u52A9"];
-var SPLIT = /[\s,，、;；和跟與及]+/;
-function matchScore(c, raw) {
-  const q = raw.trim().toLowerCase();
-  if (!q) return 0;
-  const name = c.name.toLowerCase(), title = c.title.toLowerCase(), id = c.id.toLowerCase();
-  if (name === q || id === q) return 100;
-  if (name.startsWith(q) || id.startsWith(q)) return 90;
-  if (name.includes(q) || id.includes(q)) return 80;
-  if (title.includes(q)) return 60;
-  const chars = [...q];
-  let at = 0;
-  for (const ch of name) if (ch === chars[at]) at++;
-  if (at === chars.length && chars.length >= 2) return 50;
-  const shared = chars.filter((ch) => name.includes(ch)).length;
-  return chars.length >= 3 && shared / chars.length >= 0.66 ? 20 + shared : 0;
-}
-function distance(a, b) {
-  const x = [...a], y = [...b];
-  let prev = Array.from({ length: y.length + 1 }, (_, j) => j);
-  for (let i = 1; i <= x.length; i++) {
-    const cur = [i];
-    for (let j = 1; j <= y.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (x[i - 1] === y[j - 1] ? 0 : 1));
-    prev = cur;
-  }
-  return prev[y.length];
-}
-function closest(all, raw, limit = 4) {
-  const q = raw.trim().toLowerCase();
-  if (!q) return [];
-  const allowed = [...q].length <= 4 ? 1 : 2;
-  return all.map((c) => ({ c, d: Math.min(distance(q, c.name.toLowerCase()), distance(q, c.id.toLowerCase())) })).filter((x) => x.d <= allowed).sort((a, b) => a.d - b.d || a.c.name.localeCompare(b.c.name, "zh-Hant")).slice(0, limit).map((x) => x.c);
-}
-function rosterPage(ctx) {
-  const store = ctx.plugin.store;
-  const el = page("\u901F\u67E5");
-  const all = store.champions();
-  let picks = ctx.plugin.settings.roster.filter((id) => all.some((c) => c.id === id)).slice(0, MAX_PICKS);
-  let query = "", role = "";
-  const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)]));
-  const save = () => {
-    void ctx.plugin.setRoster(picks);
-  };
-  h(el, "p", "mn-rq-hint", "\u5927\u6DF7\u6230\u6703\u96A8\u6A5F\u7D66\u4F60\u82F1\u96C4\u3002\u9EDE\u4F60\u62FF\u5230\u7684(\u6700\u591A 15 \u4F4D),\u99AC\u4E0A\u770B\u5230\u5B9A\u4F4D\u548C\u80FD\u529B\u3002");
-  const results = h(el, "div", "mn-rq-results");
-  const box = h(el, "div", "mn-search");
-  icon(box, "search", "mn-search-ic");
-  const search = h(box, "input");
-  search.type = "search";
-  search.placeholder = "\u8F38\u5165\u82F1\u96C4\u540D\u5B57,\u6216\u6309\u9375\u76E4\u4E0A\u7684 \u{1F3A4} \u8AAA\u51FA\u4F86";
-  search.setAttribute("enterkeyhint", "search");
-  const suggest2 = h(el, "div", "mn-chips");
-  const roles = h(el, "div", "mn-chips");
-  const grid = h(el, "div", "mn-grid");
-  const toggle = (id) => {
-    if (picks.includes(id)) picks = picks.filter((p) => p !== id);
-    else if (picks.length >= MAX_PICKS) {
-      new import_obsidian6.Notice(`\u6700\u591A\u9078 ${MAX_PICKS} \u4F4D`);
-      return;
-    } else picks = [...picks, id];
-    save();
-    drawResults();
-    drawGrid();
-  };
-  const card = (c) => {
-    const r = h(results, "div", "mn-rq");
-    const top = h(r, "div", "mn-rq-top");
-    const im = h(top, "img", "mn-rq-img");
-    im.src = c.icon;
-    im.alt = "";
-    const who = h(top, "div", "mn-rq-who");
-    h(who, "div", "mn-rq-name", c.name);
-    h(who, "div", "mn-rq-title", c.title);
-    const rm = h(top, "button", "mn-rq-x");
-    icon(rm, "x");
-    rm.setAttribute("aria-label", "\u79FB\u9664");
-    rm.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      toggle(c.id);
-    });
-    const tags = h(r, "div", "mn-chips mn-rq-tags");
-    for (const role_ of c.roles) chip(tags, role_);
-    chip(tags, `${c.damageType}\u8F38\u51FA`, { color: DAMAGE_COLOR[c.damageType] });
-    const rd = recent.get(c.name);
-    if (rd) {
-      const m = marker(rd);
-      chip(tags, `${m.mark} \u672C\u7248\u8ABF\u6574`, { color: m.color });
-    }
-    styleLine(r, c);
-    abilityPills(r, c);
-    r.addEventListener("click", () => ctx.openChampion(c.id));
-  };
-  const drawResults = () => {
-    results.empty();
-    if (!picks.length) return;
-    const head = h(results, "div", "mn-rq-head");
-    h(head, "span", "mn-rq-count", `\u4F60\u7684\u82F1\u96C4 ${picks.length} / ${MAX_PICKS}`);
-    const clear = h(head, "button", "mn-clear", "\u5168\u90E8\u6E05\u9664");
-    clear.addEventListener("click", (e) => {
-      e.preventDefault();
-      picks = [];
-      save();
-      drawResults();
-      drawGrid();
-    });
-    for (const id of picks) {
-      const c = all.find((x) => x.id === id);
-      if (c) card(c);
-    }
-  };
-  const drawSuggest = () => {
-    suggest2.empty();
-    const tokens = query.split(SPLIT).filter(Boolean);
-    if (!tokens.length) return;
-    const best = (t) => {
-      const ranked = all.map((c) => ({ c, s: matchScore(c, t) })).sort((a, b) => b.s - a.s);
-      return ranked[0] && ranked[0].s >= 50 ? { list: [ranked[0].c], exact: true } : { list: closest(all, t, 3), exact: false };
-    };
-    const found = tokens.map(best);
-    const unique = [...new Map(found.flatMap((f) => f.list).map((c) => [c.id, c])).values()];
-    if (!unique.length) return;
-    const guessed = found.some((f) => !f.exact && f.list.length);
-    if (tokens.length === 1 && !guessed) return;
-    if (guessed) h(suggest2, "span", "mn-dym", "\u4F60\u662F\u4E0D\u662F\u5728\u627E:");
-    for (const c of unique) chip(suggest2, `${picks.includes(c.id) ? "\u2713 " : "+ "}${c.name}`, { color: "var(--color-green)", onTap: () => toggle(c.id) });
-    if (unique.length > 1) chip(suggest2, "\u5168\u90E8\u52A0\u5165", { on: true, onTap: () => {
-      for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) picks = [...picks, c.id];
-      save();
-      drawResults();
-      drawGrid();
-    } });
-  };
-  const drawGrid = () => {
-    grid.empty();
-    const tokens = query.split(SPLIT).filter(Boolean);
-    let list2 = all.filter((c) => !role || c.roles.includes(role));
-    if (tokens.length) {
-      const scored = list2.map((c) => ({ c, s: Math.max(...tokens.map((t) => matchScore(c, t))) })).filter((x) => x.s > 0);
-      scored.sort((a, b) => b.s - a.s || a.c.name.localeCompare(b.c.name, "zh-Hant"));
-      list2 = scored.map((x) => x.c);
-    }
-    for (const c of list2) {
-      const on = picks.includes(c.id);
-      const t = h(grid, "button", "mn-tile mn-pick" + (on ? " is-pick" : ""));
-      const im = h(t, "img");
-      im.src = c.icon;
-      im.alt = "";
-      im.loading = "lazy";
-      if (on) icon(h(t, "span", "mn-pick-ok"), "check");
-      h(t, "span", "mn-tile-n", c.name);
-      t.addEventListener("click", (e) => {
-        e.preventDefault();
-        toggle(c.id);
-      });
-    }
-    if (!list2.length) empty(grid, { icon: "search-x", title: "\u627E\u4E0D\u5230\u9019\u500B\u540D\u5B57", text: "\u4E0A\u9762\u7684\u300C\u4F60\u662F\u4E0D\u662F\u5728\u627E\u300D\u6703\u5217\u51FA\u6700\u63A5\u8FD1\u7684,\u6216\u63DB\u500B\u8AAA\u6CD5\u518D\u8A66\u3002" });
-  };
-  const drawRoles = () => {
-    roles.empty();
-    for (const r of ROLES2) chip(roles, r, { on: role === r, onTap: () => {
-      role = role === r ? "" : r;
-      drawRoles();
-      drawGrid();
-    } });
-  };
-  search.addEventListener("input", () => {
-    query = search.value;
-    drawSuggest();
-    drawGrid();
-  });
-  drawResults();
-  drawRoles();
-  drawGrid();
-  return { title: "\u901F\u67E5", el };
-}
-
 // src/pages/handbook.ts
 var SNIPPET = 46;
 var MAX_PER_NOTE = 2;
@@ -2024,7 +1871,6 @@ function firstSentence(blurb) {
   return s.length > 64 ? s.slice(0, 62) + "\u2026" : s;
 }
 function handbookPage(ctx) {
-  if (ctx.frame.key === "roster") return rosterPage(ctx);
   const store = ctx.plugin.store;
   const el = page("Handbook");
   const box = h(el, "div", "mn-search");
@@ -2050,25 +1896,6 @@ function handbookPage(ctx) {
       empty(out, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." });
       return;
     }
-    const picked = ctx.plugin.settings.roster.map((id) => store.champion(id)).filter((c) => !!c);
-    const qk = h(out, "button", "mn-qk");
-    icon(h(qk, "span", "mn-qk-ic"), "scan-search");
-    const qt = h(qk, "div", "mn-qk-main");
-    h(qt, "div", "mn-qk-t", "\u5927\u6DF7\u6230\u901F\u67E5");
-    h(qt, "div", "mn-qk-s", picked.length ? `\u4F60\u9078\u4E86 ${picked.length} \u4F4D\u82F1\u96C4,\u9EDE\u958B\u770B\u5404\u81EA\u7684\u5B9A\u4F4D\u548C\u80FD\u529B` : "\u62FF\u5230\u4E0D\u8A8D\u8B58\u7684\u82F1\u96C4?\u9EDE\u4E00\u4E0B\u5C31\u77E5\u9053\u5B9A\u4F4D\u548C\u80FD\u529B");
-    if (picked.length) {
-      const strip2 = h(qt, "div", "mn-qk-strip");
-      for (const c of picked.slice(0, 8)) {
-        const im = h(strip2, "img");
-        im.src = c.icon;
-        im.alt = "";
-      }
-    }
-    icon(qk, "chevron-right", "mn-row-chev");
-    qk.addEventListener("click", (e) => {
-      e.preventDefault();
-      ctx.push({ key: "roster", title: "\u901F\u67E5" });
-    });
     const done = notes.filter((n) => read.has(n.file.path)).length;
     const next = notes.find((n) => !read.has(n.file.path)) ?? notes[Math.floor(Math.random() * notes.length)];
     const hero = h(out, "button", "mn-hh");
@@ -2364,6 +2191,186 @@ function mayhemSection(el, ctx, n) {
   }
 }
 
+// src/pages/roster.ts
+var import_obsidian6 = require("obsidian");
+var MAX_PICKS = 15;
+var ROLES2 = ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u5C04\u624B", "\u8F14\u52A9"];
+var SPLIT = /[\s,，、;；和跟與及]+/;
+function matchScore(c, raw) {
+  const q = raw.trim().toLowerCase();
+  if (!q) return 0;
+  const name = c.name.toLowerCase(), title = c.title.toLowerCase(), id = c.id.toLowerCase();
+  if (name === q || id === q) return 100;
+  if (name.startsWith(q) || id.startsWith(q)) return 90;
+  if (name.includes(q) || id.includes(q)) return 80;
+  if (title.includes(q)) return 60;
+  const chars = [...q];
+  let at = 0;
+  for (const ch of name) if (ch === chars[at]) at++;
+  if (at === chars.length && chars.length >= 2) return 50;
+  const shared = chars.filter((ch) => name.includes(ch)).length;
+  return chars.length >= 3 && shared / chars.length >= 0.66 ? 20 + shared : 0;
+}
+function distance(a, b) {
+  const x = [...a], y = [...b];
+  let prev = Array.from({ length: y.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= x.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= y.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (x[i - 1] === y[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[y.length];
+}
+function closest(all, raw, limit = 4) {
+  const q = raw.trim().toLowerCase();
+  if (!q) return [];
+  const allowed = [...q].length <= 4 ? 1 : 2;
+  return all.map((c) => ({ c, d: Math.min(distance(q, c.name.toLowerCase()), distance(q, c.id.toLowerCase())) })).filter((x) => x.d <= allowed).sort((a, b) => a.d - b.d || a.c.name.localeCompare(b.c.name, "zh-Hant")).slice(0, limit).map((x) => x.c);
+}
+function rosterPage(ctx) {
+  const store = ctx.plugin.store;
+  const el = page("\u901F\u67E5");
+  const all = store.champions();
+  let picks = ctx.plugin.settings.roster.filter((id) => all.some((c) => c.id === id)).slice(0, MAX_PICKS);
+  let query = "", role = "";
+  const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)]));
+  const save = () => {
+    void ctx.plugin.setRoster(picks);
+  };
+  h(el, "p", "mn-rq-hint", "\u5927\u6DF7\u6230\u6703\u96A8\u6A5F\u7D66\u4F60\u82F1\u96C4\u3002\u9EDE\u4F60\u62FF\u5230\u7684(\u6700\u591A 15 \u4F4D),\u99AC\u4E0A\u770B\u5230\u5B9A\u4F4D\u548C\u80FD\u529B\u3002");
+  const results = h(el, "div", "mn-rq-results");
+  const box = h(el, "div", "mn-search");
+  icon(box, "search", "mn-search-ic");
+  const search = h(box, "input");
+  search.type = "search";
+  search.placeholder = "\u8F38\u5165\u82F1\u96C4\u540D\u5B57,\u6216\u6309\u9375\u76E4\u4E0A\u7684 \u{1F3A4} \u8AAA\u51FA\u4F86";
+  search.setAttribute("enterkeyhint", "search");
+  const suggest2 = h(el, "div", "mn-chips");
+  const roles = h(el, "div", "mn-chips");
+  const grid = h(el, "div", "mn-grid");
+  const toggle = (id) => {
+    if (picks.includes(id)) picks = picks.filter((p) => p !== id);
+    else if (picks.length >= MAX_PICKS) {
+      new import_obsidian6.Notice(`\u6700\u591A\u9078 ${MAX_PICKS} \u4F4D`);
+      return;
+    } else picks = [...picks, id];
+    save();
+    drawResults();
+    drawGrid();
+  };
+  const card = (c) => {
+    const r = h(results, "div", "mn-rq");
+    const top = h(r, "div", "mn-rq-top");
+    const im = h(top, "img", "mn-rq-img");
+    im.src = c.icon;
+    im.alt = "";
+    const who = h(top, "div", "mn-rq-who");
+    h(who, "div", "mn-rq-name", c.name);
+    h(who, "div", "mn-rq-title", c.title);
+    const rm = h(top, "button", "mn-rq-x");
+    icon(rm, "x");
+    rm.setAttribute("aria-label", "\u79FB\u9664");
+    rm.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggle(c.id);
+    });
+    const tags = h(r, "div", "mn-chips mn-rq-tags");
+    for (const role_ of c.roles) chip(tags, role_);
+    for (const d of damageKinds(c)) chip(tags, d.main ? `${d.kind}\u8F38\u51FA` : `\u517C${d.kind}`, { color: DAMAGE_COLOR[d.kind] });
+    const rd = recent.get(c.name);
+    if (rd) {
+      const m = marker(rd);
+      chip(tags, `${m.mark} \u672C\u7248\u8ABF\u6574`, { color: m.color });
+    }
+    styleLine(r, c);
+    abilityPills(r, c);
+    r.addEventListener("click", () => ctx.openChampion(c.id));
+  };
+  const drawResults = () => {
+    results.empty();
+    if (!picks.length) return;
+    const head = h(results, "div", "mn-rq-head");
+    h(head, "span", "mn-rq-count", `\u4F60\u7684\u82F1\u96C4 ${picks.length} / ${MAX_PICKS}`);
+    const clear = h(head, "button", "mn-clear", "\u5168\u90E8\u6E05\u9664");
+    clear.addEventListener("click", (e) => {
+      e.preventDefault();
+      picks = [];
+      save();
+      drawResults();
+      drawGrid();
+    });
+    for (const id of picks) {
+      const c = all.find((x) => x.id === id);
+      if (c) card(c);
+    }
+  };
+  const drawSuggest = () => {
+    suggest2.empty();
+    const tokens = query.split(SPLIT).filter(Boolean);
+    if (!tokens.length) return;
+    const best = (t) => {
+      const ranked = all.map((c) => ({ c, s: matchScore(c, t) })).sort((a, b) => b.s - a.s);
+      return ranked[0] && ranked[0].s >= 50 ? { list: [ranked[0].c], exact: true } : { list: closest(all, t, 3), exact: false };
+    };
+    const found = tokens.map(best);
+    const unique = [...new Map(found.flatMap((f) => f.list).map((c) => [c.id, c])).values()];
+    if (!unique.length) return;
+    const guessed = found.some((f) => !f.exact && f.list.length);
+    if (tokens.length === 1 && !guessed) return;
+    if (guessed) h(suggest2, "span", "mn-dym", "\u4F60\u662F\u4E0D\u662F\u5728\u627E:");
+    for (const c of unique) chip(suggest2, `${picks.includes(c.id) ? "\u2713 " : "+ "}${c.name}`, { color: "var(--color-green)", onTap: () => toggle(c.id) });
+    if (unique.length > 1) chip(suggest2, "\u5168\u90E8\u52A0\u5165", { on: true, onTap: () => {
+      for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) picks = [...picks, c.id];
+      save();
+      drawResults();
+      drawGrid();
+    } });
+  };
+  const drawGrid = () => {
+    grid.empty();
+    const tokens = query.split(SPLIT).filter(Boolean);
+    let list2 = all.filter((c) => !role || c.roles.includes(role));
+    if (tokens.length) {
+      const scored = list2.map((c) => ({ c, s: Math.max(...tokens.map((t) => matchScore(c, t))) })).filter((x) => x.s > 0);
+      scored.sort((a, b) => b.s - a.s || a.c.name.localeCompare(b.c.name, "zh-Hant"));
+      list2 = scored.map((x) => x.c);
+    }
+    for (const c of list2) {
+      const on = picks.includes(c.id);
+      const t = h(grid, "button", "mn-tile mn-pick" + (on ? " is-pick" : ""));
+      const im = h(t, "img");
+      im.src = c.icon;
+      im.alt = "";
+      im.loading = "lazy";
+      if (on) icon(h(t, "span", "mn-pick-ok"), "check");
+      h(t, "span", "mn-tile-n", c.name);
+      t.addEventListener("click", (e) => {
+        e.preventDefault();
+        toggle(c.id);
+      });
+    }
+    if (!list2.length) empty(grid, { icon: "search-x", title: "\u627E\u4E0D\u5230\u9019\u500B\u540D\u5B57", text: "\u4E0A\u9762\u7684\u300C\u4F60\u662F\u4E0D\u662F\u5728\u627E\u300D\u6703\u5217\u51FA\u6700\u63A5\u8FD1\u7684,\u6216\u63DB\u500B\u8AAA\u6CD5\u518D\u8A66\u3002" });
+  };
+  const drawRoles = () => {
+    roles.empty();
+    for (const r of ROLES2) chip(roles, r, { on: role === r, onTap: () => {
+      role = role === r ? "" : r;
+      drawRoles();
+      drawGrid();
+    } });
+  };
+  search.addEventListener("input", () => {
+    query = search.value;
+    drawSuggest();
+    drawGrid();
+  });
+  drawResults();
+  drawRoles();
+  drawGrid();
+  return { title: "\u901F\u67E5", el };
+}
+
 // src/pages/index.ts
 var PAGES = {
   champions: championsPage,
@@ -2381,6 +2388,8 @@ function renderPage(tab, ctx) {
       return itemPage(ctx);
     case "note":
       return notePage(ctx);
+    case "roster":
+      return rosterPage(ctx);
     default:
       return PAGES[tab](ctx);
   }
