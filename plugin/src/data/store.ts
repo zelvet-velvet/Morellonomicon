@@ -1,3 +1,4 @@
+import { Sounds } from "./sound";
 import { TFile, normalizePath } from "obsidian";
 import type MorellonomiconPlugin from "../main";
 import { MODES, ModeId } from "../modes";
@@ -92,6 +93,7 @@ export class Store {
     changes: ChangeData | null = null;
     positions: { patch: string; date: string; matches: number; champions: Record<string, Record<string, number>> } | null = null;   // _data/positions.json
     riotNotes: PatchNote[] = [];
+    sounds: Sounds | null = null;   // _data/sounds.json: how characters are said, for finding names from speech to text
     gameText: Record<string, { text: string; partial: boolean }> = {};   // augment id -> the game's own description (tools/fetch_augment_text.py)
 
     constructor(private plugin: MorellonomiconPlugin) {}
@@ -117,6 +119,13 @@ export class Store {
             const path = normalizePath("_data/positions.json");
             this.positions = (await this.app.vault.adapter.exists(path)) ? JSON.parse(await this.app.vault.adapter.read(path)) : null;
         } catch { this.positions = null; }
+        if (!this.sounds) try {
+            const path = normalizePath("_data/sounds.json");
+            if (await this.app.vault.adapter.exists(path)) {
+                const d = JSON.parse(await this.app.vault.adapter.read(path)) as { sounds: Record<string, string>; rare?: Record<string, string> };
+                this.sounds = new Sounds(d.sounds, d.rare);
+            }
+        } catch { this.sounds = null; }
         try {
             const path = normalizePath("_data/changes.json");
             this.changes = (await this.app.vault.adapter.exists(path)) ? (JSON.parse(await this.app.vault.adapter.read(path)) as ChangeData) : null;

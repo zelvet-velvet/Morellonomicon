@@ -1,5 +1,6 @@
 import { Notice } from "obsidian";
 import type { Champion } from "../data/store";
+import { findSaid, type Said, type Sounds, soundScore } from "../data/sound";
 import { chip, empty, fgrid, h, holdTip, icon, page, roleChip } from "../ui";
 import { entryDir, marker } from "./changes";
 import type { PageCtx, PageOut } from "./index";
@@ -49,6 +50,62 @@ function closest(all: Champion[], raw: string, limit = 4): Champion[] {
         .filter((x) => x.d <= allowed).sort((a, b) => a.d - b.d || a.c.name.localeCompare(b.c.name, "zh-Hant")).slice(0, limit).map((x) => x.c);
 }
 
+// Finding a champion from what was typed or said: by text first; when that is weak, by sound (speech to text hears the
+// name and writes other characters). `within` finds several names said in one breath.
+export function finder(all: Champion[], sounds: Sounds | null) {
+    const heard = new Map<string, { name: [Said, Said]; title: [Said, Said] }>();
+    const heardOf = (c: Champion) => {
+        let x = heard.get(c.id);
+        if (!x && sounds) heard.set(c.id, x = { name: [sounds.said(c.name), sounds.said(c.name, true)], title: [sounds.said(c.title), sounds.said(c.title, true)] });
+        return x!;
+    };
+    const score = (c: Champion, t: string): number => {
+        const s = matchScore(c, t);
+        if (s >= 80 || !sounds) return s;
+        const q: [Said, Said] = [sounds.said(t, false, true), sounds.said(t, true, true)];
+        if (!q[0].length) return s;
+        const x = heardOf(c);
+        const byName = Math.max(soundScore(q[0], x.name[0], false), soundScore(q[1], x.name[1], true));
+        const byTitle = Math.max(soundScore(q[0], x.title[0], false), soundScore(q[1], x.title[1], true));
+        return Math.max(s, byName, byTitle >= 64 ? byTitle - 20 : 0);
+    };
+    // several names said in one breath ("阿璃卡特蓮娜"): the champions whose whole name is heard inside it, longest first, in order
+    const within = (t: string): Champion[] => {
+        if (!sounds) return [];
+        const han = [...t].filter((ch) => /\p{Script=Han}/u.test(ch));
+        const q: [Said, Said] = [sounds.said(t, false, true), sounds.said(t, true, true)];
+        if (q[0].length < 3) return [];
+        const hits: { c: Champion; at: number; len: number; near: number }[] = [];
+        for (const c of all) {
+            const x = heardOf(c);
+            if (x.name[0].length < 2 || x.name[0].length >= q[0].length) continue;
+            for (const near of [0, 1]) { const at = findSaid(q[near], x.name[near]); if (at >= 0) { hits.push({ c, at, len: x.name[0].length, near }); break; } }
+        }
+        hits.sort((a, b) => b.len - a.len || a.near - b.near || a.at - b.at);
+        const used = new Set<number>(), out: { c: Champion; at: number }[] = [];
+        const take = (c: Champion, at: number, len: number) => { for (let i = at; i < at + len; i++) used.add(i); out.push({ c, at }); };
+        for (const h_ of hits) {
+            if (out.some((o) => o.c.id === h_.c.id)) continue;
+            if (Array.from({ length: h_.len }, (_, i) => h_.at + i).some((i) => used.has(i))) continue;
+            take(h_.c, h_.at, h_.len);
+        }
+        // what is left between them may be one more name: misheard by a character, or a one-character name said exactly (汎, 劫)
+        if (out.length) {
+            for (let i = 0; i < han.length;) {
+                if (used.has(i)) { i++; continue; }
+                let j = i;
+                while (j < han.length && !used.has(j)) j++;
+                const part = han.slice(i, j).join("");
+                const best = all.map((c) => ({ c, s: score(c, part) })).sort((a, b) => b.s - a.s)[0];
+                if (best && best.s >= (j - i >= 2 ? 50 : 78) && !out.some((o) => o.c.id === best.c.id)) take(best.c, i, j - i);
+                i = j;
+            }
+        }
+        return out.sort((a, b) => a.at - b.at).map((x) => x.c);
+    };
+    return { score, within };
+}
+
 // Quick Look: pick the champions the game gave you (up to 15) and see right away what each one is and can do.
 export function rosterPage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
@@ -58,6 +115,8 @@ export function rosterPage(ctx: PageCtx): PageOut {
     let query = "", role = "";
     const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)] as const));
     const save = () => { void ctx.plugin.setRoster(picks); };
+
+    const { score, within } = finder(all, store.sounds);
 
     // finding first: the search box, then the class icons, then faces (like the game's pick screen). Once champions are
     // picked their cards take the page, and the faces come back as soon as something is typed or a class is chosen.
@@ -125,8 +184,13 @@ export function rosterPage(ctx: PageCtx): PageOut {
         const tokens = query.split(SPLIT).filter(Boolean);
         if (!tokens.length) return;
         const best = (t: string): { list: Champion[]; exact: boolean } => {
-            const ranked = all.map((c) => ({ c, s: matchScore(c, t) })).sort((a, b) => b.s - a.s);
-            return ranked[0] && ranked[0].s >= 50 ? { list: [ranked[0].c], exact: true } : { list: closest(all, t, 3), exact: false };
+            const ranked = all.map((c) => ({ c, s: score(c, t) })).sort((a, b) => b.s - a.s);
+            if (ranked[0] && ranked[0].s >= 70) return { list: [ranked[0].c], exact: true };
+            const many = within(t);
+            if (many.length >= 2) return { list: many, exact: true };
+            if (ranked[0] && ranked[0].s >= 50) return { list: [ranked[0].c], exact: true };
+            const near = ranked.filter((x) => x.s > 0).slice(0, 3).map((x) => x.c);
+            return { list: near.length ? near : closest(all, t, 3), exact: false };
         };
         const found = tokens.map(best);
         const unique = [...new Map(found.flatMap((f) => f.list).map((c) => [c.id, c])).values()];
@@ -148,7 +212,8 @@ export function rosterPage(ctx: PageCtx): PageOut {
         if (!finding) return;
         let list = all.filter((c) => !role || c.roles.includes(role));
         if (tokens.length) {
-            const scored = list.map((c) => ({ c, s: Math.max(...tokens.map((t) => matchScore(c, t))) })).filter((x) => x.s > 0);
+            const said = new Set(tokens.filter((t) => !all.some((c) => score(c, t) >= 70)).flatMap((t) => within(t)).map((c) => c.id));
+            const scored = list.map((c) => ({ c, s: Math.max(said.has(c.id) ? 75 : 0, ...tokens.map((t) => score(c, t))) })).filter((x) => x.s > 0);
             scored.sort((a, b) => b.s - a.s || a.c.name.localeCompare(b.c.name, "zh-Hant"));
             list = scored.map((x) => x.c);
         }

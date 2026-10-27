@@ -25,6 +25,77 @@ __export(main_exports, {
 module.exports = __toCommonJS(main_exports);
 var import_obsidian9 = require("obsidian");
 
+// src/data/sound.ts
+function loose(s) {
+  return s.replace(/^zh/, "z").replace(/^ch/, "c").replace(/^sh/, "s").replace(/ing$/, "in").replace(/eng$/, "en").replace(/^l/, "n");
+}
+var Sounds = class {
+  // `table`: the usual reading of each character; `rare`: older or rarer ones, which only what was said may use (a name
+  // matched on its rare readings finds wrong champions: 鄂爾 for 阿狸)
+  constructor(table, rare = {}) {
+    this.exact = /* @__PURE__ */ new Map();
+    this.near = /* @__PURE__ */ new Map();
+    this.exactAll = /* @__PURE__ */ new Map();
+    this.nearAll = /* @__PURE__ */ new Map();
+    const add = (exact, near, t) => {
+      for (const [sound, chars] of Object.entries(t)) for (const ch of chars) {
+        if (!exact.has(ch)) {
+          exact.set(ch, /* @__PURE__ */ new Set());
+          near.set(ch, /* @__PURE__ */ new Set());
+        }
+        exact.get(ch).add(sound);
+        near.get(ch).add(loose(sound));
+      }
+    };
+    add(this.exact, this.near, table);
+    add(this.exactAll, this.nearAll, table);
+    add(this.exactAll, this.nearAll, rare);
+  }
+  // The Chinese characters of a text, as sounds (anything else is dropped); a character not in the table matches nothing.
+  // `heard`: what was typed or said, which may use any reading; otherwise a name, on its usual readings.
+  said(text, near = false, heard = false) {
+    const map = heard ? near ? this.nearAll : this.exactAll : near ? this.near : this.exact;
+    const out = [];
+    for (const ch of text) {
+      if (!/\p{Script=Han}/u.test(ch)) continue;
+      out.push(map.get(ch) ?? /* @__PURE__ */ new Set());
+    }
+    return out;
+  }
+};
+var same = (a, b) => {
+  for (const x of a) if (b.has(x)) return true;
+  return false;
+};
+function findSaid(whole, part, from = 0) {
+  if (!part.length) return -1;
+  for (let i = from; i + part.length <= whole.length; i++) {
+    let ok = true;
+    for (let j = 0; j < part.length && ok; j++) ok = same(whole[i + j], part[j]);
+    if (ok) return i;
+  }
+  return -1;
+}
+function saidDistance(a, b) {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (same(a[i - 1], b[j - 1]) ? 0 : 1));
+    prev = cur;
+  }
+  return prev[b.length];
+}
+function soundScore(q, name, near) {
+  const cut = near ? 4 : 0;
+  if (!q.length || !name.length) return 0;
+  const at = findSaid(name, q);
+  if (q.length === name.length && at === 0) return 78 - cut;
+  if (q.length >= 2 && at === 0) return 70 - cut;
+  if (q.length >= 2 && at > 0) return 64 - cut;
+  if (near && Math.min(q.length, name.length) >= 3 && saidDistance(q, name) === 1) return 52;
+  return 0;
+}
+
 // src/data/store.ts
 var import_obsidian = require("obsidian");
 
@@ -88,6 +159,8 @@ var Store = class {
     this.positions = null;
     // _data/positions.json
     this.riotNotes = [];
+    this.sounds = null;
+    // _data/sounds.json: how characters are said, for finding names from speech to text
     this.gameText = {};
   }
   get app() {
@@ -122,6 +195,15 @@ var Store = class {
       this.positions = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)) : null;
     } catch {
       this.positions = null;
+    }
+    if (!this.sounds) try {
+      const path = (0, import_obsidian.normalizePath)("_data/sounds.json");
+      if (await this.app.vault.adapter.exists(path)) {
+        const d = JSON.parse(await this.app.vault.adapter.read(path));
+        this.sounds = new Sounds(d.sounds, d.rare);
+      }
+    } catch {
+      this.sounds = null;
     }
     try {
       const path = (0, import_obsidian.normalizePath)("_data/changes.json");
@@ -2638,6 +2720,69 @@ function closest(all, raw, limit = 4) {
   const allowed = [...q].length <= 4 ? 1 : 2;
   return all.map((c) => ({ c, d: Math.min(distance(q, c.name.toLowerCase()), distance(q, c.id.toLowerCase())) })).filter((x) => x.d <= allowed).sort((a, b) => a.d - b.d || a.c.name.localeCompare(b.c.name, "zh-Hant")).slice(0, limit).map((x) => x.c);
 }
+function finder(all, sounds) {
+  const heard = /* @__PURE__ */ new Map();
+  const heardOf = (c) => {
+    let x = heard.get(c.id);
+    if (!x && sounds) heard.set(c.id, x = { name: [sounds.said(c.name), sounds.said(c.name, true)], title: [sounds.said(c.title), sounds.said(c.title, true)] });
+    return x;
+  };
+  const score2 = (c, t) => {
+    const s = matchScore(c, t);
+    if (s >= 80 || !sounds) return s;
+    const q = [sounds.said(t, false, true), sounds.said(t, true, true)];
+    if (!q[0].length) return s;
+    const x = heardOf(c);
+    const byName = Math.max(soundScore(q[0], x.name[0], false), soundScore(q[1], x.name[1], true));
+    const byTitle = Math.max(soundScore(q[0], x.title[0], false), soundScore(q[1], x.title[1], true));
+    return Math.max(s, byName, byTitle >= 64 ? byTitle - 20 : 0);
+  };
+  const within = (t) => {
+    if (!sounds) return [];
+    const han = [...t].filter((ch) => /\p{Script=Han}/u.test(ch));
+    const q = [sounds.said(t, false, true), sounds.said(t, true, true)];
+    if (q[0].length < 3) return [];
+    const hits = [];
+    for (const c of all) {
+      const x = heardOf(c);
+      if (x.name[0].length < 2 || x.name[0].length >= q[0].length) continue;
+      for (const near of [0, 1]) {
+        const at = findSaid(q[near], x.name[near]);
+        if (at >= 0) {
+          hits.push({ c, at, len: x.name[0].length, near });
+          break;
+        }
+      }
+    }
+    hits.sort((a, b) => b.len - a.len || a.near - b.near || a.at - b.at);
+    const used = /* @__PURE__ */ new Set(), out = [];
+    const take = (c, at, len) => {
+      for (let i = at; i < at + len; i++) used.add(i);
+      out.push({ c, at });
+    };
+    for (const h_ of hits) {
+      if (out.some((o) => o.c.id === h_.c.id)) continue;
+      if (Array.from({ length: h_.len }, (_, i) => h_.at + i).some((i) => used.has(i))) continue;
+      take(h_.c, h_.at, h_.len);
+    }
+    if (out.length) {
+      for (let i = 0; i < han.length; ) {
+        if (used.has(i)) {
+          i++;
+          continue;
+        }
+        let j = i;
+        while (j < han.length && !used.has(j)) j++;
+        const part = han.slice(i, j).join("");
+        const best = all.map((c) => ({ c, s: score2(c, part) })).sort((a, b) => b.s - a.s)[0];
+        if (best && best.s >= (j - i >= 2 ? 50 : 78) && !out.some((o) => o.c.id === best.c.id)) take(best.c, i, j - i);
+        i = j;
+      }
+    }
+    return out.sort((a, b) => a.at - b.at).map((x) => x.c);
+  };
+  return { score: score2, within };
+}
 function rosterPage(ctx) {
   const store = ctx.plugin.store;
   const el = page("\u901F\u67E5");
@@ -2648,6 +2793,7 @@ function rosterPage(ctx) {
   const save = () => {
     void ctx.plugin.setRoster(picks);
   };
+  const { score: score2, within } = finder(all, store.sounds);
   const box = h(el, "div", "mn-search");
   icon(box, "search", "mn-search-ic");
   const search = h(box, "input");
@@ -2732,8 +2878,13 @@ function rosterPage(ctx) {
     const tokens = query.split(SPLIT).filter(Boolean);
     if (!tokens.length) return;
     const best = (t) => {
-      const ranked = all.map((c) => ({ c, s: matchScore(c, t) })).sort((a, b) => b.s - a.s);
-      return ranked[0] && ranked[0].s >= 50 ? { list: [ranked[0].c], exact: true } : { list: closest(all, t, 3), exact: false };
+      const ranked = all.map((c) => ({ c, s: score2(c, t) })).sort((a, b) => b.s - a.s);
+      if (ranked[0] && ranked[0].s >= 70) return { list: [ranked[0].c], exact: true };
+      const many = within(t);
+      if (many.length >= 2) return { list: many, exact: true };
+      if (ranked[0] && ranked[0].s >= 50) return { list: [ranked[0].c], exact: true };
+      const near = ranked.filter((x) => x.s > 0).slice(0, 3).map((x) => x.c);
+      return { list: near.length ? near : closest(all, t, 3), exact: false };
     };
     const found = tokens.map(best);
     const unique = [...new Map(found.flatMap((f) => f.list).map((c) => [c.id, c])).values()];
@@ -2761,7 +2912,8 @@ function rosterPage(ctx) {
     if (!finding) return;
     let list2 = all.filter((c) => !role || c.roles.includes(role));
     if (tokens.length) {
-      const scored = list2.map((c) => ({ c, s: Math.max(...tokens.map((t) => matchScore(c, t))) })).filter((x) => x.s > 0);
+      const said = new Set(tokens.filter((t) => !all.some((c) => score2(c, t) >= 70)).flatMap((t) => within(t)).map((c) => c.id));
+      const scored = list2.map((c) => ({ c, s: Math.max(said.has(c.id) ? 75 : 0, ...tokens.map((t) => score2(c, t))) })).filter((x) => x.s > 0);
       scored.sort((a, b) => b.s - a.s || a.c.name.localeCompare(b.c.name, "zh-Hant"));
       list2 = scored.map((x) => x.c);
     }
