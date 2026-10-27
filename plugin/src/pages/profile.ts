@@ -96,6 +96,23 @@ class TagLegend extends Modal {
     onClose(): void { this.contentEl.empty(); }
 }
 
+// A tag as an icon-only filter: off (dim), must have (ring in the tag's colour) or must not have (red ring, struck through).
+// Tapping cycles the state; a bubble names the tag and the new state.
+export function tagFilter(parent: HTMLElement, tag: string, state: 1 | -1 | undefined, onTap: () => void): HTMLElement {
+    const t = TAG.get(tag);
+    const el = h(parent, "button", "mn-ftg" + (state === 1 ? " is-yes" : state === -1 ? " is-no" : ""));
+    el.setAttribute("aria-label", tag);
+    el.style.setProperty("--p", t?.color ?? "var(--mn-text)");
+    icon(el, t?.icon ?? "circle");
+    el.addEventListener("click", (e) => {
+        e.preventDefault();
+        const next = state === undefined ? "必須有" : state === 1 ? "不要" : "不限";
+        tip(el, `${tag} · ${next}`);
+        onTap();
+    });
+    return el;
+}
+
 // The keys of the skills that carry a tag ("Q · E · R"), passive first as P
 const keysOf = (c: Champion, ...tags: string[]): string => c.skills.filter((s) => tags.some((t) => s.tags.includes(t))).map((s) => s.key).join(" · ");
 const hasTag = (c: Champion, tag: string): boolean => c.features.includes(tag);

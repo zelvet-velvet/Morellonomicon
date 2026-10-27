@@ -936,6 +936,20 @@ var TagLegend = class extends import_obsidian4.Modal {
     this.contentEl.empty();
   }
 };
+function tagFilter(parent, tag, state, onTap) {
+  const t = TAG.get(tag);
+  const el = h(parent, "button", "mn-ftg" + (state === 1 ? " is-yes" : state === -1 ? " is-no" : ""));
+  el.setAttribute("aria-label", tag);
+  el.style.setProperty("--p", t?.color ?? "var(--mn-text)");
+  icon(el, t?.icon ?? "circle");
+  el.addEventListener("click", (e) => {
+    e.preventDefault();
+    const next = state === void 0 ? "\u5FC5\u9808\u6709" : state === 1 ? "\u4E0D\u8981" : "\u4E0D\u9650";
+    tip(el, `${tag} \xB7 ${next}`);
+    onTap();
+  });
+  return el;
+}
 var keysOf = (c, ...tags) => c.skills.filter((s) => tags.some((t) => s.tags.includes(t))).map((s) => s.key).join(" \xB7 ");
 var hasTag = (c, tag) => c.features.includes(tag);
 var reachOf = (c) => c.archetypes.find((a) => a === "\u8FD1\u6230" || a === "\u4E2D\u7A0B" || a === "\u9060\u7A0B") ?? "";
@@ -1459,7 +1473,7 @@ function rankTable(parent, s, changes) {
 // src/pages/champions.ts
 var ROLES = ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u5C04\u624B", "\u8F14\u52A9"];
 var DAMAGES = ["\u7269\u7406", "\u9B54\u6CD5", "\u6DF7\u5408"];
-var FEATURES = ["\u63A7\u5834", "\u7DE9\u901F", "\u4F4D\u79FB", "\u6CBB\u7642", "\u8B77\u76FE", "\u5438\u8840", "\u5F37\u5316\u666E\u653B"];
+var FEATURES = ["\u63A7\u5834", "\u7DE9\u901F", "\u4F4D\u79FB", "\u6CBB\u7642", "\u8B77\u76FE", "\u5438\u8840", "\u5F37\u5316\u666E\u653B", "\u653B\u64CA\u7279\u6548"];
 var REACH = ["\u8FD1\u6230", "\u4E2D\u7A0B", "\u9060\u7A0B"];
 var SORTS2 = [["name", "\u540D\u7A31"], ["easy", "\u7C21\u55AE\u512A\u5148"], ["range", "\u5C04\u7A0B\u9060\u512A\u5148"]];
 var SEARCH_EXTRA = 8;
@@ -1599,18 +1613,14 @@ function championPicker(parent, ctx) {
       if (hint) h(head, "span", "mn-fp-hint", hint);
       return s;
     };
-    const ab = h(sect("\u6280\u80FD"), "div", "mn-chips");
+    const ab = fgrid(sect("\u6280\u80FD", "\u9EDE\u4E00\u4E0B = \u5FC5\u9808\u6709,\u5169\u4E0B = \u4E0D\u8981"), FEATURES.length);
     for (const f of FEATURES) {
       const st = F.feat.get(f);
-      chip(ab, (st === 1 ? "\u2713 " : st === -1 ? "\u2715 " : "") + f, {
-        on: st !== void 0,
-        color: st === -1 ? "var(--color-red)" : "var(--color-green)",
-        onTap: () => {
-          if (st === void 0) F.feat.set(f, 1);
-          else if (st === 1) F.feat.set(f, -1);
-          else F.feat.delete(f);
-          redraw();
-        }
+      tagFilter(ab, f, st, () => {
+        if (st === void 0) F.feat.set(f, 1);
+        else if (st === 1) F.feat.set(f, -1);
+        else F.feat.delete(f);
+        redraw();
       });
     }
     segmented(sect("\u8DDD\u96E2"), [["", "\u5168\u90E8"], ...REACH.map((r) => [r, r])], F.reach, (id) => {
