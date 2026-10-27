@@ -98,7 +98,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
         const rd = recent.get(c.name);
         if (rd) { const m = marker(rd); chip(tags, `${m.mark} 本版調整`, { color: m.color }); }
         styleLine(r, c);
-        abilityPills(r, c);
+        abilityPills(r, c, false, ctx.app);
         r.addEventListener("click", () => ctx.openChampion(c.id));
     };
 

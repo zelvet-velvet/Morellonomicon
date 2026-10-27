@@ -1,5 +1,4 @@
 import type { Champion } from "../data/store";
-import { MODES } from "../modes";
 import { DAMAGE_COLOR, chip, empty, group, h, icon, page, row, segmented } from "../ui";
 import { championProfile, damageKinds } from "./profile";
 import { buildTab } from "./build";
@@ -144,9 +143,7 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
 
 export function championsPage(ctx: PageCtx): PageOut {
     if (ctx.frame.key === "champion") return championCard(ctx);
-    const mode = MODES[ctx.plugin.settings.mode];
     const el = page("Champions");
-    chip(h(el, "div", "mn-chips mn-chips-top"), mode.label, { color: "var(--interactive-accent)" });
     championPicker(el, ctx);
     return { title: "Champions", el };
 }
@@ -181,7 +178,7 @@ export function championCard(ctx: PageCtx): PageOut {
     else if (official) { const m = marker(entryDir(official.entry)); chip(tags, `${m.mark} ${official.patch}`, { color: m.color, onTap: openChanges }); }
 
     // what the champion can do at a glance: reach, damage kind, difficulty, a six-axis profile and its abilities (see profile.ts)
-    championProfile(h(el, "div", "mn-panel mn-profile"), c, dmgColor);
+    championProfile(h(el, "div", "mn-panel mn-profile"), c, dmgColor, ctx.app);
 
     const mayhem = ctx.plugin.settings.mode === "mayhem";
     const tabs: [SubTab, string][] = [["skills", "Skills"], ["build", "Build"], ["augments", mayhem ? "Augments" : "Runes"], ["tips", "Tips"]];

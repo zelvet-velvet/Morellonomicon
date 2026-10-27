@@ -1,5 +1,7 @@
+import { Modal, Notice } from "obsidian";
+import type { App } from "obsidian";
 import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, h, svg } from "../ui";
+import { DAMAGE_COLOR, h, icon, svg } from "../ui";
 
 // A champion at a glance: what it can do, drawn as a profile chart, plus the abilities it has. Every axis comes from data we have:
 //   輸出 = its stronger damage rating (Riot, 1-10)        坦度 = Riot's defence rating
@@ -54,30 +56,66 @@ export function profileRadar(parent: HTMLElement, axes: Axis[], color: string, m
     });
 }
 
-// The abilities a champion has, lit when it has them (with how many of its skills), dim when it does not
-const ABILITIES: { tag: string; color: string }[] = [
-    { tag: "控場", color: "var(--color-purple)" }, { tag: "緩速", color: "var(--color-blue)" }, { tag: "位移", color: "var(--color-cyan)" },
-    { tag: "治療", color: "var(--color-green)" }, { tag: "護盾", color: "var(--color-yellow)" }, { tag: "吸血", color: "var(--color-red)" },
-    { tag: "強化普攻", color: "var(--color-pink)" },
+// The abilities a champion has, as icons: lit when it has them (with how many of its skills), dim when it does not.
+// Tap an icon for its name; the legend lists every icon with its full name and the usual abbreviation.
+const ABILITIES: { tag: string; color: string; icon: string; en: string; abbr: string; what: string }[] = [
+    { tag: "控場", color: "var(--color-purple)", icon: "hand", en: "Crowd Control", abbr: "CC", what: "暈眩、擊飛、定身、沉默、恐懼等,讓敵人動不了或不能放技能" },
+    { tag: "緩速", color: "var(--color-blue)", icon: "snowflake", en: "Slow", abbr: "Slow", what: "降低敵人的移動速度" },
+    { tag: "位移", color: "var(--color-cyan)", icon: "chevrons-right", en: "Dash / Mobility", abbr: "Dash", what: "衝刺、閃現、瞬步、跳躍等,讓自己快速移動" },
+    { tag: "治療", color: "var(--color-green)", icon: "heart-pulse", en: "Heal", abbr: "Heal", what: "回復自己或隊友的生命" },
+    { tag: "護盾", color: "var(--color-yellow)", icon: "shield", en: "Shield", abbr: "Shield", what: "給自己或隊友一層可吸收傷害的護盾" },
+    { tag: "吸血", color: "var(--color-red)", icon: "droplet", en: "Lifesteal / Omnivamp", abbr: "LS", what: "造成傷害時回復自己的生命" },
+    { tag: "強化普攻", color: "var(--color-pink)", icon: "swords", en: "Empowered attacks (On-hit)", abbr: "On-hit", what: "技能會強化普通攻擊(下一次普攻、額外傷害)。依技能文字判斷,比「適合出攻擊特效裝」寬" },
 ];
+
+// The chart of every ability icon: icon, name, English name, abbreviation and what it means
+class AbilityLegend extends Modal {
+    constructor(app: App) { super(app); }
+    onOpen(): void {
+        this.titleEl.setText("圖示說明");
+        const table = h(this.contentEl, "div", "mn-lg");
+        const head = h(table, "div", "mn-lg-r mn-lg-h");
+        for (const t of ["", "名稱", "英文 / 縮寫"]) h(head, "span", "", t);
+        for (const a of ABILITIES) {
+            const r = h(table, "div", "mn-lg-r");
+            const ic = icon(h(r, "span", "mn-pill mn-pill-ic is-lit"), a.icon);
+            ic.parentElement?.style.setProperty("--p", a.color);
+            const name = h(r, "span", "mn-lg-n", a.tag);
+            h(name, "div", "mn-lg-w", a.what);
+            h(r, "span", "mn-lg-e", `${a.en} · ${a.abbr}`);
+        }
+        h(this.contentEl, "p", "mn-lg-note", "亮的圖示代表這位英雄有;暗的代表沒有。數字是有幾個技能有這個效果。");
+    }
+    onClose(): void { this.contentEl.empty(); }
+}
+
+export function abilityPills(parent: HTMLElement, c: Champion, onlyLit = false, app?: App): HTMLElement {
+    const row = h(parent, "div", "mn-pills");
+    for (const a of ABILITIES) {
+        const n = count(c, a.tag);
+        const lit = c.features.includes(a.tag);
+        if (onlyLit && !lit) continue;
+        const p = h(row, "button", "mn-pill mn-pill-ic" + (lit ? " is-lit" : " is-off"));
+        p.setAttribute("aria-label", a.tag);
+        icon(p, a.icon);
+        if (lit && n > 1) h(p, "span", "mn-pill-n", String(n));
+        p.style.setProperty("--p", a.color);
+        p.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); new Notice(`${a.tag} · ${a.abbr}${lit ? "" : "(沒有)"}`, 1800); });
+    }
+    if (app) {
+        const q = h(row, "button", "mn-pill mn-pill-ic mn-pill-help");
+        q.setAttribute("aria-label", "圖示說明");
+        icon(q, "circle-help");
+        q.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); new AbilityLegend(app).open(); });
+    }
+    return row;
+}
 
 // Every damage kind a champion deals: its main one (Riot's ratings) first, then the others its skills also deal ("輸出" = main, "兼" = also)
 export function damageKinds(c: Champion): { kind: string; main: boolean }[] {
     const main = c.damageType === "混合" ? ["物理", "魔法"] : [c.damageType];
     const extra = c.skillDamage.filter((d) => !main.includes(d));
     return [...main.map((kind) => ({ kind, main: true })), ...extra.map((kind) => ({ kind, main: false }))];
-}
-
-export function abilityPills(parent: HTMLElement, c: Champion, onlyLit = false): HTMLElement {
-    const row = h(parent, "div", "mn-pills");
-    for (const a of ABILITIES) {
-        const n = count(c, a.tag);
-        const lit = c.features.includes(a.tag);
-        if (onlyLit && !lit) continue;
-        const p = h(row, "span", "mn-pill" + (lit ? " is-lit" : " is-off"), a.tag + (lit && n > 1 ? ` ×${n}` : ""));
-        p.style.setProperty("--p", a.color);
-    }
-    return row;
 }
 
 // 近戰 / 中程 / 遠程, the damage kind and how hard the champion is (dots)
@@ -96,8 +134,8 @@ export function styleLine(parent: HTMLElement, c: Champion): void {
 }
 
 // the whole block of the champion card
-export function championProfile(parent: HTMLElement, c: Champion, color: string): void {
+export function championProfile(parent: HTMLElement, c: Champion, color: string, app?: App): void {
     styleLine(parent, c);
     profileRadar(parent, profileAxes(c), color);
-    abilityPills(parent, c);
+    abilityPills(parent, c, false, app);
 }

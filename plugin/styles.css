@@ -48,7 +48,9 @@ body.is-mobile:not(.mn-on) .mn-home svg { width: 24px; height: 24px; }
 .mn-top.has-back .mn-back { visibility: visible; }
 .mn-top-title { font-size: 16px; font-weight: 600; opacity: 0; transition: opacity 0.15s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60vw; }
 .mn-top.is-scrolled .mn-top-title, .mn-top.has-back .mn-top-title { opacity: 1; }
-.mn-acts { justify-self: end; display: flex; }
+.mn-acts { justify-self: end; display: flex; gap: 8px; }
+.mn-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.mn-title-row .mn-acts { margin-top: 4px; }
 
 /* page */
 .mn-scroll { flex: 1; min-height: 0; overflow-x: hidden; overflow-x: clip; touch-action: pan-y; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: none; }
@@ -429,6 +431,17 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rd-shape { stroke: var(--rd); stroke-width: 2.5; stroke-linejoin: round; }
 .mn-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 4px 0 2px; }
 .mn-pill { --p: var(--mn-muted); padding: 4px 11px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.mn-pill-ic { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; }
+.mn-pill-ic svg { width: 18px; height: 18px; }
+.mn-pill-n { position: absolute; right: -3px; top: -3px; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px; background: var(--mn-card-hi); color: var(--mn-text, var(--text-normal)); font-size: 10px; line-height: 15px; text-align: center; }
+.mn-pill-help { color: var(--mn-muted); background: transparent; }
+.mn-lg { display: grid; gap: 10px; }
+.mn-lg-r { display: grid; grid-template-columns: 34px 1fr 108px; gap: 10px; align-items: center; }
+.mn-lg-h { font-size: 11px; color: var(--mn-faint); }
+.mn-lg-n { font-weight: 700; }
+.mn-lg-w { font-size: 12px; font-weight: 400; color: var(--mn-muted); line-height: 1.35; }
+.mn-lg-e { font-size: 12px; color: var(--mn-muted); }
+.mn-lg-note { font-size: 12px; color: var(--mn-muted); margin-top: 12px; }
 .mn-pill.is-lit { background: var(--p); color: var(--text-on-accent, #fff); }
 .mn-pill.is-off { color: var(--mn-faint); border: 1px dashed var(--mn-line); }
 

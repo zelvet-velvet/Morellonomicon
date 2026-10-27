@@ -43,6 +43,7 @@ export class MnView extends ItemView {
         this.backEl.addEventListener("click", (e) => { e.preventDefault(); this.back(); });
         this.titleEl = h(this.topEl, "div", "mn-top-title");
         const acts = h(this.topEl, "div", "mn-acts");
+        this.actsEl = acts;
         const themeBtn = h(acts, "button", "mn-btn");
         themeBtn.setAttribute("aria-label", "Color theme");
         icon(themeBtn, "palette");
@@ -63,6 +64,7 @@ export class MnView extends ItemView {
     async onClose(): Promise<void> { this.scrolls.clear(); }
 
     private modeBtn!: HTMLElement;
+    private actsEl!: HTMLElement;   // theme and mode buttons: in the big title row of a tab's first page, in the top bar elsewhere
 
     // The chosen colour theme as variables on the app element (none = Obsidian's own colours)
     applyTheme(): void {
@@ -156,6 +158,8 @@ export class MnView extends ItemView {
         this.scrollEl.scrollTop = this.scrolls.get(key) ?? 0;
         this.scrollEl.scrollLeft = 0;   // never carry a sideways offset from the previous page
         this.titleEl.textContent = out.title;
+        const titleRow = this.router.depth() === 0 ? out.el.querySelector(":scope > .mn-title-row") : null;
+        (titleRow ?? this.topEl).appendChild(this.actsEl);
         this.topEl.toggleClass("has-back", this.router.depth() > 0);
         this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > 36);
     }
