@@ -612,21 +612,29 @@ var h = (parent, tag, cls, text) => {
   parent?.appendChild(e);
   return e;
 };
-var tipEl = null;
-var tipTimer = 0;
-var TIP_MS = 2200;
+var bubbleEl = null;
+var bubbleTimer = 0;
+var BUBBLE_MS = 2200;
+var closeBubble = () => {
+  window.clearTimeout(bubbleTimer);
+  bubbleEl?.remove();
+  bubbleEl = null;
+  document.removeEventListener("pointerdown", closeBubble, true);
+  document.removeEventListener("scroll", closeBubble, true);
+};
 var tip = (anchor, text) => {
-  tipEl?.remove();
-  window.clearTimeout(tipTimer);
-  const t = h(anchor.closest(".mn-app") ?? document.body, "div", "mn-tip", text);
-  tipEl = t;
+  closeBubble();
+  const t = h(anchor.closest(".mn-app") ?? document.body, "div", "mn-bubble", text);
+  bubbleEl = t;
   const a = anchor.getBoundingClientRect();
   t.style.left = `${Math.max(8, Math.min(window.innerWidth - t.offsetWidth - 8, a.left + a.width / 2 - t.offsetWidth / 2))}px`;
   t.style.top = `${a.top - t.offsetHeight - 8 < 8 ? a.bottom + 8 : a.top - t.offsetHeight - 8}px`;
-  tipTimer = window.setTimeout(() => {
-    t.remove();
-    if (tipEl === t) tipEl = null;
-  }, TIP_MS);
+  bubbleTimer = window.setTimeout(closeBubble, BUBBLE_MS);
+  window.setTimeout(() => {
+    if (bubbleEl !== t) return;
+    document.addEventListener("pointerdown", closeBubble, true);
+    document.addEventListener("scroll", closeBubble, true);
+  }, 0);
 };
 var icon = (parent, name, cls = "mn-ic") => {
   const s = h(parent, "span", cls);
@@ -2542,6 +2550,7 @@ function renderPage(tab, ctx) {
 
 // src/view.ts
 var VIEW_TYPE = "morellonomicon";
+var LOL_PAGES = /* @__PURE__ */ new Set(["champion", "roster"]);
 var SPINNER_DELAY = 140;
 var IMAGE_WAIT = 8e3;
 var ARRIVE_MS = 240;
@@ -2757,6 +2766,7 @@ var MnView = class extends import_obsidian8.ItemView {
     (titleRow ?? this.topEl).appendChild(this.actsEl);
     this.actsEl.toggleClass("is-hidden", !titleRow);
     this.topEl.toggleClass("has-back", this.router.depth() > 0);
+    this.appEl.toggleClass("is-lol", LOL_PAGES.has(f.key));
     this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > 36);
     if (anim === "none") {
       this.loaderEl.removeClass("is-on");

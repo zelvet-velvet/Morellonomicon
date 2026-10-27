@@ -477,9 +477,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-pick-ok svg { width: 12px; height: 12px; }
 .mn-dym { align-self: center; font-size: 13px; font-weight: 700; color: var(--mn-muted); padding: 0 2px; }
 
-/* icon name bubble */
-.mn-tip { position: fixed; z-index: 1000; padding: 6px 12px; border-radius: 10px; font-size: 13px; font-weight: 700; white-space: nowrap; pointer-events: none;
-    background: var(--mn-text); color: var(--mn-bg); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35); }
+/* icon name bubble: always dark with light text, whatever the theme */
+.mn-bubble { position: fixed; z-index: 1000; padding: 6px 12px; border-radius: 10px; font-size: 13px; font-weight: 700; white-space: nowrap; pointer-events: none;
+    background: rgba(6, 9, 15, 0.94); color: #f3f1ea; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); animation: mn-fade 0.12s ease-out; }
 
 /* spinner over a page whose pictures are still loading */
 .mn-loader { position: absolute; inset: 0; z-index: 2; display: none; align-items: center; justify-content: center; pointer-events: none; }
@@ -539,3 +539,19 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lg-ic svg { width: 18px; height: 18px; }
 .mn-rq .mn-fs { margin-top: 12px; }
 .mn-rq .mn-tgs { margin-top: 10px; }
+
+/* League palette for champion pages (champion card, 速查): Hextech navy, gold accent, saturated tag and damage colours.
+   !important because the colour theme sets its variables inline on the app element. */
+.mn-app.is-lol {
+    --mn-bg: #010a13 !important; --mn-card: #0a1428 !important; --mn-card-hi: #12223b !important;
+    --mn-text: #f0e6d2 !important; --mn-muted: #a09b8c !important; --mn-faint: #77736a !important;
+    --mn-line: rgba(200, 170, 110, 0.2) !important; --mn-accent: #c8aa6e !important; --interactive-accent: #c8aa6e !important; --text-on-accent: #010a13 !important;
+    --mn-phys: #ff7a3d; --mn-magic: #4aa8ff; --mn-true: #f4f1e8; --mn-mixed: #c67cff;
+    --mn-cc: #b57bff; --mn-slow: #38c8f0; --mn-dash: #0ac8b9; --mn-heal: #4fd86b; --mn-shield: #f5c443; --mn-ls: #ff4d6a; --mn-onhit: #ff9a2e; --mn-aa: #ff6bd0;
+    --mn-tank: #7fa7d6; --mn-range: #c8aa6e;
+}
+.mn-app.is-lol .mn-seg { background: #0a1428; border-color: rgba(200, 170, 110, 0.35); }
+.mn-app.is-lol .mn-seg-b { color: #a09b8c; }
+.mn-app.is-lol .mn-seg-b.is-on { background: linear-gradient(180deg, #c8aa6e, #a07c3b); color: #010a13; font-weight: 800; box-shadow: 0 0 0 1px #f0e6d2 inset, 0 2px 10px rgba(200, 170, 110, 0.25); }
+.mn-app.is-lol .mn-tabs { border-top-color: rgba(200, 170, 110, 0.3); }
+.mn-app.is-lol .mn-panel, .mn-app.is-lol .mn-fs { border-color: rgba(200, 170, 110, 0.22); }

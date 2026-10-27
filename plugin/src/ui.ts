@@ -9,19 +9,31 @@ export const h = <K extends keyof HTMLElementTagNameMap>(parent: HTMLElement | n
     return e;
 };
 
-// A small bubble over (or under) an element, for the name of an icon: replaces itself on the next tap and fades after a moment
-let tipEl: HTMLElement | null = null;
-let tipTimer = 0;
-const TIP_MS = 2200;
+// A small bubble over (or under) an element, for the name of an icon: replaced by the next one, gone on any other tap or scroll
+let bubbleEl: HTMLElement | null = null;
+let bubbleTimer = 0;
+const BUBBLE_MS = 2200;
+const closeBubble = (): void => {
+    window.clearTimeout(bubbleTimer);
+    bubbleEl?.remove();
+    bubbleEl = null;
+    document.removeEventListener("pointerdown", closeBubble, true);
+    document.removeEventListener("scroll", closeBubble, true);
+};
 export const tip = (anchor: HTMLElement, text: string): void => {
-    tipEl?.remove();
-    window.clearTimeout(tipTimer);
-    const t = h(anchor.closest<HTMLElement>(".mn-app") ?? document.body, "div", "mn-tip", text);
-    tipEl = t;
+    closeBubble();
+    const t = h(anchor.closest<HTMLElement>(".mn-app") ?? document.body, "div", "mn-bubble", text);
+    bubbleEl = t;
     const a = anchor.getBoundingClientRect();
     t.style.left = `${Math.max(8, Math.min(window.innerWidth - t.offsetWidth - 8, a.left + a.width / 2 - t.offsetWidth / 2))}px`;
     t.style.top = `${a.top - t.offsetHeight - 8 < 8 ? a.bottom + 8 : a.top - t.offsetHeight - 8}px`;
-    tipTimer = window.setTimeout(() => { t.remove(); if (tipEl === t) tipEl = null; }, TIP_MS);
+    bubbleTimer = window.setTimeout(closeBubble, BUBBLE_MS);
+    // listen from the next tick on, so the tap that opened it does not close it
+    window.setTimeout(() => {
+        if (bubbleEl !== t) return;
+        document.addEventListener("pointerdown", closeBubble, true);
+        document.addEventListener("scroll", closeBubble, true);
+    }, 0);
 };
 
 export const icon = (parent: HTMLElement, name: string, cls = "mn-ic"): HTMLElement => {

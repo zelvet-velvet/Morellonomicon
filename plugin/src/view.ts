@@ -11,6 +11,7 @@ export const VIEW_TYPE = "morellonomicon";
 
 // The app screen: top bar (back, title, mode switch), page area, tab bar. A page is drawn in one step when a tab, a detail page
 // or the data changes; scroll positions are kept per page so Back returns to where you were.
+const LOL_PAGES = new Set(["champion", "roster"]);
 const SPINNER_DELAY = 140;   // ms a page may take before the spinner shows (a quick load never flashes it)
 const IMAGE_WAIT = 8000;     // ms before a page is shown even if a picture has not arrived
 const ARRIVE_MS = 240;
@@ -190,6 +191,7 @@ export class MnView extends ItemView {
         (titleRow ?? this.topEl).appendChild(this.actsEl);
         this.actsEl.toggleClass("is-hidden", !titleRow);   // only a tab's first page has them
         this.topEl.toggleClass("has-back", this.router.depth() > 0);
+        this.appEl.toggleClass("is-lol", LOL_PAGES.has(f.key));   // champion pages take the League palette (see styles.css)
         this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > 36);
         if (anim === "none") { this.loaderEl.removeClass("is-on"); return; }
         // pictures that are in view and not here yet: keep the page hidden under a spinner until they arrive (or give up after a while)
