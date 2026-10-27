@@ -345,13 +345,16 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-nextcard-done { margin: 18px 0 10px; text-align: center; font-weight: 700; color: var(--color-green); }
 
 /* augment rarity frames, drawn here (the game adds them in its own UI): metallic silver, metallic gold, prismatic = a metallic rainbow */
-/* an augment icon like in the game: a dark square in a thick metallic frame, the glyph tinted for the rarity (the icon files are grey shapes the game tints) */
+/* an augment icon like in the game: the game's large icon (its glyph is already tinted for the rarity) on a dark teal square in the rarity's frame */
 .aug-icon { --ring: 4px; position: relative; display: inline-block; flex: none; width: 56px; height: 56px; box-sizing: border-box; border-radius: 16px; border: var(--ring) solid transparent;
-    background: linear-gradient(#171b2d, #12152a) padding-box, var(--frame) border-box; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 0 10px var(--glow); }
-.aug-glyph { position: absolute; inset: 12%; background: var(--tint); -webkit-mask: var(--glyph) center / contain no-repeat; mask: var(--glyph) center / contain no-repeat; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)); }
-.aug-silver { --frame: linear-gradient(135deg, #fffbea, #e5d9a6 30%, #fffdf2 52%, #c2b27a 78%, #f1e7bd); --tint: linear-gradient(180deg, #ffffff, #d8dee6 55%, #a3adba); --glow: rgba(240, 230, 190, 0.35); }
-.aug-gold { --frame: linear-gradient(135deg, #ffe27a, #e9a91d 30%, #fff0a6 52%, #b9770e 78%, #f4c84a); --tint: linear-gradient(180deg, #fff1b8, #f2bb3b 55%, #bd7d10); --glow: rgba(240, 180, 50, 0.45); }
-.aug-prism { --frame: conic-gradient(from 20deg, #ff7f9a, #ffd37a, #9cff9f, #7ae0ff, #b79aff, #ff7fd9, #ff7f9a); --tint: linear-gradient(135deg, #ff9ad5, #ffd27d 25%, #9dffb0 50%, #7dd9ff 75%, #b898ff); --glow: rgba(183, 154, 255, 0.55); }
+    background: linear-gradient(160deg, #1f3036, #121b1f) padding-box, var(--frame) border-box; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); }
+.aug-icon { overflow: hidden; --glow: transparent; }
+.aug-icon img { display: block; width: 100%; height: 100%; object-fit: contain; }
+/* the frame colours are sampled from the game's own files (ux/cherry/augments/augmentselection/augmentcard_frame_<silver|gold|prismatic>.png), top to bottom;
+   the glyph colours are already in the game's large icon images */
+.aug-silver { --frame: linear-gradient(180deg, #dbdbdb, #c0c0c0 22%, #aaabaa 42%, #7e7e7e 58%, #626262 72%, #4f4f4f 86%, #414041); }
+.aug-gold { --frame: linear-gradient(180deg, #ecd9b2, #d6ba91 22%, #c09e73 42%, #866347 58%, #684d39 72%, #5a4031 86%, #4d3426); }
+.aug-prism { --frame: linear-gradient(180deg, #e9d0e9, #e4e5c6 22%, #9abbbd 42%, #808ed3 58%, #7b67db 72%, #8b67d8 86%, #9f73c5); }
 .mn-row-aug { width: 40px; height: 40px; --ring: 3px; border-radius: 12px; }
 .mn-tile-aug { width: 60px; height: 60px; }
 .mn-dimg-aug { width: 80px; height: 80px; --ring: 5px; border-radius: 20px; }

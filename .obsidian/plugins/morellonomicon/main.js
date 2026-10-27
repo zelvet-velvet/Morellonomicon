@@ -629,10 +629,16 @@ var group = (parent, title, footer) => {
   return g;
 };
 var AUG_CLASS = { \u9280: "aug-silver", \u91D1: "aug-gold", \u7A1C\u93E1: "aug-prism" };
+var augLarge = (src) => src.includes("_small.png") ? src.replace("/plugins/rcp-be-lol-game-data/global/default/assets/", "/game/assets/").replace("_small.png", "_large.png") : src;
 var augIcon = (parent, src, rarity, cls = "") => {
   const box = h(parent, "span", `aug-icon ${AUG_CLASS[rarity] ?? ""} ${cls}`.trim());
-  box.style.setProperty("--glyph", `url("${src}")`);
-  h(box, "span", "aug-glyph");
+  const im = h(box, "img");
+  im.alt = "";
+  im.loading = "lazy";
+  im.src = augLarge(src);
+  im.addEventListener("error", () => {
+    if (im.src !== src) im.src = src;
+  }, { once: true });
   return box;
 };
 var row = (parent, r) => {

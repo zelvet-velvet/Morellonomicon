@@ -34,12 +34,17 @@ export const group = (parent: HTMLElement, title?: string, footer?: string): HTM
 // The frame an augment icon gets for its rarity (silver, gold, prismatic = metallic rainbow); drawn in CSS, see styles.css
 export const AUG_CLASS: Record<string, string> = { 銀: "aug-silver", 金: "aug-gold", 稜鏡: "aug-prism" };
 
-// An augment icon the way the game shows it: a dark square in a metallic frame, the glyph tinted for the rarity. The icon files are grey
-// shapes on transparent (the game tints them), so the glyph is drawn as a mask filled with the rarity's colours; see .aug-icon in styles.css.
+// An augment icon the way the game shows it: its large icon (the rarity's tint is already in the picture) in the rarity's frame, see .aug-icon in
+// styles.css. The large file sits in the game's own folder; a few augments only have the small one, which is the fallback.
+const augLarge = (src: string): string => (src.includes("_small.png")
+    ? src.replace("/plugins/rcp-be-lol-game-data/global/default/assets/", "/game/assets/").replace("_small.png", "_large.png") : src);
 export const augIcon = (parent: HTMLElement, src: string, rarity: string, cls = ""): HTMLElement => {
     const box = h(parent, "span", `aug-icon ${AUG_CLASS[rarity] ?? ""} ${cls}`.trim());
-    box.style.setProperty("--glyph", `url("${src}")`);
-    h(box, "span", "aug-glyph");
+    const im = h(box, "img");
+    im.alt = "";
+    im.loading = "lazy";
+    im.src = augLarge(src);
+    im.addEventListener("error", () => { if (im.src !== src) im.src = src; }, { once: true });
     return box;
 };
 
