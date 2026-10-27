@@ -58,15 +58,15 @@ FEATURES = {
     "隊友增益": r"(友軍|隊友|友方)[^。]{0,16}(治療|回復|護盾|跑速|移動速度)|(治療|回復|護盾|跑速|移動速度)[^。]{0,16}(友軍|隊友|友方)",
     # skills that empower basic attacks: the next one(s), every Nth one, or an attack the text calls 強化. Not a lasting "attacks deal
     # extra damage" passive (that is an on-hit effect), and not on-hit itself: that one is set by hand (`onhit`, `features_extra`)
-    "強化普攻": r"(下[一二三]?次|接下來的?[ 0-9一二三兩]*次?)[^。，]{0,8}(基本攻擊|普通攻擊|普攻|攻擊)|注入[^。]{0,10}(普攻|基本攻擊)|(每|第|連續)[ 0-9一二三四]*[次下][^。，]{0,2}(基本攻擊|普攻)|(首次|最後一次)[^。，]{0,2}(基本攻擊|普攻)|強化[^。，]{0,6}(普攻|基本攻擊)|普攻將被強化",
+    "強化普攻": r"(下[一二三]?次|接下來的?[ 0-9一二三兩]*次?)[^。，]{0,8}(基本攻擊|普通攻擊|普攻|攻擊)|注入[^。]{0,10}(普攻|基本攻擊)|(每|第|連續)[ 0-9一二三四]+[次下][^。，]{0,2}(基本攻擊|普攻)|(首次|最後一次)[^。，]{0,2}(基本攻擊|普攻)|強化[^。，]{0,6}(普攻|基本攻擊)|普攻將被強化",
 }
 
 # Phrases that contain a tag's words without meaning it (found with tools/audit_tags.py): they are blanked out before the tag is looked for
 NOT_FEATURES = {
     "緩速": r"(免疫|解除|移除|淨化)[^。，]{0,8}(緩速|減速)",
     "護盾": r"(移除|摧毀|擊破)[^。]{0,8}護盾",
-    "位移": r"的敵(方|人|軍)衝刺|敵(方|人|軍)從[^。，]{0,6}衝刺|敵方的衝刺|(打斷|中斷|阻止)[^。，]{0,8}衝刺|跳躍的水柱|跳躍一次|虛空的傳送門",   # enemies dashing, not this champion
-    "加速": r"技能加速|(飛行途中|直線|隨時間)加速",
+    "位移": r"的敵(方|人|軍)衝刺|敵(方|人|軍)從[^。，]{0,6}衝刺|敵方的衝刺|(打斷|中斷|阻止)[^。，]{0,8}衝刺|跳躍的水柱|跳躍一次|虛空的傳送門|傳送在兩道傳送門|海潮衝向|魔法衝刺|從石塊上衝刺",   # enemies dashing, not this champion
+    "加速": r"技能加速|(飛行途中|直線|隨時間)加速|控制加速|加速的飛彈",
     "隱身": r"偽裝成|在偽裝的狀態下|不可見的敵",
     "免傷": r"免疫[^。，]{0,4}(控場|緩速|硬控場)|(控場|緩速|行動限制)[^。，]{0,4}免疫",
     "隊友增益": r"友方防禦塔|獲得友軍的治療",
@@ -75,6 +75,7 @@ NOT_FEATURES = {
 
 def tag_search(tag, text):
     """The first place `text` shows the ability `tag`, or None."""
+    text = re.sub(r"<(?!/?(healing|shield)\b)[^>]*>", "", text)   # markup (<status>, <br>) can sit inside an ignored phrase; <healing> and <shield> are rules
     if tag in NOT_FEATURES:
         text = re.sub(NOT_FEATURES[tag], "。", text)
     return re.search(FEATURES[tag], text)
