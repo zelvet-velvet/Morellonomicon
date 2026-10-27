@@ -699,6 +699,11 @@ var chip = (parent, text, o = {}) => {
   }
   return el;
 };
+var fgrid = (parent, cells) => {
+  const row2 = h(parent, "div", "mn-fgrid");
+  row2.style.setProperty("--n", String(cells));
+  return row2;
+};
 var SVG_NS = "http://www.w3.org/2000/svg";
 var svg = (parent, tag, attrs = {}, cls) => {
   const e = document.createElementNS(SVG_NS, tag);
@@ -1345,7 +1350,7 @@ function championPicker(parent, ctx) {
   search.type = "search";
   search.placeholder = "Search champions, augments, items";
   search.setAttribute("enterkeyhint", "search");
-  const filters = h(parent, "div", "mn-chips");
+  const filters = h(parent, "div", "mn-fgroup");
   const panel = h(parent, "div", "mn-fpanel");
   const count2 = h(parent, "div", "mn-count");
   const grid = h(parent, "div", "mn-grid");
@@ -1394,16 +1399,18 @@ function championPicker(parent, ctx) {
   };
   const drawFilters = () => {
     filters.empty();
-    for (const r of ROLES) chip(filters, r, { on: F.roles.has(r), onTap: () => {
+    const roleRow = fgrid(filters, ROLES.length);
+    for (const r of ROLES) chip(roleRow, r, { on: F.roles.has(r), onTap: () => {
       F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r);
       redraw();
     } });
-    for (const d of DAMAGES) chip(filters, d, { on: F.dmg === d, color: DAMAGE_COLOR[d], onTap: () => {
+    const kindRow = fgrid(filters, DAMAGES.length + 1);
+    for (const d of DAMAGES) chip(kindRow, d, { on: F.dmg === d, color: DAMAGE_COLOR[d], onTap: () => {
       F.dmg = F.dmg === d ? "" : d;
       redraw();
     } });
     const n = activeFilters();
-    const fb = h(filters, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
+    const fb = h(kindRow, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
     icon(fb, "sliders-horizontal", "mn-filterbtn-ic");
     h(fb, "span", "", "\u7BE9\u9078");
     if (n) h(fb, "span", "mn-filterbtn-n", String(n));
@@ -2327,7 +2334,7 @@ function rosterPage(ctx) {
   search.placeholder = "\u8F38\u5165\u82F1\u96C4\u540D\u5B57,\u6216\u6309\u9375\u76E4\u4E0A\u7684 \u{1F3A4} \u8AAA\u51FA\u4F86";
   search.setAttribute("enterkeyhint", "search");
   const suggest2 = h(el, "div", "mn-chips");
-  const roles = h(el, "div", "mn-chips");
+  const roles = fgrid(el, ROLES2.length);
   const grid = h(el, "div", "mn-grid");
   const toggle = (id) => {
     if (picks.includes(id)) picks = picks.filter((p) => p !== id);

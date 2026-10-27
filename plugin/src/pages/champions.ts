@@ -1,5 +1,5 @@
 import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, chip, empty, group, h, icon, page, row, segmented } from "../ui";
+import { DAMAGE_COLOR, chip, empty, fgrid, group, h, icon, page, row, segmented } from "../ui";
 import { championProfile } from "./profile";
 import { buildTab } from "./build";
 import type { PageCtx, PageOut } from "./index";
@@ -60,7 +60,7 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
     search.type = "search";
     search.placeholder = "Search champions, augments, items";
     search.setAttribute("enterkeyhint", "search");
-    const filters = h(parent, "div", "mn-chips");
+    const filters = h(parent, "div", "mn-fgroup");
     const panel = h(parent, "div", "mn-fpanel");
     const count = h(parent, "div", "mn-count");
     const grid = h(parent, "div", "mn-grid");
@@ -96,11 +96,14 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
     const redraw = () => { drawFilters(); drawPanel(); draw(); };
     const drawFilters = () => {
         filters.empty();
-        for (const r of ROLES) chip(filters, r, { on: F.roles.has(r), onTap: () => { F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r); redraw(); } });
-        for (const d of DAMAGES) chip(filters, d, { on: F.dmg === d, color: DAMAGE_COLOR[d], onTap: () => { F.dmg = F.dmg === d ? "" : d; redraw(); } });
+        // two rows that fill the width: the six roles, then the damage kinds and the filter button
+        const roleRow = fgrid(filters, ROLES.length);
+        for (const r of ROLES) chip(roleRow, r, { on: F.roles.has(r), onTap: () => { F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r); redraw(); } });
+        const kindRow = fgrid(filters, DAMAGES.length + 1);
+        for (const d of DAMAGES) chip(kindRow, d, { on: F.dmg === d, color: DAMAGE_COLOR[d], onTap: () => { F.dmg = F.dmg === d ? "" : d; redraw(); } });
         const n = activeFilters();
         // a button of its own (not a chip): sliders icon, the number of active filters, opens the panel
-        const fb = h(filters, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
+        const fb = h(kindRow, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
         icon(fb, "sliders-horizontal", "mn-filterbtn-ic");
         h(fb, "span", "", "篩選");
         if (n) h(fb, "span", "mn-filterbtn-n", String(n));

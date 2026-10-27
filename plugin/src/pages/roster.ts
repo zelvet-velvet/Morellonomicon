@@ -1,6 +1,6 @@
 import { Notice } from "obsidian";
 import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, chip, empty, h, icon, page } from "../ui";
+import { chip, empty, fgrid, h, icon, page } from "../ui";
 import { entryDir, marker } from "./changes";
 import type { PageCtx, PageOut } from "./index";
 import { abilityBlock, factsRow } from "./profile";
@@ -69,7 +69,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
     search.placeholder = "輸入英雄名字,或按鍵盤上的 🎤 說出來";
     search.setAttribute("enterkeyhint", "search");
     const suggest = h(el, "div", "mn-chips");
-    const roles = h(el, "div", "mn-chips");
+    const roles = fgrid(el, ROLES.length);
     const grid = h(el, "div", "mn-grid");
 
     const toggle = (id: string) => {

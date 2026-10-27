@@ -95,6 +95,13 @@ export const chip = (parent: HTMLElement, text: string, o: { color?: string; on?
     return el;
 };
 
+// A row of equal-width cells that fills the page width (role chips, filter buttons)
+export const fgrid = (parent: HTMLElement, cells: number): HTMLElement => {
+    const row = h(parent, "div", "mn-fgrid");
+    row.style.setProperty("--n", String(cells));
+    return row;
+};
+
 const SVG_NS = "http://www.w3.org/2000/svg";
 export const svg = (parent: Element, tag: string, attrs: Record<string, string | number> = {}, cls?: string): SVGElement => {
     const e = document.createElementNS(SVG_NS, tag);
