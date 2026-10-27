@@ -121,21 +121,21 @@ export function tagRow(parent: HTMLElement, c: Champion, only?: string[]): HTMLE
 // Each damaging ability at max rank: its damage type, base damage and how it scales (+% 物攻 / 魔攻, from the skill's rank grid).
 // A skill can list the same hit twice (per dagger and in total): the biggest line of each type is the one shown.
 const KINDS = ["物理", "魔法", "真實"] as const;
-export interface DamageLine { key: string; name: string; kind: string; base: number; ad: number; ap: number; onHit: boolean }
+export interface DamageLine { key: string; name: string; kind: string; first: number; base: number; ad: number; ap: number; onHit: boolean }
 const lastNum = (s: string): number => parseFloat(s.split("/").pop() ?? "") || 0;   // "75/85/95" -> 95 (max rank)
 export function damageLines(c: Champion): DamageLine[] {
     const out: DamageLine[] = [];
     for (const s of c.skills) for (const kind of KINDS) {
         const rows = s.rows.filter((r) => r.label.startsWith(`${kind}傷害`));
         // the passive has no rank grid in our data: when its text names a damage type, list it without a number
-        if (!rows.length && s.key === "P" && s.desc.includes(`${kind}傷害`)) { out.push({ key: s.key, name: s.name, kind, base: 0, ad: 0, ap: 0, onHit: s.tags.includes("攻擊特效") }); continue; }
+        if (!rows.length && s.key === "P" && s.desc.includes(`${kind}傷害`)) { out.push({ key: s.key, name: s.name, kind, first: 0, base: 0, ad: 0, ap: 0, onHit: s.tags.includes("攻擊特效") }); continue; }
         if (!rows.length) continue;
         const best = rows.reduce((x, y) => (lastNum(y.vals[y.vals.length - 1]) > lastNum(x.vals[x.vals.length - 1]) ? y : x));
         let ad = 0, ap = 0;
         for (const m of best.note.matchAll(/\+([\d./]+)%\s*(額外物理攻擊|物理攻擊|魔法攻擊)/g)) {
             if (m[2] === "魔法攻擊") ap += lastNum(m[1]); else ad += lastNum(m[1]);
         }
-        out.push({ key: s.key, name: s.name, kind, base: lastNum(best.vals[best.vals.length - 1]), ad, ap, onHit: s.tags.includes("攻擊特效") });
+        out.push({ key: s.key, name: s.name, kind, first: lastNum(best.vals[0]), base: lastNum(best.vals[best.vals.length - 1]), ad, ap, onHit: s.tags.includes("攻擊特效") });
     }
     return out;
 }
@@ -145,26 +145,26 @@ export function damageLines(c: Champion): DamageLine[] {
 export function factsStrip(parent: HTMLElement, c: Champion): void {
     const strip = h(parent, "div", "mn-fs");
     const dmg = h(strip, "div", "mn-fs-dmg");
-    const head = h(dmg, "div", "mn-fs-row");
-    h(head, "span", "mn-fs-l", "技能傷害");
-    h(head, "span", "mn-fs-hint", "滿級基礎 · 加成");
+    // a small table with fixed columns: ability, damage type, 物攻 / 魔攻 scaling, base damage from rank 1 to max rank
+    h(dmg, "div", "mn-fs-l", "技能傷害");
     const lines = damageLines(c);
     if (!lines.length) h(dmg, "div", "mn-fs-hint", "沒有傷害技能");
     const list = h(dmg, "div", "mn-dl");
+    if (lines.length) for (const t of ["", "", "類型", "物攻", "魔攻", "基礎傷害"]) h(list, "span", "mn-dl-h", t);
+    const num = (n: number) => Math.round(n * 10) / 10;
     for (const d of lines) {
-        const row = h(list, "div", "mn-dl-r");
-        h(row, "span", "mn-dl-key", d.key);
-        h(row, "span", "mn-dl-name", d.name);
-        const kind = h(row, "span", "mn-dl-kind", d.kind);
-        kind.style.color = DAMAGE_COLOR[d.kind] ?? "inherit";
-        h(row, "span", "mn-dl-base", d.base ? Math.round(d.base).toLocaleString() : "—");
-        if (d.key === "P" && !d.base) {
-            const sc = h(row, "span", "mn-dl-sc", "被動,數值未收錄");
-            if (d.onHit) { const oh = h(sc, "span", "mn-dl-oh", "觸發攻擊特效"); oh.style.color = "var(--mn-onhit)"; oh.style.marginLeft = "8px"; }
-            continue;
+        h(list, "span", "mn-dl-key", d.key);
+        const name = h(list, "span", "mn-dl-name", d.name);
+        const notes = [d.key === "P" && !d.base ? "數值未收錄" : "", d.onHit ? "觸發攻擊特效" : ""].filter(Boolean);
+        if (notes.length) {
+            const sub = h(name, "span", "mn-dl-sub");
+            for (const n of notes) { const x = h(sub, "span", "", n); if (n === "觸發攻擊特效") x.style.color = "var(--mn-onhit)"; }
         }
-        const sc = h(row, "span", "mn-dl-sc", [d.ad ? `+${d.ad}% 物攻` : "", d.ap ? `+${d.ap}% 魔攻` : ""].filter(Boolean).join("  "));
-        if (d.onHit) { const gap = !!sc.textContent; const oh = h(sc, "span", "mn-dl-oh", "觸發攻擊特效"); oh.style.color = "var(--mn-onhit)"; if (gap) oh.style.marginLeft = "8px"; }
+        const kind = h(list, "span", "mn-dl-kind", d.kind);
+        kind.style.color = DAMAGE_COLOR[d.kind] ?? "inherit";
+        h(list, "span", "mn-dl-pct", d.ad ? `${d.ad}%` : "—").style.color = d.ad ? DAMAGE_COLOR["物理"] : "";
+        h(list, "span", "mn-dl-pct", d.ap ? `${d.ap}%` : "—").style.color = d.ap ? DAMAGE_COLOR["魔法"] : "";
+        h(list, "span", "mn-dl-base", !d.base ? "—" : d.first && d.first !== d.base ? `${num(d.first)}–${num(d.base)}` : `${num(d.base)}`);
     }
     const ad = lines.reduce((n, d) => n + d.ad, 0), ap = lines.reduce((n, d) => n + d.ap, 0);
     // the abilities' scaling added up: 物攻 at the bar's left end, 魔攻 at its right end

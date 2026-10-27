@@ -923,7 +923,7 @@ function damageLines(c) {
   for (const s of c.skills) for (const kind of KINDS) {
     const rows = s.rows.filter((r) => r.label.startsWith(`${kind}\u50B7\u5BB3`));
     if (!rows.length && s.key === "P" && s.desc.includes(`${kind}\u50B7\u5BB3`)) {
-      out.push({ key: s.key, name: s.name, kind, base: 0, ad: 0, ap: 0, onHit: s.tags.includes("\u653B\u64CA\u7279\u6548") });
+      out.push({ key: s.key, name: s.name, kind, first: 0, base: 0, ad: 0, ap: 0, onHit: s.tags.includes("\u653B\u64CA\u7279\u6548") });
       continue;
     }
     if (!rows.length) continue;
@@ -933,42 +933,35 @@ function damageLines(c) {
       if (m[2] === "\u9B54\u6CD5\u653B\u64CA") ap += lastNum(m[1]);
       else ad += lastNum(m[1]);
     }
-    out.push({ key: s.key, name: s.name, kind, base: lastNum(best.vals[best.vals.length - 1]), ad, ap, onHit: s.tags.includes("\u653B\u64CA\u7279\u6548") });
+    out.push({ key: s.key, name: s.name, kind, first: lastNum(best.vals[0]), base: lastNum(best.vals[best.vals.length - 1]), ad, ap, onHit: s.tags.includes("\u653B\u64CA\u7279\u6548") });
   }
   return out;
 }
 function factsStrip(parent, c) {
   const strip2 = h(parent, "div", "mn-fs");
   const dmg = h(strip2, "div", "mn-fs-dmg");
-  const head = h(dmg, "div", "mn-fs-row");
-  h(head, "span", "mn-fs-l", "\u6280\u80FD\u50B7\u5BB3");
-  h(head, "span", "mn-fs-hint", "\u6EFF\u7D1A\u57FA\u790E \xB7 \u52A0\u6210");
+  h(dmg, "div", "mn-fs-l", "\u6280\u80FD\u50B7\u5BB3");
   const lines = damageLines(c);
   if (!lines.length) h(dmg, "div", "mn-fs-hint", "\u6C92\u6709\u50B7\u5BB3\u6280\u80FD");
   const list2 = h(dmg, "div", "mn-dl");
+  if (lines.length) for (const t of ["", "", "\u985E\u578B", "\u7269\u653B", "\u9B54\u653B", "\u57FA\u790E\u50B7\u5BB3"]) h(list2, "span", "mn-dl-h", t);
+  const num2 = (n) => Math.round(n * 10) / 10;
   for (const d of lines) {
-    const row2 = h(list2, "div", "mn-dl-r");
-    h(row2, "span", "mn-dl-key", d.key);
-    h(row2, "span", "mn-dl-name", d.name);
-    const kind = h(row2, "span", "mn-dl-kind", d.kind);
-    kind.style.color = DAMAGE_COLOR[d.kind] ?? "inherit";
-    h(row2, "span", "mn-dl-base", d.base ? Math.round(d.base).toLocaleString() : "\u2014");
-    if (d.key === "P" && !d.base) {
-      const sc2 = h(row2, "span", "mn-dl-sc", "\u88AB\u52D5,\u6578\u503C\u672A\u6536\u9304");
-      if (d.onHit) {
-        const oh = h(sc2, "span", "mn-dl-oh", "\u89F8\u767C\u653B\u64CA\u7279\u6548");
-        oh.style.color = "var(--mn-onhit)";
-        oh.style.marginLeft = "8px";
+    h(list2, "span", "mn-dl-key", d.key);
+    const name = h(list2, "span", "mn-dl-name", d.name);
+    const notes = [d.key === "P" && !d.base ? "\u6578\u503C\u672A\u6536\u9304" : "", d.onHit ? "\u89F8\u767C\u653B\u64CA\u7279\u6548" : ""].filter(Boolean);
+    if (notes.length) {
+      const sub = h(name, "span", "mn-dl-sub");
+      for (const n of notes) {
+        const x = h(sub, "span", "", n);
+        if (n === "\u89F8\u767C\u653B\u64CA\u7279\u6548") x.style.color = "var(--mn-onhit)";
       }
-      continue;
     }
-    const sc = h(row2, "span", "mn-dl-sc", [d.ad ? `+${d.ad}% \u7269\u653B` : "", d.ap ? `+${d.ap}% \u9B54\u653B` : ""].filter(Boolean).join("  "));
-    if (d.onHit) {
-      const gap = !!sc.textContent;
-      const oh = h(sc, "span", "mn-dl-oh", "\u89F8\u767C\u653B\u64CA\u7279\u6548");
-      oh.style.color = "var(--mn-onhit)";
-      if (gap) oh.style.marginLeft = "8px";
-    }
+    const kind = h(list2, "span", "mn-dl-kind", d.kind);
+    kind.style.color = DAMAGE_COLOR[d.kind] ?? "inherit";
+    h(list2, "span", "mn-dl-pct", d.ad ? `${d.ad}%` : "\u2014").style.color = d.ad ? DAMAGE_COLOR["\u7269\u7406"] : "";
+    h(list2, "span", "mn-dl-pct", d.ap ? `${d.ap}%` : "\u2014").style.color = d.ap ? DAMAGE_COLOR["\u9B54\u6CD5"] : "";
+    h(list2, "span", "mn-dl-base", !d.base ? "\u2014" : d.first && d.first !== d.base ? `${num2(d.first)}\u2013${num2(d.base)}` : `${num2(d.base)}`);
   }
   const ad = lines.reduce((n, d) => n + d.ad, 0), ap = lines.reduce((n, d) => n + d.ap, 0);
   if (ad + ap > 0) {

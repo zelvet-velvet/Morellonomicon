@@ -502,16 +502,15 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-fs-hint { font-size: 11px; color: var(--mn-faint); }
 .mn-stack { display: flex; gap: 2px; height: 6px; border-radius: 3px; overflow: hidden; background: var(--mn-line); }
 .mn-stack i { display: block; min-width: 4px; }
-.mn-dl { display: grid; gap: 2px; }
-.mn-dl-r { display: grid; grid-template-columns: 22px 1fr auto 44px; column-gap: 8px; align-items: baseline; padding: 4px 0; border-bottom: 1px solid color-mix(in srgb, var(--mn-text) 6%, transparent); font-size: 13px; }
-.mn-dl-r:last-child { border-bottom: none; }
+.mn-dl { display: grid; grid-template-columns: 20px minmax(0, 1fr) 38px 48px 48px 76px; column-gap: 0; align-items: baseline; font-size: 13px; }
+.mn-dl > span { padding: 6px 0; border-top: 1px solid color-mix(in srgb, var(--mn-text) 6%, transparent); }
+.mn-dl > .mn-dl-h { padding: 0 0 4px; border-top: none; font-size: 10px; color: var(--mn-faint); text-align: right; }
 .mn-dl-key { font-weight: 700; color: var(--mn-faint); }
-.mn-dl-name { color: var(--mn-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mn-dl-kind { font-size: 12px; font-weight: 700; }
-.mn-dl-base { text-align: right; font-family: var(--mn-serif); font-weight: 700; font-variant-numeric: tabular-nums; color: var(--mn-text); }
-.mn-dl-sc { grid-column: 2 / -1; font-size: 11px; color: var(--mn-muted); font-variant-numeric: tabular-nums; }
-.mn-dl-sc:empty { display: none; }
-.mn-dl-oh { font-weight: 700; }
+.mn-dl-name { color: var(--mn-text); min-width: 0; }
+.mn-dl-sub { display: flex; flex-wrap: wrap; gap: 0 8px; font-size: 10px; color: var(--mn-muted); font-weight: 700; }
+.mn-dl-kind { font-size: 12px; font-weight: 700; text-align: right; }
+.mn-dl-pct { text-align: right; font-size: 12px; font-weight: 700; color: var(--mn-faint); font-variant-numeric: tabular-nums; }
+.mn-dl-base { text-align: right; font-family: var(--mn-serif); font-weight: 700; font-variant-numeric: tabular-nums; color: var(--mn-text); white-space: nowrap; }
 .mn-dl-foot { padding-top: 4px; }
 .mn-fs-v.mn-fs-big { font-size: 30px; line-height: 1.1; }
 .mn-fs-v.mn-fs-big .mn-fs-of { font-size: 13px; }
