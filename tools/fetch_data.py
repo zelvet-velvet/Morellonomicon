@@ -148,6 +148,15 @@ def damage_type(info):
     return "物理" if a > m else "魔法"
 
 
+def skills_fm(c, version):
+    """Passive + Q W E R as small objects for the plugin (key, name, damage types, icon)."""
+    p = c["passive"]
+    out = [{"key": "P", "name": p["name"], "damage": [], "icon": f"{DD}/cdn/{version}/img/passive/{p['image']['full']}"}]
+    for key, s in zip("QWER", c["spells"]):
+        out.append({"key": key, "name": s["name"], "damage": spell_damage(s), "icon": f"{DD}/cdn/{version}/img/spell/{s['image']['full']}"})
+    return out
+
+
 def champion_note(c, version):
     info, st = c["info"], c["stats"]
     spells = c["spells"]
@@ -159,24 +168,24 @@ def champion_note(c, version):
         "features": spell_features(spells, c["passive"]), "resource": c["partype"],
         "attack": info["attack"], "magic": info["magic"], "defense": info["defense"], "difficulty": info["difficulty"],
         "range": st["attackrange"], "icon": f"{DD}/cdn/{version}/img/champion/{c['image']['full']}",
+        "skills": skills_fm(c, version),
         "patch": version, "generated": True,
     }
-    keys = ["Q", "W", "E", "R"]
-    lines = [f"![{c['name']}|64]({fm['icon']})", "", f"**{c['name']}**,{c['title']}", "", c["blurb"], "",
-             "## 基本資料", "",
-             "| 生命 | 魔力 / 資源 | 物理防禦 | 魔法防禦 | 攻擊力 | 攻速 | 移速 | 射程 |", "| --- | --- | --- | --- | --- | --- | --- | --- |",
-             f"| {st['hp']:g} | {c['partype']} {st['mp']:g} | {st['armor']:g} | {st['spellblock']:g} | {st['attackdamage']:g} | {st['attackspeed']:g} | {st['movespeed']:g} | {st['attackrange']:g} |",
-             "", f"評分(1–10):物理 {info['attack']}、魔法 {info['magic']}、防禦 {info['defense']}、難度 {info['difficulty']}。", "",
-             "## 技能", "",
-             "| 技能 | 名稱 | 傷害類型 | 冷卻(秒) | 說明 |", "| --- | --- | --- | --- | --- |"]
-    p = c["passive"]
-    lines.append(f"| 被動 | <img src='{DD}/cdn/{version}/img/passive/{p['image']['full']}' width='32'> {p['name']} | | | {strip_html(p['description']).replace(chr(10), ' ')} |")
-    for key, s in zip(keys, spells):
-        dmg = "、".join(spell_damage(s)) or "—"
-        lines.append(f"| {key} | <img src='{DD}/cdn/{version}/img/spell/{s['image']['full']}' width='32'> {s['name']} | {dmg} | {s['cooldownBurn']} | {strip_html(s['description']).replace(chr(10), ' ')} |")
-    for title, tips in (("使用技巧", c.get("allytips")), ("對戰技巧", c.get("enemytips"))):
+    desc = lambda t: strip_html(t).replace("\n", " ")
+    dmg = lambda sp: "、".join(spell_damage(sp)) or "—"
+    lines = [f"![{c['name']}|64]({fm['icon']})  **{c['name']}**,{c['title']}", "",
+             "| 技能 | 名稱 | 傷害 | 冷卻 |", "| --- | --- | --- | --- |",
+             f"| 被動 | {c['passive']['name']} | — | — |"]
+    for key, sp in zip("QWER", c["spells"]):
+        lines.append(f"| {key} | {sp['name']} | {dmg(sp)} | {sp['cooldownBurn']} |")
+    # long text stays folded so the note reads at a glance
+    lines += ["", "> [!info]- 技能說明", f"> - **被動 {c['passive']['name']}**:{desc(c['passive']['description'])}"]
+    lines += [f"> - **{key} {sp['name']}**:{desc(sp['description'])}" for key, sp in zip("QWER", c["spells"])]
+    for title, kind, tips in (("使用技巧", "tip", c.get("allytips")), ("對戰技巧", "warning", c.get("enemytips"))):
         if tips:
-            lines += ["", f"## {title}(官方)", ""] + [f"- {strip_html(t).lstrip('- ').strip()}" for t in tips]
+            lines += ["", f"> [!{kind}]- {title}(官方)"] + [f"> - {strip_html(t).lstrip('- ').strip()}" for t in tips]
+    lines += ["", "> [!abstract]- 基本數值",
+              f"> 生命 {st['hp']:g}、{c['partype']} {st['mp']:g}、物理防禦 {st['armor']:g}、魔法防禦 {st['spellblock']:g}、攻擊力 {st['attackdamage']:g}、攻速 {st['attackspeed']:g}、移速 {st['movespeed']:g}、射程 {st['attackrange']:g}"]
     tail = "\n\n## 玩法心得\n\n\n## 大混戰 強化\n\n"
     return fm, "\n".join(lines), tail
 

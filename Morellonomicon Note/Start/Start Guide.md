@@ -15,8 +15,9 @@ How to set up Morellonomicon and work on it day to day. It is a solo project.
    git clone https://github.com/zelvet-velvet/Morellonomicon.git
    python3 tools/install_plugins.py     # plugins are not stored in git
    ```
-3. In Obsidian: Settings → Community plugins → turn off Restricted Mode. The theme (Minimal) and the CSS snippets are already enabled in `.obsidian/`.
-4. Check the font size: the theme was copied with a large base font (30). Change it in Settings → Appearance if it is too big on your screen.
+3. Build the Morellonomicon plugin only if you change it: `cd plugin && npm install && npm run build && npm run install-vault` (the built plugin is already committed).
+4. In Obsidian: Settings → Community plugins → turn off Restricted Mode. The theme (Minimal) and the CSS snippets are already enabled in `.obsidian/`.
+5. Check the font size: the theme was copied with a large base font (30). Change it in Settings → Appearance if it is too big on your screen.
 
 ## 2. Open it on the phone
 

@@ -18,6 +18,7 @@ OBSIDIAN = VAULT / ".obsidian"
 REGISTRY = "https://raw.githubusercontent.com/obsidianmd/obsidian-releases/master/community-plugins.json"
 ASSETS = ("main.js", "manifest.json", "styles.css")
 OPTIONAL = {"styles.css"}
+OWN_PLUGINS = {"morellonomicon"}   # built from plugin/ (npm run build && npm run install-vault), committed in the vault
 
 
 def get(url):
@@ -44,6 +45,8 @@ def main():
     registry = {p["id"]: p["repo"] for p in json.loads(get(REGISTRY))}
     failed = []
     for plugin_id in wanted:
+        if plugin_id in OWN_PLUGINS:
+            continue
         if plugin_id not in registry:
             print(f"? {plugin_id}: not in the community list")
             failed.append(plugin_id)

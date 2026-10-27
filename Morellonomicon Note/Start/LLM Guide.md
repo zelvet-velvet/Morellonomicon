@@ -41,7 +41,8 @@ Morellonomicon Note/   the Obsidian vault (open this folder in Obsidian; plugin 
                          強化/       ARAM Mayhem augments by type, fitting champions, combos
                          模式/       Normal, Ranked, ARAM, ARAM Mayhem
                          _Meta/     vault helpers: Templates/ (Day note)
-tools/                 Python scripts (data fetch, vault generation, plugin install)
+tools/                 Python scripts (data fetch, community plugin install)
+plugin/                the Morellonomicon Obsidian plugin (TypeScript, esbuild)
 CLAUDE.md              points here
 ```
 
@@ -53,7 +54,9 @@ CLAUDE.md              points here
 - **Generated vs written.** Generated pages carry `generated: true` in the frontmatter and a marked block; scripts only rewrite inside the marked block, never the hand-written advice around it.
 - **Data sources are public and cited.** Riot Data Dragon (`ddragon.leagueoflegends.com`, `zh_TW`) and CommunityDragon. Every page shows the **patch version** it was generated from. Never invent statistics: win rates and pick rates come from a named source with a date, or are left out.
 - **Riot policy.** Do not commit a Riot API key. Keys go in an environment variable (`RIOT_API_KEY`) or an untracked `.env`. Include Riot's legal line in the README ("not endorsed by Riot Games"). Do not copy another site's tier lists wholesale; link to them.
-- **No dependencies.** Python standard library only; no pip installs.
+- **No dependencies in the data scripts.** `tools/` is Python standard library only; no pip installs. The plugin in `plugin/` is TypeScript with npm dev dependencies (esbuild, typescript) for the build only.
+- **Plugin.** Source in `plugin/src/`; `cd plugin && npm install && npm run check && npm run build && npm run install-vault` puts `main.js`, `manifest.json`, `styles.css` into `Morellonomicon Note/.obsidian/plugins/morellonomicon/`, which **is committed** (the phone cannot build). Rebuild and commit it after every plugin change. Modes live in `plugin/src/modes.ts` (Mayhem now, Rift reserved). UI labels are English, content is zh_TW.
+- **Less text.** The product goal is low friction: glanceable cards, icons and chips, long text folded away. Do not add paragraphs to cards or notes.
 - **Network use.** Only the fetch scripts touch the network, only to the public endpoints above, and only when the user runs them.
 - **Nothing private in the repo.** No keys, personal paths or summoner names/IDs of real players.
 - **Plugins are not in git** (`.obsidian/plugins/` is ignored). `tools/install_plugins.py` downloads them from each plugin's GitHub release; the list is `community-plugins.json`.

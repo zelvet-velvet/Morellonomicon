@@ -4,7 +4,9 @@ __pycache__/
 .env
 
 # Obsidian: per-device state and downloaded plugins (python3 tools/install_plugins.py)
-Morellonomicon Note/.obsidian/plugins/
+Morellonomicon Note/.obsidian/plugins/*
+!Morellonomicon Note/.obsidian/plugins/morellonomicon/
+Morellonomicon Note/.obsidian/plugins/morellonomicon/data.json
 Morellonomicon Note/.obsidian/workspace.json
 Morellonomicon Note/.obsidian/workspaces.json
 Morellonomicon Note/**/.makemd/
