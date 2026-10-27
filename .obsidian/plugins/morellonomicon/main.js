@@ -30,30 +30,41 @@ var import_obsidian = require("obsidian");
 
 // src/modes.ts
 var MODES = {
-  mayhem: { id: "mayhem", label: "Mayhem", icon: "zap", enabled: true, itemFlag: "aram", tabs: ["champions", "augments", "handbook"] },
-  rift: { id: "rift", label: "Rift", icon: "map", enabled: false, itemFlag: "rift", tabs: ["champions", "handbook"] }
+  mayhem: { id: "mayhem", label: "Mayhem", icon: "zap", enabled: true, itemFlag: "aram", tabs: ["champions", "augments", "patch", "handbook"] },
+  rift: { id: "rift", label: "Rift", icon: "map", enabled: false, itemFlag: "rift", tabs: ["champions", "patch", "handbook"] }
 };
 var MODE_ORDER = ["mayhem", "rift"];
-var TAB_LABEL = { champions: "Champions", augments: "Augments", handbook: "Handbook" };
-var TAB_ICON = { champions: "users", augments: "sparkles", handbook: "book-open" };
+var TAB_LABEL = { champions: "Champions", augments: "Augments", patch: "Patch", handbook: "Handbook" };
+var TAB_ICON = { champions: "users", augments: "sparkles", patch: "newspaper", handbook: "book-open" };
 
 // src/data/store.ts
+var patchNo = (p) => {
+  const m = /^(\d+)\.(\d+)/.exec(p.trim());
+  if (!m) return null;
+  const major = Number(m[1]) >= 20 ? Number(m[1]) - 10 : Number(m[1]);
+  return major * 100 + Number(m[2]);
+};
+var patchAge = (entry, now) => {
+  const a = patchNo(entry), b = patchNo(now);
+  return a === null || b === null ? null : Math.max(0, b - a);
+};
 var str = (v, d = "") => typeof v === "string" ? v : d;
 var num = (v, d = 0) => typeof v === "number" ? v : d;
 var rowList = (v) => Array.isArray(v) ? v.flatMap((x) => {
   const o = x;
   return o && typeof o === "object" ? [{ label: str(o.label), vals: list(o.vals), note: str(o.note) }] : [];
 }) : [];
+var metaOf = (o) => ({ patch: str(o.patch), date: str(o.date), source: str(o.source), sourceName: str(o.source_name), status: str(o.status) });
 var numList = (v) => Array.isArray(v) ? v.filter((x) => typeof x === "number") : [];
 var buildList = (v) => Array.isArray(v) ? v.flatMap((x) => {
   const o = x;
   if (!o || typeof o !== "object") return [];
   const kind = o.kind === "alt" || o.kind === "synergy" ? o.kind : "meta";
-  return [{ kind, mode: str(o.mode, "mayhem"), name: str(o.name), items: numList(o.items), note: str(o.note), with: list(o.with) }];
+  return [{ kind, mode: str(o.mode, "mayhem"), name: str(o.name), items: numList(o.items), note: str(o.note), with: list(o.with), ...metaOf(o) }];
 }) : [];
 var tipList = (v) => Array.isArray(v) ? v.flatMap((x) => {
   const o = x;
-  return o && typeof o === "object" ? [{ title: str(o.title), text: str(o.text), video: str(o.video) }] : [];
+  return o && typeof o === "object" ? [{ title: str(o.title), text: str(o.text), video: str(o.video), ...metaOf(o) }] : [];
 }) : [];
 var skillList = (v) => Array.isArray(v) ? v.flatMap((x) => {
   const o = x;
@@ -90,7 +101,7 @@ var Store = class {
   }
   inData(path) {
     const s = this.s;
-    return path.startsWith("_data/") || [s.championFolder, s.itemFolder, s.guideFolder, s.augmentFolder].some((f) => path.startsWith((0, import_obsidian.normalizePath)(f) + "/"));
+    return path.startsWith("_data/") || [s.championFolder, s.itemFolder, s.guideFolder, s.augmentFolder, s.patchFolder].some((f) => path.startsWith((0, import_obsidian.normalizePath)(f) + "/"));
   }
   notes(folder) {
     const prefix = (0, import_obsidian.normalizePath)(folder) + "/";
@@ -175,6 +186,24 @@ var Store = class {
     }
     return this.augs;
   }
+  // The game patch the notes were generated from, as "16.21" (Data Dragon numbering)
+  currentPatch() {
+    return this.champions()[0]?.patch.split(".").slice(0, 2).join(".") ?? "";
+  }
+  // Our own patch notes, newest first
+  patchNotes() {
+    return this.notes(this.s.patchFolder).map(({ file, fm }) => ({ file, title: str(fm.title, file.basename), patch: str(fm.patch), date: str(fm.date), summary: str(fm.summary) })).sort((a, b) => b.date.localeCompare(a.date) || b.patch.localeCompare(a.patch));
+  }
+  // Every tip / build whose patch is older than the current one, or has none (so it might be out of date)
+  staleEntries() {
+    const now = this.currentPatch();
+    const out = [];
+    for (const c of this.champions()) {
+      for (const t of c.tips) if (patchAge(t.patch, now) !== 0) out.push({ champion: c, kind: "tip", title: t.title, patch: t.patch });
+      for (const b of c.builds) if (patchAge(b.patch, now) !== 0) out.push({ champion: c, kind: "build", title: b.name, patch: b.patch });
+    }
+    return out;
+  }
   // The Learn cards: notes in the guide folder, ordered by their `order` (then name); `icon` and `summary` come from frontmatter
   guideNotes() {
     return this.notes(this.s.guideFolder).map(({ file, fm }) => ({ file, title: file.basename, icon: str(fm.icon, "file-text"), summary: str(fm.summary), order: num(fm.order, 99) })).sort((a, b) => a.order - b.order || a.title.localeCompare(b.title, "zh-Hant"));
@@ -255,6 +284,7 @@ var DEFAULTS = {
   itemFolder: "\u9053\u5177",
   guideFolder: "\u65B0\u624B\u5165\u9580",
   augmentFolder: "\u5F37\u5316",
+  patchFolder: "\u7248\u672C\u66F4\u65B0",
   openOnStartup: import_obsidian2.Platform.isMobile
 };
 var MnSettingTab = class extends import_obsidian2.PluginSettingTab {
@@ -281,6 +311,7 @@ var MnSettingTab = class extends import_obsidian2.PluginSettingTab {
     folder("Champion folder", "Notes made by tools/fetch_data.py", "championFolder");
     folder("Item folder", "Notes made by tools/fetch_data.py", "itemFolder");
     folder("Augment folder", "Notes made by tools/fetch_augments.py", "augmentFolder");
+    folder("Patch notes folder", "Our own patch notes (frontmatter: patch, date, title, summary)", "patchFolder");
     folder("Guide folder", "Beginner guide notes", "guideFolder");
     new import_obsidian2.Setting(c).setName("Open on startup").setDesc("Show the app when Obsidian starts (on by default on a phone).").addToggle((x) => x.setValue(s.openOnStartup).onChange(async (v) => {
       s.openOnStartup = v;
@@ -396,6 +427,24 @@ var empty = (parent, o) => {
   return box;
 };
 
+// src/pages/fresh.ts
+function metaLine(parent, m, now) {
+  const row2 = h(parent, "div", "mn-meta");
+  const age = patchAge(m.patch, now);
+  if (age === null) chip(row2, "\u26A0 \u7248\u672C\u672A\u8A3B\u660E", { color: "var(--color-red)" });
+  else if (age === 0) chip(row2, `\u2713 ${m.patch}`, { color: "var(--color-green)" });
+  else chip(row2, `\u26A0 ${m.patch}(\u5DF2\u904E ${age} \u7248)`, { color: age === 1 ? "var(--color-yellow)" : "var(--color-red)" });
+  if (m.date) chip(row2, m.date);
+  if (m.status) chip(row2, m.status, { color: m.status.includes("\u5F85") ? "var(--color-orange)" : "var(--color-green)" });
+  if (m.source) {
+    const a = h(row2, "button", "mn-chip mn-meta-src", `\u2197 ${m.sourceName || "\u4F86\u6E90"}`);
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      window.open(m.source);
+    });
+  }
+}
+
 // src/pages/build.ts
 var TOP_SETS = 3;
 var TOP_ITEMS = 8;
@@ -468,6 +517,7 @@ function setCard(body, c, ctx, b) {
   }
   itemRow(card, c, ctx, b.items);
   if (b.note) h(card, "div", "mn-set-n", b.note);
+  metaLine(card, b, ctx.plugin.store.currentPatch());
 }
 function itemRow(parent, c, ctx, ids, captions = []) {
   const store = ctx.plugin.store;
@@ -814,6 +864,7 @@ function tips(body, c, ctx) {
     const main = h(card, "div", "mn-tip-main");
     h(main, "div", "mn-tip-t", t.title);
     h(main, "div", "mn-tip-s", t.text);
+    metaLine(main, t, ctx.plugin.store.currentPatch());
     if (t.video) {
       const v = h(main, "button", "mn-tip-v", "\u25B6 Video");
       v.addEventListener("click", (e) => {
@@ -963,10 +1014,46 @@ function marked(parent, text, q) {
   if (at < text.length) parent.appendChild(document.createTextNode(text.slice(at)));
 }
 
+// src/pages/patch.ts
+var OFFICIAL = "https://www.leagueoflegends.com/zh-tw/news/tags/patch-notes/";
+function patchPage(ctx) {
+  const store = ctx.plugin.store;
+  const el = page("Patch");
+  const now = store.currentPatch();
+  const hero = h(el, "div", "mn-patch");
+  h(hero, "div", "mn-patch-k", "Data from patch");
+  h(hero, "div", "mn-patch-v", now || "\u2014");
+  h(hero, "div", "mn-patch-s", "Champions, skills and items are regenerated per patch. Tips and builds below show the patch they were written for.");
+  const links = group(el);
+  row(links, { icon: "external-link", title: "Official patch notes (\u7E41\u4E2D)", chevron: true, onTap: () => window.open(OFFICIAL) });
+  const notes = store.patchNotes();
+  if (notes.length) {
+    const g2 = group(el, "Our patch notes");
+    for (const n of notes) row(g2, { icon: "file-text", title: n.title, sub: n.summary || void 0, value: n.patch, chevron: true, onTap: () => ctx.openNote(n.file.path) });
+  }
+  const stale = store.staleEntries();
+  const g = group(el, "Check these tricks");
+  if (!stale.length) {
+    empty(g, { icon: "check-circle", title: "Nothing to recheck", text: "Every tip and build matches the current patch." });
+  } else {
+    for (const s of stale.slice(0, 30)) {
+      row(g, { image: s.champion.icon, title: `${s.champion.name}:${s.title}`, sub: s.patch ? `Written for ${s.patch}` : "No patch given", value: s.kind === "tip" ? "Tip" : "Build", chevron: true, onTap: () => {
+        rememberSub(s.champion.id, s.kind === "tip" ? "tips" : "build");
+        ctx.goTab("champions");
+        ctx.push({ key: "champion", title: s.champion.name, params: { id: s.champion.id } });
+      } });
+    }
+    if (stale.length > 30) h(el, "div", "mn-gf", `${stale.length - 30} more`);
+  }
+  void icon;
+  return { title: "Patch", el };
+}
+
 // src/pages/index.ts
 var PAGES = {
   champions: championsPage,
   augments: augmentsPage,
+  patch: patchPage,
   handbook: handbookPage
 };
 

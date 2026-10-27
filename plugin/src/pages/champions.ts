@@ -3,6 +3,7 @@ import { MODES } from "../modes";
 import { DAMAGE_COLOR, chip, empty, group, h, icon, page, radar, row } from "../ui";
 import { buildTab } from "./build";
 import type { PageCtx, PageOut } from "./index";
+import { metaLine } from "./fresh";
 import { skillStrip } from "./skills";
 
 const ROLES = ["戰士", "坦克", "法師", "刺客", "射手", "輔助"];
@@ -187,6 +188,7 @@ function tips(body: HTMLElement, c: Champion, ctx: PageCtx): void {
         const main = h(card, "div", "mn-tip-main");
         h(main, "div", "mn-tip-t", t.title);
         h(main, "div", "mn-tip-s", t.text);
+        metaLine(main, t, ctx.plugin.store.currentPatch());
         if (t.video) {
             const v = h(main, "button", "mn-tip-v", "▶ Video");
             v.addEventListener("click", (e) => { e.preventDefault(); window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(t.video)}`); });

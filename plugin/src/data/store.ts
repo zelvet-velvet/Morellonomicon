@@ -13,8 +13,10 @@ export interface Champion {
 }
 export interface SkillRow { label: string; vals: string[]; note: string }   // one value per rank, or one value for all ranks
 // A hand-written build in a champion note: kind meta (a normal build), alt (fun / other play style) or synergy (with teammates in `with`)
-export interface Build { kind: "meta" | "alt" | "synergy"; mode: string; name: string; items: number[]; note: string; with: string[] }
-export interface Tip { title: string; text: string; video: string }
+// A tip or build says which patch and day it was written for, where it came from and whether it was tried (status)
+export interface Meta { patch: string; date: string; source: string; sourceName: string; status: string }
+export interface Build extends Meta { kind: "meta" | "alt" | "synergy"; mode: string; name: string; items: number[]; note: string; with: string[] }
+export interface Tip extends Meta { title: string; text: string; video: string }
 // What tools/fetch_builds.py counts from real matches (_data/builds.<mode>.json)
 export interface Count { id: number; games: number; wins: number }
 export interface ChampStats { games: number; wins: number; items: Count[]; sets: { items: number[]; games: number; wins: number }[]; augments: Count[] }
@@ -25,22 +27,35 @@ export interface Item {
     id: number; name: string; tags: string[]; desc: string; goldTotal: number; aram: boolean; rift: boolean; icon: string; variantOf?: string; path: string;
 }
 
+// "26.21" and "16.21" are the same patch (Riot's 2026 numbering is 26.x, Data Dragon's is 16.x); compare as minor numbers
+const patchNo = (p: string): number | null => {
+    const m = /^(\d+)\.(\d+)/.exec(p.trim());
+    if (!m) return null;
+    const major = Number(m[1]) >= 20 ? Number(m[1]) - 10 : Number(m[1]);
+    return major * 100 + Number(m[2]);
+};
+// 0 = written for the current patch, 1 = one patch behind ..., null = no patch given
+export const patchAge = (entry: string, now: string): number | null => {
+    const a = patchNo(entry), b = patchNo(now);
+    return a === null || b === null ? null : Math.max(0, b - a);
+};
 const str = (v: unknown, d = ""): string => (typeof v === "string" ? v : d);
 const num = (v: unknown, d = 0): number => (typeof v === "number" ? v : d);
 const rowList = (v: unknown): SkillRow[] => (Array.isArray(v) ? v.flatMap((x) => {
     const o = x as Record<string, unknown> | null;
     return o && typeof o === "object" ? [{ label: str(o.label), vals: list(o.vals), note: str(o.note) }] : [];
 }) : []);
+const metaOf = (o: Record<string, unknown>): Meta => ({ patch: str(o.patch), date: str(o.date), source: str(o.source), sourceName: str(o.source_name), status: str(o.status) });
 const numList = (v: unknown): number[] => (Array.isArray(v) ? v.filter((x): x is number => typeof x === "number") : []);
 const buildList = (v: unknown): Build[] => (Array.isArray(v) ? v.flatMap((x) => {
     const o = x as Record<string, unknown> | null;
     if (!o || typeof o !== "object") return [];
     const kind = o.kind === "alt" || o.kind === "synergy" ? o.kind : "meta";
-    return [{ kind, mode: str(o.mode, "mayhem"), name: str(o.name), items: numList(o.items), note: str(o.note), with: list(o.with) }];
+    return [{ kind, mode: str(o.mode, "mayhem"), name: str(o.name), items: numList(o.items), note: str(o.note), with: list(o.with), ...metaOf(o) }];
 }) : []);
 const tipList = (v: unknown): Tip[] => (Array.isArray(v) ? v.flatMap((x) => {
     const o = x as Record<string, unknown> | null;
-    return o && typeof o === "object" ? [{ title: str(o.title), text: str(o.text), video: str(o.video) }] : [];
+    return o && typeof o === "object" ? [{ title: str(o.title), text: str(o.text), video: str(o.video), ...metaOf(o) }] : [];
 }) : []);
 const skillList = (v: unknown): Skill[] => (Array.isArray(v) ? v.flatMap((x) => {
     const o = x as Record<string, unknown> | null;
@@ -70,7 +85,7 @@ export class Store {
     invalidate(): void { this.champs = null; this.its = null; this.augs = null; }
     inData(path: string): boolean {
         const s = this.s;
-        return path.startsWith("_data/") || [s.championFolder, s.itemFolder, s.guideFolder, s.augmentFolder].some((f) => path.startsWith(normalizePath(f) + "/"));
+        return path.startsWith("_data/") || [s.championFolder, s.itemFolder, s.guideFolder, s.augmentFolder, s.patchFolder].some((f) => path.startsWith(normalizePath(f) + "/"));
     }
 
     private notes(folder: string): { file: TFile; fm: FM }[] {
@@ -121,6 +136,26 @@ export class Store {
             })).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
         }
         return this.augs;
+    }
+
+    // The game patch the notes were generated from, as "16.21" (Data Dragon numbering)
+    currentPatch(): string { return this.champions()[0]?.patch.split(".").slice(0, 2).join(".") ?? ""; }
+
+    // Our own patch notes, newest first
+    patchNotes(): { file: TFile; title: string; patch: string; date: string; summary: string }[] {
+        return this.notes(this.s.patchFolder).map(({ file, fm }) => ({ file, title: str(fm.title, file.basename), patch: str(fm.patch), date: str(fm.date), summary: str(fm.summary) }))
+            .sort((a, b) => b.date.localeCompare(a.date) || b.patch.localeCompare(a.patch));
+    }
+
+    // Every tip / build whose patch is older than the current one, or has none (so it might be out of date)
+    staleEntries(): { champion: Champion; kind: "tip" | "build"; title: string; patch: string }[] {
+        const now = this.currentPatch();
+        const out: { champion: Champion; kind: "tip" | "build"; title: string; patch: string }[] = [];
+        for (const c of this.champions()) {
+            for (const t of c.tips) if (patchAge(t.patch, now) !== 0) out.push({ champion: c, kind: "tip", title: t.title, patch: t.patch });
+            for (const b of c.builds) if (patchAge(b.patch, now) !== 0) out.push({ champion: c, kind: "build", title: b.name, patch: b.patch });
+        }
+        return out;
     }
 
     // The Learn cards: notes in the guide folder, ordered by their `order` (then name); `icon` and `summary` come from frontmatter

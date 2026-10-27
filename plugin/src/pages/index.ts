@@ -5,6 +5,7 @@ import type { TabId } from "../modes";
 import { championsPage } from "./champions";
 import { augmentsPage } from "./augments";
 import { handbookPage } from "./handbook";
+import { patchPage } from "./patch";
 
 export interface PageOut { title: string; el: HTMLElement }
 export interface PageCtx {
@@ -22,5 +23,6 @@ export type PageRender = (ctx: PageCtx) => PageOut;
 export const PAGES: Record<TabId, PageRender> = {
     champions: championsPage,
     augments: augmentsPage,
+    patch: patchPage,
     handbook: handbookPage,
 };

@@ -1,5 +1,6 @@
 import type { Champion } from "../data/store";
 import { chip, empty, group, h, row } from "../ui";
+import { metaLine } from "./fresh";
 import type { PageCtx } from "./index";
 
 const TOP_SETS = 3;
@@ -67,6 +68,7 @@ function setCard(body: HTMLElement, c: Champion, ctx: PageCtx, b: Champion["buil
     }
     itemRow(card, c, ctx, b.items);
     if (b.note) h(card, "div", "mn-set-n", b.note);
+    metaLine(card, b, ctx.plugin.store.currentPatch());
 }
 
 // A row of item icons (optional caption under each); tap one to open its name, price and effect right below.

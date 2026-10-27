@@ -8,6 +8,7 @@ export interface MnSettings {
     itemFolder: string;
     guideFolder: string;
     augmentFolder: string;
+    patchFolder: string;
     openOnStartup: boolean;
 }
 
@@ -17,6 +18,7 @@ export const DEFAULTS: MnSettings = {
     itemFolder: "道具",
     guideFolder: "新手入門",
     augmentFolder: "強化",
+    patchFolder: "版本更新",
     openOnStartup: Platform.isMobile,
 };
 
@@ -33,12 +35,13 @@ export class MnSettingTab extends PluginSettingTab {
                 for (const id of MODE_ORDER) d.addOption(id, MODES[id].label + (MODES[id].enabled ? "" : " (coming soon)"));
                 d.setValue(s.mode).onChange(async (v) => { s.mode = v as ModeId; await save(); });
             });
-        const folder = (name: string, desc: string, key: "championFolder" | "itemFolder" | "guideFolder" | "augmentFolder") =>
+        const folder = (name: string, desc: string, key: "championFolder" | "itemFolder" | "guideFolder" | "augmentFolder" | "patchFolder") =>
             new Setting(c).setName(name).setDesc(desc)
                 .addText((x) => x.setValue(s[key]).onChange(async (v) => { s[key] = v.trim() || DEFAULTS[key]; await save(); }));
         folder("Champion folder", "Notes made by tools/fetch_data.py", "championFolder");
         folder("Item folder", "Notes made by tools/fetch_data.py", "itemFolder");
         folder("Augment folder", "Notes made by tools/fetch_augments.py", "augmentFolder");
+        folder("Patch notes folder", "Our own patch notes (frontmatter: patch, date, title, summary)", "patchFolder");
         folder("Guide folder", "Beginner guide notes", "guideFolder");
         new Setting(c).setName("Open on startup").setDesc("Show the app when Obsidian starts (on by default on a phone).")
             .addToggle((x) => x.setValue(s.openOnStartup).onChange(async (v) => { s.openOnStartup = v; await save(); }));

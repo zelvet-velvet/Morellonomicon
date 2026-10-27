@@ -23,6 +23,7 @@ sticker: lucide//activity
 - **App restructure**: tabs are now Champions · Augments · Handbook (Items tab dropped; typing in the Champions search also finds augments and items). A champion card has sub-tabs Skills · Build · Augments (Runes in Rift) · Tips. Mayhem / Rift stays a mode switch (top right). Handbook is six short beginner cards from `新手入門/`.
 - **Builds**: Build sub-tab shows counted builds (games, win rate, top core sets, most common items, tap an item for its effect) plus hand-written alternative / synergy builds; Tips shows hand-written cards. `tools/fetch_builds.py` counts real Mayhem matches from Riot's Match-V5 (queue 2400); its counting is tested on made-up matches only, the Riot calls are not tested yet.
 - **Reframe**: Morellonomicon is a newbie guide with its own sorting, plus the strategy that stat sites do not have. Champions can be narrowed by role, damage type, abilities (must have / must not have 控場, 治療, 護盾, 位移), reach (近戰 / 中程 / 遠程) and sorted (name, easiest, longest range). The tab is now **Handbook**: the beginner cards plus one search box over the guide cards, champion tips and our builds, with the match highlighted. Build shows OP.GG and Mobalytics links (their terms forbid copying their numbers; OP.GG's also forbids scraping and framing).
+- **Patch tab and freshness**: a Patch tab shows the patch the data is from, the official patch notes link, our own patch notes (`版本更新/`) and a "Check these tricks" list. Every tip and build shows its patch (green current, yellow one behind, red older or none), date, status and source link. `Inbox/技巧收件匣.md` is the place to jot tricks (format inside) for me to process.
 - **Workflow**: Copied the LLM Guide, Dev Status / Dev Log / Day note from clawd-room, simplified for a solo project (commit to `main`, no PRs) and added a Start Guide.
 
 ## 📅 Yesterday's Progress (—)
@@ -45,6 +46,7 @@ sticker: lucide//activity
 - [ ] **Stat codes**: only 0 (AP) and 2 (AD, formula 2 = bonus) are named; other stats show as "+其他加成" (66 rows) until their codes are confirmed.
 
 ### ✍️ Our own strategy
+- [>] **Inbox**: Zaviel is tidying the first tricks into `Inbox/技巧收件匣.md`; then "process the inbox".
 - [ ] **Easy way to record it**: tips, builds and combos are frontmatter lists today; add a command / form ("Add tip", "Add build") so they can be written on the phone in a few taps.
 - [ ] **Review**: the Handbook search is the quick way back to a detail; consider a short quiz / saved list if forgetting remains a problem.
 - [ ] **First batch of content**: five champions you play often in Mayhem, with one alternative build and one trick each.
