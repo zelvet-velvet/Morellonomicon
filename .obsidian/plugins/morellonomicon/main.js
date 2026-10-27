@@ -2648,17 +2648,17 @@ function rosterPage(ctx) {
   const save = () => {
     void ctx.plugin.setRoster(picks);
   };
-  h(el, "p", "mn-rq-hint", "\u5927\u6DF7\u6230\u6703\u96A8\u6A5F\u7D66\u4F60\u82F1\u96C4\u3002\u9EDE\u4F60\u62FF\u5230\u7684(\u6700\u591A 15 \u4F4D),\u99AC\u4E0A\u770B\u5230\u5B9A\u4F4D\u548C\u80FD\u529B\u3002");
-  const results = h(el, "div", "mn-rq-results");
   const box = h(el, "div", "mn-search");
   icon(box, "search", "mn-search-ic");
   const search = h(box, "input");
   search.type = "search";
   search.placeholder = "\u8F38\u5165\u82F1\u96C4\u540D\u5B57,\u6216\u6309\u9375\u76E4\u4E0A\u7684 \u{1F3A4} \u8AAA\u51FA\u4F86";
   search.setAttribute("enterkeyhint", "search");
-  const suggest2 = h(el, "div", "mn-chips");
+  const suggest2 = h(el, "div", "mn-chips mn-rq-sugg");
   const roles = fgrid(el, ROLES2.length);
-  const grid = h(el, "div", "mn-grid");
+  roles.addClass("mn-rq-roles-f");
+  const grid = h(el, "div", "mn-faces");
+  const results = h(el, "div", "mn-rq-results");
   const toggle = (id) => {
     if (picks.includes(id)) picks = picks.filter((p) => p !== id);
     else if (picks.length >= MAX_PICKS) {
@@ -2668,6 +2668,17 @@ function rosterPage(ctx) {
     save();
     drawResults();
     drawGrid();
+  };
+  const pickFromSearch = (id) => {
+    const adding = !picks.includes(id);
+    toggle(id);
+    if (adding && query) {
+      search.value = "";
+      query = "";
+      drawSuggest();
+      drawGrid();
+      search.focus();
+    }
   };
   const card = (c) => {
     const r = h(results, "div", "mn-rq");
@@ -2730,10 +2741,13 @@ function rosterPage(ctx) {
     const guessed = found.some((f) => !f.exact && f.list.length);
     if (tokens.length === 1 && !guessed) return;
     if (guessed) h(suggest2, "span", "mn-dym", "\u4F60\u662F\u4E0D\u662F\u5728\u627E:");
-    for (const c of unique) chip(suggest2, `${picks.includes(c.id) ? "\u2713 " : "+ "}${c.name}`, { color: "var(--color-green)", onTap: () => toggle(c.id) });
+    for (const c of unique) chip(suggest2, `${picks.includes(c.id) ? "\u2713 " : "+ "}${c.name}`, { color: "var(--color-green)", onTap: () => pickFromSearch(c.id) });
     if (unique.length > 1) chip(suggest2, "\u5168\u90E8\u52A0\u5165", { on: true, onTap: () => {
       for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) picks = [...picks, c.id];
       save();
+      search.value = "";
+      query = "";
+      drawSuggest();
       drawResults();
       drawGrid();
     } });
@@ -2741,27 +2755,33 @@ function rosterPage(ctx) {
   const drawGrid = () => {
     grid.empty();
     const tokens = query.split(SPLIT).filter(Boolean);
+    const finding = tokens.length > 0 || !!role || !picks.length;
+    grid.toggleClass("is-hidden", !finding);
+    results.toggleClass("is-hidden", finding && (tokens.length > 0 || !!role));
+    if (!finding) return;
     let list2 = all.filter((c) => !role || c.roles.includes(role));
     if (tokens.length) {
       const scored = list2.map((c) => ({ c, s: Math.max(...tokens.map((t) => matchScore(c, t))) })).filter((x) => x.s > 0);
       scored.sort((a, b) => b.s - a.s || a.c.name.localeCompare(b.c.name, "zh-Hant"));
       list2 = scored.map((x) => x.c);
     }
+    grid.toggleClass("is-named", tokens.length > 0);
     for (const c of list2) {
       const on = picks.includes(c.id);
-      const t = h(grid, "button", "mn-tile mn-pick" + (on ? " is-pick" : ""));
+      const t = h(grid, "button", "mn-face" + (on ? " is-pick" : ""));
       const im = h(t, "img");
       im.src = c.icon;
-      im.alt = "";
+      im.alt = c.name;
       im.loading = "lazy";
       if (on) icon(h(t, "span", "mn-pick-ok"), "check");
-      h(t, "span", "mn-tile-n", c.name);
+      h(t, "span", "mn-face-n", c.name);
+      holdTip(t, c.name);
       t.addEventListener("click", (e) => {
         e.preventDefault();
-        toggle(c.id);
+        pickFromSearch(c.id);
       });
     }
-    if (!list2.length) empty(grid, { icon: "search-x", title: "\u627E\u4E0D\u5230\u9019\u500B\u540D\u5B57", text: "\u4E0A\u9762\u7684\u300C\u4F60\u662F\u4E0D\u662F\u5728\u627E\u300D\u6703\u5217\u51FA\u6700\u63A5\u8FD1\u7684,\u6216\u63DB\u500B\u8AAA\u6CD5\u518D\u8A66\u3002" });
+    if (!list2.length) empty(grid, { icon: "search-x", title: "\u627E\u4E0D\u5230\u9019\u500B\u540D\u5B57", text: "\u63DB\u500B\u8AAA\u6CD5\u518D\u8A66,\u6216\u770B\u4E0A\u9762\u7684\u300C\u4F60\u662F\u4E0D\u662F\u5728\u627E\u300D\u3002" });
   };
   const drawRoles = () => {
     roles.empty();

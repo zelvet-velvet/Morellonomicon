@@ -1,6 +1,6 @@
 import { Notice } from "obsidian";
 import type { Champion } from "../data/store";
-import { chip, empty, fgrid, h, icon, page, roleChip } from "../ui";
+import { chip, empty, fgrid, h, holdTip, icon, page, roleChip } from "../ui";
 import { entryDir, marker } from "./changes";
 import type { PageCtx, PageOut } from "./index";
 import { factsStrip, tagRow } from "./profile";
@@ -59,18 +59,19 @@ export function rosterPage(ctx: PageCtx): PageOut {
     const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)] as const));
     const save = () => { void ctx.plugin.setRoster(picks); };
 
-    h(el, "p", "mn-rq-hint", "大混戰會隨機給你英雄。點你拿到的(最多 15 位),馬上看到定位和能力。");
-    const results = h(el, "div", "mn-rq-results");
-
+    // finding first: the search box, then the class icons, then faces (like the game's pick screen). Once champions are
+    // picked their cards take the page, and the faces come back as soon as something is typed or a class is chosen.
     const box = h(el, "div", "mn-search");
     icon(box, "search", "mn-search-ic");
     const search = h(box, "input");
     search.type = "search";
     search.placeholder = "輸入英雄名字,或按鍵盤上的 🎤 說出來";
     search.setAttribute("enterkeyhint", "search");
-    const suggest = h(el, "div", "mn-chips");
+    const suggest = h(el, "div", "mn-chips mn-rq-sugg");
     const roles = fgrid(el, ROLES.length);
-    const grid = h(el, "div", "mn-grid");
+    roles.addClass("mn-rq-roles-f");
+    const grid = h(el, "div", "mn-faces");
+    const results = h(el, "div", "mn-rq-results");
 
     const toggle = (id: string) => {
         if (picks.includes(id)) picks = picks.filter((p) => p !== id);
@@ -79,6 +80,12 @@ export function rosterPage(ctx: PageCtx): PageOut {
         save();
         drawResults();
         drawGrid();
+    };
+    // a face tapped while searching: add it, empty the box and keep the keyboard up for the next name
+    const pickFromSearch = (id: string) => {
+        const adding = !picks.includes(id);
+        toggle(id);
+        if (adding && query) { search.value = ""; query = ""; drawSuggest(); drawGrid(); search.focus(); }
     };
 
     const card = (c: Champion) => {
@@ -128,28 +135,34 @@ export function rosterPage(ctx: PageCtx): PageOut {
         // a single word that already matches well needs no suggestion row: the grid shows it
         if (tokens.length === 1 && !guessed) return;
         if (guessed) h(suggest, "span", "mn-dym", "你是不是在找:");
-        for (const c of unique) chip(suggest, `${picks.includes(c.id) ? "✓ " : "+ "}${c.name}`, { color: "var(--color-green)", onTap: () => toggle(c.id) });
-        if (unique.length > 1) chip(suggest, "全部加入", { on: true, onTap: () => { for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) picks = [...picks, c.id]; save(); drawResults(); drawGrid(); } });
+        for (const c of unique) chip(suggest, `${picks.includes(c.id) ? "✓ " : "+ "}${c.name}`, { color: "var(--color-green)", onTap: () => pickFromSearch(c.id) });
+        if (unique.length > 1) chip(suggest, "全部加入", { on: true, onTap: () => { for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) picks = [...picks, c.id]; save(); search.value = ""; query = ""; drawSuggest(); drawResults(); drawGrid(); } });
     };
 
     const drawGrid = () => {
         grid.empty();
         const tokens = query.split(SPLIT).filter(Boolean);
+        const finding = tokens.length > 0 || !!role || !picks.length;
+        grid.toggleClass("is-hidden", !finding);
+        results.toggleClass("is-hidden", finding && (tokens.length > 0 || !!role));
+        if (!finding) return;
         let list = all.filter((c) => !role || c.roles.includes(role));
         if (tokens.length) {
             const scored = list.map((c) => ({ c, s: Math.max(...tokens.map((t) => matchScore(c, t))) })).filter((x) => x.s > 0);
             scored.sort((a, b) => b.s - a.s || a.c.name.localeCompare(b.c.name, "zh-Hant"));
             list = scored.map((x) => x.c);
         }
+        grid.toggleClass("is-named", tokens.length > 0);   // a few matches: names under the faces; the whole roster: faces only
         for (const c of list) {
             const on = picks.includes(c.id);
-            const t = h(grid, "button", "mn-tile mn-pick" + (on ? " is-pick" : ""));
-            const im = h(t, "img"); im.src = c.icon; im.alt = ""; im.loading = "lazy";
+            const t = h(grid, "button", "mn-face" + (on ? " is-pick" : ""));
+            const im = h(t, "img"); im.src = c.icon; im.alt = c.name; im.loading = "lazy";
             if (on) icon(h(t, "span", "mn-pick-ok"), "check");
-            h(t, "span", "mn-tile-n", c.name);
-            t.addEventListener("click", (e) => { e.preventDefault(); toggle(c.id); });
+            h(t, "span", "mn-face-n", c.name);
+            holdTip(t, c.name);
+            t.addEventListener("click", (e) => { e.preventDefault(); pickFromSearch(c.id); });
         }
-        if (!list.length) empty(grid, { icon: "search-x", title: "找不到這個名字", text: "上面的「你是不是在找」會列出最接近的,或換個說法再試。" });
+        if (!list.length) empty(grid, { icon: "search-x", title: "找不到這個名字", text: "換個說法再試,或看上面的「你是不是在找」。" });
     };
 
     const drawRoles = () => {
