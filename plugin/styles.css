@@ -604,16 +604,17 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* role filters: a plain row of the game's class icons (no pill); dim when off, bright with a short accent line when on */
 .mn-app .mn-chip.mn-chip-ic { position: relative; justify-content: center; justify-self: center; width: 44px; height: 44px; padding: 0; border: none; border-radius: 0; background: none; }
 .mn-app .mn-chip.mn-chip-ic.is-on { background: none; }
-.mn-app .mn-chip.mn-chip-ic.is-on::after { content: ""; position: absolute; left: 50%; bottom: -2px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--mn-accent); }
+.mn-app .mn-chip.mn-chip-ic.is-on::after { content: ""; position: absolute; left: 50%; bottom: -3px; width: 16px; height: 2px; margin-left: -8px; border-radius: 1px; background: var(--mn-text); }
 .mn-chip-ic .mn-ic { display: flex; }
 .mn-chip-ic svg { width: 24px; height: 24px; }
 .mn-role-img { display: block; width: 30px; height: 30px; object-fit: contain; transition: opacity 0.2s; }
 .mn-role-img.is-loading { opacity: 0; }
 /* ability filters in the 篩選 panel: icon only. Off = dim; on (must have) = ring in the tag colour */
-.mn-app .mn-ftg { position: relative; display: flex; align-items: center; justify-content: center; justify-self: center; width: 44px; height: 44px; color: var(--p); -webkit-tap-highlight-color: transparent; }
+.mn-app .mn-ftg { position: relative; display: flex; align-items: center; justify-content: center; justify-self: center; width: 100%; max-width: 44px; height: 44px; color: var(--p); -webkit-tap-highlight-color: transparent; }
+.mn-ftg .mn-gi { max-width: 100%; }
 .mn-ftg .mn-ic { display: flex; }
 .mn-ftg svg { width: 20px; height: 20px; }
-.mn-app .mn-ftg.is-yes::after { content: ""; position: absolute; left: 50%; bottom: -2px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--p); }
+.mn-app .mn-ftg.is-yes::after { content: ""; position: absolute; left: 50%; bottom: -3px; width: 16px; height: 2px; margin-left: -8px; border-radius: 1px; background: var(--p); }
 
 /* elements with a hold-to-name bubble: no text selection or iOS callout while held */
 .mn-holdable { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
@@ -622,7 +623,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app .mn-fgrid .mn-filterbtn { position: relative; justify-content: center; justify-self: center; width: 44px; height: 44px; padding: 0; border: none; border-radius: 0; background: none; color: var(--mn-text); }
 .mn-app .mn-fgrid .mn-filterbtn.has-n { color: var(--mn-accent); }
 .mn-app .mn-fgrid .mn-filterbtn.is-open { color: var(--mn-accent); background: none; }
-.mn-app .mn-fgrid .mn-filterbtn.is-open::after { content: ""; position: absolute; left: 50%; bottom: -2px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--mn-accent); }
 .mn-fgrid .mn-filterbtn .mn-filterbtn-ic svg { width: 24px; height: 24px; }
 .mn-fgrid .mn-filterbtn .mn-filterbtn-n { position: absolute; top: -4px; right: -6px; }
 

@@ -511,7 +511,7 @@ var ROLE_FILE = { \u6230\u58EB: "Fighter_icon.png", \u5766\u514B: "Tank_icon.png
 var GAME_ICON_FILE = {
   \u63A7\u5834: "Stun_icon.png",
   \u7DE9\u901F: "Slow_icon.png",
-  \u4F4D\u79FB: "Dash_icon.png",
+  \u4F4D\u79FB: "Movement_speed_icon.png",
   \u6CBB\u7642: "Heal_power_icon.png",
   \u8B77\u76FE: "Heal_and_shield_power_icon.png",
   \u5438\u8840: "Life_steal_icon.png",
