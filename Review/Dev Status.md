@@ -38,6 +38,7 @@ sticker: lucide//activity
 - **Fixes**: the skill rank grid lost its layout (a CSS edit landed inside the wrong rule); the Handbook grid no longer scrolls sideways on a phone.
 - **Handbook as picture cards** (2026-10-27): each guide topic is a swipeable deck (dots, ‹ ›, swipe left / right); every `## ` section is one card with a big picture and one or two lines. Pictures come from the data: Riot's ability clips, a live radar chart, skill icons with their damage frames, champions of a role, items of a kind, augments of a rarity, or your own screenshot. A lore trivia card ("你知道嗎?": one line of a champion's lore on its splash art, tap for the next) sits between the topic cards. Topic cards use muted colours; the glossary is a plain list (`layout: list`).
 - **Filter panel**: 清除 moved into the panel as "全部清除"; the 篩選 button is outlined (accent border when open or in use) instead of a cream block.
+- **Augment effect text for 234 of 249** (2026-10-27): Riot's own zh_TW game text (`lol.stringtable.json` on CommunityDragon) holds the description of 180 augments; with the patch notes' text that is 234 augments. `tools/fetch_augment_text.py` writes `_data/augment-text.json`; the game text has numbers as placeholders, shown as X ("X = 遊戲內才看得到的數值"), and the page says which source it came from. Priority: hand-written `effect`, then patch notes (full numbers), then game text. The numbers' own file (augment DataValues) was not found: `map12.bin.json` has only 4 augment entries.
 - **Workflow**: Copied the LLM Guide, Dev Status / Dev Log / Day note from clawd-room, simplified for a solo project (commit to `main`, no PRs) and added a Start Guide.
 
 ## 📅 Yesterday's Progress (—)
@@ -51,7 +52,8 @@ sticker: lucide//activity
 - [ ] **Item notes check**: 142 ARAM-only items (`77NNNN`) are linked to their base item; look at a few notes in Obsidian and confirm the ARAM copies are what the Mayhem shop sells.
 - [ ] **Offline images**: optional `tools/cache_images.py` into a gitignored folder.
 - [x] **Augment data**: names, rarity, icons (no effect text exists in CommunityDragon).
-- [ ] **Augment effects**: hand-write a one-line `effect` per augment (strongest first) or pull from the League wiki with a named source; never invent them.
+- [x] **Augment effects**: from Riot's game text and patch notes (234 of 249); 15 still have none.
+- [ ] **Augment numbers**: find the game file with the augments' DataValues so the X placeholders can be filled.
 - [ ] **Augment fit**: `fits` (archetypes the augment suits), `tier`, `combos` on the augment notes; then the champion card's "Best augments" block matches them to a champion's archetypes.
 - [ ] **Statistics**: win / pick rates for Mayhem augments need either Match-V5 (developer key, queue for ARAM Mayhem, many matches) or a cited community source. Decide in phase 2.
 

@@ -85,7 +85,9 @@ export function augmentPage(ctx: PageCtx): PageOut {
     const panel = h(el, "div", "mn-panel mn-dpanel");
     if (a.effect) {
         h(panel, "p", "mn-dtext", a.effect);
-        if (store.officialEffect(a.name) === a.effect) h(panel, "div", "mn-pn-src", "Effect text: Riot Games patch notes");
+        const official = store.officialEffect(a.name) === a.effect;
+        h(panel, "div", "mn-pn-src", `Effect text: Riot Games ${official ? "patch notes" : "game text"}`);
+        if (a.partial) h(panel, "div", "mn-pn-src", "X = 遊戲內才看得到的數值");
     } else {
         // Riot's patch notes only describe an augment in the patch that adds or changes it; older ones have no text we can read yet
         h(panel, "p", "mn-dtext mn-muted", "這個強化的效果說明還沒有收錄。");

@@ -16,7 +16,8 @@ from pathlib import Path
 TOOLS = Path(__file__).resolve().parent
 ROOT = TOOLS.parent
 STEPS = [("champions and items", "fetch_data.py"), ("Mayhem augments", "fetch_augments.py"),
-         ("changes since the last patch", "fetch_changes.py"), ("Riot's patch notes", "fetch_patch_notes.py")]
+         ("changes since the last patch", "fetch_changes.py"), ("Riot's patch notes", "fetch_patch_notes.py"),
+         ("augment effect text", "fetch_augment_text.py")]
 ATTRIBUTION = "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 
 

@@ -72,6 +72,7 @@ var skillList = (v) => Array.isArray(v) ? v.flatMap((x) => {
 }) : [];
 var list = (v) => Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
 var Store = class {
+  // augment id -> the game's own description (tools/fetch_augment_text.py)
   constructor(plugin) {
     this.plugin = plugin;
     this.champs = null;
@@ -80,6 +81,7 @@ var Store = class {
     this.stats = null;
     this.changes = null;
     this.riotNotes = [];
+    this.gameText = {};
   }
   get app() {
     return this.plugin.app;
@@ -100,6 +102,13 @@ var Store = class {
       this.riotNotes = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)).patches ?? [] : [];
     } catch {
       this.riotNotes = [];
+    }
+    try {
+      const path = (0, import_obsidian.normalizePath)("_data/augment-text.json");
+      this.gameText = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)).augments ?? {} : {};
+      this.augs = null;
+    } catch {
+      this.gameText = {};
     }
     try {
       const path = (0, import_obsidian.normalizePath)("_data/changes.json");
@@ -224,7 +233,9 @@ var Store = class {
         name: str(fm.name, file.basename),
         rarity: str(fm.rarity),
         icon: str(fm.icon),
-        effect: str(fm.effect) || this.officialEffect(str(fm.name, file.basename)),
+        // hand-written first, then Riot's patch notes (full numbers), then the game's own text (numbers left out, `partial`)
+        effect: str(fm.effect) || this.officialEffect(str(fm.name, file.basename)) || this.gameText[String(num(fm.id))]?.text || "",
+        partial: !str(fm.effect) && !this.officialEffect(str(fm.name, file.basename)) && !!this.gameText[String(num(fm.id))]?.partial,
         fits: list(fm.fits),
         tier: str(fm.tier),
         path: file.path
@@ -1600,7 +1611,9 @@ function augmentPage(ctx) {
   const panel = h(el, "div", "mn-panel mn-dpanel");
   if (a.effect) {
     h(panel, "p", "mn-dtext", a.effect);
-    if (store.officialEffect(a.name) === a.effect) h(panel, "div", "mn-pn-src", "Effect text: Riot Games patch notes");
+    const official = store.officialEffect(a.name) === a.effect;
+    h(panel, "div", "mn-pn-src", `Effect text: Riot Games ${official ? "patch notes" : "game text"}`);
+    if (a.partial) h(panel, "div", "mn-pn-src", "X = \u904A\u6232\u5167\u624D\u770B\u5F97\u5230\u7684\u6578\u503C");
   } else {
     h(panel, "p", "mn-dtext mn-muted", "\u9019\u500B\u5F37\u5316\u7684\u6548\u679C\u8AAA\u660E\u9084\u6C92\u6709\u6536\u9304\u3002");
     const links = group(el);

@@ -34,7 +34,7 @@ export interface PatchNote {
     augments_new?: { rarity: string; name: string; text: string }[]; augments_removed?: string[];
 }
 export interface Skill { key: string; name: string; damage: string[]; icon: string; desc: string; upgrade: string; range: string; rows: SkillRow[] }
-export interface Augment { id: number; name: string; rarity: string; icon: string; effect: string; fits: string[]; tier: string; path: string }
+export interface Augment { id: number; name: string; rarity: string; icon: string; effect: string; partial: boolean; fits: string[]; tier: string; path: string }
 export interface Item {
     id: number; name: string; tags: string[]; desc: string; from: number[]; into: number[]; goldTotal: number; aram: boolean; rift: boolean; icon: string; variantOf?: string; path: string;
 }
@@ -83,6 +83,7 @@ export class Store {
     stats: BuildStats | null = null;
     changes: ChangeData | null = null;
     riotNotes: PatchNote[] = [];
+    gameText: Record<string, { text: string; partial: boolean }> = {};   // augment id -> the game's own description (tools/fetch_augment_text.py)
 
     constructor(private plugin: MorellonomiconPlugin) {}
     private get app() { return this.plugin.app; }
@@ -98,6 +99,11 @@ export class Store {
             const path = normalizePath("_data/patches.json");
             this.riotNotes = (await this.app.vault.adapter.exists(path)) ? ((JSON.parse(await this.app.vault.adapter.read(path)) as { patches: PatchNote[] }).patches ?? []) : [];
         } catch { this.riotNotes = []; }
+        try {
+            const path = normalizePath("_data/augment-text.json");
+            this.gameText = (await this.app.vault.adapter.exists(path)) ? ((JSON.parse(await this.app.vault.adapter.read(path)) as { augments: Record<string, { text: string; partial: boolean }> }).augments ?? {}) : {};
+            this.augs = null;
+        } catch { this.gameText = {}; }
         try {
             const path = normalizePath("_data/changes.json");
             this.changes = (await this.app.vault.adapter.exists(path)) ? (JSON.parse(await this.app.vault.adapter.read(path)) as ChangeData) : null;
@@ -183,7 +189,10 @@ export class Store {
     augments(): Augment[] {
         if (!this.augs) {
             this.augs = this.notes(this.s.augmentFolder).filter((n) => n.fm.type === "augment").map(({ file, fm }) => ({
-                id: num(fm.id), name: str(fm.name, file.basename), rarity: str(fm.rarity), icon: str(fm.icon), effect: str(fm.effect) || this.officialEffect(str(fm.name, file.basename)),
+                id: num(fm.id), name: str(fm.name, file.basename), rarity: str(fm.rarity), icon: str(fm.icon),
+                // hand-written first, then Riot's patch notes (full numbers), then the game's own text (numbers left out, `partial`)
+                effect: str(fm.effect) || this.officialEffect(str(fm.name, file.basename)) || this.gameText[String(num(fm.id))]?.text || "",
+                partial: !str(fm.effect) && !this.officialEffect(str(fm.name, file.basename)) && !!this.gameText[String(num(fm.id))]?.partial,
                 fits: list(fm.fits), tier: str(fm.tier), path: file.path,
             })).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
         }
