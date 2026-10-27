@@ -198,6 +198,24 @@ var Store = class {
     }
     return "";
   }
+  // What Riot's patch notes say about a champion or an item, newest patch first (only patches that mention it)
+  officialFor(kind, name) {
+    const out = [];
+    for (const n of this.riotNotes) {
+      const entry = (kind === "champions" ? n.champions : n.items)?.find((e) => e.name === name);
+      if (entry) out.push({ patch: n.patch, url: n.url, entry });
+    }
+    return out;
+  }
+  // In which patches an augment was added or removed
+  augmentHistory(name) {
+    const out = [];
+    for (const n of this.riotNotes) {
+      if (n.augments_new?.some((a) => a.name === name)) out.push({ patch: n.patch, what: "added" });
+      if (n.augments_removed?.includes(name)) out.push({ patch: n.patch, what: "removed" });
+    }
+    return out;
+  }
   augments() {
     if (!this.augs) {
       this.augs = this.notes(this.s.augmentFolder).filter((n) => n.fm.type === "augment").map(({ file, fm }) => ({
@@ -317,8 +335,209 @@ var Router = class {
 
 // src/settings.ts
 var import_obsidian2 = require("obsidian");
+
+// src/themes.ts
+var THEMES = [
+  { id: "auto", name: "Obsidian (follows your theme)" },
+  {
+    id: "popping",
+    name: "Popping and Locking",
+    dark: {
+      bg: "#1C1D26",
+      surface: "#262836",
+      surface2: "#30334A",
+      text: "#F2E5BC",
+      text2: "#C9C2B2",
+      text3: "#9A8F80",
+      onAccent: "#1C1D26",
+      accent: "#E9892B",
+      positive: "#A3CF7E",
+      negative: "#F7685B",
+      warning: "#F5B83D",
+      info: "#7DB3C9",
+      orange: "#E9892B",
+      purple: "#B995D8",
+      pink: "#D3869B",
+      cyan: "#8EC0B4",
+      line: "rgba(242,229,188,0.11)"
+    },
+    light: {
+      bg: "#F6F0DF",
+      surface: "#FFFBEE",
+      surface2: "#EFE7D0",
+      text: "#2B2A33",
+      text2: "#5C574C",
+      text3: "#766F61",
+      onAccent: "#FFFFFF",
+      accent: "#B5470A",
+      positive: "#3F7A1E",
+      negative: "#B8322A",
+      warning: "#915600",
+      info: "#2D6C8C",
+      orange: "#D9741A",
+      purple: "#8A5DB5",
+      pink: "#C2587A",
+      cyan: "#3F9A8A",
+      line: "rgba(60,48,20,0.13)"
+    }
+  },
+  {
+    id: "ocean",
+    name: "Ocean",
+    dark: {
+      bg: "#101820",
+      surface: "#1A2530",
+      surface2: "#243241",
+      text: "#EAF1F7",
+      text2: "#A9B8C6",
+      text3: "#7F90A0",
+      onAccent: "#0B1218",
+      accent: "#4DB6AC",
+      positive: "#6FCF97",
+      negative: "#EB5757",
+      warning: "#F2C94C",
+      info: "#56CCF2",
+      orange: "#F2994A",
+      purple: "#BB86FC",
+      pink: "#FF7AA8",
+      cyan: "#4DB6AC",
+      line: "rgba(234,241,247,0.11)"
+    },
+    light: {
+      bg: "#F4F8FB",
+      surface: "#FFFFFF",
+      surface2: "#EAF0F5",
+      text: "#14202B",
+      text2: "#4B5C6B",
+      text3: "#66798A",
+      onAccent: "#FFFFFF",
+      accent: "#00796B",
+      positive: "#1B7F46",
+      negative: "#C62828",
+      warning: "#8A6100",
+      info: "#0A6C9A",
+      orange: "#E07B20",
+      purple: "#8E4EC6",
+      pink: "#E0457F",
+      cyan: "#12877B",
+      line: "rgba(20,32,43,0.13)"
+    }
+  },
+  {
+    id: "sakura",
+    name: "Sakura",
+    dark: {
+      bg: "#211922",
+      surface: "#2D2230",
+      surface2: "#3A2C3E",
+      text: "#F7E8F0",
+      text2: "#CDB6C4",
+      text3: "#9C8696",
+      onAccent: "#2A1020",
+      accent: "#FF8FB1",
+      positive: "#9ED8A5",
+      negative: "#FF6B7A",
+      warning: "#F7C873",
+      info: "#8FC5E8",
+      orange: "#FFA776",
+      purple: "#C7A2F0",
+      pink: "#FF8FB1",
+      cyan: "#7DD3CB",
+      line: "rgba(247,232,240,0.11)"
+    },
+    light: {
+      bg: "#FBF3F6",
+      surface: "#FFFFFF",
+      surface2: "#F5E6EC",
+      text: "#2B1B24",
+      text2: "#5E4654",
+      text3: "#7A6270",
+      onAccent: "#FFFFFF",
+      accent: "#C2185B",
+      positive: "#2E7D32",
+      negative: "#C62828",
+      warning: "#8D5B00",
+      info: "#1565A0",
+      orange: "#D2691E",
+      purple: "#7B4DB2",
+      pink: "#C2185B",
+      cyan: "#00796B",
+      line: "rgba(43,27,36,0.13)"
+    }
+  },
+  {
+    id: "forest",
+    name: "Forest",
+    dark: {
+      bg: "#141A16",
+      surface: "#1D2620",
+      surface2: "#27342B",
+      text: "#E6F0E4",
+      text2: "#B0C2B0",
+      text3: "#86998A",
+      onAccent: "#0E1A10",
+      accent: "#8FD19E",
+      positive: "#8FD19E",
+      negative: "#F0776B",
+      warning: "#E8C35C",
+      info: "#7DC4D6",
+      orange: "#E8955A",
+      purple: "#B59AE0",
+      pink: "#DB8CA8",
+      cyan: "#6CC7B5",
+      line: "rgba(230,240,228,0.11)"
+    },
+    light: {
+      bg: "#F2F6EF",
+      surface: "#FFFFFF",
+      surface2: "#E6EEE2",
+      text: "#18241A",
+      text2: "#4A5E4C",
+      text3: "#657A68",
+      onAccent: "#FFFFFF",
+      accent: "#2E7D32",
+      positive: "#2E7D32",
+      negative: "#B3261E",
+      warning: "#8A6100",
+      info: "#0A6C85",
+      orange: "#C9651A",
+      purple: "#6F4AAE",
+      pink: "#B03A6C",
+      cyan: "#00796B",
+      line: "rgba(24,36,26,0.13)"
+    }
+  }
+];
+function themeVars(id, dark) {
+  const t = THEMES.find((x) => x.id === id);
+  const k = t && (dark ? t.dark : t.light);
+  if (!k) return {};
+  return {
+    "--mn-bg": k.bg,
+    "--mn-card": k.surface,
+    "--mn-card-hi": k.surface2,
+    "--mn-text": k.text,
+    "--mn-muted": k.text2,
+    "--mn-faint": k.text3,
+    "--mn-line": k.line,
+    "--mn-accent": k.accent,
+    "--interactive-accent": k.accent,
+    "--text-on-accent": k.onAccent,
+    "--color-green": k.positive,
+    "--color-red": k.negative,
+    "--color-yellow": k.warning,
+    "--color-blue": k.info,
+    "--color-orange": k.orange,
+    "--color-purple": k.purple,
+    "--color-pink": k.pink,
+    "--color-cyan": k.cyan
+  };
+}
+
+// src/settings.ts
 var DEFAULTS = {
   mode: "mayhem",
+  theme: "popping",
   championFolder: "\u82F1\u96C4",
   itemFolder: "\u9053\u5177",
   guideFolder: "\u65B0\u624B\u5165\u9580",
@@ -341,6 +560,13 @@ var MnSettingTab = class extends import_obsidian2.PluginSettingTab {
       for (const id of MODE_ORDER) d.addOption(id, MODES[id].label + (MODES[id].enabled ? "" : " (coming soon)"));
       d.setValue(s.mode).onChange(async (v) => {
         s.mode = v;
+        await save();
+      });
+    });
+    new import_obsidian2.Setting(c).setName("Color theme").setDesc("Colors of the app screen. Follows Obsidian's light / dark.").addDropdown((d) => {
+      for (const t of THEMES) d.addOption(t.id, t.name);
+      d.setValue(s.theme).onChange(async (v) => {
+        s.theme = v;
         await save();
       });
     });
@@ -659,15 +885,40 @@ function badgeColor(items) {
   if (t.mixed || t.buff && t.nerf) return DIR_COLOR.mixed;
   return t.nerf ? DIR_COLOR.nerf : t.buff ? DIR_COLOR.buff : DIR_COLOR.change;
 }
+function officialBlock(parent, list2) {
+  for (const { patch, url, entry } of list2) {
+    const sec = h(parent, "div", "mn-off");
+    const head = h(sec, "div", "mn-off-h");
+    h(head, "span", "mn-off-t", `Riot ${patch} \u7248\u672C\u516C\u544A`);
+    const link = h(head, "button", "mn-off-link", "\u5168\u6587 \u2197");
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      window.open(url);
+    });
+    for (const c of entry.changes) {
+      const line = h(sec, "div", "mn-ent-ch");
+      h(line, "div", "mn-ent-l", c.label);
+      const vals = h(line, "div", "mn-ent-v");
+      h(vals, "span", "mn-chg-old", c.old);
+      h(vals, "span", "mn-chg-arrow", "\u2192");
+      h(vals, "span", "mn-chg-new", c.new);
+    }
+    if (entry.more) h(sec, "div", "mn-gf", `\u9084\u6709 ${entry.more} \u9805,\u898B\u5168\u6587`);
+  }
+}
 function changesBlock(parent, c, ctx) {
-  const patches = ctx.plugin.store.changesOf(c.id);
-  if (!patches.length) return null;
+  const store = ctx.plugin.store;
+  const patches = store.changesOf(c.id);
+  const official = store.officialFor("champions", c.name);
+  if (!patches.length && !official.length) return null;
   const el = h(parent, "div", "mn-chg");
   const head = h(el, "button", "mn-chg-head");
   icon(head, "history", "mn-chg-ic");
-  h(head, "span", "mn-chg-t", `Recent changes \xB7 ${patches.length} patch${patches.length > 1 ? "es" : ""}`);
+  h(head, "span", "mn-chg-t", `Recent changes \xB7 ${official.length || patches.length} patch${(official.length || patches.length) > 1 ? "es" : ""}`);
   const caret = icon(head, "chevron-down", "mn-chg-caret");
   const body = h(el, "div", "mn-chg-body");
+  if (official.length) officialBlock(body, official);
+  if (patches.length) h(body, "div", "mn-chg-sub", "\u8CC7\u6599\u6BD4\u5C0D(\u51B7\u537B\u3001\u6D88\u8017\u3001\u5C04\u7A0B\u3001\u5C6C\u6027)");
   for (const p of patches) {
     h(body, "div", "mn-chg-p", `${p.from} \u2192 ${p.patch}`);
     for (const i of p.items) {
@@ -855,13 +1106,13 @@ function championPicker(parent, ctx) {
     const hits = sorted(all.filter((c) => matches(c) && (!q || c.name.toLowerCase().includes(q) || c.title.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))));
     count.textContent = `${hits.length} / ${all.length}`;
     for (const c of hits) {
-      const tile = h(grid, "button", "mn-tile");
-      const im = h(tile, "img");
+      const tile2 = h(grid, "button", "mn-tile");
+      const im = h(tile2, "img");
       im.src = c.icon;
       im.loading = "lazy";
       im.alt = "";
-      h(tile, "span", "mn-tile-n", c.name);
-      tile.addEventListener("click", (e) => {
+      h(tile2, "span", "mn-tile-n", c.name);
+      tile2.addEventListener("click", (e) => {
         e.preventDefault();
         ctx.openChampion(c.id);
       });
@@ -983,11 +1234,14 @@ function championCard(ctx) {
   for (const r of c.roles) chip(tags, r);
   chip(tags, c.damageType, { color: dmgColor });
   const now = ctx.plugin.store.currentChanges(c.id);
-  if (badgeText(now)) chip(tags, badgeText(now), { color: badgeColor(now), onTap: () => {
+  const openChanges = () => {
     show("skills");
     block?.open();
     block?.el.scrollIntoView({ behavior: "smooth", block: "start" });
-  } });
+  };
+  const official = ctx.plugin.store.officialFor("champions", c.name)[0];
+  if (badgeText(now)) chip(tags, badgeText(now), { color: badgeColor(now), onTap: openChanges });
+  else if (official) chip(tags, `\u{1F4F0} ${official.patch}`, { color: "var(--color-blue)", onTap: openChanges });
   const panel = h(el, "div", "mn-panel");
   radar(panel, [
     { label: "\u7269\u7406", value: c.attack },
@@ -1077,6 +1331,7 @@ var TAG_ZH = {
   Active: "\u4E3B\u52D5",
   Tenacity: "\u97CC\u6027"
 };
+var SUGGESTED = 12;
 function notePage(ctx) {
   const path = String(ctx.frame.params?.path ?? "");
   const file = ctx.app.vault.getAbstractFileByPath(path);
@@ -1108,13 +1363,33 @@ function notePage(ctx) {
   row(group(el), { icon: "pencil", title: "Edit in Obsidian", chevron: true, onTap: () => void ctx.plugin.openPath(path) });
   return { title: file.basename, el };
 }
+var KINDS = [
+  { tag: "\u9B54\u6CD5\u653B\u64CA", re: /魔攻|魔法攻擊|法術強度/, fits: (c) => c.damageType === "\u9B54\u6CD5" || c.damageType === "\u6DF7\u5408" },
+  { tag: "\u7269\u7406\u653B\u64CA", re: /物攻|物理攻擊/, fits: (c) => c.damageType === "\u7269\u7406" || c.damageType === "\u6DF7\u5408" },
+  { tag: "\u666E\u653B", re: /普攻|普通攻擊|攻速|暴擊/, fits: (c) => c.roles.includes("\u5C04\u624B") || c.damageType === "\u7269\u7406" && c.archetypes.includes("\u8FD1\u6230") },
+  { tag: "\u6280\u80FD", re: /技能|大絕|冷卻/, fits: (c) => c.damageType === "\u9B54\u6CD5" || c.roles.includes("\u6CD5\u5E2B") },
+  { tag: "\u751F\u5B58", re: /生命|物防|魔防|護甲|魔抗|韌性|減傷/, fits: (c) => c.roles.includes("\u5766\u514B") || c.roles.includes("\u6230\u58EB") },
+  { tag: "\u8B77\u76FE / \u6CBB\u7642", re: /護盾|治療|回復/, fits: (c) => c.features.includes("\u8B77\u76FE") || c.features.includes("\u6CBB\u7642") || c.roles.includes("\u8F14\u52A9") },
+  { tag: "\u8DD1\u901F / \u4F4D\u79FB", re: /跑速|衝刺|位移/, fits: (c) => c.features.includes("\u4F4D\u79FB") },
+  { tag: "\u63A7\u5834", re: /緩速|暈眩|擊飛|控制|定身|擊退/, fits: (c) => c.features.includes("\u63A7\u5834") }
+];
+function suggest(effect, champions) {
+  const kinds = KINDS.filter((k) => k.re.test(effect));
+  if (!kinds.length) return { tags: [], champions: [] };
+  const need = Math.max(1, Math.ceil(kinds.length * 0.6));
+  const scored = champions.map((c) => ({ c, n: kinds.filter((k) => k.fits(c)).length })).filter((x) => x.n >= need);
+  scored.sort((a, b) => b.n - a.n || a.c.name.localeCompare(b.c.name, "zh-Hant"));
+  return { tags: kinds.map((k) => k.tag), champions: scored.slice(0, SUGGESTED).map((x) => x.c) };
+}
 function augmentPage(ctx) {
-  const a = ctx.plugin.store.augment(Number(ctx.frame.params?.id));
+  const store = ctx.plugin.store;
+  const a = store.augment(Number(ctx.frame.params?.id));
   const el = h(null, "div", "mn-page");
   if (!a) {
     empty(el, { icon: "sparkles", title: "Augment not found" });
     return { title: "", el };
   }
+  const history = store.augmentHistory(a.name);
   const head = h(el, "div", "mn-dhead");
   const im = h(head, "img", "mn-dimg");
   im.src = a.icon;
@@ -1124,16 +1399,48 @@ function augmentPage(ctx) {
   const tags = h(who, "div", "mn-chips");
   chip(tags, a.rarity, { color: RARITY_COLOR[a.rarity] });
   if (a.tier) chip(tags, `\u8A55\u50F9 ${a.tier}`, { color: "var(--color-green)" });
-  const added = ctx.plugin.store.riotNotes.find((n) => n.augments_new?.some((x) => x.name === a.name));
-  if (added) chip(tags, `\u65B0\u589E\u65BC ${added.patch}`, { color: "var(--color-blue)" });
+  const last = history[0];
+  if (last) chip(tags, `${last.what === "added" ? "\u65B0\u589E\u65BC" : "\u79FB\u9664\u65BC"} ${last.patch}`, { color: last.what === "added" ? "var(--color-blue)" : "var(--color-red)" });
   const panel = h(el, "div", "mn-panel mn-dpanel");
-  if (a.effect) h(panel, "p", "mn-dtext", a.effect);
-  else h(panel, "p", "mn-dtext mn-muted", "No effect text yet.");
-  if (a.effect && ctx.plugin.store.officialEffect(a.name) === a.effect) h(panel, "div", "mn-pn-src", "Effect text: Riot Games patch notes");
+  h(panel, "p", "mn-dtext" + (a.effect ? "" : " mn-muted"), a.effect || "No effect text yet.");
+  if (a.effect && store.officialEffect(a.name) === a.effect) h(panel, "div", "mn-pn-src", "Effect text: Riot Games patch notes");
+  const all = store.champions();
+  let tagList = [], list2 = [], label = "";
   if (a.fits.length) {
-    h(el, "div", "mn-gh", "\u9069\u5408");
-    const fits = h(el, "div", "mn-chips");
-    for (const f of a.fits) chip(fits, f);
+    tagList = a.fits;
+    list2 = all.filter((c) => a.fits.some((f) => c.archetypes.includes(f) || c.features.includes(f) || c.roles.includes(f))).slice(0, SUGGESTED);
+    label = "\u4EBA\u5DE5\u6574\u7406";
+  } else if (a.effect) {
+    const s = suggest(a.effect, all);
+    tagList = s.tags;
+    list2 = s.champions;
+    label = "\u4F9D\u6548\u679C\u6587\u5B57\u81EA\u52D5\u63A8\u6E2C,\u50C5\u4F9B\u53C3\u8003";
+  }
+  if (tagList.length) {
+    h(el, "div", "mn-gh", "\u6548\u679C\u91CD\u9EDE");
+    const chips = h(el, "div", "mn-chips");
+    for (const t of tagList) chip(chips, t);
+  }
+  if (list2.length) {
+    h(el, "div", "mn-gh", "\u9069\u5408\u7684\u82F1\u96C4");
+    const grid = h(el, "div", "mn-grid");
+    for (const c of list2) {
+      const tile2 = h(grid, "button", "mn-tile");
+      const t = h(tile2, "img");
+      t.src = c.icon;
+      t.alt = "";
+      h(tile2, "span", "mn-tile-n", c.name);
+      tile2.addEventListener("click", (e) => {
+        e.preventDefault();
+        ctx.openChampion(c.id, "augments");
+      });
+    }
+    h(el, "div", "mn-gf", label);
+  }
+  if (history.length) {
+    h(el, "div", "mn-gh", "\u7248\u672C\u7D00\u9304");
+    const g = group(el);
+    for (const x of history) row(g, { icon: x.what === "added" ? "plus-circle" : "minus-circle", title: x.what === "added" ? "\u65B0\u589E" : "\u79FB\u9664", value: x.patch });
   }
   return { title: a.name, el };
 }
@@ -1159,6 +1466,11 @@ function itemPage(ctx) {
     h(panel, "p", "mn-dtext", item.desc);
   }
   if (item.variantOf) h(el, "div", "mn-gf", "\u9019\u662F ARAM \u5C08\u7528\u7248\u672C,\u50F9\u683C\u8207\u6578\u503C\u548C\u4E00\u822C\u7248\u672C\u4E0D\u540C\u3002");
+  const official = store.officialFor("items", item.name);
+  if (official.length) {
+    h(el, "div", "mn-gh", "\u7248\u672C\u8ABF\u6574");
+    officialBlock(el, official);
+  }
   recipe(el, ctx, "\u5408\u6210\u6750\u6599", item.from.map((id) => store.item(id)).filter((i) => !!i));
   recipe(el, ctx, "\u53EF\u5408\u6210", item.into.map((id) => store.item(id)).filter((i) => !!i));
   return { title: item.name, el };
@@ -1179,64 +1491,6 @@ function recipe(el, ctx, title, items) {
       ctx.openItem(i.id);
     });
   }
-}
-function listPage(ctx) {
-  const kind = String(ctx.frame.params?.kind);
-  const note = ctx.plugin.store.riotNotes.find((n) => n.patch === String(ctx.frame.params?.patch));
-  const el = h(null, "div", "mn-page");
-  const title = kind === "champions" ? "Champions" : kind === "items" ? "Items" : "New augments";
-  h(h(el, "div", "mn-title-row"), "h1", "mn-title", `${title} \xB7 ${note?.patch ?? ""}`);
-  if (!note) {
-    empty(el, { icon: "newspaper", title: "No patch notes" });
-    return { title, el };
-  }
-  const store = ctx.plugin.store;
-  if (kind === "augments") {
-    const byName = new Map(store.augments().map((a) => [a.name, a]));
-    for (const a of note.augments_new ?? []) {
-      const mine = byName.get(a.name);
-      const card = h(el, "div", "mn-ent" + (mine ? " is-tap" : ""));
-      const head = h(card, "div", "mn-ent-head");
-      if (mine) {
-        const im = h(head, "img");
-        im.src = mine.icon;
-        im.alt = "";
-      }
-      h(head, "span", "mn-ent-n", a.name);
-      chip(head, a.rarity, { color: RARITY_COLOR[a.rarity] });
-      if (a.text) h(card, "div", "mn-ent-t", a.text);
-      if (mine) card.addEventListener("click", () => ctx.openAugment(mine.id));
-    }
-    return { title, el };
-  }
-  const entries2 = (kind === "champions" ? note.champions : note.items) ?? [];
-  for (const e of entries2) {
-    const champ = kind === "champions" ? store.champions().find((c) => c.name === e.name) : void 0;
-    const item = kind === "items" ? store.items().find((i) => i.name === e.name) : void 0;
-    const open = champ ? () => ctx.openChampion(champ.id, "skills") : item ? () => ctx.openItem(item.id) : null;
-    const card = h(el, "div", "mn-ent" + (open ? " is-tap" : ""));
-    const head = h(card, "div", "mn-ent-head");
-    const src = champ?.icon ?? item?.icon;
-    if (src) {
-      const im = h(head, "img");
-      im.src = src;
-      im.alt = "";
-    }
-    h(head, "span", "mn-ent-n", e.name);
-    if (open) icon(head, "chevron-right", "mn-row-chev");
-    for (const c of e.changes) {
-      const line = h(card, "div", "mn-ent-ch");
-      h(line, "div", "mn-ent-l", c.label);
-      const vals = h(line, "div", "mn-ent-v");
-      h(vals, "span", "mn-chg-old", c.old);
-      h(vals, "span", "mn-chg-arrow", "\u2192");
-      h(vals, "span", "mn-chg-new", c.new);
-    }
-    if (e.more) h(card, "div", "mn-gf", `+${e.more} more in Riot's notes`);
-    if (open) card.addEventListener("click", open);
-  }
-  if (!entries2.length) empty(el, { icon: "newspaper", title: "Nothing listed" });
-  return { title, el };
 }
 
 // src/pages/handbook.ts
@@ -1293,15 +1547,15 @@ function handbookPage(ctx) {
     });
     const grid = h(out, "div", "mn-ht-grid");
     notes.forEach((n, i) => {
-      const tile = h(grid, "button", "mn-ht");
-      tile.style.setProperty("--c", `var(${TILE_COLORS[i % TILE_COLORS.length]})`);
-      const top = h(tile, "div", "mn-ht-top");
+      const tile2 = h(grid, "button", "mn-ht");
+      tile2.style.setProperty("--c", `var(${TILE_COLORS[i % TILE_COLORS.length]})`);
+      const top = h(tile2, "div", "mn-ht-top");
       icon(h(top, "span", "mn-ht-ic"), n.icon);
       if (read.has(n.file.path)) icon(h(top, "span", "mn-ht-done"), "check");
-      h(tile, "div", "mn-ht-t", n.title);
-      if (n.summary) h(tile, "div", "mn-ht-s", n.summary);
-      h(tile, "div", "mn-ht-m", `${minutes(n.file.stat.size)} \u5206\u9418`);
-      tile.addEventListener("click", (e) => {
+      h(tile2, "div", "mn-ht-t", n.title);
+      if (n.summary) h(tile2, "div", "mn-ht-s", n.summary);
+      h(tile2, "div", "mn-ht-m", `${minutes(n.file.stat.size)} \u5206\u9418`);
+      tile2.addEventListener("click", (e) => {
         e.preventDefault();
         ctx.openNote(n.file.path);
       });
@@ -1312,10 +1566,10 @@ function handbookPage(ctx) {
     const g = notes.find((n) => n.title === GLOSSARY);
     if (!g) return;
     const lines = (await load()).get(g.file.path) ?? [];
-    const entries2 = lines.filter((l) => /[:：]/.test(l));
-    if (!entries2.length || search.value.trim()) return;
+    const entries = lines.filter((l) => /[:：]/.test(l));
+    if (!entries.length || search.value.trim()) return;
     const day = Math.floor(Date.now() / 864e5);
-    const [term, ...rest] = entries2[day % entries2.length].split(/[:：]/);
+    const [term, ...rest] = entries[day % entries.length].split(/[:：]/);
     const card = h(out, "button", "mn-fact");
     h(card, "div", "mn-fact-k", "\u4ECA\u65E5\u5C0F\u77E5\u8B58");
     h(card, "div", "mn-fact-t", term.trim());
@@ -1423,7 +1677,6 @@ function marked(parent, text, q) {
 }
 
 // src/pages/patch.ts
-var SHOWN = 5;
 function patchPage(ctx) {
   const store = ctx.plugin.store;
   const el = page("Patch");
@@ -1436,11 +1689,25 @@ function patchPage(ctx) {
     h(hero, "div", "mn-patch-s", "Run tools/fetch_patch_notes.py to show Riot's patch notes here.");
   }
   if (latest && ctx.plugin.settings.mode === "mayhem") mayhemSection(el, ctx, latest);
-  if (latest?.champions?.length) entries(el, ctx, latest, "champions", "Champions", latest.champions);
-  if (latest?.items?.length) entries(el, ctx, latest, "items", "Items", latest.items);
+  if (latest?.champions?.length) {
+    h(el, "div", "mn-gh", `Champions \xB7 ${latest.champions.length}`);
+    const grid = h(el, "div", "mn-grid");
+    for (const e of latest.champions) {
+      const c = store.champions().find((x) => x.name === e.name);
+      if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "skills"), { badge: e.changes.length + e.more });
+    }
+  }
+  if (latest?.items?.length) {
+    h(el, "div", "mn-gh", `Items \xB7 ${latest.items.length}`);
+    const grid = h(el, "div", "mn-grid");
+    for (const e of latest.items) {
+      const i = store.items().find((x) => x.name === e.name);
+      if (i) tile(grid, i.icon, i.name, () => ctx.openItem(i.id), { badge: e.changes.length + e.more });
+    }
+  }
   if (older.length) {
     const g2 = group(el, "Earlier patches");
-    for (const n of older) row(g2, { icon: "newspaper", title: n.title, sub: n.summary || void 0, value: n.date, chevron: true, onTap: () => window.open(n.url) });
+    for (const n of older) row(g2, { icon: "newspaper", title: n.title, sub: n.summary || void 0, value: n.date, chevron: true, clamp: true, onTap: () => window.open(n.url) });
   }
   const mine = store.patchNotes();
   if (mine.length) {
@@ -1465,6 +1732,20 @@ function patchPage(ctx) {
   }
   return { title: "Patch", el };
 }
+function tile(grid, src, name, onTap, o = {}) {
+  const t = h(grid, "button", "mn-tile" + (o.ring ? " has-ring" : ""));
+  if (o.ring) t.style.setProperty("--ring", o.ring);
+  const im = h(t, "img");
+  im.src = src;
+  im.alt = "";
+  im.loading = "lazy";
+  if (o.badge && o.badge > 1) h(t, "span", "mn-tile-b", `+${o.badge}`);
+  h(t, "span", "mn-tile-n", name);
+  t.addEventListener("click", (e) => {
+    e.preventDefault();
+    onTap();
+  });
+}
 function latestCard(el, n) {
   const card = h(el, "div", "mn-pn");
   if (n.image) {
@@ -1484,46 +1765,23 @@ function latestCard(el, n) {
   });
   h(body, "div", "mn-pn-src", "Riot Games \xB7 \u7248\u672C\u66F4\u65B0\u516C\u544A");
 }
-function seeAll(g, ctx, kind, patch, total) {
-  row(g, { icon: "list", title: `See all ${total}`, chevron: true, onTap: () => ctx.push({ key: "list", title: "Changes", params: { kind, patch } }) });
-}
 function mayhemSection(el, ctx, n) {
   const added = n.augments_new ?? [], removed = n.augments_removed ?? [];
   if (!added.length && !removed.length) return;
   const byName = new Map(ctx.plugin.store.augments().map((a) => [a.name, a]));
   if (added.length) {
-    const g = group(el, `Mayhem \xB7 ${added.length} new augments`);
-    for (const a of added.slice(0, SHOWN)) {
+    h(el, "div", "mn-gh", `Mayhem \xB7 ${added.length} new augments`);
+    const grid = h(el, "div", "mn-grid");
+    for (const a of added) {
       const mine = byName.get(a.name);
-      row(g, { image: mine?.icon, title: a.name, sub: a.text || void 0, value: a.rarity, chevron: !!mine, onTap: mine ? () => ctx.openAugment(mine.id) : void 0, clamp: true });
+      if (mine) tile(grid, mine.icon, a.name, () => ctx.openAugment(mine.id), { ring: RARITY_COLOR[a.rarity] });
     }
-    if (added.length > SHOWN) seeAll(g, ctx, "augments", n.patch, added.length);
   }
   if (removed.length) {
     h(el, "div", "mn-gh", `Removed augments \xB7 ${removed.length}`);
     const chips = h(el, "div", "mn-chips");
     for (const r of removed) chip(chips, r, { color: RARITY_COLOR["\u9280"] });
   }
-}
-function entries(el, ctx, n, kind, title, list2) {
-  const store = ctx.plugin.store;
-  const g = group(el, `${title} \xB7 ${list2.length}`);
-  for (const e of list2.slice(0, SHOWN)) {
-    const champ = kind === "champions" ? store.champions().find((c2) => c2.name === e.name) : void 0;
-    const item = kind === "items" ? store.items().find((i) => i.name === e.name) : void 0;
-    const c = e.changes[0];
-    const extra = e.changes.length - 1 + e.more;
-    row(g, {
-      image: champ?.icon ?? item?.icon,
-      title: e.name,
-      sub: c ? `${c.label}  ${c.old} \u2192 ${c.new}` : void 0,
-      value: extra > 0 ? `+${extra}` : void 0,
-      chevron: true,
-      clamp: true,
-      onTap: champ ? () => ctx.openChampion(champ.id, "skills") : item ? () => ctx.openItem(item.id) : void 0
-    });
-  }
-  if (list2.length > SHOWN) seeAll(g, ctx, kind, n.patch, list2.length);
 }
 
 // src/pages/index.ts
@@ -1543,8 +1801,6 @@ function renderPage(tab, ctx) {
       return itemPage(ctx);
     case "note":
       return notePage(ctx);
-    case "list":
-      return listPage(ctx);
     default:
       return PAGES[tab](ctx);
   }
@@ -1558,6 +1814,7 @@ var MnView = class extends import_obsidian5.ItemView {
     this.plugin = plugin;
     this.scrolls = /* @__PURE__ */ new Map();
     this.shown = "";
+    this.themed = [];
   }
   getViewType() {
     return VIEW_TYPE;
@@ -1579,6 +1836,7 @@ var MnView = class extends import_obsidian5.ItemView {
     c.empty();
     c.addClass("mn-host");
     const app = h(c, "div", "mn-app");
+    this.appEl = app;
     app.toggleClass("is-full", import_obsidian5.Platform.isMobile);
     this.topEl = h(app, "div", "mn-top");
     this.backEl = h(this.topEl, "button", "mn-btn mn-back");
@@ -1589,6 +1847,13 @@ var MnView = class extends import_obsidian5.ItemView {
     });
     this.titleEl = h(this.topEl, "div", "mn-top-title");
     const acts = h(this.topEl, "div", "mn-acts");
+    const themeBtn = h(acts, "button", "mn-btn");
+    themeBtn.setAttribute("aria-label", "Color theme");
+    icon(themeBtn, "palette");
+    themeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      this.themeMenu(e);
+    });
     const modeBtn = h(acts, "button", "mn-btn");
     modeBtn.setAttribute("aria-label", "Mode");
     modeBtn.addEventListener("click", (e) => {
@@ -1599,11 +1864,28 @@ var MnView = class extends import_obsidian5.ItemView {
     this.scrollEl = h(app, "div", "mn-scroll");
     this.registerDomEvent(this.scrollEl, "scroll", () => this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > 36), { passive: true });
     this.tabsEl = h(app, "div", "mn-tabs");
+    this.applyTheme();
+    this.registerEvent(this.app.workspace.on("css-change", () => this.applyTheme()));
     this.buildTabs();
     this.draw();
   }
   async onClose() {
     this.scrolls.clear();
+  }
+  // The chosen colour theme as variables on the app element (none = Obsidian's own colours)
+  applyTheme() {
+    for (const name of this.themed) this.appEl.style.removeProperty(name);
+    const vars = themeVars(this.plugin.settings.theme, document.body.hasClass("theme-dark"));
+    this.themed = Object.keys(vars);
+    for (const [k, v] of Object.entries(vars)) this.appEl.style.setProperty(k, v);
+  }
+  themeMenu(e) {
+    const menu = new import_obsidian5.Menu();
+    for (const t of THEMES) menu.addItem((i) => i.setTitle(t.name).setChecked(this.plugin.settings.theme === t.id).onClick(() => {
+      this.plugin.settings.theme = t.id;
+      void this.plugin.saveTheme();
+    }));
+    menu.showAtMouseEvent(e);
   }
   modeMenu(e) {
     const menu = new import_obsidian5.Menu();
@@ -1667,6 +1949,7 @@ var MnView = class extends import_obsidian5.ItemView {
   // Data or settings changed: redraw from scratch (the mode may have changed the tabs)
   refresh(resetStack = false) {
     if (resetStack) this.router.reset();
+    this.applyTheme();
     this.buildTabs();
     this.draw();
   }
@@ -1803,6 +2086,11 @@ var MorellonomiconPlugin = class extends import_obsidian6.Plugin {
       return;
     }
     await ws.getLeaf("tab").openFile(f, { state: { mode: "preview" } });
+  }
+  // A new colour theme: save and repaint, keeping the page you are on
+  async saveTheme() {
+    await this.saveData(this.settings);
+    this.views().forEach((v) => v.applyTheme());
   }
   // A guide card was opened: remember it without redrawing the screen
   async markRead(path) {

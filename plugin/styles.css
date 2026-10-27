@@ -51,7 +51,7 @@ body.is-mobile:not(.mn-on) .mn-home svg { width: 24px; height: 24px; }
 .mn-acts { justify-self: end; display: flex; }
 
 /* page */
-.mn-scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: none; }
+.mn-scroll { flex: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: none; }
 .mn-page { max-width: 760px; margin: 0 auto; padding: 4px 16px 36px; }
 .mn-title { font-size: 32px; font-weight: 800; line-height: 1.12; letter-spacing: -0.03em; margin: 4px 2px 14px; }
 
@@ -71,6 +71,10 @@ button.mn-chip.is-on { background: color-mix(in srgb, var(--chip) 24%, transpare
 .mn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); gap: 14px 8px; margin-top: 10px; }
 .mn-tile { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 0; transition: transform 0.12s; }
 .mn-tile:active { transform: scale(0.92); }
+.mn-app .mn-tile { position: relative; }
+.mn-tile.has-ring img { border: 2px solid var(--ring); }
+.mn-tile-b { position: absolute; top: -4px; right: 2px; min-width: 20px; padding: 0 5px; border-radius: 10px; text-align: center; font-size: 11px; font-weight: 700; line-height: 20px;
+    background: var(--mn-accent); color: var(--text-on-accent, #fff); }
 .mn-tile img { width: 60px; height: 60px; border-radius: 18px; background: var(--mn-card); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18); border: 1px solid var(--mn-line); }
 .mn-tile-n { font-size: 11px; color: var(--mn-muted); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -120,14 +124,14 @@ button.mn-skill-box.is-on { box-shadow: 0 0 0 3px color-mix(in srgb, var(--chip)
 .mn-sd-up { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--color-green) 12%, transparent); border: 1px solid color-mix(in srgb, var(--color-green) 28%, transparent); }
 .mn-sd-up-t { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--color-green); }
 .mn-sd-up-ic svg { width: 16px; height: 16px; }
-.mn-sd-up .mn-rk { display: grid; grid-template-columns: minmax(88px, 1.5fr) repeat(var(--r, 5), 1fr); gap: 1px 4px; align-items: center; margin: 10px 0 2px; font-variant-numeric: tabular-nums; }
+.mn-rk { display: grid; grid-template-columns: minmax(88px, 1.5fr) repeat(var(--r, 5), 1fr); gap: 1px 4px; align-items: center; margin: 10px 0 2px; font-variant-numeric: tabular-nums; }
 .mn-rk-h { font-size: 11px; color: var(--mn-faint); text-align: center; padding-bottom: 2px; }
 .mn-rk-l { display: flex; flex-direction: column; padding: 7px 0; border-top: 0.5px solid var(--mn-line); }
 .mn-rk-name { font-size: 13px; font-weight: 700; }
 .mn-rk-note { font-size: 11px; color: var(--mn-muted); line-height: 1.25; }
 .mn-rk-v { font-size: 14px; font-weight: 600; text-align: center; padding: 7px 0; border-top: 0.5px solid var(--mn-line); }
 .mn-rk-all { color: var(--mn-text); }
-.mn-sd-desc { margin-top: 6px; }
+.mn-sd-up .mn-sd-desc { margin-top: 6px; }
 .mn-sd-desc { margin: 10px 0 0; font-size: 14px; line-height: 1.55; color: var(--mn-text); -webkit-user-select: text; user-select: text; }
 
 /* lists */
@@ -270,6 +274,11 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rc img { width: 44px; height: 44px; border-radius: 10px; }
 .mn-rc-n { font-size: 12px; text-align: center; line-height: 1.25; }
 .mn-rc-g { font-size: 11px; color: var(--color-yellow); font-variant-numeric: tabular-nums; }
+.mn-off { margin: 10px 0 4px; padding: 10px 12px; border-radius: 12px; background: var(--mn-card-hi); }
+.mn-off-h { display: flex; justify-content: space-between; align-items: center; }
+.mn-off-t { font-size: 12px; font-weight: 700; color: var(--color-blue); }
+.mn-app .mn-off-link { font-size: 12px; color: var(--mn-accent); padding: 2px 4px; }
+.mn-chg-sub { font-size: 12px; font-weight: 700; color: var(--mn-muted); margin: 14px 0 2px; }
 .mn-ent { background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: var(--mn-radius); padding: 14px 16px; margin: 10px 0; }
 .mn-ent.is-tap { cursor: pointer; }
 .mn-ent.is-tap:active { background: var(--mn-card-hi); }
@@ -284,8 +293,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-note h1, .mn-note h2, .mn-note h3 { margin-top: 1.2em; }
 
 /* handbook start page */
-.mn-keys { display: flex; gap: 8px; overflow-x: auto; margin: 10px 0 6px; padding-bottom: 2px; scrollbar-width: none; }
-.mn-keys::-webkit-scrollbar { display: none; }
+.mn-keys { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 6px; }
 .mn-app .mn-key { flex: none; padding: 5px 13px; border-radius: 999px; font-size: 13px; background: var(--mn-card); border: 1px solid var(--mn-line); color: var(--mn-muted); }
 .mn-app .mn-hh { position: relative; display: block; width: 100%; text-align: left; overflow: hidden; margin: 8px 0 8px; padding: 20px 20px 18px;
     border-radius: 24px; color: #fff; background: linear-gradient(135deg, var(--color-purple), var(--color-blue)); box-shadow: var(--mn-shadow); }
@@ -300,8 +308,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-prog-track { flex: 1; height: 6px; border-radius: 3px; background: var(--mn-line); overflow: hidden; }
 .mn-prog-fill { height: 100%; border-radius: 3px; background: var(--color-green); transition: width 0.3s; }
 .mn-prog-t { font-size: 12px; color: var(--mn-muted); font-variant-numeric: tabular-nums; }
-.mn-ht-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-.mn-app .mn-ht { --c: var(--color-blue); display: flex; flex-direction: column; align-items: flex-start; text-align: left; padding: 14px 14px 12px; min-height: 150px; border-radius: 20px;
+.mn-ht-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.mn-app .mn-ht { --c: var(--color-blue); min-width: 0; overflow: hidden; display: flex; flex-direction: column; align-items: flex-start; text-align: left; padding: 14px 14px 12px; min-height: 150px; border-radius: 20px;
     background: linear-gradient(160deg, color-mix(in srgb, var(--c) 24%, var(--mn-card)), var(--mn-card) 70%); border: 1px solid color-mix(in srgb, var(--c) 28%, var(--mn-line)); }
 .mn-app .mn-ht:active { transform: scale(0.97); }
 .mn-ht-top { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px; }

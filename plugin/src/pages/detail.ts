@@ -1,7 +1,8 @@
 import { MarkdownRenderer, TFile } from "obsidian";
-import type { Item, NoteEntry } from "../data/store";
+import type { Champion, Item } from "../data/store";
 import { chip, empty, group, h, icon, row } from "../ui";
 import { RARITY_COLOR } from "./augments";
+import { officialBlock } from "./changes";
 import type { PageCtx, PageOut } from "./index";
 
 const TAG_ZH: Record<string, string> = {
@@ -9,6 +10,7 @@ const TAG_ZH: Record<string, string> = {
     CriticalStrike: "暴擊", AttackSpeed: "攻速", LifeSteal: "生命偷取", SpellVamp: "法術吸血", AbilityHaste: "技能加速", CooldownReduction: "冷卻縮減",
     MagicPenetration: "魔法穿透", ArmorPenetration: "護甲穿透", NonbootsMovement: "移速", Boots: "鞋子", OnHit: "攻擊特效", Active: "主動", Tenacity: "韌性",
 };
+const SUGGESTED = 12;   // champions shown under "適合的英雄"
 
 // ---- a note, drawn inside the app (Handbook cards, our patch notes)
 export function notePage(ctx: PageCtx): PageOut {
@@ -37,11 +39,36 @@ export function notePage(ctx: PageCtx): PageOut {
     return { title: file.basename, el };
 }
 
-// ---- an augment
+// What an augment's effect text is about, and which kinds of champion that helps. A guess from the wording only (the tags and rules
+// are plain and listed here); a hand-written `fits` on the augment note replaces it.
+interface Kind { tag: string; re: RegExp; fits: (c: Champion) => boolean }
+const KINDS: Kind[] = [
+    { tag: "魔法攻擊", re: /魔攻|魔法攻擊|法術強度/, fits: (c) => c.damageType === "魔法" || c.damageType === "混合" },
+    { tag: "物理攻擊", re: /物攻|物理攻擊/, fits: (c) => c.damageType === "物理" || c.damageType === "混合" },
+    { tag: "普攻", re: /普攻|普通攻擊|攻速|暴擊/, fits: (c) => c.roles.includes("射手") || (c.damageType === "物理" && c.archetypes.includes("近戰")) },
+    { tag: "技能", re: /技能|大絕|冷卻/, fits: (c) => c.damageType === "魔法" || c.roles.includes("法師") },
+    { tag: "生存", re: /生命|物防|魔防|護甲|魔抗|韌性|減傷/, fits: (c) => c.roles.includes("坦克") || c.roles.includes("戰士") },
+    { tag: "護盾 / 治療", re: /護盾|治療|回復/, fits: (c) => c.features.includes("護盾") || c.features.includes("治療") || c.roles.includes("輔助") },
+    { tag: "跑速 / 位移", re: /跑速|衝刺|位移/, fits: (c) => c.features.includes("位移") },
+    { tag: "控場", re: /緩速|暈眩|擊飛|控制|定身|擊退/, fits: (c) => c.features.includes("控場") },
+];
+
+function suggest(effect: string, champions: Champion[]): { tags: string[]; champions: Champion[] } {
+    const kinds = KINDS.filter((k) => k.re.test(effect));
+    if (!kinds.length) return { tags: [], champions: [] };
+    const need = Math.max(1, Math.ceil(kinds.length * 0.6));
+    const scored = champions.map((c) => ({ c, n: kinds.filter((k) => k.fits(c)).length })).filter((x) => x.n >= need);
+    scored.sort((a, b) => b.n - a.n || a.c.name.localeCompare(b.c.name, "zh-Hant"));
+    return { tags: kinds.map((k) => k.tag), champions: scored.slice(0, SUGGESTED).map((x) => x.c) };
+}
+
+// ---- an augment: effect, what it is about, which champions suit it, and its history
 export function augmentPage(ctx: PageCtx): PageOut {
-    const a = ctx.plugin.store.augment(Number(ctx.frame.params?.id));
+    const store = ctx.plugin.store;
+    const a = store.augment(Number(ctx.frame.params?.id));
     const el = h(null, "div", "mn-page");
     if (!a) { empty(el, { icon: "sparkles", title: "Augment not found" }); return { title: "", el }; }
+    const history = store.augmentHistory(a.name);
     const head = h(el, "div", "mn-dhead");
     const im = h(head, "img", "mn-dimg"); im.src = a.icon; im.alt = "";
     const who = h(head, "div", "mn-dwho");
@@ -49,22 +76,51 @@ export function augmentPage(ctx: PageCtx): PageOut {
     const tags = h(who, "div", "mn-chips");
     chip(tags, a.rarity, { color: RARITY_COLOR[a.rarity] });
     if (a.tier) chip(tags, `評價 ${a.tier}`, { color: "var(--color-green)" });
-    const added = ctx.plugin.store.riotNotes.find((n) => n.augments_new?.some((x) => x.name === a.name));
-    if (added) chip(tags, `新增於 ${added.patch}`, { color: "var(--color-blue)" });
+    const last = history[0];
+    if (last) chip(tags, `${last.what === "added" ? "新增於" : "移除於"} ${last.patch}`, { color: last.what === "added" ? "var(--color-blue)" : "var(--color-red)" });
 
     const panel = h(el, "div", "mn-panel mn-dpanel");
-    if (a.effect) h(panel, "p", "mn-dtext", a.effect);
-    else h(panel, "p", "mn-dtext mn-muted", "No effect text yet.");
-    if (a.effect && ctx.plugin.store.officialEffect(a.name) === a.effect) h(panel, "div", "mn-pn-src", "Effect text: Riot Games patch notes");
+    h(panel, "p", "mn-dtext" + (a.effect ? "" : " mn-muted"), a.effect || "No effect text yet.");
+    if (a.effect && store.officialEffect(a.name) === a.effect) h(panel, "div", "mn-pn-src", "Effect text: Riot Games patch notes");
+
+    // which champions suit it: the hand-written `fits` when there is one, else a guess from the wording
+    const all = store.champions();
+    let tagList: string[] = [], list: Champion[] = [], label = "";
     if (a.fits.length) {
-        h(el, "div", "mn-gh", "適合");
-        const fits = h(el, "div", "mn-chips");
-        for (const f of a.fits) chip(fits, f);
+        tagList = a.fits;
+        list = all.filter((c) => a.fits.some((f) => c.archetypes.includes(f) || c.features.includes(f) || c.roles.includes(f))).slice(0, SUGGESTED);
+        label = "人工整理";
+    } else if (a.effect) {
+        const s = suggest(a.effect, all);
+        tagList = s.tags;
+        list = s.champions;
+        label = "依效果文字自動推測,僅供參考";
+    }
+    if (tagList.length) {
+        h(el, "div", "mn-gh", "效果重點");
+        const chips = h(el, "div", "mn-chips");
+        for (const t of tagList) chip(chips, t);
+    }
+    if (list.length) {
+        h(el, "div", "mn-gh", "適合的英雄");
+        const grid = h(el, "div", "mn-grid");
+        for (const c of list) {
+            const tile = h(grid, "button", "mn-tile");
+            const t = h(tile, "img"); t.src = c.icon; t.alt = "";
+            h(tile, "span", "mn-tile-n", c.name);
+            tile.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id, "augments"); });
+        }
+        h(el, "div", "mn-gf", label);
+    }
+    if (history.length) {
+        h(el, "div", "mn-gh", "版本紀錄");
+        const g = group(el);
+        for (const x of history) row(g, { icon: x.what === "added" ? "plus-circle" : "minus-circle", title: x.what === "added" ? "新增" : "移除", value: x.patch });
     }
     return { title: a.name, el };
 }
 
-// ---- an item, with what it is built from and what it builds into
+// ---- an item: effect, what it is built from and builds into, and what Riot changed in it
 export function itemPage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const item = store.item(Number(ctx.frame.params?.id));
@@ -80,6 +136,8 @@ export function itemPage(ctx: PageCtx): PageOut {
 
     if (item.desc) { const panel = h(el, "div", "mn-panel mn-dpanel"); h(panel, "p", "mn-dtext", item.desc); }
     if (item.variantOf) h(el, "div", "mn-gf", "這是 ARAM 專用版本,價格與數值和一般版本不同。");
+    const official = store.officialFor("items", item.name);
+    if (official.length) { h(el, "div", "mn-gh", "版本調整"); officialBlock(el, official); }
     recipe(el, ctx, "合成材料", item.from.map((id) => store.item(id)).filter((i): i is Item => !!i));
     recipe(el, ctx, "可合成", item.into.map((id) => store.item(id)).filter((i): i is Item => !!i));
     return { title: item.name, el };
@@ -96,55 +154,4 @@ function recipe(el: HTMLElement, ctx: PageCtx, title: string, items: Item[]): vo
         h(b, "span", "mn-rc-g", `${i.goldTotal}`);
         b.addEventListener("click", (e) => { e.preventDefault(); ctx.openItem(i.id); });
     }
-}
-
-// ---- "Show all": a full page of a patch's changes, one card each with the numbers laid out in full
-export function listPage(ctx: PageCtx): PageOut {
-    const kind = String(ctx.frame.params?.kind);
-    const note = ctx.plugin.store.riotNotes.find((n) => n.patch === String(ctx.frame.params?.patch));
-    const el = h(null, "div", "mn-page");
-    const title = kind === "champions" ? "Champions" : kind === "items" ? "Items" : "New augments";
-    h(h(el, "div", "mn-title-row"), "h1", "mn-title", `${title} · ${note?.patch ?? ""}`);
-    if (!note) { empty(el, { icon: "newspaper", title: "No patch notes" }); return { title, el }; }
-    const store = ctx.plugin.store;
-
-    if (kind === "augments") {
-        const byName = new Map(store.augments().map((a) => [a.name, a]));
-        for (const a of note.augments_new ?? []) {
-            const mine = byName.get(a.name);
-            const card = h(el, "div", "mn-ent" + (mine ? " is-tap" : ""));
-            const head = h(card, "div", "mn-ent-head");
-            if (mine) { const im = h(head, "img"); im.src = mine.icon; im.alt = ""; }
-            h(head, "span", "mn-ent-n", a.name);
-            chip(head, a.rarity, { color: RARITY_COLOR[a.rarity] });
-            if (a.text) h(card, "div", "mn-ent-t", a.text);
-            if (mine) card.addEventListener("click", () => ctx.openAugment(mine.id));
-        }
-        return { title, el };
-    }
-
-    const entries: NoteEntry[] = (kind === "champions" ? note.champions : note.items) ?? [];
-    for (const e of entries) {
-        const champ = kind === "champions" ? store.champions().find((c) => c.name === e.name) : undefined;
-        const item = kind === "items" ? store.items().find((i) => i.name === e.name) : undefined;
-        const open = champ ? () => ctx.openChampion(champ.id, "skills") : item ? () => ctx.openItem(item.id) : null;
-        const card = h(el, "div", "mn-ent" + (open ? " is-tap" : ""));
-        const head = h(card, "div", "mn-ent-head");
-        const src = champ?.icon ?? item?.icon;
-        if (src) { const im = h(head, "img"); im.src = src; im.alt = ""; }
-        h(head, "span", "mn-ent-n", e.name);
-        if (open) icon(head, "chevron-right", "mn-row-chev");
-        for (const c of e.changes) {
-            const line = h(card, "div", "mn-ent-ch");
-            h(line, "div", "mn-ent-l", c.label);
-            const vals = h(line, "div", "mn-ent-v");
-            h(vals, "span", "mn-chg-old", c.old);
-            h(vals, "span", "mn-chg-arrow", "→");
-            h(vals, "span", "mn-chg-new", c.new);
-        }
-        if (e.more) h(card, "div", "mn-gf", `+${e.more} more in Riot's notes`);
-        if (open) card.addEventListener("click", open);
-    }
-    if (!entries.length) empty(el, { icon: "newspaper", title: "Nothing listed" });
-    return { title, el };
 }

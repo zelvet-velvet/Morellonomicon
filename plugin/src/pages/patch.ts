@@ -1,12 +1,11 @@
-import type { NoteEntry, PatchNote } from "../data/store";
+import type { PatchNote } from "../data/store";
 import { chip, empty, group, h, page, row } from "../ui";
 import { RARITY_COLOR } from "./augments";
 import type { PageCtx, PageOut } from "./index";
 
-const SHOWN = 5;   // rows on the tab itself; "See all" opens a full page
-
-// The Patch tab: Riot's latest patch notes in short (blurb, headline image, what changed in Mayhem, champions and items, a link to the
-// full notes), earlier patches, our own patch notes, and the tips / builds written for an older patch.
+// The Patch tab: Riot's latest patch notes in short (blurb, headline image, a link to the full notes), then icon grids of what changed
+// (new Mayhem augments, champions, items). One tap on an icon opens that augment / champion / item, whose own page shows the details:
+// no list pages in between. Then earlier patches, our own patch notes, and the tips / builds written for an older patch.
 export function patchPage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const el = page("Patch");
@@ -21,12 +20,27 @@ export function patchPage(ctx: PageCtx): PageOut {
     }
 
     if (latest && ctx.plugin.settings.mode === "mayhem") mayhemSection(el, ctx, latest);
-    if (latest?.champions?.length) entries(el, ctx, latest, "champions", "Champions", latest.champions);
-    if (latest?.items?.length) entries(el, ctx, latest, "items", "Items", latest.items);
+
+    if (latest?.champions?.length) {
+        h(el, "div", "mn-gh", `Champions · ${latest.champions.length}`);
+        const grid = h(el, "div", "mn-grid");
+        for (const e of latest.champions) {
+            const c = store.champions().find((x) => x.name === e.name);
+            if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "skills"), { badge: e.changes.length + e.more });
+        }
+    }
+    if (latest?.items?.length) {
+        h(el, "div", "mn-gh", `Items · ${latest.items.length}`);
+        const grid = h(el, "div", "mn-grid");
+        for (const e of latest.items) {
+            const i = store.items().find((x) => x.name === e.name);
+            if (i) tile(grid, i.icon, i.name, () => ctx.openItem(i.id), { badge: e.changes.length + e.more });
+        }
+    }
 
     if (older.length) {
         const g = group(el, "Earlier patches");
-        for (const n of older) row(g, { icon: "newspaper", title: n.title, sub: n.summary || undefined, value: n.date, chevron: true, onTap: () => window.open(n.url) });
+        for (const n of older) row(g, { icon: "newspaper", title: n.title, sub: n.summary || undefined, value: n.date, chevron: true, clamp: true, onTap: () => window.open(n.url) });
     }
     const mine = store.patchNotes();
     if (mine.length) {
@@ -47,6 +61,16 @@ export function patchPage(ctx: PageCtx): PageOut {
     return { title: "Patch", el };
 }
 
+// An icon with its name under it; `badge` is the number of changes, `ring` an outline colour (rarity)
+function tile(grid: HTMLElement, src: string, name: string, onTap: () => void, o: { badge?: number; ring?: string } = {}): void {
+    const t = h(grid, "button", "mn-tile" + (o.ring ? " has-ring" : ""));
+    if (o.ring) t.style.setProperty("--ring", o.ring);
+    const im = h(t, "img"); im.src = src; im.alt = ""; im.loading = "lazy";
+    if (o.badge && o.badge > 1) h(t, "span", "mn-tile-b", `+${o.badge}`);
+    h(t, "span", "mn-tile-n", name);
+    t.addEventListener("click", (e) => { e.preventDefault(); onTap(); });
+}
+
 function latestCard(el: HTMLElement, n: PatchNote): void {
     const card = h(el, "div", "mn-pn");
     if (n.image) { const im = h(card, "img", "mn-pn-img"); im.src = n.image; im.alt = ""; im.loading = "lazy"; }
@@ -59,40 +83,21 @@ function latestCard(el: HTMLElement, n: PatchNote): void {
     h(body, "div", "mn-pn-src", "Riot Games · 版本更新公告");
 }
 
-function seeAll(g: HTMLElement, ctx: PageCtx, kind: string, patch: string, total: number): void {
-    row(g, { icon: "list", title: `See all ${total}`, chevron: true, onTap: () => ctx.push({ key: "list", title: "Changes", params: { kind, patch } }) });
-}
-
 function mayhemSection(el: HTMLElement, ctx: PageCtx, n: PatchNote): void {
     const added = n.augments_new ?? [], removed = n.augments_removed ?? [];
     if (!added.length && !removed.length) return;
     const byName = new Map(ctx.plugin.store.augments().map((a) => [a.name, a]));
     if (added.length) {
-        const g = group(el, `Mayhem · ${added.length} new augments`);
-        for (const a of added.slice(0, SHOWN)) {
+        h(el, "div", "mn-gh", `Mayhem · ${added.length} new augments`);
+        const grid = h(el, "div", "mn-grid");
+        for (const a of added) {
             const mine = byName.get(a.name);
-            row(g, { image: mine?.icon, title: a.name, sub: a.text || undefined, value: a.rarity, chevron: !!mine, onTap: mine ? () => ctx.openAugment(mine.id) : undefined, clamp: true });
+            if (mine) tile(grid, mine.icon, a.name, () => ctx.openAugment(mine.id), { ring: RARITY_COLOR[a.rarity] });
         }
-        if (added.length > SHOWN) seeAll(g, ctx, "augments", n.patch, added.length);
     }
     if (removed.length) {
         h(el, "div", "mn-gh", `Removed augments · ${removed.length}`);
         const chips = h(el, "div", "mn-chips");
         for (const r of removed) chip(chips, r, { color: RARITY_COLOR["銀"] });
     }
-}
-
-// One row per champion / item: the first change on a single line; the full numbers are on the "See all" page.
-function entries(el: HTMLElement, ctx: PageCtx, n: PatchNote, kind: "champions" | "items", title: string, list: NoteEntry[]): void {
-    const store = ctx.plugin.store;
-    const g = group(el, `${title} · ${list.length}`);
-    for (const e of list.slice(0, SHOWN)) {
-        const champ = kind === "champions" ? store.champions().find((c) => c.name === e.name) : undefined;
-        const item = kind === "items" ? store.items().find((i) => i.name === e.name) : undefined;
-        const c = e.changes[0];
-        const extra = e.changes.length - 1 + e.more;
-        row(g, { image: champ?.icon ?? item?.icon, title: e.name, sub: c ? `${c.label}  ${c.old} → ${c.new}` : undefined, value: extra > 0 ? `+${extra}` : undefined, chevron: true, clamp: true,
-            onTap: champ ? () => ctx.openChampion(champ.id, "skills") : item ? () => ctx.openItem(item.id) : undefined });
-    }
-    if (list.length > SHOWN) seeAll(g, ctx, kind, n.patch, list.length);
 }

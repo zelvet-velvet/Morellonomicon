@@ -4,7 +4,7 @@ import type { Frame } from "../router";
 import type { TabId } from "../modes";
 import { augmentsPage } from "./augments";
 import { championCard, championsPage, type SubTab } from "./champions";
-import { augmentPage, itemPage, listPage, notePage } from "./detail";
+import { augmentPage, itemPage, notePage } from "./detail";
 import { handbookPage } from "./handbook";
 import { patchPage } from "./patch";
 
@@ -40,7 +40,6 @@ export function renderPage(tab: TabId, ctx: PageCtx): PageOut {
         case "augment": return augmentPage(ctx);
         case "item": return itemPage(ctx);
         case "note": return notePage(ctx);
-        case "list": return listPage(ctx);
         default: return PAGES[tab](ctx);
     }
 }

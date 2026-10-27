@@ -1,6 +1,7 @@
 import { ItemView, Menu, Platform, WorkspaceLeaf } from "obsidian";
 import type MorellonomiconPlugin from "./main";
 import { MODES, MODE_ORDER, TAB_ICON, TAB_LABEL, TabId } from "./modes";
+import { THEMES, themeVars } from "./themes";
 import { PageOut, renderPage } from "./pages";
 import { rememberSub } from "./pages/champions";
 import type { Frame } from "./router";
@@ -11,6 +12,7 @@ export const VIEW_TYPE = "morellonomicon";
 // The app screen: top bar (back, title, mode switch), page area, tab bar. A page is drawn in one step when a tab, a detail page
 // or the data changes; scroll positions are kept per page so Back returns to where you were.
 export class MnView extends ItemView {
+    private appEl!: HTMLElement;
     private topEl!: HTMLElement;
     private backEl!: HTMLButtonElement;
     private titleEl!: HTMLElement;
@@ -33,6 +35,7 @@ export class MnView extends ItemView {
         c.empty();
         c.addClass("mn-host");
         const app = h(c, "div", "mn-app");
+        this.appEl = app;
         app.toggleClass("is-full", Platform.isMobile);   // phone: the app covers the display and adds the status-bar space itself
         this.topEl = h(app, "div", "mn-top");
         this.backEl = h(this.topEl, "button", "mn-btn mn-back");
@@ -40,6 +43,10 @@ export class MnView extends ItemView {
         this.backEl.addEventListener("click", (e) => { e.preventDefault(); this.back(); });
         this.titleEl = h(this.topEl, "div", "mn-top-title");
         const acts = h(this.topEl, "div", "mn-acts");
+        const themeBtn = h(acts, "button", "mn-btn");
+        themeBtn.setAttribute("aria-label", "Color theme");
+        icon(themeBtn, "palette");
+        themeBtn.addEventListener("click", (e) => { e.preventDefault(); this.themeMenu(e); });
         const modeBtn = h(acts, "button", "mn-btn");
         modeBtn.setAttribute("aria-label", "Mode");
         modeBtn.addEventListener("click", (e) => { e.preventDefault(); this.modeMenu(e); });
@@ -47,6 +54,8 @@ export class MnView extends ItemView {
         this.scrollEl = h(app, "div", "mn-scroll");
         this.registerDomEvent(this.scrollEl, "scroll", () => this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > 36), { passive: true });
         this.tabsEl = h(app, "div", "mn-tabs");
+        this.applyTheme();
+        this.registerEvent(this.app.workspace.on("css-change", () => this.applyTheme()));   // Obsidian switched light / dark
         this.buildTabs();
         this.draw();
     }
@@ -54,6 +63,21 @@ export class MnView extends ItemView {
     async onClose(): Promise<void> { this.scrolls.clear(); }
 
     private modeBtn!: HTMLElement;
+
+    // The chosen colour theme as variables on the app element (none = Obsidian's own colours)
+    applyTheme(): void {
+        for (const name of this.themed) this.appEl.style.removeProperty(name);
+        const vars = themeVars(this.plugin.settings.theme, document.body.hasClass("theme-dark"));
+        this.themed = Object.keys(vars);
+        for (const [k, v] of Object.entries(vars)) this.appEl.style.setProperty(k, v);
+    }
+    private themed: string[] = [];
+
+    private themeMenu(e: MouseEvent): void {
+        const menu = new Menu();
+        for (const t of THEMES) menu.addItem((i) => i.setTitle(t.name).setChecked(this.plugin.settings.theme === t.id).onClick(() => { this.plugin.settings.theme = t.id; void this.plugin.saveTheme(); }));
+        menu.showAtMouseEvent(e);
+    }
 
     private modeMenu(e: MouseEvent): void {
         const menu = new Menu();
@@ -103,6 +127,7 @@ export class MnView extends ItemView {
     // Data or settings changed: redraw from scratch (the mode may have changed the tabs)
     refresh(resetStack = false): void {
         if (resetStack) this.router.reset();
+        this.applyTheme();
         this.buildTabs();
         this.draw();
     }

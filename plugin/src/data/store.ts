@@ -160,6 +160,26 @@ export class Store {
         return "";
     }
 
+    // What Riot's patch notes say about a champion or an item, newest patch first (only patches that mention it)
+    officialFor(kind: "champions" | "items", name: string): { patch: string; url: string; entry: NoteEntry }[] {
+        const out: { patch: string; url: string; entry: NoteEntry }[] = [];
+        for (const n of this.riotNotes) {
+            const entry = (kind === "champions" ? n.champions : n.items)?.find((e) => e.name === name);
+            if (entry) out.push({ patch: n.patch, url: n.url, entry });
+        }
+        return out;
+    }
+
+    // In which patches an augment was added or removed
+    augmentHistory(name: string): { patch: string; what: "added" | "removed" }[] {
+        const out: { patch: string; what: "added" | "removed" }[] = [];
+        for (const n of this.riotNotes) {
+            if (n.augments_new?.some((a) => a.name === name)) out.push({ patch: n.patch, what: "added" });
+            if (n.augments_removed?.includes(name)) out.push({ patch: n.patch, what: "removed" });
+        }
+        return out;
+    }
+
     augments(): Augment[] {
         if (!this.augs) {
             this.augs = this.notes(this.s.augmentFolder).filter((n) => n.fm.type === "augment").map(({ file, fm }) => ({

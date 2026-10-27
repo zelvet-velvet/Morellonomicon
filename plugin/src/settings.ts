@@ -1,9 +1,11 @@
 import { App, Platform, PluginSettingTab, Setting } from "obsidian";
 import type MorellonomiconPlugin from "./main";
 import { MODES, MODE_ORDER, ModeId } from "./modes";
+import { THEMES } from "./themes";
 
 export interface MnSettings {
     mode: ModeId;
+    theme: string;             // colour theme id (themes.ts)
     championFolder: string;   // vault-relative folders holding the generated notes (tools/fetch_data.py)
     itemFolder: string;
     guideFolder: string;
@@ -15,6 +17,7 @@ export interface MnSettings {
 
 export const DEFAULTS: MnSettings = {
     mode: "mayhem",
+    theme: "popping",
     championFolder: "英雄",
     itemFolder: "道具",
     guideFolder: "新手入門",
@@ -36,6 +39,11 @@ export class MnSettingTab extends PluginSettingTab {
             .addDropdown((d) => {
                 for (const id of MODE_ORDER) d.addOption(id, MODES[id].label + (MODES[id].enabled ? "" : " (coming soon)"));
                 d.setValue(s.mode).onChange(async (v) => { s.mode = v as ModeId; await save(); });
+            });
+        new Setting(c).setName("Color theme").setDesc("Colors of the app screen. Follows Obsidian's light / dark.")
+            .addDropdown((d) => {
+                for (const t of THEMES) d.addOption(t.id, t.name);
+                d.setValue(s.theme).onChange(async (v) => { s.theme = v; await save(); });
             });
         const folder = (name: string, desc: string, key: "championFolder" | "itemFolder" | "guideFolder" | "augmentFolder" | "patchFolder") =>
             new Setting(c).setName(name).setDesc(desc)

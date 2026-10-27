@@ -144,7 +144,10 @@ export function championCard(ctx: PageCtx): PageOut {
     for (const r of c.roles) chip(tags, r);
     chip(tags, c.damageType, { color: dmgColor });
     const now = ctx.plugin.store.currentChanges(c.id);
-    if (badgeText(now)) chip(tags, badgeText(now), { color: badgeColor(now), onTap: () => { show("skills"); block?.open(); block?.el.scrollIntoView({ behavior: "smooth", block: "start" }); } });
+    const openChanges = () => { show("skills"); block?.open(); block?.el.scrollIntoView({ behavior: "smooth", block: "start" }); };
+    const official = ctx.plugin.store.officialFor("champions", c.name)[0];
+    if (badgeText(now)) chip(tags, badgeText(now), { color: badgeColor(now), onTap: openChanges });
+    else if (official) chip(tags, `📰 ${official.patch}`, { color: "var(--color-blue)", onTap: openChanges });
 
     // 射程 is derived from the attack range (650 = full); the other four are Riot's own 1-10 ratings
     const panel = h(el, "div", "mn-panel");

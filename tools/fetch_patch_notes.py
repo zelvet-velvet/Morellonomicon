@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Read Riot's official zh-TW patch notes and write a short summary of each into _data/patches.json.
 
-    python3 tools/fetch_patch_notes.py            # the last 3 patches
-    python3 tools/fetch_patch_notes.py --patches 6 --refresh
+    python3 tools/fetch_patch_notes.py            # the last 12 patches
+    python3 tools/fetch_patch_notes.py --patches 24 --refresh
 
 Per patch: Riot's own one-line blurb, the headline image's address (the app shows it from Riot's site; it is not copied into
 the repo), a link to the full notes, and a short list of what changed: champions and items (name, the numbers before => after),
@@ -172,7 +172,7 @@ def mayhem(lines):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--patches", type=int, default=3)
+    ap.add_argument("--patches", type=int, default=12)
     ap.add_argument("--refresh", action="store_true", help="download the pages again")
     args = ap.parse_args()
     listing = articles(next_data(get(LIST_URL, "list.html", True)))

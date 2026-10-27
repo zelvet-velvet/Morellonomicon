@@ -95,6 +95,12 @@ export default class MorellonomiconPlugin extends Plugin {
         await ws.getLeaf("tab").openFile(f, { state: { mode: "preview" } });
     }
 
+    // A new colour theme: save and repaint, keeping the page you are on
+    async saveTheme(): Promise<void> {
+        await this.saveData(this.settings);
+        this.views().forEach((v) => v.applyTheme());
+    }
+
     // A guide card was opened: remember it without redrawing the screen
     async markRead(path: string): Promise<void> {
         if (this.settings.read.includes(path)) return;
