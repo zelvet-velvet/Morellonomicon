@@ -914,11 +914,19 @@ function tagRow(parent, c, only) {
   return row2;
 }
 var KINDS = ["\u7269\u7406", "\u9B54\u6CD5", "\u771F\u5BE6"];
-function baseDamage(c) {
-  const out = { \u7269\u7406: 0, \u9B54\u6CD5: 0, \u771F\u5BE6: 0 };
-  for (const s of c.skills) for (const k of KINDS) {
-    const best = Math.max(0, ...s.rows.filter((r) => r.label.startsWith(`${k}\u50B7\u5BB3`)).map((r) => parseFloat(r.vals[r.vals.length - 1]) || 0));
-    out[k] += best;
+var lastNum = (s) => parseFloat(s.split("/").pop() ?? "") || 0;
+function damageLines(c) {
+  const out = [];
+  for (const s of c.skills) for (const kind of KINDS) {
+    const rows = s.rows.filter((r) => r.label.startsWith(`${kind}\u50B7\u5BB3`));
+    if (!rows.length) continue;
+    const best = rows.reduce((x, y) => lastNum(y.vals[y.vals.length - 1]) > lastNum(x.vals[x.vals.length - 1]) ? y : x);
+    let ad = 0, ap = 0;
+    for (const m of best.note.matchAll(/\+([\d./]+)%\s*(額外物理攻擊|物理攻擊|魔法攻擊)/g)) {
+      if (m[2] === "\u9B54\u6CD5\u653B\u64CA") ap += lastNum(m[1]);
+      else ad += lastNum(m[1]);
+    }
+    out.push({ key: s.key, name: s.name, kind, base: lastNum(best.vals[best.vals.length - 1]), ad, ap });
   }
   return out;
 }
@@ -926,28 +934,41 @@ function factsStrip(parent, c) {
   const strip2 = h(parent, "div", "mn-fs");
   const dmg = h(strip2, "div", "mn-fs-dmg");
   const head = h(dmg, "div", "mn-fs-row");
-  h(head, "span", "mn-fs-l", "\u50B7\u5BB3");
-  h(head, "span", "mn-fs-hint", "\u6280\u80FD\u6EFF\u7D1A\u57FA\u790E\u50B7\u5BB3");
-  const base = baseDamage(c);
-  const total = KINDS.reduce((n, k) => n + base[k], 0);
-  const shown = KINDS.filter((k) => base[k] > 0 || c.skillDamage.includes(k));
-  const bar = h(dmg, "div", "mn-stack");
-  const legend = h(dmg, "div", "mn-stack-l");
-  for (const k of shown) {
-    const pct2 = total ? Math.round(base[k] / total * 100) : 0;
-    if (pct2 > 0) {
+  h(head, "span", "mn-fs-l", "\u6280\u80FD\u50B7\u5BB3");
+  h(head, "span", "mn-fs-hint", "\u6EFF\u7D1A\u57FA\u790E \xB7 \u52A0\u6210");
+  const lines = damageLines(c);
+  if (!lines.length) h(dmg, "div", "mn-fs-hint", "\u6C92\u6709\u50B7\u5BB3\u6280\u80FD");
+  const list2 = h(dmg, "div", "mn-dl");
+  for (const d of lines) {
+    const row2 = h(list2, "div", "mn-dl-r");
+    h(row2, "span", "mn-dl-key", d.key);
+    h(row2, "span", "mn-dl-name", d.name);
+    const kind = h(row2, "span", "mn-dl-kind", d.kind);
+    kind.style.color = DAMAGE_COLOR[d.kind] ?? "inherit";
+    h(row2, "span", "mn-dl-base", d.base ? Math.round(d.base).toLocaleString() : "\u2014");
+    h(row2, "span", "mn-dl-sc", [d.ad ? `+${d.ad}% \u7269\u653B` : "", d.ap ? `+${d.ap}% \u9B54\u653B` : ""].filter(Boolean).join("  "));
+  }
+  const ad = lines.reduce((n, d) => n + d.ad, 0), ap = lines.reduce((n, d) => n + d.ap, 0);
+  if (ad + ap > 0) {
+    const foot = h(dmg, "div", "mn-fs-row mn-dl-foot");
+    h(foot, "span", "mn-fs-l", "\u52A0\u6210\u5408\u8A08");
+    const sum = h(foot, "span", "mn-dl-sum");
+    if (ad) {
+      const x = h(sum, "span", "", `\u7269\u653B ${ad}%`);
+      x.style.color = DAMAGE_COLOR["\u7269\u7406"];
+    }
+    if (ad && ap) h(sum, "span", "mn-fs-hint", " \xB7 ");
+    if (ap) {
+      const x = h(sum, "span", "", `\u9B54\u653B ${ap}%`);
+      x.style.color = DAMAGE_COLOR["\u9B54\u6CD5"];
+    }
+    const bar = h(dmg, "div", "mn-stack");
+    for (const [v2, k] of [[ad, "\u7269\u7406"], [ap, "\u9B54\u6CD5"]]) if (v2) {
       const seg = h(bar, "i");
-      seg.style.flex = String(pct2);
+      seg.style.flex = String(v2);
       seg.style.background = DAMAGE_COLOR[k];
     }
-    const item = h(legend, "div", "mn-stack-i");
-    const dot = h(item, "span", "mn-stack-d");
-    dot.style.background = DAMAGE_COLOR[k];
-    h(item, "span", "mn-stack-k", k);
-    h(item, "span", "mn-stack-p", `${pct2}%`);
-    h(item, "span", "mn-stack-v", base[k] > 0 ? Math.round(base[k]).toLocaleString() : "\u53EA\u9760\u52A0\u6210");
   }
-  if (!shown.length) h(legend, "div", "mn-fs-hint", "\u6C92\u6709\u50B7\u5BB3\u6280\u80FD");
   const pair = h(strip2, "div", "mn-fs-pair");
   const cell = (label) => {
     const d = h(pair, "div", "mn-fs-c");

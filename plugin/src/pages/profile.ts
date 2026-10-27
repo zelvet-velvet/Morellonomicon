@@ -118,41 +118,57 @@ export function tagRow(parent: HTMLElement, c: Champion, only?: string[]): HTMLE
     return row;
 }
 
-// Base damage at max rank by damage type: per skill the biggest line of each type (a skill can list the same hit twice, e.g. per
-// dagger and in total), summed over the skills. Scaling (+% AD / AP) is not in it, so a type a skill deals only through scaling shows 0.
+// Each damaging ability at max rank: its damage type, base damage and how it scales (+% 物攻 / 魔攻, from the skill's rank grid).
+// A skill can list the same hit twice (per dagger and in total): the biggest line of each type is the one shown.
 const KINDS = ["物理", "魔法", "真實"] as const;
-export function baseDamage(c: Champion): Record<(typeof KINDS)[number], number> {
-    const out = { 物理: 0, 魔法: 0, 真實: 0 };
-    for (const s of c.skills) for (const k of KINDS) {
-        const best = Math.max(0, ...s.rows.filter((r) => r.label.startsWith(`${k}傷害`)).map((r) => parseFloat(r.vals[r.vals.length - 1]) || 0));
-        out[k] += best;
+export interface DamageLine { key: string; name: string; kind: string; base: number; ad: number; ap: number }
+const lastNum = (s: string): number => parseFloat(s.split("/").pop() ?? "") || 0;   // "75/85/95" -> 95 (max rank)
+export function damageLines(c: Champion): DamageLine[] {
+    const out: DamageLine[] = [];
+    for (const s of c.skills) for (const kind of KINDS) {
+        const rows = s.rows.filter((r) => r.label.startsWith(`${kind}傷害`));
+        if (!rows.length) continue;
+        const best = rows.reduce((x, y) => (lastNum(y.vals[y.vals.length - 1]) > lastNum(x.vals[x.vals.length - 1]) ? y : x));
+        let ad = 0, ap = 0;
+        for (const m of best.note.matchAll(/\+([\d./]+)%\s*(額外物理攻擊|物理攻擊|魔法攻擊)/g)) {
+            if (m[2] === "魔法攻擊") ap += lastNum(m[1]); else ad += lastNum(m[1]);
+        }
+        out.push({ key: s.key, name: s.name, kind, base: lastNum(best.vals[best.vals.length - 1]), ad, ap });
     }
     return out;
 }
 
-// The strip above the chart. Damage: a stacked bar of each type's share of the base damage at max rank, with the % and the number;
-// then reach and difficulty. Labels sit on the left, values on the right.
+// The strip above the chart. Damage: one line per damaging ability (key, name, type, base damage at max rank, scaling), then the
+// abilities' scaling added up as 物攻 vs 魔攻 (which items it wants); then reach and difficulty. Labels left, values right.
 export function factsStrip(parent: HTMLElement, c: Champion): void {
     const strip = h(parent, "div", "mn-fs");
     const dmg = h(strip, "div", "mn-fs-dmg");
     const head = h(dmg, "div", "mn-fs-row");
-    h(head, "span", "mn-fs-l", "傷害");
-    h(head, "span", "mn-fs-hint", "技能滿級基礎傷害");
-    const base = baseDamage(c);
-    const total = KINDS.reduce((n, k) => n + base[k], 0);
-    const shown = KINDS.filter((k) => base[k] > 0 || c.skillDamage.includes(k));
-    const bar = h(dmg, "div", "mn-stack");
-    const legend = h(dmg, "div", "mn-stack-l");
-    for (const k of shown) {
-        const pct = total ? Math.round((base[k] / total) * 100) : 0;
-        if (pct > 0) { const seg = h(bar, "i"); seg.style.flex = String(pct); seg.style.background = DAMAGE_COLOR[k]; }
-        const item = h(legend, "div", "mn-stack-i");
-        const dot = h(item, "span", "mn-stack-d"); dot.style.background = DAMAGE_COLOR[k];
-        h(item, "span", "mn-stack-k", k);
-        h(item, "span", "mn-stack-p", `${pct}%`);
-        h(item, "span", "mn-stack-v", base[k] > 0 ? Math.round(base[k]).toLocaleString() : "只靠加成");
+    h(head, "span", "mn-fs-l", "技能傷害");
+    h(head, "span", "mn-fs-hint", "滿級基礎 · 加成");
+    const lines = damageLines(c);
+    if (!lines.length) h(dmg, "div", "mn-fs-hint", "沒有傷害技能");
+    const list = h(dmg, "div", "mn-dl");
+    for (const d of lines) {
+        const row = h(list, "div", "mn-dl-r");
+        h(row, "span", "mn-dl-key", d.key);
+        h(row, "span", "mn-dl-name", d.name);
+        const kind = h(row, "span", "mn-dl-kind", d.kind);
+        kind.style.color = DAMAGE_COLOR[d.kind] ?? "inherit";
+        h(row, "span", "mn-dl-base", d.base ? Math.round(d.base).toLocaleString() : "—");
+        h(row, "span", "mn-dl-sc", [d.ad ? `+${d.ad}% 物攻` : "", d.ap ? `+${d.ap}% 魔攻` : ""].filter(Boolean).join("  "));
     }
-    if (!shown.length) h(legend, "div", "mn-fs-hint", "沒有傷害技能");
+    const ad = lines.reduce((n, d) => n + d.ad, 0), ap = lines.reduce((n, d) => n + d.ap, 0);
+    if (ad + ap > 0) {
+        const foot = h(dmg, "div", "mn-fs-row mn-dl-foot");
+        h(foot, "span", "mn-fs-l", "加成合計");
+        const sum = h(foot, "span", "mn-dl-sum");
+        if (ad) { const x = h(sum, "span", "", `物攻 ${ad}%`); x.style.color = DAMAGE_COLOR["物理"]; }
+        if (ad && ap) h(sum, "span", "mn-fs-hint", " · ");
+        if (ap) { const x = h(sum, "span", "", `魔攻 ${ap}%`); x.style.color = DAMAGE_COLOR["魔法"]; }
+        const bar = h(dmg, "div", "mn-stack");
+        for (const [v, k] of [[ad, "物理"], [ap, "魔法"]] as const) if (v) { const seg = h(bar, "i"); seg.style.flex = String(v); seg.style.background = DAMAGE_COLOR[k]; }
+    }
     const pair = h(strip, "div", "mn-fs-pair");
     const cell = (label: string) => { const d = h(pair, "div", "mn-fs-c"); h(d, "span", "mn-fs-l", label); return h(d, "div", "mn-fs-r"); };
     const reach = cell("距離");
