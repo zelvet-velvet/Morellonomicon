@@ -148,7 +148,7 @@ var Store = class {
         damageType: str(fm.damage_type),
         skillDamage: list(fm.skill_damage),
         archetypes: [...list(fm.archetypes), ...list(fm.archetypes_extra)],
-        features: list(fm.features),
+        features: [...list(fm.features), ...list(fm.features_extra)],
         resource: str(fm.resource),
         attack: num(fm.attack),
         magic: num(fm.magic),
@@ -849,104 +849,173 @@ function profileRadar(parent, axes, color, max = 10) {
     v.textContent = String(ax.value);
   });
 }
-var ABILITIES = [
+var TAGS = [
   { tag: "\u63A7\u5834", color: "var(--mn-cc)", icon: "lock", en: "Crowd Control", abbr: "CC", what: "\u6688\u7729\u3001\u64CA\u98DB\u3001\u5B9A\u8EAB\u3001\u6C89\u9ED8\u3001\u6050\u61FC\u7B49,\u8B93\u6575\u4EBA\u52D5\u4E0D\u4E86\u6216\u4E0D\u80FD\u653E\u6280\u80FD" },
   { tag: "\u7DE9\u901F", color: "var(--mn-slow)", icon: "snowflake", en: "Slow", abbr: "Slow", what: "\u964D\u4F4E\u6575\u4EBA\u7684\u79FB\u52D5\u901F\u5EA6" },
   { tag: "\u4F4D\u79FB", color: "var(--mn-dash)", icon: "arrow-big-right-dash", en: "Dash / Mobility", abbr: "Dash", what: "\u885D\u523A\u3001\u9583\u73FE\u3001\u77AC\u6B65\u3001\u8DF3\u8E8D\u7B49,\u8B93\u81EA\u5DF1\u5FEB\u901F\u79FB\u52D5" },
   { tag: "\u6CBB\u7642", color: "var(--mn-heal)", icon: "heart-pulse", en: "Heal", abbr: "Heal", what: "\u56DE\u5FA9\u81EA\u5DF1\u6216\u968A\u53CB\u7684\u751F\u547D" },
   { tag: "\u8B77\u76FE", color: "var(--mn-shield)", icon: "shield-plus", en: "Shield", abbr: "Shield", what: "\u7D66\u81EA\u5DF1\u6216\u968A\u53CB\u4E00\u5C64\u53EF\u5438\u6536\u50B7\u5BB3\u7684\u8B77\u76FE" },
   { tag: "\u5438\u8840", color: "var(--mn-ls)", icon: "syringe", en: "Lifesteal / Omnivamp", abbr: "LS", what: "\u9020\u6210\u50B7\u5BB3\u6642\u56DE\u5FA9\u81EA\u5DF1\u7684\u751F\u547D" },
-  { tag: "\u5F37\u5316\u666E\u653B", color: "var(--mn-onhit)", icon: "sword", en: "Empowered attacks (On-hit)", abbr: "On-hit", what: "\u6280\u80FD\u6703\u5F37\u5316\u666E\u901A\u653B\u64CA(\u4E0B\u4E00\u6B21\u666E\u653B\u3001\u984D\u5916\u50B7\u5BB3)\u3002\u4F9D\u6280\u80FD\u6587\u5B57\u5224\u65B7,\u6BD4\u300C\u9069\u5408\u51FA\u653B\u64CA\u7279\u6548\u88DD\u300D\u5BEC" }
+  { tag: "\u5F37\u5316\u666E\u653B", color: "var(--mn-aa)", icon: "sword", en: "Empowered attack", abbr: "AA+", what: "\u6280\u80FD\u8B93\u4E0B\u4E00\u6B21(\u6216\u63A5\u4E0B\u4F86\u5E7E\u6B21)\u666E\u653B\u66F4\u5F37,\u4F8B\u5982\u984D\u5916\u50B7\u5BB3" },
+  { tag: "\u653B\u64CA\u7279\u6548", color: "var(--mn-onhit)", icon: "crosshair", en: "On-hit", abbr: "On-hit", what: "\u6BCF\u6B21\u666E\u653B\u90FD\u6703\u89F8\u767C\u6548\u679C,\u9069\u5408\u51FA\u653B\u64CA\u7279\u6548\u88DD\u5099(\u4EBA\u5DE5\u6A19\u8A3B)" }
 ];
-var AbilityLegend = class extends import_obsidian4.Modal {
+var TAG = new Map(TAGS.map((t) => [t.tag, t]));
+var TagLegend = class extends import_obsidian4.Modal {
   constructor(app) {
     super(app);
   }
   onOpen() {
     this.titleEl.setText("\u5716\u793A\u8AAA\u660E");
     const table = h(this.contentEl, "div", "mn-lg");
-    const head = h(table, "div", "mn-lg-r mn-lg-h");
-    for (const t of ["", "\u540D\u7A31", "\u82F1\u6587 / \u7E2E\u5BEB"]) h(head, "span", "", t);
-    for (const a of ABILITIES) {
+    for (const a of TAGS) {
       const r = h(table, "div", "mn-lg-r");
-      const ic = icon(h(r, "span", "mn-pill mn-pill-ic is-lit"), a.icon);
-      ic.parentElement?.style.setProperty("--p", a.color);
+      const ic = h(r, "span", "mn-lg-ic");
+      ic.style.setProperty("--p", a.color);
+      icon(ic, a.icon);
       const name = h(r, "span", "mn-lg-n", a.tag);
       h(name, "div", "mn-lg-w", a.what);
       h(r, "span", "mn-lg-e", `${a.en} \xB7 ${a.abbr}`);
     }
-    h(this.contentEl, "p", "mn-lg-note", "\u4EAE\u7684\u5716\u793A\u4EE3\u8868\u9019\u4F4D\u82F1\u96C4\u6709;\u6697\u7684\u4EE3\u8868\u6C92\u6709\u3002\u6578\u5B57\u662F\u6709\u5E7E\u500B\u6280\u80FD\u6709\u9019\u500B\u6548\u679C\u3002");
+    h(this.contentEl, "p", "mn-lg-note", "\u5BE6\u7DDA\u4EE3\u8868\u9019\u4F4D\u82F1\u96C4\u6709,\u865B\u7DDA\u4EE3\u8868\u6C92\u6709;\u5B57\u6BCD\u662F\u54EA\u500B\u6280\u80FD\u6709(P = \u88AB\u52D5)\u3002");
   }
   onClose() {
     this.contentEl.empty();
   }
 };
-function abilityPills(parent, c, onlyLit = false) {
-  const row2 = h(parent, "div", "mn-pills");
-  for (const a of ABILITIES) {
-    const n = count(c, a.tag);
-    const lit = c.features.includes(a.tag);
-    if (onlyLit && !lit) continue;
-    const p = h(row2, "button", "mn-pill mn-pill-ic" + (lit ? " is-lit" : " is-off"));
-    p.setAttribute("aria-label", a.tag);
-    icon(p, a.icon);
-    if (lit && n > 1) h(p, "span", "mn-pill-n", String(n));
-    p.style.setProperty("--p", a.color);
-    p.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      tip(p, `${a.tag} \xB7 ${a.abbr}`);
-    });
-  }
+var keysOf = (c, ...tags) => c.skills.filter((s) => tags.some((t) => s.tags.includes(t))).map((s) => s.key).join(" \xB7 ");
+var hasTag = (c, tag) => c.features.includes(tag);
+var reachOf = (c) => c.archetypes.find((a) => a === "\u8FD1\u6230" || a === "\u4E2D\u7A0B" || a === "\u9060\u7A0B") ?? "";
+function tagChip(parent, c, t) {
+  const lit = hasTag(c, t.tag);
+  const el = h(parent, "button", "mn-tg" + (lit ? " is-on" : ""));
+  el.style.setProperty("--p", t.color);
+  icon(el, t.icon);
+  h(el, "span", "", t.tag);
+  const keys = lit ? keysOf(c, t.tag) : "";
+  if (keys) h(el, "span", "mn-tg-k", keys);
+  el.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    tip(el, `${t.tag} \xB7 ${t.abbr}`);
+  });
+  return el;
+}
+function tagRow(parent, c, only) {
+  const row2 = h(parent, "div", "mn-tgs");
+  for (const t of TAGS) if (!only || only.includes(t.tag)) tagChip(row2, c, t);
   return row2;
 }
-var reachOf = (c) => c.archetypes.find((a) => a === "\u8FD1\u6230" || a === "\u4E2D\u7A0B" || a === "\u9060\u7A0B") ?? "";
-function difficultyDots(parent, c) {
-  const dots = h(parent, "span", "mn-hard");
-  const level = Math.max(1, Math.min(5, Math.ceil(c.difficulty / 2)));
-  for (let i = 1; i <= 5; i++) h(dots, "i", i <= level ? "is-on" : "");
-  return dots;
-}
-function damageMeters(parent, c) {
+function factsStrip(parent, c) {
+  const strip2 = h(parent, "div", "mn-fs");
+  const cell = (label) => {
+    const d = h(strip2, "div", "mn-fs-c");
+    h(d, "div", "mn-fs-l", label);
+    return d;
+  };
+  const dmg = cell("\u50B7\u5BB3");
   const top = Math.max(c.attack, c.magic);
   for (const [kind, rating] of [["\u7269\u7406", c.attack], ["\u9B54\u6CD5", c.magic]]) {
-    const row2 = h(parent, "div", "mn-mt" + (rating === top ? " is-main" : ""));
+    const row2 = h(dmg, "div", "mn-mt" + (rating === top ? " is-main" : ""));
     row2.style.setProperty("--k", DAMAGE_COLOR[kind]);
     h(row2, "span", "mn-mt-k", kind);
     h(h(row2, "span", "mn-mt-bar"), "i", "").style.width = `${Math.max(0, Math.min(10, rating)) * 10}%`;
     h(row2, "span", "mn-mt-n", String(rating));
   }
+  const reach = cell("\u8DDD\u96E2");
+  h(reach, "div", "mn-fs-v", reachOf(c) || "\u2014");
+  h(reach, "div", "mn-fs-s", `\u5C04\u7A0B ${c.range}`);
+  const hard = cell("\u96E3\u5EA6");
+  const v = h(hard, "div", "mn-fs-v", String(c.difficulty));
+  h(v, "span", "mn-fs-of", " / 10");
+  const segs = h(hard, "div", "mn-segs");
+  const level = Math.max(1, Math.min(5, Math.ceil(c.difficulty / 2)));
+  for (let i = 1; i <= 5; i++) h(segs, "i", i <= level ? "is-on" : "");
 }
-function factsRow(parent, c) {
-  const spec = h(parent, "div", "mn-spec");
-  const line = (label) => {
-    const r = h(spec, "div", "mn-spec-r");
-    h(r, "div", "mn-spec-l", label);
-    return h(r, "div", "mn-spec-v");
+function styleAxes(c) {
+  const tough = c.defense >= 7 ? "\u5F88\u786C" : c.defense >= 4 ? "\u666E\u901A" : "\u8106";
+  return [
+    { label: "\u8F38\u51FA", icon: "zap", color: DAMAGE_COLOR[c.damageType] ?? "var(--mn-text)", value: Math.max(c.attack, c.magic), sub: c.damageType === "\u6DF7\u5408" ? "\u7269\u7406 + \u9B54\u6CD5" : `${c.damageType}\u70BA\u4E3B` },
+    { label: "\u5766\u5EA6", icon: "shield", color: "var(--mn-tank)", value: c.defense, sub: tough },
+    { label: "\u63A7\u5834", icon: "lock", color: "var(--mn-cc)", value: score(count(c, "\u63A7\u5834")), sub: keysOf(c, "\u63A7\u5834"), tag: "\u63A7\u5834" },
+    { label: "\u4F4D\u79FB", icon: "arrow-big-right-dash", color: "var(--mn-dash)", value: score(count(c, "\u4F4D\u79FB")), sub: keysOf(c, "\u4F4D\u79FB"), tag: "\u4F4D\u79FB" },
+    { label: "\u8F14\u52A9", icon: "heart-pulse", color: "var(--mn-heal)", value: score(count(c, "\u6CBB\u7642", "\u8B77\u76FE")), sub: keysOf(c, "\u6CBB\u7642", "\u8B77\u76FE"), tag: "\u6CBB\u7642" },
+    { label: "\u5C04\u7A0B", icon: "target", color: "var(--mn-range)", value: Math.min(10, Math.round(c.range / 65)), sub: reachOf(c) }
+  ];
+}
+var SW = 350;
+var SH = 356;
+var SCX = 175;
+var SCY = 180;
+var SR = 96;
+var CHIP_R = 140;
+function styleChart(parent, c) {
+  const axes = styleAxes(c);
+  const n = axes.length;
+  const pt = (i, r) => {
+    const a = -Math.PI / 2 + i * 2 * Math.PI / n;
+    return [SCX + r * Math.cos(a), SCY + r * Math.sin(a)];
   };
-  damageMeters(line("\u50B7\u5BB3"), c);
-  h(line("\u8DDD\u96E2"), "span", "", reachOf(c) || "\u2014");
-  difficultyDots(line("\u96E3\u5EA6"), c);
-}
-function abilityBlock(parent, c, app) {
-  const head = h(parent, "div", "mn-rq-al");
-  h(head, "span", "mn-rq-fl", "\u6280\u80FD(\u9EDE\u5716\u793A\u770B\u540D\u7A31)");
-  if (app) {
-    const q = h(head, "button", "mn-lg-btn");
-    icon(q, "circle-help");
-    h(q, "span", "", "\u5716\u793A\u8AAA\u660E");
-    q.addEventListener("click", (e) => {
+  const poly = (r) => axes.map((_, i) => pt(i, r(i)).map((v) => v.toFixed(1)).join(",")).join(" ");
+  const val = (i) => SR * Math.max(0, Math.min(10, axes[i].value)) / 10;
+  const color = axes[0].color;
+  const wrap = h(parent, "div", "mn-sc");
+  const root = svg(wrap, "svg", { viewBox: `0 0 ${SW} ${SH}`, "aria-hidden": "true" }, "mn-sc-svg");
+  const id = `mn-grad-${++uid}`;
+  const grad = svg(svg(root, "defs"), "linearGradient", { id, x1: 0, y1: 0, x2: 0, y2: 1 });
+  svg(grad, "stop", { offset: "0%", "stop-opacity": 0.55 }).setAttribute("style", `stop-color:${color}`);
+  svg(grad, "stop", { offset: "100%", "stop-opacity": 0.12 }).setAttribute("style", `stop-color:${color}`);
+  for (let k = 4; k >= 1; k--) svg(root, "polygon", { points: poly(() => SR * k / 4) }, k === 4 ? "mn-sc-ring is-outer" : "mn-sc-ring");
+  axes.forEach((ax, i) => {
+    const [x, y] = pt(i, SR);
+    const line = svg(root, "line", { x1: SCX, y1: SCY, x2: x, y2: y }, "mn-sc-axis" + (ax.value > 0 ? " is-on" : ""));
+    line.setAttribute("style", `--p:${ax.color}`);
+  });
+  const shape = svg(root, "polygon", { points: poly(val), fill: `url(#${id})` }, "mn-sc-shape");
+  shape.setAttribute("style", `stroke:color-mix(in srgb, ${color} 55%, white)`);
+  axes.forEach((ax, i) => {
+    if (ax.value <= 0) return;
+    const [x, y] = pt(i, val(i));
+    svg(root, "circle", { cx: x, cy: y, r: 4.5 }, "mn-sc-dot").setAttribute("style", `fill:${ax.color}`);
+  });
+  axes.forEach((ax, i) => {
+    const [x, y] = pt(i, CHIP_R);
+    const on = ax.value > 0;
+    const chip2 = h(wrap, "button", "mn-scc" + (on ? " is-on" : ""));
+    chip2.style.left = `${x / SW * 100}%`;
+    chip2.style.top = `${y / SH * 100}%`;
+    chip2.style.setProperty("--p", ax.color);
+    const top = h(chip2, "span", "mn-scc-t");
+    icon(top, ax.icon);
+    h(top, "span", "", ax.label);
+    h(top, "b", "", String(ax.value));
+    h(chip2, "span", "mn-scc-k", on && ax.sub ? ax.sub : "\u2014");
+    const t = ax.tag ? TAG.get(ax.tag) : void 0;
+    chip2.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      new AbilityLegend(app).open();
+      tip(chip2, t ? `${ax.label} \xB7 ${t.abbr}` : `${ax.label} ${ax.value} / 10`);
     });
-  }
-  abilityPills(parent, c, false);
+  });
 }
-function championProfile(parent, c, color, app) {
-  factsRow(parent, c);
-  profileRadar(parent, profileAxes(c), color);
-  abilityBlock(parent, c, app);
+var OFF_CHART = ["\u7DE9\u901F", "\u5438\u8840", "\u5F37\u5316\u666E\u653B", "\u653B\u64CA\u7279\u6548"];
+function styleCard(parent, c, app) {
+  const card = h(parent, "div", "mn-panel mn-style");
+  const head = h(card, "div", "mn-style-h");
+  h(head, "span", "mn-style-t", "\u6230\u9B25\u98A8\u683C");
+  const key = h(head, "button", "mn-lg-btn");
+  h(key, "span", "", "\u5BE6\u7DDA \u6709 \xB7 \u865B\u7DDA \u7121 \xB7 \u5B57\u6BCD = \u6280\u80FD");
+  icon(key, "circle-help");
+  if (app) key.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    new TagLegend(app).open();
+  });
+  styleChart(card, c);
+  tagRow(h(card, "div", "mn-style-f"), c, OFF_CHART);
+}
+function championProfile(parent, c, app) {
+  factsStrip(parent, c);
+  styleCard(parent, c, app);
 }
 
 // src/pages/fresh.ts
@@ -1482,7 +1551,6 @@ function championCard(ctx) {
     empty(el, { icon: "user-x", title: "Champion not found" });
     return { title: "", el };
   }
-  const dmgColor = DAMAGE_COLOR[c.damageType] ?? "var(--interactive-accent)";
   const hero = h(el, "div", "mn-hero");
   const bg = h(hero, "div", "mn-hero-bg");
   bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
@@ -1508,7 +1576,7 @@ function championCard(ctx) {
     const m = marker(entryDir(official.entry));
     chip(tags, `${m.mark} ${official.patch}`, { color: m.color, onTap: openChanges });
   }
-  championProfile(h(el, "div", "mn-panel mn-profile"), c, dmgColor, ctx.app);
+  championProfile(el, c, ctx.app);
   const mayhem = ctx.plugin.settings.mode === "mayhem";
   const tabs = [["skills", "Skills"], ["build", "Build"], ["augments", mayhem ? "Augments" : "Runes"], ["tips", "Tips"]];
   let block = null;
@@ -2360,8 +2428,8 @@ function rosterPage(ctx) {
       const b = h(roles2, "span", "mn-rq-role mn-rq-mark", `${m.mark} \u672C\u7248\u8ABF\u6574`);
       b.style.setProperty("--m", m.color);
     }
-    factsRow(r, c);
-    abilityBlock(r, c, ctx.app);
+    factsStrip(r, c);
+    tagRow(r, c);
     r.addEventListener("click", () => ctx.openChampion(c.id));
   };
   const drawResults = () => {

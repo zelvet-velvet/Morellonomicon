@@ -3,7 +3,7 @@ import type { Champion } from "../data/store";
 import { chip, empty, fgrid, h, icon, page } from "../ui";
 import { entryDir, marker } from "./changes";
 import type { PageCtx, PageOut } from "./index";
-import { abilityBlock, factsRow } from "./profile";
+import { factsStrip, tagRow } from "./profile";
 
 const MAX_PICKS = 15;   // a Mayhem game can hand you a lot of champions
 const ROLES = ["戰士", "坦克", "法師", "刺客", "射手", "輔助"];
@@ -96,8 +96,8 @@ export function rosterPage(ctx: PageCtx): PageOut {
         for (const role_ of c.roles) h(roles, "span", "mn-rq-role", role_);
         const rd = recent.get(c.name);
         if (rd) { const m = marker(rd); const b = h(roles, "span", "mn-rq-role mn-rq-mark", `${m.mark} 本版調整`); b.style.setProperty("--m", m.color); }
-        factsRow(r, c);
-        abilityBlock(r, c, ctx.app);
+        factsStrip(r, c);
+        tagRow(r, c);
         r.addEventListener("click", () => ctx.openChampion(c.id));
     };
 

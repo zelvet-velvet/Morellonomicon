@@ -130,7 +130,7 @@ export class Store {
         if (!this.champs) {
             this.champs = this.notes(this.s.championFolder).filter((n) => n.fm.type === "champion").map(({ file, fm }) => ({
                 id: str(fm.id), key: num(fm.key), name: str(fm.name, file.basename), title: str(fm.title), blurb: str(fm.blurb), tier: str(fm.tier), roles: list(fm.roles), damageType: str(fm.damage_type),
-                skillDamage: list(fm.skill_damage), archetypes: [...list(fm.archetypes), ...list(fm.archetypes_extra)], features: list(fm.features),
+                skillDamage: list(fm.skill_damage), archetypes: [...list(fm.archetypes), ...list(fm.archetypes_extra)], features: [...list(fm.features), ...list(fm.features_extra)],
                 resource: str(fm.resource), attack: num(fm.attack), magic: num(fm.magic), defense: num(fm.defense), difficulty: num(fm.difficulty),
                 range: num(fm.range), icon: str(fm.icon), skills: skillList(fm.skills), patch: str(fm.patch), pinned: list(fm.pinned), avoid: list(fm.avoid),
                 video: typeof fm.video === "string" ? fm.video : undefined, builds: buildList(fm.builds), tips: tipList(fm.tips), path: file.path,

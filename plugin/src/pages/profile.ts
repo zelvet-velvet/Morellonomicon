@@ -56,110 +56,168 @@ export function profileRadar(parent: HTMLElement, axes: Axis[], color: string, m
     });
 }
 
-// The abilities a champion has, as icons: lit when it has them (with how many of its skills), dim when it does not.
-// Tap an icon for its name; the legend lists every icon with its full name and the usual abbreviation.
-const ABILITIES: { tag: string; color: string; icon: string; en: string; abbr: string; what: string }[] = [
+// Every ability tag: name, colour, icon, English name and abbreviation, and what it means (the legend shows them all).
+// 攻擊特效 (on-hit) is not in the skill text we have, so it only shows when a champion note lists it in `features_extra`.
+interface Tag { tag: string; color: string; icon: string; en: string; abbr: string; what: string }
+const TAGS: Tag[] = [
     { tag: "控場", color: "var(--mn-cc)", icon: "lock", en: "Crowd Control", abbr: "CC", what: "暈眩、擊飛、定身、沉默、恐懼等,讓敵人動不了或不能放技能" },
     { tag: "緩速", color: "var(--mn-slow)", icon: "snowflake", en: "Slow", abbr: "Slow", what: "降低敵人的移動速度" },
     { tag: "位移", color: "var(--mn-dash)", icon: "arrow-big-right-dash", en: "Dash / Mobility", abbr: "Dash", what: "衝刺、閃現、瞬步、跳躍等,讓自己快速移動" },
     { tag: "治療", color: "var(--mn-heal)", icon: "heart-pulse", en: "Heal", abbr: "Heal", what: "回復自己或隊友的生命" },
     { tag: "護盾", color: "var(--mn-shield)", icon: "shield-plus", en: "Shield", abbr: "Shield", what: "給自己或隊友一層可吸收傷害的護盾" },
     { tag: "吸血", color: "var(--mn-ls)", icon: "syringe", en: "Lifesteal / Omnivamp", abbr: "LS", what: "造成傷害時回復自己的生命" },
-    { tag: "強化普攻", color: "var(--mn-onhit)", icon: "sword", en: "Empowered attacks (On-hit)", abbr: "On-hit", what: "技能會強化普通攻擊(下一次普攻、額外傷害)。依技能文字判斷,比「適合出攻擊特效裝」寬" },
+    { tag: "強化普攻", color: "var(--mn-aa)", icon: "sword", en: "Empowered attack", abbr: "AA+", what: "技能讓下一次(或接下來幾次)普攻更強,例如額外傷害" },
+    { tag: "攻擊特效", color: "var(--mn-onhit)", icon: "crosshair", en: "On-hit", abbr: "On-hit", what: "每次普攻都會觸發效果,適合出攻擊特效裝備(人工標註)" },
 ];
+const TAG = new Map(TAGS.map((t) => [t.tag, t] as const));
 
-// The chart of every ability icon: icon, name, English name, abbreviation and what it means
-class AbilityLegend extends Modal {
+// The chart of every tag: icon, name, what it means, English name and abbreviation
+class TagLegend extends Modal {
     constructor(app: App) { super(app); }
     onOpen(): void {
         this.titleEl.setText("圖示說明");
         const table = h(this.contentEl, "div", "mn-lg");
-        const head = h(table, "div", "mn-lg-r mn-lg-h");
-        for (const t of ["", "名稱", "英文 / 縮寫"]) h(head, "span", "", t);
-        for (const a of ABILITIES) {
+        for (const a of TAGS) {
             const r = h(table, "div", "mn-lg-r");
-            const ic = icon(h(r, "span", "mn-pill mn-pill-ic is-lit"), a.icon);
-            ic.parentElement?.style.setProperty("--p", a.color);
+            const ic = h(r, "span", "mn-lg-ic");
+            ic.style.setProperty("--p", a.color);
+            icon(ic, a.icon);
             const name = h(r, "span", "mn-lg-n", a.tag);
             h(name, "div", "mn-lg-w", a.what);
             h(r, "span", "mn-lg-e", `${a.en} · ${a.abbr}`);
         }
-        h(this.contentEl, "p", "mn-lg-note", "亮的圖示代表這位英雄有;暗的代表沒有。數字是有幾個技能有這個效果。");
+        h(this.contentEl, "p", "mn-lg-note", "實線代表這位英雄有,虛線代表沒有;字母是哪個技能有(P = 被動)。");
     }
     onClose(): void { this.contentEl.empty(); }
 }
 
-export function abilityPills(parent: HTMLElement, c: Champion, onlyLit = false): HTMLElement {
-    const row = h(parent, "div", "mn-pills");
-    for (const a of ABILITIES) {
-        const n = count(c, a.tag);
-        const lit = c.features.includes(a.tag);
-        if (onlyLit && !lit) continue;
-        const p = h(row, "button", "mn-pill mn-pill-ic" + (lit ? " is-lit" : " is-off"));
-        p.setAttribute("aria-label", a.tag);
-        icon(p, a.icon);
-        if (lit && n > 1) h(p, "span", "mn-pill-n", String(n));
-        p.style.setProperty("--p", a.color);
-        p.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); tip(p, `${a.tag} · ${a.abbr}`); });
-    }
-    return row;
-}
-
-// Every damage kind a champion deals: its main one (Riot's ratings) first, then the others its skills also deal ("輸出" = main, "兼" = also)
-export function damageKinds(c: Champion): { kind: string; main: boolean }[] {
-    const main = c.damageType === "混合" ? ["物理", "魔法"] : [c.damageType];
-    const extra = c.skillDamage.filter((d) => !main.includes(d));
-    return [...main.map((kind) => ({ kind, main: true })), ...extra.map((kind) => ({ kind, main: false }))];
-}
+// The keys of the skills that carry a tag ("Q · E · R"), passive first as P
+const keysOf = (c: Champion, ...tags: string[]): string => c.skills.filter((s) => tags.some((t) => s.tags.includes(t))).map((s) => s.key).join(" · ");
+const hasTag = (c: Champion, tag: string): boolean => c.features.includes(tag);
 
 // 近戰 / 中程 / 遠程
 export const reachOf = (c: Champion): string => c.archetypes.find((a) => a === "近戰" || a === "中程" || a === "遠程") ?? "";
 
-// five dots for how hard a champion is
-export function difficultyDots(parent: HTMLElement, c: Champion): HTMLElement {
-    const dots = h(parent, "span", "mn-hard");
-    const level = Math.max(1, Math.min(5, Math.ceil(c.difficulty / 2)));
-    for (let i = 1; i <= 5; i++) h(dots, "i", i <= level ? "is-on" : "");
-    return dots;
+// One tag as a chip: icon, name and the skills that carry it; solid when the champion has it, dashed when not. Tap for what it means.
+function tagChip(parent: HTMLElement, c: Champion, t: Tag): HTMLElement {
+    const lit = hasTag(c, t.tag);
+    const el = h(parent, "button", "mn-tg" + (lit ? " is-on" : ""));
+    el.style.setProperty("--p", t.color);
+    icon(el, t.icon);
+    h(el, "span", "", t.tag);
+    const keys = lit ? keysOf(c, t.tag) : "";
+    if (keys) h(el, "span", "mn-tg-k", keys);
+    el.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); tip(el, `${t.tag} · ${t.abbr}`); });
+    return el;
 }
 
-// Riot's physical and magic ratings (0-10) as two thin meters; the stronger one is drawn solid
-function damageMeters(parent: HTMLElement, c: Champion): void {
+// A row of tag chips (all of them, or the ones named)
+export function tagRow(parent: HTMLElement, c: Champion, only?: string[]): HTMLElement {
+    const row = h(parent, "div", "mn-tgs");
+    for (const t of TAGS) if (!only || only.includes(t.tag)) tagChip(row, c, t);
+    return row;
+}
+
+// The strip above the chart: damage (two coloured meters with Riot's 0-10 ratings), reach, difficulty
+export function factsStrip(parent: HTMLElement, c: Champion): void {
+    const strip = h(parent, "div", "mn-fs");
+    const cell = (label: string) => { const d = h(strip, "div", "mn-fs-c"); h(d, "div", "mn-fs-l", label); return d; };
+    const dmg = cell("傷害");
     const top = Math.max(c.attack, c.magic);
     for (const [kind, rating] of [["物理", c.attack], ["魔法", c.magic]] as const) {
-        const row = h(parent, "div", "mn-mt" + (rating === top ? " is-main" : ""));
+        const row = h(dmg, "div", "mn-mt" + (rating === top ? " is-main" : ""));
         row.style.setProperty("--k", DAMAGE_COLOR[kind]);
         h(row, "span", "mn-mt-k", kind);
         h(h(row, "span", "mn-mt-bar"), "i", "").style.width = `${Math.max(0, Math.min(10, rating)) * 10}%`;
         h(row, "span", "mn-mt-n", String(rating));
     }
+    const reach = cell("距離");
+    h(reach, "div", "mn-fs-v", reachOf(c) || "—");
+    h(reach, "div", "mn-fs-s", `射程 ${c.range}`);
+    const hard = cell("難度");
+    const v = h(hard, "div", "mn-fs-v", String(c.difficulty));
+    h(v, "span", "mn-fs-of", " / 10");
+    const segs = h(hard, "div", "mn-segs");
+    const level = Math.max(1, Math.min(5, Math.ceil(c.difficulty / 2)));
+    for (let i = 1; i <= 5; i++) h(segs, "i", i <= level ? "is-on" : "");
 }
 
-// A small spec sheet: damage (two meters), reach, difficulty. Neutral colours only.
-export function factsRow(parent: HTMLElement, c: Champion): void {
-    const spec = h(parent, "div", "mn-spec");
-    const line = (label: string) => { const r = h(spec, "div", "mn-spec-r"); h(r, "div", "mn-spec-l", label); return h(r, "div", "mn-spec-v"); };
-    damageMeters(line("傷害"), c);
-    h(line("距離"), "span", "", reachOf(c) || "—");
-    difficultyDots(line("難度"), c);
+// The six axes of the style chart, each with its colour, icon and a short line under it (main damage, how tough, which skills, reach)
+interface StyleAxis { label: string; icon: string; color: string; value: number; sub: string; tag?: string }
+function styleAxes(c: Champion): StyleAxis[] {
+    const tough = c.defense >= 7 ? "很硬" : c.defense >= 4 ? "普通" : "脆";
+    return [
+        { label: "輸出", icon: "zap", color: DAMAGE_COLOR[c.damageType] ?? "var(--mn-text)", value: Math.max(c.attack, c.magic), sub: c.damageType === "混合" ? "物理 + 魔法" : `${c.damageType}為主` },
+        { label: "坦度", icon: "shield", color: "var(--mn-tank)", value: c.defense, sub: tough },
+        { label: "控場", icon: "lock", color: "var(--mn-cc)", value: score(count(c, "控場")), sub: keysOf(c, "控場"), tag: "控場" },
+        { label: "位移", icon: "arrow-big-right-dash", color: "var(--mn-dash)", value: score(count(c, "位移")), sub: keysOf(c, "位移"), tag: "位移" },
+        { label: "輔助", icon: "heart-pulse", color: "var(--mn-heal)", value: score(count(c, "治療", "護盾")), sub: keysOf(c, "治療", "護盾"), tag: "治療" },
+        { label: "射程", icon: "target", color: "var(--mn-range)", value: Math.min(10, Math.round(c.range / 65)), sub: reachOf(c) },
+    ];
 }
 
-// The ability icons under a small label
-export function abilityBlock(parent: HTMLElement, c: Champion, app?: App): void {
-    const head = h(parent, "div", "mn-rq-al");
-    h(head, "span", "mn-rq-fl", "技能(點圖示看名稱)");
-    if (app) {
-        const q = h(head, "button", "mn-lg-btn");
-        icon(q, "circle-help");
-        h(q, "span", "", "圖示說明");
-        q.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); new AbilityLegend(app).open(); });
-    }
-    abilityPills(parent, c, false);
+// The style chart: a hexagon whose corners are labelled with coloured chips (icon, name, value, the skills or a hint).
+// A corner at zero gets a dashed chip. The shape is tinted with the champion's main damage colour.
+const SW = 350, SH = 356, SCX = 175, SCY = 180, SR = 96, CHIP_R = 140;
+function styleChart(parent: HTMLElement, c: Champion): void {
+    const axes = styleAxes(c);
+    const n = axes.length;
+    const pt = (i: number, r: number): [number, number] => { const a = -Math.PI / 2 + (i * 2 * Math.PI) / n; return [SCX + r * Math.cos(a), SCY + r * Math.sin(a)]; };
+    const poly = (r: (i: number) => number) => axes.map((_, i) => pt(i, r(i)).map((v) => v.toFixed(1)).join(",")).join(" ");
+    const val = (i: number) => (SR * Math.max(0, Math.min(10, axes[i].value))) / 10;
+    const color = axes[0].color;
+    const wrap = h(parent, "div", "mn-sc");
+    const root = svg(wrap, "svg", { viewBox: `0 0 ${SW} ${SH}`, "aria-hidden": "true" }, "mn-sc-svg");
+    const id = `mn-grad-${++uid}`;
+    const grad = svg(svg(root, "defs"), "linearGradient", { id, x1: 0, y1: 0, x2: 0, y2: 1 });
+    svg(grad, "stop", { offset: "0%", "stop-opacity": 0.55 }).setAttribute("style", `stop-color:${color}`);
+    svg(grad, "stop", { offset: "100%", "stop-opacity": 0.12 }).setAttribute("style", `stop-color:${color}`);
+    for (let k = 4; k >= 1; k--) svg(root, "polygon", { points: poly(() => (SR * k) / 4) }, k === 4 ? "mn-sc-ring is-outer" : "mn-sc-ring");
+    axes.forEach((ax, i) => {
+        const [x, y] = pt(i, SR);
+        const line = svg(root, "line", { x1: SCX, y1: SCY, x2: x, y2: y }, "mn-sc-axis" + (ax.value > 0 ? " is-on" : ""));
+        line.setAttribute("style", `--p:${ax.color}`);
+    });
+    const shape = svg(root, "polygon", { points: poly(val), fill: `url(#${id})` }, "mn-sc-shape");
+    shape.setAttribute("style", `stroke:color-mix(in srgb, ${color} 55%, white)`);
+    axes.forEach((ax, i) => {
+        if (ax.value <= 0) return;
+        const [x, y] = pt(i, val(i));
+        svg(root, "circle", { cx: x, cy: y, r: 4.5 }, "mn-sc-dot").setAttribute("style", `fill:${ax.color}`);
+    });
+    axes.forEach((ax, i) => {
+        const [x, y] = pt(i, CHIP_R);
+        const on = ax.value > 0;
+        const chip = h(wrap, "button", "mn-scc" + (on ? " is-on" : ""));
+        chip.style.left = `${(x / SW) * 100}%`;
+        chip.style.top = `${(y / SH) * 100}%`;
+        chip.style.setProperty("--p", ax.color);
+        const top = h(chip, "span", "mn-scc-t");
+        icon(top, ax.icon);
+        h(top, "span", "", ax.label);
+        h(top, "b", "", String(ax.value));
+        h(chip, "span", "mn-scc-k", on && ax.sub ? ax.sub : "—");
+        const t = ax.tag ? TAG.get(ax.tag) : undefined;
+        chip.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); tip(chip, t ? `${ax.label} · ${t.abbr}` : `${ax.label} ${ax.value} / 10`); });
+    });
 }
 
-// the whole block of the champion card
-export function championProfile(parent: HTMLElement, c: Champion, color: string, app?: App): void {
-    factsRow(parent, c);
-    profileRadar(parent, profileAxes(c), color);
-    abilityBlock(parent, c, app);
+// The 戰鬥風格 card: header with the key and the legend button, the chart, then the tags that are not corners of the chart
+const OFF_CHART = ["緩速", "吸血", "強化普攻", "攻擊特效"];
+export function styleCard(parent: HTMLElement, c: Champion, app?: App): void {
+    const card = h(parent, "div", "mn-panel mn-style");
+    const head = h(card, "div", "mn-style-h");
+    h(head, "span", "mn-style-t", "戰鬥風格");
+    const key = h(head, "button", "mn-lg-btn");
+    h(key, "span", "", "實線 有 · 虛線 無 · 字母 = 技能");
+    icon(key, "circle-help");
+    if (app) key.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); new TagLegend(app).open(); });
+    styleChart(card, c);
+    tagRow(h(card, "div", "mn-style-f"), c, OFF_CHART);
+}
+
+// the whole block of the champion card: the facts strip, then the style card
+export function championProfile(parent: HTMLElement, c: Champion, app?: App): void {
+    factsStrip(parent, c);
+    styleCard(parent, c, app);
 }

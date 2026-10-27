@@ -30,7 +30,7 @@ WORKERS = 16
 
 GEN_START = "<!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->"
 GEN_END = "<!-- generated:end -->"
-HAND_KEYS = ("video", "archetypes_extra", "pinned", "avoid", "effect", "fits", "tier", "combos", "builds", "tips")   # kept when a note is regenerated
+HAND_KEYS = ("video", "archetypes_extra", "features_extra", "pinned", "avoid", "effect", "fits", "tier", "combos", "builds", "tips")   # kept when a note is regenerated
 ARAM_MAP = "12"          # Howling Abyss; ARAM Mayhem uses its item list
 ARAM_TWIN_PREFIX = "77"  # id 77NNNN is the ARAM-only copy of item NNNN (other price/stats)
 RIFT_DUPLICATE_PREFIXES = ("32", "66")   # 32NNNN / 66NNNN: Summoner's Rift variants of item NNNN, not needed here
@@ -48,8 +48,8 @@ FEATURES = {
     "護盾": r"<shield>|護盾",
     "位移": r"衝刺|閃現|傳送|躍|突進|瞬步|瞬移|瞬間移動|閃爍|衝向|飛向|跳向|跳到|跳至|翻滾|往後退|向後退|向後跳",
     "吸血": r"吸血|生命偷取|偷取生命|汲取",
-    # skills that change basic attacks (next attack, extra damage on attack); not the same as building on-hit items
-    "強化普攻": r"(下[一二]?次|接下來[ 0-9]*次)[^。，]{0,4}(基本攻擊|普通攻擊|普攻|攻擊)|(基本攻擊|普通攻擊|普攻)[^。]{0,8}(附帶|附加|額外造成|額外魔法|額外物理|額外傷害|會造成額外|會額外|造成額外|命中時)|攻擊特效|命中時效果",
+    # skills that empower basic attacks (next attack, extra damage on attack). Not on-hit: that one is set by hand (`features_extra`)
+    "強化普攻": r"(下[一二]?次|接下來[ 0-9]*次)[^。，]{0,4}(基本攻擊|普通攻擊|普攻|攻擊)|(基本攻擊|普通攻擊|普攻)[^。]{0,8}(附帶|附加|額外造成|額外魔法|額外物理|額外傷害|會造成額外|會額外|造成額外)",
 }
 
 
