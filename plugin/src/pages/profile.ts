@@ -177,10 +177,7 @@ export function factsStrip(parent: HTMLElement, c: Champion): void {
     }
     const pair = h(strip, "div", "mn-fs-pair");
     const cell = (label: string) => { const d = h(pair, "div", "mn-fs-c"); h(d, "span", "mn-fs-l", label); return h(d, "div", "mn-fs-r"); };
-    const reach = cell("距離");
-    reach.classList.add("mn-fs-inline");   // 近戰 and 射程 125 on one line, sharing a baseline
-    h(reach, "span", "mn-fs-s", `射程 ${c.range}`);
-    h(reach, "span", "mn-fs-v", reachOf(c) || "—");
+    h(cell("距離"), "div", "mn-fs-v", reachOf(c) || "—");   // the range number is on the chart's 射程 chip
     const v = h(cell("難度"), "div", "mn-fs-v mn-fs-big", String(c.difficulty));
     h(v, "span", "mn-fs-of", " / 10");
 }
@@ -195,7 +192,7 @@ function styleAxes(c: Champion): StyleAxis[] {
         { label: "控場", icon: "lock", color: "var(--mn-cc)", value: score(count(c, "控場")), sub: keysOf(c, "控場"), tag: "控場" },
         { label: "位移", icon: "arrow-big-right-dash", color: "var(--mn-dash)", value: score(count(c, "位移")), sub: keysOf(c, "位移"), tag: "位移" },
         { label: "輔助", icon: "heart-pulse", color: "var(--mn-heal)", value: score(count(c, "治療", "護盾")), sub: keysOf(c, "治療", "護盾"), tag: "治療" },
-        { label: "射程", icon: "target", color: "var(--mn-range)", value: Math.min(10, Math.round(c.range / 65)), sub: reachOf(c) },
+        { label: "射程", icon: "target", color: "var(--mn-range)", value: Math.min(10, Math.round(c.range / 65)), sub: [reachOf(c), String(c.range)].filter(Boolean).join(" · ") },
     ];
 }
 

@@ -983,10 +983,7 @@ function factsStrip(parent, c) {
     h(d, "span", "mn-fs-l", label);
     return h(d, "div", "mn-fs-r");
   };
-  const reach = cell("\u8DDD\u96E2");
-  reach.classList.add("mn-fs-inline");
-  h(reach, "span", "mn-fs-s", `\u5C04\u7A0B ${c.range}`);
-  h(reach, "span", "mn-fs-v", reachOf(c) || "\u2014");
+  h(cell("\u8DDD\u96E2"), "div", "mn-fs-v", reachOf(c) || "\u2014");
   const v = h(cell("\u96E3\u5EA6"), "div", "mn-fs-v mn-fs-big", String(c.difficulty));
   h(v, "span", "mn-fs-of", " / 10");
 }
@@ -998,7 +995,7 @@ function styleAxes(c) {
     { label: "\u63A7\u5834", icon: "lock", color: "var(--mn-cc)", value: score(count(c, "\u63A7\u5834")), sub: keysOf(c, "\u63A7\u5834"), tag: "\u63A7\u5834" },
     { label: "\u4F4D\u79FB", icon: "arrow-big-right-dash", color: "var(--mn-dash)", value: score(count(c, "\u4F4D\u79FB")), sub: keysOf(c, "\u4F4D\u79FB"), tag: "\u4F4D\u79FB" },
     { label: "\u8F14\u52A9", icon: "heart-pulse", color: "var(--mn-heal)", value: score(count(c, "\u6CBB\u7642", "\u8B77\u76FE")), sub: keysOf(c, "\u6CBB\u7642", "\u8B77\u76FE"), tag: "\u6CBB\u7642" },
-    { label: "\u5C04\u7A0B", icon: "target", color: "var(--mn-range)", value: Math.min(10, Math.round(c.range / 65)), sub: reachOf(c) }
+    { label: "\u5C04\u7A0B", icon: "target", color: "var(--mn-range)", value: Math.min(10, Math.round(c.range / 65)), sub: [reachOf(c), String(c.range)].filter(Boolean).join(" \xB7 ") }
   ];
 }
 var SW = 350;

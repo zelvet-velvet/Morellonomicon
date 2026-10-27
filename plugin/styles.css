@@ -515,7 +515,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-dl-base { text-align: right; font-family: var(--mn-serif); font-weight: 700; font-variant-numeric: tabular-nums; color: var(--mn-text); white-space: nowrap; }
 .mn-dl-foot { padding-top: 4px; }
 .mn-dl-foot + .mn-stack { margin-bottom: 12px; }
-.mn-fs-r.mn-fs-inline { display: flex; align-items: baseline; gap: 4px; }
 .mn-fs-v.mn-fs-big { font-size: 30px; line-height: 1.1; }
 .mn-fs-v.mn-fs-big .mn-fs-of { font-size: 13px; }
 .mn-dl-sum { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
