@@ -86,7 +86,6 @@ class TagLegend extends Modal {
             h(name, "div", "mn-lg-w", a.what);
             h(r, "span", "mn-lg-e", `${a.en} · ${a.abbr}`);
         }
-        h(this.contentEl, "p", "mn-lg-note", "實線代表這位英雄有,虛線代表沒有;字母是哪個技能有(P = 被動)。");
     }
     onClose(): void { this.contentEl.empty(); }
 }

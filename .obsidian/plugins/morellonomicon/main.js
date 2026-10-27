@@ -887,7 +887,6 @@ var TagLegend = class extends import_obsidian4.Modal {
       h(name, "div", "mn-lg-w", a.what);
       h(r, "span", "mn-lg-e", `${a.en} \xB7 ${a.abbr}`);
     }
-    h(this.contentEl, "p", "mn-lg-note", "\u5BE6\u7DDA\u4EE3\u8868\u9019\u4F4D\u82F1\u96C4\u6709,\u865B\u7DDA\u4EE3\u8868\u6C92\u6709;\u5B57\u6BCD\u662F\u54EA\u500B\u6280\u80FD\u6709(P = \u88AB\u52D5)\u3002");
   }
   onClose() {
     this.contentEl.empty();
