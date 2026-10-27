@@ -7,7 +7,7 @@ A Traditional Chinese League of Legends beginner guide, kept as an Obsidian vaul
 ## 使用 / Use
 
 1. Install [Obsidian](https://obsidian.md) (PC or phone).
-2. Open the folder `Morellonomicon Note/` as a vault.
+2. Open the repo folder itself as a vault.
 3. Plugins are not stored in git. Run `python3 tools/install_plugins.py`, then turn off Restricted Mode in Obsidian.
 4. On a phone, sync the vault with Obsidian Sync, iCloud, Syncthing or Git.
 
@@ -17,7 +17,7 @@ Champion, skill and item data come from Riot's public [Data Dragon](https://deve
 
 ## 開發 / Development
 
-Start at `Morellonomicon Note/Start/Start Guide.md`. Status and plan: `Morellonomicon Note/Review/Dev Status.md`. AI assistants: `Morellonomicon Note/Start/LLM Guide.md`.
+Start at `Start/Start Guide.md`. Status and plan: `Review/Dev Status.md`. AI assistants: `Start/LLM Guide.md`.
 
 ---
 *Morellonomicon isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.*

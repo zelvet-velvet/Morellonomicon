@@ -15,6 +15,7 @@ sticker: lucide//activity
 - **Decisions**: images stay remote Data Dragon URLs; tab names in English, champion / item / augment content in zh_TW; archetypes are derived automatically with hand overrides.
 - **Plugin shell**: `plugin/` (TypeScript, from the ZeLedger skeleton) with tabs Mayhem · Champions · Items · Guide, a page stack, a mode switch (Mayhem on, Rift planned), a tap-to-pick champion grid, a one-screen champion card (icon, role and damage chips, rating bars, damage-coloured skill icons) and an item list; built into the vault. Not yet seen in Obsidian.
 - **Less text**: generated champion notes keep a 5-row skill table and fold the descriptions, tips and base stats into collapsed callouts; no lore.
+- **Vault at the repo root**: moved `Morellonomicon Note/` up so Obsidian Git on a phone can clone the repo straight into a vault; `plugin/` and `tools/` are hidden through Excluded files; Obsidian Git is in the plugin list; the Start Guide has the phone steps.
 - **Workflow**: Copied the LLM Guide, Dev Status / Dev Log / Day note from clawd-room, simplified for a solo project (commit to `main`, no PRs) and added a Start Guide.
 
 ## 📅 Yesterday's Progress (—)
@@ -49,7 +50,7 @@ sticker: lucide//activity
 - [ ] **Plugins**: `tools/install_plugins.py` downloads the 13 listed plugins; decide which to keep (Dataview, Templater, Style Settings, Minimal Settings, Breadcrumbs are the useful ones here).
 
 ### 📱 Phone
-- [ ] **Sync**: pick how the vault reaches the phone (Obsidian Sync, iCloud, Syncthing or Git) and check the Obsidian mobile app opens it with the theme.
+- [>] **Git clone on the phone**: steps are in the Start Guide; to check on a real phone: the clone finishes, the theme and the Morellonomicon plugin load, icons show.
 
 ## 💡 Ideas
 - A static website export of the vault for people without Obsidian.

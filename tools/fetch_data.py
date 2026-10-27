@@ -5,7 +5,7 @@
     python3 tools/fetch_data.py --only Ahri,Garen --no-items
     python3 tools/fetch_data.py --patch 16.21.1
 
-Writes Morellonomicon Note/英雄/<name>.md and Morellonomicon Note/道具/<name>.md.
+Writes 英雄/<name>.md and 道具/<name>.md in the vault (the repo root).
 Only the generated frontmatter keys and the block between GEN_START and GEN_END are rewritten;
 HAND_KEYS in the frontmatter and everything after GEN_END (your own advice) are kept.
 Raw downloads are cached in .cache/ (not in git). Standard library only.
@@ -19,7 +19,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-VAULT = ROOT / "Morellonomicon Note"
+VAULT = ROOT   # the repo root is the Obsidian vault
 CACHE = ROOT / ".cache" / "ddragon"
 DD = "https://ddragon.leagueoflegends.com"
 LOCALE = "zh_TW"

@@ -13,7 +13,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-VAULT = Path(__file__).resolve().parent.parent / "Morellonomicon Note"
+VAULT = Path(__file__).resolve().parent.parent   # the repo root is the Obsidian vault
 OBSIDIAN = VAULT / ".obsidian"
 REGISTRY = "https://raw.githubusercontent.com/obsidianmd/obsidian-releases/master/community-plugins.json"
 ASSETS = ("main.js", "manifest.json", "styles.css")

@@ -2,7 +2,13 @@
   "spellcheck": false,
   "alwaysUpdateLinks": true,
   "promptDelete": false,
-  "userIgnoreFilters": [],
+  "userIgnoreFilters": [
+    "plugin/",
+    "tools/",
+    "CLAUDE.md",
+    "LICENSE",
+    "README.md"
+  ],
   "useTab": true,
   "vimMode": false,
   "propertiesInDocument": "hidden",
