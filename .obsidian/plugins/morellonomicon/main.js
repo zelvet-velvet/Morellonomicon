@@ -513,7 +513,7 @@ var GAME_ICON_FILE = {
   \u7DE9\u901F: "Slow_icon.png",
   \u4F4D\u79FB: "Dash_icon.png",
   \u6CBB\u7642: "Heal_power_icon.png",
-  \u8B77\u76FE: "Shield_icon.png",
+  \u8B77\u76FE: "Heal_and_shield_power_icon.png",
   \u5438\u8840: "Life_steal_icon.png",
   \u5F37\u5316\u666E\u653B: "Basic_attack_icon.png",
   \u653B\u64CA\u7279\u6548: "On-hit_icon.png",
@@ -525,8 +525,14 @@ var GAME_ICON_FILE = {
 var preloaded = /* @__PURE__ */ new Map();
 var preloadRoleIcons = () => {
   if (preloaded.size) return;
-  for (const file of [...Object.values(ROLE_FILE), ...Object.values(LANE_FILE), ...Object.values(GAME_ICON_FILE)]) {
+  for (const file of [...Object.values(ROLE_FILE), ...Object.values(LANE_FILE)]) {
     const im = new Image();
+    im.src = ROLE_WIKI + file;
+    preloaded.set(file, im);
+  }
+  for (const file of Object.values(GAME_ICON_FILE)) {
+    const im = new Image();
+    im.crossOrigin = "anonymous";
     im.src = ROLE_WIKI + file;
     preloaded.set(file, im);
   }
@@ -534,20 +540,25 @@ var preloadRoleIcons = () => {
 var gameIcon = (parent, key, fallback, size) => {
   const file = GAME_ICON_FILE[key];
   if (!file) return icon(parent, fallback);
+  const url = ROLE_WIKI + file;
   const slot = h(parent, "span", "mn-ic mn-gi-slot");
-  const im = h(slot, "img", "mn-gi");
-  im.alt = "";
-  im.style.width = im.style.height = `${size}px`;
-  const cached = preloaded.get(file);
-  if (!(cached?.complete && cached.naturalWidth)) {
-    im.classList.add("is-loading");
-    im.addEventListener("load", () => im.classList.remove("is-loading"), { once: true });
+  const shape = h(slot, "span", "mn-gi");
+  shape.style.width = shape.style.height = `${size}px`;
+  shape.style.setProperty("--gi", `url("${url}")`);
+  const probe = preloaded.get(file) ?? Object.assign(new Image(), { crossOrigin: "anonymous" });
+  const fail = () => {
+    const fb = icon(document.createElement("span"), fallback);
+    slot.replaceWith(fb);
+  };
+  if (probe.complete && probe.naturalWidth) return slot;
+  if (probe.complete && !probe.naturalWidth && probe.src) {
+    fail();
+    return slot;
   }
-  im.addEventListener("error", () => {
-    slot.remove();
-    icon(parent, fallback);
-  }, { once: true });
-  im.src = ROLE_WIKI + file;
+  shape.classList.add("is-loading");
+  probe.addEventListener("load", () => shape.classList.remove("is-loading"), { once: true });
+  probe.addEventListener("error", fail, { once: true });
+  if (!probe.src) probe.src = url;
   return slot;
 };
 var iconChip = (parent, label, file, fallback, o) => {
@@ -1718,7 +1729,7 @@ function championPicker(parent, ctx) {
         redraw();
       });
     }
-    const kindRow = fgrid(sect("\u50B7\u5BB3"), FEATURES.length);
+    const kindRow = fgrid(sect("\u50B7\u5BB3"), DAMAGES.length);
     for (const d of DAMAGES) iconFilter(kindRow, d, DAMAGE_ICON[d], DAMAGE_COLOR[d], F.dmg === d, () => {
       F.dmg = F.dmg === d ? "" : d;
       redraw();

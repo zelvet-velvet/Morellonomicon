@@ -140,7 +140,7 @@ const ROLE_FILE: Record<string, string> = { 戰士: "Fighter_icon.png", 坦克: 
 // The game's own icons for tags, damage kinds and stats (the wiki's keyword and stat icons, e.g. its "Champion stat assets").
 // Same rule as the class icons: shown by address, never stored; a file that does not load falls back to the look-alike.
 export const GAME_ICON_FILE: Record<string, string> = {
-    控場: "Stun_icon.png", 緩速: "Slow_icon.png", 位移: "Dash_icon.png", 治療: "Heal_power_icon.png", 護盾: "Shield_icon.png",
+    控場: "Stun_icon.png", 緩速: "Slow_icon.png", 位移: "Dash_icon.png", 治療: "Heal_power_icon.png", 護盾: "Heal_and_shield_power_icon.png",
     吸血: "Life_steal_icon.png", 強化普攻: "Basic_attack_icon.png", 攻擊特效: "On-hit_icon.png",
     物理: "Attack_damage_icon.png", 魔法: "Ability_power_icon.png", 坦度: "Armor_icon.png", 射程: "Range_icon.png",
 };
@@ -149,25 +149,31 @@ export const GAME_ICON_FILE: Record<string, string> = {
 const preloaded = new Map<string, HTMLImageElement>();
 export const preloadRoleIcons = (): void => {
     if (preloaded.size) return;
-    for (const file of [...Object.values(ROLE_FILE), ...Object.values(LANE_FILE), ...Object.values(GAME_ICON_FILE)]) { const im = new Image(); im.src = ROLE_WIKI + file; preloaded.set(file, im); }
+    for (const file of [...Object.values(ROLE_FILE), ...Object.values(LANE_FILE)]) { const im = new Image(); im.src = ROLE_WIKI + file; preloaded.set(file, im); }
+    // the game icons are used as CSS masks, which the browser fetches with CORS: probe them the same way, so a host that does not
+    // allow it is found out (and the look-alike used) instead of drawing nothing
+    for (const file of Object.values(GAME_ICON_FILE)) { const im = new Image(); im.crossOrigin = "anonymous"; im.src = ROLE_WIKI + file; preloaded.set(file, im); }
 };
 
-// An icon slot (the class "mn-ic" like icon()): the game's picture for `key` when there is one, at `size` px, drawn at once when
-// cached and faded in otherwise; the look-alike `fallback` when there is none or it does not load.
+// An icon slot (the class "mn-ic" like icon()): the game's picture for `key` as a silhouette in the current text colour (so it
+// takes the tag's colour like the look-alikes do), at `size` px; shown at once when cached, faded in otherwise; the look-alike
+// `fallback` when there is no picture or it does not load.
 export const gameIcon = (parent: HTMLElement, key: string, fallback: string, size: number): HTMLElement => {
     const file = GAME_ICON_FILE[key];
     if (!file) return icon(parent, fallback);
+    const url = ROLE_WIKI + file;
     const slot = h(parent, "span", "mn-ic mn-gi-slot");
-    const im = h(slot, "img", "mn-gi");
-    im.alt = "";
-    im.style.width = im.style.height = `${size}px`;
-    const cached = preloaded.get(file);
-    if (!(cached?.complete && cached.naturalWidth)) {
-        im.classList.add("is-loading");
-        im.addEventListener("load", () => im.classList.remove("is-loading"), { once: true });
-    }
-    im.addEventListener("error", () => { slot.remove(); icon(parent, fallback); }, { once: true });
-    im.src = ROLE_WIKI + file;
+    const shape = h(slot, "span", "mn-gi");
+    shape.style.width = shape.style.height = `${size}px`;
+    shape.style.setProperty("--gi", `url("${url}")`);
+    const probe = preloaded.get(file) ?? Object.assign(new Image(), { crossOrigin: "anonymous" });
+    const fail = () => { const fb = icon(document.createElement("span"), fallback); slot.replaceWith(fb); };
+    if (probe.complete && probe.naturalWidth) return slot;
+    if (probe.complete && !probe.naturalWidth && probe.src) { fail(); return slot; }
+    shape.classList.add("is-loading");
+    probe.addEventListener("load", () => shape.classList.remove("is-loading"), { once: true });
+    probe.addEventListener("error", fail, { once: true });
+    if (!probe.src) probe.src = url;
     return slot;
 };
 

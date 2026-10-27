@@ -138,7 +138,7 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
             const on = F.feat.get(f) === 1;
             tagFilter(ab, f, on, () => { if (on) F.feat.delete(f); else F.feat.set(f, 1); redraw(); });   // tap: must have / any
         }
-        const kindRow = fgrid(sect("傷害"), FEATURES.length);
+        const kindRow = fgrid(sect("傷害"), DAMAGES.length);   // three icons spread across the width
         for (const d of DAMAGES) iconFilter(kindRow, d, DAMAGE_ICON[d], DAMAGE_COLOR[d], F.dmg === d, () => { F.dmg = F.dmg === d ? "" : d; redraw(); });
         segmented(sect("攻擊距離"), [["", "全部"], ...REACH.map((r): [string, string] => [r, r])], F.reach, (id) => { F.reach = id; redraw(); }, "is-sm");
         // sort: tapping the chosen one again flips its direction (the arrow shows which way)
