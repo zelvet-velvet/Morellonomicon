@@ -382,6 +382,32 @@ var tip = (anchor, text) => {
     document.addEventListener("scroll", closeBubble, true);
   }, 0);
 };
+var HOLD_MS = 280;
+var holdTip = (el, text) => {
+  let timer = 0, shown = false;
+  el.classList.add("mn-holdable");
+  const end = () => {
+    window.clearTimeout(timer);
+    if (shown) closeBubble();
+  };
+  el.addEventListener("pointerdown", () => {
+    shown = false;
+    timer = window.setTimeout(() => {
+      shown = true;
+      tip(el, typeof text === "function" ? text() : text);
+      window.clearTimeout(bubbleTimer);
+    }, HOLD_MS);
+  });
+  for (const ev of ["pointerup", "pointercancel", "pointerleave"]) el.addEventListener(ev, end);
+  el.addEventListener("click", (e) => {
+    if (shown) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      shown = false;
+    }
+  }, true);
+  el.addEventListener("contextmenu", (e) => e.preventDefault());
+};
 var icon = (parent, name, cls = "mn-ic") => {
   const s = h(parent, "span", cls);
   (0, import_obsidian2.setIcon)(s, name);
@@ -467,10 +493,8 @@ var preloadRoleIcons = () => {
 };
 var roleChip = (parent, role, o) => {
   let el = null;
-  el = chip(parent, "", { on: o.on, onTap: () => {
-    if (el) tip(el, role);
-    o.onTap();
-  } });
+  el = chip(parent, "", { on: o.on, onTap: o.onTap });
+  holdTip(el, role);
   el.classList.add("mn-chip-ic");
   el.setAttribute("aria-label", role);
   const file = ROLE_FILE[role];
@@ -936,16 +960,15 @@ var TagLegend = class extends import_obsidian4.Modal {
     this.contentEl.empty();
   }
 };
-function tagFilter(parent, tag, state, onTap) {
+function tagFilter(parent, tag, on, onTap) {
   const t = TAG.get(tag);
-  const el = h(parent, "button", "mn-ftg" + (state === 1 ? " is-yes" : state === -1 ? " is-no" : ""));
+  const el = h(parent, "button", "mn-ftg" + (on ? " is-yes" : ""));
   el.setAttribute("aria-label", tag);
   el.style.setProperty("--p", t?.color ?? "var(--mn-text)");
   icon(el, t?.icon ?? "circle");
+  holdTip(el, tag);
   el.addEventListener("click", (e) => {
     e.preventDefault();
-    const next = state === void 0 ? "\u5FC5\u9808\u6709" : state === 1 ? "\u4E0D\u8981" : "\u4E0D\u9650";
-    tip(el, `${tag} \xB7 ${next}`);
     onTap();
   });
   return el;
@@ -961,10 +984,10 @@ function tagChip(parent, c, t) {
   h(el, "span", "", t.tag);
   const keys = lit ? keysOf(c, t.tag) : "";
   if (keys) h(el, "span", "mn-tg-k", keys);
+  holdTip(el, `${t.tag} \xB7 ${t.abbr}`);
   el.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    tip(el, `${t.tag} \xB7 ${t.abbr}`);
   });
   return el;
 }
@@ -1103,10 +1126,10 @@ function styleChart(parent, c) {
     h(top, "b", "", String(ax.value));
     h(chip2, "span", "mn-scc-k", on && ax.sub ? ax.sub : "\u2014");
     const t = ax.tag ? TAG.get(ax.tag) : void 0;
+    holdTip(chip2, t ? `${ax.label} \xB7 ${t.abbr}` : `${ax.label} ${ax.value} / 10`);
     chip2.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      tip(chip2, t ? `${ax.label} \xB7 ${t.abbr}` : `${ax.label} ${ax.value} / 10`);
     });
   });
 }
@@ -1613,13 +1636,12 @@ function championPicker(parent, ctx) {
       if (hint) h(head, "span", "mn-fp-hint", hint);
       return s;
     };
-    const ab = fgrid(sect("\u6280\u80FD", "\u9EDE\u4E00\u4E0B = \u5FC5\u9808\u6709,\u5169\u4E0B = \u4E0D\u8981"), FEATURES.length);
+    const ab = fgrid(sect("\u6280\u80FD"), FEATURES.length);
     for (const f of FEATURES) {
-      const st = F.feat.get(f);
-      tagFilter(ab, f, st, () => {
-        if (st === void 0) F.feat.set(f, 1);
-        else if (st === 1) F.feat.set(f, -1);
-        else F.feat.delete(f);
+      const on2 = F.feat.get(f) === 1;
+      tagFilter(ab, f, on2, () => {
+        if (on2) F.feat.delete(f);
+        else F.feat.set(f, 1);
         redraw();
       });
     }

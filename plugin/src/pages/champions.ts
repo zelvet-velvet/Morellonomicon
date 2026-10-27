@@ -9,7 +9,7 @@ import { skillStrip } from "./skills";
 
 const ROLES = ["戰士", "坦克", "法師", "刺客", "射手", "輔助"];
 const DAMAGES = ["物理", "魔法", "混合"];
-const FEATURES = ["控場", "緩速", "位移", "治療", "護盾", "吸血", "強化普攻", "攻擊特效"];   // tap once = must have, twice = must not have
+const FEATURES = ["控場", "緩速", "位移", "治療", "護盾", "吸血", "強化普攻", "攻擊特效"];   // tap = must have
 const REACH = ["近戰", "中程", "遠程"];
 const SORTS: [string, string][] = [["name", "名稱"], ["easy", "簡單優先"], ["range", "射程遠優先"]];
 const SEARCH_EXTRA = 8;   // augments / items listed under the champions when the search box has text
@@ -124,10 +124,10 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
             if (hint) h(head, "span", "mn-fp-hint", hint);
             return s;
         };
-        const ab = fgrid(sect("技能", "點一下 = 必須有,兩下 = 不要"), FEATURES.length);
+        const ab = fgrid(sect("技能"), FEATURES.length);
         for (const f of FEATURES) {
-            const st = F.feat.get(f) as 1 | -1 | undefined;
-            tagFilter(ab, f, st, () => { if (st === undefined) F.feat.set(f, 1); else if (st === 1) F.feat.set(f, -1); else F.feat.delete(f); redraw(); });
+            const on = F.feat.get(f) === 1;
+            tagFilter(ab, f, on, () => { if (on) F.feat.delete(f); else F.feat.set(f, 1); redraw(); });   // tap: must have / any
         }
         segmented(sect("距離"), [["", "全部"], ...REACH.map((r): [string, string] => [r, r])], F.reach, (id) => { F.reach = id; redraw(); }, "is-sm");
         segmented(sect("排序"), SORTS, F.sort, (id) => { F.sort = id; redraw(); }, "is-sm");

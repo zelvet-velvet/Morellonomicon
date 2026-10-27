@@ -36,6 +36,26 @@ export const tip = (anchor: HTMLElement, text: string): void => {
     }, 0);
 };
 
+// The name bubble while a finger rests on an element: it shows after a short hold and goes the moment the finger lifts.
+// A hold does not count as a tap (the element's tap action stays for a quick tap).
+const HOLD_MS = 280;
+export const holdTip = (el: HTMLElement, text: string | (() => string)): void => {
+    let timer = 0, shown = false;
+    el.classList.add("mn-holdable");
+    const end = (): void => { window.clearTimeout(timer); if (shown) closeBubble(); };
+    el.addEventListener("pointerdown", () => {
+        shown = false;
+        timer = window.setTimeout(() => {
+            shown = true;
+            tip(el, typeof text === "function" ? text() : text);
+            window.clearTimeout(bubbleTimer);   // stays while held
+        }, HOLD_MS);
+    });
+    for (const ev of ["pointerup", "pointercancel", "pointerleave"]) el.addEventListener(ev, end);
+    el.addEventListener("click", (e) => { if (shown) { e.preventDefault(); e.stopImmediatePropagation(); shown = false; } }, true);
+    el.addEventListener("contextmenu", (e) => e.preventDefault());
+};
+
 export const icon = (parent: HTMLElement, name: string, cls = "mn-ic"): HTMLElement => {
     const s = h(parent, "span", cls);
     setIcon(s, name);
@@ -121,7 +141,8 @@ export const preloadRoleIcons = (): void => {
 };
 export const roleChip = (parent: HTMLElement, role: string, o: { on: boolean; onTap: () => void }): HTMLElement => {
     let el: HTMLElement | null = null;
-    el = chip(parent, "", { on: o.on, onTap: () => { if (el) tip(el, role); o.onTap(); } });
+    el = chip(parent, "", { on: o.on, onTap: o.onTap });
+    holdTip(el, role);
     el.classList.add("mn-chip-ic");
     el.setAttribute("aria-label", role);
     // the game's icon: drawn at once when cached; otherwise it fades in when it arrives. The look-alike only if it fails to load

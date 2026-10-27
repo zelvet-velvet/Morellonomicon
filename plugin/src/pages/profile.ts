@@ -1,7 +1,7 @@
 import { Modal } from "obsidian";
 import type { App } from "obsidian";
 import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, h, icon, svg, tip } from "../ui";
+import { DAMAGE_COLOR, h, holdTip, icon, svg } from "../ui";
 
 // A champion at a glance: what it can do, drawn as a profile chart, plus the abilities it has. Every axis comes from data we have:
 //   輸出 = its stronger damage rating (Riot, 1-10)        坦度 = Riot's defence rating
@@ -96,20 +96,15 @@ class TagLegend extends Modal {
     onClose(): void { this.contentEl.empty(); }
 }
 
-// A tag as an icon-only filter: off (dim), must have (ring in the tag's colour) or must not have (red ring, struck through).
-// Tapping cycles the state; a bubble names the tag and the new state.
-export function tagFilter(parent: HTMLElement, tag: string, state: 1 | -1 | undefined, onTap: () => void): HTMLElement {
+// A tag as an icon-only filter: dim when off, a ring in the tag's colour when on (must have). Hold for the name.
+export function tagFilter(parent: HTMLElement, tag: string, on: boolean, onTap: () => void): HTMLElement {
     const t = TAG.get(tag);
-    const el = h(parent, "button", "mn-ftg" + (state === 1 ? " is-yes" : state === -1 ? " is-no" : ""));
+    const el = h(parent, "button", "mn-ftg" + (on ? " is-yes" : ""));
     el.setAttribute("aria-label", tag);
     el.style.setProperty("--p", t?.color ?? "var(--mn-text)");
     icon(el, t?.icon ?? "circle");
-    el.addEventListener("click", (e) => {
-        e.preventDefault();
-        const next = state === undefined ? "必須有" : state === 1 ? "不要" : "不限";
-        tip(el, `${tag} · ${next}`);
-        onTap();
-    });
+    holdTip(el, tag);
+    el.addEventListener("click", (e) => { e.preventDefault(); onTap(); });
     return el;
 }
 
@@ -129,7 +124,8 @@ function tagChip(parent: HTMLElement, c: Champion, t: Tag): HTMLElement {
     h(el, "span", "", t.tag);
     const keys = lit ? keysOf(c, t.tag) : "";
     if (keys) h(el, "span", "mn-tg-k", keys);
-    el.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); tip(el, `${t.tag} · ${t.abbr}`); });
+    holdTip(el, `${t.tag} · ${t.abbr}`);
+    el.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); });   // a tag is not a link (inside a 速查 card)
     return el;
 }
 
@@ -260,7 +256,8 @@ function styleChart(parent: HTMLElement, c: Champion): void {
         h(top, "b", "", String(ax.value));
         h(chip, "span", "mn-scc-k", on && ax.sub ? ax.sub : "—");
         const t = ax.tag ? TAG.get(ax.tag) : undefined;
-        chip.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); tip(chip, t ? `${ax.label} · ${t.abbr}` : `${ax.label} ${ax.value} / 10`); });
+        holdTip(chip, t ? `${ax.label} · ${t.abbr}` : `${ax.label} ${ax.value} / 10`);
+        chip.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); });
     });
 }
 

@@ -608,10 +608,11 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-chip-ic svg { width: 24px; height: 24px; }
 .mn-role-img { display: block; width: 30px; height: 30px; object-fit: contain; transition: opacity 0.2s; }
 .mn-role-img.is-loading { opacity: 0; }
-/* ability filters in the 篩選 panel: icon only. Off = dim; must have = ring in the tag colour; must not have = red ring, struck through */
+/* ability filters in the 篩選 panel: icon only. Off = dim; on (must have) = ring in the tag colour */
 .mn-app .mn-ftg { position: relative; display: flex; align-items: center; justify-content: center; justify-self: center; width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid transparent; color: var(--p); opacity: 0.45; -webkit-tap-highlight-color: transparent; transition: opacity 0.15s; }
 .mn-ftg .mn-ic { display: flex; }
 .mn-ftg svg { width: 20px; height: 20px; }
 .mn-app .mn-ftg.is-yes { opacity: 1; border-color: var(--p); background: color-mix(in srgb, var(--p) 14%, transparent); }
-.mn-app .mn-ftg.is-no { opacity: 1; border-color: var(--color-red); color: var(--color-red); }
-.mn-ftg.is-no::after { content: ""; position: absolute; left: 7px; right: 7px; top: 50%; height: 1.5px; background: var(--color-red); transform: rotate(-45deg); }
+
+/* elements with a hold-to-name bubble: no text selection or iOS callout while held */
+.mn-holdable { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
