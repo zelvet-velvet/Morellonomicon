@@ -51,7 +51,7 @@ body.is-mobile:not(.mn-on) .mn-home svg { width: 24px; height: 24px; }
 .mn-acts { justify-self: end; display: flex; }
 
 /* page */
-.mn-scroll { flex: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: none; }
+.mn-scroll { flex: 1; min-height: 0; overflow-x: hidden; overflow-x: clip; touch-action: pan-y; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: none; }
 .mn-page { max-width: 760px; margin: 0 auto; padding: 4px 16px 36px; }
 .mn-title { font-size: 32px; font-weight: 800; line-height: 1.12; letter-spacing: -0.03em; margin: 4px 2px 14px; }
 
@@ -99,7 +99,7 @@ button.mn-chip:active { transform: scale(0.96); }
 .mn-card-who .mn-title { margin: 0; font-size: 28px; }
 .mn-card-sub { color: var(--mn-muted); font-size: 14px; }
 .mn-card-who .mn-chips { margin: 8px 0 0; }
-.mn-panel { background: var(--mn-card); border-radius: var(--mn-radius); padding: 8px 8px 4px; margin: 14px 0; border: 1px solid var(--mn-line); }
+.mn-panel { overflow: hidden; background: var(--mn-card); border-radius: var(--mn-radius); padding: 8px 8px 4px; margin: 14px 0; border: 1px solid var(--mn-line); }
 .mn-radar { display: block; width: 100%; max-width: 340px; margin: 0 auto; overflow: visible; }
 .mn-rd-ring { fill: none; stroke: var(--mn-line); stroke-width: 1; }
 .mn-rd-axis { stroke: var(--mn-line); stroke-width: 1; }
@@ -304,8 +304,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-note h1, .mn-note h2, .mn-note h3 { margin-top: 1.2em; }
 
 /* handbook start page */
-.mn-keys { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 6px; }
-.mn-app .mn-key { flex: none; padding: 5px 13px; border-radius: 999px; font-size: 13px; background: var(--mn-card); border: 1px solid var(--mn-line); color: var(--mn-muted); }
+.mn-keys { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 10px 0 8px; }
+.mn-app .mn-key { min-width: 0; padding: 8px 4px; border-radius: 999px; font-size: 13px; font-weight: 600; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--mn-card-hi); border: 1px solid var(--mn-line); color: var(--mn-text); }
 .mn-app .mn-hh { position: relative; display: block; width: 100%; white-space: normal; text-align: left; overflow: hidden; margin: 8px 0 8px; padding: 20px 20px 18px;
     border-radius: 24px; color: var(--text-on-accent, #fff); background: var(--mn-accent); box-shadow: var(--mn-shadow); }
 .mn-hh-body { position: relative; z-index: 1; padding-right: 64px; }
@@ -369,7 +369,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-dots { display: flex; justify-content: center; gap: 6px; margin: 0 0 12px; }
 .mn-dot2 { width: 7px; height: 7px; border-radius: 4px; background: var(--mn-line); transition: width 0.15s, background 0.15s; }
 .mn-dot2.is-on { width: 22px; background: var(--mn-accent); }
-.mn-pager { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scrollbar-width: none; margin: 0 -16px; }
+.mn-pager { touch-action: pan-x pan-y; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scrollbar-width: none; margin: 0 -16px; }
 .mn-pager::-webkit-scrollbar { display: none; }
 .mn-slide { flex: 0 0 calc(100% - 12px); margin: 0 6px; scroll-snap-align: center; box-sizing: border-box; display: flex; flex-direction: column; min-height: 400px; padding: 18px 18px 22px;
     background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: 24px; }
@@ -398,7 +398,15 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 
 /* "你知道嗎?" lore trivia between the topic cards, like a loading screen */
 .mn-app .mn-trv { position: relative; display: block; width: 100%; height: 168px; margin: 14px 0; padding: 0; overflow: hidden; border-radius: 22px; text-align: left; white-space: normal; background: var(--mn-card-hi); box-shadow: var(--mn-shadow); }
-.mn-trv-bg { position: absolute; inset: 0; background-size: cover; background-position: center 20%; }
+.mn-trv-bg { position: absolute; inset: 0; background-size: cover; background-position: center 20%; animation: mn-fade 0.35s ease-out; }
+@keyframes mn-fade { from { opacity: 0; } to { opacity: 1; } }
+/* loading: a soft moving shine and a spinner, no text until the picture is there */
+.mn-trv.is-loading { background: linear-gradient(100deg, var(--mn-card-hi) 30%, color-mix(in srgb, var(--mn-card-hi) 70%, var(--mn-text)) 50%, var(--mn-card-hi) 70%) 0 0 / 220% 100%; animation: mn-shimmer 1.3s linear infinite; }
+.mn-trv.is-loading::after { display: none; }
+@keyframes mn-shimmer { from { background-position: 120% 0; } to { background-position: -100% 0; } }
+.mn-trv-load { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.mn-spin { width: 30px; height: 30px; border-radius: 50%; border: 3px solid color-mix(in srgb, var(--mn-text) 18%, transparent); border-top-color: var(--mn-accent); animation: mn-rot 0.8s linear infinite; }
+@keyframes mn-rot { to { transform: rotate(360deg); } }
 .mn-trv::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 25%, rgba(0, 0, 0, 0.78) 100%); }
 .mn-trv-body { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; padding: 14px 16px; color: #fff; }
 .mn-trv-k { display: inline-block; padding: 2px 9px; border-radius: 999px; background: var(--mn-accent); color: var(--text-on-accent, #fff); font-size: 11px; font-weight: 800; letter-spacing: 0.06em; }

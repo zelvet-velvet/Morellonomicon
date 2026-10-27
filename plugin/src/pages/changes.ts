@@ -5,6 +5,38 @@ import type { PageCtx } from "./index";
 export const DIR_COLOR: Record<string, string> = { buff: "var(--color-green)", nerf: "var(--color-red)", mixed: "var(--color-yellow)", change: "var(--color-blue)", text: "var(--color-blue)" };
 const DIR_MARK: Record<string, string> = { buff: "▲", nerf: "▼", mixed: "◆", change: "●", text: "✎" };
 
+// Which way one of Riot's patch-note lines goes for the player, guessed from the numbers and the name of the stat (the notes themselves do not say).
+// Only stats whose better direction is obvious count: lower cooldown / cost is better; more damage, shield, heal, health, armor, speed, range... is better.
+// Anything else (durations, ratios, "damage taken"...) is just an adjustment, shown without an arrow.
+const LOWER_IS_BETTER = /冷卻|消耗|前搖|後搖|施放時間/;
+const HIGHER_IS_BETTER = /傷害|護盾|治療|回復|生命|護甲|魔抗|物防|魔防|攻擊力|物攻|魔攻|攻速|跑速|移速|射程|吸血|韌性|穿透|技能加速|魔力/;
+const AMBIGUOUS = /受到|承受|減免|敵/;
+const numbers = (s: string): number[] => (s.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
+export type OfficialDir = "buff" | "nerf" | "mixed" | "change";
+
+export function noteChangeDir(c: { label: string; old: string; new: string }): OfficialDir {
+    const a = numbers(c.old), b = numbers(c.new);
+    const n = Math.min(a.length, b.length);
+    if (!n || AMBIGUOUS.test(c.label)) return "change";
+    let up = 0, down = 0;
+    for (let i = 0; i < n; i++) { if (b[i] > a[i]) up++; else if (b[i] < a[i]) down++; }
+    if (up && down) return "mixed";
+    if (!up && !down) return "change";
+    const lower = LOWER_IS_BETTER.test(c.label);
+    if (!lower && !HIGHER_IS_BETTER.test(c.label)) return "change";
+    return (up > 0) !== lower ? "buff" : "nerf";
+}
+
+// The overall direction of one champion's / item's entry: all buffs, all nerfs, a mix, or just adjusted
+export function entryDir(e: NoteEntry): OfficialDir {
+    const dirs = e.changes.map(noteChangeDir);
+    const buff = dirs.includes("buff"), nerf = dirs.includes("nerf");
+    if (dirs.includes("mixed") || (buff && nerf)) return "mixed";
+    return buff ? "buff" : nerf ? "nerf" : "change";
+}
+
+export const marker = (d: OfficialDir): { mark: string; color: string } => ({ mark: DIR_MARK[d] ?? "●", color: DIR_COLOR[d] ?? DIR_COLOR.change });
+
 // ▲ buffs, ▼ nerfs (text rewrites and neutral changes are not counted) for a list of changes
 export function tally(items: Change[]): { buff: number; nerf: number; mixed: number } {
     return { buff: items.filter((i) => i.dir === "buff").length, nerf: items.filter((i) => i.dir === "nerf").length, mixed: items.filter((i) => i.dir === "mixed").length };

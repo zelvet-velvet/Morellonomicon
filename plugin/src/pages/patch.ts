@@ -1,7 +1,10 @@
 import type { PatchNote } from "../data/store";
 import { AUG_CLASS, augIcon, chip, empty, group, h, page, row } from "../ui";
 import { RARITY_COLOR } from "./augments";
+import { entryDir, marker, type OfficialDir } from "./changes";
 import type { PageCtx, PageOut } from "./index";
+
+const LEGEND = "▲ 增強 · ▼ 削弱 · ◆ 有增有減 · ● 調整。方向是依數字變化推測的,不是官方標示。";
 
 // The Patch tab: Riot's latest patch notes in short (blurb, headline image, a link to the full notes), then icon grids of what changed
 // (new Mayhem augments, champions, items). One tap on an icon opens that augment / champion / item, whose own page shows the details:
@@ -26,16 +29,18 @@ export function patchPage(ctx: PageCtx): PageOut {
         const grid = h(el, "div", "mn-grid");
         for (const e of latest.champions) {
             const c = store.champions().find((x) => x.name === e.name);
-            if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "skills"), { badge: e.changes.length + e.more });
+            if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "skills"), { dir: entryDir(e) });
         }
+        h(el, "div", "mn-gf", LEGEND);
     }
     if (latest?.items?.length) {
         h(el, "div", "mn-gh", `Items · ${latest.items.length}`);
         const grid = h(el, "div", "mn-grid");
         for (const e of latest.items) {
             const i = store.items().find((x) => x.name === e.name);
-            if (i) tile(grid, i.icon, i.name, () => ctx.openItem(i.id), { badge: e.changes.length + e.more });
+            if (i) tile(grid, i.icon, i.name, () => ctx.openItem(i.id), { dir: entryDir(e) });
         }
+        h(el, "div", "mn-gf", LEGEND);
     }
 
     if (older.length) {
@@ -62,11 +67,11 @@ export function patchPage(ctx: PageCtx): PageOut {
 }
 
 // An icon with its name under it; `badge` is the number of changes, `ring` an outline colour (rarity)
-function tile(grid: HTMLElement, src: string, name: string, onTap: () => void, o: { badge?: number; rarity?: string } = {}): void {
+function tile(grid: HTMLElement, src: string, name: string, onTap: () => void, o: { dir?: OfficialDir; rarity?: string } = {}): void {
     const t = h(grid, "button", "mn-tile");
     if (o.rarity && AUG_CLASS[o.rarity]) augIcon(t, src, o.rarity, "mn-tile-aug");
     else { const im = h(t, "img"); im.src = src; im.alt = ""; im.loading = "lazy"; }
-    if (o.badge && o.badge > 1) h(t, "span", "mn-tile-b", `+${o.badge}`);
+    if (o.dir) { const m = marker(o.dir); const b = h(t, "span", "mn-tile-b", m.mark); b.style.background = m.color; }
     h(t, "span", "mn-tile-n", name);
     t.addEventListener("click", (e) => { e.preventDefault(); onTap(); });
 }

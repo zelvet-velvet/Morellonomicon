@@ -3,7 +3,7 @@ import { MODES } from "../modes";
 import { DAMAGE_COLOR, chip, empty, group, h, icon, page, radar, row, segmented } from "../ui";
 import { buildTab } from "./build";
 import type { PageCtx, PageOut } from "./index";
-import { badgeColor, badgeText, changesBlock } from "./changes";
+import { badgeColor, badgeText, changesBlock, entryDir, marker } from "./changes";
 import { metaLine } from "./fresh";
 import { skillStrip } from "./skills";
 
@@ -39,6 +39,8 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
     const all = store.champions();
     if (!all.length) { empty(parent, { icon: "database", title: "No champion notes yet", text: "Run python3 tools/fetch_data.py" }); return; }
     let query = "";
+    // champions changed in the latest patch notes get a ▲ / ▼ / ◆ / ● mark on their icon
+    const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)] as const));
     const box = h(parent, "div", "mn-search");
     icon(box, "search", "mn-search-ic");
     const search = h(box, "input");
@@ -60,6 +62,8 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
         for (const c of hits) {
             const tile = h(grid, "button", "mn-tile");
             const im = h(tile, "img"); im.src = c.icon; im.loading = "lazy"; im.alt = "";
+            const rd = recent.get(c.name);
+            if (rd) { const m = marker(rd); const b = h(tile, "span", "mn-tile-b", m.mark); b.style.background = m.color; }
             h(tile, "span", "mn-tile-n", c.name);
             tile.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); });
         }
@@ -160,7 +164,7 @@ export function championCard(ctx: PageCtx): PageOut {
     const openChanges = () => { show("skills"); block?.open(); block?.el.scrollIntoView({ behavior: "smooth", block: "start" }); };
     const official = ctx.plugin.store.officialFor("champions", c.name)[0];
     if (badgeText(now)) chip(tags, badgeText(now), { color: badgeColor(now), onTap: openChanges });
-    else if (official) chip(tags, `📰 ${official.patch}`, { color: "var(--color-blue)", onTap: openChanges });
+    else if (official) { const m = marker(entryDir(official.entry)); chip(tags, `${m.mark} ${official.patch}`, { color: m.color, onTap: openChanges }); }
 
     // 射程 is derived from the attack range (650 = full); the other four are Riot's own 1-10 ratings
     const panel = h(el, "div", "mn-panel");
@@ -189,7 +193,7 @@ export function championCard(ctx: PageCtx): PageOut {
         b.addEventListener("click", (e) => { e.preventDefault(); show(t); });
     }
     show(lastSub.get(c.id) ?? "skills");
-    return { title: c.name, el };
+    return { title: "", el };   // the name is in the banner; no second copy in the top bar
 }
 
 function skills(body: HTMLElement, c: Champion, ctx: PageCtx): { el: HTMLElement; open(): void } | null {

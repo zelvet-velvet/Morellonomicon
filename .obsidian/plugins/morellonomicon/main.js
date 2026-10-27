@@ -739,32 +739,54 @@ var segmented = (parent, options, value, onChange, cls = "") => {
 // src/pages/augments.ts
 var RARITIES = ["\u9280", "\u91D1", "\u7A1C\u93E1"];
 var RARITY_COLOR = { \u9280: "var(--text-muted)", \u91D1: "var(--color-yellow)", \u7A1C\u93E1: "var(--color-purple)" };
+var RARITY_RANK = { \u7A1C\u93E1: 0, \u91D1: 1, \u9280: 2 };
+var SORTS = [["rarity", "\u7A00\u6709\u5EA6"], ["name", "\u540D\u7A31"], ["new", "\u6700\u65B0"]];
+var patchNo2 = (p) => {
+  const m = /(\d+)\.(\d+)/.exec(p);
+  return m ? Number(m[1]) * 100 + Number(m[2]) : 0;
+};
+var sortBy = "rarity";
 function augmentsPage(ctx) {
+  const store = ctx.plugin.store;
   const el = page("Augments");
-  const all = ctx.plugin.store.augments();
+  const all = store.augments();
   if (!all.length) {
     empty(el, { icon: "database", title: "No augment notes yet", text: "Run python3 tools/fetch_augments.py" });
     return { title: "Augments", el };
   }
   let query = "", rarity = "";
+  const latest = store.riotNotes[0]?.patch ?? "";
+  const addedIn = new Map(all.map((a) => [a.id, store.augmentHistory(a.name).find((x) => x.what === "added")?.patch ?? ""]));
   const box = h(el, "div", "mn-search");
   icon(box, "search", "mn-search-ic");
   const search = h(box, "input");
   search.type = "search";
   search.placeholder = "Search";
-  const links = group(el);
+  const chips = h(el, "div", "mn-chips");
+  segmented(el, SORTS, sortBy, (id) => {
+    sortBy = id;
+    draw();
+    sortbar.querySelectorAll(".mn-seg-b").forEach((b, i) => b.toggleClass("is-on", SORTS[i][0] === id));
+  }, "is-sm mn-sortbar");
+  const sortbar = el.lastElementChild;
+  const list2 = h(el, "div");
+  const links = group(el, "Tier lists (other sites)");
   row(links, { icon: "external-link", title: "OP.GG Mayhem tier list", chevron: true, onTap: () => window.open("https://op.gg/lol/modes/aram-mayhem") });
   row(links, { icon: "external-link", title: "U.GG augment tier list", chevron: true, onTap: () => window.open("https://u.gg/lol/aram-mayhem-augment-tier-list") });
-  const chips = h(el, "div", "mn-chips");
-  const list2 = h(el, "div");
   const draw = () => {
     list2.empty();
     const q = query.trim().toLowerCase();
     const hits = all.filter((a) => (!rarity || a.rarity === rarity) && (!q || a.name.toLowerCase().includes(q)));
+    const byName = (a, b) => a.name.localeCompare(b.name, "zh-Hant");
+    if (sortBy === "rarity") hits.sort((a, b) => (RARITY_RANK[a.rarity] ?? 9) - (RARITY_RANK[b.rarity] ?? 9) || byName(a, b));
+    else if (sortBy === "new") hits.sort((a, b) => patchNo2(addedIn.get(b.id) ?? "") - patchNo2(addedIn.get(a.id) ?? "") || byName(a, b));
+    else hits.sort(byName);
     const g = group(list2);
-    for (const a of hits.slice(0, 100)) row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || void 0, value: a.rarity, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
+    for (const a of hits) {
+      const isNew = !!latest && addedIn.get(a.id) === latest;
+      row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || void 0, value: isNew ? `${a.rarity} \xB7 \u65B0` : a.rarity, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
+    }
     if (!hits.length) empty(list2, { icon: "search-x", title: "No match" });
-    else if (hits.length > 100) h(list2, "div", "mn-gf", `${hits.length - 100} more: search or filter`);
   };
   const drawChips = () => {
     chips.empty();
@@ -905,6 +927,32 @@ function itemRow(parent, c, ctx, ids, captions = []) {
 // src/pages/changes.ts
 var DIR_COLOR = { buff: "var(--color-green)", nerf: "var(--color-red)", mixed: "var(--color-yellow)", change: "var(--color-blue)", text: "var(--color-blue)" };
 var DIR_MARK = { buff: "\u25B2", nerf: "\u25BC", mixed: "\u25C6", change: "\u25CF", text: "\u270E" };
+var LOWER_IS_BETTER = /冷卻|消耗|前搖|後搖|施放時間/;
+var HIGHER_IS_BETTER = /傷害|護盾|治療|回復|生命|護甲|魔抗|物防|魔防|攻擊力|物攻|魔攻|攻速|跑速|移速|射程|吸血|韌性|穿透|技能加速|魔力/;
+var AMBIGUOUS = /受到|承受|減免|敵/;
+var numbers = (s) => (s.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
+function noteChangeDir(c) {
+  const a = numbers(c.old), b = numbers(c.new);
+  const n = Math.min(a.length, b.length);
+  if (!n || AMBIGUOUS.test(c.label)) return "change";
+  let up = 0, down = 0;
+  for (let i = 0; i < n; i++) {
+    if (b[i] > a[i]) up++;
+    else if (b[i] < a[i]) down++;
+  }
+  if (up && down) return "mixed";
+  if (!up && !down) return "change";
+  const lower = LOWER_IS_BETTER.test(c.label);
+  if (!lower && !HIGHER_IS_BETTER.test(c.label)) return "change";
+  return up > 0 !== lower ? "buff" : "nerf";
+}
+function entryDir(e) {
+  const dirs = e.changes.map(noteChangeDir);
+  const buff = dirs.includes("buff"), nerf = dirs.includes("nerf");
+  if (dirs.includes("mixed") || buff && nerf) return "mixed";
+  return buff ? "buff" : nerf ? "nerf" : "change";
+}
+var marker = (d) => ({ mark: DIR_MARK[d] ?? "\u25CF", color: DIR_COLOR[d] ?? DIR_COLOR.change });
 function tally(items) {
   return { buff: items.filter((i) => i.dir === "buff").length, nerf: items.filter((i) => i.dir === "nerf").length, mixed: items.filter((i) => i.dir === "mixed").length };
 }
@@ -1098,7 +1146,7 @@ var ROLES = ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u
 var DAMAGES = ["\u7269\u7406", "\u9B54\u6CD5", "\u6DF7\u5408"];
 var FEATURES = ["\u63A7\u5834", "\u6CBB\u7642", "\u8B77\u76FE", "\u4F4D\u79FB"];
 var REACH = ["\u8FD1\u6230", "\u4E2D\u7A0B", "\u9060\u7A0B"];
-var SORTS = [["name", "\u540D\u7A31"], ["easy", "\u7C21\u55AE\u512A\u5148"], ["range", "\u5C04\u7A0B\u9060\u512A\u5148"]];
+var SORTS2 = [["name", "\u540D\u7A31"], ["easy", "\u7C21\u55AE\u512A\u5148"], ["range", "\u5C04\u7A0B\u9060\u512A\u5148"]];
 var SEARCH_EXTRA = 8;
 var F = { roles: /* @__PURE__ */ new Set(), dmg: "", feat: /* @__PURE__ */ new Map(), reach: "", sort: "name", open: false };
 var activeFilters = () => F.roles.size + (F.dmg ? 1 : 0) + F.feat.size + (F.reach ? 1 : 0);
@@ -1121,6 +1169,7 @@ function championPicker(parent, ctx) {
     return;
   }
   let query = "";
+  const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)]));
   const box = h(parent, "div", "mn-search");
   icon(box, "search", "mn-search-ic");
   const search = h(box, "input");
@@ -1144,6 +1193,12 @@ function championPicker(parent, ctx) {
       im.src = c.icon;
       im.loading = "lazy";
       im.alt = "";
+      const rd = recent.get(c.name);
+      if (rd) {
+        const m = marker(rd);
+        const b = h(tile2, "span", "mn-tile-b", m.mark);
+        b.style.background = m.color;
+      }
       h(tile2, "span", "mn-tile-n", c.name);
       tile2.addEventListener("click", (e) => {
         e.preventDefault();
@@ -1234,7 +1289,7 @@ function championPicker(parent, ctx) {
       F.reach = id;
       redraw();
     }, "is-sm");
-    segmented(sect("\u6392\u5E8F"), SORTS, F.sort, (id) => {
+    segmented(sect("\u6392\u5E8F"), SORTS2, F.sort, (id) => {
       F.sort = id;
       redraw();
     }, "is-sm");
@@ -1287,7 +1342,10 @@ function championCard(ctx) {
   };
   const official = ctx.plugin.store.officialFor("champions", c.name)[0];
   if (badgeText(now)) chip(tags, badgeText(now), { color: badgeColor(now), onTap: openChanges });
-  else if (official) chip(tags, `\u{1F4F0} ${official.patch}`, { color: "var(--color-blue)", onTap: openChanges });
+  else if (official) {
+    const m = marker(entryDir(official.entry));
+    chip(tags, `${m.mark} ${official.patch}`, { color: m.color, onTap: openChanges });
+  }
   const panel = h(el, "div", "mn-panel");
   radar(panel, [
     { label: "\u7269\u7406", value: c.attack },
@@ -1319,7 +1377,7 @@ function championCard(ctx) {
     });
   }
   show(lastSub.get(c.id) ?? "skills");
-  return { title: c.name, el };
+  return { title: "", el };
 }
 function skills(body, c, ctx) {
   skillStrip(body, c, ctx.plugin.store.currentChanges(c.id));
@@ -1435,7 +1493,7 @@ function deckPage(ctx, file) {
       if (i >= count - 1) void ctx.plugin.markRead(file.path);
     }, { passive: true });
   });
-  return { title: file.basename, el };
+  return { title: "", el };
 }
 function visual(ctx, box, s) {
   const store = ctx.plugin.store;
@@ -1589,7 +1647,7 @@ function notePage(ctx) {
     } else h(el, "div", "mn-nextcard-done", "\u{1F389} \u5168\u90E8\u8B80\u5B8C\u4E86");
   }
   row(group(el), { icon: "pencil", title: "Edit in Obsidian", chevron: true, onTap: () => void ctx.plugin.openPath(path) });
-  return { title: file.basename, el };
+  return { title: "", el };
 }
 var KINDS = [
   { tag: "\u9B54\u6CD5\u653B\u64CA", re: /魔攻|魔法攻擊|法術強度/, fits: (c) => c.damageType === "\u9B54\u6CD5" || c.damageType === "\u6DF7\u5408" },
@@ -1676,7 +1734,7 @@ function augmentPage(ctx) {
     const g = group(el);
     for (const x of history) row(g, { icon: x.what === "added" ? "plus-circle" : "minus-circle", title: x.what === "added" ? "\u65B0\u589E" : "\u79FB\u9664", value: x.patch });
   }
-  return { title: a.name, el };
+  return { title: "", el };
 }
 function itemPage(ctx) {
   const store = ctx.plugin.store;
@@ -1707,7 +1765,7 @@ function itemPage(ctx) {
   }
   recipe(el, ctx, "\u5408\u6210\u6750\u6599", item.from.map((id) => store.item(id)).filter((i) => !!i));
   recipe(el, ctx, "\u53EF\u5408\u6210", item.into.map((id) => store.item(id)).filter((i) => !!i));
-  return { title: item.name, el };
+  return { title: "", el };
 }
 function recipe(el, ctx, title, items) {
   if (!items.length) return;
@@ -1731,7 +1789,8 @@ function recipe(el, ctx, title, items) {
 var SNIPPET = 46;
 var MAX_PER_NOTE = 2;
 var CHARS_PER_MINUTE = 350;
-var KEYWORDS = 6;
+var KEYWORDS = 8;
+var LOAD_TIMEOUT = 8e3;
 var TILE_COLORS = ["--color-blue", "--color-purple", "--color-orange", "--color-green", "--color-cyan", "--color-pink", "--color-yellow", "--color-red"];
 var GLOSSARY = "\u540D\u8A5E\u8868";
 var TRIVIA_AFTER = 4;
@@ -1812,19 +1871,36 @@ function handbookPage(ctx) {
     if (!champs.length) return;
     let n = Math.floor(Date.now() / 864e5);
     const card = h(parent, "button", "mn-trv");
+    let seq = 0;
     const draw = () => {
-      card.empty();
+      const mine = ++seq;
       const c = champs[hash(n) % champs.length];
-      const bg = h(card, "div", "mn-trv-bg");
-      bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
-      const body = h(card, "div", "mn-trv-body");
-      h(body, "div", "mn-trv-k", "\u4F60\u77E5\u9053\u55CE?");
-      h(body, "div", "mn-trv-t", `${c.name} \xB7 ${c.title}`);
-      h(body, "div", "mn-trv-s", firstSentence(c.blurb));
-      icon(h(card, "span", "mn-trv-next"), "refresh-cw");
+      const url = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg`;
+      card.empty();
+      card.addClass("is-loading");
+      h(h(card, "div", "mn-trv-load"), "span", "mn-spin");
+      let shown = false;
+      const show = () => {
+        if (shown || mine !== seq) return;
+        shown = true;
+        card.empty();
+        card.removeClass("is-loading");
+        h(card, "div", "mn-trv-bg").style.backgroundImage = `url("${url}")`;
+        const body = h(card, "div", "mn-trv-body");
+        h(body, "div", "mn-trv-k", "\u4F60\u77E5\u9053\u55CE?");
+        h(body, "div", "mn-trv-t", `${c.name} \xB7 ${c.title}`);
+        h(body, "div", "mn-trv-s", firstSentence(c.blurb));
+        icon(h(card, "span", "mn-trv-next"), "refresh-cw");
+      };
+      const img = new Image();
+      img.onload = show;
+      img.onerror = show;
+      img.src = url;
+      window.setTimeout(show, LOAD_TIMEOUT);
     };
     card.addEventListener("click", (e) => {
       e.preventDefault();
+      if (card.hasClass("is-loading")) return;
       n += 1;
       draw();
     });
@@ -1928,6 +2004,7 @@ function marked(parent, text, q) {
 }
 
 // src/pages/patch.ts
+var LEGEND = "\u25B2 \u589E\u5F37 \xB7 \u25BC \u524A\u5F31 \xB7 \u25C6 \u6709\u589E\u6709\u6E1B \xB7 \u25CF \u8ABF\u6574\u3002\u65B9\u5411\u662F\u4F9D\u6578\u5B57\u8B8A\u5316\u63A8\u6E2C\u7684,\u4E0D\u662F\u5B98\u65B9\u6A19\u793A\u3002";
 function patchPage(ctx) {
   const store = ctx.plugin.store;
   const el = page("Patch");
@@ -1945,16 +2022,18 @@ function patchPage(ctx) {
     const grid = h(el, "div", "mn-grid");
     for (const e of latest.champions) {
       const c = store.champions().find((x) => x.name === e.name);
-      if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "skills"), { badge: e.changes.length + e.more });
+      if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "skills"), { dir: entryDir(e) });
     }
+    h(el, "div", "mn-gf", LEGEND);
   }
   if (latest?.items?.length) {
     h(el, "div", "mn-gh", `Items \xB7 ${latest.items.length}`);
     const grid = h(el, "div", "mn-grid");
     for (const e of latest.items) {
       const i = store.items().find((x) => x.name === e.name);
-      if (i) tile(grid, i.icon, i.name, () => ctx.openItem(i.id), { badge: e.changes.length + e.more });
+      if (i) tile(grid, i.icon, i.name, () => ctx.openItem(i.id), { dir: entryDir(e) });
     }
+    h(el, "div", "mn-gf", LEGEND);
   }
   if (older.length) {
     const g2 = group(el, "Earlier patches");
@@ -1992,7 +2071,11 @@ function tile(grid, src, name, onTap, o = {}) {
     im.alt = "";
     im.loading = "lazy";
   }
-  if (o.badge && o.badge > 1) h(t, "span", "mn-tile-b", `+${o.badge}`);
+  if (o.dir) {
+    const m = marker(o.dir);
+    const b = h(t, "span", "mn-tile-b", m.mark);
+    b.style.background = m.color;
+  }
   h(t, "span", "mn-tile-n", name);
   t.addEventListener("click", (e) => {
     e.preventDefault();
@@ -2237,6 +2320,7 @@ var MnView = class extends import_obsidian6.ItemView {
     this.scrollEl.replaceChildren(out.el);
     this.shown = key;
     this.scrollEl.scrollTop = this.scrolls.get(key) ?? 0;
+    this.scrollEl.scrollLeft = 0;
     this.titleEl.textContent = out.title;
     this.topEl.toggleClass("has-back", this.router.depth() > 0);
     this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > 36);

@@ -82,7 +82,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             if (i >= count - 1) void ctx.plugin.markRead(file.path);   // reached the end: counts as read
         }, { passive: true });
     });
-    return { title: file.basename, el };
+    return { title: "", el };
 }
 
 // ---- the picture of a card

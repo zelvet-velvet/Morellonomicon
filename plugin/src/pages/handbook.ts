@@ -4,7 +4,8 @@ import type { PageCtx, PageOut } from "./index";
 const SNIPPET = 46;      // characters of context around a match
 const MAX_PER_NOTE = 2;  // matching lines shown per guide card
 const CHARS_PER_MINUTE = 350;   // reading speed for the "N min" label (Chinese)
-const KEYWORDS = 6;      // quick-search chips taken from the glossary
+const KEYWORDS = 8;      // quick-search chips taken from the glossary (two full rows of four)
+const LOAD_TIMEOUT = 8000;   // ms before the trivia card shows its text even if the picture has not arrived
 const TILE_COLORS = ["--color-blue", "--color-purple", "--color-orange", "--color-green", "--color-cyan", "--color-pink", "--color-yellow", "--color-red"];
 const GLOSSARY = "名詞表";
 const TRIVIA_AFTER = 4;   // topic cards above the lore trivia card
@@ -91,18 +92,35 @@ export function handbookPage(ctx: PageCtx): PageOut {
         if (!champs.length) return;
         let n = Math.floor(Date.now() / 86_400_000);
         const card = h(parent, "button", "mn-trv");
+        let seq = 0;   // a newer card replaces one still loading
+        // The picture loads first behind a spinner; the text only appears together with it (never text on an empty card).
         const draw = () => {
-            card.empty();
+            const mine = ++seq;
             const c = champs[hash(n) % champs.length];
-            const bg = h(card, "div", "mn-trv-bg");
-            bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
-            const body = h(card, "div", "mn-trv-body");
-            h(body, "div", "mn-trv-k", "你知道嗎?");
-            h(body, "div", "mn-trv-t", `${c.name} · ${c.title}`);
-            h(body, "div", "mn-trv-s", firstSentence(c.blurb));
-            icon(h(card, "span", "mn-trv-next"), "refresh-cw");
+            const url = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg`;
+            card.empty();
+            card.addClass("is-loading");
+            h(h(card, "div", "mn-trv-load"), "span", "mn-spin");
+            let shown = false;
+            const show = () => {
+                if (shown || mine !== seq) return;
+                shown = true;
+                card.empty();
+                card.removeClass("is-loading");
+                h(card, "div", "mn-trv-bg").style.backgroundImage = `url("${url}")`;
+                const body = h(card, "div", "mn-trv-body");
+                h(body, "div", "mn-trv-k", "你知道嗎?");
+                h(body, "div", "mn-trv-t", `${c.name} · ${c.title}`);
+                h(body, "div", "mn-trv-s", firstSentence(c.blurb));
+                icon(h(card, "span", "mn-trv-next"), "refresh-cw");
+            };
+            const img = new Image();
+            img.onload = show;
+            img.onerror = show;   // no picture: show the text on the plain card
+            img.src = url;
+            window.setTimeout(show, LOAD_TIMEOUT);
         };
-        card.addEventListener("click", (e) => { e.preventDefault(); n += 1; draw(); });
+        card.addEventListener("click", (e) => { e.preventDefault(); if (card.hasClass("is-loading")) return; n += 1; draw(); });
         draw();
     };
 

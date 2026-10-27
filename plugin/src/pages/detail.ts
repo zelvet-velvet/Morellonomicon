@@ -39,7 +39,7 @@ export function notePage(ctx: PageCtx): PageOut {
         } else h(el, "div", "mn-nextcard-done", "🎉 全部讀完了");
     }
     row(group(el), { icon: "pencil", title: "Edit in Obsidian", chevron: true, onTap: () => void ctx.plugin.openPath(path) });
-    return { title: file.basename, el };
+    return { title: "", el };
 }
 
 // What an augment's effect text is about, and which kinds of champion that helps. A guess from the wording only (the tags and rules
@@ -129,7 +129,7 @@ export function augmentPage(ctx: PageCtx): PageOut {
         const g = group(el);
         for (const x of history) row(g, { icon: x.what === "added" ? "plus-circle" : "minus-circle", title: x.what === "added" ? "新增" : "移除", value: x.patch });
     }
-    return { title: a.name, el };
+    return { title: "", el };   // the name is already the big heading
 }
 
 // ---- an item: effect, what it is built from and builds into, and what Riot changed in it
@@ -152,7 +152,7 @@ export function itemPage(ctx: PageCtx): PageOut {
     if (official.length) { h(el, "div", "mn-gh", "版本調整"); officialBlock(el, official); }
     recipe(el, ctx, "合成材料", item.from.map((id) => store.item(id)).filter((i): i is Item => !!i));
     recipe(el, ctx, "可合成", item.into.map((id) => store.item(id)).filter((i): i is Item => !!i));
-    return { title: item.name, el };
+    return { title: "", el };
 }
 
 function recipe(el: HTMLElement, ctx: PageCtx, title: string, items: Item[]): void {

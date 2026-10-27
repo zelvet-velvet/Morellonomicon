@@ -154,6 +154,7 @@ export class MnView extends ItemView {
         this.scrollEl.replaceChildren(out.el);
         this.shown = key;
         this.scrollEl.scrollTop = this.scrolls.get(key) ?? 0;
+        this.scrollEl.scrollLeft = 0;   // never carry a sideways offset from the previous page
         this.titleEl.textContent = out.title;
         this.topEl.toggleClass("has-back", this.router.depth() > 0);
         this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > 36);
