@@ -2696,6 +2696,7 @@ var MnView = class extends import_obsidian8.ItemView {
   markScrolled() {
     const past = this.appEl.hasClass("is-overlay") ? OVERLAY_SCROLL : 36;
     this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > past);
+    this.appEl.toggleClass("has-scrolled", this.scrollEl.scrollTop > 4);
   }
   // theme and mode buttons: in the big title row of a tab's first page, in the top bar elsewhere
   // The chosen colour theme as variables on the app element (none = Obsidian's own colours)

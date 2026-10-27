@@ -584,9 +584,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-qk-btn svg { width: 18px; height: 18px; }
 .mn-qk-n { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--mn-accent); color: var(--text-on-accent, #fff); font-size: 11px; line-height: 18px; text-align: center; }
 
-/* a tab's first page: the top bar floats (no empty strip held for the small title); it shows its background and title once scrolled */
-.mn-app.is-float .mn-top { position: absolute; left: 0; right: 0; top: 0; background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; border-bottom-color: transparent; transition: background 0.2s, border-color 0.2s; }
-.mn-app.is-float .mn-top:not(.is-scrolled) { pointer-events: none; }
-.mn-app.is-float .mn-top.is-scrolled { background: color-mix(in srgb, var(--mn-bg) 80%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom-color: var(--mn-line); }
-.mn-app.is-float .mn-top:not(.is-scrolled) .mn-top-title { opacity: 0; }
-.mn-app.is-float .mn-scroll > .mn-page { padding-top: calc(var(--mn-safe-top) + 10px); }
+/* a tab's first page: no top bar; the big title row (title and its two buttons) sticks to the top while the page scrolls */
+.mn-app.is-float .mn-top { display: none; }
+.mn-app.is-float .mn-scroll > .mn-page { padding-top: 0; }
+.mn-app.is-float .mn-title-row { position: sticky; top: 0; z-index: 2; margin: 0 -16px 10px; padding: calc(var(--mn-safe-top) + 10px) 18px 8px;
+    background: color-mix(in srgb, var(--mn-bg) 86%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 0.5px solid transparent; transition: border-color 0.15s; }
+.mn-app.is-float.has-scrolled .mn-title-row { border-bottom-color: var(--mn-line); }

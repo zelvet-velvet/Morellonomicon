@@ -94,6 +94,7 @@ export class MnView extends ItemView {
     private markScrolled(): void {
         const past = this.appEl.hasClass("is-overlay") ? OVERLAY_SCROLL : 36;
         this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > past);
+        this.appEl.toggleClass("has-scrolled", this.scrollEl.scrollTop > 4);   // a pinned title row shows its bottom line once the page moves
     }
     private loaderEl!: HTMLElement;   // a spinner over the page while its pictures load
     private actsEl!: HTMLElement;   // theme and mode buttons: in the big title row of a tab's first page, in the top bar elsewhere
