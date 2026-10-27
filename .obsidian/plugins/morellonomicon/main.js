@@ -986,18 +986,21 @@ var TagLegend = class extends import_obsidian4.Modal {
     this.contentEl.empty();
   }
 };
-function tagFilter(parent, tag, on, onTap) {
-  const t = TAG.get(tag);
+function iconFilter(parent, label, iconName, color, on, onTap) {
   const el = h(parent, "button", "mn-ftg" + (on ? " is-yes" : ""));
-  el.setAttribute("aria-label", tag);
-  el.style.setProperty("--p", t?.color ?? "var(--mn-text)");
-  icon(el, t?.icon ?? "circle");
-  holdTip(el, tag);
+  el.setAttribute("aria-label", label);
+  el.style.setProperty("--p", color);
+  icon(el, iconName);
+  holdTip(el, label);
   el.addEventListener("click", (e) => {
     e.preventDefault();
     onTap();
   });
   return el;
+}
+function tagFilter(parent, tag, on, onTap) {
+  const t = TAG.get(tag);
+  return iconFilter(parent, tag, t?.icon ?? "circle", t?.color ?? "var(--mn-text)", on, onTap);
 }
 var keysOf = (c, ...tags) => c.skills.filter((s) => tags.some((t) => s.tags.includes(t))).map((s) => s.key).join(" \xB7 ");
 var hasTag = (c, tag) => c.features.includes(tag);
@@ -1524,9 +1527,11 @@ var ROLES = ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u
 var DAMAGES = ["\u7269\u7406", "\u9B54\u6CD5", "\u6DF7\u5408"];
 var FEATURES = ["\u63A7\u5834", "\u7DE9\u901F", "\u4F4D\u79FB", "\u6CBB\u7642", "\u8B77\u76FE", "\u5438\u8840", "\u5F37\u5316\u666E\u653B", "\u653B\u64CA\u7279\u6548"];
 var REACH = ["\u8FD1\u6230", "\u4E2D\u7A0B", "\u9060\u7A0B"];
-var SORTS2 = [["name", "\u540D\u7A31"], ["easy", "\u7C21\u55AE\u512A\u5148"], ["range", "\u5C04\u7A0B\u9060\u512A\u5148"]];
+var SORTS2 = [["name", "\u540D\u7A31"], ["diff", "\u96E3\u5EA6\u512A\u5148"], ["range", "\u5C04\u7A0B\u512A\u5148"]];
+var SORT_DIR = { diff: 1, range: -1 };
+var DAMAGE_ICON = { \u7269\u7406: "sword", \u9B54\u6CD5: "sparkles", \u6DF7\u5408: "blend" };
 var SEARCH_EXTRA = 8;
-var F = { lanes: /* @__PURE__ */ new Set(), roles: /* @__PURE__ */ new Set(), dmg: "", feat: /* @__PURE__ */ new Map(), reach: "", sort: "name", open: false };
+var F = { lanes: /* @__PURE__ */ new Set(), roles: /* @__PURE__ */ new Set(), dmg: "", feat: /* @__PURE__ */ new Map(), reach: "", sort: "name", dir: 1, open: false };
 var activeFilters = () => F.roles.size + (F.dmg ? 1 : 0) + F.feat.size + (F.reach ? 1 : 0);
 function matches(c, lanes) {
   if (F.lanes.size && !lanes.some((l) => F.lanes.has(l))) return false;
@@ -1536,8 +1541,9 @@ function matches(c, lanes) {
   return !F.reach || c.archetypes.includes(F.reach);
 }
 function sorted(list2) {
-  if (F.sort === "easy") return [...list2].sort((a, b) => a.difficulty - b.difficulty || a.name.localeCompare(b.name, "zh-Hant"));
-  if (F.sort === "range") return [...list2].sort((a, b) => b.range - a.range || a.name.localeCompare(b.name, "zh-Hant"));
+  const byName = (a, b) => a.name.localeCompare(b.name, "zh-Hant");
+  if (F.sort === "diff") return [...list2].sort((a, b) => F.dir * (a.difficulty - b.difficulty) || byName(a, b));
+  if (F.sort === "range") return [...list2].sort((a, b) => F.dir * (a.range - b.range) || byName(a, b));
   return list2;
 }
 function championPicker(parent, ctx) {
@@ -1644,9 +1650,8 @@ function championPicker(parent, ctx) {
     panel.toggleClass("is-open", F.open);
     if (!F.open) return;
     const on = activeFilters();
-    const top = h(panel, "div", "mn-fp-top");
-    h(top, "span", "mn-fp-count", on ? `\u5DF2\u9078 ${on} \u9805` : "\u9078\u64C7\u689D\u4EF6");
     if (on || F.sort !== "name") {
+      const top = h(panel, "div", "mn-fp-top");
       const clear = h(top, "button", "mn-clear", "\u5168\u90E8\u6E05\u9664");
       clear.addEventListener("click", (e) => {
         e.preventDefault();
@@ -1655,6 +1660,7 @@ function championPicker(parent, ctx) {
         F.feat.clear();
         F.reach = "";
         F.sort = "name";
+        F.dir = 1;
         redraw();
       });
     }
@@ -1670,11 +1676,6 @@ function championPicker(parent, ctx) {
       F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r);
       redraw();
     } });
-    const kindRow = fgrid(sect("\u50B7\u5BB3"), DAMAGES.length);
-    for (const d of DAMAGES) chip(kindRow, d, { on: F.dmg === d, color: DAMAGE_COLOR[d], onTap: () => {
-      F.dmg = F.dmg === d ? "" : d;
-      redraw();
-    } });
     const ab = fgrid(sect("\u6280\u80FD"), FEATURES.length);
     for (const f of FEATURES) {
       const on2 = F.feat.get(f) === 1;
@@ -1684,12 +1685,22 @@ function championPicker(parent, ctx) {
         redraw();
       });
     }
-    segmented(sect("\u8DDD\u96E2"), [["", "\u5168\u90E8"], ...REACH.map((r) => [r, r])], F.reach, (id) => {
+    const kindRow = fgrid(sect("\u50B7\u5BB3"), FEATURES.length);
+    for (const d of DAMAGES) iconFilter(kindRow, d, DAMAGE_ICON[d], DAMAGE_COLOR[d], F.dmg === d, () => {
+      F.dmg = F.dmg === d ? "" : d;
+      redraw();
+    });
+    segmented(sect("\u653B\u64CA\u8DDD\u96E2"), [["", "\u5168\u90E8"], ...REACH.map((r) => [r, r])], F.reach, (id) => {
       F.reach = id;
       redraw();
     }, "is-sm");
-    segmented(sect("\u6392\u5E8F"), SORTS2, F.sort, (id) => {
-      F.sort = id;
+    const arrow = (id) => id === "name" ? "" : (F.sort === id ? F.dir : SORT_DIR[id]) === 1 ? " \u2191" : " \u2193";
+    segmented(sect("\u6392\u5E8F"), SORTS2.map(([id, l]) => [id, l + arrow(id)]), F.sort, (id) => {
+      if (id === F.sort && id !== "name") F.dir = F.dir === 1 ? -1 : 1;
+      else {
+        F.sort = id;
+        F.dir = SORT_DIR[id] ?? 1;
+      }
       redraw();
     }, "is-sm");
   };

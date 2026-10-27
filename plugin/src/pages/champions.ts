@@ -1,6 +1,6 @@
 import type { Champion } from "../data/store";
 import { DAMAGE_COLOR, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, tip } from "../ui";
-import { championProfile, tagFilter } from "./profile";
+import { championProfile, iconFilter, tagFilter } from "./profile";
 import { buildTab } from "./build";
 import type { PageCtx, PageOut } from "./index";
 import { badgeColor, badgeText, changesBlock, entryDir, marker } from "./changes";
@@ -11,12 +11,14 @@ const ROLES = ["戰士", "坦克", "法師", "刺客", "射手", "輔助"];
 const DAMAGES = ["物理", "魔法", "混合"];
 const FEATURES = ["控場", "緩速", "位移", "治療", "護盾", "吸血", "強化普攻", "攻擊特效"];   // tap = must have
 const REACH = ["近戰", "中程", "遠程"];
-const SORTS: [string, string][] = [["name", "名稱"], ["easy", "簡單優先"], ["range", "射程遠優先"]];
+const SORTS: [string, string][] = [["name", "名稱"], ["diff", "難度優先"], ["range", "射程優先"]];
+const SORT_DIR: Record<string, 1 | -1> = { diff: 1, range: -1 };   // first direction when a sort is picked: easy first, far first
+const DAMAGE_ICON: Record<string, string> = { 物理: "sword", 魔法: "sparkles", 混合: "blend" };
 const SEARCH_EXTRA = 8;   // augments / items listed under the champions when the search box has text
 
 // The filters stay as you set them while the app is open, so coming back from a champion card keeps your list.
-interface Filter { lanes: Set<string>; roles: Set<string>; dmg: string; feat: Map<string, 1 | -1>; reach: string; sort: string; open: boolean }
-const F: Filter = { lanes: new Set(), roles: new Set(), dmg: "", feat: new Map(), reach: "", sort: "name", open: false };
+interface Filter { lanes: Set<string>; roles: Set<string>; dmg: string; feat: Map<string, 1 | -1>; reach: string; sort: string; dir: 1 | -1; open: boolean }
+const F: Filter = { lanes: new Set(), roles: new Set(), dmg: "", feat: new Map(), reach: "", sort: "name", dir: 1, open: false };
 const activeFilters = () => F.roles.size + (F.dmg ? 1 : 0) + F.feat.size + (F.reach ? 1 : 0);   // the ones inside the 篩選 panel
 
 function matches(c: Champion, lanes: string[]): boolean {
@@ -28,8 +30,9 @@ function matches(c: Champion, lanes: string[]): boolean {
 }
 
 function sorted(list: Champion[]): Champion[] {
-    if (F.sort === "easy") return [...list].sort((a, b) => a.difficulty - b.difficulty || a.name.localeCompare(b.name, "zh-Hant"));
-    if (F.sort === "range") return [...list].sort((a, b) => b.range - a.range || a.name.localeCompare(b.name, "zh-Hant"));
+    const byName = (a: Champion, b: Champion) => a.name.localeCompare(b.name, "zh-Hant");
+    if (F.sort === "diff") return [...list].sort((a, b) => F.dir * (a.difficulty - b.difficulty) || byName(a, b));
+    if (F.sort === "range") return [...list].sort((a, b) => F.dir * (a.range - b.range) || byName(a, b));
     return list;
 }
 
@@ -113,13 +116,12 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
         panel.empty();
         panel.toggleClass("is-open", F.open);
         if (!F.open) return;
-        // the panel's own header: how many are on, and one button to clear them all
+        // clear everything (only when something is set)
         const on = activeFilters();
-        const top = h(panel, "div", "mn-fp-top");
-        h(top, "span", "mn-fp-count", on ? `已選 ${on} 項` : "選擇條件");
         if (on || F.sort !== "name") {
+            const top = h(panel, "div", "mn-fp-top");
             const clear = h(top, "button", "mn-clear", "全部清除");
-            clear.addEventListener("click", (e) => { e.preventDefault(); F.roles.clear(); F.dmg = ""; F.feat.clear(); F.reach = ""; F.sort = "name"; redraw(); });
+            clear.addEventListener("click", (e) => { e.preventDefault(); F.roles.clear(); F.dmg = ""; F.feat.clear(); F.reach = ""; F.sort = "name"; F.dir = 1; redraw(); });
         }
         const sect = (title: string, hint = "") => {
             const s = h(panel, "div", "mn-fp-s");
@@ -128,17 +130,24 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
             if (hint) h(head, "span", "mn-fp-hint", hint);
             return s;
         };
+        // top to bottom: 定位, 技能, 傷害, 攻擊距離, 排序
         const roleRow = fgrid(sect("定位"), ROLES.length);
         for (const r of ROLES) roleChip(roleRow, r, { on: F.roles.has(r), onTap: () => { F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r); redraw(); } });
-        const kindRow = fgrid(sect("傷害"), DAMAGES.length);
-        for (const d of DAMAGES) chip(kindRow, d, { on: F.dmg === d, color: DAMAGE_COLOR[d], onTap: () => { F.dmg = F.dmg === d ? "" : d; redraw(); } });
         const ab = fgrid(sect("技能"), FEATURES.length);
         for (const f of FEATURES) {
             const on = F.feat.get(f) === 1;
             tagFilter(ab, f, on, () => { if (on) F.feat.delete(f); else F.feat.set(f, 1); redraw(); });   // tap: must have / any
         }
-        segmented(sect("距離"), [["", "全部"], ...REACH.map((r): [string, string] => [r, r])], F.reach, (id) => { F.reach = id; redraw(); }, "is-sm");
-        segmented(sect("排序"), SORTS, F.sort, (id) => { F.sort = id; redraw(); }, "is-sm");
+        const kindRow = fgrid(sect("傷害"), FEATURES.length);
+        for (const d of DAMAGES) iconFilter(kindRow, d, DAMAGE_ICON[d], DAMAGE_COLOR[d], F.dmg === d, () => { F.dmg = F.dmg === d ? "" : d; redraw(); });
+        segmented(sect("攻擊距離"), [["", "全部"], ...REACH.map((r): [string, string] => [r, r])], F.reach, (id) => { F.reach = id; redraw(); }, "is-sm");
+        // sort: tapping the chosen one again flips its direction (the arrow shows which way)
+        const arrow = (id: string) => (id === "name" ? "" : (F.sort === id ? F.dir : SORT_DIR[id]) === 1 ? " ↑" : " ↓");
+        segmented(sect("排序"), SORTS.map(([id, l]): [string, string] => [id, l + arrow(id)]), F.sort, (id) => {
+            if (id === F.sort && id !== "name") F.dir = F.dir === 1 ? -1 : 1;
+            else { F.sort = id; F.dir = SORT_DIR[id] ?? 1; }
+            redraw();
+        }, "is-sm");
     };
     // only the results are redrawn while typing, so the keyboard stays open
     search.addEventListener("input", () => { query = search.value; draw(); });

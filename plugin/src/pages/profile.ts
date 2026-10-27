@@ -96,16 +96,20 @@ class TagLegend extends Modal {
     onClose(): void { this.contentEl.empty(); }
 }
 
-// A tag as an icon-only filter: dim when off, a ring in the tag's colour when on (must have). Hold for the name.
-export function tagFilter(parent: HTMLElement, tag: string, on: boolean, onTap: () => void): HTMLElement {
-    const t = TAG.get(tag);
+// An icon-only filter: dim when off, a ring in its colour when on. Hold for the name.
+export function iconFilter(parent: HTMLElement, label: string, iconName: string, color: string, on: boolean, onTap: () => void): HTMLElement {
     const el = h(parent, "button", "mn-ftg" + (on ? " is-yes" : ""));
-    el.setAttribute("aria-label", tag);
-    el.style.setProperty("--p", t?.color ?? "var(--mn-text)");
-    icon(el, t?.icon ?? "circle");
-    holdTip(el, tag);
+    el.setAttribute("aria-label", label);
+    el.style.setProperty("--p", color);
+    icon(el, iconName);
+    holdTip(el, label);
     el.addEventListener("click", (e) => { e.preventDefault(); onTap(); });
     return el;
+}
+// A tag (控場 ...) as such a filter, in the tag's own icon and colour
+export function tagFilter(parent: HTMLElement, tag: string, on: boolean, onTap: () => void): HTMLElement {
+    const t = TAG.get(tag);
+    return iconFilter(parent, tag, t?.icon ?? "circle", t?.color ?? "var(--mn-text)", on, onTap);
 }
 
 // The keys of the skills that carry a tag ("Q · E · R"), passive first as P

@@ -86,7 +86,7 @@ body.is-mobile:not(.mn-on) .mn-home svg { width: 24px; height: 24px; }
 button.mn-chip:active { transform: scale(0.96); }
 .mn-app .mn-filterbtn { display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 12px; font-size: 13px; font-weight: 700; color: var(--mn-text); background: var(--mn-card); border: 1.5px solid var(--mn-text); }
 .mn-app .mn-filterbtn.is-open, .mn-app .mn-filterbtn.has-n { border-color: var(--mn-accent); background: var(--mn-card-hi); }
-.mn-fp-top { display: flex; align-items: center; justify-content: space-between; padding: 8px 0 2px; }
+.mn-fp-top { display: flex; align-items: center; justify-content: flex-end; padding: 8px 0 2px; }
 .mn-fp-count { font-size: 12px; font-weight: 700; color: var(--mn-muted); }
 .mn-filterbtn-ic svg { width: 16px; height: 16px; }
 .mn-filterbtn-n { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--mn-accent); color: var(--text-on-accent, #fff); font-size: 11px; line-height: 18px; text-align: center; }
@@ -618,4 +618,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-holdable { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 
 /* the lane row's last cell: the 篩選 button as an icon (with the number of panel filters in use) */
-.mn-app .mn-fgrid .mn-filterbtn { justify-content: center; gap: 4px; height: 44px; padding: 0; border-radius: 12px; }
+.mn-app .mn-fgrid .mn-filterbtn { position: relative; justify-content: center; height: 44px; padding: 0; border: none; border-radius: 0; background: none; color: var(--mn-text); opacity: 0.6; }
+.mn-app .mn-fgrid .mn-filterbtn.is-open, .mn-app .mn-fgrid .mn-filterbtn.has-n { background: none; opacity: 1; color: var(--mn-accent); }
+.mn-app .mn-fgrid .mn-filterbtn.is-open { box-shadow: inset 0 -2px 0 var(--mn-accent); }
+.mn-fgrid .mn-filterbtn .mn-filterbtn-ic svg { width: 24px; height: 24px; }
+.mn-fgrid .mn-filterbtn .mn-filterbtn-n { position: absolute; top: 4px; right: calc(50% - 22px); }
