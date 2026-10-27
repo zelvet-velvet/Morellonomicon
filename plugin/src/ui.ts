@@ -113,6 +113,12 @@ export const ROLE_ICON: Record<string, string> = { 戰士: "swords", 坦克: "sh
 // a little from Riot's role tags: 刺客 is under its Slayer class, 輔助 its Controller class. A missing file falls back to ROLE_ICON.
 const ROLE_WIKI = "https://wiki.leagueoflegends.com/en-us/Special:FilePath/";
 const ROLE_FILE: Record<string, string> = { 戰士: "Fighter_icon.png", 坦克: "Tank_icon.png", 法師: "Mage_icon.png", 刺客: "Slayer_icon.png", 射手: "Marksman_icon.png", 輔助: "Controller_icon.png" };
+// Fetch the class icons once when the app opens, so the role chips have them ready instead of popping in later
+const preloaded: HTMLImageElement[] = [];
+export const preloadRoleIcons = (): void => {
+    if (preloaded.length) return;
+    for (const file of Object.values(ROLE_FILE)) { const im = new Image(); im.src = ROLE_WIKI + file; preloaded.push(im); }
+};
 export const roleChip = (parent: HTMLElement, role: string, o: { on: boolean; onTap: () => void }): HTMLElement => {
     let el: HTMLElement | null = null;
     el = chip(parent, "", { on: o.on, onTap: () => { if (el) tip(el, role); o.onTap(); } });

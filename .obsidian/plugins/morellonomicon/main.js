@@ -713,6 +713,15 @@ var chip = (parent, text, o = {}) => {
 var ROLE_ICON = { \u6230\u58EB: "swords", \u5766\u514B: "shield", \u6CD5\u5E2B: "wand-sparkles", \u523A\u5BA2: "slice", \u5C04\u624B: "target", \u8F14\u52A9: "heart-handshake" };
 var ROLE_WIKI = "https://wiki.leagueoflegends.com/en-us/Special:FilePath/";
 var ROLE_FILE = { \u6230\u58EB: "Fighter_icon.png", \u5766\u514B: "Tank_icon.png", \u6CD5\u5E2B: "Mage_icon.png", \u523A\u5BA2: "Slayer_icon.png", \u5C04\u624B: "Marksman_icon.png", \u8F14\u52A9: "Controller_icon.png" };
+var preloaded = [];
+var preloadRoleIcons = () => {
+  if (preloaded.length) return;
+  for (const file of Object.values(ROLE_FILE)) {
+    const im = new Image();
+    im.src = ROLE_WIKI + file;
+    preloaded.push(im);
+  }
+};
 var roleChip = (parent, role, o) => {
   let el = null;
   el = chip(parent, "", { on: o.on, onTap: () => {
@@ -2712,6 +2721,7 @@ var MnView = class extends import_obsidian8.ItemView {
     this.tabsEl = h(app, "div", "mn-tabs");
     this.applyTheme();
     this.registerEvent(this.app.workspace.on("css-change", () => this.applyTheme()));
+    preloadRoleIcons();
     this.buildTabs();
     this.draw();
   }
@@ -2802,6 +2812,7 @@ var MnView = class extends import_obsidian8.ItemView {
   refresh(resetStack = false) {
     if (resetStack) this.router.reset();
     this.applyTheme();
+    preloadRoleIcons();
     this.buildTabs();
     this.draw();
   }

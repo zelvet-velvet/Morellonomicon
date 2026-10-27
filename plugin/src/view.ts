@@ -5,7 +5,7 @@ import { THEMES, themeVars } from "./themes";
 import { PageOut, renderPage } from "./pages";
 import { rememberSub } from "./pages/champions";
 import type { Frame } from "./router";
-import { empty, h, icon } from "./ui";
+import { empty, h, icon, preloadRoleIcons } from "./ui";
 
 export const VIEW_TYPE = "morellonomicon";
 
@@ -83,6 +83,7 @@ export class MnView extends ItemView {
         this.tabsEl = h(app, "div", "mn-tabs");
         this.applyTheme();
         this.registerEvent(this.app.workspace.on("css-change", () => this.applyTheme()));   // Obsidian switched light / dark
+        preloadRoleIcons();   // class icons for the role filters, fetched up front
         this.buildTabs();
         this.draw();
     }
@@ -163,6 +164,7 @@ export class MnView extends ItemView {
     refresh(resetStack = false): void {
         if (resetStack) this.router.reset();
         this.applyTheme();
+        preloadRoleIcons();   // class icons for the role filters, fetched up front
         this.buildTabs();
         this.draw();
     }
