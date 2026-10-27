@@ -11,6 +11,8 @@ sticker: lucide//activity
 ## 🚀 Today's Progress (2026-10-27)
 - **Project start**: Chose an Obsidian vault over a C desktop app (opens on a phone); named it Morellonomicon (黑魔禁書).
 - **Vault setup**: Copied the Minimal theme, 4 CSS snippets and the plugin list from clawd-room; folders for beginner guide, champions, augments and modes.
+- **Fetch script**: `tools/fetch_data.py` writes 173 champion notes (`英雄/`) and 372 item notes (`道具/`) in zh_TW from Data Dragon 16.21.1, with auto archetypes, skill damage types and features; your own notes and `video` / `pinned` / `avoid` / `archetypes_extra` survive a rerun.
+- **Decisions**: images stay remote Data Dragon URLs; tab names in English, champion / item / augment content in zh_TW; archetypes are derived automatically with hand overrides.
 - **Workflow**: Copied the LLM Guide, Dev Status / Dev Log / Day note from clawd-room, simplified for a solo project (commit to `main`, no PRs) and added a Start Guide.
 
 ## 📅 Yesterday's Progress (—)
@@ -20,9 +22,18 @@ sticker: lucide//activity
 ## ⏳ Ongoing
 
 ### 📦 Data
-- [ ] **Fetch script**: `tools/fetch_data.py` pulls champions, skills and items from Riot Data Dragon (`zh_TW`) and writes the generated block of each note, with the patch version. Data Dragon 16.21.1 has 173 champions in zh_TW (checked 2026-10-27).
+- [x] **Fetch script**: `tools/fetch_data.py` (champions + items, zh_TW, patch in every note).
+- [ ] **Item notes check**: 142 ARAM-only items (`77NNNN`) are linked to their base item; look at a few notes in Obsidian and confirm the ARAM copies are what the Mayhem shop sells.
+- [ ] **Offline images**: optional `tools/cache_images.py` into a gitignored folder.
 - [ ] **Augment data**: CommunityDragon has `cdragon/arena/zh_tw.json` (Arena augments); the ARAM Mayhem augment file is not found yet. Find the right source before building.
 - [ ] **Statistics**: win / pick rates for Mayhem augments need either Match-V5 (developer key, queue for ARAM Mayhem, many matches) or a cited community source. Decide in phase 2.
+
+### 🎬 Videos
+- [ ] **Skill combo videos**: optional `video:` (YouTube id) per champion note. OP.GG's channel could not be listed without the YouTube Data API (the page is JavaScript and the RSS feed gave 404); needs a free API key in `.env` (`YOUTUBE_API_KEY`), or hand-picked ids. The plugin shows a `youtube-nocookie` embed when the field exists, else a "search on YouTube" button.
+
+### 🧩 Plugin (TypeScript, from the ZeLedger skeleton)
+- [ ] **Shell**: `plugin/` with tabs `Mayhem`, `Champions`, `Items`, `Guide`, page stack, sheets; built `main.js` committed to `.obsidian/plugins/morellonomicon/`.
+- [ ] **Champion finder** first (filters on roles, damage type, archetypes), then augment data and the Mayhem advisor (augments declare which archetypes they suit; champions pin / avoid).
 
 ### 📖 Content
 - [ ] **Beginner guide**: roles, damage types (AD / AP / true), tank / bruiser / carry / support, item logic (when to build armor or magic resist).

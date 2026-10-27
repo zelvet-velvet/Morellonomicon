@@ -37,6 +37,7 @@ Morellonomicon Note/   the Obsidian vault (open this folder in Obsidian; plugin 
                          Review/    Dev Status (today, ongoing, done), Dev Log (index of days), Log/YYYY/MM/Www/YYYY-MM-DD (one note per day)
                          新手入門/   beginner guide: roles, damage types, item logic
                          英雄/       one note per champion (generated base + written advice)
+                         道具/       one note per item (generated; ARAM-only versions link to the base item)
                          強化/       ARAM Mayhem augments by type, fitting champions, combos
                          模式/       Normal, Ranked, ARAM, ARAM Mayhem
                          _Meta/     vault helpers: Templates/ (Day note)
@@ -48,6 +49,7 @@ CLAUDE.md              points here
 ## ⚠️ Rules that prevent breakage
 
 - **Language.** Vault content for readers is Traditional Chinese (Taiwan wording; use the official zh_TW client names for champions, items and augments). Workflow notes (this guide, Dev Status, Dev Log, Start Guide) stay English.
+- **Frontmatter keys you may add by hand:** `video` (YouTube id), `pinned`, `avoid`, `archetypes_extra`; `tools/fetch_data.py` keeps them. Run it from the repo root: `python3 -I tools/fetch_data.py [--only Ahri,Garen]`.
 - **Generated vs written.** Generated pages carry `generated: true` in the frontmatter and a marked block; scripts only rewrite inside the marked block, never the hand-written advice around it.
 - **Data sources are public and cited.** Riot Data Dragon (`ddragon.leagueoflegends.com`, `zh_TW`) and CommunityDragon. Every page shows the **patch version** it was generated from. Never invent statistics: win rates and pick rates come from a named source with a date, or are left out.
 - **Riot policy.** Do not commit a Riot API key. Keys go in an environment variable (`RIOT_API_KEY`) or an untracked `.env`. Include Riot's legal line in the README ("not endorsed by Riot Games"). Do not copy another site's tier lists wholesale; link to them.

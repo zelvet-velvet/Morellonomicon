@@ -10,3 +10,6 @@ Morellonomicon Note/.obsidian/workspaces.json
 Morellonomicon Note/**/.makemd/
 Morellonomicon Note/**/.space/
 Morellonomicon Note/.trash/
+
+# fetched data cache
+.cache/
