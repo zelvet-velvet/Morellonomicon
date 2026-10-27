@@ -324,7 +324,8 @@ var DEFAULTS = {
   guideFolder: "\u65B0\u624B\u5165\u9580",
   augmentFolder: "\u5F37\u5316",
   patchFolder: "\u7248\u672C\u66F4\u65B0",
-  openOnStartup: import_obsidian2.Platform.isMobile
+  openOnStartup: import_obsidian2.Platform.isMobile,
+  read: []
 };
 var MnSettingTab = class extends import_obsidian2.PluginSettingTab {
   constructor(app, plugin) {
@@ -1087,6 +1088,23 @@ function notePage(ctx) {
   h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
   const body = h(el, "div", "mn-note markdown-rendered");
   void ctx.app.vault.cachedRead(file).then((text) => import_obsidian4.MarkdownRenderer.render(ctx.app, text.replace(/^---[\s\S]*?---\n/, ""), body, path, ctx.component));
+  const guide = ctx.plugin.store.guideNotes();
+  const at = guide.findIndex((n) => n.file.path === path);
+  if (at >= 0) {
+    void ctx.plugin.markRead(path);
+    const next = guide[at + 1];
+    if (next) {
+      const b = h(el, "button", "mn-nextcard");
+      h(b, "span", "mn-nextcard-k", "\u4E0B\u4E00\u7BC7");
+      h(b, "span", "mn-nextcard-t", next.title);
+      icon(b, "arrow-right", "mn-nextcard-ic");
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        ctx.pop();
+        ctx.openNote(next.file.path);
+      });
+    } else h(el, "div", "mn-nextcard-done", "\u{1F389} \u5168\u90E8\u8B80\u5B8C\u4E86");
+  }
   row(group(el), { icon: "pencil", title: "Edit in Obsidian", chevron: true, onTap: () => void ctx.plugin.openPath(path) });
   return { title: file.basename, el };
 }
@@ -1224,6 +1242,10 @@ function listPage(ctx) {
 // src/pages/handbook.ts
 var SNIPPET = 46;
 var MAX_PER_NOTE = 2;
+var CHARS_PER_MINUTE = 350;
+var KEYWORDS = 6;
+var TILE_COLORS = ["--color-blue", "--color-purple", "--color-orange", "--color-green", "--color-cyan", "--color-pink", "--color-yellow", "--color-red"];
+var GLOSSARY = "\u540D\u8A5E\u8868";
 function handbookPage(ctx) {
   const store = ctx.plugin.store;
   const el = page("Handbook");
@@ -1231,52 +1253,143 @@ function handbookPage(ctx) {
   icon(box, "search", "mn-search-ic");
   const search = h(box, "input");
   search.type = "search";
-  search.placeholder = "Search the handbook, e.g. \u63A7\u5834, \u8B77\u7532";
+  search.placeholder = "Search anything you read here";
+  const chips = h(el, "div", "mn-keys");
   const out = h(el, "div");
   const notes = store.guideNotes();
   let texts = null;
-  const cards = () => {
+  const read = new Set(ctx.plugin.settings.read);
+  const minutes = (size) => Math.max(1, Math.round(size / 3 / CHARS_PER_MINUTE));
+  const load = async () => {
+    if (texts) return texts;
+    texts = /* @__PURE__ */ new Map();
+    for (const n of notes) texts.set(n.file.path, (await ctx.app.vault.cachedRead(n.file)).replace(/^---[\s\S]*?---\n/, "").split("\n").map(clean).filter(Boolean));
+    return texts;
+  };
+  const home = () => {
     out.empty();
     if (!notes.length) {
       empty(out, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." });
       return;
     }
-    const g = group(out);
-    for (const n of notes) row(g, { icon: n.icon, title: n.title, sub: n.summary || void 0, chevron: true, onTap: () => ctx.openNote(n.file.path) });
+    const done = notes.filter((n) => read.has(n.file.path)).length;
+    const next = notes.find((n) => !read.has(n.file.path)) ?? notes[Math.floor(Math.random() * notes.length)];
+    const hero = h(out, "button", "mn-hh");
+    const body = h(hero, "div", "mn-hh-body");
+    h(body, "div", "mn-hh-k", done >= notes.length ? "\u5168\u90E8\u8B80\u5B8C\u4E86 \u{1F389} \u518D\u8907\u7FD2\u4E00\u4E0B?" : done ? "\u63A5\u8457\u770B" : "\u5F9E\u9019\u88E1\u958B\u59CB");
+    h(body, "div", "mn-hh-t", next.title);
+    if (next.summary) h(body, "div", "mn-hh-s", next.summary);
+    const go = h(body, "span", "mn-hh-go", `${minutes(next.file.stat.size)} \u5206\u9418 \xB7 \u958B\u59CB \u2192`);
+    void go;
+    const ic = h(hero, "div", "mn-hh-ic");
+    icon(ic, next.icon);
+    const prog = h(out, "div", "mn-prog");
+    const bar = h(h(prog, "div", "mn-prog-track"), "div", "mn-prog-fill");
+    bar.style.width = `${done / notes.length * 100}%`;
+    h(prog, "div", "mn-prog-t", `${done} / ${notes.length}`);
+    hero.addEventListener("click", (e) => {
+      e.preventDefault();
+      ctx.openNote(next.file.path);
+    });
+    const grid = h(out, "div", "mn-ht-grid");
+    notes.forEach((n, i) => {
+      const tile = h(grid, "button", "mn-ht");
+      tile.style.setProperty("--c", `var(${TILE_COLORS[i % TILE_COLORS.length]})`);
+      const top = h(tile, "div", "mn-ht-top");
+      icon(h(top, "span", "mn-ht-ic"), n.icon);
+      if (read.has(n.file.path)) icon(h(top, "span", "mn-ht-done"), "check");
+      h(tile, "div", "mn-ht-t", n.title);
+      if (n.summary) h(tile, "div", "mn-ht-s", n.summary);
+      h(tile, "div", "mn-ht-m", `${minutes(n.file.stat.size)} \u5206\u9418`);
+      tile.addEventListener("click", (e) => {
+        e.preventDefault();
+        ctx.openNote(n.file.path);
+      });
+    });
+    void fact();
+  };
+  const fact = async () => {
+    const g = notes.find((n) => n.title === GLOSSARY);
+    if (!g) return;
+    const lines = (await load()).get(g.file.path) ?? [];
+    const entries2 = lines.filter((l) => /[:：]/.test(l));
+    if (!entries2.length || search.value.trim()) return;
+    const day = Math.floor(Date.now() / 864e5);
+    const [term, ...rest] = entries2[day % entries2.length].split(/[:：]/);
+    const card = h(out, "button", "mn-fact");
+    h(card, "div", "mn-fact-k", "\u4ECA\u65E5\u5C0F\u77E5\u8B58");
+    h(card, "div", "mn-fact-t", term.trim());
+    h(card, "div", "mn-fact-s", rest.join(":").trim());
+    card.addEventListener("click", (e) => {
+      e.preventDefault();
+      ctx.openNote(g.file.path);
+    });
+  };
+  const keywords = async () => {
+    const g = notes.find((n) => n.title === GLOSSARY);
+    if (!g) return;
+    const terms = ((await load()).get(g.file.path) ?? []).map((l) => l.split(/[:：]/)[0].trim()).filter((t) => t && t.length <= 8).slice(0, KEYWORDS);
+    for (const t of terms) {
+      const b = h(chips, "button", "mn-key", t);
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        search.value = t;
+        void results(t.toLowerCase());
+      });
+    }
   };
   const results = async (q) => {
-    if (!texts) {
-      texts = /* @__PURE__ */ new Map();
-      for (const n of notes) texts.set(n.file.path, (await ctx.app.vault.cachedRead(n.file)).replace(/^---[\s\S]*?---\n/, "").split("\n").map(clean).filter(Boolean));
-    }
+    const lines = await load();
     if (search.value.trim().toLowerCase() !== q) return;
     out.empty();
     let found = 0;
-    const guide = notes.map((n) => ({ n, lines: (texts.get(n.file.path) ?? []).filter((l) => l.toLowerCase().includes(q)), title: n.title.toLowerCase().includes(q) })).filter((x) => x.title || x.lines.length);
+    const guide = notes.map((n) => ({ n, lines: (lines.get(n.file.path) ?? []).filter((l) => l.toLowerCase().includes(q)), title: n.title.toLowerCase().includes(q) })).filter((x) => x.title || x.lines.length);
+    const sect = (title) => {
+      h(out, "div", "mn-gh", title);
+      return h(out, "div", "mn-group");
+    };
     if (guide.length) {
-      const g = group(out, "Guide");
-      for (const { n, lines } of guide) {
-        const r = row(g, { icon: n.icon, title: n.title, chevron: true, onTap: () => ctx.openNote(n.file.path) });
-        const main = r.querySelector(".mn-row-main");
-        for (const l of lines.slice(0, MAX_PER_NOTE)) marked(h(main, "div", "mn-row-s"), snippet(l, q), q);
+      const g = sect("Guide");
+      for (const { n, lines: ls } of guide) {
+        const r = h(g, "div", "mn-row is-tap");
+        icon(r, n.icon, "mn-row-ic");
+        const main = h(r, "div", "mn-row-main");
+        h(main, "div", "mn-row-t", n.title);
+        for (const l of ls.slice(0, MAX_PER_NOTE)) marked(h(main, "div", "mn-row-s"), snippet(l, q), q);
+        icon(r, "chevron-right", "mn-row-chev");
+        r.addEventListener("click", () => ctx.openNote(n.file.path));
         found++;
       }
     }
     const tipHits = store.champions().flatMap((c) => c.tips.filter((t) => `${t.title} ${t.text}`.toLowerCase().includes(q)).map((t) => ({ c, t })));
     if (tipHits.length) {
-      const g = group(out, "Tips");
+      const g = sect("Tips");
       for (const { c, t } of tipHits) {
-        const r = row(g, { image: c.icon, title: `${c.name}:${t.title}`, chevron: true, onTap: () => ctx.openChampion(c.id, "tips") });
-        marked(h(r.querySelector(".mn-row-main"), "div", "mn-row-s"), snippet(t.text, q), q);
+        const r = h(g, "div", "mn-row is-tap");
+        const im = h(r, "img", "mn-row-img");
+        im.src = c.icon;
+        im.alt = "";
+        const main = h(r, "div", "mn-row-main");
+        h(main, "div", "mn-row-t", `${c.name}:${t.title}`);
+        marked(h(main, "div", "mn-row-s"), snippet(t.text, q), q);
+        icon(r, "chevron-right", "mn-row-chev");
+        r.addEventListener("click", () => ctx.openChampion(c.id, "tips"));
         found++;
       }
     }
     const buildHits = store.champions().flatMap((c) => c.builds.filter((b) => `${b.name} ${b.note}`.toLowerCase().includes(q)).map((b) => ({ c, b })));
     if (buildHits.length) {
-      const g = group(out, "Builds");
+      const g = sect("Builds");
       for (const { c, b } of buildHits) {
-        const r = row(g, { image: c.icon, title: `${c.name}:${b.name}`, chevron: true, onTap: () => ctx.openChampion(c.id, "build") });
-        if (b.note) marked(h(r.querySelector(".mn-row-main"), "div", "mn-row-s"), snippet(b.note, q), q);
+        const r = h(g, "div", "mn-row is-tap");
+        const im = h(r, "img", "mn-row-img");
+        im.src = c.icon;
+        im.alt = "";
+        const main = h(r, "div", "mn-row-main");
+        h(main, "div", "mn-row-t", `${c.name}:${b.name}`);
+        if (b.note) marked(h(main, "div", "mn-row-s"), snippet(b.note, q), q);
+        icon(r, "chevron-right", "mn-row-chev");
+        r.addEventListener("click", () => ctx.openChampion(c.id, "build"));
         found++;
       }
     }
@@ -1284,10 +1397,11 @@ function handbookPage(ctx) {
   };
   search.addEventListener("input", () => {
     const q = search.value.trim().toLowerCase();
-    if (!q) cards();
+    if (!q) home();
     else void results(q);
   });
-  cards();
+  home();
+  void keywords();
   return { title: "Handbook", el };
 }
 var clean = (l) => l.replace(/^\s*(?:[-*]|\d+\.|>)\s*/, "").replace(/[*_`]/g, "").replace(/!?\[\[?([^\]|]*)(?:\|[^\]]*)?\]\]?/g, "$1").trim();
@@ -1689,6 +1803,12 @@ var MorellonomiconPlugin = class extends import_obsidian6.Plugin {
       return;
     }
     await ws.getLeaf("tab").openFile(f, { state: { mode: "preview" } });
+  }
+  // A guide card was opened: remember it without redrawing the screen
+  async markRead(path) {
+    if (this.settings.read.includes(path)) return;
+    this.settings.read = [...this.settings.read, path];
+    await this.saveData(this.settings);
   }
   async loadSettings() {
     this.settings = { ...DEFAULTS, ...await this.loadData() };

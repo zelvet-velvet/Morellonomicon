@@ -1,11 +1,15 @@
-import { empty, group, h, icon, page, row } from "../ui";
+import { empty, h, icon, page } from "../ui";
 import type { PageCtx, PageOut } from "./index";
 
 const SNIPPET = 46;      // characters of context around a match
 const MAX_PER_NOTE = 2;  // matching lines shown per guide card
+const CHARS_PER_MINUTE = 350;   // reading speed for the "N min" label (Chinese)
+const KEYWORDS = 6;      // quick-search chips taken from the glossary
+const TILE_COLORS = ["--color-blue", "--color-purple", "--color-orange", "--color-green", "--color-cyan", "--color-pink", "--color-yellow", "--color-red"];
+const GLOSSARY = "名詞表";
 
-// The Handbook: the beginner cards, and a search over everything we have written (guide cards, champion tips and our own builds),
-// so a detail read once can be found again in a couple of taps.
+// The Handbook: a short, friendly start page (where to begin, topic tiles with a read time, a small fact of the day) and a search over
+// everything we have written (guide cards, champion tips and our own builds), so a detail read once can be found again in a couple of taps.
 export function handbookPage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const el = page("Handbook");
@@ -13,52 +17,132 @@ export function handbookPage(ctx: PageCtx): PageOut {
     icon(box, "search", "mn-search-ic");
     const search = h(box, "input");
     search.type = "search";
-    search.placeholder = "Search the handbook, e.g. 控場, 護甲";
+    search.placeholder = "Search anything you read here";
+    const chips = h(el, "div", "mn-keys");
     const out = h(el, "div");
     const notes = store.guideNotes();
     let texts: Map<string, string[]> | null = null;   // guide note path -> its lines, read on the first search
+    const read = new Set(ctx.plugin.settings.read);
+    const minutes = (size: number) => Math.max(1, Math.round(size / 3 / CHARS_PER_MINUTE));   // UTF-8: about 3 bytes per Chinese character
 
-    const cards = () => {
+    const load = async () => {
+        if (texts) return texts;
+        texts = new Map();
+        for (const n of notes) texts.set(n.file.path, (await ctx.app.vault.cachedRead(n.file)).replace(/^---[\s\S]*?---\n/, "").split("\n").map(clean).filter(Boolean));
+        return texts;
+    };
+
+    const home = () => {
         out.empty();
         if (!notes.length) { empty(out, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." }); return; }
-        const g = group(out);
-        for (const n of notes) row(g, { icon: n.icon, title: n.title, sub: n.summary || undefined, chevron: true, onTap: () => ctx.openNote(n.file.path) });
+        const done = notes.filter((n) => read.has(n.file.path)).length;
+
+        // where to begin: the first card you have not opened (or a random one to review when you have read them all)
+        const next = notes.find((n) => !read.has(n.file.path)) ?? notes[Math.floor(Math.random() * notes.length)];
+        const hero = h(out, "button", "mn-hh");
+        const body = h(hero, "div", "mn-hh-body");
+        h(body, "div", "mn-hh-k", done >= notes.length ? "全部讀完了 🎉 再複習一下?" : done ? "接著看" : "從這裡開始");
+        h(body, "div", "mn-hh-t", next.title);
+        if (next.summary) h(body, "div", "mn-hh-s", next.summary);
+        const go = h(body, "span", "mn-hh-go", `${minutes(next.file.stat.size)} 分鐘 · 開始 →`);
+        void go;
+        const ic = h(hero, "div", "mn-hh-ic");
+        icon(ic, next.icon);
+        const prog = h(out, "div", "mn-prog");
+        const bar = h(h(prog, "div", "mn-prog-track"), "div", "mn-prog-fill");
+        bar.style.width = `${(done / notes.length) * 100}%`;
+        h(prog, "div", "mn-prog-t", `${done} / ${notes.length}`);
+        hero.addEventListener("click", (e) => { e.preventDefault(); ctx.openNote(next.file.path); });
+
+        const grid = h(out, "div", "mn-ht-grid");
+        notes.forEach((n, i) => {
+            const tile = h(grid, "button", "mn-ht");
+            tile.style.setProperty("--c", `var(${TILE_COLORS[i % TILE_COLORS.length]})`);
+            const top = h(tile, "div", "mn-ht-top");
+            icon(h(top, "span", "mn-ht-ic"), n.icon);
+            if (read.has(n.file.path)) icon(h(top, "span", "mn-ht-done"), "check");
+            h(tile, "div", "mn-ht-t", n.title);
+            if (n.summary) h(tile, "div", "mn-ht-s", n.summary);
+            h(tile, "div", "mn-ht-m", `${minutes(n.file.stat.size)} 分鐘`);
+            tile.addEventListener("click", (e) => { e.preventDefault(); ctx.openNote(n.file.path); });
+        });
+
+        void fact();
+    };
+
+    // a glossary line that changes every day
+    const fact = async () => {
+        const g = notes.find((n) => n.title === GLOSSARY);
+        if (!g) return;
+        const lines = (await load()).get(g.file.path) ?? [];
+        const entries = lines.filter((l) => /[:：]/.test(l));
+        if (!entries.length || search.value.trim()) return;
+        const day = Math.floor(Date.now() / 86_400_000);
+        const [term, ...rest] = entries[day % entries.length].split(/[:：]/);
+        const card = h(out, "button", "mn-fact");
+        h(card, "div", "mn-fact-k", "今日小知識");
+        h(card, "div", "mn-fact-t", term.trim());
+        h(card, "div", "mn-fact-s", rest.join(":").trim());
+        card.addEventListener("click", (e) => { e.preventDefault(); ctx.openNote(g.file.path); });
+    };
+
+    // quick-search chips: the glossary's terms
+    const keywords = async () => {
+        const g = notes.find((n) => n.title === GLOSSARY);
+        if (!g) return;
+        const terms = ((await load()).get(g.file.path) ?? []).map((l) => l.split(/[:：]/)[0].trim()).filter((t) => t && t.length <= 8).slice(0, KEYWORDS);
+        for (const t of terms) {
+            const b = h(chips, "button", "mn-key", t);
+            b.addEventListener("click", (e) => { e.preventDefault(); search.value = t; void results(t.toLowerCase()); });
+        }
     };
 
     const results = async (q: string) => {
-        if (!texts) {
-            texts = new Map();
-            for (const n of notes) texts.set(n.file.path, (await ctx.app.vault.cachedRead(n.file)).replace(/^---[\s\S]*?---\n/, "").split("\n").map(clean).filter(Boolean));
-        }
+        const lines = await load();
         if (search.value.trim().toLowerCase() !== q) return;   // typed on while the notes were being read
         out.empty();
         let found = 0;
-        const guide = notes.map((n) => ({ n, lines: (texts!.get(n.file.path) ?? []).filter((l) => l.toLowerCase().includes(q)), title: n.title.toLowerCase().includes(q) }))
+        const guide = notes.map((n) => ({ n, lines: (lines.get(n.file.path) ?? []).filter((l) => l.toLowerCase().includes(q)), title: n.title.toLowerCase().includes(q) }))
             .filter((x) => x.title || x.lines.length);
+        const sect = (title: string) => { h(out, "div", "mn-gh", title); return h(out, "div", "mn-group"); };
         if (guide.length) {
-            const g = group(out, "Guide");
-            for (const { n, lines } of guide) {
-                const r = row(g, { icon: n.icon, title: n.title, chevron: true, onTap: () => ctx.openNote(n.file.path) });
-                const main = r.querySelector(".mn-row-main") as HTMLElement;
-                for (const l of lines.slice(0, MAX_PER_NOTE)) marked(h(main, "div", "mn-row-s"), snippet(l, q), q);
+            const g = sect("Guide");
+            for (const { n, lines: ls } of guide) {
+                const r = h(g, "div", "mn-row is-tap");
+                icon(r, n.icon, "mn-row-ic");
+                const main = h(r, "div", "mn-row-main");
+                h(main, "div", "mn-row-t", n.title);
+                for (const l of ls.slice(0, MAX_PER_NOTE)) marked(h(main, "div", "mn-row-s"), snippet(l, q), q);
+                icon(r, "chevron-right", "mn-row-chev");
+                r.addEventListener("click", () => ctx.openNote(n.file.path));
                 found++;
             }
         }
         const tipHits = store.champions().flatMap((c) => c.tips.filter((t) => `${t.title} ${t.text}`.toLowerCase().includes(q)).map((t) => ({ c, t })));
         if (tipHits.length) {
-            const g = group(out, "Tips");
+            const g = sect("Tips");
             for (const { c, t } of tipHits) {
-                const r = row(g, { image: c.icon, title: `${c.name}:${t.title}`, chevron: true, onTap: () => ctx.openChampion(c.id, "tips") });
-                marked(h(r.querySelector(".mn-row-main") as HTMLElement, "div", "mn-row-s"), snippet(t.text, q), q);
+                const r = h(g, "div", "mn-row is-tap");
+                const im = h(r, "img", "mn-row-img"); im.src = c.icon; im.alt = "";
+                const main = h(r, "div", "mn-row-main");
+                h(main, "div", "mn-row-t", `${c.name}:${t.title}`);
+                marked(h(main, "div", "mn-row-s"), snippet(t.text, q), q);
+                icon(r, "chevron-right", "mn-row-chev");
+                r.addEventListener("click", () => ctx.openChampion(c.id, "tips"));
                 found++;
             }
         }
         const buildHits = store.champions().flatMap((c) => c.builds.filter((b) => `${b.name} ${b.note}`.toLowerCase().includes(q)).map((b) => ({ c, b })));
         if (buildHits.length) {
-            const g = group(out, "Builds");
+            const g = sect("Builds");
             for (const { c, b } of buildHits) {
-                const r = row(g, { image: c.icon, title: `${c.name}:${b.name}`, chevron: true, onTap: () => ctx.openChampion(c.id, "build") });
-                if (b.note) marked(h(r.querySelector(".mn-row-main") as HTMLElement, "div", "mn-row-s"), snippet(b.note, q), q);
+                const r = h(g, "div", "mn-row is-tap");
+                const im = h(r, "img", "mn-row-img"); im.src = c.icon; im.alt = "";
+                const main = h(r, "div", "mn-row-main");
+                h(main, "div", "mn-row-t", `${c.name}:${b.name}`);
+                if (b.note) marked(h(main, "div", "mn-row-s"), snippet(b.note, q), q);
+                icon(r, "chevron-right", "mn-row-chev");
+                r.addEventListener("click", () => ctx.openChampion(c.id, "build"));
                 found++;
             }
         }
@@ -67,9 +151,10 @@ export function handbookPage(ctx: PageCtx): PageOut {
 
     search.addEventListener("input", () => {
         const q = search.value.trim().toLowerCase();
-        if (!q) cards(); else void results(q);
+        if (!q) home(); else void results(q);
     });
-    cards();
+    home();
+    void keywords();
     return { title: "Handbook", el };
 }
 

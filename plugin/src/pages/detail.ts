@@ -19,6 +19,20 @@ export function notePage(ctx: PageCtx): PageOut {
     h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
     const body = h(el, "div", "mn-note markdown-rendered");
     void ctx.app.vault.cachedRead(file).then((text) => MarkdownRenderer.render(ctx.app, text.replace(/^---[\s\S]*?---\n/, ""), body, path, ctx.component));
+    // a guide card: remember it as read and offer the next one
+    const guide = ctx.plugin.store.guideNotes();
+    const at = guide.findIndex((n) => n.file.path === path);
+    if (at >= 0) {
+        void ctx.plugin.markRead(path);
+        const next = guide[at + 1];
+        if (next) {
+            const b = h(el, "button", "mn-nextcard");
+            h(b, "span", "mn-nextcard-k", "下一篇");
+            h(b, "span", "mn-nextcard-t", next.title);
+            icon(b, "arrow-right", "mn-nextcard-ic");
+            b.addEventListener("click", (e) => { e.preventDefault(); ctx.pop(); ctx.openNote(next.file.path); });
+        } else h(el, "div", "mn-nextcard-done", "🎉 全部讀完了");
+    }
     row(group(el), { icon: "pencil", title: "Edit in Obsidian", chevron: true, onTap: () => void ctx.plugin.openPath(path) });
     return { title: file.basename, el };
 }

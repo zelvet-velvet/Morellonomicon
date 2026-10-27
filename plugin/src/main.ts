@@ -95,6 +95,13 @@ export default class MorellonomiconPlugin extends Plugin {
         await ws.getLeaf("tab").openFile(f, { state: { mode: "preview" } });
     }
 
+    // A guide card was opened: remember it without redrawing the screen
+    async markRead(path: string): Promise<void> {
+        if (this.settings.read.includes(path)) return;
+        this.settings.read = [...this.settings.read, path];
+        await this.saveData(this.settings);
+    }
+
     async loadSettings(): Promise<void> {
         this.settings = { ...DEFAULTS, ...((await this.loadData()) as Partial<MnSettings> | null) };
     }

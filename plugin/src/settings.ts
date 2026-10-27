@@ -10,6 +10,7 @@ export interface MnSettings {
     augmentFolder: string;
     patchFolder: string;
     openOnStartup: boolean;
+    read: string[];            // guide cards you have opened (their note paths)
 }
 
 export const DEFAULTS: MnSettings = {
@@ -20,6 +21,7 @@ export const DEFAULTS: MnSettings = {
     augmentFolder: "強化",
     patchFolder: "版本更新",
     openOnStartup: Platform.isMobile,
+    read: [],
 };
 
 export class MnSettingTab extends PluginSettingTab {

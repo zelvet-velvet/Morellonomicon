@@ -282,3 +282,44 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-ent-t { font-size: 14px; line-height: 1.6; color: var(--mn-text); margin-top: 4px; }
 .mn-note { font-size: 15px; line-height: 1.7; -webkit-user-select: text; user-select: text; }
 .mn-note h1, .mn-note h2, .mn-note h3 { margin-top: 1.2em; }
+
+/* handbook start page */
+.mn-keys { display: flex; gap: 8px; overflow-x: auto; margin: 10px 0 6px; padding-bottom: 2px; scrollbar-width: none; }
+.mn-keys::-webkit-scrollbar { display: none; }
+.mn-app .mn-key { flex: none; padding: 5px 13px; border-radius: 999px; font-size: 13px; background: var(--mn-card); border: 1px solid var(--mn-line); color: var(--mn-muted); }
+.mn-app .mn-hh { position: relative; display: block; width: 100%; text-align: left; overflow: hidden; margin: 8px 0 8px; padding: 20px 20px 18px;
+    border-radius: 24px; color: #fff; background: linear-gradient(135deg, var(--color-purple), var(--color-blue)); box-shadow: var(--mn-shadow); }
+.mn-hh-body { position: relative; z-index: 1; padding-right: 64px; }
+.mn-hh-k { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; opacity: 0.85; }
+.mn-hh-t { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; margin: 6px 0 4px; }
+.mn-hh-s { font-size: 14px; opacity: 0.9; line-height: 1.45; }
+.mn-hh-go { display: inline-block; margin-top: 14px; padding: 7px 16px; border-radius: 999px; background: rgba(255, 255, 255, 0.22); font-size: 13px; font-weight: 700; }
+.mn-hh-ic { position: absolute; right: -6px; bottom: -14px; opacity: 0.22; }
+.mn-hh-ic svg { width: 120px; height: 120px; }
+.mn-prog { display: flex; align-items: center; gap: 10px; margin: 0 4px 14px; }
+.mn-prog-track { flex: 1; height: 6px; border-radius: 3px; background: var(--mn-line); overflow: hidden; }
+.mn-prog-fill { height: 100%; border-radius: 3px; background: var(--color-green); transition: width 0.3s; }
+.mn-prog-t { font-size: 12px; color: var(--mn-muted); font-variant-numeric: tabular-nums; }
+.mn-ht-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.mn-app .mn-ht { --c: var(--color-blue); display: flex; flex-direction: column; align-items: flex-start; text-align: left; padding: 14px 14px 12px; min-height: 150px; border-radius: 20px;
+    background: linear-gradient(160deg, color-mix(in srgb, var(--c) 24%, var(--mn-card)), var(--mn-card) 70%); border: 1px solid color-mix(in srgb, var(--c) 28%, var(--mn-line)); }
+.mn-app .mn-ht:active { transform: scale(0.97); }
+.mn-ht-top { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px; }
+.mn-ht-ic { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 14px; color: var(--c); background: color-mix(in srgb, var(--c) 20%, transparent); }
+.mn-ht-ic svg { width: 22px; height: 22px; }
+.mn-ht-done { display: flex; width: 22px; height: 22px; border-radius: 50%; align-items: center; justify-content: center; background: var(--color-green); color: #fff; }
+.mn-ht-done svg { width: 14px; height: 14px; }
+.mn-ht-t { font-size: 16px; font-weight: 800; line-height: 1.25; }
+.mn-ht-s { font-size: 12px; color: var(--mn-muted); line-height: 1.4; margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mn-ht-m { margin-top: auto; padding-top: 8px; font-size: 11px; font-weight: 600; color: var(--c); }
+.mn-app .mn-fact { display: block; width: 100%; text-align: left; margin: 14px 0 4px; padding: 16px 18px; border-radius: 20px; background: var(--mn-card); border: 1px dashed var(--mn-line); }
+.mn-fact-k { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: var(--color-yellow); }
+.mn-fact-t { font-size: 20px; font-weight: 800; margin: 4px 0 2px; }
+.mn-fact-s { font-size: 14px; color: var(--mn-muted); line-height: 1.5; }
+
+/* next card at the end of a guide note */
+.mn-app .mn-nextcard { display: flex; align-items: center; gap: 10px; width: 100%; margin: 18px 0 10px; padding: 16px 18px; border-radius: 18px; text-align: left; background: var(--mn-accent); color: var(--text-on-accent, #fff); }
+.mn-nextcard-k { font-size: 12px; font-weight: 700; opacity: 0.85; }
+.mn-nextcard-t { flex: 1; font-size: 17px; font-weight: 800; }
+.mn-nextcard-ic svg { width: 22px; height: 22px; }
+.mn-nextcard-done { margin: 18px 0 10px; text-align: center; font-weight: 700; color: var(--color-green); }
