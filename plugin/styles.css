@@ -602,32 +602,32 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app.is-sub .mn-back { transition: transform 0.2s; }
 
 /* role filters: a plain row of the game's class icons (no pill); dim when off, bright with a short accent line when on */
-.mn-app .mn-chip.mn-chip-ic { justify-content: center; justify-self: center; width: 44px; height: 44px; padding: 0; border: 1.5px solid transparent; border-radius: 50%; background: none; transition: background 0.15s, border-color 0.15s, transform 0.15s; }
-.mn-app .mn-chip.mn-chip-ic.is-on { background: color-mix(in srgb, var(--mn-accent) 22%, transparent); border-color: var(--mn-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--mn-accent) 16%, transparent); transform: scale(1.08); }
+.mn-app .mn-chip.mn-chip-ic { position: relative; justify-content: center; justify-self: center; width: 44px; height: 44px; padding: 0; border: none; border-radius: 0; background: none; }
+.mn-app .mn-chip.mn-chip-ic.is-on { background: none; }
+.mn-app .mn-chip.mn-chip-ic.is-on::after { content: ""; position: absolute; left: 50%; bottom: -2px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--mn-accent); }
 .mn-chip-ic .mn-ic { display: flex; }
 .mn-chip-ic svg { width: 24px; height: 24px; }
 .mn-role-img { display: block; width: 30px; height: 30px; object-fit: contain; transition: opacity 0.2s; }
 .mn-role-img.is-loading { opacity: 0; }
 /* ability filters in the 篩選 panel: icon only. Off = dim; on (must have) = ring in the tag colour */
-.mn-app .mn-ftg { position: relative; display: flex; align-items: center; justify-content: center; justify-self: center; width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid transparent; color: var(--p); -webkit-tap-highlight-color: transparent; transition: background 0.15s, border-color 0.15s, transform 0.15s; }
+.mn-app .mn-ftg { position: relative; display: flex; align-items: center; justify-content: center; justify-self: center; width: 44px; height: 44px; color: var(--p); -webkit-tap-highlight-color: transparent; }
 .mn-ftg .mn-ic { display: flex; }
 .mn-ftg svg { width: 20px; height: 20px; }
-.mn-app .mn-ftg.is-yes { border-color: var(--p); background: color-mix(in srgb, var(--p) 24%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--p) 18%, transparent); transform: scale(1.08); }
+.mn-app .mn-ftg.is-yes::after { content: ""; position: absolute; left: 50%; bottom: -2px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--p); }
 
 /* elements with a hold-to-name bubble: no text selection or iOS callout while held */
 .mn-holdable { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 
 /* the lane row's last cell: the 篩選 button as an icon (with the number of panel filters in use) */
-.mn-app .mn-fgrid .mn-filterbtn { position: relative; justify-content: center; justify-self: center; width: 44px; height: 44px; padding: 0; border: 1.5px solid transparent; border-radius: 50%; background: none; color: var(--mn-text); }
+.mn-app .mn-fgrid .mn-filterbtn { position: relative; justify-content: center; justify-self: center; width: 44px; height: 44px; padding: 0; border: none; border-radius: 0; background: none; color: var(--mn-text); }
 .mn-app .mn-fgrid .mn-filterbtn.has-n { color: var(--mn-accent); }
-.mn-app .mn-fgrid .mn-filterbtn.is-open { color: var(--mn-accent); border-color: var(--mn-accent); background: color-mix(in srgb, var(--mn-accent) 22%, transparent); }
+.mn-app .mn-fgrid .mn-filterbtn.is-open { color: var(--mn-accent); background: none; }
+.mn-app .mn-fgrid .mn-filterbtn.is-open::after { content: ""; position: absolute; left: 50%; bottom: -2px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--mn-accent); }
 .mn-fgrid .mn-filterbtn .mn-filterbtn-ic svg { width: 24px; height: 24px; }
 .mn-fgrid .mn-filterbtn .mn-filterbtn-n { position: absolute; top: -4px; right: -6px; }
 
-/* the game's own icons in tags, chart chips and filters: drawn as a silhouette in the text colour (the tag's colour) */
+/* the game's own icons in tags, chart chips and filters (their own colours) */
 .mn-gi-slot { display: flex; align-items: center; justify-content: center; }
-.mn-gi { display: block; background: currentColor; -webkit-mask: var(--gi) center / contain no-repeat; mask: var(--gi) center / contain no-repeat; transition: opacity 0.2s; }
+.mn-gi { display: block; object-fit: contain; transition: opacity 0.2s; }
 .mn-gi.is-loading { opacity: 0; }
-
-/* 全部清除 on the 定位 heading line */
-.mn-fp-h .mn-clear { margin-left: auto; }
+.mn-tg:not(.is-on) .mn-gi, .mn-scc:not(.is-on) .mn-gi { opacity: 0.45; }

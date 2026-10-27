@@ -532,7 +532,6 @@ var preloadRoleIcons = () => {
   }
   for (const file of Object.values(GAME_ICON_FILE)) {
     const im = new Image();
-    im.crossOrigin = "anonymous";
     im.src = ROLE_WIKI + file;
     preloaded.set(file, im);
   }
@@ -540,25 +539,19 @@ var preloadRoleIcons = () => {
 var gameIcon = (parent, key, fallback, size) => {
   const file = GAME_ICON_FILE[key];
   if (!file) return icon(parent, fallback);
-  const url = ROLE_WIKI + file;
   const slot = h(parent, "span", "mn-ic mn-gi-slot");
-  const shape = h(slot, "span", "mn-gi");
-  shape.style.width = shape.style.height = `${size}px`;
-  shape.style.setProperty("--gi", `url("${url}")`);
-  const probe = preloaded.get(file) ?? Object.assign(new Image(), { crossOrigin: "anonymous" });
-  const fail = () => {
-    const fb = icon(document.createElement("span"), fallback);
-    slot.replaceWith(fb);
-  };
-  if (probe.complete && probe.naturalWidth) return slot;
-  if (probe.complete && !probe.naturalWidth && probe.src) {
-    fail();
-    return slot;
+  const im = h(slot, "img", "mn-gi");
+  im.alt = "";
+  im.style.width = im.style.height = `${size}px`;
+  const cached = preloaded.get(file);
+  if (!(cached?.complete && cached.naturalWidth)) {
+    im.classList.add("is-loading");
+    im.addEventListener("load", () => im.classList.remove("is-loading"), { once: true });
   }
-  shape.classList.add("is-loading");
-  probe.addEventListener("load", () => shape.classList.remove("is-loading"), { once: true });
-  probe.addEventListener("error", fail, { once: true });
-  if (!probe.src) probe.src = url;
+  im.addEventListener("error", () => {
+    slot.replaceWith(icon(document.createElement("span"), fallback));
+  }, { once: true });
+  im.src = ROLE_WIKI + file;
   return slot;
 };
 var iconChip = (parent, label, file, fallback, o) => {

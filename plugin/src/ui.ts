@@ -150,30 +150,27 @@ const preloaded = new Map<string, HTMLImageElement>();
 export const preloadRoleIcons = (): void => {
     if (preloaded.size) return;
     for (const file of [...Object.values(ROLE_FILE), ...Object.values(LANE_FILE)]) { const im = new Image(); im.src = ROLE_WIKI + file; preloaded.set(file, im); }
-    // the game icons are used as CSS masks, which the browser fetches with CORS: probe them the same way, so a host that does not
-    // allow it is found out (and the look-alike used) instead of drawing nothing
-    for (const file of Object.values(GAME_ICON_FILE)) { const im = new Image(); im.crossOrigin = "anonymous"; im.src = ROLE_WIKI + file; preloaded.set(file, im); }
+    for (const file of Object.values(GAME_ICON_FILE)) { const im = new Image(); im.src = ROLE_WIKI + file; preloaded.set(file, im); }
 };
 
-// An icon slot (the class "mn-ic" like icon()): the game's picture for `key` as a silhouette in the current text colour (so it
-// takes the tag's colour like the look-alikes do), at `size` px; shown at once when cached, faded in otherwise; the look-alike
-// `fallback` when there is no picture or it does not load.
+// An icon slot (the class "mn-ic" like icon()): the game's picture for `key` in its own colours, at `size` px; shown at once when
+// cached, faded in otherwise; the look-alike `fallback` when there is no picture or it does not load.
+// (A tag-coloured silhouette needs a CSS mask, which phones refuse for pictures from another site; it can come back once the
+// icons are stored in the vault.)
 export const gameIcon = (parent: HTMLElement, key: string, fallback: string, size: number): HTMLElement => {
     const file = GAME_ICON_FILE[key];
     if (!file) return icon(parent, fallback);
-    const url = ROLE_WIKI + file;
     const slot = h(parent, "span", "mn-ic mn-gi-slot");
-    const shape = h(slot, "span", "mn-gi");
-    shape.style.width = shape.style.height = `${size}px`;
-    shape.style.setProperty("--gi", `url("${url}")`);
-    const probe = preloaded.get(file) ?? Object.assign(new Image(), { crossOrigin: "anonymous" });
-    const fail = () => { const fb = icon(document.createElement("span"), fallback); slot.replaceWith(fb); };
-    if (probe.complete && probe.naturalWidth) return slot;
-    if (probe.complete && !probe.naturalWidth && probe.src) { fail(); return slot; }
-    shape.classList.add("is-loading");
-    probe.addEventListener("load", () => shape.classList.remove("is-loading"), { once: true });
-    probe.addEventListener("error", fail, { once: true });
-    if (!probe.src) probe.src = url;
+    const im = h(slot, "img", "mn-gi");
+    im.alt = "";
+    im.style.width = im.style.height = `${size}px`;
+    const cached = preloaded.get(file);
+    if (!(cached?.complete && cached.naturalWidth)) {
+        im.classList.add("is-loading");
+        im.addEventListener("load", () => im.classList.remove("is-loading"), { once: true });
+    }
+    im.addEventListener("error", () => { slot.replaceWith(icon(document.createElement("span"), fallback)); }, { once: true });
+    im.src = ROLE_WIKI + file;
     return slot;
 };
 
