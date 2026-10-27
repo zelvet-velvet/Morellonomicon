@@ -149,6 +149,15 @@ export function factsStrip(parent: HTMLElement, c: Champion): void {
     h(dmg, "div", "mn-fs-l", "技能傷害");
     const lines = damageLines(c);
     if (!lines.length) h(dmg, "div", "mn-fs-hint", "沒有傷害技能");
+    const ad = lines.reduce((n, d) => n + d.ad, 0), ap = lines.reduce((n, d) => n + d.ap, 0);
+    // the abilities' scaling added up, above the table: 物攻 at the bar's left end, 魔攻 at its right end
+    if (ad + ap > 0) {
+        const ends = h(dmg, "div", "mn-fs-row mn-dl-foot");
+        const l = h(ends, "span", "mn-dl-sum", ad ? `物攻 ${ad}%` : ""); l.style.color = DAMAGE_COLOR["物理"];
+        const r = h(ends, "span", "mn-dl-sum", ap ? `魔攻 ${ap}%` : ""); r.style.color = DAMAGE_COLOR["魔法"];
+        const bar = h(dmg, "div", "mn-stack");
+        for (const [v, k] of [[ad, "物理"], [ap, "魔法"]] as const) if (v) { const seg = h(bar, "i"); seg.style.flex = String(v); seg.style.background = DAMAGE_COLOR[k]; }
+    }
     const list = h(dmg, "div", "mn-dl");
     if (lines.length) for (const t of ["", "", "類型", "物攻", "魔攻", "基礎傷害"]) h(list, "span", "mn-dl-h", t);
     const num = (n: number) => Math.round(n * 10) / 10;
@@ -165,15 +174,6 @@ export function factsStrip(parent: HTMLElement, c: Champion): void {
         h(list, "span", "mn-dl-pct", d.ad ? `${d.ad}%` : "—").style.color = d.ad ? DAMAGE_COLOR["物理"] : "";
         h(list, "span", "mn-dl-pct", d.ap ? `${d.ap}%` : "—").style.color = d.ap ? DAMAGE_COLOR["魔法"] : "";
         h(list, "span", "mn-dl-base", !d.base ? "—" : d.first && d.first !== d.base ? `${num(d.first)}–${num(d.base)}` : `${num(d.base)}`);
-    }
-    const ad = lines.reduce((n, d) => n + d.ad, 0), ap = lines.reduce((n, d) => n + d.ap, 0);
-    // the abilities' scaling added up: 物攻 at the bar's left end, 魔攻 at its right end
-    if (ad + ap > 0) {
-        const ends = h(dmg, "div", "mn-fs-row mn-dl-foot");
-        const l = h(ends, "span", "mn-dl-sum", ad ? `物攻 ${ad}%` : ""); l.style.color = DAMAGE_COLOR["物理"];
-        const r = h(ends, "span", "mn-dl-sum", ap ? `魔攻 ${ap}%` : ""); r.style.color = DAMAGE_COLOR["魔法"];
-        const bar = h(dmg, "div", "mn-stack");
-        for (const [v, k] of [[ad, "物理"], [ap, "魔法"]] as const) if (v) { const seg = h(bar, "i"); seg.style.flex = String(v); seg.style.background = DAMAGE_COLOR[k]; }
     }
     const pair = h(strip, "div", "mn-fs-pair");
     const cell = (label: string) => { const d = h(pair, "div", "mn-fs-c"); h(d, "span", "mn-fs-l", label); return h(d, "div", "mn-fs-r"); };

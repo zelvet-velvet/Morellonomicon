@@ -943,6 +943,20 @@ function factsStrip(parent, c) {
   h(dmg, "div", "mn-fs-l", "\u6280\u80FD\u50B7\u5BB3");
   const lines = damageLines(c);
   if (!lines.length) h(dmg, "div", "mn-fs-hint", "\u6C92\u6709\u50B7\u5BB3\u6280\u80FD");
+  const ad = lines.reduce((n, d) => n + d.ad, 0), ap = lines.reduce((n, d) => n + d.ap, 0);
+  if (ad + ap > 0) {
+    const ends = h(dmg, "div", "mn-fs-row mn-dl-foot");
+    const l = h(ends, "span", "mn-dl-sum", ad ? `\u7269\u653B ${ad}%` : "");
+    l.style.color = DAMAGE_COLOR["\u7269\u7406"];
+    const r = h(ends, "span", "mn-dl-sum", ap ? `\u9B54\u653B ${ap}%` : "");
+    r.style.color = DAMAGE_COLOR["\u9B54\u6CD5"];
+    const bar = h(dmg, "div", "mn-stack");
+    for (const [v2, k] of [[ad, "\u7269\u7406"], [ap, "\u9B54\u6CD5"]]) if (v2) {
+      const seg = h(bar, "i");
+      seg.style.flex = String(v2);
+      seg.style.background = DAMAGE_COLOR[k];
+    }
+  }
   const list2 = h(dmg, "div", "mn-dl");
   if (lines.length) for (const t of ["", "", "\u985E\u578B", "\u7269\u653B", "\u9B54\u653B", "\u57FA\u790E\u50B7\u5BB3"]) h(list2, "span", "mn-dl-h", t);
   const num2 = (n) => Math.round(n * 10) / 10;
@@ -962,20 +976,6 @@ function factsStrip(parent, c) {
     h(list2, "span", "mn-dl-pct", d.ad ? `${d.ad}%` : "\u2014").style.color = d.ad ? DAMAGE_COLOR["\u7269\u7406"] : "";
     h(list2, "span", "mn-dl-pct", d.ap ? `${d.ap}%` : "\u2014").style.color = d.ap ? DAMAGE_COLOR["\u9B54\u6CD5"] : "";
     h(list2, "span", "mn-dl-base", !d.base ? "\u2014" : d.first && d.first !== d.base ? `${num2(d.first)}\u2013${num2(d.base)}` : `${num2(d.base)}`);
-  }
-  const ad = lines.reduce((n, d) => n + d.ad, 0), ap = lines.reduce((n, d) => n + d.ap, 0);
-  if (ad + ap > 0) {
-    const ends = h(dmg, "div", "mn-fs-row mn-dl-foot");
-    const l = h(ends, "span", "mn-dl-sum", ad ? `\u7269\u653B ${ad}%` : "");
-    l.style.color = DAMAGE_COLOR["\u7269\u7406"];
-    const r = h(ends, "span", "mn-dl-sum", ap ? `\u9B54\u653B ${ap}%` : "");
-    r.style.color = DAMAGE_COLOR["\u9B54\u6CD5"];
-    const bar = h(dmg, "div", "mn-stack");
-    for (const [v2, k] of [[ad, "\u7269\u7406"], [ap, "\u9B54\u6CD5"]]) if (v2) {
-      const seg = h(bar, "i");
-      seg.style.flex = String(v2);
-      seg.style.background = DAMAGE_COLOR[k];
-    }
   }
   const pair = h(strip2, "div", "mn-fs-pair");
   const cell = (label) => {
