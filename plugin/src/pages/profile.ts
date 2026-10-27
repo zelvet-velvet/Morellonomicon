@@ -1,7 +1,7 @@
 import { Modal } from "obsidian";
 import type { App } from "obsidian";
 import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, h, icon, svg, tip } from "../ui";
+import { h, icon, svg, tip } from "../ui";
 
 // A champion at a glance: what it can do, drawn as a profile chart, plus the abilities it has. Every axis comes from data we have:
 //   輸出 = its stronger damage rating (Riot, 1-10)        坦度 = Riot's defence rating
@@ -123,31 +123,24 @@ export function difficultyDots(parent: HTMLElement, c: Champion): HTMLElement {
     return dots;
 }
 
-// The damage kinds in words ("魔法為主,兼物理") and a bar split by Riot's physical / magic ratings
-export function damageBar(parent: HTMLElement, c: Champion): void {
-    const kinds = damageKinds(c);
-    const mainKinds = kinds.filter((k) => k.main).map((k) => k.kind);
-    const extras = kinds.filter((k) => !k.main).map((k) => k.kind);
-    const words = mainKinds.length > 1 ? mainKinds.join("+") : `${mainKinds[0]}為主`;
-    const line = h(parent, "div", "mn-dmg-t");
-    h(line, "span", "mn-dmg-m", words).style.color = DAMAGE_COLOR[mainKinds[0]] ?? "inherit";
-    if (extras.length) h(line, "span", "mn-dmg-x", `,兼${extras.join("、")}`);
-    const total = Math.max(1, c.attack + c.magic);
-    const bar = h(parent, "div", "mn-split");
+// Riot's physical and magic ratings (0-10) as two thin meters; the stronger one is drawn solid
+function damageMeters(parent: HTMLElement, c: Champion): void {
+    const top = Math.max(c.attack, c.magic);
     for (const [kind, rating] of [["物理", c.attack], ["魔法", c.magic]] as const) {
-        const seg = h(bar, "span", "");
-        seg.style.flex = String(Math.max(0.08, rating / total));
-        seg.style.background = DAMAGE_COLOR[kind];
+        const row = h(parent, "div", "mn-mt" + (rating === top ? " is-main" : ""));
+        h(row, "span", "mn-mt-k", kind);
+        h(h(row, "span", "mn-mt-bar"), "i", "").style.width = `${Math.max(0, Math.min(10, rating)) * 10}%`;
+        h(row, "span", "mn-mt-n", String(rating));
     }
 }
 
-// Three facts side by side: damage (words and bar), reach, difficulty
+// A small spec sheet: damage (two meters), reach, difficulty. Neutral colours only.
 export function factsRow(parent: HTMLElement, c: Champion): void {
-    const facts = h(parent, "div", "mn-rq-facts");
-    const fact = (label: string) => { const f = h(facts, "div", "mn-rq-f"); h(f, "div", "mn-rq-fl", label); return h(f, "div", "mn-rq-fv"); };
-    damageBar(fact("傷害"), c);
-    h(fact("距離"), "span", "mn-rq-big", reachOf(c) || "—");
-    difficultyDots(fact("難度"), c);
+    const spec = h(parent, "div", "mn-spec");
+    const line = (label: string) => { const r = h(spec, "div", "mn-spec-r"); h(r, "div", "mn-spec-l", label); return h(r, "div", "mn-spec-v"); };
+    damageMeters(line("傷害"), c);
+    h(line("距離"), "span", "", reachOf(c) || "—");
+    difficultyDots(line("難度"), c);
 }
 
 // The ability icons under a small label

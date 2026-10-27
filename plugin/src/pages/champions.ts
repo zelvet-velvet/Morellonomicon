@@ -161,7 +161,6 @@ export function championCard(ctx: PageCtx): PageOut {
     const el = h(null, "div", "mn-page");
     if (!c) { empty(el, { icon: "user-x", title: "Champion not found" }); return { title: "", el }; }
 
-    const dmgColor = DAMAGE_COLOR[c.damageType] ?? "var(--interactive-accent)";
     const hero = h(el, "div", "mn-hero");
     const bg = h(hero, "div", "mn-hero-bg");
     bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
@@ -180,7 +179,7 @@ export function championCard(ctx: PageCtx): PageOut {
     else if (official) { const m = marker(entryDir(official.entry)); chip(tags, `${m.mark} ${official.patch}`, { color: m.color, onTap: openChanges }); }
 
     // what the champion can do at a glance: reach, damage kind, difficulty, a six-axis profile and its abilities (see profile.ts)
-    championProfile(h(el, "div", "mn-panel mn-profile"), c, dmgColor, ctx.app);
+    championProfile(h(el, "div", "mn-panel mn-profile"), c, "var(--mn-muted)", ctx.app);
 
     const mayhem = ctx.plugin.settings.mode === "mayhem";
     const tabs: [SubTab, string][] = [["skills", "Skills"], ["build", "Build"], ["augments", mayhem ? "Augments" : "Runes"], ["tips", "Tips"]];

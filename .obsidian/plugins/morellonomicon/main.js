@@ -900,11 +900,6 @@ function abilityPills(parent, c, onlyLit = false) {
   }
   return row2;
 }
-function damageKinds(c) {
-  const main = c.damageType === "\u6DF7\u5408" ? ["\u7269\u7406", "\u9B54\u6CD5"] : [c.damageType];
-  const extra = c.skillDamage.filter((d) => !main.includes(d));
-  return [...main.map((kind) => ({ kind, main: true })), ...extra.map((kind) => ({ kind, main: false }))];
-}
 var reachOf = (c) => c.archetypes.find((a) => a === "\u8FD1\u6230" || a === "\u4E2D\u7A0B" || a === "\u9060\u7A0B") ?? "";
 function difficultyDots(parent, c) {
   const dots = h(parent, "span", "mn-hard");
@@ -912,32 +907,25 @@ function difficultyDots(parent, c) {
   for (let i = 1; i <= 5; i++) h(dots, "i", i <= level ? "is-on" : "");
   return dots;
 }
-function damageBar(parent, c) {
-  const kinds = damageKinds(c);
-  const mainKinds = kinds.filter((k) => k.main).map((k) => k.kind);
-  const extras = kinds.filter((k) => !k.main).map((k) => k.kind);
-  const words = mainKinds.length > 1 ? mainKinds.join("+") : `${mainKinds[0]}\u70BA\u4E3B`;
-  const line = h(parent, "div", "mn-dmg-t");
-  h(line, "span", "mn-dmg-m", words).style.color = DAMAGE_COLOR[mainKinds[0]] ?? "inherit";
-  if (extras.length) h(line, "span", "mn-dmg-x", `,\u517C${extras.join("\u3001")}`);
-  const total = Math.max(1, c.attack + c.magic);
-  const bar = h(parent, "div", "mn-split");
+function damageMeters(parent, c) {
+  const top = Math.max(c.attack, c.magic);
   for (const [kind, rating] of [["\u7269\u7406", c.attack], ["\u9B54\u6CD5", c.magic]]) {
-    const seg = h(bar, "span", "");
-    seg.style.flex = String(Math.max(0.08, rating / total));
-    seg.style.background = DAMAGE_COLOR[kind];
+    const row2 = h(parent, "div", "mn-mt" + (rating === top ? " is-main" : ""));
+    h(row2, "span", "mn-mt-k", kind);
+    h(h(row2, "span", "mn-mt-bar"), "i", "").style.width = `${Math.max(0, Math.min(10, rating)) * 10}%`;
+    h(row2, "span", "mn-mt-n", String(rating));
   }
 }
 function factsRow(parent, c) {
-  const facts = h(parent, "div", "mn-rq-facts");
-  const fact = (label) => {
-    const f = h(facts, "div", "mn-rq-f");
-    h(f, "div", "mn-rq-fl", label);
-    return h(f, "div", "mn-rq-fv");
+  const spec = h(parent, "div", "mn-spec");
+  const line = (label) => {
+    const r = h(spec, "div", "mn-spec-r");
+    h(r, "div", "mn-spec-l", label);
+    return h(r, "div", "mn-spec-v");
   };
-  damageBar(fact("\u50B7\u5BB3"), c);
-  h(fact("\u8DDD\u96E2"), "span", "mn-rq-big", reachOf(c) || "\u2014");
-  difficultyDots(fact("\u96E3\u5EA6"), c);
+  damageMeters(line("\u50B7\u5BB3"), c);
+  h(line("\u8DDD\u96E2"), "span", "", reachOf(c) || "\u2014");
+  difficultyDots(line("\u96E3\u5EA6"), c);
 }
 function abilityBlock(parent, c, app) {
   const head = h(parent, "div", "mn-rq-al");
@@ -1493,7 +1481,6 @@ function championCard(ctx) {
     empty(el, { icon: "user-x", title: "Champion not found" });
     return { title: "", el };
   }
-  const dmgColor = DAMAGE_COLOR[c.damageType] ?? "var(--interactive-accent)";
   const hero = h(el, "div", "mn-hero");
   const bg = h(hero, "div", "mn-hero-bg");
   bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
@@ -1519,7 +1506,7 @@ function championCard(ctx) {
     const m = marker(entryDir(official.entry));
     chip(tags, `${m.mark} ${official.patch}`, { color: m.color, onTap: openChanges });
   }
-  championProfile(h(el, "div", "mn-panel mn-profile"), c, dmgColor, ctx.app);
+  championProfile(h(el, "div", "mn-panel mn-profile"), c, "var(--mn-muted)", ctx.app);
   const mayhem = ctx.plugin.settings.mode === "mayhem";
   const tabs = [["skills", "Skills"], ["build", "Build"], ["augments", mayhem ? "Augments" : "Runes"], ["tips", "Tips"]];
   let block = null;
