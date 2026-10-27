@@ -118,24 +118,47 @@ export function tagRow(parent: HTMLElement, c: Champion, only?: string[]): HTMLE
     return row;
 }
 
-// The strip above the chart: damage (two coloured meters with Riot's 0-10 ratings), reach, difficulty
+// Base damage at max rank by damage type: per skill the biggest line of each type (a skill can list the same hit twice, e.g. per
+// dagger and in total), summed over the skills. Scaling (+% AD / AP) is not in it, so a type a skill deals only through scaling shows 0.
+const KINDS = ["物理", "魔法", "真實"] as const;
+export function baseDamage(c: Champion): Record<(typeof KINDS)[number], number> {
+    const out = { 物理: 0, 魔法: 0, 真實: 0 };
+    for (const s of c.skills) for (const k of KINDS) {
+        const best = Math.max(0, ...s.rows.filter((r) => r.label.startsWith(`${k}傷害`)).map((r) => parseFloat(r.vals[r.vals.length - 1]) || 0));
+        out[k] += best;
+    }
+    return out;
+}
+
+// The strip above the chart. Damage: a stacked bar of each type's share of the base damage at max rank, with the % and the number;
+// then reach and difficulty. Labels sit on the left, values on the right.
 export function factsStrip(parent: HTMLElement, c: Champion): void {
     const strip = h(parent, "div", "mn-fs");
-    const cell = (label: string) => { const d = h(strip, "div", "mn-fs-c"); h(d, "div", "mn-fs-l", label); return d; };
-    const dmg = cell("傷害");
-    const top = Math.max(c.attack, c.magic);
-    for (const [kind, rating] of [["物理", c.attack], ["魔法", c.magic]] as const) {
-        const row = h(dmg, "div", "mn-mt" + (rating === top ? " is-main" : ""));
-        row.style.setProperty("--k", DAMAGE_COLOR[kind]);
-        h(row, "span", "mn-mt-k", kind);
-        h(h(row, "span", "mn-mt-bar"), "i", "").style.width = `${Math.max(0, Math.min(10, rating)) * 10}%`;
-        h(row, "span", "mn-mt-n", String(rating));
+    const dmg = h(strip, "div", "mn-fs-dmg");
+    const head = h(dmg, "div", "mn-fs-row");
+    h(head, "span", "mn-fs-l", "傷害");
+    h(head, "span", "mn-fs-hint", "技能滿級基礎傷害");
+    const base = baseDamage(c);
+    const total = KINDS.reduce((n, k) => n + base[k], 0);
+    const shown = KINDS.filter((k) => base[k] > 0 || c.skillDamage.includes(k));
+    const bar = h(dmg, "div", "mn-stack");
+    const legend = h(dmg, "div", "mn-stack-l");
+    for (const k of shown) {
+        const pct = total ? Math.round((base[k] / total) * 100) : 0;
+        if (pct > 0) { const seg = h(bar, "i"); seg.style.flex = String(pct); seg.style.background = DAMAGE_COLOR[k]; }
+        const item = h(legend, "div", "mn-stack-i");
+        const dot = h(item, "span", "mn-stack-d"); dot.style.background = DAMAGE_COLOR[k];
+        h(item, "span", "mn-stack-k", k);
+        h(item, "span", "mn-stack-p", `${pct}%`);
+        h(item, "span", "mn-stack-v", base[k] > 0 ? Math.round(base[k]).toLocaleString() : "只靠加成");
     }
+    if (!shown.length) h(legend, "div", "mn-fs-hint", "沒有傷害技能");
+    const pair = h(strip, "div", "mn-fs-pair");
+    const cell = (label: string) => { const d = h(pair, "div", "mn-fs-c"); h(d, "span", "mn-fs-l", label); return h(d, "div", "mn-fs-r"); };
     const reach = cell("距離");
     h(reach, "div", "mn-fs-v", reachOf(c) || "—");
     h(reach, "div", "mn-fs-s", `射程 ${c.range}`);
-    const hard = cell("難度");
-    const v = h(hard, "div", "mn-fs-v", String(c.difficulty));
+    const v = h(cell("難度"), "div", "mn-fs-v", String(c.difficulty));
     h(v, "span", "mn-fs-of", " / 10");
 }
 

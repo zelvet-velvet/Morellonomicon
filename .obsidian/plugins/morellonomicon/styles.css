@@ -490,21 +490,27 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app:not(.is-full) { position: relative; }
 
 /* spec sheet: damage meters, reach, difficulty (neutral colours) */
-.mn-mt { display: grid; grid-template-columns: 26px 1fr 12px; gap: 6px; align-items: center; font-size: 11px; color: var(--mn-muted); }
-.mn-mt-bar { height: 5px; border-radius: 3px; background: var(--mn-line); overflow: hidden; }
-.mn-mt-bar i { display: block; height: 100%; border-radius: 3px; background: var(--k, var(--mn-text)); opacity: 0.45; }
-.mn-mt.is-main { color: var(--mn-text); }
-.mn-mt.is-main .mn-mt-bar i { opacity: 1; }
-.mn-mt-n { text-align: right; font-variant-numeric: tabular-nums; }
 
-/* champion facts strip: damage meters, reach, difficulty */
-.mn-fs { display: grid; grid-template-columns: 1.35fr 1fr 1fr; margin: 14px 0 0; border: 1px solid var(--mn-line); border-radius: 8px; background: var(--mn-card); }
-.mn-fs-c { display: grid; gap: 5px; align-content: start; min-width: 0; padding: 10px 12px; }
+/* champion facts strip: damage share (stacked bar and legend), then reach and difficulty; labels left, values right */
+.mn-fs { margin: 14px 0 0; border: 1px solid var(--mn-line); border-radius: 8px; background: var(--mn-card); }
+.mn-fs-dmg { padding: 11px 14px 12px; display: grid; gap: 8px; }
+.mn-fs-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.mn-fs-l { font-size: 12px; color: var(--mn-muted); }
+.mn-fs-hint { font-size: 11px; color: var(--mn-faint); }
+.mn-stack { display: flex; gap: 2px; height: 6px; border-radius: 3px; overflow: hidden; background: var(--mn-line); }
+.mn-stack i { display: block; min-width: 4px; }
+.mn-stack-l { display: grid; gap: 4px; }
+.mn-stack-i { display: grid; grid-template-columns: 8px auto 1fr auto; gap: 8px; align-items: center; font-size: 13px; }
+.mn-stack-d { width: 8px; height: 8px; border-radius: 2px; }
+.mn-stack-k { color: var(--mn-muted); }
+.mn-stack-p { font-family: var(--mn-serif); font-weight: 700; font-variant-numeric: tabular-nums; color: var(--mn-text); }
+.mn-stack-v { text-align: right; font-variant-numeric: tabular-nums; color: var(--mn-muted); font-size: 12px; }
+.mn-fs-pair { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--mn-line); }
+.mn-fs-c { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-width: 0; padding: 10px 14px; }
 .mn-fs-c + .mn-fs-c { border-left: 1px solid var(--mn-line); }
-.mn-fs-l { font-size: 11px; color: var(--mn-muted); }
+.mn-fs-r { text-align: right; }
 .mn-fs-v { font-family: var(--mn-serif); font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; color: var(--mn-text); }
-.mn-fs-of { font-family: var(--text-font, sans-serif); }
-.mn-fs-of { font-size: 11px; font-weight: 500; color: var(--mn-muted); }
+.mn-fs-of { font-family: var(--text-font, sans-serif); font-size: 11px; font-weight: 500; color: var(--mn-muted); }
 .mn-fs-s { font-size: 11px; color: var(--mn-muted); font-variant-numeric: tabular-nums; }
 
 /* 戰鬥風格 card: hexagon chart with coloured corner chips, then the other tags */

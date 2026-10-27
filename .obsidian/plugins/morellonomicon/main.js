@@ -913,27 +913,51 @@ function tagRow(parent, c, only) {
   for (const t of TAGS) if (!only || only.includes(t.tag)) tagChip(row2, c, t);
   return row2;
 }
+var KINDS = ["\u7269\u7406", "\u9B54\u6CD5", "\u771F\u5BE6"];
+function baseDamage(c) {
+  const out = { \u7269\u7406: 0, \u9B54\u6CD5: 0, \u771F\u5BE6: 0 };
+  for (const s of c.skills) for (const k of KINDS) {
+    const best = Math.max(0, ...s.rows.filter((r) => r.label.startsWith(`${k}\u50B7\u5BB3`)).map((r) => parseFloat(r.vals[r.vals.length - 1]) || 0));
+    out[k] += best;
+  }
+  return out;
+}
 function factsStrip(parent, c) {
   const strip2 = h(parent, "div", "mn-fs");
-  const cell = (label) => {
-    const d = h(strip2, "div", "mn-fs-c");
-    h(d, "div", "mn-fs-l", label);
-    return d;
-  };
-  const dmg = cell("\u50B7\u5BB3");
-  const top = Math.max(c.attack, c.magic);
-  for (const [kind, rating] of [["\u7269\u7406", c.attack], ["\u9B54\u6CD5", c.magic]]) {
-    const row2 = h(dmg, "div", "mn-mt" + (rating === top ? " is-main" : ""));
-    row2.style.setProperty("--k", DAMAGE_COLOR[kind]);
-    h(row2, "span", "mn-mt-k", kind);
-    h(h(row2, "span", "mn-mt-bar"), "i", "").style.width = `${Math.max(0, Math.min(10, rating)) * 10}%`;
-    h(row2, "span", "mn-mt-n", String(rating));
+  const dmg = h(strip2, "div", "mn-fs-dmg");
+  const head = h(dmg, "div", "mn-fs-row");
+  h(head, "span", "mn-fs-l", "\u50B7\u5BB3");
+  h(head, "span", "mn-fs-hint", "\u6280\u80FD\u6EFF\u7D1A\u57FA\u790E\u50B7\u5BB3");
+  const base = baseDamage(c);
+  const total = KINDS.reduce((n, k) => n + base[k], 0);
+  const shown = KINDS.filter((k) => base[k] > 0 || c.skillDamage.includes(k));
+  const bar = h(dmg, "div", "mn-stack");
+  const legend = h(dmg, "div", "mn-stack-l");
+  for (const k of shown) {
+    const pct2 = total ? Math.round(base[k] / total * 100) : 0;
+    if (pct2 > 0) {
+      const seg = h(bar, "i");
+      seg.style.flex = String(pct2);
+      seg.style.background = DAMAGE_COLOR[k];
+    }
+    const item = h(legend, "div", "mn-stack-i");
+    const dot = h(item, "span", "mn-stack-d");
+    dot.style.background = DAMAGE_COLOR[k];
+    h(item, "span", "mn-stack-k", k);
+    h(item, "span", "mn-stack-p", `${pct2}%`);
+    h(item, "span", "mn-stack-v", base[k] > 0 ? Math.round(base[k]).toLocaleString() : "\u53EA\u9760\u52A0\u6210");
   }
+  if (!shown.length) h(legend, "div", "mn-fs-hint", "\u6C92\u6709\u50B7\u5BB3\u6280\u80FD");
+  const pair = h(strip2, "div", "mn-fs-pair");
+  const cell = (label) => {
+    const d = h(pair, "div", "mn-fs-c");
+    h(d, "span", "mn-fs-l", label);
+    return h(d, "div", "mn-fs-r");
+  };
   const reach = cell("\u8DDD\u96E2");
   h(reach, "div", "mn-fs-v", reachOf(c) || "\u2014");
   h(reach, "div", "mn-fs-s", `\u5C04\u7A0B ${c.range}`);
-  const hard = cell("\u96E3\u5EA6");
-  const v = h(hard, "div", "mn-fs-v", String(c.difficulty));
+  const v = h(cell("\u96E3\u5EA6"), "div", "mn-fs-v", String(c.difficulty));
   h(v, "span", "mn-fs-of", " / 10");
 }
 function styleAxes(c) {
@@ -1870,7 +1894,7 @@ function notePage(ctx) {
   row(group(el), { icon: "pencil", title: "Edit in Obsidian", chevron: true, onTap: () => void ctx.plugin.openPath(path) });
   return { title: "", el };
 }
-var KINDS = [
+var KINDS2 = [
   { tag: "\u9B54\u6CD5\u653B\u64CA", re: /魔攻|魔法攻擊|法術強度/, fits: (c) => c.damageType === "\u9B54\u6CD5" || c.damageType === "\u6DF7\u5408" },
   { tag: "\u7269\u7406\u653B\u64CA", re: /物攻|物理攻擊/, fits: (c) => c.damageType === "\u7269\u7406" || c.damageType === "\u6DF7\u5408" },
   { tag: "\u666E\u653B", re: /普攻|普通攻擊|攻速|暴擊/, fits: (c) => c.roles.includes("\u5C04\u624B") || c.damageType === "\u7269\u7406" && c.archetypes.includes("\u8FD1\u6230") },
@@ -1881,7 +1905,7 @@ var KINDS = [
   { tag: "\u63A7\u5834", re: /緩速|暈眩|擊飛|控制|定身|擊退/, fits: (c) => c.features.includes("\u63A7\u5834") }
 ];
 function suggest(effect, champions) {
-  const kinds = KINDS.filter((k) => k.re.test(effect));
+  const kinds = KINDS2.filter((k) => k.re.test(effect));
   if (!kinds.length) return { tags: [], champions: [] };
   const need = Math.max(1, Math.ceil(kinds.length * 0.6));
   const scored = champions.map((c) => ({ c, n: kinds.filter((k) => k.fits(c)).length })).filter((x) => x.n >= need);
