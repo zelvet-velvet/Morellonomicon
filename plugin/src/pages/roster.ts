@@ -18,7 +18,8 @@ export function matchScore(c: Champion, raw: string): number {
     const name = c.name.toLowerCase(), title = c.title.toLowerCase(), id = c.id.toLowerCase();
     if (name === q || id === q) return 100;
     if (name.startsWith(q) || id.startsWith(q)) return 90;
-    if (name.includes(q) || id.includes(q)) return 80;
+    if (name.includes(q)) return 80;
+    if (id.includes(q)) return q.length >= 4 ? 80 : 40;   // three letters inside an English name are too common ("ari" in darius)
     if (title.includes(q)) return 60;
     const chars = [...q];
     let at = 0;
@@ -38,6 +39,37 @@ function distance(a: string, b: string): number {
         prev = cur;
     }
     return prev[y.length];
+}
+
+// English typed by ear: spellings that sound alike become the same (aphelios / afelios, katarina / catarina, yasuo / yasou),
+// double letters count once, and anything but letters is dropped (Kai'Sa, Lee Sin)
+export function enKey(s: string): string {
+    return s.toLowerCase().replace(/[^a-z]/g, "")
+        .replace(/ph/g, "f").replace(/ck/g, "k").replace(/ch/g, "1").replace(/c/g, "k").replace(/q/g, "k").replace(/x/g, "ks").replace(/z/g, "s")
+        .replace(/ee|ea|ie/g, "i").replace(/oo|ou/g, "u").replace(/y/g, "i").replace(/(.)\1+/g, "$1");
+}
+
+// Edits between two words, a swap of two neighbours counting as one (yasou / yasuo)
+function edits(a: string, b: string): number {
+    const d = Array.from({ length: a.length + 1 }, (_, i) => Array.from({ length: b.length + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)));
+    for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) {
+        d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+        if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+    }
+    return d[a.length][b.length];
+}
+
+// How well an English word matches a champion's English name by ear. 0 = no match.
+export function enScore(c: Champion, raw: string): number {
+    const q = enKey(raw), name = enKey(c.id);
+    if (q.length < 3 || !name) return 0;
+    if (q === name) return 88;
+    if (name.startsWith(q)) return 84;
+    const allowed = q.length <= 4 ? 1 : q.length <= 7 ? 2 : 3;
+    const whole = edits(q, name);
+    if (whole <= allowed) return 60 - 4 * whole;
+    if (q.length >= 4 && q.length < name.length && edits(q, name.slice(0, q.length)) <= 1) return 52;   // the start, with a slip
+    return 0;
 }
 
 // The champions whose name (or English id) is only a letter or two off what was typed: the "did you mean" list for a misspelling or a
@@ -60,7 +92,7 @@ export function finder(all: Champion[], sounds: Sounds | null) {
         return x!;
     };
     const score = (c: Champion, t: string): number => {
-        const s = matchScore(c, t);
+        const s = Math.max(matchScore(c, t), enScore(c, t));
         if (s >= 80 || !sounds) return s;
         const q: [Said, Said] = [sounds.said(t, false, true), sounds.said(t, true, true)];
         if (!q[0].length) return s;
