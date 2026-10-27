@@ -4,6 +4,8 @@ id: 771057
 name: "負極斗篷"
 tags: ["SpellBlock"]
 desc: "40 魔法防禦"
+from: []
+into: [773161, 773140, 773064, 773026, 773001, 773211, 773512]
 gold_total: 720
 gold_base: 720
 aram: true

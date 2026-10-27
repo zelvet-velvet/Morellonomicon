@@ -23,7 +23,7 @@ __export(main_exports, {
   default: () => MorellonomiconPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian5 = require("obsidian");
+var import_obsidian6 = require("obsidian");
 
 // src/data/store.ts
 var import_obsidian = require("obsidian");
@@ -168,6 +168,8 @@ var Store = class {
         name: str(fm.name, file.basename),
         tags: list(fm.tags),
         desc: str(fm.desc),
+        from: numList(fm.from),
+        into: numList(fm.into),
         goldTotal: num(fm.gold_total),
         aram: fm.aram === true,
         rift: fm.rift === true,
@@ -181,6 +183,9 @@ var Store = class {
   modeItems() {
     const flag = MODES[this.s.mode].itemFlag;
     return this.items().filter((i) => i[flag]);
+  }
+  augment(id) {
+    return this.augments().find((a) => a.id === id);
   }
   item(id) {
     return this.items().find((i) => i.id === id);
@@ -355,7 +360,7 @@ var MnSettingTab = class extends import_obsidian2.PluginSettingTab {
 };
 
 // src/view.ts
-var import_obsidian4 = require("obsidian");
+var import_obsidian5 = require("obsidian");
 
 // src/ui.ts
 var import_obsidian3 = require("obsidian");
@@ -393,7 +398,7 @@ var row = (parent, r) => {
   } else if (r.icon) icon(el, r.icon, "mn-row-ic");
   const main = h(el, "div", "mn-row-main");
   h(main, "div", "mn-row-t", r.title);
-  if (r.sub) h(main, "div", "mn-row-s", r.sub);
+  if (r.sub) h(main, "div", "mn-row-s" + (r.clamp ? " is-clamp" : ""), r.sub);
   if (r.value) h(el, "div", "mn-row-v", r.value);
   if (r.chevron) icon(el, "chevron-right", "mn-row-chev");
   if (r.onTap) {
@@ -460,6 +465,64 @@ var empty = (parent, o) => {
   if (o.text) h(box, "div", "mn-empty-s", o.text);
   return box;
 };
+var segmented = (parent, options, value, onChange, cls = "") => {
+  const seg = h(parent, "div", "mn-seg " + cls);
+  for (const [id, label] of options) {
+    const b = h(seg, "button", "mn-seg-b" + (id === value ? " is-on" : ""), label);
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      onChange(id);
+    });
+  }
+  return seg;
+};
+
+// src/pages/augments.ts
+var RARITIES = ["\u9280", "\u91D1", "\u7A1C\u93E1"];
+var RARITY_COLOR = { \u9280: "var(--text-muted)", \u91D1: "var(--color-yellow)", \u7A1C\u93E1: "var(--color-purple)" };
+function augmentsPage(ctx) {
+  const el = page("Augments");
+  const all = ctx.plugin.store.augments();
+  if (!all.length) {
+    empty(el, { icon: "database", title: "No augment notes yet", text: "Run python3 tools/fetch_augments.py" });
+    return { title: "Augments", el };
+  }
+  let query = "", rarity = "";
+  const box = h(el, "div", "mn-search");
+  icon(box, "search", "mn-search-ic");
+  const search = h(box, "input");
+  search.type = "search";
+  search.placeholder = "Search";
+  const links = group(el);
+  row(links, { icon: "external-link", title: "OP.GG Mayhem tier list", chevron: true, onTap: () => window.open("https://op.gg/lol/modes/aram-mayhem") });
+  row(links, { icon: "external-link", title: "U.GG augment tier list", chevron: true, onTap: () => window.open("https://u.gg/lol/aram-mayhem-augment-tier-list") });
+  const chips = h(el, "div", "mn-chips");
+  const list2 = h(el, "div");
+  const draw = () => {
+    list2.empty();
+    const q = query.trim().toLowerCase();
+    const hits = all.filter((a) => (!rarity || a.rarity === rarity) && (!q || a.name.toLowerCase().includes(q)));
+    const g = group(list2);
+    for (const a of hits.slice(0, 100)) row(g, { image: a.icon, title: a.name, sub: a.effect || void 0, value: a.rarity, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
+    if (!hits.length) empty(list2, { icon: "search-x", title: "No match" });
+    else if (hits.length > 100) h(list2, "div", "mn-gf", `${hits.length - 100} more: search or filter`);
+  };
+  const drawChips = () => {
+    chips.empty();
+    for (const r of RARITIES) chip(chips, r, { on: rarity === r, color: RARITY_COLOR[r], onTap: () => {
+      rarity = rarity === r ? "" : r;
+      drawChips();
+      draw();
+    } });
+  };
+  search.addEventListener("input", () => {
+    query = search.value;
+    draw();
+  });
+  drawChips();
+  draw();
+  return { title: "Augments", el };
+}
 
 // src/pages/fresh.ts
 function metaLine(parent, m, now) {
@@ -545,7 +608,7 @@ function setCard(body, c, ctx, b) {
       h(btn, "span", "", mate?.name ?? id);
       if (mate) btn.addEventListener("click", (e) => {
         e.preventDefault();
-        ctx.push({ key: "champion", title: mate.name, params: { id: mate.id } });
+        ctx.openChampion(mate.id);
       });
     }
   }
@@ -799,7 +862,7 @@ function championPicker(parent, ctx) {
       h(tile, "span", "mn-tile-n", c.name);
       tile.addEventListener("click", (e) => {
         e.preventDefault();
-        ctx.push({ key: "champion", title: c.name, params: { id: c.id } });
+        ctx.openChampion(c.id);
       });
     }
     if (!q) return;
@@ -807,12 +870,12 @@ function championPicker(parent, ctx) {
     const augs = ctx.plugin.settings.mode === "mayhem" ? store.augments().filter((a) => a.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA) : [];
     if (augs.length) {
       const g = group(extra, "Augments");
-      for (const a of augs) row(g, { image: a.icon, title: a.name, value: a.rarity, chevron: true, onTap: () => ctx.openNote(a.path) });
+      for (const a of augs) row(g, { image: a.icon, title: a.name, value: a.rarity, chevron: true, onTap: () => ctx.openAugment(a.id) });
     }
     const items = store.modeItems().filter((i) => i.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA);
     if (items.length) {
       const g = group(extra, "Items");
-      for (const i of items) row(g, { image: i.icon, title: i.name, sub: i.desc || void 0, value: `${i.goldTotal}`, chevron: true, onTap: () => ctx.openNote(i.path) });
+      for (const i of items) row(g, { image: i.icon, title: i.name, sub: i.desc || void 0, value: `${i.goldTotal}`, chevron: true, onTap: () => ctx.openItem(i.id) });
     }
   };
   const redraw = () => {
@@ -831,12 +894,12 @@ function championPicker(parent, ctx) {
       redraw();
     } });
     const n = activeFilters();
-    chip(filters, F.open ? "More \u25B2" : n ? `More (${n}) \u25BC` : "More \u25BC", { on: F.open, onTap: () => {
+    chip(filters, n ? `\u7BE9\u9078 \xB7 ${n}` : "\u7BE9\u9078", { on: F.open || n > 0, color: "var(--interactive-accent)", onTap: () => {
       F.open = !F.open;
       drawFilters();
       drawPanel();
     } });
-    if (n || F.sort !== "name") chip(filters, "Clear", { color: "var(--color-red)", onTap: () => {
+    if (n || F.sort !== "name") chip(filters, "\u6E05\u9664", { color: "var(--color-red)", onTap: () => {
       F.roles.clear();
       F.dmg = "";
       F.feat.clear();
@@ -849,16 +912,19 @@ function championPicker(parent, ctx) {
     panel.empty();
     panel.toggleClass("is-open", F.open);
     if (!F.open) return;
-    const sect = (title) => {
-      h(panel, "div", "mn-fp-t", title);
-      return h(panel, "div", "mn-chips");
+    const sect = (title, hint = "") => {
+      const s = h(panel, "div", "mn-fp-s");
+      const head = h(s, "div", "mn-fp-h");
+      h(head, "span", "mn-fp-t", title);
+      if (hint) h(head, "span", "mn-fp-hint", hint);
+      return s;
     };
-    const ab = sect("\u6280\u80FD(\u9EDE\u4E00\u4E0B=\u8981\u6709,\u518D\u9EDE=\u4E0D\u8981\u6709)");
+    const ab = h(sect("\u6280\u80FD", "\u9EDE\u4E00\u4E0B = \u8981\u6709 \xB7 \u518D\u9EDE = \u4E0D\u8981\u6709"), "div", "mn-chips");
     for (const f of FEATURES) {
       const st = F.feat.get(f);
       chip(ab, (st === 1 ? "\u2713 " : st === -1 ? "\u2715 " : "") + f, {
         on: st !== void 0,
-        color: st === -1 ? "var(--color-red)" : void 0,
+        color: st === -1 ? "var(--color-red)" : "var(--color-green)",
         onTap: () => {
           if (st === void 0) F.feat.set(f, 1);
           else if (st === 1) F.feat.set(f, -1);
@@ -867,16 +933,14 @@ function championPicker(parent, ctx) {
         }
       });
     }
-    const rg = sect("\u8DDD\u96E2");
-    for (const r of REACH) chip(rg, r, { on: F.reach === r, onTap: () => {
-      F.reach = F.reach === r ? "" : r;
+    segmented(sect("\u8DDD\u96E2"), [["", "\u5168\u90E8"], ...REACH.map((r) => [r, r])], F.reach, (id) => {
+      F.reach = id;
       redraw();
-    } });
-    const so = sect("\u6392\u5E8F");
-    for (const [id, label] of SORTS) chip(so, label, { on: F.sort === id, onTap: () => {
+    }, "is-sm");
+    segmented(sect("\u6392\u5E8F"), SORTS, F.sort, (id) => {
       F.sort = id;
       redraw();
-    } });
+    }, "is-sm");
   };
   search.addEventListener("input", () => {
     query = search.value;
@@ -987,51 +1051,174 @@ function tips(body, c, ctx) {
   }
 }
 
-// src/pages/augments.ts
-var RARITIES = ["\u9280", "\u91D1", "\u7A1C\u93E1"];
-var RARITY_COLOR = { \u9280: "var(--text-muted)", \u91D1: "var(--color-yellow)", \u7A1C\u93E1: "var(--color-purple)" };
-function augmentsPage(ctx) {
-  const el = page("Augments");
-  const all = ctx.plugin.store.augments();
-  if (!all.length) {
-    empty(el, { icon: "database", title: "No augment notes yet", text: "Run python3 tools/fetch_augments.py" });
-    return { title: "Augments", el };
+// src/pages/detail.ts
+var import_obsidian4 = require("obsidian");
+var TAG_ZH = {
+  Damage: "\u7269\u7406\u653B\u64CA",
+  SpellDamage: "\u9B54\u6CD5\u653B\u64CA",
+  Armor: "\u8B77\u7532",
+  SpellBlock: "\u9B54\u6297",
+  Health: "\u751F\u547D",
+  HealthRegen: "\u751F\u547D\u56DE\u5FA9",
+  Mana: "\u9B54\u529B",
+  ManaRegen: "\u9B54\u529B\u56DE\u5FA9",
+  CriticalStrike: "\u66B4\u64CA",
+  AttackSpeed: "\u653B\u901F",
+  LifeSteal: "\u751F\u547D\u5077\u53D6",
+  SpellVamp: "\u6CD5\u8853\u5438\u8840",
+  AbilityHaste: "\u6280\u80FD\u52A0\u901F",
+  CooldownReduction: "\u51B7\u537B\u7E2E\u6E1B",
+  MagicPenetration: "\u9B54\u6CD5\u7A7F\u900F",
+  ArmorPenetration: "\u8B77\u7532\u7A7F\u900F",
+  NonbootsMovement: "\u79FB\u901F",
+  Boots: "\u978B\u5B50",
+  OnHit: "\u653B\u64CA\u7279\u6548",
+  Active: "\u4E3B\u52D5",
+  Tenacity: "\u97CC\u6027"
+};
+function notePage(ctx) {
+  const path = String(ctx.frame.params?.path ?? "");
+  const file = ctx.app.vault.getAbstractFileByPath(path);
+  const el = h(null, "div", "mn-page");
+  if (!(file instanceof import_obsidian4.TFile)) {
+    empty(el, { icon: "file-x", title: "Note not found" });
+    return { title: "", el };
   }
-  let query = "", rarity = "";
-  const box = h(el, "div", "mn-search");
-  icon(box, "search", "mn-search-ic");
-  const search = h(box, "input");
-  search.type = "search";
-  search.placeholder = "Search";
-  const links = group(el);
-  row(links, { icon: "external-link", title: "OP.GG Mayhem tier list", chevron: true, onTap: () => window.open("https://op.gg/lol/modes/aram-mayhem") });
-  row(links, { icon: "external-link", title: "U.GG augment tier list", chevron: true, onTap: () => window.open("https://u.gg/lol/aram-mayhem-augment-tier-list") });
-  const chips = h(el, "div", "mn-chips");
-  const list2 = h(el, "div");
-  const draw = () => {
-    list2.empty();
-    const q = query.trim().toLowerCase();
-    const hits = all.filter((a) => (!rarity || a.rarity === rarity) && (!q || a.name.toLowerCase().includes(q)));
-    const g = group(list2);
-    for (const a of hits.slice(0, 100)) row(g, { image: a.icon, title: a.name, sub: a.effect || void 0, value: a.rarity, chevron: true, onTap: () => ctx.openNote(a.path) });
-    if (!hits.length) empty(list2, { icon: "search-x", title: "No match" });
-    else if (hits.length > 100) h(list2, "div", "mn-gf", `${hits.length - 100} more: search or filter`);
-  };
-  const drawChips = () => {
-    chips.empty();
-    for (const r of RARITIES) chip(chips, r, { on: rarity === r, color: RARITY_COLOR[r], onTap: () => {
-      rarity = rarity === r ? "" : r;
-      drawChips();
-      draw();
-    } });
-  };
-  search.addEventListener("input", () => {
-    query = search.value;
-    draw();
-  });
-  drawChips();
-  draw();
-  return { title: "Augments", el };
+  h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
+  const body = h(el, "div", "mn-note markdown-rendered");
+  void ctx.app.vault.cachedRead(file).then((text) => import_obsidian4.MarkdownRenderer.render(ctx.app, text.replace(/^---[\s\S]*?---\n/, ""), body, path, ctx.component));
+  row(group(el), { icon: "pencil", title: "Edit in Obsidian", chevron: true, onTap: () => void ctx.plugin.openPath(path) });
+  return { title: file.basename, el };
+}
+function augmentPage(ctx) {
+  const a = ctx.plugin.store.augment(Number(ctx.frame.params?.id));
+  const el = h(null, "div", "mn-page");
+  if (!a) {
+    empty(el, { icon: "sparkles", title: "Augment not found" });
+    return { title: "", el };
+  }
+  const head = h(el, "div", "mn-dhead");
+  const im = h(head, "img", "mn-dimg");
+  im.src = a.icon;
+  im.alt = "";
+  const who = h(head, "div", "mn-dwho");
+  h(who, "h1", "mn-title", a.name);
+  const tags = h(who, "div", "mn-chips");
+  chip(tags, a.rarity, { color: RARITY_COLOR[a.rarity] });
+  if (a.tier) chip(tags, `\u8A55\u50F9 ${a.tier}`, { color: "var(--color-green)" });
+  const added = ctx.plugin.store.riotNotes.find((n) => n.augments_new?.some((x) => x.name === a.name));
+  if (added) chip(tags, `\u65B0\u589E\u65BC ${added.patch}`, { color: "var(--color-blue)" });
+  const panel = h(el, "div", "mn-panel mn-dpanel");
+  if (a.effect) h(panel, "p", "mn-dtext", a.effect);
+  else h(panel, "p", "mn-dtext mn-muted", "No effect text yet.");
+  if (a.effect && ctx.plugin.store.officialEffect(a.name) === a.effect) h(panel, "div", "mn-pn-src", "Effect text: Riot Games patch notes");
+  if (a.fits.length) {
+    h(el, "div", "mn-gh", "\u9069\u5408");
+    const fits = h(el, "div", "mn-chips");
+    for (const f of a.fits) chip(fits, f);
+  }
+  return { title: a.name, el };
+}
+function itemPage(ctx) {
+  const store = ctx.plugin.store;
+  const item = store.item(Number(ctx.frame.params?.id));
+  const el = h(null, "div", "mn-page");
+  if (!item) {
+    empty(el, { icon: "package-x", title: "Item not found" });
+    return { title: "", el };
+  }
+  const head = h(el, "div", "mn-dhead");
+  const im = h(head, "img", "mn-dimg");
+  im.src = item.icon;
+  im.alt = "";
+  const who = h(head, "div", "mn-dwho");
+  h(who, "h1", "mn-title", item.name);
+  const tags = h(who, "div", "mn-chips");
+  chip(tags, `${item.goldTotal} \u91D1`, { color: "var(--color-yellow)" });
+  for (const t of item.tags) if (TAG_ZH[t]) chip(tags, TAG_ZH[t]);
+  if (item.desc) {
+    const panel = h(el, "div", "mn-panel mn-dpanel");
+    h(panel, "p", "mn-dtext", item.desc);
+  }
+  if (item.variantOf) h(el, "div", "mn-gf", "\u9019\u662F ARAM \u5C08\u7528\u7248\u672C,\u50F9\u683C\u8207\u6578\u503C\u548C\u4E00\u822C\u7248\u672C\u4E0D\u540C\u3002");
+  recipe(el, ctx, "\u5408\u6210\u6750\u6599", item.from.map((id) => store.item(id)).filter((i) => !!i));
+  recipe(el, ctx, "\u53EF\u5408\u6210", item.into.map((id) => store.item(id)).filter((i) => !!i));
+  return { title: item.name, el };
+}
+function recipe(el, ctx, title, items) {
+  if (!items.length) return;
+  h(el, "div", "mn-gh", title);
+  const grid = h(el, "div", "mn-recipe");
+  for (const i of items) {
+    const b = h(grid, "button", "mn-rc");
+    const im = h(b, "img");
+    im.src = i.icon;
+    im.alt = "";
+    h(b, "span", "mn-rc-n", i.name);
+    h(b, "span", "mn-rc-g", `${i.goldTotal}`);
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      ctx.openItem(i.id);
+    });
+  }
+}
+function listPage(ctx) {
+  const kind = String(ctx.frame.params?.kind);
+  const note = ctx.plugin.store.riotNotes.find((n) => n.patch === String(ctx.frame.params?.patch));
+  const el = h(null, "div", "mn-page");
+  const title = kind === "champions" ? "Champions" : kind === "items" ? "Items" : "New augments";
+  h(h(el, "div", "mn-title-row"), "h1", "mn-title", `${title} \xB7 ${note?.patch ?? ""}`);
+  if (!note) {
+    empty(el, { icon: "newspaper", title: "No patch notes" });
+    return { title, el };
+  }
+  const store = ctx.plugin.store;
+  if (kind === "augments") {
+    const byName = new Map(store.augments().map((a) => [a.name, a]));
+    for (const a of note.augments_new ?? []) {
+      const mine = byName.get(a.name);
+      const card = h(el, "div", "mn-ent" + (mine ? " is-tap" : ""));
+      const head = h(card, "div", "mn-ent-head");
+      if (mine) {
+        const im = h(head, "img");
+        im.src = mine.icon;
+        im.alt = "";
+      }
+      h(head, "span", "mn-ent-n", a.name);
+      chip(head, a.rarity, { color: RARITY_COLOR[a.rarity] });
+      if (a.text) h(card, "div", "mn-ent-t", a.text);
+      if (mine) card.addEventListener("click", () => ctx.openAugment(mine.id));
+    }
+    return { title, el };
+  }
+  const entries2 = (kind === "champions" ? note.champions : note.items) ?? [];
+  for (const e of entries2) {
+    const champ = kind === "champions" ? store.champions().find((c) => c.name === e.name) : void 0;
+    const item = kind === "items" ? store.items().find((i) => i.name === e.name) : void 0;
+    const open = champ ? () => ctx.openChampion(champ.id, "skills") : item ? () => ctx.openItem(item.id) : null;
+    const card = h(el, "div", "mn-ent" + (open ? " is-tap" : ""));
+    const head = h(card, "div", "mn-ent-head");
+    const src = champ?.icon ?? item?.icon;
+    if (src) {
+      const im = h(head, "img");
+      im.src = src;
+      im.alt = "";
+    }
+    h(head, "span", "mn-ent-n", e.name);
+    if (open) icon(head, "chevron-right", "mn-row-chev");
+    for (const c of e.changes) {
+      const line = h(card, "div", "mn-ent-ch");
+      h(line, "div", "mn-ent-l", c.label);
+      const vals = h(line, "div", "mn-ent-v");
+      h(vals, "span", "mn-chg-old", c.old);
+      h(vals, "span", "mn-chg-arrow", "\u2192");
+      h(vals, "span", "mn-chg-new", c.new);
+    }
+    if (e.more) h(card, "div", "mn-gf", `+${e.more} more in Riot's notes`);
+    if (open) card.addEventListener("click", open);
+  }
+  if (!entries2.length) empty(el, { icon: "newspaper", title: "Nothing listed" });
+  return { title, el };
 }
 
 // src/pages/handbook.ts
@@ -1048,11 +1235,6 @@ function handbookPage(ctx) {
   const out = h(el, "div");
   const notes = store.guideNotes();
   let texts = null;
-  const openChampion = (id, name, sub) => {
-    rememberSub(id, sub);
-    ctx.goTab("champions");
-    ctx.push({ key: "champion", title: name, params: { id } });
-  };
   const cards = () => {
     out.empty();
     if (!notes.length) {
@@ -1084,7 +1266,7 @@ function handbookPage(ctx) {
     if (tipHits.length) {
       const g = group(out, "Tips");
       for (const { c, t } of tipHits) {
-        const r = row(g, { image: c.icon, title: `${c.name}:${t.title}`, chevron: true, onTap: () => openChampion(c.id, c.name, "tips") });
+        const r = row(g, { image: c.icon, title: `${c.name}:${t.title}`, chevron: true, onTap: () => ctx.openChampion(c.id, "tips") });
         marked(h(r.querySelector(".mn-row-main"), "div", "mn-row-s"), snippet(t.text, q), q);
         found++;
       }
@@ -1093,7 +1275,7 @@ function handbookPage(ctx) {
     if (buildHits.length) {
       const g = group(out, "Builds");
       for (const { c, b } of buildHits) {
-        const r = row(g, { image: c.icon, title: `${c.name}:${b.name}`, chevron: true, onTap: () => openChampion(c.id, c.name, "build") });
+        const r = row(g, { image: c.icon, title: `${c.name}:${b.name}`, chevron: true, onTap: () => ctx.openChampion(c.id, "build") });
         if (b.note) marked(h(r.querySelector(".mn-row-main"), "div", "mn-row-s"), snippet(b.note, q), q);
         found++;
       }
@@ -1127,7 +1309,7 @@ function marked(parent, text, q) {
 }
 
 // src/pages/patch.ts
-var SHOWN = 6;
+var SHOWN = 5;
 function patchPage(ctx) {
   const store = ctx.plugin.store;
   const el = page("Patch");
@@ -1140,8 +1322,8 @@ function patchPage(ctx) {
     h(hero, "div", "mn-patch-s", "Run tools/fetch_patch_notes.py to show Riot's patch notes here.");
   }
   if (latest && ctx.plugin.settings.mode === "mayhem") mayhemSection(el, ctx, latest);
-  if (latest?.champions?.length) entries(el, ctx, "Champions", latest.champions, (name) => championOf(ctx, name));
-  if (latest?.items?.length) entries(el, ctx, "Items", latest.items, (name) => itemOf(ctx, name));
+  if (latest?.champions?.length) entries(el, ctx, latest, "champions", "Champions", latest.champions);
+  if (latest?.items?.length) entries(el, ctx, latest, "items", "Items", latest.items);
   if (older.length) {
     const g2 = group(el, "Earlier patches");
     for (const n of older) row(g2, { icon: "newspaper", title: n.title, sub: n.summary || void 0, value: n.date, chevron: true, onTap: () => window.open(n.url) });
@@ -1156,11 +1338,14 @@ function patchPage(ctx) {
   if (!stale.length) empty(g, { icon: "check-circle", title: "Nothing to recheck", text: "Every tip and build matches the current patch." });
   else {
     for (const s of stale.slice(0, 30)) {
-      row(g, { image: s.champion.icon, title: `${s.champion.name}:${s.title}`, sub: s.patch ? `Written for ${s.patch}` : "No patch given", value: s.kind === "tip" ? "Tip" : "Build", chevron: true, onTap: () => {
-        rememberSub(s.champion.id, s.kind === "tip" ? "tips" : "build");
-        ctx.goTab("champions");
-        ctx.push({ key: "champion", title: s.champion.name, params: { id: s.champion.id } });
-      } });
+      row(g, {
+        image: s.champion.icon,
+        title: `${s.champion.name}:${s.title}`,
+        sub: s.patch ? `Written for ${s.patch}` : "No patch given",
+        value: s.kind === "tip" ? "Tip" : "Build",
+        chevron: true,
+        onTap: () => ctx.openChampion(s.champion.id, s.kind === "tip" ? "tips" : "build")
+      });
     }
     if (stale.length > 30) h(el, "div", "mn-gf", `${stale.length - 30} more`);
   }
@@ -1185,24 +1370,20 @@ function latestCard(el, n) {
   });
   h(body, "div", "mn-pn-src", "Riot Games \xB7 \u7248\u672C\u66F4\u65B0\u516C\u544A");
 }
+function seeAll(g, ctx, kind, patch, total) {
+  row(g, { icon: "list", title: `See all ${total}`, chevron: true, onTap: () => ctx.push({ key: "list", title: "Changes", params: { kind, patch } }) });
+}
 function mayhemSection(el, ctx, n) {
   const added = n.augments_new ?? [], removed = n.augments_removed ?? [];
   if (!added.length && !removed.length) return;
   const byName = new Map(ctx.plugin.store.augments().map((a) => [a.name, a]));
   if (added.length) {
     const g = group(el, `Mayhem \xB7 ${added.length} new augments`);
-    const list2 = (limit) => {
-      g.empty();
-      for (const a of added.slice(0, limit)) row(g, { image: byName.get(a.name)?.icon, title: a.name, sub: a.text || void 0, value: a.rarity, chevron: !!byName.get(a.name), onTap: byName.get(a.name) ? () => ctx.openNote(byName.get(a.name).path) : void 0 });
-      if (added.length > limit) {
-        const more = h(g, "button", "mn-showall", `Show all ${added.length}`);
-        more.addEventListener("click", (e) => {
-          e.preventDefault();
-          list2(added.length);
-        });
-      }
-    };
-    list2(SHOWN);
+    for (const a of added.slice(0, SHOWN)) {
+      const mine = byName.get(a.name);
+      row(g, { image: mine?.icon, title: a.name, sub: a.text || void 0, value: a.rarity, chevron: !!mine, onTap: mine ? () => ctx.openAugment(mine.id) : void 0, clamp: true });
+    }
+    if (added.length > SHOWN) seeAll(g, ctx, "augments", n.patch, added.length);
   }
   if (removed.length) {
     h(el, "div", "mn-gh", `Removed augments \xB7 ${removed.length}`);
@@ -1210,38 +1391,25 @@ function mayhemSection(el, ctx, n) {
     for (const r of removed) chip(chips, r, { color: RARITY_COLOR["\u9280"] });
   }
 }
-function championOf(ctx, name) {
-  const c = ctx.plugin.store.champions().find((x) => x.name === name);
-  if (!c) return null;
-  return { icon: c.icon, open: () => {
-    rememberSub(c.id, "skills");
-    ctx.goTab("champions");
-    ctx.push({ key: "champion", title: c.name, params: { id: c.id } });
-  } };
-}
-function itemOf(ctx, name) {
-  const i = ctx.plugin.store.items().find((x) => x.name === name);
-  return i ? { icon: i.icon, open: () => ctx.openNote(i.path) } : null;
-}
-function entries(el, ctx, title, list2, find) {
+function entries(el, ctx, n, kind, title, list2) {
+  const store = ctx.plugin.store;
   const g = group(el, `${title} \xB7 ${list2.length}`);
-  const draw = (limit) => {
-    g.empty();
-    for (const e of list2.slice(0, limit)) {
-      const hit = find(e.name);
-      const c = e.changes[0];
-      const extra = e.changes.length - 1 + e.more;
-      row(g, { image: hit?.icon, title: e.name, sub: c ? `${c.label}  ${c.old} \u2192 ${c.new}` : void 0, value: extra > 0 ? `+${extra}` : void 0, chevron: !!hit, onTap: hit?.open });
-    }
-    if (list2.length > limit) {
-      const more = h(g, "button", "mn-showall", `Show all ${list2.length}`);
-      more.addEventListener("click", (e) => {
-        e.preventDefault();
-        draw(list2.length);
-      });
-    }
-  };
-  draw(SHOWN);
+  for (const e of list2.slice(0, SHOWN)) {
+    const champ = kind === "champions" ? store.champions().find((c2) => c2.name === e.name) : void 0;
+    const item = kind === "items" ? store.items().find((i) => i.name === e.name) : void 0;
+    const c = e.changes[0];
+    const extra = e.changes.length - 1 + e.more;
+    row(g, {
+      image: champ?.icon ?? item?.icon,
+      title: e.name,
+      sub: c ? `${c.label}  ${c.old} \u2192 ${c.new}` : void 0,
+      value: extra > 0 ? `+${extra}` : void 0,
+      chevron: true,
+      clamp: true,
+      onTap: champ ? () => ctx.openChampion(champ.id, "skills") : item ? () => ctx.openItem(item.id) : void 0
+    });
+  }
+  if (list2.length > SHOWN) seeAll(g, ctx, kind, n.patch, list2.length);
 }
 
 // src/pages/index.ts
@@ -1251,10 +1419,26 @@ var PAGES = {
   patch: patchPage,
   handbook: handbookPage
 };
+function renderPage(tab, ctx) {
+  switch (ctx.frame.key) {
+    case "champion":
+      return championCard(ctx);
+    case "augment":
+      return augmentPage(ctx);
+    case "item":
+      return itemPage(ctx);
+    case "note":
+      return notePage(ctx);
+    case "list":
+      return listPage(ctx);
+    default:
+      return PAGES[tab](ctx);
+  }
+}
 
 // src/view.ts
 var VIEW_TYPE = "morellonomicon";
-var MnView = class extends import_obsidian4.ItemView {
+var MnView = class extends import_obsidian5.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.plugin = plugin;
@@ -1281,7 +1465,7 @@ var MnView = class extends import_obsidian4.ItemView {
     c.empty();
     c.addClass("mn-host");
     const app = h(c, "div", "mn-app");
-    app.toggleClass("is-full", import_obsidian4.Platform.isMobile);
+    app.toggleClass("is-full", import_obsidian5.Platform.isMobile);
     this.topEl = h(app, "div", "mn-top");
     this.backEl = h(this.topEl, "button", "mn-btn mn-back");
     icon(this.backEl, "chevron-left");
@@ -1308,7 +1492,7 @@ var MnView = class extends import_obsidian4.ItemView {
     this.scrolls.clear();
   }
   modeMenu(e) {
-    const menu = new import_obsidian4.Menu();
+    const menu = new import_obsidian5.Menu();
     for (const id of MODE_ORDER) {
       const m = MODES[id];
       menu.addItem((i) => i.setTitle(m.label + (m.enabled ? "" : " (coming soon)")).setIcon(m.icon).setChecked(this.plugin.settings.mode === id).setDisabled(!m.enabled).onClick(() => {
@@ -1378,16 +1562,22 @@ var MnView = class extends import_obsidian4.ItemView {
     const f = this.router.top();
     let out;
     try {
-      out = PAGES[this.router.tab]({
+      const store = this.plugin.store;
+      out = renderPage(this.router.tab, {
         app: this.app,
         plugin: this.plugin,
+        component: this,
         frame: f,
         push: (x) => this.push(x),
         pop: () => this.back(),
         goTab: (id) => this.goTab(id),
-        openNote: (path) => {
-          void this.plugin.openPath(path);
-        }
+        openChampion: (id, sub) => {
+          if (sub) rememberSub(id, sub);
+          this.push({ key: "champion", title: store.champion(id)?.name ?? id, params: { id } });
+        },
+        openAugment: (id) => this.push({ key: "augment", title: store.augment(id)?.name ?? "Augment", params: { id } }),
+        openItem: (id) => this.push({ key: "item", title: store.item(id)?.name ?? "Item", params: { id } }),
+        openNote: (path) => this.push({ key: "note", title: path.split("/").pop()?.replace(/\.md$/, "") ?? "Note", params: { path } })
       });
     } catch (e) {
       const el = h(null, "div", "mn-page");
@@ -1404,7 +1594,7 @@ var MnView = class extends import_obsidian4.ItemView {
 };
 
 // src/main.ts
-var MorellonomiconPlugin = class extends import_obsidian5.Plugin {
+var MorellonomiconPlugin = class extends import_obsidian6.Plugin {
   constructor() {
     super(...arguments);
     this.settings = { ...DEFAULTS };
@@ -1430,7 +1620,7 @@ var MorellonomiconPlugin = class extends import_obsidian5.Plugin {
     this.registerEvent(this.app.vault.on("rename", (f, old) => onFile(f, old)));
     this.registerEvent(this.app.metadataCache.on("resolved", () => this.dataChanged()));
     this.home = createEl("button", { cls: "mn-home", attr: { "aria-label": "Open Morellonomicon" } });
-    (0, import_obsidian5.setIcon)(this.home, "book-open");
+    (0, import_obsidian6.setIcon)(this.home, "book-open");
     this.home.addEventListener("click", (e) => {
       e.preventDefault();
       void this.activate(false);
@@ -1453,9 +1643,9 @@ var MorellonomiconPlugin = class extends import_obsidian5.Plugin {
     const ws = this.app.workspace;
     const on = !!ws.getActiveViewOfType(MnView);
     document.body.toggleClass("mn-on", on);
-    document.body.toggleClass("mn-full", on && import_obsidian5.Platform.isMobile);
-    if (!import_obsidian5.Platform.isMobile) return;
-    const v = ws.getActiveViewOfType(import_obsidian5.View);
+    document.body.toggleClass("mn-full", on && import_obsidian6.Platform.isMobile);
+    if (!import_obsidian6.Platform.isMobile) return;
+    const v = ws.getActiveViewOfType(import_obsidian6.View);
     if (!v || v instanceof MnView || v.leaf.getRoot() !== ws.rootSplit) {
       this.home.remove();
       return;
@@ -1480,7 +1670,7 @@ var MorellonomiconPlugin = class extends import_obsidian5.Plugin {
     const ws = this.app.workspace;
     let leaf = ws.getLeavesOfType(VIEW_TYPE)[0] ?? null;
     if (!leaf) {
-      leaf = ws.getLeaf(startup || import_obsidian5.Platform.isMobile ? false : "tab");
+      leaf = ws.getLeaf(startup || import_obsidian6.Platform.isMobile ? false : "tab");
       await leaf.setViewState({ type: VIEW_TYPE, active: true });
     }
     await ws.revealLeaf(leaf);
@@ -1490,7 +1680,7 @@ var MorellonomiconPlugin = class extends import_obsidian5.Plugin {
   // A note in a tab of its own; a tab that already shows it is brought forward instead of opening a second one
   async openPath(path) {
     const f = this.app.vault.getAbstractFileByPath(path);
-    if (!(f instanceof import_obsidian5.TFile)) return;
+    if (!(f instanceof import_obsidian6.TFile)) return;
     const ws = this.app.workspace;
     const open = ws.getLeavesOfType("markdown").find((l) => l.view.file?.path === path);
     if (open) {

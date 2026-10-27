@@ -4,6 +4,8 @@ id: 773173
 name: "奇蹟之石"
 tags: ["HealthRegen", "ManaRegen"]
 desc: "每5秒10生命回復 / 每5秒+15魔力回復 / 援助：治療、洞察和清晰召喚師技能的冷卻時間縮短30%。 / 艾莉莎的祝福：裝備此道具獲得3個等級時，會消耗此道具，且其所有效果永久生效。"
+from: [773096]
+into: []
 gold_total: 1100
 gold_base: 400
 aram: true

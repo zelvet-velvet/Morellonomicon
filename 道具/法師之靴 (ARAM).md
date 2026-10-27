@@ -4,6 +4,8 @@ id: 773020
 name: "法師之靴"
 tags: ["Boots", "MagicPenetration"]
 desc: "15 魔法穿透 / 強化跑速：45跑速"
+from: [771001]
+into: []
 gold_total: 1100
 gold_base: 775
 aram: true

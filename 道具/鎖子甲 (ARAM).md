@@ -4,6 +4,8 @@ id: 771031
 name: "鎖子甲"
 tags: ["Armor"]
 desc: "40 物理防禦"
+from: []
+into: [773026, 773005, 773024, 773068, 773073, 773075, 773512]
 gold_total: 720
 gold_base: 720
 aram: true

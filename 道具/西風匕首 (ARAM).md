@@ -4,6 +4,8 @@ id: 773172
 name: "西風匕首"
 tags: ["Damage", "AttackSpeed", "NonbootsMovement", "CooldownReduction", "Tenacity"]
 desc: "25 物理攻擊 / 50% 攻擊速度 / 10% 跑速 / 10%冷卻時間減免 / 韌性：使暈眩、緩速、嘲諷、恐懼、沉默、致盲和硬控場等減益效果的持續時間縮短35%。"
+from: [773101, 771037]
+into: []
 gold_total: 2850
 gold_base: 725
 aram: true

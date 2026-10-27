@@ -4,6 +4,8 @@ id: 771006
 name: "治療寶珠"
 tags: ["HealthRegen"]
 desc: "每5秒5生命回復"
+from: []
+into: [771080, 773052, 773064, 773077, 773083, 773096, 773512]
 gold_total: 180
 gold_base: 180
 aram: true

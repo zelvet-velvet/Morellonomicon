@@ -263,7 +263,7 @@ def item_note(item_id, it, version, names, keep):
     has_twin = ARAM_TWIN_PREFIX + item_id in keep
     fm = {
         "type": "item", "id": int(item_id), "name": it["name"], "tags": it.get("tags", []),
-        "desc": item_desc(it), "gold_total": gold["total"], "gold_base": gold["base"],
+        "desc": item_desc(it), "from": [int(i) for i in dict.fromkeys(it.get("from", []))], "into": [int(i) for i in dict.fromkeys(it.get("into", []))], "gold_total": gold["total"], "gold_base": gold["base"],
         "aram": bool(maps.get(ARAM_MAP)) and not has_twin, "rift": bool(maps.get(RIFT_MAP)),
         "icon": f"{DD}/cdn/{version}/img/item/{it['image']['full']}", "patch": version, "generated": True,
     }

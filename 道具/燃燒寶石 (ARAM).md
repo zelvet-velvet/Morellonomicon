@@ -4,6 +4,8 @@ id: 773067
 name: "燃燒寶石"
 tags: ["Health", "CooldownReduction"]
 desc: "200 生命 / 燼火火花：10%冷卻時間減免"
+from: [771028]
+into: [773050, 773063, 773065, 773069, 773207]
 gold_total: 850
 gold_base: 375
 aram: true

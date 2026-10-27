@@ -4,6 +4,8 @@ id: 771033
 name: "抗魔斗篷"
 tags: ["SpellBlock"]
 desc: "20 魔法防禦"
+from: []
+into: [773111, 773064, 773023, 773028, 773091, 773105, 773107, 773155]
 gold_total: 400
 gold_base: 400
 aram: true

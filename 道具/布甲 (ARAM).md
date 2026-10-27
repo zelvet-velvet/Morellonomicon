@@ -4,6 +4,8 @@ id: 771029
 name: "布甲"
 tags: ["Armor"]
 desc: "15 物理防禦"
+from: []
+into: [773082, 773191, 773052, 773143, 773047, 773075, 773105, 773106]
 gold_total: 300
 gold_base: 300
 aram: true

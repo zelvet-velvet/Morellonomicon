@@ -4,6 +4,8 @@ id: 773123
 name: "死刑宣告"
 tags: ["Damage", "CriticalStrike", "OnHit"]
 desc: "25 物理攻擊 / 20% 暴擊率 / 撕裂打擊：普攻命中敵方英雄時，施加重創效果，持續1.5秒。 / (重創會使受到的治療和回復效果降低50%。)"
+from: [773093, 771036]
+into: []
 gold_total: 1900
 gold_base: 700
 aram: true

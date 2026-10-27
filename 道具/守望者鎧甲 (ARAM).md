@@ -4,6 +4,8 @@ id: 773082
 name: "守望者鎧甲"
 tags: ["Armor", "Slow"]
 desc: "50 物理防禦 / 冷鋼：被普攻命中時，降低攻擊者攻速15%，持續1秒。"
+from: [771029]
+into: [773143, 773110]
 gold_total: 1000
 gold_base: 400
 aram: true

@@ -4,6 +4,8 @@ id: 773155
 name: "吸魔劍"
 tags: ["SpellBlock", "Damage"]
 desc: "25 物理攻擊 / 25 魔法防禦 / 命脈：受到會使生命低於30%的魔法傷害時，獲得一道可吸收250魔法傷害的護盾，持續5秒(冷卻時間90秒)。"
+from: [771036, 771033]
+into: [773156]
 gold_total: 1350
 gold_base: 550
 aram: true

@@ -4,6 +4,8 @@ id: 771001
 name: "速度之靴"
 tags: ["Boots"]
 desc: "僅限1件 / 強化跑速：25跑速"
+from: []
+into: [773020, 773117, 773111, 773006, 773009, 773047, 773158]
 gold_total: 325
 gold_base: 325
 aram: true

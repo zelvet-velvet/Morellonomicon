@@ -1,7 +1,8 @@
 import { ItemView, Menu, Platform, WorkspaceLeaf } from "obsidian";
 import type MorellonomiconPlugin from "./main";
 import { MODES, MODE_ORDER, TAB_ICON, TAB_LABEL, TabId } from "./modes";
-import { PAGES, PageOut } from "./pages";
+import { PageOut, renderPage } from "./pages";
+import { rememberSub } from "./pages/champions";
 import type { Frame } from "./router";
 import { empty, h, icon } from "./ui";
 
@@ -112,9 +113,13 @@ export class MnView extends ItemView {
         const f = this.router.top();
         let out: PageOut;
         try {
-            out = PAGES[this.router.tab]({
-                app: this.app, plugin: this.plugin, frame: f, push: (x) => this.push(x), pop: () => this.back(),
-                goTab: (id) => this.goTab(id), openNote: (path) => { void this.plugin.openPath(path); },
+            const store = this.plugin.store;
+            out = renderPage(this.router.tab, {
+                app: this.app, plugin: this.plugin, component: this, frame: f, push: (x) => this.push(x), pop: () => this.back(), goTab: (id) => this.goTab(id),
+                openChampion: (id, sub) => { if (sub) rememberSub(id, sub); this.push({ key: "champion", title: store.champion(id)?.name ?? id, params: { id } }); },
+                openAugment: (id) => this.push({ key: "augment", title: store.augment(id)?.name ?? "Augment", params: { id } }),
+                openItem: (id) => this.push({ key: "item", title: store.item(id)?.name ?? "Item", params: { id } }),
+                openNote: (path) => this.push({ key: "note", title: path.split("/").pop()?.replace(/\.md$/, "") ?? "Note", params: { path } }),
             });
         } catch (e) {
             const el = h(null, "div", "mn-page");

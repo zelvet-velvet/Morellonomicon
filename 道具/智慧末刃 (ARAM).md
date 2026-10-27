@@ -4,6 +4,8 @@ id: 773091
 name: "智慧末刃"
 tags: ["SpellBlock", "AttackSpeed", "OnHit"]
 desc: "40% 攻擊速度 / 25 魔法防禦 / 回饋循環：普攻命中時會造成42額外魔法傷害，並使你的魔防提升5，持續5秒(最多可累加4層)。"
+from: [771043, 771033]
+into: []
 gold_total: 2150
 gold_base: 850
 aram: true

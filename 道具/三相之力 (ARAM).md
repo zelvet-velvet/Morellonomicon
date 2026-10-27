@@ -4,6 +4,8 @@ id: 773078
 name: "三相之力"
 tags: ["Health", "Damage", "CriticalStrike", "AttackSpeed", "SpellDamage", "Mana", "NonbootsMovement", "OnHit", "Slow"]
 desc: "30 物理攻擊 / 30 魔法攻擊 / 30% 攻擊速度 / 10% 暴擊率 / 8% 跑速 / 250 生命 / 200 魔力 / 暴虐：普攻命中時，賦予20跑速，持續2秒。擊殺會賦予60跑速，持續2秒。 / 飆傷魔刃：使用技能後，下一次普攻命中時會額外造成物理傷害，數值等於…"
+from: [773086, 773057, 773044]
+into: []
 gold_total: 3628
 gold_base: 3
 aram: true

@@ -36,7 +36,7 @@ export interface PatchNote {
 export interface Skill { key: string; name: string; damage: string[]; icon: string; desc: string; upgrade: string; range: string; rows: SkillRow[] }
 export interface Augment { id: number; name: string; rarity: string; icon: string; effect: string; fits: string[]; tier: string; path: string }
 export interface Item {
-    id: number; name: string; tags: string[]; desc: string; goldTotal: number; aram: boolean; rift: boolean; icon: string; variantOf?: string; path: string;
+    id: number; name: string; tags: string[]; desc: string; from: number[]; into: number[]; goldTotal: number; aram: boolean; rift: boolean; icon: string; variantOf?: string; path: string;
 }
 
 // "26.21" and "16.21" are the same patch (Riot's 2026 numbering is 26.x, Data Dragon's is 16.x); compare as minor numbers
@@ -138,7 +138,7 @@ export class Store {
     items(): Item[] {
         if (!this.its) {
             this.its = this.notes(this.s.itemFolder).filter((n) => n.fm.type === "item").map(({ file, fm }) => ({
-                id: num(fm.id), name: str(fm.name, file.basename), tags: list(fm.tags), desc: str(fm.desc), goldTotal: num(fm.gold_total), aram: fm.aram === true,
+                id: num(fm.id), name: str(fm.name, file.basename), tags: list(fm.tags), desc: str(fm.desc), from: numList(fm.from), into: numList(fm.into), goldTotal: num(fm.gold_total), aram: fm.aram === true,
                 rift: fm.rift === true, icon: str(fm.icon), variantOf: typeof fm.variant_of === "string" ? fm.variant_of : undefined, path: file.path,
             })).sort((a, b) => a.goldTotal - b.goldTotal || a.name.localeCompare(b.name, "zh-Hant"));
         }
@@ -148,6 +148,7 @@ export class Store {
         const flag = MODES[this.s.mode].itemFlag;
         return this.items().filter((i) => i[flag]);
     }
+    augment(id: number): Augment | undefined { return this.augments().find((a) => a.id === id); }
     item(id: number): Item | undefined { return this.items().find((i) => i.id === id); }
 
     // Riot's effect text for an augment, from the patch notes where it was introduced (newest patch wins)

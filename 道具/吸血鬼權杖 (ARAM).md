@@ -4,6 +4,8 @@ id: 771053
 name: "吸血鬼權杖"
 tags: ["Damage", "LifeSteal"]
 desc: "10 物理攻擊 / 10% 普攻吸血"
+from: [771036]
+into: [773074, 773144, 773072, 773050]
 gold_total: 800
 gold_base: 400
 aram: true

@@ -4,6 +4,8 @@ id: 771058
 name: "巨型魔棒"
 tags: ["SpellDamage"]
 desc: "80 魔法攻擊"
+from: []
+into: [773128, 773089, 773157]
 gold_total: 1600
 gold_base: 1600
 aram: true

@@ -4,6 +4,8 @@ id: 773140
 name: "水銀飾帶"
 tags: ["SpellBlock"]
 desc: "45 魔法防禦 / 主動90秒 / 移除所有減益效果。"
+from: [771057]
+into: [773139]
 gold_total: 1550
 gold_base: 830
 aram: true

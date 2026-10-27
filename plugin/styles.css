@@ -62,10 +62,10 @@ body.is-mobile:not(.mn-on) .mn-home svg { width: 24px; height: 24px; }
 .mn-search input { width: 100%; height: 44px; border-radius: 999px; font-size: 16px; padding: 0 16px 0 40px; border: 1px solid transparent; background: var(--mn-card); box-shadow: none; -webkit-user-select: text; user-select: text; }
 .mn-search input:focus { border-color: var(--mn-accent); background: var(--mn-card-hi); }
 .mn-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
-.mn-chip { --chip: var(--mn-muted); display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 999px; font-size: 13px; font-weight: 500; line-height: 1.4;
+.mn-app .mn-chip { --chip: var(--mn-muted); display: inline-flex; align-items: center; white-space: nowrap; padding: 6px 13px; border-radius: 999px; font-size: 13px; font-weight: 500; line-height: 1.4;
     color: var(--chip); background: color-mix(in srgb, var(--chip) 14%, transparent); border: 1px solid color-mix(in srgb, var(--chip) 22%, transparent); }
 button.mn-chip:active { transform: scale(0.96); }
-button.mn-chip.is-on { background: var(--chip); border-color: var(--chip); color: var(--mn-bg); }
+button.mn-chip.is-on { background: color-mix(in srgb, var(--chip) 24%, transparent); border-color: var(--chip); font-weight: 700; }
 
 /* champion grid */
 .mn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); gap: 14px 8px; margin-top: 10px; }
@@ -158,7 +158,7 @@ button.mn-skill-box.is-on { box-shadow: 0 0 0 3px color-mix(in srgb, var(--chip)
 /* tab bar: translucent, the active tab sits on a soft pill */
 .mn-tabs { flex: none; display: grid; grid-template-columns: repeat(var(--n, 4), 1fr); padding: 6px 8px var(--mn-safe-bottom);
     background: color-mix(in srgb, var(--mn-bg) 82%, transparent); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 0.5px solid var(--mn-line); }
-.mn-tab { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0 3px; color: var(--mn-muted); }
+.mn-app .mn-tab { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0 3px; color: var(--mn-muted); }
 .mn-tab .mn-ic { display: flex; align-items: center; justify-content: center; width: 54px; height: 30px; border-radius: 15px; transition: background 0.15s; }
 .mn-tab svg { width: 22px; height: 22px; }
 .mn-tab-l { font-size: 10px; font-weight: 600; }
@@ -167,9 +167,11 @@ button.mn-skill-box.is-on { box-shadow: 0 0 0 3px color-mix(in srgb, var(--chip)
 
 /* champion card sub-tabs */
 .mn-chips-top { margin: -6px 0 6px; }
-.mn-seg { display: flex; gap: 4px; padding: 4px; margin: 4px 0 6px; border-radius: 14px; background: var(--mn-card); border: 1px solid var(--mn-line); }
-.mn-seg-b { flex: 1; padding: 8px 0; border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--mn-muted); }
-.mn-seg-b.is-on { background: var(--mn-bg); color: var(--mn-text); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18); }
+.mn-seg { display: flex; gap: 4px; padding: 4px; margin: 6px 0 8px; border-radius: 16px; background: var(--mn-card); border: 1px solid var(--mn-line); }
+.mn-app .mn-seg-b { flex: 1; min-height: 42px; padding: 0 6px; border-radius: 12px; font-size: 14px; font-weight: 600; color: var(--mn-muted); white-space: nowrap; }
+.mn-seg-b.is-on { background: var(--mn-accent); color: var(--text-on-accent, #fff); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); }
+.mn-seg.is-sm { margin: 0; border-radius: 14px; }
+.mn-seg.is-sm .mn-seg-b { min-height: 38px; font-size: 13px; }
 
 /* build sets */
 .mn-set { background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: var(--mn-radius); padding: 12px 14px; margin: 10px 0; }
@@ -187,7 +189,7 @@ button.mn-skill-box.is-on { box-shadow: 0 0 0 3px color-mix(in srgb, var(--chip)
 .mn-ip-name { font-weight: 700; }
 .mn-ip-gold { color: var(--color-yellow); font-weight: 600; font-variant-numeric: tabular-nums; }
 .mn-with { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
-.mn-with-b { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: 999px; background: var(--mn-card-hi); font-size: 12px; }
+.mn-app .mn-with-b { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: 999px; background: var(--mn-card-hi); font-size: 12px; }
 .mn-with-b img { width: 24px; height: 24px; border-radius: 50%; }
 
 /* tips */
@@ -199,9 +201,14 @@ button.mn-skill-box.is-on { box-shadow: 0 0 0 3px color-mix(in srgb, var(--chip)
 .mn-tip-v { margin-top: 6px; font-size: 13px; color: var(--mn-accent); font-weight: 600; }
 
 /* champion filters */
-.mn-fpanel { display: none; background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: var(--mn-radius); padding: 4px 14px 6px; margin: 4px 0 8px; }
+.mn-fpanel { display: none; background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: var(--mn-radius); padding: 4px 16px; margin: 6px 0 10px; }
 .mn-fpanel.is-open { display: block; animation: mn-pop 0.16s ease-out; }
-.mn-fp-t { font-size: 12px; font-weight: 600; color: var(--mn-muted); margin-top: 8px; }
+.mn-fp-s { padding: 12px 0; }
+.mn-fp-s + .mn-fp-s { border-top: 0.5px solid var(--mn-line); }
+.mn-fp-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.mn-fp-t { font-size: 13px; font-weight: 700; }
+.mn-fp-hint { font-size: 11px; color: var(--mn-faint); }
+.mn-fp-s .mn-chips { margin: 0; }
 .mn-count { font-size: 12px; color: var(--mn-faint); margin: 2px 4px 0; }
 
 /* handbook search */
@@ -218,7 +225,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* changes since the last patch */
 .mn-chg-was { display: block; font-size: 10px; color: var(--mn-faint); text-decoration: line-through; font-weight: 400; }
 .mn-chg { background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: var(--mn-radius); margin: 12px 0; overflow: hidden; }
-.mn-chg-head { display: flex; align-items: center; gap: 8px; width: 100%; padding: 12px 14px; text-align: left; }
+.mn-app .mn-chg-head { display: flex; align-items: center; gap: 8px; width: 100%; padding: 12px 14px; text-align: left; }
 .mn-chg-ic svg { width: 18px; height: 18px; color: var(--mn-accent); }
 .mn-chg-t { flex: 1; font-size: 14px; font-weight: 700; }
 .mn-chg-caret svg { width: 18px; height: 18px; color: var(--mn-faint); transition: transform 0.15s; }
@@ -244,6 +251,34 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-pn-img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: var(--mn-card-hi); }
 .mn-pn-body { padding: 14px 16px 16px; }
 .mn-pn-t { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; margin: 2px 0 4px; }
-.mn-pn-btn { margin-top: 12px; padding: 9px 16px; border-radius: 999px; background: var(--mn-accent); color: var(--text-on-accent, #fff); font-size: 14px; font-weight: 600; }
+.mn-app .mn-pn-btn { margin-top: 12px; padding: 9px 16px; border-radius: 999px; background: var(--mn-accent); color: var(--text-on-accent, #fff); font-size: 14px; font-weight: 600; }
 .mn-pn-src { margin-top: 10px; font-size: 11px; color: var(--mn-faint); }
-.mn-showall { display: block; width: 100%; padding: 12px; font-size: 14px; font-weight: 600; color: var(--mn-accent); border-top: 0.5px solid var(--mn-line); }
+.mn-app .mn-showall { display: block; width: 100%; padding: 12px; font-size: 14px; font-weight: 600; color: var(--mn-accent); border-top: 0.5px solid var(--mn-line); }
+
+/* one-line row text, detail pages, full lists, notes */
+.mn-row-s.is-clamp { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mn-muted { color: var(--mn-muted); }
+.mn-dhead { display: flex; gap: 14px; align-items: center; margin: 4px 0 12px; }
+.mn-dimg { width: 76px; height: 76px; border-radius: 18px; flex: none; background: var(--mn-card-hi); border: 1px solid var(--mn-line); }
+.mn-dwho { min-width: 0; }
+.mn-dwho .mn-title { margin: 0; font-size: 26px; }
+.mn-dwho .mn-chips { margin: 6px 0 0; }
+.mn-dpanel { padding: 14px 16px; }
+.mn-dtext { margin: 0; font-size: 15px; line-height: 1.65; -webkit-user-select: text; user-select: text; }
+.mn-recipe { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; }
+.mn-app .mn-rc { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 6px; border-radius: 14px; background: var(--mn-card); border: 1px solid var(--mn-line); }
+.mn-rc img { width: 44px; height: 44px; border-radius: 10px; }
+.mn-rc-n { font-size: 12px; text-align: center; line-height: 1.25; }
+.mn-rc-g { font-size: 11px; color: var(--color-yellow); font-variant-numeric: tabular-nums; }
+.mn-ent { background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: var(--mn-radius); padding: 14px 16px; margin: 10px 0; }
+.mn-ent.is-tap { cursor: pointer; }
+.mn-ent.is-tap:active { background: var(--mn-card-hi); }
+.mn-ent-head { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.mn-ent-head img { width: 44px; height: 44px; border-radius: 12px; flex: none; }
+.mn-ent-n { flex: 1; font-size: 17px; font-weight: 700; }
+.mn-ent-ch { padding: 10px 0 2px; border-top: 0.5px solid var(--mn-line); margin-top: 10px; }
+.mn-ent-l { font-size: 12px; font-weight: 600; color: var(--mn-muted); margin-bottom: 4px; }
+.mn-ent-v { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; font-size: 14px; line-height: 1.5; }
+.mn-ent-t { font-size: 14px; line-height: 1.6; color: var(--mn-text); margin-top: 4px; }
+.mn-note { font-size: 15px; line-height: 1.7; -webkit-user-select: text; user-select: text; }
+.mn-note h1, .mn-note h2, .mn-note h3 { margin-top: 1.2em; }

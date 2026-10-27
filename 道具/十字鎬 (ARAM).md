@@ -4,6 +4,8 @@ id: 771037
 name: "十字鎬"
 tags: ["Damage"]
 desc: "25 物理攻擊"
+from: []
+into: [773124, 773172, 773031, 773022, 773035, 773077, 773109, 773156]
 gold_total: 875
 gold_base: 875
 aram: true

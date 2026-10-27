@@ -4,6 +4,8 @@ id: 771042
 name: "短劍"
 tags: ["AttackSpeed"]
 desc: "12% 攻擊速度"
+from: []
+into: [773114, 773162, 773153, 773046, 773131, 773006, 773085, 773086, 773101]
 gold_total: 400
 gold_base: 400
 aram: true

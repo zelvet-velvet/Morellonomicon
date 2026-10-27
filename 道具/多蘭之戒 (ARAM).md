@@ -4,6 +4,8 @@ id: 771056
 name: "多蘭之戒"
 tags: ["Health", "SpellDamage", "ManaRegen"]
 desc: "60 生命 / 15 魔法攻擊 / 每5秒+3魔力回復 / 被動：擊殺單位時回復4點魔力。"
+from: []
+into: []
 gold_total: 400
 gold_base: 400
 aram: true

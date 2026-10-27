@@ -4,6 +4,8 @@ id: 773024
 name: "冰川護甲"
 tags: ["Armor", "Mana", "CooldownReduction"]
 desc: "45 物理防禦 / 300 魔力 / 冷靜沉著：10%冷卻時間減免。"
+from: [771031, 771027]
+into: [773025, 773110]
 gold_total: 1350
 gold_base: 230
 aram: true

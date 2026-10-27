@@ -4,6 +4,8 @@ id: 773139
 name: "水星彎刀"
 tags: ["SpellBlock", "Damage", "NonbootsMovement"]
 desc: "60 物理攻擊 / 45 魔法防禦 / 主動90秒 / 移除所有減益效果，若為近戰英雄，還會獲得50%額外跑速，持續1秒。"
+from: [773140, 771038]
+into: []
 gold_total: 3700
 gold_base: 600
 aram: true

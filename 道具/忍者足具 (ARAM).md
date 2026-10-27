@@ -4,6 +4,8 @@ id: 773047
 name: "忍者足具"
 tags: ["Armor", "Boots"]
 desc: "25 物理防禦 / 忍者瞬步：格擋10%來自普攻的傷害。 / 強化跑速：45跑速。"
+from: [771001, 771029]
+into: []
 gold_total: 1000
 gold_base: 375
 aram: true

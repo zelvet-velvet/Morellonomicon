@@ -4,6 +4,8 @@ id: 771026
 name: "爆裂魔杖"
 tags: ["SpellDamage"]
 desc: "40 魔法攻擊"
+from: []
+into: [773056, 773124, 773027, 773003, 773116, 773001, 773089, 773100, 773135]
 gold_total: 860
 gold_base: 860
 aram: true

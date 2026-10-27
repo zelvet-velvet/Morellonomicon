@@ -4,6 +4,8 @@ id: 773068
 name: "日炎斗篷"
 tags: ["Health", "Armor"]
 desc: "450 生命 / 45 物理防禦 / 灼熱逼人：每秒對鄰近敵軍造成40魔法傷害。"
+from: [771031, 771011]
+into: []
 gold_total: 2650
 gold_base: 930
 aram: true

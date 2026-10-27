@@ -4,6 +4,8 @@ id: 773086
 name: "狂熱雙刀"
 tags: ["CriticalStrike", "AttackSpeed", "NonbootsMovement"]
 desc: "18% 攻擊速度 / 10% 暴擊率 / 5% 跑速"
+from: [771051, 771042]
+into: [773046, 773087, 773078]
 gold_total: 1175
 gold_base: 375
 aram: true

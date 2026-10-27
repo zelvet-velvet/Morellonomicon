@@ -63,7 +63,7 @@ function setCard(body: HTMLElement, c: Champion, ctx: PageCtx, b: Champion["buil
             const btn = h(row, "button", "mn-with-b");
             const im = h(btn, "img"); im.src = mate?.icon ?? ""; im.alt = "";
             h(btn, "span", "", mate?.name ?? id);
-            if (mate) btn.addEventListener("click", (e) => { e.preventDefault(); ctx.push({ key: "champion", title: mate.name, params: { id: mate.id } }); });
+            if (mate) btn.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(mate.id); });
         }
     }
     itemRow(card, c, ctx, b.items);

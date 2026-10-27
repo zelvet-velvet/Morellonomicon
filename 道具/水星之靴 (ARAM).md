@@ -4,6 +4,8 @@ id: 773111
 name: "水星之靴"
 tags: ["SpellBlock", "Boots", "Tenacity"]
 desc: "25 魔法防禦 / 強化跑速：45跑速。 / 韌性：使暈眩、緩速、嘲諷、恐懼、沉默、致盲和硬控場等減益效果的持續時間縮短35%。"
+from: [771001, 771033]
+into: []
 gold_total: 1200
 gold_base: 475
 aram: true

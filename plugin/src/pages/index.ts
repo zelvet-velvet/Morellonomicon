@@ -1,9 +1,10 @@
-import type { App } from "obsidian";
+import type { App, Component } from "obsidian";
 import type MorellonomiconPlugin from "../main";
 import type { Frame } from "../router";
 import type { TabId } from "../modes";
-import { championsPage } from "./champions";
 import { augmentsPage } from "./augments";
+import { championCard, championsPage, type SubTab } from "./champions";
+import { augmentPage, itemPage, listPage, notePage } from "./detail";
 import { handbookPage } from "./handbook";
 import { patchPage } from "./patch";
 
@@ -11,18 +12,35 @@ export interface PageOut { title: string; el: HTMLElement }
 export interface PageCtx {
     app: App;
     plugin: MorellonomiconPlugin;
+    component: Component;          // owns what a page renders (markdown notes)
     frame: Frame;
     push(f: Frame): void;
     pop(): void;
-    goTab(id: TabId): void;       // jump to another tab's first page
-    openNote(path: string): void; // open a note in its own Obsidian tab
+    goTab(id: TabId): void;        // jump to another tab's first page
+    // every detail opens as a page of the app on top of the current tab (Back returns to where you were)
+    openChampion(id: string, sub?: SubTab): void;
+    openAugment(id: number): void;
+    openItem(id: number): void;
+    openNote(path: string): void;  // a note, drawn inside the app
 }
 export type PageRender = (ctx: PageCtx) => PageOut;
 
-// One renderer per tab. A page branches on the mode (ctx.plugin.settings.mode) where Mayhem and Rift differ.
+// One renderer per tab (its first page).
 export const PAGES: Record<TabId, PageRender> = {
     champions: championsPage,
     augments: augmentsPage,
     patch: patchPage,
     handbook: handbookPage,
 };
+
+// Detail pages can be reached from any tab, so they are chosen by the frame before the tab's own page.
+export function renderPage(tab: TabId, ctx: PageCtx): PageOut {
+    switch (ctx.frame.key) {
+        case "champion": return championCard(ctx);
+        case "augment": return augmentPage(ctx);
+        case "item": return itemPage(ctx);
+        case "note": return notePage(ctx);
+        case "list": return listPage(ctx);
+        default: return PAGES[tab](ctx);
+    }
+}

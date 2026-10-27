@@ -31,14 +31,14 @@ export const group = (parent: HTMLElement, title?: string, footer?: string): HTM
     return g;
 };
 
-export interface RowSpec { icon?: string; image?: string; title: string; sub?: string; value?: string; chevron?: boolean; muted?: boolean; onTap?: () => void }
+export interface RowSpec { icon?: string; image?: string; title: string; sub?: string; value?: string; chevron?: boolean; muted?: boolean; clamp?: boolean; onTap?: () => void }
 export const row = (parent: HTMLElement, r: RowSpec): HTMLElement => {
     const el = h(parent, "div", "mn-row" + (r.onTap ? " is-tap" : "") + (r.muted ? " is-muted" : ""));
     if (r.image) { const im = h(el, "img", "mn-row-img"); im.src = r.image; im.loading = "lazy"; im.alt = ""; }
     else if (r.icon) icon(el, r.icon, "mn-row-ic");
     const main = h(el, "div", "mn-row-main");
     h(main, "div", "mn-row-t", r.title);
-    if (r.sub) h(main, "div", "mn-row-s", r.sub);
+    if (r.sub) h(main, "div", "mn-row-s" + (r.clamp ? " is-clamp" : ""), r.sub);
     if (r.value) h(el, "div", "mn-row-v", r.value);
     if (r.chevron) icon(el, "chevron-right", "mn-row-chev");
     if (r.onTap) { const fn = r.onTap; el.addEventListener("click", (e) => { e.preventDefault(); fn(); }); }
@@ -94,4 +94,14 @@ export const empty = (parent: HTMLElement, o: { icon: string; title: string; tex
     h(box, "div", "mn-empty-t", o.title);
     if (o.text) h(box, "div", "mn-empty-s", o.text);
     return box;
+};
+
+// A row of equal-width choices (one is on). Used for sub-tabs, reach and sort.
+export const segmented = (parent: HTMLElement, options: [string, string][], value: string, onChange: (id: string) => void, cls = ""): HTMLElement => {
+    const seg = h(parent, "div", "mn-seg " + cls);
+    for (const [id, label] of options) {
+        const b = h(seg, "button", "mn-seg-b" + (id === value ? " is-on" : ""), label);
+        b.addEventListener("click", (e) => { e.preventDefault(); onChange(id); });
+    }
+    return seg;
 };

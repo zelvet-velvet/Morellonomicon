@@ -1,5 +1,4 @@
 import { empty, group, h, icon, page, row } from "../ui";
-import { rememberSub, type SubTab } from "./champions";
 import type { PageCtx, PageOut } from "./index";
 
 const SNIPPET = 46;      // characters of context around a match
@@ -18,12 +17,6 @@ export function handbookPage(ctx: PageCtx): PageOut {
     const out = h(el, "div");
     const notes = store.guideNotes();
     let texts: Map<string, string[]> | null = null;   // guide note path -> its lines, read on the first search
-
-    const openChampion = (id: string, name: string, sub: SubTab) => {
-        rememberSub(id, sub);
-        ctx.goTab("champions");
-        ctx.push({ key: "champion", title: name, params: { id } });
-    };
 
     const cards = () => {
         out.empty();
@@ -55,7 +48,7 @@ export function handbookPage(ctx: PageCtx): PageOut {
         if (tipHits.length) {
             const g = group(out, "Tips");
             for (const { c, t } of tipHits) {
-                const r = row(g, { image: c.icon, title: `${c.name}:${t.title}`, chevron: true, onTap: () => openChampion(c.id, c.name, "tips") });
+                const r = row(g, { image: c.icon, title: `${c.name}:${t.title}`, chevron: true, onTap: () => ctx.openChampion(c.id, "tips") });
                 marked(h(r.querySelector(".mn-row-main") as HTMLElement, "div", "mn-row-s"), snippet(t.text, q), q);
                 found++;
             }
@@ -64,7 +57,7 @@ export function handbookPage(ctx: PageCtx): PageOut {
         if (buildHits.length) {
             const g = group(out, "Builds");
             for (const { c, b } of buildHits) {
-                const r = row(g, { image: c.icon, title: `${c.name}:${b.name}`, chevron: true, onTap: () => openChampion(c.id, c.name, "build") });
+                const r = row(g, { image: c.icon, title: `${c.name}:${b.name}`, chevron: true, onTap: () => ctx.openChampion(c.id, "build") });
                 if (b.note) marked(h(r.querySelector(".mn-row-main") as HTMLElement, "div", "mn-row-s"), snippet(b.note, q), q);
                 found++;
             }

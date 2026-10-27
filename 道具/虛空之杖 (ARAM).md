@@ -4,6 +4,8 @@ id: 773135
 name: "虛空之杖"
 tags: ["SpellDamage", "MagicPenetration"]
 desc: "70 魔法攻擊 / 虛空之觸：魔法傷害無視目標35%魔防。"
+from: [771026, 771052]
+into: []
 gold_total: 2295
 gold_base: 1000
 aram: true

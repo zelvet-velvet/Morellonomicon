@@ -4,6 +4,8 @@ id: 773009
 name: "輕靈之靴"
 tags: ["Boots"]
 desc: "強化跑速：60跑速 / 緩速抗性：緩速效果降低25%。"
+from: [771001]
+into: []
 gold_total: 1000
 gold_base: 675
 aram: true

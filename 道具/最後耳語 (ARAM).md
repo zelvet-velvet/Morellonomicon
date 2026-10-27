@@ -4,6 +4,8 @@ id: 773035
 name: "最後耳語"
 tags: ["Damage", "ArmorPenetration"]
 desc: "40 物理攻擊 / 穿心齊射：你無視對手35%的物防。"
+from: [771036, 771037]
+into: []
 gold_total: 2300
 gold_base: 1025
 aram: true

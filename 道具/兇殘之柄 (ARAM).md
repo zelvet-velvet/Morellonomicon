@@ -4,6 +4,8 @@ id: 773134
 name: "兇殘之柄"
 tags: ["Damage", "CooldownReduction", "ArmorPenetration"]
 desc: "25 物理攻擊 / 狂襲：10%冷卻時間減免 / 大刀一砍：10物理致命"
+from: [771036]
+into: [773071, 773142]
 gold_total: 1337
 gold_base: 537
 aram: true

@@ -4,6 +4,8 @@ id: 773071
 name: "黑色切割者"
 tags: ["Health", "Damage", "OnHit", "CooldownReduction", "ArmorPenetration"]
 desc: "200 生命 / 50 物理攻擊 / 10%冷卻時間減免 / 邪靈之刃：10物理致命 / 破甲斬：對敵方英雄造成物理傷害時，會使其物防降低5%，持續4秒(最多可累加5層，最高25%)。"
+from: [773134, 771028]
+into: []
 gold_total: 3000
 gold_base: 1188
 aram: true

@@ -4,6 +4,8 @@ id: 771011
 name: "巨人腰帶"
 tags: ["Health"]
 desc: "380 生命"
+from: []
+into: [773116, 773022, 773068, 773073, 773083]
 gold_total: 1000
 gold_base: 1000
 aram: true

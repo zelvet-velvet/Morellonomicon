@@ -4,6 +4,8 @@ id: 773116
 name: "瑞萊的冰晶節杖"
 tags: ["Health", "SpellDamage", "Slow"]
 desc: "500 生命 / 80 魔法攻擊 / 霜晶：造成技能傷害時，使目標跑速減緩35%，持續1.5秒(多目標和持續傷害技能減緩15%)。"
+from: [771026, 771052, 771011]
+into: []
 gold_total: 2900
 gold_base: 605
 aram: true

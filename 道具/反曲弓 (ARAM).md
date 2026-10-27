@@ -4,6 +4,8 @@ id: 771043
 name: "反曲弓"
 tags: ["AttackSpeed"]
 desc: "30% 攻擊速度"
+from: []
+into: [773154, 773178, 773131, 773085, 773091, 773109]
 gold_total: 900
 gold_base: 900
 aram: true

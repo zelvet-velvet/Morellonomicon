@@ -1,6 +1,6 @@
 import type { Champion } from "../data/store";
 import { MODES } from "../modes";
-import { DAMAGE_COLOR, chip, empty, group, h, icon, page, radar, row } from "../ui";
+import { DAMAGE_COLOR, chip, empty, group, h, icon, page, radar, row, segmented } from "../ui";
 import { buildTab } from "./build";
 import type { PageCtx, PageOut } from "./index";
 import { badgeColor, badgeText, changesBlock } from "./changes";
@@ -61,19 +61,19 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
             const tile = h(grid, "button", "mn-tile");
             const im = h(tile, "img"); im.src = c.icon; im.loading = "lazy"; im.alt = "";
             h(tile, "span", "mn-tile-n", c.name);
-            tile.addEventListener("click", (e) => { e.preventDefault(); ctx.push({ key: "champion", title: c.name, params: { id: c.id } }); });
+            tile.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); });
         }
         if (!q) return;
         if (!hits.length) empty(grid, { icon: "search-x", title: "No champion" });
         const augs = ctx.plugin.settings.mode === "mayhem" ? store.augments().filter((a) => a.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA) : [];
         if (augs.length) {
             const g = group(extra, "Augments");
-            for (const a of augs) row(g, { image: a.icon, title: a.name, value: a.rarity, chevron: true, onTap: () => ctx.openNote(a.path) });
+            for (const a of augs) row(g, { image: a.icon, title: a.name, value: a.rarity, chevron: true, onTap: () => ctx.openAugment(a.id) });
         }
         const items = store.modeItems().filter((i) => i.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA);
         if (items.length) {
             const g = group(extra, "Items");
-            for (const i of items) row(g, { image: i.icon, title: i.name, sub: i.desc || undefined, value: `${i.goldTotal}`, chevron: true, onTap: () => ctx.openNote(i.path) });
+            for (const i of items) row(g, { image: i.icon, title: i.name, sub: i.desc || undefined, value: `${i.goldTotal}`, chevron: true, onTap: () => ctx.openItem(i.id) });
         }
     };
     const redraw = () => { drawFilters(); drawPanel(); draw(); };
@@ -82,26 +82,30 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
         for (const r of ROLES) chip(filters, r, { on: F.roles.has(r), onTap: () => { F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r); redraw(); } });
         for (const d of DAMAGES) chip(filters, d, { on: F.dmg === d, color: DAMAGE_COLOR[d], onTap: () => { F.dmg = F.dmg === d ? "" : d; redraw(); } });
         const n = activeFilters();
-        chip(filters, F.open ? "More ▲" : n ? `More (${n}) ▼` : "More ▼", { on: F.open, onTap: () => { F.open = !F.open; drawFilters(); drawPanel(); } });
-        if (n || F.sort !== "name") chip(filters, "Clear", { color: "var(--color-red)", onTap: () => { F.roles.clear(); F.dmg = ""; F.feat.clear(); F.reach = ""; F.sort = "name"; redraw(); } });
+        chip(filters, n ? `篩選 · ${n}` : "篩選", { on: F.open || n > 0, color: "var(--interactive-accent)", onTap: () => { F.open = !F.open; drawFilters(); drawPanel(); } });
+        if (n || F.sort !== "name") chip(filters, "清除", { color: "var(--color-red)", onTap: () => { F.roles.clear(); F.dmg = ""; F.feat.clear(); F.reach = ""; F.sort = "name"; redraw(); } });
     };
     const drawPanel = () => {
         panel.empty();
         panel.toggleClass("is-open", F.open);
         if (!F.open) return;
-        const sect = (title: string) => { h(panel, "div", "mn-fp-t", title); return h(panel, "div", "mn-chips"); };
-        const ab = sect("技能(點一下=要有,再點=不要有)");
+        const sect = (title: string, hint = "") => {
+            const s = h(panel, "div", "mn-fp-s");
+            const head = h(s, "div", "mn-fp-h");
+            h(head, "span", "mn-fp-t", title);
+            if (hint) h(head, "span", "mn-fp-hint", hint);
+            return s;
+        };
+        const ab = h(sect("技能", "點一下 = 要有 · 再點 = 不要有"), "div", "mn-chips");
         for (const f of FEATURES) {
             const st = F.feat.get(f);
             chip(ab, (st === 1 ? "✓ " : st === -1 ? "✕ " : "") + f, {
-                on: st !== undefined, color: st === -1 ? "var(--color-red)" : undefined,
+                on: st !== undefined, color: st === -1 ? "var(--color-red)" : "var(--color-green)",
                 onTap: () => { if (st === undefined) F.feat.set(f, 1); else if (st === 1) F.feat.set(f, -1); else F.feat.delete(f); redraw(); },
             });
         }
-        const rg = sect("距離");
-        for (const r of REACH) chip(rg, r, { on: F.reach === r, onTap: () => { F.reach = F.reach === r ? "" : r; redraw(); } });
-        const so = sect("排序");
-        for (const [id, label] of SORTS) chip(so, label, { on: F.sort === id, onTap: () => { F.sort = id; redraw(); } });
+        segmented(sect("距離"), [["", "全部"], ...REACH.map((r): [string, string] => [r, r])], F.reach, (id) => { F.reach = id; redraw(); }, "is-sm");
+        segmented(sect("排序"), SORTS, F.sort, (id) => { F.sort = id; redraw(); }, "is-sm");
     };
     // only the results are redrawn while typing, so the keyboard stays open
     search.addEventListener("input", () => { query = search.value; draw(); });
@@ -122,7 +126,7 @@ const lastSub = new Map<string, SubTab>();
 export function rememberSub(id: string, sub: SubTab): void { lastSub.set(id, sub); }   // the sub-tab you were on, per champion, while the app is open
 
 // The champion card: a banner and radar always on top, then sub-tabs. Everything glanceable, no paragraphs.
-function championCard(ctx: PageCtx): PageOut {
+export function championCard(ctx: PageCtx): PageOut {
     const c = ctx.plugin.store.champion(String(ctx.frame.params?.id ?? ""));
     const el = h(null, "div", "mn-page");
     if (!c) { empty(el, { icon: "user-x", title: "Champion not found" }); return { title: "", el }; }
