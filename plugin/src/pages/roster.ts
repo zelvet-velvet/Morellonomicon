@@ -27,6 +27,28 @@ export function matchScore(c: Champion, raw: string): number {
     return chars.length >= 3 && shared / chars.length >= 0.66 ? 20 + shared : 0;
 }
 
+// Number of single-character edits (change, add, remove) between two words: "阿里" and "阿璃" are 1 apart.
+function distance(a: string, b: string): number {
+    const x = [...a], y = [...b];
+    let prev = Array.from({ length: y.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= x.length; i++) {
+        const cur = [i];
+        for (let j = 1; j <= y.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (x[i - 1] === y[j - 1] ? 0 : 1));
+        prev = cur;
+    }
+    return prev[y.length];
+}
+
+// The champions whose name (or English id) is only a letter or two off what was typed: the "did you mean" list for a misspelling or a
+// speech-to-text slip. One slip is allowed for short words, two for longer ones.
+function closest(all: Champion[], raw: string, limit = 4): Champion[] {
+    const q = raw.trim().toLowerCase();
+    if (!q) return [];
+    const allowed = [...q].length <= 4 ? 1 : 2;
+    return all.map((c) => ({ c, d: Math.min(distance(q, c.name.toLowerCase()), distance(q, c.id.toLowerCase())) }))
+        .filter((x) => x.d <= allowed).sort((a, b) => a.d - b.d || a.c.name.localeCompare(b.c.name, "zh-Hant")).slice(0, limit).map((x) => x.c);
+}
+
 // Quick Look: pick the champions the game gave you (up to 15) and see right away what each one is and can do.
 export function rosterPage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
@@ -44,7 +66,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
     icon(box, "search", "mn-search-ic");
     const search = h(box, "input");
     search.type = "search";
-    search.placeholder = "打字,或用鍵盤的麥克風說名字(可以一次說好幾個)";
+    search.placeholder = "輸入英雄名字,或按鍵盤上的 🎤 說出來";
     search.setAttribute("enterkeyhint", "search");
     const suggest = h(el, "div", "mn-chips");
     const roles = h(el, "div", "mn-chips");
@@ -91,15 +113,24 @@ export function rosterPage(ctx: PageCtx): PageOut {
     };
 
     // several names typed or said together: a button per name that matched, and one to add them all
+    // For each word: the best name that matches well; when none does, the nearest names ("did you mean"). Several words add up.
     const drawSuggest = () => {
         suggest.empty();
         const tokens = query.split(SPLIT).filter(Boolean);
-        if (tokens.length < 2) return;
-        const found = tokens.map((t) => all.map((c) => ({ c, s: matchScore(c, t) })).sort((a, b) => b.s - a.s)[0]).filter((x) => x && x.s >= 50).map((x) => x.c);
-        const unique = [...new Map(found.map((c) => [c.id, c])).values()];
+        if (!tokens.length) return;
+        const best = (t: string): { list: Champion[]; exact: boolean } => {
+            const ranked = all.map((c) => ({ c, s: matchScore(c, t) })).sort((a, b) => b.s - a.s);
+            return ranked[0] && ranked[0].s >= 50 ? { list: [ranked[0].c], exact: true } : { list: closest(all, t, 3), exact: false };
+        };
+        const found = tokens.map(best);
+        const unique = [...new Map(found.flatMap((f) => f.list).map((c) => [c.id, c])).values()];
         if (!unique.length) return;
+        const guessed = found.some((f) => !f.exact && f.list.length);
+        // a single word that already matches well needs no suggestion row: the grid shows it
+        if (tokens.length === 1 && !guessed) return;
+        if (guessed) h(suggest, "span", "mn-dym", "你是不是在找:");
         for (const c of unique) chip(suggest, `${picks.includes(c.id) ? "✓ " : "+ "}${c.name}`, { color: "var(--color-green)", onTap: () => toggle(c.id) });
-        chip(suggest, "全部加入", { on: true, onTap: () => { for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) picks = [...picks, c.id]; save(); drawResults(); drawGrid(); } });
+        if (unique.length > 1) chip(suggest, "全部加入", { on: true, onTap: () => { for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) picks = [...picks, c.id]; save(); drawResults(); drawGrid(); } });
     };
 
     const drawGrid = () => {
@@ -119,7 +150,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
             h(t, "span", "mn-tile-n", c.name);
             t.addEventListener("click", (e) => { e.preventDefault(); toggle(c.id); });
         }
-        if (!list.length) empty(grid, { icon: "search-x", title: "找不到", text: "換個說法,或少打幾個字試試。" });
+        if (!list.length) empty(grid, { icon: "search-x", title: "找不到這個名字", text: "上面的「你是不是在找」會列出最接近的,或換個說法再試。" });
     };
 
     const drawRoles = () => {

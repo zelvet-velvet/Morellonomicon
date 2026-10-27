@@ -1849,6 +1849,22 @@ function matchScore(c, raw) {
   const shared = chars.filter((ch) => name.includes(ch)).length;
   return chars.length >= 3 && shared / chars.length >= 0.66 ? 20 + shared : 0;
 }
+function distance(a, b) {
+  const x = [...a], y = [...b];
+  let prev = Array.from({ length: y.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= x.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= y.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (x[i - 1] === y[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[y.length];
+}
+function closest(all, raw, limit = 4) {
+  const q = raw.trim().toLowerCase();
+  if (!q) return [];
+  const allowed = [...q].length <= 4 ? 1 : 2;
+  return all.map((c) => ({ c, d: Math.min(distance(q, c.name.toLowerCase()), distance(q, c.id.toLowerCase())) })).filter((x) => x.d <= allowed).sort((a, b) => a.d - b.d || a.c.name.localeCompare(b.c.name, "zh-Hant")).slice(0, limit).map((x) => x.c);
+}
 function rosterPage(ctx) {
   const store = ctx.plugin.store;
   const el = page("\u901F\u67E5");
@@ -1865,7 +1881,7 @@ function rosterPage(ctx) {
   icon(box, "search", "mn-search-ic");
   const search = h(box, "input");
   search.type = "search";
-  search.placeholder = "\u6253\u5B57,\u6216\u7528\u9375\u76E4\u7684\u9EA5\u514B\u98A8\u8AAA\u540D\u5B57(\u53EF\u4EE5\u4E00\u6B21\u8AAA\u597D\u5E7E\u500B)";
+  search.placeholder = "\u8F38\u5165\u82F1\u96C4\u540D\u5B57,\u6216\u6309\u9375\u76E4\u4E0A\u7684 \u{1F3A4} \u8AAA\u51FA\u4F86";
   search.setAttribute("enterkeyhint", "search");
   const suggest2 = h(el, "div", "mn-chips");
   const roles = h(el, "div", "mn-chips");
@@ -1930,12 +1946,19 @@ function rosterPage(ctx) {
   const drawSuggest = () => {
     suggest2.empty();
     const tokens = query.split(SPLIT).filter(Boolean);
-    if (tokens.length < 2) return;
-    const found = tokens.map((t) => all.map((c) => ({ c, s: matchScore(c, t) })).sort((a, b) => b.s - a.s)[0]).filter((x) => x && x.s >= 50).map((x) => x.c);
-    const unique = [...new Map(found.map((c) => [c.id, c])).values()];
+    if (!tokens.length) return;
+    const best = (t) => {
+      const ranked = all.map((c) => ({ c, s: matchScore(c, t) })).sort((a, b) => b.s - a.s);
+      return ranked[0] && ranked[0].s >= 50 ? { list: [ranked[0].c], exact: true } : { list: closest(all, t, 3), exact: false };
+    };
+    const found = tokens.map(best);
+    const unique = [...new Map(found.flatMap((f) => f.list).map((c) => [c.id, c])).values()];
     if (!unique.length) return;
+    const guessed = found.some((f) => !f.exact && f.list.length);
+    if (tokens.length === 1 && !guessed) return;
+    if (guessed) h(suggest2, "span", "mn-dym", "\u4F60\u662F\u4E0D\u662F\u5728\u627E:");
     for (const c of unique) chip(suggest2, `${picks.includes(c.id) ? "\u2713 " : "+ "}${c.name}`, { color: "var(--color-green)", onTap: () => toggle(c.id) });
-    chip(suggest2, "\u5168\u90E8\u52A0\u5165", { on: true, onTap: () => {
+    if (unique.length > 1) chip(suggest2, "\u5168\u90E8\u52A0\u5165", { on: true, onTap: () => {
       for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) picks = [...picks, c.id];
       save();
       drawResults();
@@ -1965,7 +1988,7 @@ function rosterPage(ctx) {
         toggle(c.id);
       });
     }
-    if (!list2.length) empty(grid, { icon: "search-x", title: "\u627E\u4E0D\u5230", text: "\u63DB\u500B\u8AAA\u6CD5,\u6216\u5C11\u6253\u5E7E\u500B\u5B57\u8A66\u8A66\u3002" });
+    if (!list2.length) empty(grid, { icon: "search-x", title: "\u627E\u4E0D\u5230\u9019\u500B\u540D\u5B57", text: "\u4E0A\u9762\u7684\u300C\u4F60\u662F\u4E0D\u662F\u5728\u627E\u300D\u6703\u5217\u51FA\u6700\u63A5\u8FD1\u7684,\u6216\u63DB\u500B\u8AAA\u6CD5\u518D\u8A66\u3002" });
   };
   const drawRoles = () => {
     roles.empty();
