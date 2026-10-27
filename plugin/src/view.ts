@@ -190,6 +190,10 @@ export class MnView extends ItemView {
             empty(el, { icon: "alert-triangle", title: "This page could not be drawn", text: String(e instanceof Error ? e.message : e).slice(0, 200) });
             out = { title: "Error", el };
         }
+        // forget the old page's scrolled state first: restoring the scroll below lays the new page out at once, and a stale
+        // "scrolled" would draw the title row's bottom line and then fade it out (a blink)
+        this.appEl.removeClass("has-scrolled");
+        this.topEl.removeClass("is-scrolled");
         this.scrollEl.replaceChildren(out.el);
         this.shown = key;
         this.scrollEl.scrollTop = this.scrolls.get(key) ?? 0;

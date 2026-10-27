@@ -2922,6 +2922,8 @@ var MnView = class extends import_obsidian8.ItemView {
       empty(el, { icon: "alert-triangle", title: "This page could not be drawn", text: String(e instanceof Error ? e.message : e).slice(0, 200) });
       out = { title: "Error", el };
     }
+    this.appEl.removeClass("has-scrolled");
+    this.topEl.removeClass("is-scrolled");
     this.scrollEl.replaceChildren(out.el);
     this.shown = key;
     this.scrollEl.scrollTop = this.scrolls.get(key) ?? 0;
