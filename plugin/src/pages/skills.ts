@@ -17,6 +17,7 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
         h(box, "span", "mn-skill-k", s.key);
         if (s.upgrade) icon(box, "chevrons-up", "mn-skill-up");   // this skill has an upgrade / evolve effect
         box.addEventListener("click", (e) => { e.preventDefault(); show(open === i ? -1 : i); });
+        if (s.key === "P") h(strip, "span", "mn-skill-sep");   // a thin line between the passive and Q W E R
         return box;
     });
     const show = (i: number) => {

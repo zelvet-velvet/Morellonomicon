@@ -1317,6 +1317,7 @@ function skillStrip(parent, c, changes = []) {
       e.preventDefault();
       show(open === i ? -1 : i);
     });
+    if (s.key === "P") h(strip2, "span", "mn-skill-sep");
     return box;
   });
   const show = (i) => {
