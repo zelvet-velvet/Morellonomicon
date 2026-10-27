@@ -143,6 +143,7 @@ var Store = class {
         name: str(fm.name, file.basename),
         title: str(fm.title),
         blurb: str(fm.blurb),
+        tier: str(fm.tier),
         roles: list(fm.roles),
         damageType: str(fm.damage_type),
         skillDamage: list(fm.skill_damage),
@@ -628,10 +629,17 @@ var group = (parent, title, footer) => {
   return g;
 };
 var AUG_CLASS = { \u9280: "aug-silver", \u91D1: "aug-gold", \u7A1C\u93E1: "aug-prism" };
+var augIcon = (parent, src, rarity, cls = "") => {
+  const box = h(parent, "span", `aug-icon ${AUG_CLASS[rarity] ?? ""} ${cls}`.trim());
+  box.style.setProperty("--glyph", `url("${src}")`);
+  h(box, "span", "aug-glyph");
+  return box;
+};
 var row = (parent, r) => {
   const el = h(parent, "div", "mn-row" + (r.onTap ? " is-tap" : "") + (r.muted ? " is-muted" : ""));
-  if (r.image) {
-    const im = h(el, "img", "mn-row-img" + (r.rarity && AUG_CLASS[r.rarity] ? " " + AUG_CLASS[r.rarity] : ""));
+  if (r.image && r.rarity && AUG_CLASS[r.rarity]) augIcon(el, r.image, r.rarity, "mn-row-aug");
+  else if (r.image) {
+    const im = h(el, "img", "mn-row-img");
     im.src = r.image;
     im.loading = "lazy";
     im.alt = "";
@@ -1261,6 +1269,7 @@ function championCard(ctx) {
   const tags = h(who, "div", "mn-chips");
   for (const r of c.roles) chip(tags, r);
   chip(tags, c.damageType, { color: dmgColor });
+  if (c.tier) chip(tags, `\u8A55\u50F9 ${c.tier}`, { color: "var(--color-green)" });
   const now = ctx.plugin.store.currentChanges(c.id);
   const openChanges = () => {
     show("skills");
@@ -1492,7 +1501,7 @@ function visual(ctx, box, s) {
   } else if (kind === "augs") {
     const list2 = store.augments().filter((a) => a.rarity === args[0]).sort((a, b) => hashStr(String(a.id) + day()) - hashStr(String(b.id) + day())).slice(0, STRIP);
     if (list2.length) {
-      strip(box, list2.map((a) => ({ src: a.icon, label: a.name, cls: AUG_CLASS[a.rarity], tap: () => ctx.openAugment(a.id) })));
+      strip(box, list2.map((a) => ({ src: a.icon, label: a.name, rarity: a.rarity, tap: () => ctx.openAugment(a.id) })));
       return;
     }
   }
@@ -1502,9 +1511,12 @@ function strip(box, items) {
   const row2 = h(box, "div", "mn-sl-strip");
   for (const it of items) {
     const b = h(row2, "button", "mn-sl-ic");
-    const im = h(b, "img", it.cls);
-    im.src = it.src;
-    im.alt = "";
+    if (it.rarity) augIcon(b, it.src, it.rarity, "mn-sl-aug");
+    else {
+      const im = h(b, "img");
+      im.src = it.src;
+      im.alt = "";
+    }
     h(b, "span", "", it.label);
     b.addEventListener("click", (e) => {
       e.preventDefault();
@@ -1598,14 +1610,11 @@ function augmentPage(ctx) {
   }
   const history = store.augmentHistory(a.name);
   const head = h(el, "div", "mn-dhead");
-  const im = h(head, "img", "mn-dimg " + (AUG_CLASS[a.rarity] ?? ""));
-  im.src = a.icon;
-  im.alt = "";
+  augIcon(head, a.icon, a.rarity, "mn-dimg-aug");
   const who = h(head, "div", "mn-dwho");
   h(who, "h1", "mn-title", a.name);
   const tags = h(who, "div", "mn-chips");
   chip(tags, a.rarity, { color: RARITY_COLOR[a.rarity] });
-  if (a.tier) chip(tags, `\u8A55\u50F9 ${a.tier}`, { color: "var(--color-green)" });
   const last = history[0];
   if (last) chip(tags, `${last.what === "added" ? "\u65B0\u589E\u65BC" : "\u79FB\u9664\u65BC"} ${last.patch}`, { color: last.what === "added" ? "var(--color-blue)" : "var(--color-red)" });
   const panel = h(el, "div", "mn-panel mn-dpanel");
@@ -1967,10 +1976,13 @@ function patchPage(ctx) {
 }
 function tile(grid, src, name, onTap, o = {}) {
   const t = h(grid, "button", "mn-tile");
-  const im = h(t, "img", o.rarity ? AUG_CLASS[o.rarity] : void 0);
-  im.src = src;
-  im.alt = "";
-  im.loading = "lazy";
+  if (o.rarity && AUG_CLASS[o.rarity]) augIcon(t, src, o.rarity, "mn-tile-aug");
+  else {
+    const im = h(t, "img");
+    im.src = src;
+    im.alt = "";
+    im.loading = "lazy";
+  }
   if (o.badge && o.badge > 1) h(t, "span", "mn-tile-b", `+${o.badge}`);
   h(t, "span", "mn-tile-n", name);
   t.addEventListener("click", (e) => {

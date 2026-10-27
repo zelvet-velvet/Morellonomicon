@@ -34,10 +34,20 @@ export const group = (parent: HTMLElement, title?: string, footer?: string): HTM
 // The frame an augment icon gets for its rarity (silver, gold, prismatic = metallic rainbow); drawn in CSS, see styles.css
 export const AUG_CLASS: Record<string, string> = { 銀: "aug-silver", 金: "aug-gold", 稜鏡: "aug-prism" };
 
+// An augment icon the way the game shows it: a dark square in a metallic frame, the glyph tinted for the rarity. The icon files are grey
+// shapes on transparent (the game tints them), so the glyph is drawn as a mask filled with the rarity's colours; see .aug-icon in styles.css.
+export const augIcon = (parent: HTMLElement, src: string, rarity: string, cls = ""): HTMLElement => {
+    const box = h(parent, "span", `aug-icon ${AUG_CLASS[rarity] ?? ""} ${cls}`.trim());
+    box.style.setProperty("--glyph", `url("${src}")`);
+    h(box, "span", "aug-glyph");
+    return box;
+};
+
 export interface RowSpec { icon?: string; image?: string; rarity?: string; title: string; sub?: string; value?: string; chevron?: boolean; muted?: boolean; clamp?: boolean; onTap?: () => void }
 export const row = (parent: HTMLElement, r: RowSpec): HTMLElement => {
     const el = h(parent, "div", "mn-row" + (r.onTap ? " is-tap" : "") + (r.muted ? " is-muted" : ""));
-    if (r.image) { const im = h(el, "img", "mn-row-img" + (r.rarity && AUG_CLASS[r.rarity] ? " " + AUG_CLASS[r.rarity] : "")); im.src = r.image; im.loading = "lazy"; im.alt = ""; }
+    if (r.image && r.rarity && AUG_CLASS[r.rarity]) augIcon(el, r.image, r.rarity, "mn-row-aug");
+    else if (r.image) { const im = h(el, "img", "mn-row-img"); im.src = r.image; im.loading = "lazy"; im.alt = ""; }
     else if (r.icon) icon(el, r.icon, "mn-row-ic");
     const main = h(el, "div", "mn-row-main");
     h(main, "div", "mn-row-t", r.title);

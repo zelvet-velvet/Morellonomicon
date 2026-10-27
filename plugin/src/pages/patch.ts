@@ -1,5 +1,5 @@
 import type { PatchNote } from "../data/store";
-import { AUG_CLASS, chip, empty, group, h, page, row } from "../ui";
+import { AUG_CLASS, augIcon, chip, empty, group, h, page, row } from "../ui";
 import { RARITY_COLOR } from "./augments";
 import type { PageCtx, PageOut } from "./index";
 
@@ -64,7 +64,8 @@ export function patchPage(ctx: PageCtx): PageOut {
 // An icon with its name under it; `badge` is the number of changes, `ring` an outline colour (rarity)
 function tile(grid: HTMLElement, src: string, name: string, onTap: () => void, o: { badge?: number; rarity?: string } = {}): void {
     const t = h(grid, "button", "mn-tile");
-    const im = h(t, "img", o.rarity ? AUG_CLASS[o.rarity] : undefined); im.src = src; im.alt = ""; im.loading = "lazy";
+    if (o.rarity && AUG_CLASS[o.rarity]) augIcon(t, src, o.rarity, "mn-tile-aug");
+    else { const im = h(t, "img"); im.src = src; im.alt = ""; im.loading = "lazy"; }
     if (o.badge && o.badge > 1) h(t, "span", "mn-tile-b", `+${o.badge}`);
     h(t, "span", "mn-tile-n", name);
     t.addEventListener("click", (e) => { e.preventDefault(); onTap(); });

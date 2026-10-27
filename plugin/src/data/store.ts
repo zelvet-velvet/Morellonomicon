@@ -6,7 +6,7 @@ type FM = Record<string, unknown>;
 
 // What tools/fetch_data.py writes into a champion note's frontmatter (plus the hand-written pinned / avoid / video)
 export interface Champion {
-    id: string; key: number; name: string; title: string; blurb: string; roles: string[]; damageType: string; skillDamage: string[];
+    id: string; key: number; name: string; title: string; blurb: string; tier: string; roles: string[]; damageType: string; skillDamage: string[];
     archetypes: string[]; features: string[]; resource: string; attack: number; magic: number; defense: number; difficulty: number;
     range: number; icon: string; skills: Skill[]; patch: string; pinned: string[]; avoid: string[]; video?: string;
     builds: Build[]; tips: Tip[]; path: string;
@@ -129,7 +129,7 @@ export class Store {
     champions(): Champion[] {
         if (!this.champs) {
             this.champs = this.notes(this.s.championFolder).filter((n) => n.fm.type === "champion").map(({ file, fm }) => ({
-                id: str(fm.id), key: num(fm.key), name: str(fm.name, file.basename), title: str(fm.title), blurb: str(fm.blurb), roles: list(fm.roles), damageType: str(fm.damage_type),
+                id: str(fm.id), key: num(fm.key), name: str(fm.name, file.basename), title: str(fm.title), blurb: str(fm.blurb), tier: str(fm.tier), roles: list(fm.roles), damageType: str(fm.damage_type),
                 skillDamage: list(fm.skill_damage), archetypes: [...list(fm.archetypes), ...list(fm.archetypes_extra)], features: list(fm.features),
                 resource: str(fm.resource), attack: num(fm.attack), magic: num(fm.magic), defense: num(fm.defense), difficulty: num(fm.difficulty),
                 range: num(fm.range), icon: str(fm.icon), skills: skillList(fm.skills), patch: str(fm.patch), pinned: list(fm.pinned), avoid: list(fm.avoid),

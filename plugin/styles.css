@@ -345,10 +345,17 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-nextcard-done { margin: 18px 0 10px; text-align: center; font-weight: 700; color: var(--color-green); }
 
 /* augment rarity frames, drawn here (the game adds them in its own UI): metallic silver, metallic gold, prismatic = a metallic rainbow */
-.aug-silver, .aug-gold, .aug-prism { border: 3px solid transparent !important; }
-.aug-silver { background: linear-gradient(var(--mn-card-hi), var(--mn-card-hi)) padding-box, linear-gradient(135deg, #f4f7fa, #8d98a5 32%, #eef2f6 52%, #6e7a87 78%, #cfd6dd) border-box !important; box-shadow: 0 0 10px rgba(190, 200, 212, 0.35); }
-.aug-gold { background: linear-gradient(var(--mn-card-hi), var(--mn-card-hi)) padding-box, linear-gradient(135deg, #fff4bd, #d9a21b 32%, #fff1b3 52%, #a8740a 78%, #f3cf63) border-box !important; box-shadow: 0 0 10px rgba(232, 180, 40, 0.4); }
-.aug-prism { background: linear-gradient(var(--mn-card-hi), var(--mn-card-hi)) padding-box, conic-gradient(from 30deg, #ff7d7d, #ffd47d, #93ff9f, #7dd9ff, #b898ff, #ff7ddb, #ff7d7d) border-box !important; box-shadow: 0 0 12px rgba(184, 152, 255, 0.5), 0 0 6px rgba(125, 217, 255, 0.35); }
+/* an augment icon like in the game: a dark square in a thick metallic frame, the glyph tinted for the rarity (the icon files are grey shapes the game tints) */
+.aug-icon { --ring: 4px; position: relative; display: inline-block; flex: none; width: 56px; height: 56px; box-sizing: border-box; border-radius: 16px; border: var(--ring) solid transparent;
+    background: linear-gradient(#171b2d, #12152a) padding-box, var(--frame) border-box; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 0 10px var(--glow); }
+.aug-glyph { position: absolute; inset: 12%; background: var(--tint); -webkit-mask: var(--glyph) center / contain no-repeat; mask: var(--glyph) center / contain no-repeat; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)); }
+.aug-silver { --frame: linear-gradient(135deg, #fffbea, #e5d9a6 30%, #fffdf2 52%, #c2b27a 78%, #f1e7bd); --tint: linear-gradient(180deg, #ffffff, #d8dee6 55%, #a3adba); --glow: rgba(240, 230, 190, 0.35); }
+.aug-gold { --frame: linear-gradient(135deg, #ffe27a, #e9a91d 30%, #fff0a6 52%, #b9770e 78%, #f4c84a); --tint: linear-gradient(180deg, #fff1b8, #f2bb3b 55%, #bd7d10); --glow: rgba(240, 180, 50, 0.45); }
+.aug-prism { --frame: conic-gradient(from 20deg, #ff7f9a, #ffd37a, #9cff9f, #7ae0ff, #b79aff, #ff7fd9, #ff7f9a); --tint: linear-gradient(135deg, #ff9ad5, #ffd27d 25%, #9dffb0 50%, #7dd9ff 75%, #b898ff); --glow: rgba(183, 154, 255, 0.55); }
+.mn-row-aug { width: 40px; height: 40px; --ring: 3px; border-radius: 12px; }
+.mn-tile-aug { width: 60px; height: 60px; }
+.mn-dimg-aug { width: 80px; height: 80px; --ring: 5px; border-radius: 20px; }
+.mn-sl-aug { width: 58px; height: 58px; }
 
 /* guide decks: swipeable cards, a big picture and one or two lines each */
 .mn-dots { display: flex; justify-content: center; gap: 6px; margin: 0 0 12px; }

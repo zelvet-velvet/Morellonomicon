@@ -155,6 +155,7 @@ export function championCard(ctx: PageCtx): PageOut {
     const tags = h(who, "div", "mn-chips");
     for (const r of c.roles) chip(tags, r);
     chip(tags, c.damageType, { color: dmgColor });
+    if (c.tier) chip(tags, `評價 ${c.tier}`, { color: "var(--color-green)" });   // optional, hand-written `tier` in the champion note
     const now = ctx.plugin.store.currentChanges(c.id);
     const openChanges = () => { show("skills"); block?.open(); block?.el.scrollIntoView({ behavior: "smooth", block: "start" }); };
     const official = ctx.plugin.store.officialFor("champions", c.name)[0];
