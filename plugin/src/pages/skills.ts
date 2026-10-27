@@ -32,12 +32,6 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
         h(head, "span", "mn-sd-name", s.name);
         const types = h(head, "span", "mn-sd-types");
         for (const d of s.damage) chip(types, `${d}傷害`, { color: DAMAGE_COLOR[d] });
-        if (s.range) {
-            const m = h(detail, "div", "mn-sd-meta");
-            const cell = h(m, "div", "mn-sd-cell"); h(cell, "span", "mn-sd-k", "射程"); const rv = h(cell, "span", "mn-sd-v", s.range);
-            const rc = changes.find((x) => x.scope === s.key && x.field === "射程");
-            if (rc) { rv.style.color = DIR_COLOR[rc.dir]; h(cell, "span", "mn-chg-was", `上版 ${rc.old}`); }
-        }
         rankTable(detail, s, changes.filter((x) => x.scope === s.key));
         if (s.desc) h(detail, "p", "mn-sd-desc", s.desc);
         if (s.upgrade) {
@@ -77,15 +71,17 @@ const ROW_COLOR: [string, string][] = [["魔法", DAMAGE_COLOR["魔法"]], ["物
 // Per-rank numbers as a small grid: one row per damage / heal / shield value, then cooldown and cost.
 // A row with one value is the same on every rank and spans the grid; the scaling (+50% 魔法攻擊) sits under the row's name.
 function rankTable(parent: HTMLElement, s: Skill, changes: Change[]): void {
-    if (!s.rows.length) return;
-    const ranks = Math.max(1, ...s.rows.map((r) => r.vals.length));
+    // range is the last row (one value spans the grid, or one per rank)
+    const rows = s.range ? [...s.rows, { label: "射程", vals: s.range.split("/"), note: "" }] : s.rows;
+    if (!rows.length) return;
+    const ranks = Math.max(1, ...rows.map((r) => r.vals.length));
     const grid = h(parent, "div", "mn-rk");
     grid.style.setProperty("--r", String(ranks));
     if (ranks > 1) {
         h(grid, "div", "mn-rk-h");
         for (let i = 1; i <= ranks; i++) h(grid, "div", "mn-rk-h", String(i));
     }
-    for (const r of s.rows) {
+    for (const r of rows) {
         const name = h(grid, "div", "mn-rk-l");
         const label = h(name, "span", "mn-rk-name", r.label);
         const color = ROW_COLOR.find(([k]) => r.label.startsWith(k))?.[1];

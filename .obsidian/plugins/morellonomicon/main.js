@@ -1332,17 +1332,6 @@ function skillStrip(parent, c, changes = []) {
     h(head, "span", "mn-sd-name", s.name);
     const types = h(head, "span", "mn-sd-types");
     for (const d of s.damage) chip(types, `${d}\u50B7\u5BB3`, { color: DAMAGE_COLOR[d] });
-    if (s.range) {
-      const m = h(detail, "div", "mn-sd-meta");
-      const cell = h(m, "div", "mn-sd-cell");
-      h(cell, "span", "mn-sd-k", "\u5C04\u7A0B");
-      const rv = h(cell, "span", "mn-sd-v", s.range);
-      const rc = changes.find((x) => x.scope === s.key && x.field === "\u5C04\u7A0B");
-      if (rc) {
-        rv.style.color = DIR_COLOR[rc.dir];
-        h(cell, "span", "mn-chg-was", `\u4E0A\u7248 ${rc.old}`);
-      }
-    }
     rankTable(detail, s, changes.filter((x) => x.scope === s.key));
     if (s.desc) h(detail, "p", "mn-sd-desc", s.desc);
     if (s.upgrade) {
@@ -1383,15 +1372,16 @@ function demo(parent, c, s) {
 }
 var ROW_COLOR = [["\u9B54\u6CD5", DAMAGE_COLOR["\u9B54\u6CD5"]], ["\u7269\u7406", DAMAGE_COLOR["\u7269\u7406"]], ["\u771F\u5BE6", DAMAGE_COLOR["\u771F\u5BE6"]], ["\u6CBB\u7642", "var(--color-green)"], ["\u8B77\u76FE", "var(--color-cyan)"]];
 function rankTable(parent, s, changes) {
-  if (!s.rows.length) return;
-  const ranks = Math.max(1, ...s.rows.map((r) => r.vals.length));
+  const rows = s.range ? [...s.rows, { label: "\u5C04\u7A0B", vals: s.range.split("/"), note: "" }] : s.rows;
+  if (!rows.length) return;
+  const ranks = Math.max(1, ...rows.map((r) => r.vals.length));
   const grid = h(parent, "div", "mn-rk");
   grid.style.setProperty("--r", String(ranks));
   if (ranks > 1) {
     h(grid, "div", "mn-rk-h");
     for (let i = 1; i <= ranks; i++) h(grid, "div", "mn-rk-h", String(i));
   }
-  for (const r of s.rows) {
+  for (const r of rows) {
     const name = h(grid, "div", "mn-rk-l");
     const label = h(name, "span", "mn-rk-name", r.label);
     const color = ROW_COLOR.find(([k]) => r.label.startsWith(k))?.[1];
