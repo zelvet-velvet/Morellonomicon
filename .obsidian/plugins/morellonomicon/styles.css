@@ -520,7 +520,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-fs-pair { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--mn-line); }
 .mn-fs-c { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; min-width: 0; padding: 10px 14px; }
 .mn-fs-c + .mn-fs-c { border-left: 1px solid var(--mn-line); }
-.mn-fs-r { text-align: right; }
+.mn-fs-r { text-align: right; align-self: center; }   /* values centred in the cell height, so 近戰 and 8 / 10 share a middle line */
 .mn-fs-v { font-family: var(--mn-serif); font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; color: var(--mn-text); }
 .mn-fs-of { font-family: var(--text-font, sans-serif); font-size: 11px; font-weight: 500; color: var(--mn-muted); }
 .mn-fs-s { font-size: 11px; color: var(--mn-muted); font-variant-numeric: tabular-nums; }
