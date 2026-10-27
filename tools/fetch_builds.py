@@ -39,6 +39,7 @@ ROUTES = {
     "euw1": ("europe", "europe"), "eun1": ("europe", "europe"), "tr1": ("europe", "europe"), "ru": ("europe", "europe"),
     "oc1": ("americas", "sea"),
 }
+USER_AGENT = "Morellonomicon/0.1 (+https://github.com/zelvet-velvet/Morellonomicon)"
 MIN_INTERVAL = 1.3        # seconds between calls: the development key allows 100 calls per 2 minutes
 IDS_PER_PLAYER = 20       # recent matches listed per player
 MIN_DURATION = 300        # seconds; shorter games are remakes
@@ -70,7 +71,7 @@ class Riot:
             if wait > 0:
                 time.sleep(wait)
             self.last = time.time()
-            req = urllib.request.Request(url, headers={"X-Riot-Token": self.key})
+            req = urllib.request.Request(url, headers={"X-Riot-Token": self.key, "User-Agent": USER_AGENT})   # the default Python agent is blocked (error 1010)
             try:
                 with urllib.request.urlopen(req, timeout=30) as r:
                     return json.loads(r.read())
