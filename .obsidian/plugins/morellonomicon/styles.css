@@ -457,9 +457,10 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* Quick Look */
 /* 速查: search, class icons and faces sit on one even 12px rhythm */
 .mn-rq-sugg:empty { display: none; }
-.mn-app .mn-fgrid.mn-rq-roles-f { margin: 12px 0; }
+.mn-app .mn-seg.mn-rq-tabs { margin: 12px 0 0; }
+.mn-app .mn-fgrid.mn-rq-lanes { margin: 12px 0; }
 .mn-faces { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 8px 6px; margin: 12px 0 0; }
-.mn-faces.is-hidden, .mn-rq-results.is-hidden { display: none; }
+.mn-rq-results.is-hidden, .mn-app div.is-hidden:has(> .mn-faces) { display: none; }
 .mn-app .mn-face { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; height: auto; padding: 0; border: none; background: none; transition: transform 0.12s; }
 .mn-face:active { transform: scale(0.92); }
 .mn-face img { width: 52px; height: 52px; border-radius: 14px; background: var(--mn-card); border: 1px solid var(--mn-line); }
@@ -469,7 +470,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-faces.is-named .mn-face-n { display: block; }
 .mn-faces.is-named { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 12px 8px; }
 .mn-faces.is-named .mn-face img { width: 60px; height: 60px; border-radius: 16px; }
-.mn-rq-results { margin-top: 4px; }
+.mn-rq-results { margin-top: 12px; }
 .mn-rq-head { display: flex; align-items: center; justify-content: space-between; margin: 0 4px 6px; }
 .mn-rq-count { font-size: 13px; font-weight: 700; }
 .mn-rq { position: relative; background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: var(--mn-radius); padding: 12px 14px; margin: 0 0 10px; cursor: pointer; }

@@ -414,19 +414,19 @@ var Router = class {
     this.stacks = {};
     this.save();
   }
-  stack(tab = this.tab) {
+  stack(tab2 = this.tab) {
     var _a;
-    return (_a = this.stacks)[tab] ?? (_a[tab] = []);
+    return (_a = this.stacks)[tab2] ?? (_a[tab2] = []);
   }
-  top(tab = this.tab) {
-    const s = this.stack(tab);
+  top(tab2 = this.tab) {
+    const s = this.stack(tab2);
     return s[s.length - 1] ?? { key: "root", title: "" };
   }
-  depth(tab = this.tab) {
-    return this.stack(tab).length;
+  depth(tab2 = this.tab) {
+    return this.stack(tab2).length;
   }
-  setTab(tab) {
-    this.tab = tab;
+  setTab(tab2) {
+    this.tab = tab2;
     this.save();
   }
   push(f) {
@@ -2700,8 +2700,8 @@ function mayhemSection(el, ctx, n) {
 // src/pages/roster.ts
 var import_obsidian7 = require("obsidian");
 var MAX_PICKS = 15;
-var ROLES2 = ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u5C04\u624B", "\u8F14\u52A9"];
 var SPLIT = /[\s,，、;；和跟與及]+/;
+var tab = "pick";
 function matchScore(c, raw) {
   const q = raw.trim().toLowerCase();
   if (!q) return 0;
@@ -2827,7 +2827,7 @@ function rosterPage(ctx) {
   const el = page("\u901F\u67E5");
   const all = store.champions();
   let picks = ctx.plugin.settings.roster.filter((id) => all.some((c) => c.id === id)).slice(0, MAX_PICKS);
-  let query = "", role = "";
+  let query = "", lane = "";
   const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)]));
   const save = () => {
     void ctx.plugin.setRoster(picks);
@@ -2840,10 +2840,32 @@ function rosterPage(ctx) {
   search.placeholder = "\u8F38\u5165\u82F1\u96C4\u540D\u5B57,\u6216\u6309\u9375\u76E4\u4E0A\u7684 \u{1F3A4} \u8AAA\u51FA\u4F86";
   search.setAttribute("enterkeyhint", "search");
   const suggest2 = h(el, "div", "mn-chips mn-rq-sugg");
-  const roles = fgrid(el, ROLES2.length);
-  roles.addClass("mn-rq-roles-f");
-  const grid = h(el, "div", "mn-faces");
+  const tabs = h(el, "div", "mn-seg mn-seg-line mn-rq-tabs");
+  const pickTab = h(tabs, "button", "mn-seg-b", "\u6311\u9078");
+  const listTab = h(tabs, "button", "mn-seg-b");
+  const pane = h(el, "div");
+  const lanes = fgrid(pane, LANES.length);
+  lanes.addClass("mn-rq-lanes");
+  const grid = h(pane, "div", "mn-faces");
   const results = h(el, "div", "mn-rq-results");
+  const show = (t_) => {
+    tab = t_;
+    pickTab.toggleClass("is-on", tab === "pick");
+    listTab.toggleClass("is-on", tab === "list");
+    pane.toggleClass("is-hidden", tab !== "pick");
+    results.toggleClass("is-hidden", tab !== "list");
+  };
+  pickTab.addEventListener("click", (e) => {
+    e.preventDefault();
+    show("pick");
+  });
+  listTab.addEventListener("click", (e) => {
+    e.preventDefault();
+    show("list");
+  });
+  const drawCount = () => {
+    listTab.textContent = picks.length ? `\u5DF2\u9078 ${picks.length}` : "\u5DF2\u9078";
+  };
   const toggle = (id) => {
     if (picks.includes(id)) picks = picks.filter((p) => p !== id);
     else if (picks.length >= MAX_PICKS) {
@@ -2851,6 +2873,7 @@ function rosterPage(ctx) {
       return;
     } else picks = [...picks, id];
     save();
+    drawCount();
     drawResults();
     drawGrid();
   };
@@ -2883,12 +2906,12 @@ function rosterPage(ctx) {
       e.stopPropagation();
       toggle(c.id);
     });
-    const roles2 = h(r, "div", "mn-rq-roles");
-    for (const role_ of c.roles) h(roles2, "span", "mn-rq-role", role_);
+    const roles = h(r, "div", "mn-rq-roles");
+    for (const role_ of c.roles) h(roles, "span", "mn-rq-role", role_);
     const rd = recent.get(c.name);
     if (rd) {
       const m = marker(rd);
-      const b = h(roles2, "span", "mn-rq-role mn-rq-mark", `${m.mark} \u672C\u7248\u8ABF\u6574`);
+      const b = h(roles, "span", "mn-rq-role mn-rq-mark", `${m.mark} \u672C\u7248\u8ABF\u6574`);
       b.style.setProperty("--m", m.color);
     }
     factsStrip(r, c);
@@ -2897,14 +2920,18 @@ function rosterPage(ctx) {
   };
   const drawResults = () => {
     results.empty();
-    if (!picks.length) return;
+    if (!picks.length) {
+      empty(results, { icon: "users", title: "\u9084\u6C92\u9078\u82F1\u96C4" });
+      return;
+    }
     const head = h(results, "div", "mn-rq-head");
-    h(head, "span", "mn-rq-count", `\u4F60\u7684\u82F1\u96C4 ${picks.length} / ${MAX_PICKS}`);
+    h(head, "span", "mn-rq-count", `${picks.length} / ${MAX_PICKS}`);
     const clear = h(head, "button", "mn-clear", "\u5168\u90E8\u6E05\u9664");
     clear.addEventListener("click", (e) => {
       e.preventDefault();
       picks = [];
       save();
+      drawCount();
       drawResults();
       drawGrid();
     });
@@ -2940,6 +2967,7 @@ function rosterPage(ctx) {
       save();
       search.value = "";
       query = "";
+      drawCount();
       drawSuggest();
       drawResults();
       drawGrid();
@@ -2948,11 +2976,7 @@ function rosterPage(ctx) {
   const drawGrid = () => {
     grid.empty();
     const tokens = query.split(SPLIT).filter(Boolean);
-    const finding = tokens.length > 0 || !!role || !picks.length;
-    grid.toggleClass("is-hidden", !finding);
-    results.toggleClass("is-hidden", finding && (tokens.length > 0 || !!role));
-    if (!finding) return;
-    let list2 = all.filter((c) => !role || c.roles.includes(role));
+    let list2 = all.filter((c) => !lane || store.lanes(c).includes(lane));
     if (tokens.length) {
       const said = new Set(tokens.filter((t) => !all.some((c) => score2(c, t) >= 70)).flatMap((t) => within(t)).map((c) => c.id));
       const scored = list2.map((c) => ({ c, s: Math.max(said.has(c.id) ? 75 : 0, ...tokens.map((t) => score2(c, t))) })).filter((x) => x.s > 0);
@@ -2977,22 +3001,32 @@ function rosterPage(ctx) {
     }
     if (!list2.length) empty(grid, { icon: "search-x", title: "\u627E\u4E0D\u5230\u9019\u500B\u540D\u5B57", text: "\u63DB\u500B\u8AAA\u6CD5\u518D\u8A66,\u6216\u770B\u4E0A\u9762\u7684\u300C\u4F60\u662F\u4E0D\u662F\u5728\u627E\u300D\u3002" });
   };
-  const drawRoles = () => {
-    roles.empty();
-    for (const r of ROLES2) roleChip(roles, r, { on: role === r, onTap: () => {
-      role = role === r ? "" : r;
-      drawRoles();
-      drawGrid();
-    } });
+  const drawLanes = () => {
+    lanes.empty();
+    const known = store.hasLanes();
+    for (const l of LANES) {
+      const chipEl = laneChip(lanes, l, { on: lane === l, onTap: () => {
+        if (!known) {
+          tip(chipEl, "\u9084\u6C92\u6709\u5206\u8DEF\u8CC7\u6599");
+          return;
+        }
+        lane = lane === l ? "" : l;
+        drawLanes();
+        drawGrid();
+      } });
+    }
   };
   search.addEventListener("input", () => {
     query = search.value;
+    if (query) show("pick");
     drawSuggest();
     drawGrid();
   });
+  drawCount();
   drawResults();
-  drawRoles();
+  drawLanes();
   drawGrid();
+  show(picks.length ? tab : "pick");
   return { title: "\u901F\u67E5", el };
 }
 
@@ -3003,7 +3037,7 @@ var PAGES = {
   patch: patchPage,
   handbook: handbookPage
 };
-function renderPage(tab, ctx) {
+function renderPage(tab2, ctx) {
   switch (ctx.frame.key) {
     case "champion":
       return championCard(ctx);
@@ -3016,7 +3050,7 @@ function renderPage(tab, ctx) {
     case "roster":
       return rosterPage(ctx);
     default:
-      return PAGES[tab](ctx);
+      return PAGES[tab2](ctx);
   }
 }
 
