@@ -1,4 +1,4 @@
-import type { Champion } from "../data/store";
+import type { Champion, Skill } from "../data/store";
 import { MODES } from "../modes";
 import { DAMAGE_COLOR, chip, empty, group, h, icon, page, radar, row } from "../ui";
 import type { PageCtx, PageOut } from "./index";
@@ -91,9 +91,7 @@ function championCard(ctx: PageCtx): PageOut {
     const mode = MODES[ctx.plugin.settings.mode];
     const g = group(el, mode.id === "mayhem" ? "Augments" : "Build");
     row(g, { icon: mode.id === "mayhem" ? "sparkles" : "swords", title: mode.id === "mayhem" ? "Best augments" : "Core build", value: "Soon", muted: true });
-    const links = group(el);
-    row(links, { icon: "file-text", title: "Full note", chevron: true, onTap: () => ctx.openNote(c.path) });
-    if (c.video) row(links, { icon: "play-circle", title: "Combo video", chevron: true, onTap: () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video!)}`) });
+    if (c.video) row(group(el), { icon: "play-circle", title: "Combo video", chevron: true, onTap: () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video!)}`) });
     return { title: c.name, el };
 }
 
@@ -110,6 +108,7 @@ function skillStrip(parent: HTMLElement, c: Champion): void {
         const im = h(box, "img"); im.src = s.icon; im.alt = "";
         box.style.setProperty("--chip", DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--background-modifier-border)");
         h(box, "span", "mn-skill-k", s.key);
+        if (s.upgrade) icon(box, "chevrons-up", "mn-skill-up");   // this skill has an upgrade / evolve effect
         box.addEventListener("click", (e) => { e.preventDefault(); show(open === i ? -1 : i); });
         return box;
     });
@@ -128,11 +127,34 @@ function skillStrip(parent: HTMLElement, c: Champion): void {
         const meta: [string, string][] = [];
         if (s.cd) meta.push(["冷卻", `${s.cd} 秒`]);
         if (s.cost) meta.push(["消耗", s.cost === "0" ? "無" : `${s.cost} ${c.resource}`]);
-        if (s.range) meta.push(["射程", s.range === "self" ? "自身" : s.range]);
+        if (s.range) meta.push(["射程", s.range]);
         if (meta.length) {
             const m = h(detail, "div", "mn-sd-meta");
             for (const [k, v] of meta) { const cell = h(m, "div", "mn-sd-cell"); h(cell, "span", "mn-sd-k", k); h(cell, "span", "mn-sd-v", v); }
         }
-        h(detail, "p", "mn-sd-desc", s.desc);
+        if (s.desc) h(detail, "p", "mn-sd-desc", s.desc);
+        if (s.upgrade) {
+            const up = h(detail, "div", "mn-sd-up");
+            const t = h(up, "div", "mn-sd-up-t");
+            icon(t, "chevrons-up", "mn-sd-up-ic");
+            h(t, "span", "", "進化 / 升級");
+            h(up, "p", "mn-sd-desc", s.upgrade);
+        }
+        demo(detail, c, s);
     };
+}
+
+// Riot's own ability demo (the clip the official champion page plays): <champion key, 4 digits>/ability_<key>_<P|Q|W|E|R>1.mp4/.webm.
+// An unofficial but public Riot CDN path, so if a clip is missing or the address changes the video simply does not appear.
+const DEMO_BASE = "https://d28xe8vt774jo5.cloudfront.net/champion-abilities";
+function demo(parent: HTMLElement, c: Champion, s: Skill): void {
+    if (!c.key) return;
+    const key = String(c.key).padStart(4, "0");
+    const url = `${DEMO_BASE}/${key}/ability_${key}_${s.key}1`;
+    const v = h(parent, "video", "mn-sd-video");
+    v.muted = true; v.loop = true; v.autoplay = true; v.controls = true; v.preload = "metadata";
+    v.setAttribute("playsinline", "");
+    const mp4 = h(v, "source"); mp4.src = `${url}.mp4`; mp4.type = "video/mp4";
+    const webm = h(v, "source"); webm.src = `${url}.webm`; webm.type = "video/webm";
+    webm.addEventListener("error", () => v.remove());   // neither format loaded
 }

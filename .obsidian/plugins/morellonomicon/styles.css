@@ -114,6 +114,13 @@ button.mn-skill-box.is-on { box-shadow: 0 0 0 3px color-mix(in srgb, var(--chip)
 .mn-sd-cell { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 12px; background: var(--mn-card-hi); }
 .mn-sd-k { font-size: 11px; color: var(--mn-muted); }
 .mn-sd-v { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; word-break: break-all; }
+.mn-skill-up { position: absolute; left: 3px; top: 3px; display: flex; width: 16px; height: 16px; border-radius: 8px; align-items: center; justify-content: center; background: var(--color-green); color: #fff; }
+.mn-skill-up svg { width: 11px; height: 11px; }
+.mn-sd-video { display: block; width: 100%; border-radius: 12px; margin: 12px 0 2px; background: #000; aspect-ratio: 16 / 9; }
+.mn-sd-up { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--color-green) 12%, transparent); border: 1px solid color-mix(in srgb, var(--color-green) 28%, transparent); }
+.mn-sd-up-t { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--color-green); }
+.mn-sd-up-ic svg { width: 16px; height: 16px; }
+.mn-sd-up .mn-sd-desc { margin-top: 6px; }
 .mn-sd-desc { margin: 10px 0 0; font-size: 14px; line-height: 1.55; color: var(--mn-text); -webkit-user-select: text; user-select: text; }
 
 /* lists */

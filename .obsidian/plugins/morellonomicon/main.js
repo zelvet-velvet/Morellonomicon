@@ -42,7 +42,7 @@ var str = (v, d = "") => typeof v === "string" ? v : d;
 var num = (v, d = 0) => typeof v === "number" ? v : d;
 var skillList = (v) => Array.isArray(v) ? v.flatMap((x) => {
   const o = x;
-  return o && typeof o === "object" ? [{ key: str(o.key), name: str(o.name), damage: list(o.damage), icon: str(o.icon), desc: str(o.desc), cd: str(o.cd), cost: str(o.cost), range: str(o.range) }] : [];
+  return o && typeof o === "object" ? [{ key: str(o.key), name: str(o.name), damage: list(o.damage), icon: str(o.icon), desc: str(o.desc), upgrade: str(o.upgrade), cd: str(o.cd), cost: str(o.cost), range: str(o.range) }] : [];
 }) : [];
 var list = (v) => Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
 var Store = class {
@@ -80,6 +80,7 @@ var Store = class {
     if (!this.champs) {
       this.champs = this.notes(this.s.championFolder).filter((n) => n.fm.type === "champion").map(({ file, fm }) => ({
         id: str(fm.id),
+        key: num(fm.key),
         name: str(fm.name, file.basename),
         title: str(fm.title),
         roles: list(fm.roles),
@@ -468,9 +469,7 @@ function championCard(ctx) {
   const mode = MODES[ctx.plugin.settings.mode];
   const g = group(el, mode.id === "mayhem" ? "Augments" : "Build");
   row(g, { icon: mode.id === "mayhem" ? "sparkles" : "swords", title: mode.id === "mayhem" ? "Best augments" : "Core build", value: "Soon", muted: true });
-  const links = group(el);
-  row(links, { icon: "file-text", title: "Full note", chevron: true, onTap: () => ctx.openNote(c.path) });
-  if (c.video) row(links, { icon: "play-circle", title: "Combo video", chevron: true, onTap: () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video)}`) });
+  if (c.video) row(group(el), { icon: "play-circle", title: "Combo video", chevron: true, onTap: () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video)}`) });
   return { title: c.name, el };
 }
 function skillStrip(parent, c) {
@@ -486,6 +485,7 @@ function skillStrip(parent, c) {
     im.alt = "";
     box.style.setProperty("--chip", DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--background-modifier-border)");
     h(box, "span", "mn-skill-k", s.key);
+    if (s.upgrade) icon(box, "chevrons-up", "mn-skill-up");
     box.addEventListener("click", (e) => {
       e.preventDefault();
       show(open === i ? -1 : i);
@@ -507,7 +507,7 @@ function skillStrip(parent, c) {
     const meta = [];
     if (s.cd) meta.push(["\u51B7\u537B", `${s.cd} \u79D2`]);
     if (s.cost) meta.push(["\u6D88\u8017", s.cost === "0" ? "\u7121" : `${s.cost} ${c.resource}`]);
-    if (s.range) meta.push(["\u5C04\u7A0B", s.range === "self" ? "\u81EA\u8EAB" : s.range]);
+    if (s.range) meta.push(["\u5C04\u7A0B", s.range]);
     if (meta.length) {
       const m = h(detail, "div", "mn-sd-meta");
       for (const [k, v] of meta) {
@@ -516,8 +516,36 @@ function skillStrip(parent, c) {
         h(cell, "span", "mn-sd-v", v);
       }
     }
-    h(detail, "p", "mn-sd-desc", s.desc);
+    if (s.desc) h(detail, "p", "mn-sd-desc", s.desc);
+    if (s.upgrade) {
+      const up = h(detail, "div", "mn-sd-up");
+      const t = h(up, "div", "mn-sd-up-t");
+      icon(t, "chevrons-up", "mn-sd-up-ic");
+      h(t, "span", "", "\u9032\u5316 / \u5347\u7D1A");
+      h(up, "p", "mn-sd-desc", s.upgrade);
+    }
+    demo(detail, c, s);
   };
+}
+var DEMO_BASE = "https://d28xe8vt774jo5.cloudfront.net/champion-abilities";
+function demo(parent, c, s) {
+  if (!c.key) return;
+  const key = String(c.key).padStart(4, "0");
+  const url = `${DEMO_BASE}/${key}/ability_${key}_${s.key}1`;
+  const v = h(parent, "video", "mn-sd-video");
+  v.muted = true;
+  v.loop = true;
+  v.autoplay = true;
+  v.controls = true;
+  v.preload = "metadata";
+  v.setAttribute("playsinline", "");
+  const mp4 = h(v, "source");
+  mp4.src = `${url}.mp4`;
+  mp4.type = "video/mp4";
+  const webm = h(v, "source");
+  webm.src = `${url}.webm`;
+  webm.type = "video/webm";
+  webm.addEventListener("error", () => v.remove());
 }
 
 // src/pages/guide.ts

@@ -18,6 +18,7 @@ sticker: lucide//activity
 - **Vault at the repo root**: moved `Morellonomicon Note/` up so Obsidian Git on a phone can clone the repo straight into a vault; `plugin/` and `tools/` are hidden through Excluded files; Obsidian Git is in the plugin list; the Start Guide has the phone steps.
 - **Radar and look**: the champion card uses a 5-axis radar (物理 魔法 防禦 射程 難度) and a splash-art banner; softer cards, pill search, glassy bars. Seen on the phone and liked.
 - **Mayhem augments**: `tools/fetch_augments.py` writes 249 augment notes (`強化/`: 銀 71, 金 104, 稜鏡 74) from CommunityDragon's KIWI pool with zh_TW names, rarity and icons; the plugin has an Augments list (Mayhem home → Augments).
+- **Skill panel**: tap a skill icon on the champion card to open its details under the strip: damage types, cooldown, cost, range (hidden when meaningless), description, an 進化 / 升級 block for skills that evolve (Kha'Zix, Kai'Sa, Heimerdinger… found by wording in Riot's text) and Riot's ability demo clip; the "Full note" row is gone.
 - **Workflow**: Copied the LLM Guide, Dev Status / Dev Log / Day note from clawd-room, simplified for a solo project (commit to `main`, no PRs) and added a Start Guide.
 
 ## 📅 Yesterday's Progress (—)
@@ -36,6 +37,8 @@ sticker: lucide//activity
 - [ ] **Statistics**: win / pick rates for Mayhem augments need either Match-V5 (developer key, queue for ARAM Mayhem, many matches) or a cited community source. Decide in phase 2.
 
 ### 🎬 Videos
+- [>] **Skill demo clips**: played from Riot's ability CDN (`champion-abilities/<key>/ability_<key>_Q1.mp4`); unofficial path, so check on the phone (iOS plays the mp4) and that a missing clip just disappears.
+- [ ] **Other forms**: champions that swap forms or upgrade through a mechanic Riot's text does not word as 進化 / 升級 (Viktor, Jayce, Elise, Nidalee, Gnar, Aphelios…) show their base skill only; list them and add hand-written upgrade text.
 - [ ] **Skill combo videos**: optional `video:` (YouTube id) per champion note. OP.GG's channel could not be listed without the YouTube Data API (the page is JavaScript and the RSS feed gave 404); needs a free API key in `.env` (`YOUTUBE_API_KEY`), or hand-picked ids. The plugin shows a `youtube-nocookie` embed when the field exists, else a "search on YouTube" button.
 
 ### 🧩 Plugin (TypeScript, from the ZeLedger skeleton)

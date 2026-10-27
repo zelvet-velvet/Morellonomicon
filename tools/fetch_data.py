@@ -148,14 +148,40 @@ def damage_type(info):
     return "物理" if a > m else "魔法"
 
 
+UPGRADE_MARKERS = ("進化", "升級", "生物兵器")   # sentences with these describe a skill's upgrade (Kha'Zix, Kai'Sa, Heimerdinger...)
+GLOBAL_RANGE = 25000   # Data Dragon's "no range / whole map" value
+GLOBAL_WORDS = re.compile(r"全地圖|整張地圖|全圖")
+
+
+def split_upgrade(html):
+    """(base text, upgrade text): sentences that mention an upgrade go to the second part."""
+    base, upgrade = [], []
+    for para in strip_html(html).split("\n"):
+        for sentence in re.findall(r"[^。]+。?", para):
+            (upgrade if any(m in sentence for m in UPGRADE_MARKERS) else base).append(sentence.strip())
+    return " ".join(base), " ".join(upgrade)
+
+
+def clean_range(spell):
+    """The range worth showing: nothing for self-cast or no-range skills, 全地圖 only when the text says so."""
+    r = spell["rangeBurn"]
+    if r in ("", "0", "1", "-1", "self"):
+        return ""
+    if all(part.isdigit() and int(part) >= GLOBAL_RANGE for part in r.split("/")):
+        return "全地圖" if GLOBAL_WORDS.search(spell["description"]) else ""
+    return r
+
+
 def skills_fm(c, version):
     """Passive + Q W E R as small objects for the plugin (key, name, damage types, description, cooldown, cost, range, icon)."""
     p = c["passive"]
-    out = [{"key": "P", "name": p["name"], "damage": [], "desc": strip_html(p["description"]).replace("\n", " "),
+    base, up = split_upgrade(p["description"])
+    out = [{"key": "P", "name": p["name"], "damage": [], "desc": base, "upgrade": up,
             "icon": f"{DD}/cdn/{version}/img/passive/{p['image']['full']}"}]
     for key, s in zip("QWER", c["spells"]):
-        out.append({"key": key, "name": s["name"], "damage": spell_damage(s), "desc": strip_html(s["description"]).replace("\n", " "),
-                    "cd": s["cooldownBurn"], "cost": s["costBurn"], "range": s["rangeBurn"],
+        base, up = split_upgrade(s["description"])
+        out.append({"key": key, "name": s["name"], "damage": spell_damage(s), "desc": base, "upgrade": up,
+                    "cd": s["cooldownBurn"], "cost": s["costBurn"], "range": clean_range(s),
                     "icon": f"{DD}/cdn/{version}/img/spell/{s['image']['full']}"})
     return out
 
