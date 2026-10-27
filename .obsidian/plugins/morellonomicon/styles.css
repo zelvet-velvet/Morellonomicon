@@ -113,8 +113,10 @@ button.mn-chip:active { transform: scale(0.96); }
 .mn-card-who { min-width: 0; }
 .mn-card-who .mn-title { margin: 0; font-size: 28px; }
 .mn-card-sub { color: var(--mn-muted); font-size: 14px; }
-.mn-card-who .mn-chips { margin: 8px 0 0; }
-.mn-app .mn-card-who .mn-chip:not(.has-color) { background: rgba(10, 12, 20, 0.62); color: #fff; border-color: rgba(255, 255, 255, 0.22); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.mn-card-who .mn-chips { gap: 6px; margin: 8px 0 0; }
+/* role tags under the name: small and flat like the other tags, so the name and title lead */
+.mn-app .mn-card-who .mn-chip { padding: 3px 9px; border-radius: 6px; font-size: 12px; line-height: 1.3; }
+.mn-app .mn-card-who .mn-chip:not(.has-color) { background: rgba(10, 12, 20, 0.5); color: var(--mn-text); border-color: rgba(255, 255, 255, 0.16); }
 .mn-panel { overflow: hidden; background: var(--mn-card); border-radius: var(--mn-radius); padding: 8px 8px 4px; margin: 14px 0; border: 1px solid var(--mn-line); }
 .mn-radar { display: block; width: 100%; max-width: 300px; margin: 0 auto; overflow: visible; }
 .mn-rd-ring { fill: none; stroke: var(--mn-line); stroke-width: 1; }
