@@ -919,6 +919,10 @@ function damageLines(c) {
   const out = [];
   for (const s of c.skills) for (const kind of KINDS) {
     const rows = s.rows.filter((r) => r.label.startsWith(`${kind}\u50B7\u5BB3`));
+    if (!rows.length && s.key === "P" && s.desc.includes(`${kind}\u50B7\u5BB3`)) {
+      out.push({ key: s.key, name: s.name, kind, base: 0, ad: 0, ap: 0 });
+      continue;
+    }
     if (!rows.length) continue;
     const best = rows.reduce((x, y) => lastNum(y.vals[y.vals.length - 1]) > lastNum(x.vals[x.vals.length - 1]) ? y : x);
     let ad = 0, ap = 0;
@@ -946,22 +950,19 @@ function factsStrip(parent, c) {
     const kind = h(row2, "span", "mn-dl-kind", d.kind);
     kind.style.color = DAMAGE_COLOR[d.kind] ?? "inherit";
     h(row2, "span", "mn-dl-base", d.base ? Math.round(d.base).toLocaleString() : "\u2014");
+    if (d.key === "P" && !d.base) {
+      h(row2, "span", "mn-dl-sc", "\u88AB\u52D5,\u6578\u503C\u672A\u6536\u9304");
+      continue;
+    }
     h(row2, "span", "mn-dl-sc", [d.ad ? `+${d.ad}% \u7269\u653B` : "", d.ap ? `+${d.ap}% \u9B54\u653B` : ""].filter(Boolean).join("  "));
   }
   const ad = lines.reduce((n, d) => n + d.ad, 0), ap = lines.reduce((n, d) => n + d.ap, 0);
   if (ad + ap > 0) {
-    const foot = h(dmg, "div", "mn-fs-row mn-dl-foot");
-    h(foot, "span", "mn-fs-l", "\u52A0\u6210\u5408\u8A08");
-    const sum = h(foot, "span", "mn-dl-sum");
-    if (ad) {
-      const x = h(sum, "span", "", `\u7269\u653B ${ad}%`);
-      x.style.color = DAMAGE_COLOR["\u7269\u7406"];
-    }
-    if (ad && ap) h(sum, "span", "mn-fs-hint", " \xB7 ");
-    if (ap) {
-      const x = h(sum, "span", "", `\u9B54\u653B ${ap}%`);
-      x.style.color = DAMAGE_COLOR["\u9B54\u6CD5"];
-    }
+    const ends = h(dmg, "div", "mn-fs-row mn-dl-foot");
+    const l = h(ends, "span", "mn-dl-sum", ad ? `\u7269\u653B ${ad}%` : "");
+    l.style.color = DAMAGE_COLOR["\u7269\u7406"];
+    const r = h(ends, "span", "mn-dl-sum", ap ? `\u9B54\u653B ${ap}%` : "");
+    r.style.color = DAMAGE_COLOR["\u9B54\u6CD5"];
     const bar = h(dmg, "div", "mn-stack");
     for (const [v2, k] of [[ad, "\u7269\u7406"], [ap, "\u9B54\u6CD5"]]) if (v2) {
       const seg = h(bar, "i");
@@ -978,7 +979,7 @@ function factsStrip(parent, c) {
   const reach = cell("\u8DDD\u96E2");
   h(reach, "div", "mn-fs-v", reachOf(c) || "\u2014");
   h(reach, "div", "mn-fs-s", `\u5C04\u7A0B ${c.range}`);
-  const v = h(cell("\u96E3\u5EA6"), "div", "mn-fs-v", String(c.difficulty));
+  const v = h(cell("\u96E3\u5EA6"), "div", "mn-fs-v mn-fs-big", String(c.difficulty));
   h(v, "span", "mn-fs-of", " / 10");
 }
 function styleAxes(c) {
@@ -1342,7 +1343,13 @@ function skillStrip(parent, c, changes = []) {
       h(up, "p", "mn-sd-desc", s.upgrade);
     }
     demo(detail, c, s);
-    window.requestAnimationFrame(() => detail.scrollIntoView({ behavior: "smooth", block: "start" }));
+    const reveal = () => {
+      const view = detail.closest(".mn-scroll");
+      const tall = view ? detail.offsetHeight > view.clientHeight - 80 : false;
+      detail.scrollIntoView({ behavior: "smooth", block: tall ? "start" : "end" });
+    };
+    window.requestAnimationFrame(reveal);
+    detail.querySelector("video")?.addEventListener("loadedmetadata", reveal, { once: true });
   };
 }
 var DEMO_BASE = "https://d28xe8vt774jo5.cloudfront.net/champion-abilities";

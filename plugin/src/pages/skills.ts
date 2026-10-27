@@ -42,8 +42,14 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
             h(up, "p", "mn-sd-desc", s.upgrade);
         }
         demo(detail, c, s);
-        // bring the details into view (the icon row stays just above them)
-        window.requestAnimationFrame(() => detail.scrollIntoView({ behavior: "smooth", block: "start" }));
+        // scroll down to the end of the card (its clip included); a card taller than the screen shows from its top instead
+        const reveal = () => {
+            const view = detail.closest<HTMLElement>(".mn-scroll");
+            const tall = view ? detail.offsetHeight > view.clientHeight - 80 : false;
+            detail.scrollIntoView({ behavior: "smooth", block: tall ? "start" : "end" });
+        };
+        window.requestAnimationFrame(reveal);
+        detail.querySelector("video")?.addEventListener("loadedmetadata", reveal, { once: true });   // the clip adds its height once it knows its size
     };
 }
 

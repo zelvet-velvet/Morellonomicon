@@ -127,6 +127,8 @@ export function damageLines(c: Champion): DamageLine[] {
     const out: DamageLine[] = [];
     for (const s of c.skills) for (const kind of KINDS) {
         const rows = s.rows.filter((r) => r.label.startsWith(`${kind}傷害`));
+        // the passive has no rank grid in our data: when its text names a damage type, list it without a number
+        if (!rows.length && s.key === "P" && s.desc.includes(`${kind}傷害`)) { out.push({ key: s.key, name: s.name, kind, base: 0, ad: 0, ap: 0 }); continue; }
         if (!rows.length) continue;
         const best = rows.reduce((x, y) => (lastNum(y.vals[y.vals.length - 1]) > lastNum(x.vals[x.vals.length - 1]) ? y : x));
         let ad = 0, ap = 0;
@@ -156,16 +158,15 @@ export function factsStrip(parent: HTMLElement, c: Champion): void {
         const kind = h(row, "span", "mn-dl-kind", d.kind);
         kind.style.color = DAMAGE_COLOR[d.kind] ?? "inherit";
         h(row, "span", "mn-dl-base", d.base ? Math.round(d.base).toLocaleString() : "—");
+        if (d.key === "P" && !d.base) { h(row, "span", "mn-dl-sc", "被動,數值未收錄"); continue; }
         h(row, "span", "mn-dl-sc", [d.ad ? `+${d.ad}% 物攻` : "", d.ap ? `+${d.ap}% 魔攻` : ""].filter(Boolean).join("  "));
     }
     const ad = lines.reduce((n, d) => n + d.ad, 0), ap = lines.reduce((n, d) => n + d.ap, 0);
+    // the abilities' scaling added up: 物攻 at the bar's left end, 魔攻 at its right end
     if (ad + ap > 0) {
-        const foot = h(dmg, "div", "mn-fs-row mn-dl-foot");
-        h(foot, "span", "mn-fs-l", "加成合計");
-        const sum = h(foot, "span", "mn-dl-sum");
-        if (ad) { const x = h(sum, "span", "", `物攻 ${ad}%`); x.style.color = DAMAGE_COLOR["物理"]; }
-        if (ad && ap) h(sum, "span", "mn-fs-hint", " · ");
-        if (ap) { const x = h(sum, "span", "", `魔攻 ${ap}%`); x.style.color = DAMAGE_COLOR["魔法"]; }
+        const ends = h(dmg, "div", "mn-fs-row mn-dl-foot");
+        const l = h(ends, "span", "mn-dl-sum", ad ? `物攻 ${ad}%` : ""); l.style.color = DAMAGE_COLOR["物理"];
+        const r = h(ends, "span", "mn-dl-sum", ap ? `魔攻 ${ap}%` : ""); r.style.color = DAMAGE_COLOR["魔法"];
         const bar = h(dmg, "div", "mn-stack");
         for (const [v, k] of [[ad, "物理"], [ap, "魔法"]] as const) if (v) { const seg = h(bar, "i"); seg.style.flex = String(v); seg.style.background = DAMAGE_COLOR[k]; }
     }
@@ -174,7 +175,7 @@ export function factsStrip(parent: HTMLElement, c: Champion): void {
     const reach = cell("距離");
     h(reach, "div", "mn-fs-v", reachOf(c) || "—");
     h(reach, "div", "mn-fs-s", `射程 ${c.range}`);
-    const v = h(cell("難度"), "div", "mn-fs-v", String(c.difficulty));
+    const v = h(cell("難度"), "div", "mn-fs-v mn-fs-big", String(c.difficulty));
     h(v, "span", "mn-fs-of", " / 10");
 }
 

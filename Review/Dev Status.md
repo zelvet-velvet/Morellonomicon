@@ -55,6 +55,7 @@ sticker: lucide//activity
 - **Header and icon tags** (2026-10-27): on a tab's first page the colour / mode buttons sit in the big title row and the mode chip is gone; ability pills are icons (lucide look-alikes, not Riot art) with a tap name and a ? legend. Next: check the icons on the phone; swap any that read badly.
 - **Champion page redesign (D2)** (2026-10-27): facts strip (damage meters, reach, difficulty) and a 戰鬥風格 card (hexagon with coloured corner chips naming the skills, plus the other tags). 攻擊特效 (on-hit) split from 強化普攻 and set by hand (`features_extra`). Next: fill `features_extra` for on-hit champions; fix tag gaps the text misses (e.g. Leona E is a dash, W a shield).
 - **Calm champion styling (4c)** (2026-10-27): theme colours instead of a League palette, serif titles and line tabs, flat tags with coloured icons. The serif depends on the device (Noto Serif TC / Songti TC / PMingLiU); a phone without one shows sans. Next: decide whether to ship a serif font file in the vault.
+- **Passive numbers missing** (2026-10-27): passives have no rank grid in the champion notes, so 技能傷害 shows their damage type without a number. Next: have `tools/spells.py` read passive values from CommunityDragon (needs network).
 - **README** now teaches the Obsidian Git route first (no Python for users); the developer commands are a separate section.
 - **Workflow**: Copied the LLM Guide, Dev Status / Dev Log / Day note from clawd-room, simplified for a solo project (commit to `main`, no PRs) and added a Start Guide.
 
