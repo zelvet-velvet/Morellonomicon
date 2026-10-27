@@ -248,6 +248,7 @@ var Store = class {
         id: str(fm.id),
         key: num(fm.key),
         name: str(fm.name, file.basename),
+        nameEn: str(fm.name_en, str(fm.id)),
         title: str(fm.title),
         blurb: str(fm.blurb),
         tier: str(fm.tier),
@@ -2692,11 +2693,11 @@ var SPLIT = /[\s,，、;；和跟與及]+/;
 function matchScore(c, raw) {
   const q = raw.trim().toLowerCase();
   if (!q) return 0;
-  const name = c.name.toLowerCase(), title = c.title.toLowerCase(), id = c.id.toLowerCase();
-  if (name === q || id === q) return 100;
-  if (name.startsWith(q) || id.startsWith(q)) return 90;
+  const name = c.name.toLowerCase(), title = c.title.toLowerCase(), id = c.id.toLowerCase(), en = (c.nameEn ?? "").toLowerCase();
+  if (name === q || id === q || en === q) return 100;
+  if (name.startsWith(q) || id.startsWith(q) || en.startsWith(q)) return 90;
   if (name.includes(q)) return 80;
-  if (id.includes(q)) return q.length >= 4 ? 80 : 40;
+  if (id.includes(q) || en.includes(q)) return q.length >= 4 ? 80 : 40;
   if (title.includes(q)) return 60;
   const chars = [...q];
   let at = 0;
@@ -2727,7 +2728,10 @@ function edits(a, b) {
   return d[a.length][b.length];
 }
 function enScore(c, raw) {
-  const q = enKey(raw), name = enKey(c.id);
+  return Math.max(enScoreOf(enKey(c.id), raw), c.nameEn ? enScoreOf(enKey(c.nameEn), raw) : 0);
+}
+function enScoreOf(name, raw) {
+  const q = enKey(raw);
   if (q.length < 3 || !name) return 0;
   if (q === name) return 88;
   if (name.startsWith(q)) return 84;
@@ -2741,7 +2745,7 @@ function closest(all, raw, limit = 4) {
   const q = raw.trim().toLowerCase();
   if (!q) return [];
   const allowed = [...q].length <= 4 ? 1 : 2;
-  return all.map((c) => ({ c, d: Math.min(distance(q, c.name.toLowerCase()), distance(q, c.id.toLowerCase())) })).filter((x) => x.d <= allowed).sort((a, b) => a.d - b.d || a.c.name.localeCompare(b.c.name, "zh-Hant")).slice(0, limit).map((x) => x.c);
+  return all.map((c) => ({ c, d: Math.min(distance(q, c.name.toLowerCase()), distance(q, c.id.toLowerCase()), distance(q, (c.nameEn || c.id).toLowerCase())) })).filter((x) => x.d <= allowed).sort((a, b) => a.d - b.d || a.c.name.localeCompare(b.c.name, "zh-Hant")).slice(0, limit).map((x) => x.c);
 }
 function finder(all, sounds) {
   const heard = /* @__PURE__ */ new Map();

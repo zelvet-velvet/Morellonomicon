@@ -227,12 +227,12 @@ def skills_fm(c, version, bin_data=None):
     return out
 
 
-def champion_note(c, version, bin_data):
+def champion_note(c, version, bin_data, name_en=""):
     info, st = c["info"], c["stats"]
     spells = c["spells"]
     dmg_all = sorted({d for s in spells for d in spell_damage(s)})
     fm = {
-        "type": "champion", "id": c["id"], "key": int(c["key"]), "name": c["name"], "title": c["title"], "blurb": strip_html(c.get("blurb", "")).replace("\n", " "),
+        "type": "champion", "id": c["id"], "key": int(c["key"]), "name": c["name"], "name_en": name_en or c["id"], "title": c["title"], "blurb": strip_html(c.get("blurb", "")).replace("\n", " "),
         "roles": [ROLE_ZH.get(t, t) for t in c["tags"]], "damage_type": damage_type(info),
         "skill_damage": dmg_all, "archetypes": archetypes(c),
         "features": spell_features(spells, c["passive"]), "resource": c["partype"],
@@ -326,12 +326,14 @@ def main():
     if not args.no_champions:
         listing = fetch(f"{DD}/cdn/{version}/data/{LOCALE}/champion.json", f"{version}/champion.json")["data"]
         ids = [i for i in listing if not args.only or i in args.only.split(",")]
+        # English names too, for the 速查 search (Wukong is MonkeyKing in the ids, Nunu & Willump is Nunu)
+        english = fetch(f"{DD}/cdn/{version}/data/en_US/champion.json", f"{version}/champion.en_US.json")["data"]
         def one(cid):
             return fetch(f"{DD}/cdn/{version}/data/{LOCALE}/champion/{cid}.json", f"{version}/champion/{cid}.json")["data"][cid]
         with ThreadPoolExecutor(WORKERS) as pool:
             champions = list(pool.map(one, ids))
         for c in champions:
-            fm, gen, tail = champion_note(c, version, champion_bin(c['id']))
+            fm, gen, tail = champion_note(c, version, champion_bin(c['id']), english.get(c["id"], {}).get("name", ""))
             changed += write_note(VAULT / "英雄" / f"{safe_name(c['name'])}.md", fm, gen, tail)
         print(f"champions: {len(champions)}")
 

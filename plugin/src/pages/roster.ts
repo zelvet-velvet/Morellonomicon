@@ -15,11 +15,11 @@ const SPLIT = /[\s,，、;；和跟與及]+/;   // several names said or typed i
 export function matchScore(c: Champion, raw: string): number {
     const q = raw.trim().toLowerCase();
     if (!q) return 0;
-    const name = c.name.toLowerCase(), title = c.title.toLowerCase(), id = c.id.toLowerCase();
-    if (name === q || id === q) return 100;
-    if (name.startsWith(q) || id.startsWith(q)) return 90;
+    const name = c.name.toLowerCase(), title = c.title.toLowerCase(), id = c.id.toLowerCase(), en = (c.nameEn ?? "").toLowerCase();
+    if (name === q || id === q || en === q) return 100;
+    if (name.startsWith(q) || id.startsWith(q) || en.startsWith(q)) return 90;
     if (name.includes(q)) return 80;
-    if (id.includes(q)) return q.length >= 4 ? 80 : 40;   // three letters inside an English name are too common ("ari" in darius)
+    if (id.includes(q) || en.includes(q)) return q.length >= 4 ? 80 : 40;   // three letters inside an English name are too common ("ari" in darius)
     if (title.includes(q)) return 60;
     const chars = [...q];
     let at = 0;
@@ -61,7 +61,10 @@ function edits(a: string, b: string): number {
 
 // How well an English word matches a champion's English name by ear. 0 = no match.
 export function enScore(c: Champion, raw: string): number {
-    const q = enKey(raw), name = enKey(c.id);
+    return Math.max(enScoreOf(enKey(c.id), raw), c.nameEn ? enScoreOf(enKey(c.nameEn), raw) : 0);   // the English name and Riot's id
+}
+function enScoreOf(name: string, raw: string): number {
+    const q = enKey(raw);
     if (q.length < 3 || !name) return 0;
     if (q === name) return 88;
     if (name.startsWith(q)) return 84;
@@ -78,7 +81,7 @@ function closest(all: Champion[], raw: string, limit = 4): Champion[] {
     const q = raw.trim().toLowerCase();
     if (!q) return [];
     const allowed = [...q].length <= 4 ? 1 : 2;
-    return all.map((c) => ({ c, d: Math.min(distance(q, c.name.toLowerCase()), distance(q, c.id.toLowerCase())) }))
+    return all.map((c) => ({ c, d: Math.min(distance(q, c.name.toLowerCase()), distance(q, c.id.toLowerCase()), distance(q, (c.nameEn || c.id).toLowerCase())) }))
         .filter((x) => x.d <= allowed).sort((a, b) => a.d - b.d || a.c.name.localeCompare(b.c.name, "zh-Hant")).slice(0, limit).map((x) => x.c);
 }
 
