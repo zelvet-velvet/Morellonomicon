@@ -1,6 +1,6 @@
 import type { Champion } from "../data/store";
 import { MODES } from "../modes";
-import { DAMAGE_COLOR, bar, chip, empty, group, h, page, row } from "../ui";
+import { DAMAGE_COLOR, chip, empty, group, h, icon, page, radar, row } from "../ui";
 import type { PageCtx, PageOut } from "./index";
 
 const ROLES = ["戰士", "坦克", "法師", "刺客", "射手", "輔助"];
@@ -11,7 +11,9 @@ export function championPicker(parent: HTMLElement, ctx: PageCtx, withFilters: b
     const all = ctx.plugin.store.champions();
     if (!all.length) { empty(parent, { icon: "database", title: "No champion notes yet", text: "Run python3 tools/fetch_data.py" }); return; }
     let query = "", role = "", dmg = "";
-    const search = h(h(parent, "div", "mn-search"), "input");
+    const box = h(parent, "div", "mn-search");
+    icon(box, "search", "mn-search-ic");
+    const search = h(box, "input");
     search.type = "search";
     search.placeholder = "Search";
     search.setAttribute("enterkeyhint", "search");
@@ -57,20 +59,25 @@ function championCard(ctx: PageCtx): PageOut {
     const el = h(null, "div", "mn-page");
     if (!c) { empty(el, { icon: "user-x", title: "Champion not found" }); return { title: "", el }; }
 
-    const head = h(el, "div", "mn-card-head");
+    const dmgColor = DAMAGE_COLOR[c.damageType] ?? "var(--interactive-accent)";
+    const hero = h(el, "div", "mn-hero");
+    const bg = h(hero, "div", "mn-hero-bg");
+    bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
+    const head = h(hero, "div", "mn-card-head");
     const im = h(head, "img", "mn-card-img"); im.src = c.icon; im.alt = "";
     const who = h(head, "div", "mn-card-who");
     h(who, "h1", "mn-title", c.name);
     h(who, "div", "mn-card-sub", c.title);
     const tags = h(who, "div", "mn-chips");
     for (const r of c.roles) chip(tags, r);
-    chip(tags, c.damageType, { color: DAMAGE_COLOR[c.damageType] });
+    chip(tags, c.damageType, { color: dmgColor });
 
-    const stats = h(el, "div", "mn-stats");
-    bar(stats, "AD", c.attack, 10, DAMAGE_COLOR["物理"]);
-    bar(stats, "AP", c.magic, 10, DAMAGE_COLOR["魔法"]);
-    bar(stats, "DEF", c.defense, 10, "var(--color-green)");
-    bar(stats, "Hard", c.difficulty, 10, "var(--text-faint)");
+    // 射程 is derived from the attack range (650 = full); the other four are Riot's own 1-10 ratings
+    const panel = h(el, "div", "mn-panel");
+    radar(panel, [
+        { label: "物理", value: c.attack }, { label: "魔法", value: c.magic }, { label: "防禦", value: c.defense },
+        { label: "射程", value: Math.min(10, Math.round(c.range / 65)) }, { label: "難度", value: c.difficulty },
+    ], 10, dmgColor);
 
     skillStrip(el, c);
 
@@ -95,10 +102,9 @@ function skillStrip(parent: HTMLElement, c: Champion): void {
     if (!c.skills.length) return;
     const strip = h(parent, "div", "mn-skills");
     for (const s of c.skills) {
-        const cell = h(strip, "div", "mn-skill");
-        const box = h(cell, "div", "mn-skill-box");
+        const box = h(strip, "div", "mn-skill-box");
         const im = h(box, "img"); im.src = s.icon; im.alt = "";
         box.style.setProperty("--chip", DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--background-modifier-border)");
-        h(cell, "span", "mn-skill-k", s.key);
+        h(box, "span", "mn-skill-k", s.key);
     }
 }

@@ -304,15 +304,40 @@ var chip = (parent, text, o = {}) => {
   }
   return el;
 };
-var bar = (parent, label, value, max = 10, color = "var(--interactive-accent)") => {
-  const r = h(parent, "div", "mn-bar");
-  h(r, "div", "mn-bar-l", label);
-  const track = h(r, "div", "mn-bar-track");
-  const fill = h(track, "div", "mn-bar-fill");
-  fill.style.width = `${Math.max(0, Math.min(100, value / max * 100))}%`;
-  fill.style.background = color;
-  h(r, "div", "mn-bar-v", String(value));
-  return r;
+var SVG_NS = "http://www.w3.org/2000/svg";
+var svg = (parent, tag, attrs = {}, cls) => {
+  const e = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
+  if (cls) e.setAttribute("class", cls);
+  parent.appendChild(e);
+  return e;
+};
+var radar = (parent, axes, max = 10, color = "var(--interactive-accent)") => {
+  const W = 300, H = 250, cx = W / 2, cy = 128, R = 80, LABEL = 26, n = axes.length;
+  const pt = (i, r) => {
+    const a = -Math.PI / 2 + i * 2 * Math.PI / n;
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+  };
+  const poly = (r) => axes.map((_, i) => pt(i, typeof r === "number" ? r : r(i)).map((v) => v.toFixed(1)).join(",")).join(" ");
+  const root = svg(parent, "svg", { viewBox: `0 0 ${W} ${H}` }, "mn-radar");
+  root.style.setProperty("--rd", color);
+  for (const k of [0.25, 0.5, 0.75, 1]) svg(root, "polygon", { points: poly(R * k) }, "mn-rd-ring");
+  axes.forEach((_, i) => {
+    const [x, y] = pt(i, R);
+    svg(root, "line", { x1: cx, y1: cy, x2: x, y2: y }, "mn-rd-axis");
+  });
+  svg(root, "polygon", { points: poly((i) => R * Math.max(0, Math.min(max, axes[i].value)) / max) }, "mn-rd-area");
+  axes.forEach((ax, i) => {
+    const [dx, dy] = pt(i, R * Math.max(0, Math.min(max, ax.value)) / max);
+    svg(root, "circle", { cx: dx, cy: dy, r: 3.5 }, "mn-rd-dot");
+    const [lx, ly] = pt(i, R + LABEL);
+    const t = svg(root, "text", { x: lx, y: ly, "text-anchor": "middle", "dominant-baseline": "middle" }, "mn-rd-label");
+    const name = svg(t, "tspan");
+    name.textContent = ax.label + " ";
+    const val = svg(t, "tspan", {}, "mn-rd-val");
+    val.textContent = String(ax.value);
+  });
+  return root;
 };
 var empty = (parent, o) => {
   const box = h(parent, "div", "mn-empty");
@@ -332,7 +357,9 @@ function championPicker(parent, ctx, withFilters) {
     return;
   }
   let query = "", role = "", dmg = "";
-  const search = h(h(parent, "div", "mn-search"), "input");
+  const box = h(parent, "div", "mn-search");
+  icon(box, "search", "mn-search-ic");
+  const search = h(box, "input");
   search.type = "search";
   search.placeholder = "Search";
   search.setAttribute("enterkeyhint", "search");
@@ -391,7 +418,11 @@ function championCard(ctx) {
     empty(el, { icon: "user-x", title: "Champion not found" });
     return { title: "", el };
   }
-  const head = h(el, "div", "mn-card-head");
+  const dmgColor = DAMAGE_COLOR[c.damageType] ?? "var(--interactive-accent)";
+  const hero = h(el, "div", "mn-hero");
+  const bg = h(hero, "div", "mn-hero-bg");
+  bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
+  const head = h(hero, "div", "mn-card-head");
   const im = h(head, "img", "mn-card-img");
   im.src = c.icon;
   im.alt = "";
@@ -400,12 +431,15 @@ function championCard(ctx) {
   h(who, "div", "mn-card-sub", c.title);
   const tags = h(who, "div", "mn-chips");
   for (const r of c.roles) chip(tags, r);
-  chip(tags, c.damageType, { color: DAMAGE_COLOR[c.damageType] });
-  const stats = h(el, "div", "mn-stats");
-  bar(stats, "AD", c.attack, 10, DAMAGE_COLOR["\u7269\u7406"]);
-  bar(stats, "AP", c.magic, 10, DAMAGE_COLOR["\u9B54\u6CD5"]);
-  bar(stats, "DEF", c.defense, 10, "var(--color-green)");
-  bar(stats, "Hard", c.difficulty, 10, "var(--text-faint)");
+  chip(tags, c.damageType, { color: dmgColor });
+  const panel = h(el, "div", "mn-panel");
+  radar(panel, [
+    { label: "\u7269\u7406", value: c.attack },
+    { label: "\u9B54\u6CD5", value: c.magic },
+    { label: "\u9632\u79A6", value: c.defense },
+    { label: "\u5C04\u7A0B", value: Math.min(10, Math.round(c.range / 65)) },
+    { label: "\u96E3\u5EA6", value: c.difficulty }
+  ], 10, dmgColor);
   skillStrip(el, c);
   if (c.archetypes.length || c.features.length) {
     const tg = h(el, "div", "mn-chips");
@@ -424,13 +458,12 @@ function skillStrip(parent, c) {
   if (!c.skills.length) return;
   const strip = h(parent, "div", "mn-skills");
   for (const s of c.skills) {
-    const cell = h(strip, "div", "mn-skill");
-    const box = h(cell, "div", "mn-skill-box");
+    const box = h(strip, "div", "mn-skill-box");
     const im = h(box, "img");
     im.src = s.icon;
     im.alt = "";
     box.style.setProperty("--chip", DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--background-modifier-border)");
-    h(cell, "span", "mn-skill-k", s.key);
+    h(box, "span", "mn-skill-k", s.key);
   }
 }
 
@@ -473,7 +506,9 @@ function itemsPage(ctx) {
     return { title: "Items", el };
   }
   let query = "", kind = "";
-  const search = h(h(el, "div", "mn-search"), "input");
+  const box = h(el, "div", "mn-search");
+  icon(box, "search", "mn-search-ic");
+  const search = h(box, "input");
   search.type = "search";
   search.placeholder = "Search";
   const chips = h(el, "div", "mn-chips");

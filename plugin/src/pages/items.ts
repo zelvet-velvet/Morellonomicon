@@ -1,4 +1,4 @@
-import { chip, empty, group, h, page, row } from "../ui";
+import { chip, empty, group, h, icon, page, row } from "../ui";
 import type { PageCtx, PageOut } from "./index";
 
 const KINDS: [string, string][] = [["AP", "SpellDamage"], ["AD", "Damage"], ["Armor", "Armor"], ["MR", "SpellBlock"], ["HP", "Health"], ["Speed", "Boots"]];
@@ -9,7 +9,9 @@ export function itemsPage(ctx: PageCtx): PageOut {
     const all = ctx.plugin.store.modeItems().filter((i) => i.goldTotal > 0);
     if (!all.length) { empty(el, { icon: "database", title: "No item notes yet", text: "Run python3 tools/fetch_data.py" }); return { title: "Items", el }; }
     let query = "", kind = "";
-    const search = h(h(el, "div", "mn-search"), "input");
+    const box = h(el, "div", "mn-search");
+    icon(box, "search", "mn-search-ic");
+    const search = h(box, "input");
     search.type = "search";
     search.placeholder = "Search";
     const chips = h(el, "div", "mn-chips");
