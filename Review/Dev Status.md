@@ -28,6 +28,7 @@ sticker: lucide//activity
 - **Official patch notes in the Patch tab**: `tools/fetch_patch_notes.py` reads Riot's zh-TW patch notes (robots.txt allows it; read once per patch, cached) into `_data/patches.json`: Riot's one-line blurb, the headline image (shown from Riot's site, not copied into the repo), a link to the full notes, what changed in short (champions and items with the numbers before and after) and, for Mayhem, the new augments with Riot's own effect text and the removed ones. The Patch tab shows the latest patch as a card, then Mayhem, Champions and Items sections with "Show all", earlier patches as links, our own notes and the tricks to recheck. The augment list now shows Riot's effect text for the augments introduced in the last 3 patches (26.21 added 35).
 - **One command per patch**: `python3 -I tools/update_patch.py` runs fetch_data, fetch_augments, fetch_changes and fetch_patch_notes; add `--commit` to commit and push the result.
 - **Patch numbers**: Riot's official number is 26.21 and Data Dragon's is 16.21 (same patch); the app shows Riot's.
+- **Automatic updates**: `.github/workflows/update-patch.yml` runs `tools/update_patch.py` every Wednesday, Thursday and Friday (03:00 UTC) and commits what changed as the GitHub bot; start it by hand from the Actions tab. First run (2026-10-27) passed and changed nothing, as expected. Pull on the phone to get the new files.
 - **Workflow**: Copied the LLM Guide, Dev Status / Dev Log / Day note from clawd-room, simplified for a solo project (commit to `main`, no PRs) and added a Start Guide.
 
 ## 📅 Yesterday's Progress (—)
@@ -59,7 +60,8 @@ sticker: lucide//activity
 - [ ] **Damage diffs**: compare per-rank damage using CommunityDragon's old game data (`raw.communitydragon.org/<patch>/game/data/characters/...`, about 11 MB per patch); most balance patches change damage, so the badge undercounts until this is in.
 - [>] **Mayhem-specific balance**: the official notes list Mayhem champion adjustments under the Mayhem heading (none in 26.21); `mayhem_champions` is read but not shown yet.
 - [ ] **Item and augment changes**: the same diff for items (price, stats, text).
-- [x] **Run it each patch**: `python3 -I tools/update_patch.py --commit`.
+- [x] **Run it each patch**: automatic (GitHub Actions), or by hand with `python3 -I tools/update_patch.py --commit`.
+- [ ] **Actions versions**: GitHub warns that `checkout@v4`, `setup-python@v5` and `cache@v4` run on a deprecated Node; bump them when newer majors are confirmed.
 - [ ] **Augment effects before 26.19**: only augments introduced in the last 3 patches have Riot's effect text; run `fetch_patch_notes.py --patches 12` to reach further back, or write `effect` by hand.
 
 ### 🧮 Match data
