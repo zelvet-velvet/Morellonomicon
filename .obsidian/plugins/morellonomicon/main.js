@@ -984,8 +984,9 @@ function factsStrip(parent, c) {
     return h(d, "div", "mn-fs-r");
   };
   const reach = cell("\u8DDD\u96E2");
-  h(reach, "div", "mn-fs-v", reachOf(c) || "\u2014");
-  h(reach, "div", "mn-fs-s", `\u5C04\u7A0B ${c.range}`);
+  reach.classList.add("mn-fs-inline");
+  h(reach, "span", "mn-fs-s", `\u5C04\u7A0B ${c.range}`);
+  h(reach, "span", "mn-fs-v", reachOf(c) || "\u2014");
   const v = h(cell("\u96E3\u5EA6"), "div", "mn-fs-v mn-fs-big", String(c.difficulty));
   h(v, "span", "mn-fs-of", " / 10");
 }

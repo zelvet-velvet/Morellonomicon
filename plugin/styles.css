@@ -496,7 +496,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 
 /* champion facts strip: damage share (stacked bar and legend), then reach and difficulty; labels left, values right */
 .mn-fs { margin: 14px 0 0; border: 1px solid var(--mn-line); border-radius: 8px; background: var(--mn-card); }
-.mn-fs-dmg { padding: 11px 14px 12px; display: grid; gap: 8px; }
+.mn-fs-dmg { padding: 14px 14px 8px; display: grid; gap: 6px; }
 .mn-fs-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .mn-fs-l { font-size: 12px; color: var(--mn-muted); }
 .mn-fs-hint { font-size: 11px; color: var(--mn-faint); }
@@ -511,8 +511,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-dl-kind { font-size: 12px; font-weight: 700; text-align: right; }
 .mn-dl-pct { text-align: right; font-size: 12px; font-weight: 700; color: var(--mn-faint); font-variant-numeric: tabular-nums; }
 .mn-dl-base { text-align: right; font-family: var(--mn-serif); font-weight: 700; font-variant-numeric: tabular-nums; color: var(--mn-text); white-space: nowrap; }
-.mn-dl-foot { padding-top: 2px; }
-.mn-dl-foot + .mn-stack { margin-bottom: 6px; }
+.mn-dl-foot { padding-top: 4px; }
+.mn-dl-foot + .mn-stack { margin-bottom: 12px; }
+.mn-fs-r.mn-fs-inline { display: flex; align-items: baseline; gap: 8px; }
 .mn-fs-v.mn-fs-big { font-size: 30px; line-height: 1.1; }
 .mn-fs-v.mn-fs-big .mn-fs-of { font-size: 13px; }
 .mn-dl-sum { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }

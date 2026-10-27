@@ -178,8 +178,9 @@ export function factsStrip(parent: HTMLElement, c: Champion): void {
     const pair = h(strip, "div", "mn-fs-pair");
     const cell = (label: string) => { const d = h(pair, "div", "mn-fs-c"); h(d, "span", "mn-fs-l", label); return h(d, "div", "mn-fs-r"); };
     const reach = cell("距離");
-    h(reach, "div", "mn-fs-v", reachOf(c) || "—");
-    h(reach, "div", "mn-fs-s", `射程 ${c.range}`);
+    reach.classList.add("mn-fs-inline");   // 近戰 and 射程 125 on one line, sharing a baseline
+    h(reach, "span", "mn-fs-s", `射程 ${c.range}`);
+    h(reach, "span", "mn-fs-v", reachOf(c) || "—");
     const v = h(cell("難度"), "div", "mn-fs-v mn-fs-big", String(c.difficulty));
     h(v, "span", "mn-fs-of", " / 10");
 }
