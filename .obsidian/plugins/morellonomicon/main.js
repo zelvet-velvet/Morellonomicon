@@ -684,7 +684,7 @@ var row = (parent, r) => {
   }
   return el;
 };
-var DAMAGE_COLOR = { \u7269\u7406: "var(--color-orange)", \u9B54\u6CD5: "var(--color-blue)", \u771F\u5BE6: "var(--color-yellow)", \u6DF7\u5408: "var(--color-purple)" };
+var DAMAGE_COLOR = { \u7269\u7406: "var(--mn-phys)", \u9B54\u6CD5: "var(--mn-magic)", \u771F\u5BE6: "var(--mn-true)", \u6DF7\u5408: "var(--mn-mixed)" };
 var chip = (parent, text, o = {}) => {
   const el = h(parent, o.onTap ? "button" : "span", "mn-chip" + (o.on ? " is-on" : "") + (o.color ? " has-color" : "") + (o.onTap ? " is-tap" : ""));
   if (o.color && o.onTap && !o.on) h(el, "span", "mn-dot");
@@ -850,13 +850,13 @@ function profileRadar(parent, axes, color, max = 10) {
   });
 }
 var ABILITIES = [
-  { tag: "\u63A7\u5834", color: "var(--color-purple)", icon: "lock", en: "Crowd Control", abbr: "CC", what: "\u6688\u7729\u3001\u64CA\u98DB\u3001\u5B9A\u8EAB\u3001\u6C89\u9ED8\u3001\u6050\u61FC\u7B49,\u8B93\u6575\u4EBA\u52D5\u4E0D\u4E86\u6216\u4E0D\u80FD\u653E\u6280\u80FD" },
-  { tag: "\u7DE9\u901F", color: "var(--color-blue)", icon: "snowflake", en: "Slow", abbr: "Slow", what: "\u964D\u4F4E\u6575\u4EBA\u7684\u79FB\u52D5\u901F\u5EA6" },
-  { tag: "\u4F4D\u79FB", color: "var(--color-cyan)", icon: "arrow-big-right-dash", en: "Dash / Mobility", abbr: "Dash", what: "\u885D\u523A\u3001\u9583\u73FE\u3001\u77AC\u6B65\u3001\u8DF3\u8E8D\u7B49,\u8B93\u81EA\u5DF1\u5FEB\u901F\u79FB\u52D5" },
-  { tag: "\u6CBB\u7642", color: "var(--color-green)", icon: "heart-pulse", en: "Heal", abbr: "Heal", what: "\u56DE\u5FA9\u81EA\u5DF1\u6216\u968A\u53CB\u7684\u751F\u547D" },
-  { tag: "\u8B77\u76FE", color: "var(--color-yellow)", icon: "shield-plus", en: "Shield", abbr: "Shield", what: "\u7D66\u81EA\u5DF1\u6216\u968A\u53CB\u4E00\u5C64\u53EF\u5438\u6536\u50B7\u5BB3\u7684\u8B77\u76FE" },
-  { tag: "\u5438\u8840", color: "var(--color-red)", icon: "syringe", en: "Lifesteal / Omnivamp", abbr: "LS", what: "\u9020\u6210\u50B7\u5BB3\u6642\u56DE\u5FA9\u81EA\u5DF1\u7684\u751F\u547D" },
-  { tag: "\u5F37\u5316\u666E\u653B", color: "var(--color-pink)", icon: "sword", en: "Empowered attacks (On-hit)", abbr: "On-hit", what: "\u6280\u80FD\u6703\u5F37\u5316\u666E\u901A\u653B\u64CA(\u4E0B\u4E00\u6B21\u666E\u653B\u3001\u984D\u5916\u50B7\u5BB3)\u3002\u4F9D\u6280\u80FD\u6587\u5B57\u5224\u65B7,\u6BD4\u300C\u9069\u5408\u51FA\u653B\u64CA\u7279\u6548\u88DD\u300D\u5BEC" }
+  { tag: "\u63A7\u5834", color: "var(--mn-cc)", icon: "lock", en: "Crowd Control", abbr: "CC", what: "\u6688\u7729\u3001\u64CA\u98DB\u3001\u5B9A\u8EAB\u3001\u6C89\u9ED8\u3001\u6050\u61FC\u7B49,\u8B93\u6575\u4EBA\u52D5\u4E0D\u4E86\u6216\u4E0D\u80FD\u653E\u6280\u80FD" },
+  { tag: "\u7DE9\u901F", color: "var(--mn-slow)", icon: "snowflake", en: "Slow", abbr: "Slow", what: "\u964D\u4F4E\u6575\u4EBA\u7684\u79FB\u52D5\u901F\u5EA6" },
+  { tag: "\u4F4D\u79FB", color: "var(--mn-dash)", icon: "arrow-big-right-dash", en: "Dash / Mobility", abbr: "Dash", what: "\u885D\u523A\u3001\u9583\u73FE\u3001\u77AC\u6B65\u3001\u8DF3\u8E8D\u7B49,\u8B93\u81EA\u5DF1\u5FEB\u901F\u79FB\u52D5" },
+  { tag: "\u6CBB\u7642", color: "var(--mn-heal)", icon: "heart-pulse", en: "Heal", abbr: "Heal", what: "\u56DE\u5FA9\u81EA\u5DF1\u6216\u968A\u53CB\u7684\u751F\u547D" },
+  { tag: "\u8B77\u76FE", color: "var(--mn-shield)", icon: "shield-plus", en: "Shield", abbr: "Shield", what: "\u7D66\u81EA\u5DF1\u6216\u968A\u53CB\u4E00\u5C64\u53EF\u5438\u6536\u50B7\u5BB3\u7684\u8B77\u76FE" },
+  { tag: "\u5438\u8840", color: "var(--mn-ls)", icon: "syringe", en: "Lifesteal / Omnivamp", abbr: "LS", what: "\u9020\u6210\u50B7\u5BB3\u6642\u56DE\u5FA9\u81EA\u5DF1\u7684\u751F\u547D" },
+  { tag: "\u5F37\u5316\u666E\u653B", color: "var(--mn-onhit)", icon: "sword", en: "Empowered attacks (On-hit)", abbr: "On-hit", what: "\u6280\u80FD\u6703\u5F37\u5316\u666E\u901A\u653B\u64CA(\u4E0B\u4E00\u6B21\u666E\u653B\u3001\u984D\u5916\u50B7\u5BB3)\u3002\u4F9D\u6280\u80FD\u6587\u5B57\u5224\u65B7,\u6BD4\u300C\u9069\u5408\u51FA\u653B\u64CA\u7279\u6548\u88DD\u300D\u5BEC" }
 ];
 var AbilityLegend = class extends import_obsidian4.Modal {
   constructor(app) {
@@ -911,6 +911,7 @@ function damageMeters(parent, c) {
   const top = Math.max(c.attack, c.magic);
   for (const [kind, rating] of [["\u7269\u7406", c.attack], ["\u9B54\u6CD5", c.magic]]) {
     const row2 = h(parent, "div", "mn-mt" + (rating === top ? " is-main" : ""));
+    row2.style.setProperty("--k", DAMAGE_COLOR[kind]);
     h(row2, "span", "mn-mt-k", kind);
     h(h(row2, "span", "mn-mt-bar"), "i", "").style.width = `${Math.max(0, Math.min(10, rating)) * 10}%`;
     h(row2, "span", "mn-mt-n", String(rating));
@@ -1481,6 +1482,7 @@ function championCard(ctx) {
     empty(el, { icon: "user-x", title: "Champion not found" });
     return { title: "", el };
   }
+  const dmgColor = DAMAGE_COLOR[c.damageType] ?? "var(--interactive-accent)";
   const hero = h(el, "div", "mn-hero");
   const bg = h(hero, "div", "mn-hero-bg");
   bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
@@ -1506,7 +1508,7 @@ function championCard(ctx) {
     const m = marker(entryDir(official.entry));
     chip(tags, `${m.mark} ${official.patch}`, { color: m.color, onTap: openChanges });
   }
-  championProfile(h(el, "div", "mn-panel mn-profile"), c, "var(--mn-muted)", ctx.app);
+  championProfile(h(el, "div", "mn-panel mn-profile"), c, dmgColor, ctx.app);
   const mayhem = ctx.plugin.settings.mode === "mayhem";
   const tabs = [["skills", "Skills"], ["build", "Build"], ["augments", mayhem ? "Augments" : "Runes"], ["tips", "Tips"]];
   let block = null;

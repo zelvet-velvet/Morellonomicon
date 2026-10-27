@@ -84,7 +84,7 @@ export const row = (parent: HTMLElement, r: RowSpec): HTMLElement => {
     return el;
 };
 
-export const DAMAGE_COLOR: Record<string, string> = { 物理: "var(--color-orange)", 魔法: "var(--color-blue)", 真實: "var(--color-yellow)", 混合: "var(--color-purple)" };
+export const DAMAGE_COLOR: Record<string, string> = { 物理: "var(--mn-phys)", 魔法: "var(--mn-magic)", 真實: "var(--mn-true)", 混合: "var(--mn-mixed)" };
 
 export const chip = (parent: HTMLElement, text: string, o: { color?: string; on?: boolean; onTap?: () => void } = {}): HTMLElement => {
     const el = h(parent, o.onTap ? "button" : "span", "mn-chip" + (o.on ? " is-on" : "") + (o.color ? " has-color" : "") + (o.onTap ? " is-tap" : ""));

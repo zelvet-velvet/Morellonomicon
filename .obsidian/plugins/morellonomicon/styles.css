@@ -10,6 +10,9 @@
     --mn-faint: var(--text-faint);
     --mn-accent: var(--interactive-accent);
     --mn-line: color-mix(in srgb, var(--text-normal) 12%, transparent);
+    /* one muted palette for damage kinds and abilities (mid tones: readable on dark and light, white text on a solid fill still reads) */
+    --mn-phys: #c4684f; --mn-magic: #6f7ad0; --mn-true: #b8973f; --mn-mixed: #9a6db5;
+    --mn-cc: #8e6bc2; --mn-slow: #3f9ab8; --mn-dash: #36a089; --mn-heal: #5fa24a; --mn-shield: #c09a30; --mn-ls: #c4546a; --mn-onhit: #d17b3e;
     --mn-radius: 18px;
     --mn-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
     --mn-safe-top: 0px;
@@ -450,7 +453,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lg-w { font-size: 12px; font-weight: 400; color: var(--mn-muted); line-height: 1.35; }
 .mn-lg-e { font-size: 12px; color: var(--mn-muted); }
 .mn-lg-note { font-size: 12px; color: var(--mn-muted); margin-top: 12px; }
-.mn-pill.is-lit { background: var(--mn-text); color: var(--mn-bg); }
+.mn-pill.is-lit { background: color-mix(in srgb, var(--p) 22%, var(--mn-bg)); color: var(--p); border: 1px solid color-mix(in srgb, var(--p) 60%, transparent); }
 .mn-pill.is-off { color: var(--mn-faint); border: 1px dashed var(--mn-line); }
 
 /* Quick Look */
@@ -507,7 +510,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-spec-v { font-size: 15px; font-weight: 700; display: grid; gap: 7px; }
 .mn-mt { display: grid; grid-template-columns: 28px 1fr 18px; gap: 10px; align-items: center; font-size: 13px; font-weight: 600; color: var(--mn-muted); }
 .mn-mt-bar { height: 5px; border-radius: 3px; background: var(--mn-line); overflow: hidden; }
-.mn-mt-bar i { display: block; height: 100%; border-radius: 3px; background: var(--mn-text); opacity: 0.4; }
+.mn-mt-bar i { display: block; height: 100%; border-radius: 3px; background: var(--k, var(--mn-text)); opacity: 0.45; }
 .mn-mt.is-main { color: var(--mn-text); }
-.mn-mt.is-main .mn-mt-bar i { opacity: 0.92; }
+.mn-mt.is-main .mn-mt-bar i { opacity: 1; }
 .mn-mt-n { text-align: right; font-variant-numeric: tabular-nums; }

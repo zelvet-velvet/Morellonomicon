@@ -1,7 +1,7 @@
 import { Modal } from "obsidian";
 import type { App } from "obsidian";
 import type { Champion } from "../data/store";
-import { h, icon, svg, tip } from "../ui";
+import { DAMAGE_COLOR, h, icon, svg, tip } from "../ui";
 
 // A champion at a glance: what it can do, drawn as a profile chart, plus the abilities it has. Every axis comes from data we have:
 //   輸出 = its stronger damage rating (Riot, 1-10)        坦度 = Riot's defence rating
@@ -59,13 +59,13 @@ export function profileRadar(parent: HTMLElement, axes: Axis[], color: string, m
 // The abilities a champion has, as icons: lit when it has them (with how many of its skills), dim when it does not.
 // Tap an icon for its name; the legend lists every icon with its full name and the usual abbreviation.
 const ABILITIES: { tag: string; color: string; icon: string; en: string; abbr: string; what: string }[] = [
-    { tag: "控場", color: "var(--color-purple)", icon: "lock", en: "Crowd Control", abbr: "CC", what: "暈眩、擊飛、定身、沉默、恐懼等,讓敵人動不了或不能放技能" },
-    { tag: "緩速", color: "var(--color-blue)", icon: "snowflake", en: "Slow", abbr: "Slow", what: "降低敵人的移動速度" },
-    { tag: "位移", color: "var(--color-cyan)", icon: "arrow-big-right-dash", en: "Dash / Mobility", abbr: "Dash", what: "衝刺、閃現、瞬步、跳躍等,讓自己快速移動" },
-    { tag: "治療", color: "var(--color-green)", icon: "heart-pulse", en: "Heal", abbr: "Heal", what: "回復自己或隊友的生命" },
-    { tag: "護盾", color: "var(--color-yellow)", icon: "shield-plus", en: "Shield", abbr: "Shield", what: "給自己或隊友一層可吸收傷害的護盾" },
-    { tag: "吸血", color: "var(--color-red)", icon: "syringe", en: "Lifesteal / Omnivamp", abbr: "LS", what: "造成傷害時回復自己的生命" },
-    { tag: "強化普攻", color: "var(--color-pink)", icon: "sword", en: "Empowered attacks (On-hit)", abbr: "On-hit", what: "技能會強化普通攻擊(下一次普攻、額外傷害)。依技能文字判斷,比「適合出攻擊特效裝」寬" },
+    { tag: "控場", color: "var(--mn-cc)", icon: "lock", en: "Crowd Control", abbr: "CC", what: "暈眩、擊飛、定身、沉默、恐懼等,讓敵人動不了或不能放技能" },
+    { tag: "緩速", color: "var(--mn-slow)", icon: "snowflake", en: "Slow", abbr: "Slow", what: "降低敵人的移動速度" },
+    { tag: "位移", color: "var(--mn-dash)", icon: "arrow-big-right-dash", en: "Dash / Mobility", abbr: "Dash", what: "衝刺、閃現、瞬步、跳躍等,讓自己快速移動" },
+    { tag: "治療", color: "var(--mn-heal)", icon: "heart-pulse", en: "Heal", abbr: "Heal", what: "回復自己或隊友的生命" },
+    { tag: "護盾", color: "var(--mn-shield)", icon: "shield-plus", en: "Shield", abbr: "Shield", what: "給自己或隊友一層可吸收傷害的護盾" },
+    { tag: "吸血", color: "var(--mn-ls)", icon: "syringe", en: "Lifesteal / Omnivamp", abbr: "LS", what: "造成傷害時回復自己的生命" },
+    { tag: "強化普攻", color: "var(--mn-onhit)", icon: "sword", en: "Empowered attacks (On-hit)", abbr: "On-hit", what: "技能會強化普通攻擊(下一次普攻、額外傷害)。依技能文字判斷,比「適合出攻擊特效裝」寬" },
 ];
 
 // The chart of every ability icon: icon, name, English name, abbreviation and what it means
@@ -128,6 +128,7 @@ function damageMeters(parent: HTMLElement, c: Champion): void {
     const top = Math.max(c.attack, c.magic);
     for (const [kind, rating] of [["物理", c.attack], ["魔法", c.magic]] as const) {
         const row = h(parent, "div", "mn-mt" + (rating === top ? " is-main" : ""));
+        row.style.setProperty("--k", DAMAGE_COLOR[kind]);
         h(row, "span", "mn-mt-k", kind);
         h(h(row, "span", "mn-mt-bar"), "i", "").style.width = `${Math.max(0, Math.min(10, rating)) * 10}%`;
         h(row, "span", "mn-mt-n", String(rating));
