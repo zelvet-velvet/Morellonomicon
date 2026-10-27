@@ -123,7 +123,7 @@ button.mn-chip:active { transform: scale(0.96); }
 .mn-rd-dot { fill: var(--rd); stroke: var(--mn-bg); stroke-width: 1.5; }
 .mn-rd-label { fill: var(--mn-muted); font-size: 11px; font-weight: 500; }
 .mn-rd-val { fill: var(--mn-text); font-weight: 800; font-size: 12px; }
-.mn-skills { display: flex; justify-content: space-between; gap: 8px; margin: 14px 0; }
+.mn-skills { display: flex; justify-content: flex-start; gap: 10px; margin: 14px 0; }
 .mn-skill-box { padding: 0; --chip: var(--mn-line); position: relative; flex: 1; max-width: 52px; aspect-ratio: 1; border: 2px solid var(--chip); border-radius: 8px; overflow: hidden;
     box-shadow: 0 0 14px color-mix(in srgb, var(--chip) 35%, transparent); }
 .mn-skill-box img { width: 100%; height: 100%; display: block; }
@@ -549,3 +549,11 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app .mn-seg.mn-seg-line { gap: 0; padding: 0; margin: 14px 0 8px; border: none; border-bottom: 1px solid var(--mn-line); border-radius: 0; background: none; }
 .mn-app .mn-seg-line .mn-seg-b { min-height: 42px; border-radius: 0; font-family: var(--mn-serif); font-size: 15px; letter-spacing: 0.08em; color: var(--mn-muted); }
 .mn-app .mn-seg-line .mn-seg-b.is-on { background: none; color: var(--mn-text); font-weight: 700; box-shadow: inset 0 -2px 0 var(--mn-accent); }
+
+/* a page that starts with a splash (champion): the top bar floats over it, clear, with Back on a dark disc; it gets its
+   background back once the page has scrolled past the picture */
+.mn-app.is-overlay .mn-top { position: absolute; left: 0; right: 0; top: 0; background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; border-bottom-color: transparent; transition: background 0.2s, border-color 0.2s; }
+.mn-app.is-overlay .mn-top.is-scrolled { background: color-mix(in srgb, var(--mn-bg) 80%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom-color: var(--mn-line); }
+.mn-app.is-overlay .mn-top:not(.is-scrolled) .mn-top-title { opacity: 0; }
+.mn-app.is-overlay .mn-top:not(.is-scrolled) .mn-back { background: rgba(0, 0, 0, 0.38); color: #fff; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.mn-app.is-overlay .mn-hero { min-height: calc(250px + 48px + var(--mn-safe-top)); }

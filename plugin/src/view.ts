@@ -11,6 +11,8 @@ export const VIEW_TYPE = "morellonomicon";
 
 // The app screen: top bar (back, title, mode switch), page area, tab bar. A page is drawn in one step when a tab, a detail page
 // or the data changes; scroll positions are kept per page so Back returns to where you were.
+const OVERLAY_PAGES = new Set(["champion"]);
+const OVERLAY_SCROLL = 220;   // px scrolled before the top bar gets its background back over a splash
 const SPINNER_DELAY = 140;   // ms a page may take before the spinner shows (a quick load never flashes it)
 const IMAGE_WAIT = 8000;     // ms before a page is shown even if a picture has not arrived
 const ARRIVE_MS = 240;
@@ -75,7 +77,7 @@ export class MnView extends ItemView {
         modeBtn.addEventListener("click", (e) => { e.preventDefault(); this.modeMenu(e); });
         this.modeBtn = modeBtn;
         this.scrollEl = h(app, "div", "mn-scroll");
-        this.registerDomEvent(this.scrollEl, "scroll", () => this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > 36), { passive: true });
+        this.registerDomEvent(this.scrollEl, "scroll", () => this.markScrolled(), { passive: true });
         this.loaderEl = h(app, "div", "mn-loader");
         h(this.loaderEl, "div", "mn-spin");
         this.tabsEl = h(app, "div", "mn-tabs");
@@ -89,6 +91,10 @@ export class MnView extends ItemView {
 
     private modeBtn!: HTMLElement;
     private drawId = 0;
+    private markScrolled(): void {
+        const past = this.appEl.hasClass("is-overlay") ? OVERLAY_SCROLL : 36;
+        this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > past);
+    }
     private loaderEl!: HTMLElement;   // a spinner over the page while its pictures load
     private actsEl!: HTMLElement;   // theme and mode buttons: in the big title row of a tab's first page, in the top bar elsewhere
 
@@ -190,7 +196,9 @@ export class MnView extends ItemView {
         (titleRow ?? this.topEl).appendChild(this.actsEl);
         this.actsEl.toggleClass("is-hidden", !titleRow);   // only a tab's first page has them
         this.topEl.toggleClass("has-back", this.router.depth() > 0);
-        this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > 36);
+        // a champion page puts its splash under the top bar (Back floats on the picture) until it scrolls past it
+        this.appEl.toggleClass("is-overlay", OVERLAY_PAGES.has(f.key));
+        this.markScrolled();
         if (anim === "none") { this.loaderEl.removeClass("is-on"); return; }
         // pictures that are in view and not here yet: keep the page hidden under a spinner until they arrive (or give up after a while)
         const waiting = pendingImages(out.el);

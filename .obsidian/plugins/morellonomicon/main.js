@@ -2547,6 +2547,8 @@ function renderPage(tab, ctx) {
 
 // src/view.ts
 var VIEW_TYPE = "morellonomicon";
+var OVERLAY_PAGES = /* @__PURE__ */ new Set(["champion"]);
+var OVERLAY_SCROLL = 220;
 var SPINNER_DELAY = 140;
 var IMAGE_WAIT = 8e3;
 var ARRIVE_MS = 240;
@@ -2629,7 +2631,7 @@ var MnView = class extends import_obsidian8.ItemView {
     });
     this.modeBtn = modeBtn;
     this.scrollEl = h(app, "div", "mn-scroll");
-    this.registerDomEvent(this.scrollEl, "scroll", () => this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > 36), { passive: true });
+    this.registerDomEvent(this.scrollEl, "scroll", () => this.markScrolled(), { passive: true });
     this.loaderEl = h(app, "div", "mn-loader");
     h(this.loaderEl, "div", "mn-spin");
     this.tabsEl = h(app, "div", "mn-tabs");
@@ -2640,6 +2642,10 @@ var MnView = class extends import_obsidian8.ItemView {
   }
   async onClose() {
     this.scrolls.clear();
+  }
+  markScrolled() {
+    const past = this.appEl.hasClass("is-overlay") ? OVERLAY_SCROLL : 36;
+    this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > past);
   }
   // theme and mode buttons: in the big title row of a tab's first page, in the top bar elsewhere
   // The chosen colour theme as variables on the app element (none = Obsidian's own colours)
@@ -2762,7 +2768,8 @@ var MnView = class extends import_obsidian8.ItemView {
     (titleRow ?? this.topEl).appendChild(this.actsEl);
     this.actsEl.toggleClass("is-hidden", !titleRow);
     this.topEl.toggleClass("has-back", this.router.depth() > 0);
-    this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > 36);
+    this.appEl.toggleClass("is-overlay", OVERLAY_PAGES.has(f.key));
+    this.markScrolled();
     if (anim === "none") {
       this.loaderEl.removeClass("is-on");
       return;
