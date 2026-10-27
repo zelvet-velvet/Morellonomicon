@@ -605,3 +605,4 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app .mn-chip.mn-chip-ic { justify-content: center; }
 .mn-chip-ic .mn-ic { display: flex; }
 .mn-chip-ic svg { width: 20px; height: 20px; }
+.mn-role-img { display: block; width: 22px; height: 22px; object-fit: contain; }

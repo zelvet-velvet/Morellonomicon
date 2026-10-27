@@ -711,6 +711,8 @@ var chip = (parent, text, o = {}) => {
   return el;
 };
 var ROLE_ICON = { \u6230\u58EB: "swords", \u5766\u514B: "shield", \u6CD5\u5E2B: "wand-sparkles", \u523A\u5BA2: "slice", \u5C04\u624B: "target", \u8F14\u52A9: "heart-handshake" };
+var ROLE_WIKI = "https://wiki.leagueoflegends.com/en-us/Special:FilePath/";
+var ROLE_FILE = { \u6230\u58EB: "Fighter_icon.png", \u5766\u514B: "Tank_icon.png", \u6CD5\u5E2B: "Mage_icon.png", \u523A\u5BA2: "Assassin_icon.png", \u5C04\u624B: "Marksman_icon.png", \u8F14\u52A9: "Controller_icon.png" };
 var roleChip = (parent, role, o) => {
   let el = null;
   el = chip(parent, "", { on: o.on, onTap: () => {
@@ -719,7 +721,18 @@ var roleChip = (parent, role, o) => {
   } });
   el.classList.add("mn-chip-ic");
   el.setAttribute("aria-label", role);
-  icon(el, ROLE_ICON[role] ?? "circle");
+  const file = ROLE_FILE[role];
+  if (!file) {
+    icon(el, ROLE_ICON[role] ?? "circle");
+    return el;
+  }
+  const im = h(el, "img", "mn-role-img");
+  im.alt = "";
+  im.addEventListener("error", () => {
+    im.remove();
+    if (el) icon(el, ROLE_ICON[role] ?? "circle");
+  }, { once: true });
+  im.src = ROLE_WIKI + file;
   return el;
 };
 var fgrid = (parent, cells) => {
