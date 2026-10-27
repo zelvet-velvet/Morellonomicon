@@ -3,6 +3,7 @@ import type { Champion, Item } from "../data/store";
 import { chip, empty, group, h, icon, row } from "../ui";
 import { RARITY_COLOR } from "./augments";
 import { officialBlock } from "./changes";
+import { deckPage } from "./deck";
 import type { PageCtx, PageOut } from "./index";
 
 const TAG_ZH: Record<string, string> = {
@@ -18,6 +19,8 @@ export function notePage(ctx: PageCtx): PageOut {
     const file = ctx.app.vault.getAbstractFileByPath(path);
     const el = h(null, "div", "mn-page");
     if (!(file instanceof TFile)) { empty(el, { icon: "file-x", title: "Note not found" }); return { title: "", el }; }
+    // a guide topic written as cards (`## ` sections) is a swipeable deck; others (the glossary) are read as a note
+    if (ctx.plugin.store.guideNotes().some((n) => n.file.path === path && n.layout === "deck")) return deckPage(ctx, file);
     h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
     const body = h(el, "div", "mn-note markdown-rendered");
     void ctx.app.vault.cachedRead(file).then((text) => MarkdownRenderer.render(ctx.app, text.replace(/^---[\s\S]*?---\n/, ""), body, path, ctx.component));

@@ -36,6 +36,8 @@ sticker: lucide//activity
 - **Patch tab decision**: no list pages. Icon grids (new Mayhem augments with a rarity ring, changed champions and items with a +n badge) open the augment / champion / item page in one tap; those pages carry Riot's old → new lines ("Recent changes" on a champion, "版本調整" on an item).
 - **Augment page**: effect text (96 of 249 augments now have Riot's, from the last 12 patches), effect keywords, champions that suit it (hand-written `fits` first, else a plain keyword guess, labelled as a guess), and its add / remove history.
 - **Fixes**: the skill rank grid lost its layout (a CSS edit landed inside the wrong rule); the Handbook grid no longer scrolls sideways on a phone.
+- **Handbook as picture cards** (2026-10-27): each guide topic is a swipeable deck (dots, ‹ ›, swipe left / right); every `## ` section is one card with a big picture and one or two lines. Pictures come from the data: Riot's ability clips, a live radar chart, skill icons with their damage frames, champions of a role, items of a kind, augments of a rarity, or your own screenshot. A lore trivia card ("你知道嗎?": one line of a champion's lore on its splash art, tap for the next) sits between the topic cards. Topic cards use muted colours; the glossary is a plain list (`layout: list`).
+- **Filter panel**: 清除 moved into the panel as "全部清除"; the 篩選 button is outlined (accent border when open or in use) instead of a cream block.
 - **Workflow**: Copied the LLM Guide, Dev Status / Dev Log / Day note from clawd-room, simplified for a solo project (commit to `main`, no PRs) and added a Start Guide.
 
 ## 📅 Yesterday's Progress (—)
@@ -76,6 +78,10 @@ sticker: lucide//activity
 - [ ] ~~First real run~~ (Rift only): needs a Riot key in `.env` (`RIOT_API_KEY=RGAPI-...`) and a seed Riot ID; `python3 tools/fetch_builds.py --seed "Name#TW2" --matches 300`. A development key expires every 24 hours; a personal key does not. Check that the augment ids in the matches match the notes' ids and that final items include the ARAM `77NNNN` ids.
 - [ ] **Hand-written builds and tips**: `builds` (kind meta / alt / synergy, mode, name, items, note, with) and `tips` (title, text, video) in a champion note's frontmatter; none written yet.
 - [ ] **Augments sub-tab**: use the counted augment picks (and `fits`) once there is data.
+
+### 🖼️ Handbook pictures
+- [ ] **In-game screenshots** (Zaviel): save them in the vault (e.g. `Assets/`) and put `visual: img Assets/name.png` under a card. Wanted: where the skill damage and cooldown show in the HUD; the augment pick screen (silver / gold / prismatic); the item shop with the recipe tree; the scoreboard; the minimap and ward icons.
+- [ ] **More decks**: Rift basics, ward and map reading, ping etiquette; one card each for the trick-of-the-week.
 
 ### 🎬 Videos
 - [>] **Skill demo clips**: played from Riot's ability CDN (`champion-abilities/<key>/ability_<key>_Q1.mp4`); unofficial path, so check on the phone (iOS plays the mp4) and that a missing clip just disappears.

@@ -55,7 +55,7 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
 // Riot's own ability demo (the clip the official champion page plays): <champion key, 4 digits>/ability_<key>_<P|Q|W|E|R>1.mp4/.webm.
 // An unofficial but public Riot CDN path, so if a clip is missing or the address changes the video simply does not appear.
 const DEMO_BASE = "https://d28xe8vt774jo5.cloudfront.net/champion-abilities";
-function demo(parent: HTMLElement, c: Champion, s: Skill): void {
+export function demo(parent: HTMLElement, c: Champion, s: { key: string }): void {
     if (!c.key) return;
     const key = String(c.key).padStart(4, "0");
     const url = `${DEMO_BASE}/${key}/ability_${key}_${s.key}1`;

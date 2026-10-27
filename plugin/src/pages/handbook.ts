@@ -7,6 +7,16 @@ const CHARS_PER_MINUTE = 350;   // reading speed for the "N min" label (Chinese)
 const KEYWORDS = 6;      // quick-search chips taken from the glossary
 const TILE_COLORS = ["--color-blue", "--color-purple", "--color-orange", "--color-green", "--color-cyan", "--color-pink", "--color-yellow", "--color-red"];
 const GLOSSARY = "名詞表";
+const TRIVIA_AFTER = 4;   // topic cards above the lore trivia card
+
+// a stable pseudo-random number from a whole number (the day, then +1 per tap)
+const hash = (x: number): number => Math.imul(x ^ 0x9e3779b9, 2654435761) >>> 0;
+
+// the first sentence of a champion's lore, kept to one line or two
+function firstSentence(blurb: string): string {
+    const s = blurb.split(/(?<=[。!?!?])/)[0] ?? blurb;
+    return s.length > 64 ? s.slice(0, 62) + "…" : s;
+}
 
 // The Handbook: a short, friendly start page (where to begin, topic tiles with a read time, a small fact of the day) and a search over
 // everything we have written (guide cards, champion tips and our own builds), so a detail read once can be found again in a couple of taps.
@@ -54,36 +64,46 @@ export function handbookPage(ctx: PageCtx): PageOut {
         h(prog, "div", "mn-prog-t", `${done} / ${notes.length}`);
         hero.addEventListener("click", (e) => { e.preventDefault(); ctx.openNote(next.file.path); });
 
-        const grid = h(out, "div", "mn-ht-grid");
-        notes.forEach((n, i) => {
-            const tile = h(grid, "button", "mn-ht");
-            tile.style.setProperty("--c", `var(${TILE_COLORS[i % TILE_COLORS.length]})`);
-            const top = h(tile, "div", "mn-ht-top");
+        // topic cards in two groups with a lore trivia card between them (like a loading screen)
+        const tile = (grid: HTMLElement, n: (typeof notes)[number], i: number) => {
+            const t = h(grid, "button", "mn-ht");
+            t.style.setProperty("--c", `var(${TILE_COLORS[i % TILE_COLORS.length]})`);
+            const top = h(t, "div", "mn-ht-top");
             icon(h(top, "span", "mn-ht-ic"), n.icon);
             if (read.has(n.file.path)) icon(h(top, "span", "mn-ht-done"), "check");
-            h(tile, "div", "mn-ht-t", n.title);
-            if (n.summary) h(tile, "div", "mn-ht-s", n.summary);
-            h(tile, "div", "mn-ht-m", `${minutes(n.file.stat.size)} 分鐘`);
-            tile.addEventListener("click", (e) => { e.preventDefault(); ctx.openNote(n.file.path); });
-        });
-
-        void fact();
+            h(t, "div", "mn-ht-t", n.title);
+            if (n.summary) h(t, "div", "mn-ht-s", n.summary);
+            h(t, "div", "mn-ht-m", n.layout === "deck" ? `${minutes(n.file.stat.size)} 分鐘` : "查詢");
+            t.addEventListener("click", (e) => { e.preventDefault(); ctx.openNote(n.file.path); });
+        };
+        const first = h(out, "div", "mn-ht-grid");
+        notes.slice(0, TRIVIA_AFTER).forEach((n, i) => tile(first, n, i));
+        trivia(out);
+        if (notes.length > TRIVIA_AFTER) {
+            const rest = h(out, "div", "mn-ht-grid");
+            notes.slice(TRIVIA_AFTER).forEach((n, i) => tile(rest, n, i + TRIVIA_AFTER));
+        }
     };
 
-    // a glossary line that changes every day
-    const fact = async () => {
-        const g = notes.find((n) => n.title === GLOSSARY);
-        if (!g) return;
-        const lines = (await load()).get(g.file.path) ?? [];
-        const entries = lines.filter((l) => /[:：]/.test(l));
-        if (!entries.length || search.value.trim()) return;
-        const day = Math.floor(Date.now() / 86_400_000);
-        const [term, ...rest] = entries[day % entries.length].split(/[:：]/);
-        const card = h(out, "button", "mn-fact");
-        h(card, "div", "mn-fact-k", "今日小知識");
-        h(card, "div", "mn-fact-t", term.trim());
-        h(card, "div", "mn-fact-s", rest.join(":").trim());
-        card.addEventListener("click", (e) => { e.preventDefault(); ctx.openNote(g.file.path); });
+    // "你知道嗎?": one line of a champion's lore on its splash art; tap for the next one
+    const trivia = (parent: HTMLElement) => {
+        const champs = store.champions().filter((c) => c.blurb);
+        if (!champs.length) return;
+        let n = Math.floor(Date.now() / 86_400_000);
+        const card = h(parent, "button", "mn-trv");
+        const draw = () => {
+            card.empty();
+            const c = champs[hash(n) % champs.length];
+            const bg = h(card, "div", "mn-trv-bg");
+            bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
+            const body = h(card, "div", "mn-trv-body");
+            h(body, "div", "mn-trv-k", "你知道嗎?");
+            h(body, "div", "mn-trv-t", `${c.name} · ${c.title}`);
+            h(body, "div", "mn-trv-s", firstSentence(c.blurb));
+            icon(h(card, "span", "mn-trv-next"), "refresh-cw");
+        };
+        card.addEventListener("click", (e) => { e.preventDefault(); n += 1; draw(); });
+        draw();
     };
 
     // quick-search chips: the glossary's terms

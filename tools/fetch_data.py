@@ -214,7 +214,7 @@ def champion_note(c, version, bin_data):
     spells = c["spells"]
     dmg_all = sorted({d for s in spells for d in spell_damage(s)})
     fm = {
-        "type": "champion", "id": c["id"], "key": int(c["key"]), "name": c["name"], "title": c["title"],
+        "type": "champion", "id": c["id"], "key": int(c["key"]), "name": c["name"], "title": c["title"], "blurb": strip_html(c.get("blurb", "")).replace("\n", " "),
         "roles": [ROLE_ZH.get(t, t) for t in c["tags"]], "damage_type": damage_type(info),
         "skill_damage": dmg_all, "archetypes": archetypes(c),
         "features": spell_features(spells, c["passive"]), "resource": c["partype"],

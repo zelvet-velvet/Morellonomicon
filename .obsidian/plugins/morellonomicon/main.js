@@ -23,7 +23,7 @@ __export(main_exports, {
   default: () => MorellonomiconPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian6 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 
 // src/data/store.ts
 var import_obsidian = require("obsidian");
@@ -133,6 +133,7 @@ var Store = class {
         key: num(fm.key),
         name: str(fm.name, file.basename),
         title: str(fm.title),
+        blurb: str(fm.blurb),
         roles: list(fm.roles),
         damageType: str(fm.damage_type),
         skillDamage: list(fm.skill_damage),
@@ -263,7 +264,7 @@ var Store = class {
   }
   // The Learn cards: notes in the guide folder, ordered by their `order` (then name); `icon` and `summary` come from frontmatter
   guideNotes() {
-    return this.notes(this.s.guideFolder).map(({ file, fm }) => ({ file, title: file.basename, icon: str(fm.icon, "file-text"), summary: str(fm.summary), order: num(fm.order, 99) })).sort((a, b) => a.order - b.order || a.title.localeCompare(b.title, "zh-Hant"));
+    return this.notes(this.s.guideFolder).map(({ file, fm }) => ({ file, title: file.basename, icon: str(fm.icon, "file-text"), summary: str(fm.summary), order: num(fm.order, 99), layout: str(fm.layout, "deck") })).sort((a, b) => a.order - b.order || a.title.localeCompare(b.title, "zh-Hant"));
   }
 };
 
@@ -587,7 +588,7 @@ var MnSettingTab = class extends import_obsidian2.PluginSettingTab {
 };
 
 // src/view.ts
-var import_obsidian5 = require("obsidian");
+var import_obsidian6 = require("obsidian");
 
 // src/ui.ts
 var import_obsidian3 = require("obsidian");
@@ -960,11 +961,11 @@ function changesBlock(parent, c, ctx) {
 // src/pages/skills.ts
 function skillStrip(parent, c, changes = []) {
   if (!c.skills.length) return;
-  const strip = h(parent, "div", "mn-skills");
+  const strip2 = h(parent, "div", "mn-skills");
   const detail = h(parent, "div", "mn-skill-detail");
   let open = -1;
   const boxes = c.skills.map((s, i) => {
-    const box = h(strip, "button", "mn-skill-box");
+    const box = h(strip2, "button", "mn-skill-box");
     box.setAttribute("aria-label", `${s.key} ${s.name}`);
     const im = h(box, "img");
     im.src = s.icon;
@@ -1149,7 +1150,7 @@ function championPicker(parent, ctx) {
       redraw();
     } });
     const n = activeFilters();
-    const fb = h(filters, "button", "mn-filterbtn" + (F.open ? " is-open" : ""));
+    const fb = h(filters, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
     icon(fb, "sliders-horizontal", "mn-filterbtn-ic");
     h(fb, "span", "", "\u7BE9\u9078");
     if (n) h(fb, "span", "mn-filterbtn-n", String(n));
@@ -1159,8 +1160,16 @@ function championPicker(parent, ctx) {
       drawFilters();
       drawPanel();
     });
-    if (n || F.sort !== "name") {
-      const clear = h(filters, "button", "mn-clear", "\u6E05\u9664");
+  };
+  const drawPanel = () => {
+    panel.empty();
+    panel.toggleClass("is-open", F.open);
+    if (!F.open) return;
+    const on = activeFilters();
+    const top = h(panel, "div", "mn-fp-top");
+    h(top, "span", "mn-fp-count", on ? `\u5DF2\u9078 ${on} \u9805` : "\u9078\u64C7\u689D\u4EF6");
+    if (on || F.sort !== "name") {
+      const clear = h(top, "button", "mn-clear", "\u5168\u90E8\u6E05\u9664");
       clear.addEventListener("click", (e) => {
         e.preventDefault();
         F.roles.clear();
@@ -1171,11 +1180,6 @@ function championPicker(parent, ctx) {
         redraw();
       });
     }
-  };
-  const drawPanel = () => {
-    panel.empty();
-    panel.toggleClass("is-open", F.open);
-    if (!F.open) return;
     const sect = (title, hint = "") => {
       const s = h(panel, "div", "mn-fp-s");
       const head = h(s, "div", "mn-fp-h");
@@ -1319,7 +1323,185 @@ function tips(body, c, ctx) {
 }
 
 // src/pages/detail.ts
+var import_obsidian5 = require("obsidian");
+
+// src/pages/deck.ts
 var import_obsidian4 = require("obsidian");
+var STRIP = 6;
+function parseSlides(md) {
+  const body = md.replace(/^---[\s\S]*?---\n/, "");
+  return body.split(/^## /m).slice(1).map((part) => {
+    const lines = part.split("\n");
+    const title = (lines.shift() ?? "").trim();
+    let ic = "", visual2 = "";
+    const text = [];
+    for (const l of lines) {
+      const m = /^(icon|visual):\s*(.*)$/.exec(l.trim());
+      if (m) {
+        if (m[1] === "icon") ic = m[2].trim();
+        else visual2 = m[2].trim();
+      } else text.push(l);
+    }
+    return { title, icon: ic || "sparkles", visual: visual2, text: text.join("\n").trim() };
+  });
+}
+var hashStr = (s) => {
+  let x = 2166136261;
+  for (let i = 0; i < s.length; i++) x = Math.imul(x ^ s.charCodeAt(i), 16777619);
+  return x >>> 0;
+};
+var day = () => String(Math.floor(Date.now() / 864e5));
+function deckPage(ctx, file) {
+  const store = ctx.plugin.store;
+  const el = h(null, "div", "mn-page mn-deckpage");
+  h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
+  const dots = h(el, "div", "mn-dots");
+  const pager = h(el, "div", "mn-pager");
+  const nav = h(el, "div", "mn-decknav");
+  void ctx.app.vault.cachedRead(file).then((md) => {
+    const slides = parseSlides(md);
+    const guide = store.guideNotes();
+    const at = guide.findIndex((n) => n.file.path === file.path);
+    const next = guide[at + 1];
+    slides.forEach((s, i) => {
+      h(dots, "span", "mn-dot2" + (i === 0 ? " is-on" : ""));
+      const sec = h(pager, "section", "mn-slide");
+      visual(ctx, h(sec, "div", "mn-sl-vis"), s);
+      h(sec, "h2", "mn-sl-t", s.title);
+      if (s.text) void import_obsidian4.MarkdownRenderer.render(ctx.app, s.text, h(sec, "div", "mn-sl-x markdown-rendered"), file.path, ctx.component);
+    });
+    const end = h(pager, "section", "mn-slide mn-slide-end");
+    h(h(end, "div", "mn-sl-vis"), "div", "mn-sl-hero").appendChild(document.createTextNode("\u{1F389}"));
+    h(end, "h2", "mn-sl-t", next ? "\u8B80\u5B8C\u4E86!" : "\u5168\u90E8\u8B80\u5B8C\u4E86!");
+    if (next) {
+      const b = h(end, "button", "mn-nextcard");
+      h(b, "span", "mn-nextcard-k", "\u4E0B\u4E00\u7BC7");
+      h(b, "span", "mn-nextcard-t", next.title);
+      icon(b, "arrow-right", "mn-nextcard-ic");
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        ctx.pop();
+        ctx.openNote(next.file.path);
+      });
+    }
+    h(dots, "span", "mn-dot2");
+    const count = slides.length + 1;
+    const prev = h(nav, "button", "mn-navb", "\u2039");
+    const label = h(nav, "span", "mn-navl", `1 / ${count}`);
+    const fwd = h(nav, "button", "mn-navb", "\u203A");
+    const go = (d) => pager.scrollBy({ left: d * pager.clientWidth, behavior: "smooth" });
+    prev.addEventListener("click", (e) => {
+      e.preventDefault();
+      go(-1);
+    });
+    fwd.addEventListener("click", (e) => {
+      e.preventDefault();
+      go(1);
+    });
+    pager.addEventListener("scroll", () => {
+      const i = Math.max(0, Math.min(count - 1, Math.round(pager.scrollLeft / Math.max(1, pager.clientWidth))));
+      Array.from(dots.children).forEach((d, j) => d.toggleClass("is-on", j === i));
+      label.textContent = `${i + 1} / ${count}`;
+      if (i >= count - 1) void ctx.plugin.markRead(file.path);
+    }, { passive: true });
+  });
+  return { title: file.basename, el };
+}
+function visual(ctx, box, s) {
+  const store = ctx.plugin.store;
+  const [kind, ...args] = s.visual.split(/\s+/).filter(Boolean);
+  const champ = (id) => id ? store.champion(id) : void 0;
+  if (kind === "video") {
+    const c = champ(args[0]);
+    if (c) {
+      const wrap = h(box, "div", "mn-sl-video");
+      demo(wrap, c, { key: args[1] ?? "Q" });
+      return;
+    }
+  } else if (kind === "img") {
+    const src = args.join(" ");
+    const url = /^https?:/.test(src) ? src : ctx.app.vault.adapter.getResourcePath(src);
+    const im = h(box, "img", "mn-sl-img");
+    im.src = url;
+    im.alt = "";
+    return;
+  } else if (kind === "radar") {
+    const c = champ(args[0]);
+    if (c) {
+      const p = h(box, "div", "mn-sl-radar");
+      radar(p, [
+        { label: "\u7269\u7406", value: c.attack },
+        { label: "\u9B54\u6CD5", value: c.magic },
+        { label: "\u9632\u79A6", value: c.defense },
+        { label: "\u5C04\u7A0B", value: Math.min(10, Math.round(c.range / 65)) },
+        { label: "\u96E3\u5EA6", value: c.difficulty }
+      ], 10, DAMAGE_COLOR[c.damageType]);
+      return;
+    }
+  } else if (kind === "skills") {
+    const c = champ(args[0]);
+    if (c) {
+      const strip2 = h(box, "div", "mn-skills mn-sl-skills");
+      for (const k of c.skills) {
+        const b = h(strip2, "div", "mn-skill-box");
+        b.style.setProperty("--chip", DAMAGE_COLOR[k.damage[0] ?? ""] ?? "var(--background-modifier-border)");
+        const im = h(b, "img");
+        im.src = k.icon;
+        im.alt = "";
+        h(b, "span", "mn-skill-k", k.key);
+      }
+      return;
+    }
+  } else if (kind === "role") {
+    const list2 = store.champions().filter((c) => c.roles.includes(args[0] ?? "")).sort((a, b) => hashStr(a.id + day()) - hashStr(b.id + day())).slice(0, STRIP);
+    if (list2.length) {
+      strip(box, list2.map((c) => ({ src: c.icon, label: c.name, tap: () => ctx.openChampion(c.id) })));
+      return;
+    }
+  } else if (kind === "champs") {
+    const list2 = args.map(champ).filter((c) => !!c);
+    if (list2.length) {
+      strip(box, list2.map((c) => ({ src: c.icon, label: c.name, tap: () => ctx.openChampion(c.id) })));
+      return;
+    }
+  } else if (kind === "itemtag") {
+    const list2 = store.items().filter((i) => i.aram && i.tags.includes(args[0] ?? "") && i.into.length === 0 && i.goldTotal >= 2e3).sort((a, b) => hashStr(String(a.id) + day()) - hashStr(String(b.id) + day())).slice(0, STRIP - 1);
+    if (list2.length) {
+      strip(box, list2.map((i) => ({ src: i.icon, label: i.name, tap: () => ctx.openItem(i.id) })));
+      return;
+    }
+  } else if (kind === "item") {
+    const i = store.item(Number(args[0]));
+    if (i) {
+      const parts = i.from.map((id) => store.item(id)).filter((x) => !!x);
+      strip(box, [{ src: i.icon, label: i.name, tap: () => ctx.openItem(i.id) }, ...parts.map((p) => ({ src: p.icon, label: p.name, tap: () => ctx.openItem(p.id) }))]);
+      return;
+    }
+  } else if (kind === "augs") {
+    const list2 = store.augments().filter((a) => a.rarity === args[0]).sort((a, b) => hashStr(String(a.id) + day()) - hashStr(String(b.id) + day())).slice(0, STRIP);
+    if (list2.length) {
+      strip(box, list2.map((a) => ({ src: a.icon, label: a.name, tap: () => ctx.openAugment(a.id) })));
+      return;
+    }
+  }
+  icon(h(box, "div", "mn-sl-hero"), s.icon);
+}
+function strip(box, items) {
+  const row2 = h(box, "div", "mn-sl-strip");
+  for (const it of items) {
+    const b = h(row2, "button", "mn-sl-ic");
+    const im = h(b, "img");
+    im.src = it.src;
+    im.alt = "";
+    h(b, "span", "", it.label);
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      it.tap();
+    });
+  }
+}
+
+// src/pages/detail.ts
 var TAG_ZH = {
   Damage: "\u7269\u7406\u653B\u64CA",
   SpellDamage: "\u9B54\u6CD5\u653B\u64CA",
@@ -1348,13 +1530,14 @@ function notePage(ctx) {
   const path = String(ctx.frame.params?.path ?? "");
   const file = ctx.app.vault.getAbstractFileByPath(path);
   const el = h(null, "div", "mn-page");
-  if (!(file instanceof import_obsidian4.TFile)) {
+  if (!(file instanceof import_obsidian5.TFile)) {
     empty(el, { icon: "file-x", title: "Note not found" });
     return { title: "", el };
   }
+  if (ctx.plugin.store.guideNotes().some((n) => n.file.path === path && n.layout === "deck")) return deckPage(ctx, file);
   h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
   const body = h(el, "div", "mn-note markdown-rendered");
-  void ctx.app.vault.cachedRead(file).then((text) => import_obsidian4.MarkdownRenderer.render(ctx.app, text.replace(/^---[\s\S]*?---\n/, ""), body, path, ctx.component));
+  void ctx.app.vault.cachedRead(file).then((text) => import_obsidian5.MarkdownRenderer.render(ctx.app, text.replace(/^---[\s\S]*?---\n/, ""), body, path, ctx.component));
   const guide = ctx.plugin.store.guideNotes();
   const at = guide.findIndex((n) => n.file.path === path);
   if (at >= 0) {
@@ -1519,6 +1702,12 @@ var CHARS_PER_MINUTE = 350;
 var KEYWORDS = 6;
 var TILE_COLORS = ["--color-blue", "--color-purple", "--color-orange", "--color-green", "--color-cyan", "--color-pink", "--color-yellow", "--color-red"];
 var GLOSSARY = "\u540D\u8A5E\u8868";
+var TRIVIA_AFTER = 4;
+var hash = (x) => Math.imul(x ^ 2654435769, 2654435761) >>> 0;
+function firstSentence(blurb) {
+  const s = blurb.split(/(?<=[。!?!?])/)[0] ?? blurb;
+  return s.length > 64 ? s.slice(0, 62) + "\u2026" : s;
+}
 function handbookPage(ctx) {
   const store = ctx.plugin.store;
   const el = page("Handbook");
@@ -1564,39 +1753,50 @@ function handbookPage(ctx) {
       e.preventDefault();
       ctx.openNote(next.file.path);
     });
-    const grid = h(out, "div", "mn-ht-grid");
-    notes.forEach((n, i) => {
-      const tile2 = h(grid, "button", "mn-ht");
-      tile2.style.setProperty("--c", `var(${TILE_COLORS[i % TILE_COLORS.length]})`);
-      const top = h(tile2, "div", "mn-ht-top");
+    const tile2 = (grid, n, i) => {
+      const t = h(grid, "button", "mn-ht");
+      t.style.setProperty("--c", `var(${TILE_COLORS[i % TILE_COLORS.length]})`);
+      const top = h(t, "div", "mn-ht-top");
       icon(h(top, "span", "mn-ht-ic"), n.icon);
       if (read.has(n.file.path)) icon(h(top, "span", "mn-ht-done"), "check");
-      h(tile2, "div", "mn-ht-t", n.title);
-      if (n.summary) h(tile2, "div", "mn-ht-s", n.summary);
-      h(tile2, "div", "mn-ht-m", `${minutes(n.file.stat.size)} \u5206\u9418`);
-      tile2.addEventListener("click", (e) => {
+      h(t, "div", "mn-ht-t", n.title);
+      if (n.summary) h(t, "div", "mn-ht-s", n.summary);
+      h(t, "div", "mn-ht-m", n.layout === "deck" ? `${minutes(n.file.stat.size)} \u5206\u9418` : "\u67E5\u8A62");
+      t.addEventListener("click", (e) => {
         e.preventDefault();
         ctx.openNote(n.file.path);
       });
-    });
-    void fact();
+    };
+    const first = h(out, "div", "mn-ht-grid");
+    notes.slice(0, TRIVIA_AFTER).forEach((n, i) => tile2(first, n, i));
+    trivia(out);
+    if (notes.length > TRIVIA_AFTER) {
+      const rest = h(out, "div", "mn-ht-grid");
+      notes.slice(TRIVIA_AFTER).forEach((n, i) => tile2(rest, n, i + TRIVIA_AFTER));
+    }
   };
-  const fact = async () => {
-    const g = notes.find((n) => n.title === GLOSSARY);
-    if (!g) return;
-    const lines = (await load()).get(g.file.path) ?? [];
-    const entries = lines.filter((l) => /[:：]/.test(l));
-    if (!entries.length || search.value.trim()) return;
-    const day = Math.floor(Date.now() / 864e5);
-    const [term, ...rest] = entries[day % entries.length].split(/[:：]/);
-    const card = h(out, "button", "mn-fact");
-    h(card, "div", "mn-fact-k", "\u4ECA\u65E5\u5C0F\u77E5\u8B58");
-    h(card, "div", "mn-fact-t", term.trim());
-    h(card, "div", "mn-fact-s", rest.join(":").trim());
+  const trivia = (parent) => {
+    const champs = store.champions().filter((c) => c.blurb);
+    if (!champs.length) return;
+    let n = Math.floor(Date.now() / 864e5);
+    const card = h(parent, "button", "mn-trv");
+    const draw = () => {
+      card.empty();
+      const c = champs[hash(n) % champs.length];
+      const bg = h(card, "div", "mn-trv-bg");
+      bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
+      const body = h(card, "div", "mn-trv-body");
+      h(body, "div", "mn-trv-k", "\u4F60\u77E5\u9053\u55CE?");
+      h(body, "div", "mn-trv-t", `${c.name} \xB7 ${c.title}`);
+      h(body, "div", "mn-trv-s", firstSentence(c.blurb));
+      icon(h(card, "span", "mn-trv-next"), "refresh-cw");
+    };
     card.addEventListener("click", (e) => {
       e.preventDefault();
-      ctx.openNote(g.file.path);
+      n += 1;
+      draw();
     });
+    draw();
   };
   const keywords = async () => {
     const g = notes.find((n) => n.title === GLOSSARY);
@@ -1827,7 +2027,7 @@ function renderPage(tab, ctx) {
 
 // src/view.ts
 var VIEW_TYPE = "morellonomicon";
-var MnView = class extends import_obsidian5.ItemView {
+var MnView = class extends import_obsidian6.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.plugin = plugin;
@@ -1856,7 +2056,7 @@ var MnView = class extends import_obsidian5.ItemView {
     c.addClass("mn-host");
     const app = h(c, "div", "mn-app");
     this.appEl = app;
-    app.toggleClass("is-full", import_obsidian5.Platform.isMobile);
+    app.toggleClass("is-full", import_obsidian6.Platform.isMobile);
     this.topEl = h(app, "div", "mn-top");
     this.backEl = h(this.topEl, "button", "mn-btn mn-back");
     icon(this.backEl, "chevron-left");
@@ -1899,7 +2099,7 @@ var MnView = class extends import_obsidian5.ItemView {
     for (const [k, v] of Object.entries(vars)) this.appEl.style.setProperty(k, v);
   }
   themeMenu(e) {
-    const menu = new import_obsidian5.Menu();
+    const menu = new import_obsidian6.Menu();
     for (const t of THEMES) menu.addItem((i) => i.setTitle(t.name).setChecked(this.plugin.settings.theme === t.id).onClick(() => {
       this.plugin.settings.theme = t.id;
       void this.plugin.saveTheme();
@@ -1907,7 +2107,7 @@ var MnView = class extends import_obsidian5.ItemView {
     menu.showAtMouseEvent(e);
   }
   modeMenu(e) {
-    const menu = new import_obsidian5.Menu();
+    const menu = new import_obsidian6.Menu();
     for (const id of MODE_ORDER) {
       const m = MODES[id];
       menu.addItem((i) => i.setTitle(m.label + (m.enabled ? "" : " (coming soon)")).setIcon(m.icon).setChecked(this.plugin.settings.mode === id).setDisabled(!m.enabled).onClick(() => {
@@ -2010,7 +2210,7 @@ var MnView = class extends import_obsidian5.ItemView {
 };
 
 // src/main.ts
-var MorellonomiconPlugin = class extends import_obsidian6.Plugin {
+var MorellonomiconPlugin = class extends import_obsidian7.Plugin {
   constructor() {
     super(...arguments);
     this.settings = { ...DEFAULTS };
@@ -2036,7 +2236,7 @@ var MorellonomiconPlugin = class extends import_obsidian6.Plugin {
     this.registerEvent(this.app.vault.on("rename", (f, old) => onFile(f, old)));
     this.registerEvent(this.app.metadataCache.on("resolved", () => this.dataChanged()));
     this.home = createEl("button", { cls: "mn-home", attr: { "aria-label": "Open Morellonomicon" } });
-    (0, import_obsidian6.setIcon)(this.home, "book-open");
+    (0, import_obsidian7.setIcon)(this.home, "book-open");
     this.home.addEventListener("click", (e) => {
       e.preventDefault();
       void this.activate(false);
@@ -2059,9 +2259,9 @@ var MorellonomiconPlugin = class extends import_obsidian6.Plugin {
     const ws = this.app.workspace;
     const on = !!ws.getActiveViewOfType(MnView);
     document.body.toggleClass("mn-on", on);
-    document.body.toggleClass("mn-full", on && import_obsidian6.Platform.isMobile);
-    if (!import_obsidian6.Platform.isMobile) return;
-    const v = ws.getActiveViewOfType(import_obsidian6.View);
+    document.body.toggleClass("mn-full", on && import_obsidian7.Platform.isMobile);
+    if (!import_obsidian7.Platform.isMobile) return;
+    const v = ws.getActiveViewOfType(import_obsidian7.View);
     if (!v || v instanceof MnView || v.leaf.getRoot() !== ws.rootSplit) {
       this.home.remove();
       return;
@@ -2086,7 +2286,7 @@ var MorellonomiconPlugin = class extends import_obsidian6.Plugin {
     const ws = this.app.workspace;
     let leaf = ws.getLeavesOfType(VIEW_TYPE)[0] ?? null;
     if (!leaf) {
-      leaf = ws.getLeaf(startup || import_obsidian6.Platform.isMobile ? false : "tab");
+      leaf = ws.getLeaf(startup || import_obsidian7.Platform.isMobile ? false : "tab");
       await leaf.setViewState({ type: VIEW_TYPE, active: true });
     }
     await ws.revealLeaf(leaf);
@@ -2096,7 +2296,7 @@ var MorellonomiconPlugin = class extends import_obsidian6.Plugin {
   // A note in a tab of its own; a tab that already shows it is brought forward instead of opening a second one
   async openPath(path) {
     const f = this.app.vault.getAbstractFileByPath(path);
-    if (!(f instanceof import_obsidian6.TFile)) return;
+    if (!(f instanceof import_obsidian7.TFile)) return;
     const ws = this.app.workspace;
     const open = ws.getLeavesOfType("markdown").find((l) => l.view.file?.path === path);
     if (open) {

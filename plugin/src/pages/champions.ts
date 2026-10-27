@@ -83,20 +83,24 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
         for (const d of DAMAGES) chip(filters, d, { on: F.dmg === d, color: DAMAGE_COLOR[d], onTap: () => { F.dmg = F.dmg === d ? "" : d; redraw(); } });
         const n = activeFilters();
         // a button of its own (not a chip): sliders icon, the number of active filters, opens the panel
-        const fb = h(filters, "button", "mn-filterbtn" + (F.open ? " is-open" : ""));
+        const fb = h(filters, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
         icon(fb, "sliders-horizontal", "mn-filterbtn-ic");
         h(fb, "span", "", "篩選");
         if (n) h(fb, "span", "mn-filterbtn-n", String(n));
         fb.addEventListener("click", (e) => { e.preventDefault(); F.open = !F.open; drawFilters(); drawPanel(); });
-        if (n || F.sort !== "name") {
-            const clear = h(filters, "button", "mn-clear", "清除");
-            clear.addEventListener("click", (e) => { e.preventDefault(); F.roles.clear(); F.dmg = ""; F.feat.clear(); F.reach = ""; F.sort = "name"; redraw(); });
-        }
     };
     const drawPanel = () => {
         panel.empty();
         panel.toggleClass("is-open", F.open);
         if (!F.open) return;
+        // the panel's own header: how many are on, and one button to clear them all
+        const on = activeFilters();
+        const top = h(panel, "div", "mn-fp-top");
+        h(top, "span", "mn-fp-count", on ? `已選 ${on} 項` : "選擇條件");
+        if (on || F.sort !== "name") {
+            const clear = h(top, "button", "mn-clear", "全部清除");
+            clear.addEventListener("click", (e) => { e.preventDefault(); F.roles.clear(); F.dmg = ""; F.feat.clear(); F.reach = ""; F.sort = "name"; redraw(); });
+        }
         const sect = (title: string, hint = "") => {
             const s = h(panel, "div", "mn-fp-s");
             const head = h(s, "div", "mn-fp-h");
