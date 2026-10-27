@@ -9,6 +9,7 @@ CommunityDragon has no effect text for them, so `effect`, `fits`, `tier` and `co
 """
 import datetime
 import json
+from concurrent.futures import ThreadPoolExecutor
 import sys
 import urllib.request
 from pathlib import Path
@@ -36,6 +37,57 @@ def get(url, name):
     return json.loads(raw)
 
 
+GAME = "https://raw.communitydragon.org/latest/game/assets/ux"
+RARITY_FILE = {"kSilver": "silver", "kGold": "gold", "kPrismatic": "prismatic"}
+
+
+_HEADS_PATH = fd.CACHE / "icon-heads.json"
+_heads = None
+
+
+def _known():
+    global _heads
+    if _heads is None:
+        try:
+            _heads = json.loads(_HEADS_PATH.read_text(encoding="utf-8"))
+        except Exception:   # missing or unreadable: ask again
+            _heads = {}
+    return _heads
+
+
+def exists(url):
+    """Whether a file is on CommunityDragon; answers are kept in .cache (written once at the end) so a rerun does not ask again."""
+    known = _known()
+    if url not in known:
+        try:
+            urllib.request.urlopen(urllib.request.Request(url, method="HEAD", headers={"User-Agent": "Morellonomicon/0.1"}), timeout=20)
+            known[url] = True
+        except Exception:
+            known[url] = False
+    return known[url]
+
+
+def save_heads():
+    _HEADS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    _HEADS_PATH.write_text(json.dumps(_known()), encoding="utf-8")
+
+
+def best_icon(a):
+    """The picture to show: the game's large icon (its tint is part of the picture), else the generic icon of the augment's rarity,
+    else the small one (plain grey shapes: the app tints those itself)."""
+    small = a["augmentSmallIconPath"]
+    plugin_url = f"{CDRAGON}/default/{small[len(ICON_PREFIX):].lower()}" if small.startswith(ICON_PREFIX) else ""
+    name = small.rsplit("/", 1)[-1].lower()
+    folders = [f for f in ("kiwi", "cherry") if f"/ux/{f}/" in small.lower()] + ["kiwi", "cherry"]
+    candidates = []
+    for folder in dict.fromkeys(folders):
+        if name.startswith("genericabilityaugmenticon"):
+            candidates.append(f"{GAME}/{folder}/augments/icons/genericabilityaugmenticon_{RARITY_FILE.get(a['rarity'], 'gold')}.png")
+        elif name.endswith("_small.png"):
+            candidates.append(f"{GAME}/{folder}/augments/icons/{name.replace('_small.png', '_large.png')}")
+    return next((c for c in candidates if exists(c)), plugin_url)
+
+
 def main():
     augments = get(f"{CDRAGON}/zh_tw/v1/cherry-augments.json", "cherry-augments.zh_tw.json")
     lists = get(f"{CDRAGON}/default/v1/augment-lists.json", "augment-lists.json")
@@ -46,9 +98,11 @@ def main():
     for a in picked:
         counts[a["nameTRA"]] = counts.get(a["nameTRA"], 0) + 1
     changed = 0
+    with ThreadPoolExecutor(12) as pool_:
+        icons = dict(zip((a["id"] for a in picked), pool_.map(best_icon, picked)))
+    save_heads()
     for a in picked:
-        icon = a["augmentSmallIconPath"]
-        icon_url = f"{CDRAGON}/default/{icon[len(ICON_PREFIX):].lower()}" if icon.startswith(ICON_PREFIX) else ""
+        icon_url = icons[a["id"]]
         rarity = RARITY_ZH.get(a["rarity"], a["rarity"])
         fm = {"type": "augment", "id": a["id"], "api": a["augmentNameId"], "name": a["nameTRA"], "rarity": rarity,
               "icon": icon_url, "mode": "mayhem", "generated": True}
