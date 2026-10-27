@@ -49,8 +49,10 @@ body.is-mobile:not(.mn-on) .mn-home svg { width: 24px; height: 24px; }
 .mn-top-title { font-size: 16px; font-weight: 600; opacity: 0; transition: opacity 0.15s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60vw; }
 .mn-top.is-scrolled .mn-top-title, .mn-top.has-back .mn-top-title { opacity: 1; }
 .mn-acts { justify-self: end; display: flex; gap: 8px; }
-.mn-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.mn-title-row .mn-acts { margin-top: 4px; }
+.mn-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 2px 14px; }
+.mn-title-row .mn-title { margin: 0; }
+.mn-title-row .mn-btn { width: 40px; height: 40px; background: var(--mn-card-hi); }
+.mn-title-row .mn-btn svg { width: 22px; height: 22px; }
 
 /* page */
 .mn-scroll { flex: 1; min-height: 0; overflow-x: hidden; overflow-x: clip; touch-action: pan-y; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: none; }
@@ -101,6 +103,7 @@ button.mn-chip:active { transform: scale(0.96); }
 .mn-card-who .mn-title { margin: 0; font-size: 28px; }
 .mn-card-sub { color: var(--mn-muted); font-size: 14px; }
 .mn-card-who .mn-chips { margin: 8px 0 0; }
+.mn-app .mn-card-who .mn-chip:not(.has-color) { background: rgba(10, 12, 20, 0.62); color: #fff; border-color: rgba(255, 255, 255, 0.22); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 .mn-panel { overflow: hidden; background: var(--mn-card); border-radius: var(--mn-radius); padding: 8px 8px 4px; margin: 14px 0; border: 1px solid var(--mn-line); }
 .mn-radar { display: block; width: 100%; max-width: 340px; margin: 0 auto; overflow: visible; }
 .mn-rd-ring { fill: none; stroke: var(--mn-line); stroke-width: 1; }
@@ -421,8 +424,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-hero { min-height: 250px; }
 .mn-hero-bg { background-position: center 12%; }
 .mn-profile { padding: 14px 12px 12px; }
-.mn-pro-line { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-bottom: 2px; }
-.mn-pro-i { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--mn-card-hi); border: 1px solid var(--mn-line); }
 .mn-hard i { width: 7px; height: 7px; border-radius: 50%; background: var(--mn-line); display: inline-block; }
 .mn-hard i.is-on { background: var(--mn-accent); }
 .mn-pro { max-width: 360px; }
@@ -479,7 +480,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-dmg-x { font-size: 12px; font-weight: 600; color: var(--mn-muted); }
 .mn-split { display: flex; gap: 2px; height: 6px; margin-top: 6px; border-radius: 3px; overflow: hidden; }
 .mn-split span { display: block; }
-.mn-rq .mn-hard { display: inline-flex; gap: 4px; align-items: center; height: 20px; }
+.mn-hard { display: inline-flex; gap: 4px; align-items: center; height: 20px; }
 .mn-rq .mn-pills { justify-content: flex-start; margin: 0; }
 .mn-pick { position: relative; }
 .mn-pick.is-pick img { box-shadow: 0 0 0 3px var(--mn-accent); }

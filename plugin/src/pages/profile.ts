@@ -147,24 +147,24 @@ export function damageBar(parent: HTMLElement, c: Champion): void {
     }
 }
 
-// 近戰 / 中程 / 遠程, the damage kind and how hard the champion is (dots)
-export function styleLine(parent: HTMLElement, c: Champion): void {
-    const row = h(parent, "div", "mn-pro-line");
-    const reach = c.archetypes.find((a) => a === "近戰" || a === "中程" || a === "遠程") ?? "";
-    if (reach) h(row, "span", "mn-pro-i", reach);
-    for (const d of damageKinds(c)) {
-        const dmg = h(row, "span", "mn-pro-i", d.main ? `${d.kind}輸出` : `兼${d.kind}`);
-        dmg.style.color = DAMAGE_COLOR[d.kind] ?? "inherit";
-    }
-    const dots = h(row, "span", "mn-pro-i mn-hard");
-    h(dots, "span", "", "難度");
-    const level = Math.max(1, Math.min(5, Math.ceil(c.difficulty / 2)));
-    for (let i = 1; i <= 5; i++) h(dots, "i", i <= level ? "is-on" : "");
+// Three facts side by side: damage (words and bar), reach, difficulty
+export function factsRow(parent: HTMLElement, c: Champion): void {
+    const facts = h(parent, "div", "mn-rq-facts");
+    const fact = (label: string) => { const f = h(facts, "div", "mn-rq-f"); h(f, "div", "mn-rq-fl", label); return h(f, "div", "mn-rq-fv"); };
+    damageBar(fact("傷害"), c);
+    h(fact("距離"), "span", "mn-rq-big", reachOf(c) || "—");
+    difficultyDots(fact("難度"), c);
+}
+
+// The ability icons under a small label
+export function abilityBlock(parent: HTMLElement, c: Champion, app?: App): void {
+    h(parent, "div", "mn-rq-fl mn-rq-al", "技能(點圖示看名稱)");
+    abilityPills(parent, c, false, app);
 }
 
 // the whole block of the champion card
 export function championProfile(parent: HTMLElement, c: Champion, color: string, app?: App): void {
-    styleLine(parent, c);
+    factsRow(parent, c);
     profileRadar(parent, profileAxes(c), color);
-    abilityPills(parent, c, false, app);
+    abilityBlock(parent, c, app);
 }

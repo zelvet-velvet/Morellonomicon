@@ -1,6 +1,6 @@
 import type { Champion } from "../data/store";
 import { DAMAGE_COLOR, chip, empty, group, h, icon, page, row, segmented } from "../ui";
-import { championProfile, damageKinds } from "./profile";
+import { championProfile } from "./profile";
 import { buildTab } from "./build";
 import type { PageCtx, PageOut } from "./index";
 import { badgeColor, badgeText, changesBlock, entryDir, marker } from "./changes";
@@ -169,7 +169,6 @@ export function championCard(ctx: PageCtx): PageOut {
     h(who, "div", "mn-card-sub", c.title);
     const tags = h(who, "div", "mn-chips");
     for (const r of c.roles) chip(tags, r);
-    for (const d of damageKinds(c)) chip(tags, d.main ? d.kind : `兼${d.kind}`, { color: DAMAGE_COLOR[d.kind] ?? dmgColor });
     if (c.tier) chip(tags, `評價 ${c.tier}`, { color: "var(--color-green)" });   // optional, hand-written `tier` in the champion note
     const now = ctx.plugin.store.currentChanges(c.id);
     const openChanges = () => { show("skills"); block?.open(); block?.el.scrollIntoView({ behavior: "smooth", block: "start" }); };

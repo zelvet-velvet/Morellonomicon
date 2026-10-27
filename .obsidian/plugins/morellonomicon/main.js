@@ -933,23 +933,25 @@ function damageBar(parent, c) {
     seg.style.background = DAMAGE_COLOR[kind];
   }
 }
-function styleLine(parent, c) {
-  const row2 = h(parent, "div", "mn-pro-line");
-  const reach = c.archetypes.find((a) => a === "\u8FD1\u6230" || a === "\u4E2D\u7A0B" || a === "\u9060\u7A0B") ?? "";
-  if (reach) h(row2, "span", "mn-pro-i", reach);
-  for (const d of damageKinds(c)) {
-    const dmg = h(row2, "span", "mn-pro-i", d.main ? `${d.kind}\u8F38\u51FA` : `\u517C${d.kind}`);
-    dmg.style.color = DAMAGE_COLOR[d.kind] ?? "inherit";
-  }
-  const dots = h(row2, "span", "mn-pro-i mn-hard");
-  h(dots, "span", "", "\u96E3\u5EA6");
-  const level = Math.max(1, Math.min(5, Math.ceil(c.difficulty / 2)));
-  for (let i = 1; i <= 5; i++) h(dots, "i", i <= level ? "is-on" : "");
+function factsRow(parent, c) {
+  const facts = h(parent, "div", "mn-rq-facts");
+  const fact = (label) => {
+    const f = h(facts, "div", "mn-rq-f");
+    h(f, "div", "mn-rq-fl", label);
+    return h(f, "div", "mn-rq-fv");
+  };
+  damageBar(fact("\u50B7\u5BB3"), c);
+  h(fact("\u8DDD\u96E2"), "span", "mn-rq-big", reachOf(c) || "\u2014");
+  difficultyDots(fact("\u96E3\u5EA6"), c);
+}
+function abilityBlock(parent, c, app) {
+  h(parent, "div", "mn-rq-fl mn-rq-al", "\u6280\u80FD(\u9EDE\u5716\u793A\u770B\u540D\u7A31)");
+  abilityPills(parent, c, false, app);
 }
 function championProfile(parent, c, color, app) {
-  styleLine(parent, c);
+  factsRow(parent, c);
   profileRadar(parent, profileAxes(c), color);
-  abilityPills(parent, c, false, app);
+  abilityBlock(parent, c, app);
 }
 
 // src/pages/fresh.ts
@@ -1496,7 +1498,6 @@ function championCard(ctx) {
   h(who, "div", "mn-card-sub", c.title);
   const tags = h(who, "div", "mn-chips");
   for (const r of c.roles) chip(tags, r);
-  for (const d of damageKinds(c)) chip(tags, d.main ? d.kind : `\u517C${d.kind}`, { color: DAMAGE_COLOR[d.kind] ?? dmgColor });
   if (c.tier) chip(tags, `\u8A55\u50F9 ${c.tier}`, { color: "var(--color-green)" });
   const now = ctx.plugin.store.currentChanges(c.id);
   const openChanges = () => {
@@ -2362,17 +2363,8 @@ function rosterPage(ctx) {
       const b = h(roles2, "span", "mn-rq-role mn-rq-mark", `${m.mark} \u672C\u7248\u8ABF\u6574`);
       b.style.setProperty("--m", m.color);
     }
-    const facts = h(r, "div", "mn-rq-facts");
-    const fact = (label) => {
-      const f = h(facts, "div", "mn-rq-f");
-      h(f, "div", "mn-rq-fl", label);
-      return h(f, "div", "mn-rq-fv");
-    };
-    damageBar(fact("\u50B7\u5BB3"), c);
-    h(fact("\u8DDD\u96E2"), "span", "mn-rq-big", reachOf(c) || "\u2014");
-    difficultyDots(fact("\u96E3\u5EA6"), c);
-    h(r, "div", "mn-rq-fl mn-rq-al", "\u6280\u80FD(\u9EDE\u5716\u793A\u770B\u540D\u7A31)");
-    abilityPills(r, c, false, ctx.app);
+    factsRow(r, c);
+    abilityBlock(r, c, ctx.app);
     r.addEventListener("click", () => ctx.openChampion(c.id));
   };
   const drawResults = () => {
