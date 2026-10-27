@@ -962,7 +962,9 @@ var patchNo2 = (p) => {
   const m = /(\d+)\.(\d+)/.exec(p);
   return m ? Number(m[1]) * 100 + Number(m[2]) : 0;
 };
+var SORT_DIR = { rarity: -1, name: 1, new: -1 };
 var sortBy = "rarity";
+var sortDir = -1;
 function augmentsPage(ctx) {
   const store = ctx.plugin.store;
   const el = page("Augments");
@@ -979,13 +981,8 @@ function augmentsPage(ctx) {
   const search = h(box, "input");
   search.type = "search";
   search.placeholder = "Search";
-  const chips = h(el, "div", "mn-chips");
-  segmented(el, SORTS, sortBy, (id) => {
-    sortBy = id;
-    draw();
-    sortbar.querySelectorAll(".mn-seg-b").forEach((b, i) => b.toggleClass("is-on", SORTS[i][0] === id));
-  }, "is-sm mn-sortbar");
-  const sortbar = el.lastElementChild;
+  const sortHost = h(el, "div", "mn-aug-sort");
+  const chips = h(el, "div", "mn-chips mn-aug-rar");
   const list2 = h(el, "div");
   const links = group(el, "Tier lists (other sites)");
   row(links, { icon: "external-link", title: "OP.GG Mayhem tier list", chevron: true, onTap: () => window.open("https://op.gg/lol/modes/aram-mayhem") });
@@ -995,15 +992,29 @@ function augmentsPage(ctx) {
     const q = query.trim().toLowerCase();
     const hits = all.filter((a) => (!rarity || a.rarity === rarity) && (!q || a.name.toLowerCase().includes(q)));
     const byName = (a, b) => a.name.localeCompare(b.name, "zh-Hant");
-    if (sortBy === "rarity") hits.sort((a, b) => (RARITY_RANK[a.rarity] ?? 9) - (RARITY_RANK[b.rarity] ?? 9) || byName(a, b));
-    else if (sortBy === "new") hits.sort((a, b) => patchNo2(addedIn.get(b.id) ?? "") - patchNo2(addedIn.get(a.id) ?? "") || byName(a, b));
-    else hits.sort(byName);
+    const d = sortDir;
+    if (sortBy === "rarity") hits.sort((a, b) => d * ((RARITY_RANK[b.rarity] ?? 9) - (RARITY_RANK[a.rarity] ?? 9)) || byName(a, b));
+    else if (sortBy === "new") hits.sort((a, b) => d * (patchNo2(addedIn.get(a.id) ?? "") - patchNo2(addedIn.get(b.id) ?? "")) || byName(a, b));
+    else hits.sort((a, b) => d * byName(a, b));
     const g = group(list2);
     for (const a of hits) {
       const isNew = !!latest && addedIn.get(a.id) === latest;
       row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || void 0, value: isNew ? `${a.rarity} \xB7 \u65B0` : a.rarity, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
     }
     if (!hits.length) empty(list2, { icon: "search-x", title: "No match" });
+  };
+  const drawSort = () => {
+    sortHost.empty();
+    const arrow = (id) => sortBy !== id ? "" : sortDir === 1 ? " \u2191" : " \u2193";
+    segmented(sortHost, SORTS.map(([id, l]) => [id, l + arrow(id)]), sortBy, (id) => {
+      if (id === sortBy) sortDir = sortDir === 1 ? -1 : 1;
+      else {
+        sortBy = id;
+        sortDir = SORT_DIR[id] ?? 1;
+      }
+      drawSort();
+      draw();
+    }, "is-sm mn-sortbar");
   };
   const drawChips = () => {
     chips.empty();
@@ -1017,6 +1028,7 @@ function augmentsPage(ctx) {
     query = search.value;
     draw();
   });
+  drawSort();
   drawChips();
   draw();
   return { title: "Augments", el };
@@ -1698,7 +1710,7 @@ var ROLES = ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u
 var DAMAGES = ["\u7269\u7406", "\u9B54\u6CD5", "\u6DF7\u5408"];
 var REACH = ["\u8FD1\u6230", "\u4E2D\u7A0B", "\u9060\u7A0B"];
 var SORTS2 = [["name", "\u540D\u7A31"], ["diff", "\u96E3\u5EA6"], ["range", "\u5C04\u7A0B"]];
-var SORT_DIR = { name: 1, diff: 1, range: -1 };
+var SORT_DIR2 = { name: 1, diff: 1, range: -1 };
 var DAMAGE_ICON = { \u7269\u7406: "sword", \u9B54\u6CD5: "sparkles", \u6DF7\u5408: "blend" };
 var SEARCH_EXTRA = 8;
 var F = { lanes: /* @__PURE__ */ new Set(), roles: /* @__PURE__ */ new Set(), dmg: "", feat: /* @__PURE__ */ new Map(), reach: "", sort: "name", dir: 1, open: false };
@@ -1872,7 +1884,7 @@ function championPicker(parent, ctx) {
       if (id === F.sort) F.dir = F.dir === 1 ? -1 : 1;
       else {
         F.sort = id;
-        F.dir = SORT_DIR[id] ?? 1;
+        F.dir = SORT_DIR2[id] ?? 1;
       }
       redraw();
     }, "is-sm");

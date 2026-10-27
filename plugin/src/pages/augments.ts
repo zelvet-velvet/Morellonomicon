@@ -7,7 +7,9 @@ const RARITY_RANK: Record<string, number> = { 稜鏡: 0, 金: 1, 銀: 2 };   // 
 const SORTS: [string, string][] = [["rarity", "稀有度"], ["name", "名稱"], ["new", "最新"]];
 const patchNo = (p: string): number => { const m = /(\d+)\.(\d+)/.exec(p); return m ? Number(m[1]) * 100 + Number(m[2]) : 0; };
 
-let sortBy = "rarity";   // kept while the app is open
+// first direction when a sort is picked: strongest first (↓), A first (↑), newest first (↓)
+const SORT_DIR: Record<string, 1 | -1> = { rarity: -1, name: 1, new: -1 };
+let sortBy = "rarity", sortDir: 1 | -1 = -1;   // kept while the app is open
 
 // ARAM Mayhem augments: search, a rarity filter, a sort (rarity, name, newest), one row each (the effect line shows when there is one).
 // An augment added in the latest patch carries a 新 tag.
@@ -24,9 +26,8 @@ export function augmentsPage(ctx: PageCtx): PageOut {
     const search = h(box, "input");
     search.type = "search";
     search.placeholder = "Search";
-    const chips = h(el, "div", "mn-chips");
-    segmented(el, SORTS, sortBy, (id) => { sortBy = id; draw(); sortbar.querySelectorAll<HTMLElement>(".mn-seg-b").forEach((b, i) => b.toggleClass("is-on", SORTS[i][0] === id)); }, "is-sm mn-sortbar");
-    const sortbar = el.lastElementChild as HTMLElement;
+    const sortHost = h(el, "div", "mn-aug-sort");
+    const chips = h(el, "div", "mn-chips mn-aug-rar");
     const list = h(el, "div");
     const links = group(el, "Tier lists (other sites)");
     row(links, { icon: "external-link", title: "OP.GG Mayhem tier list", chevron: true, onTap: () => window.open("https://op.gg/lol/modes/aram-mayhem") });
@@ -37,9 +38,11 @@ export function augmentsPage(ctx: PageCtx): PageOut {
         const q = query.trim().toLowerCase();
         const hits = all.filter((a) => (!rarity || a.rarity === rarity) && (!q || a.name.toLowerCase().includes(q)));
         const byName = (a: typeof hits[number], b: typeof hits[number]) => a.name.localeCompare(b.name, "zh-Hant");
-        if (sortBy === "rarity") hits.sort((a, b) => (RARITY_RANK[a.rarity] ?? 9) - (RARITY_RANK[b.rarity] ?? 9) || byName(a, b));
-        else if (sortBy === "new") hits.sort((a, b) => patchNo(addedIn.get(b.id) ?? "") - patchNo(addedIn.get(a.id) ?? "") || byName(a, b));
-        else hits.sort(byName);
+        // each compares in its "↑" order; ↓ turns it round (rarity ↓ = 稜鏡 first, new ↓ = newest first), ties by name
+        const d = sortDir;
+        if (sortBy === "rarity") hits.sort((a, b) => d * ((RARITY_RANK[b.rarity] ?? 9) - (RARITY_RANK[a.rarity] ?? 9)) || byName(a, b));
+        else if (sortBy === "new") hits.sort((a, b) => d * (patchNo(addedIn.get(a.id) ?? "") - patchNo(addedIn.get(b.id) ?? "")) || byName(a, b));
+        else hits.sort((a, b) => d * byName(a, b));
         const g = group(list);
         for (const a of hits) {
             const isNew = !!latest && addedIn.get(a.id) === latest;
@@ -47,11 +50,23 @@ export function augmentsPage(ctx: PageCtx): PageOut {
         }
         if (!hits.length) empty(list, { icon: "search-x", title: "No match" });
     };
+    // tapping the chosen sort again flips it; only the chosen one shows its arrow
+    const drawSort = () => {
+        sortHost.empty();
+        const arrow = (id: string) => (sortBy !== id ? "" : sortDir === 1 ? " ↑" : " ↓");
+        segmented(sortHost, SORTS.map(([id, l]): [string, string] => [id, l + arrow(id)]), sortBy, (id) => {
+            if (id === sortBy) sortDir = sortDir === 1 ? -1 : 1;
+            else { sortBy = id; sortDir = SORT_DIR[id] ?? 1; }
+            drawSort();
+            draw();
+        }, "is-sm mn-sortbar");
+    };
     const drawChips = () => {
         chips.empty();
         for (const r of RARITIES) chip(chips, r, { on: rarity === r, color: RARITY_COLOR[r], onTap: () => { rarity = rarity === r ? "" : r; drawChips(); draw(); } });
     };
     search.addEventListener("input", () => { query = search.value; draw(); });
+    drawSort();
     drawChips();
     draw();
     return { title: "Augments", el };

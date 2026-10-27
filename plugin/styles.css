@@ -209,6 +209,9 @@ button.mn-skill-box.is-on::after { content: ""; position: absolute; inset: 0; bo
 .mn-seg-b.is-on { background: var(--mn-accent); color: var(--text-on-accent, #fff); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); }
 .mn-seg.is-sm { margin: 0; border-radius: 14px; }
 .mn-seg.is-sm .mn-seg-b { min-height: 38px; font-size: 13px; }
+/* Augments: the sort under the search, the rarity filter under it on the right */
+.mn-aug-sort { margin: 12px 0 0; }
+.mn-chips.mn-aug-rar { justify-content: flex-end; }
 
 /* build sets */
 .mn-set { background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: var(--mn-radius); padding: 12px 14px; margin: 10px 0; }
