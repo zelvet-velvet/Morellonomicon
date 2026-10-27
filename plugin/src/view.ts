@@ -199,7 +199,8 @@ export class MnView extends ItemView {
         this.topEl.toggleClass("has-back", this.router.depth() > 0);
         // a champion page puts its splash under the top bar (Back floats on the picture) until it scrolls past it
         this.appEl.toggleClass("is-overlay", OVERLAY_PAGES.has(f.key));
-        this.appEl.toggleClass("is-float", this.router.depth() === 0);   // a tab's first page: no empty strip above its big title
+        this.appEl.toggleClass("is-float", this.router.depth() === 0);
+        this.appEl.toggleClass("is-sub", this.router.depth() > 0 && !OVERLAY_PAGES.has(f.key));   // Back sits on the title's line   // a tab's first page: no empty strip above its big title
         this.markScrolled();
         if (anim === "none") { this.loaderEl.removeClass("is-on"); return; }
         // pictures that are in view and not here yet: keep the page hidden under a spinner until they arrive (or give up after a while)

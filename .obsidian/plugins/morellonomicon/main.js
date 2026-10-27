@@ -2821,6 +2821,7 @@ var MnView = class extends import_obsidian8.ItemView {
     this.topEl.toggleClass("has-back", this.router.depth() > 0);
     this.appEl.toggleClass("is-overlay", OVERLAY_PAGES.has(f.key));
     this.appEl.toggleClass("is-float", this.router.depth() === 0);
+    this.appEl.toggleClass("is-sub", this.router.depth() > 0 && !OVERLAY_PAGES.has(f.key));
     this.markScrolled();
     if (anim === "none") {
       this.loaderEl.removeClass("is-on");
