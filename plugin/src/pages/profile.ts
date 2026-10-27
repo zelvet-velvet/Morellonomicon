@@ -158,7 +158,11 @@ export function factsStrip(parent: HTMLElement, c: Champion): void {
         const kind = h(row, "span", "mn-dl-kind", d.kind);
         kind.style.color = DAMAGE_COLOR[d.kind] ?? "inherit";
         h(row, "span", "mn-dl-base", d.base ? Math.round(d.base).toLocaleString() : "—");
-        if (d.key === "P" && !d.base) { h(row, "span", "mn-dl-sc", "被動,數值未收錄"); continue; }
+        if (d.key === "P" && !d.base) {
+            const sc = h(row, "span", "mn-dl-sc", "被動,數值未收錄");
+            if (d.onHit) { const oh = h(sc, "span", "mn-dl-oh", "觸發攻擊特效"); oh.style.color = "var(--mn-onhit)"; oh.style.marginLeft = "8px"; }
+            continue;
+        }
         const sc = h(row, "span", "mn-dl-sc", [d.ad ? `+${d.ad}% 物攻` : "", d.ap ? `+${d.ap}% 魔攻` : ""].filter(Boolean).join("  "));
         if (d.onHit) { const gap = !!sc.textContent; const oh = h(sc, "span", "mn-dl-oh", "觸發攻擊特效"); oh.style.color = "var(--mn-onhit)"; if (gap) oh.style.marginLeft = "8px"; }
     }

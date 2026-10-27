@@ -954,7 +954,12 @@ function factsStrip(parent, c) {
     kind.style.color = DAMAGE_COLOR[d.kind] ?? "inherit";
     h(row2, "span", "mn-dl-base", d.base ? Math.round(d.base).toLocaleString() : "\u2014");
     if (d.key === "P" && !d.base) {
-      h(row2, "span", "mn-dl-sc", "\u88AB\u52D5,\u6578\u503C\u672A\u6536\u9304");
+      const sc2 = h(row2, "span", "mn-dl-sc", "\u88AB\u52D5,\u6578\u503C\u672A\u6536\u9304");
+      if (d.onHit) {
+        const oh = h(sc2, "span", "mn-dl-oh", "\u89F8\u767C\u653B\u64CA\u7279\u6548");
+        oh.style.color = "var(--mn-onhit)";
+        oh.style.marginLeft = "8px";
+      }
       continue;
     }
     const sc = h(row2, "span", "mn-dl-sc", [d.ad ? `+${d.ad}% \u7269\u653B` : "", d.ap ? `+${d.ap}% \u9B54\u653B` : ""].filter(Boolean).join("  "));
