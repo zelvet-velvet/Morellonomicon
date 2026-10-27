@@ -2,6 +2,7 @@ import { App, Platform, PluginSettingTab, Setting } from "obsidian";
 import type MorellonomiconPlugin from "./main";
 import { MODES, MODE_ORDER, ModeId } from "./modes";
 import { THEMES } from "./themes";
+import { haptic } from "./ui";
 
 export interface MnSettings {
     mode: ModeId;
@@ -57,5 +58,11 @@ export class MnSettingTab extends PluginSettingTab {
         folder("Guide folder", "Beginner guide notes", "guideFolder");
         new Setting(c).setName("Open on startup").setDesc("Show the app when Obsidian starts (on by default on a phone).")
             .addToggle((x) => x.setValue(s.openOnStartup).onChange(async (v) => { s.openOnStartup = v; await save(); }));
+        // which way this phone gives the tick on the button bars, if any (see haptic in ui.ts)
+        const hap = new Setting(c).setName("Test haptic").setDesc("Tap: the phone should tick once.");
+        hap.addButton((b) => b.setButtonText("Tick").onClick(() => {
+            const how = haptic();
+            hap.setDesc({ capacitor: "Used: Obsidian's haptics.", vibrate: "Used: web vibration.", switch: "Used: the iOS 18 switch tick. Felt nothing? Then Obsidian has no haptics here.", "": "No haptics found on this device." }[how] ?? how);
+        }));
     }
 }

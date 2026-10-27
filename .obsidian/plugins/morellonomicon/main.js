@@ -700,14 +700,18 @@ var tickBox = null;
 function haptic() {
   try {
     const hp = window.Capacitor?.Plugins?.Haptics;
+    if (hp?.impact) {
+      void hp.impact({ style: "LIGHT" });
+      return "capacitor";
+    }
     if (hp?.selectionChanged) {
-      hp.selectionChanged();
-      return;
+      void hp.selectionChanged();
+      return "capacitor";
     }
   } catch {
   }
   try {
-    if (navigator.vibrate?.(8)) return;
+    if (navigator.vibrate?.(8)) return "vibrate";
   } catch {
   }
   if (!tickBox) {
@@ -722,48 +726,68 @@ function haptic() {
     document.body.appendChild(tickBox);
   }
   tickBox.click();
+  return /iPhone|iPad/.test(navigator.userAgent) ? "switch" : "";
 }
 var segLast = /* @__PURE__ */ new Map();
-function slideSeg(seg, key = "") {
+var slid = /* @__PURE__ */ new WeakMap();
+function slideSeg(seg, key = "", opt = {}) {
+  const done = slid.get(seg);
+  if (done) {
+    if (!done.hl.isConnected) seg.prepend(done.hl);
+    requestAnimationFrame(done.place);
+    return;
+  }
+  const item = opt.item ?? ".mn-seg-b";
   const hl = document.createElement("div");
   hl.className = "mn-seg-hl";
   seg.prepend(hl);
   seg.addClass("has-hl");
-  const buttons = () => Array.from(seg.querySelectorAll(":scope > .mn-seg-b"));
+  const buttons = () => Array.from(seg.querySelectorAll(`:scope > ${item}`));
   key = key || buttons().map((b) => b.textContent ?? "").join("|");
+  const box = (b) => {
+    const r = (opt.fit && b.querySelector(opt.fit) || b).getBoundingClientRect(), s = seg.getBoundingClientRect();
+    return { x: r.left - s.left - seg.clientLeft, y: r.top - s.top - seg.clientTop, w: r.width, h: r.height };
+  };
+  const put = (p) => {
+    hl.style.opacity = "1";
+    hl.style.width = `${p.w}px`;
+    if (opt.fit) {
+      hl.style.height = `${p.h}px`;
+      hl.style.top = `${p.y}px`;
+    }
+    hl.style.transform = `translateX(${p.x}px)`;
+  };
   const place = (b, animate) => {
     if (!b || !b.offsetWidth) {
-      hl.style.opacity = b ? hl.style.opacity : "0";
+      if (!b) hl.style.opacity = "0";
       return;
     }
     if (!animate) hl.style.transition = "none";
-    hl.style.opacity = "1";
-    hl.style.width = `${b.offsetWidth}px`;
-    hl.style.transform = `translateX(${b.offsetLeft}px)`;
+    const p = box(b);
+    put(p);
     if (!animate) {
       void hl.offsetWidth;
       hl.style.transition = "";
     }
-    if (key) segLast.set(key, { x: b.offsetLeft, w: b.offsetWidth });
+    segLast.set(key, p);
   };
   const on = () => buttons().find((b) => b.hasClass("is-on"));
   requestAnimationFrame(() => {
     const last = segLast.get(key);
     if (last) {
       hl.style.transition = "none";
-      hl.style.opacity = "1";
-      hl.style.width = `${last.w}px`;
-      hl.style.transform = `translateX(${last.x}px)`;
+      put(last);
       void hl.offsetWidth;
       hl.style.transition = "";
       place(on(), true);
     } else place(on(), false);
   });
+  slid.set(seg, { hl, place: () => place(on(), false) });
   new MutationObserver(() => {
     if (!seg.hasClass("is-drag")) place(on(), true);
   }).observe(seg, { subtree: true, attributes: true, attributeFilter: ["class"] });
   if (typeof ResizeObserver !== "undefined") new ResizeObserver(() => place(on(), false)).observe(seg);
-  let at = null, moved = false, startX = 0;
+  let at = null, moved = false, startX = 0, quietUntil = 0;
   const under = (x) => buttons().find((b) => {
     const r = b.getBoundingClientRect();
     return x >= r.left && x < r.right;
@@ -787,26 +811,27 @@ function slideSeg(seg, key = "") {
       haptic();
     }
   });
-  const end = () => {
+  const end = (e) => {
     const target = moved ? at : null;
     at = null;
     if (!moved) return;
     moved = false;
     seg.removeClass("is-drag");
     buttons().forEach((x) => x.removeClass("is-pv"));
-    if (target && !target.hasClass("is-on")) target.click();
-    else place(on(), true);
+    if (target && !target.hasClass("is-on")) {
+      if (e.type === "pointerup") haptic();
+      target.click();
+    } else place(on(), true);
     quietUntil = Date.now() + 400;
   };
-  let quietUntil = 0;
+  seg.addEventListener("pointerup", end);
+  seg.addEventListener("pointercancel", end);
   seg.addEventListener("click", (e) => {
     if (e.isTrusted && Date.now() < quietUntil) {
       e.stopPropagation();
       e.preventDefault();
     }
   }, { capture: true });
-  seg.addEventListener("pointerup", end);
-  seg.addEventListener("pointercancel", end);
 }
 
 // src/settings.ts
@@ -1059,6 +1084,11 @@ var MnSettingTab = class extends import_obsidian3.PluginSettingTab {
     new import_obsidian3.Setting(c).setName("Open on startup").setDesc("Show the app when Obsidian starts (on by default on a phone).").addToggle((x) => x.setValue(s.openOnStartup).onChange(async (v) => {
       s.openOnStartup = v;
       await save();
+    }));
+    const hap = new import_obsidian3.Setting(c).setName("Test haptic").setDesc("Tap: the phone should tick once.");
+    hap.addButton((b) => b.setButtonText("Tick").onClick(() => {
+      const how = haptic();
+      hap.setDesc({ capacitor: "Used: Obsidian's haptics.", vibrate: "Used: web vibration.", switch: "Used: the iOS 18 switch tick. Felt nothing? Then Obsidian has no haptics here.", "": "No haptics found on this device." }[how] ?? how);
     }));
   }
 };
@@ -3310,6 +3340,7 @@ var MnView = class extends import_obsidian8.ItemView {
         this.tapTab(id);
       });
     }
+    slideSeg(this.tabsEl, "main-tabs", { item: ".mn-tab", fit: ".mn-ic" });
     this.modeBtn.empty();
     icon(this.modeBtn, MODES[this.plugin.settings.mode].icon);
   }

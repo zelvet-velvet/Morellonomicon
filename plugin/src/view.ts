@@ -5,7 +5,7 @@ import { THEMES, themeVars } from "./themes";
 import { PageOut, renderPage } from "./pages";
 import { rememberSub } from "./pages/champions";
 import type { Frame } from "./router";
-import { empty, h, icon, preloadRoleIcons } from "./ui";
+import { empty, h, icon, preloadRoleIcons, slideSeg } from "./ui";
 
 export const VIEW_TYPE = "morellonomicon";
 
@@ -137,6 +137,7 @@ export class MnView extends ItemView {
             h(b, "span", "mn-tab-l", this.tabLabel(id));
             b.addEventListener("click", (e) => { e.preventDefault(); this.tapTab(id); });
         }
+        slideSeg(this.tabsEl, "main-tabs", { item: ".mn-tab", fit: ".mn-ic" });   // a pill under the chosen tab's icon slides and can be dragged
         this.modeBtn.empty();
         icon(this.modeBtn, MODES[this.plugin.settings.mode].icon);
     }

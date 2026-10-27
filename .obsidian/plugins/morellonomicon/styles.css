@@ -681,6 +681,12 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-seg-line .mn-seg-hl { top: auto; bottom: -1px; height: 2px; border-radius: 0; box-shadow: none; }
 .mn-app .mn-seg-line.has-hl .mn-seg-b.is-on { box-shadow: none; }
 .mn-app .mn-seg-line.is-drag .mn-seg-b.is-pv { color: var(--mn-text); }
+/* the bottom tab bar: a soft pill under the chosen tab's icon (sized by slideSeg to the icon box) */
+.mn-tabs.has-hl { position: relative; touch-action: pan-y; }
+.mn-tabs .mn-seg-hl { bottom: auto; border-radius: 15px; background: color-mix(in srgb, var(--mn-accent) 16%, transparent); box-shadow: none; }
+.mn-app .mn-tabs.has-hl .mn-tab { position: relative; z-index: 1; transition: color 0.2s; }
+.mn-app .mn-tabs.is-drag .mn-tab.is-on:not(.is-pv) { color: var(--mn-muted); }
+.mn-app .mn-tabs.is-drag .mn-tab.is-pv { color: var(--mn-accent); }
 /* the hidden switch whose toggle gives iOS its tick (haptic in ui.ts) */
 .mn-tick { position: fixed; left: -100px; top: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; overflow: hidden; }
 /* a picture still loading is clear, then fades in (the page itself shows at once) */
