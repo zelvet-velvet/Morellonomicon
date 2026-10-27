@@ -612,6 +612,22 @@ var h = (parent, tag, cls, text) => {
   parent?.appendChild(e);
   return e;
 };
+var tipEl = null;
+var tipTimer = 0;
+var TIP_MS = 2200;
+var tip = (anchor, text) => {
+  tipEl?.remove();
+  window.clearTimeout(tipTimer);
+  const t = h(anchor.closest(".mn-app") ?? document.body, "div", "mn-tip", text);
+  tipEl = t;
+  const a = anchor.getBoundingClientRect();
+  t.style.left = `${Math.max(8, Math.min(window.innerWidth - t.offsetWidth - 8, a.left + a.width / 2 - t.offsetWidth / 2))}px`;
+  t.style.top = `${a.top - t.offsetHeight - 8 < 8 ? a.bottom + 8 : a.top - t.offsetHeight - 8}px`;
+  tipTimer = window.setTimeout(() => {
+    t.remove();
+    if (tipEl === t) tipEl = null;
+  }, TIP_MS);
+};
 var icon = (parent, name, cls = "mn-ic") => {
   const s = h(parent, "span", cls);
   (0, import_obsidian3.setIcon)(s, name);
@@ -874,7 +890,7 @@ function abilityPills(parent, c, onlyLit = false, app) {
     p.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      new import_obsidian4.Notice(`${a.tag} \xB7 ${a.abbr}${lit ? "" : "(\u6C92\u6709)"}`, 1800);
+      tip(p, `${a.tag} \xB7 ${a.abbr}${lit ? "" : "(\u6C92\u6709)"}`);
     });
   }
   if (app) {
@@ -893,6 +909,29 @@ function damageKinds(c) {
   const main = c.damageType === "\u6DF7\u5408" ? ["\u7269\u7406", "\u9B54\u6CD5"] : [c.damageType];
   const extra = c.skillDamage.filter((d) => !main.includes(d));
   return [...main.map((kind) => ({ kind, main: true })), ...extra.map((kind) => ({ kind, main: false }))];
+}
+var reachOf = (c) => c.archetypes.find((a) => a === "\u8FD1\u6230" || a === "\u4E2D\u7A0B" || a === "\u9060\u7A0B") ?? "";
+function difficultyDots(parent, c) {
+  const dots = h(parent, "span", "mn-hard");
+  const level = Math.max(1, Math.min(5, Math.ceil(c.difficulty / 2)));
+  for (let i = 1; i <= 5; i++) h(dots, "i", i <= level ? "is-on" : "");
+  return dots;
+}
+function damageBar(parent, c) {
+  const kinds = damageKinds(c);
+  const mainKinds = kinds.filter((k) => k.main).map((k) => k.kind);
+  const extras = kinds.filter((k) => !k.main).map((k) => k.kind);
+  const words = mainKinds.length > 1 ? mainKinds.join("+") : `${mainKinds[0]}\u70BA\u4E3B`;
+  const line = h(parent, "div", "mn-dmg-t");
+  h(line, "span", "mn-dmg-m", words).style.color = DAMAGE_COLOR[mainKinds[0]] ?? "inherit";
+  if (extras.length) h(line, "span", "mn-dmg-x", `,\u517C${extras.join("\u3001")}`);
+  const total = Math.max(1, c.attack + c.magic);
+  const bar = h(parent, "div", "mn-split");
+  for (const [kind, rating] of [["\u7269\u7406", c.attack], ["\u9B54\u6CD5", c.magic]]) {
+    const seg = h(bar, "span", "");
+    seg.style.flex = String(Math.max(0.08, rating / total));
+    seg.style.background = DAMAGE_COLOR[kind];
+  }
 }
 function styleLine(parent, c) {
   const row2 = h(parent, "div", "mn-pro-line");
@@ -2315,15 +2354,24 @@ function rosterPage(ctx) {
       e.stopPropagation();
       toggle(c.id);
     });
-    const tags = h(r, "div", "mn-chips mn-rq-tags");
-    for (const role_ of c.roles) chip(tags, role_);
-    for (const d of damageKinds(c)) chip(tags, d.main ? `${d.kind}\u8F38\u51FA` : `\u517C${d.kind}`, { color: DAMAGE_COLOR[d.kind] });
+    const roles2 = h(r, "div", "mn-rq-roles");
+    for (const role_ of c.roles) h(roles2, "span", "mn-rq-role", role_);
     const rd = recent.get(c.name);
     if (rd) {
       const m = marker(rd);
-      chip(tags, `${m.mark} \u672C\u7248\u8ABF\u6574`, { color: m.color });
+      const b = h(roles2, "span", "mn-rq-role mn-rq-mark", `${m.mark} \u672C\u7248\u8ABF\u6574`);
+      b.style.setProperty("--m", m.color);
     }
-    styleLine(r, c);
+    const facts = h(r, "div", "mn-rq-facts");
+    const fact = (label) => {
+      const f = h(facts, "div", "mn-rq-f");
+      h(f, "div", "mn-rq-fl", label);
+      return h(f, "div", "mn-rq-fv");
+    };
+    damageBar(fact("\u50B7\u5BB3"), c);
+    h(fact("\u8DDD\u96E2"), "span", "mn-rq-big", reachOf(c) || "\u2014");
+    difficultyDots(fact("\u96E3\u5EA6"), c);
+    h(r, "div", "mn-rq-fl mn-rq-al", "\u6280\u80FD(\u9EDE\u5716\u793A\u770B\u540D\u7A31)");
     abilityPills(r, c, false, ctx.app);
     r.addEventListener("click", () => ctx.openChampion(c.id));
   };

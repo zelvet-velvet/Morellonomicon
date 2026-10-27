@@ -9,6 +9,21 @@ export const h = <K extends keyof HTMLElementTagNameMap>(parent: HTMLElement | n
     return e;
 };
 
+// A small bubble over (or under) an element, for the name of an icon: replaces itself on the next tap and fades after a moment
+let tipEl: HTMLElement | null = null;
+let tipTimer = 0;
+const TIP_MS = 2200;
+export const tip = (anchor: HTMLElement, text: string): void => {
+    tipEl?.remove();
+    window.clearTimeout(tipTimer);
+    const t = h(anchor.closest<HTMLElement>(".mn-app") ?? document.body, "div", "mn-tip", text);
+    tipEl = t;
+    const a = anchor.getBoundingClientRect();
+    t.style.left = `${Math.max(8, Math.min(window.innerWidth - t.offsetWidth - 8, a.left + a.width / 2 - t.offsetWidth / 2))}px`;
+    t.style.top = `${a.top - t.offsetHeight - 8 < 8 ? a.bottom + 8 : a.top - t.offsetHeight - 8}px`;
+    tipTimer = window.setTimeout(() => { t.remove(); if (tipEl === t) tipEl = null; }, TIP_MS);
+};
+
 export const icon = (parent: HTMLElement, name: string, cls = "mn-ic"): HTMLElement => {
     const s = h(parent, "span", cls);
     setIcon(s, name);

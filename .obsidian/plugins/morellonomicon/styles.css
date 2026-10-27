@@ -431,8 +431,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rd-shape { stroke: var(--rd); stroke-width: 2.5; stroke-linejoin: round; }
 .mn-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 4px 0 2px; }
 .mn-pill { --p: var(--mn-muted); padding: 4px 11px; border-radius: 999px; font-size: 12px; font-weight: 700; }
-.mn-pill-ic { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; }
-.mn-pill-ic svg { width: 18px; height: 18px; }
+.mn-app .mn-pill-ic { position: relative; flex: none; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; }
+.mn-pill-ic .mn-ic { display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; }
+.mn-pill-ic svg { width: 18px; height: 18px; display: block; }
 .mn-pill-n { position: absolute; right: -3px; top: -3px; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px; background: var(--mn-card-hi); color: var(--mn-text, var(--text-normal)); font-size: 10px; line-height: 15px; text-align: center; }
 .mn-pill-help { color: var(--mn-muted); background: transparent; }
 .mn-lg { display: grid; gap: 10px; }
@@ -466,11 +467,26 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-title { font-size: 12px; color: var(--mn-muted); }
 .mn-app .mn-rq-x { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; color: var(--mn-muted); background: var(--mn-card-hi); }
 .mn-rq-x svg { width: 16px; height: 16px; }
-.mn-rq .mn-chips { margin: 8px 0 2px; }
-.mn-rq .mn-pro-line { justify-content: flex-start; margin: 4px 0 0; }
-.mn-rq .mn-pills { justify-content: flex-start; margin-top: 8px; }
+.mn-rq-roles { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; }
+.mn-rq-role { padding: 3px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; color: var(--mn-muted); background: var(--mn-card-hi); }
+.mn-rq-mark { color: var(--m, var(--mn-muted)); }
+.mn-rq-facts { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 10px; margin-top: 12px; padding: 10px 0; border-top: 1px solid var(--mn-line); border-bottom: 1px solid var(--mn-line); }
+.mn-rq-fl { font-size: 11px; color: var(--mn-faint); margin-bottom: 4px; }
+.mn-rq-al { margin: 10px 0 6px; }
+.mn-rq-fv { min-height: 24px; }
+.mn-rq-big { font-size: 15px; font-weight: 800; }
+.mn-dmg-t { font-size: 14px; font-weight: 800; line-height: 1.3; }
+.mn-dmg-x { font-size: 12px; font-weight: 600; color: var(--mn-muted); }
+.mn-split { display: flex; gap: 2px; height: 6px; margin-top: 6px; border-radius: 3px; overflow: hidden; }
+.mn-split span { display: block; }
+.mn-rq .mn-hard { display: inline-flex; gap: 4px; align-items: center; height: 20px; }
+.mn-rq .mn-pills { justify-content: flex-start; margin: 0; }
 .mn-pick { position: relative; }
 .mn-pick.is-pick img { box-shadow: 0 0 0 3px var(--mn-accent); }
 .mn-pick-ok { position: absolute; top: -4px; right: 2px; display: flex; width: 20px; height: 20px; border-radius: 50%; align-items: center; justify-content: center; background: var(--mn-accent); color: var(--text-on-accent, #fff); }
 .mn-pick-ok svg { width: 12px; height: 12px; }
 .mn-dym { align-self: center; font-size: 13px; font-weight: 700; color: var(--mn-muted); padding: 0 2px; }
+
+/* icon name bubble */
+.mn-tip { position: fixed; z-index: 1000; padding: 6px 12px; border-radius: 10px; font-size: 13px; font-weight: 700; white-space: nowrap; pointer-events: none;
+    background: var(--mn-text); color: var(--mn-bg); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35); }

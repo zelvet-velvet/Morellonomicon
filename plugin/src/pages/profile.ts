@@ -1,7 +1,7 @@
-import { Modal, Notice } from "obsidian";
+import { Modal } from "obsidian";
 import type { App } from "obsidian";
 import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, h, icon, svg } from "../ui";
+import { DAMAGE_COLOR, h, icon, svg, tip } from "../ui";
 
 // A champion at a glance: what it can do, drawn as a profile chart, plus the abilities it has. Every axis comes from data we have:
 //   輸出 = its stronger damage rating (Riot, 1-10)        坦度 = Riot's defence rating
@@ -100,7 +100,7 @@ export function abilityPills(parent: HTMLElement, c: Champion, onlyLit = false, 
         icon(p, a.icon);
         if (lit && n > 1) h(p, "span", "mn-pill-n", String(n));
         p.style.setProperty("--p", a.color);
-        p.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); new Notice(`${a.tag} · ${a.abbr}${lit ? "" : "(沒有)"}`, 1800); });
+        p.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); tip(p, `${a.tag} · ${a.abbr}${lit ? "" : "(沒有)"}`); });
     }
     if (app) {
         const q = h(row, "button", "mn-pill mn-pill-ic mn-pill-help");
@@ -116,6 +116,35 @@ export function damageKinds(c: Champion): { kind: string; main: boolean }[] {
     const main = c.damageType === "混合" ? ["物理", "魔法"] : [c.damageType];
     const extra = c.skillDamage.filter((d) => !main.includes(d));
     return [...main.map((kind) => ({ kind, main: true })), ...extra.map((kind) => ({ kind, main: false }))];
+}
+
+// 近戰 / 中程 / 遠程
+export const reachOf = (c: Champion): string => c.archetypes.find((a) => a === "近戰" || a === "中程" || a === "遠程") ?? "";
+
+// five dots for how hard a champion is
+export function difficultyDots(parent: HTMLElement, c: Champion): HTMLElement {
+    const dots = h(parent, "span", "mn-hard");
+    const level = Math.max(1, Math.min(5, Math.ceil(c.difficulty / 2)));
+    for (let i = 1; i <= 5; i++) h(dots, "i", i <= level ? "is-on" : "");
+    return dots;
+}
+
+// The damage kinds in words ("魔法為主,兼物理") and a bar split by Riot's physical / magic ratings
+export function damageBar(parent: HTMLElement, c: Champion): void {
+    const kinds = damageKinds(c);
+    const mainKinds = kinds.filter((k) => k.main).map((k) => k.kind);
+    const extras = kinds.filter((k) => !k.main).map((k) => k.kind);
+    const words = mainKinds.length > 1 ? mainKinds.join("+") : `${mainKinds[0]}為主`;
+    const line = h(parent, "div", "mn-dmg-t");
+    h(line, "span", "mn-dmg-m", words).style.color = DAMAGE_COLOR[mainKinds[0]] ?? "inherit";
+    if (extras.length) h(line, "span", "mn-dmg-x", `,兼${extras.join("、")}`);
+    const total = Math.max(1, c.attack + c.magic);
+    const bar = h(parent, "div", "mn-split");
+    for (const [kind, rating] of [["物理", c.attack], ["魔法", c.magic]] as const) {
+        const seg = h(bar, "span", "");
+        seg.style.flex = String(Math.max(0.08, rating / total));
+        seg.style.background = DAMAGE_COLOR[kind];
+    }
 }
 
 // 近戰 / 中程 / 遠程, the damage kind and how hard the champion is (dots)

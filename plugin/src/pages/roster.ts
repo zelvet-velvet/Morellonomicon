@@ -3,7 +3,7 @@ import type { Champion } from "../data/store";
 import { DAMAGE_COLOR, chip, empty, h, icon, page } from "../ui";
 import { entryDir, marker } from "./changes";
 import type { PageCtx, PageOut } from "./index";
-import { abilityPills, damageKinds, styleLine } from "./profile";
+import { abilityPills, damageBar, difficultyDots, reachOf } from "./profile";
 
 const MAX_PICKS = 15;   // a Mayhem game can hand you a lot of champions
 const ROLES = ["戰士", "坦克", "法師", "刺客", "射手", "輔助"];
@@ -92,12 +92,17 @@ export function rosterPage(ctx: PageCtx): PageOut {
         icon(rm, "x");
         rm.setAttribute("aria-label", "移除");
         rm.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); toggle(c.id); });
-        const tags = h(r, "div", "mn-chips mn-rq-tags");
-        for (const role_ of c.roles) chip(tags, role_);
-        for (const d of damageKinds(c)) chip(tags, d.main ? `${d.kind}輸出` : `兼${d.kind}`, { color: DAMAGE_COLOR[d.kind] });
+        const roles = h(r, "div", "mn-rq-roles");
+        for (const role_ of c.roles) h(roles, "span", "mn-rq-role", role_);
         const rd = recent.get(c.name);
-        if (rd) { const m = marker(rd); chip(tags, `${m.mark} 本版調整`, { color: m.color }); }
-        styleLine(r, c);
+        if (rd) { const m = marker(rd); const b = h(roles, "span", "mn-rq-role mn-rq-mark", `${m.mark} 本版調整`); b.style.setProperty("--m", m.color); }
+        // three facts side by side: damage, reach, difficulty
+        const facts = h(r, "div", "mn-rq-facts");
+        const fact = (label: string) => { const f = h(facts, "div", "mn-rq-f"); h(f, "div", "mn-rq-fl", label); return h(f, "div", "mn-rq-fv"); };
+        damageBar(fact("傷害"), c);
+        h(fact("距離"), "span", "mn-rq-big", reachOf(c) || "—");
+        difficultyDots(fact("難度"), c);
+        h(r, "div", "mn-rq-fl mn-rq-al", "技能(點圖示看名稱)");
         abilityPills(r, c, false, ctx.app);
         r.addEventListener("click", () => ctx.openChampion(c.id));
     };
