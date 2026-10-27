@@ -344,6 +344,12 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-nextcard-ic svg { width: 22px; height: 22px; }
 .mn-nextcard-done { margin: 18px 0 10px; text-align: center; font-weight: 700; color: var(--color-green); }
 
+/* augment rarity frames, drawn here (the game adds them in its own UI): metallic silver, metallic gold, prismatic = a metallic rainbow */
+.aug-silver, .aug-gold, .aug-prism { border: 3px solid transparent !important; }
+.aug-silver { background: linear-gradient(var(--mn-card-hi), var(--mn-card-hi)) padding-box, linear-gradient(135deg, #f4f7fa, #8d98a5 32%, #eef2f6 52%, #6e7a87 78%, #cfd6dd) border-box !important; box-shadow: 0 0 10px rgba(190, 200, 212, 0.35); }
+.aug-gold { background: linear-gradient(var(--mn-card-hi), var(--mn-card-hi)) padding-box, linear-gradient(135deg, #fff4bd, #d9a21b 32%, #fff1b3 52%, #a8740a 78%, #f3cf63) border-box !important; box-shadow: 0 0 10px rgba(232, 180, 40, 0.4); }
+.aug-prism { background: linear-gradient(var(--mn-card-hi), var(--mn-card-hi)) padding-box, conic-gradient(from 30deg, #ff7d7d, #ffd47d, #93ff9f, #7dd9ff, #b898ff, #ff7ddb, #ff7d7d) border-box !important; box-shadow: 0 0 12px rgba(184, 152, 255, 0.5), 0 0 6px rgba(125, 217, 255, 0.35); }
+
 /* guide decks: swipeable cards, a big picture and one or two lines each */
 .mn-dots { display: flex; justify-content: center; gap: 6px; margin: 0 0 12px; }
 .mn-dot2 { width: 7px; height: 7px; border-radius: 4px; background: var(--mn-line); transition: width 0.15s, background 0.15s; }

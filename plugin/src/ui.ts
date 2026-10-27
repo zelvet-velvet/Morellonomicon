@@ -31,10 +31,13 @@ export const group = (parent: HTMLElement, title?: string, footer?: string): HTM
     return g;
 };
 
-export interface RowSpec { icon?: string; image?: string; title: string; sub?: string; value?: string; chevron?: boolean; muted?: boolean; clamp?: boolean; onTap?: () => void }
+// The frame an augment icon gets for its rarity (silver, gold, prismatic = metallic rainbow); drawn in CSS, see styles.css
+export const AUG_CLASS: Record<string, string> = { 銀: "aug-silver", 金: "aug-gold", 稜鏡: "aug-prism" };
+
+export interface RowSpec { icon?: string; image?: string; rarity?: string; title: string; sub?: string; value?: string; chevron?: boolean; muted?: boolean; clamp?: boolean; onTap?: () => void }
 export const row = (parent: HTMLElement, r: RowSpec): HTMLElement => {
     const el = h(parent, "div", "mn-row" + (r.onTap ? " is-tap" : "") + (r.muted ? " is-muted" : ""));
-    if (r.image) { const im = h(el, "img", "mn-row-img"); im.src = r.image; im.loading = "lazy"; im.alt = ""; }
+    if (r.image) { const im = h(el, "img", "mn-row-img" + (r.rarity && AUG_CLASS[r.rarity] ? " " + AUG_CLASS[r.rarity] : "")); im.src = r.image; im.loading = "lazy"; im.alt = ""; }
     else if (r.icon) icon(el, r.icon, "mn-row-ic");
     const main = h(el, "div", "mn-row-main");
     h(main, "div", "mn-row-t", r.title);

@@ -1,6 +1,6 @@
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { Champion, Item } from "../data/store";
-import { chip, empty, group, h, icon, row } from "../ui";
+import { AUG_CLASS, chip, empty, group, h, icon, row } from "../ui";
 import { RARITY_COLOR } from "./augments";
 import { officialBlock } from "./changes";
 import { deckPage } from "./deck";
@@ -73,7 +73,7 @@ export function augmentPage(ctx: PageCtx): PageOut {
     if (!a) { empty(el, { icon: "sparkles", title: "Augment not found" }); return { title: "", el }; }
     const history = store.augmentHistory(a.name);
     const head = h(el, "div", "mn-dhead");
-    const im = h(head, "img", "mn-dimg"); im.src = a.icon; im.alt = "";
+    const im = h(head, "img", "mn-dimg " + (AUG_CLASS[a.rarity] ?? "")); im.src = a.icon; im.alt = "";
     const who = h(head, "div", "mn-dwho");
     h(who, "h1", "mn-title", a.name);
     const tags = h(who, "div", "mn-chips");

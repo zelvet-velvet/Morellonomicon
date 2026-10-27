@@ -1,5 +1,5 @@
 import type { PatchNote } from "../data/store";
-import { chip, empty, group, h, page, row } from "../ui";
+import { AUG_CLASS, chip, empty, group, h, page, row } from "../ui";
 import { RARITY_COLOR } from "./augments";
 import type { PageCtx, PageOut } from "./index";
 
@@ -62,10 +62,9 @@ export function patchPage(ctx: PageCtx): PageOut {
 }
 
 // An icon with its name under it; `badge` is the number of changes, `ring` an outline colour (rarity)
-function tile(grid: HTMLElement, src: string, name: string, onTap: () => void, o: { badge?: number; ring?: string } = {}): void {
-    const t = h(grid, "button", "mn-tile" + (o.ring ? " has-ring" : ""));
-    if (o.ring) t.style.setProperty("--ring", o.ring);
-    const im = h(t, "img"); im.src = src; im.alt = ""; im.loading = "lazy";
+function tile(grid: HTMLElement, src: string, name: string, onTap: () => void, o: { badge?: number; rarity?: string } = {}): void {
+    const t = h(grid, "button", "mn-tile");
+    const im = h(t, "img", o.rarity ? AUG_CLASS[o.rarity] : undefined); im.src = src; im.alt = ""; im.loading = "lazy";
     if (o.badge && o.badge > 1) h(t, "span", "mn-tile-b", `+${o.badge}`);
     h(t, "span", "mn-tile-n", name);
     t.addEventListener("click", (e) => { e.preventDefault(); onTap(); });
@@ -92,7 +91,7 @@ function mayhemSection(el: HTMLElement, ctx: PageCtx, n: PatchNote): void {
         const grid = h(el, "div", "mn-grid");
         for (const a of added) {
             const mine = byName.get(a.name);
-            if (mine) tile(grid, mine.icon, a.name, () => ctx.openAugment(mine.id), { ring: RARITY_COLOR[a.rarity] });
+            if (mine) tile(grid, mine.icon, a.name, () => ctx.openAugment(mine.id), { rarity: a.rarity });
         }
     }
     if (removed.length) {

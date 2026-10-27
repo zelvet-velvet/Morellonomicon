@@ -68,7 +68,7 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
         const augs = ctx.plugin.settings.mode === "mayhem" ? store.augments().filter((a) => a.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA) : [];
         if (augs.length) {
             const g = group(extra, "Augments");
-            for (const a of augs) row(g, { image: a.icon, title: a.name, value: a.rarity, chevron: true, onTap: () => ctx.openAugment(a.id) });
+            for (const a of augs) row(g, { image: a.icon, rarity: a.rarity, title: a.name, value: a.rarity, chevron: true, onTap: () => ctx.openAugment(a.id) });
         }
         const items = store.modeItems().filter((i) => i.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA);
         if (items.length) {

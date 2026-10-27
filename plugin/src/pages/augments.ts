@@ -25,7 +25,7 @@ export function augmentsPage(ctx: PageCtx): PageOut {
         const q = query.trim().toLowerCase();
         const hits = all.filter((a) => (!rarity || a.rarity === rarity) && (!q || a.name.toLowerCase().includes(q)));
         const g = group(list);
-        for (const a of hits.slice(0, 100)) row(g, { image: a.icon, title: a.name, sub: a.effect || undefined, value: a.rarity, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
+        for (const a of hits.slice(0, 100)) row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || undefined, value: a.rarity, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
         if (!hits.length) empty(list, { icon: "search-x", title: "No match" });
         else if (hits.length > 100) h(list, "div", "mn-gf", `${hits.length - 100} more: search or filter`);
     };

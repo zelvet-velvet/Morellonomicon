@@ -616,10 +616,11 @@ var group = (parent, title, footer) => {
   if (footer) h(parent, "div", "mn-gf", footer);
   return g;
 };
+var AUG_CLASS = { \u9280: "aug-silver", \u91D1: "aug-gold", \u7A1C\u93E1: "aug-prism" };
 var row = (parent, r) => {
   const el = h(parent, "div", "mn-row" + (r.onTap ? " is-tap" : "") + (r.muted ? " is-muted" : ""));
   if (r.image) {
-    const im = h(el, "img", "mn-row-img");
+    const im = h(el, "img", "mn-row-img" + (r.rarity && AUG_CLASS[r.rarity] ? " " + AUG_CLASS[r.rarity] : ""));
     im.src = r.image;
     im.loading = "lazy";
     im.alt = "";
@@ -733,7 +734,7 @@ function augmentsPage(ctx) {
     const q = query.trim().toLowerCase();
     const hits = all.filter((a) => (!rarity || a.rarity === rarity) && (!q || a.name.toLowerCase().includes(q)));
     const g = group(list2);
-    for (const a of hits.slice(0, 100)) row(g, { image: a.icon, title: a.name, sub: a.effect || void 0, value: a.rarity, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
+    for (const a of hits.slice(0, 100)) row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || void 0, value: a.rarity, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
     if (!hits.length) empty(list2, { icon: "search-x", title: "No match" });
     else if (hits.length > 100) h(list2, "div", "mn-gf", `${hits.length - 100} more: search or filter`);
   };
@@ -1126,7 +1127,7 @@ function championPicker(parent, ctx) {
     const augs = ctx.plugin.settings.mode === "mayhem" ? store.augments().filter((a) => a.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA) : [];
     if (augs.length) {
       const g = group(extra, "Augments");
-      for (const a of augs) row(g, { image: a.icon, title: a.name, value: a.rarity, chevron: true, onTap: () => ctx.openAugment(a.id) });
+      for (const a of augs) row(g, { image: a.icon, rarity: a.rarity, title: a.name, value: a.rarity, chevron: true, onTap: () => ctx.openAugment(a.id) });
     }
     const items = store.modeItems().filter((i) => i.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA);
     if (items.length) {
@@ -1480,7 +1481,7 @@ function visual(ctx, box, s) {
   } else if (kind === "augs") {
     const list2 = store.augments().filter((a) => a.rarity === args[0]).sort((a, b) => hashStr(String(a.id) + day()) - hashStr(String(b.id) + day())).slice(0, STRIP);
     if (list2.length) {
-      strip(box, list2.map((a) => ({ src: a.icon, label: a.name, tap: () => ctx.openAugment(a.id) })));
+      strip(box, list2.map((a) => ({ src: a.icon, label: a.name, cls: AUG_CLASS[a.rarity], tap: () => ctx.openAugment(a.id) })));
       return;
     }
   }
@@ -1490,7 +1491,7 @@ function strip(box, items) {
   const row2 = h(box, "div", "mn-sl-strip");
   for (const it of items) {
     const b = h(row2, "button", "mn-sl-ic");
-    const im = h(b, "img");
+    const im = h(b, "img", it.cls);
     im.src = it.src;
     im.alt = "";
     h(b, "span", "", it.label);
@@ -1586,7 +1587,7 @@ function augmentPage(ctx) {
   }
   const history = store.augmentHistory(a.name);
   const head = h(el, "div", "mn-dhead");
-  const im = h(head, "img", "mn-dimg");
+  const im = h(head, "img", "mn-dimg " + (AUG_CLASS[a.rarity] ?? ""));
   im.src = a.icon;
   im.alt = "";
   const who = h(head, "div", "mn-dwho");
@@ -1952,9 +1953,8 @@ function patchPage(ctx) {
   return { title: "Patch", el };
 }
 function tile(grid, src, name, onTap, o = {}) {
-  const t = h(grid, "button", "mn-tile" + (o.ring ? " has-ring" : ""));
-  if (o.ring) t.style.setProperty("--ring", o.ring);
-  const im = h(t, "img");
+  const t = h(grid, "button", "mn-tile");
+  const im = h(t, "img", o.rarity ? AUG_CLASS[o.rarity] : void 0);
   im.src = src;
   im.alt = "";
   im.loading = "lazy";
@@ -1993,7 +1993,7 @@ function mayhemSection(el, ctx, n) {
     const grid = h(el, "div", "mn-grid");
     for (const a of added) {
       const mine = byName.get(a.name);
-      if (mine) tile(grid, mine.icon, a.name, () => ctx.openAugment(mine.id), { ring: RARITY_COLOR[a.rarity] });
+      if (mine) tile(grid, mine.icon, a.name, () => ctx.openAugment(mine.id), { rarity: a.rarity });
     }
   }
   if (removed.length) {

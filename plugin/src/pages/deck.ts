@@ -1,6 +1,6 @@
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, h, icon, radar } from "../ui";
+import { AUG_CLASS, DAMAGE_COLOR, h, icon, radar } from "../ui";
 import type { PageCtx, PageOut } from "./index";
 import { demo } from "./skills";
 
@@ -137,18 +137,18 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
         }
     } else if (kind === "augs") {
         const list = store.augments().filter((a) => a.rarity === args[0]).sort((a, b) => hashStr(String(a.id) + day()) - hashStr(String(b.id) + day())).slice(0, STRIP);
-        if (list.length) { strip(box, list.map((a) => ({ src: a.icon, label: a.name, tap: () => ctx.openAugment(a.id) }))); return; }
+        if (list.length) { strip(box, list.map((a) => ({ src: a.icon, label: a.name, cls: AUG_CLASS[a.rarity], tap: () => ctx.openAugment(a.id) }))); return; }
     }
     // nothing to show (or not enough data): the card's own big icon
     icon(h(box, "div", "mn-sl-hero"), s.icon);
 }
 
 // icons with their names under them
-function strip(box: HTMLElement, items: { src: string; label: string; tap: () => void }[]): void {
+function strip(box: HTMLElement, items: { src: string; label: string; cls?: string; tap: () => void }[]): void {
     const row = h(box, "div", "mn-sl-strip");
     for (const it of items) {
         const b = h(row, "button", "mn-sl-ic");
-        const im = h(b, "img"); im.src = it.src; im.alt = "";
+        const im = h(b, "img", it.cls); im.src = it.src; im.alt = "";
         h(b, "span", "", it.label);
         b.addEventListener("click", (e) => { e.preventDefault(); it.tap(); });
     }
