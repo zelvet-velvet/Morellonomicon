@@ -74,6 +74,8 @@ var skillList = (v) => Array.isArray(v) ? v.flatMap((x) => {
   return o && typeof o === "object" ? [{ key: str(o.key), name: str(o.name), damage: list(o.damage), tags: list(o.tags), icon: str(o.icon), desc: str(o.desc), upgrade: str(o.upgrade), range: str(o.range), rows: rowList(o.rows) }] : [];
 }) : [];
 var list = (v) => Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
+var LANE_MIN_SHARE = 0.1;
+var LANE_ZH = { TOP: "\u4E0A\u8DEF", JUNGLE: "\u6253\u91CE", MIDDLE: "\u4E2D\u8DEF", BOTTOM: "\u4E0B\u8DEF", UTILITY: "\u8F14\u52A9" };
 var Store = class {
   // augment id -> the game's own description (tools/fetch_augment_text.py)
   constructor(plugin) {
@@ -83,6 +85,8 @@ var Store = class {
     this.augs = null;
     this.stats = null;
     this.changes = null;
+    this.positions = null;
+    // _data/positions.json
     this.riotNotes = [];
     this.gameText = {};
   }
@@ -114,11 +118,29 @@ var Store = class {
       this.gameText = {};
     }
     try {
+      const path = (0, import_obsidian.normalizePath)("_data/positions.json");
+      this.positions = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)) : null;
+    } catch {
+      this.positions = null;
+    }
+    try {
       const path = (0, import_obsidian.normalizePath)("_data/changes.json");
       this.changes = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)) : null;
     } catch {
       this.changes = null;
     }
+  }
+  // The lanes a champion is played in: a hand-written `positions` list in its note, else the lanes with at least LANE_MIN_SHARE
+  // of its ranked games in _data/positions.json (tools/fetch_builds.py --mode ranked), most played first
+  lanes(c) {
+    if (c.positions.length) return c.positions;
+    const counts = this.positions?.champions[c.id];
+    if (!counts) return [];
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    return Object.entries(counts).filter(([, n]) => n / total >= LANE_MIN_SHARE).sort((a, b) => b[1] - a[1]).map(([k]) => LANE_ZH[k] ?? k);
+  }
+  hasLanes() {
+    return !!this.positions || this.champions().some((c) => c.positions.length);
   }
   invalidate() {
     this.champs = null;
@@ -163,6 +185,7 @@ var Store = class {
         patch: str(fm.patch),
         pinned: list(fm.pinned),
         avoid: list(fm.avoid),
+        positions: list(fm.positions),
         video: typeof fm.video === "string" ? fm.video : void 0,
         builds: buildList(fm.builds),
         tips: tipList(fm.tips),
@@ -481,41 +504,44 @@ var chip = (parent, text, o = {}) => {
 };
 var ROLE_ICON = { \u6230\u58EB: "swords", \u5766\u514B: "shield", \u6CD5\u5E2B: "wand-sparkles", \u523A\u5BA2: "slice", \u5C04\u624B: "target", \u8F14\u52A9: "heart-handshake" };
 var ROLE_WIKI = "https://wiki.leagueoflegends.com/en-us/Special:FilePath/";
+var LANES = ["\u4E0A\u8DEF", "\u6253\u91CE", "\u4E2D\u8DEF", "\u4E0B\u8DEF", "\u8F14\u52A9"];
+var LANE_ICON = { \u4E0A\u8DEF: "arrow-up-left", \u6253\u91CE: "trees", \u4E2D\u8DEF: "move-diagonal-2", \u4E0B\u8DEF: "arrow-down-right", \u8F14\u52A9: "heart-handshake" };
+var LANE_FILE = { \u4E0A\u8DEF: "Top_icon.png", \u6253\u91CE: "Jungle_icon.png", \u4E2D\u8DEF: "Middle_icon.png", \u4E0B\u8DEF: "Bottom_icon.png", \u8F14\u52A9: "Support_icon.png" };
 var ROLE_FILE = { \u6230\u58EB: "Fighter_icon.png", \u5766\u514B: "Tank_icon.png", \u6CD5\u5E2B: "Mage_icon.png", \u523A\u5BA2: "Slayer_icon.png", \u5C04\u624B: "Marksman_icon.png", \u8F14\u52A9: "Controller_icon.png" };
 var preloaded = /* @__PURE__ */ new Map();
 var preloadRoleIcons = () => {
   if (preloaded.size) return;
-  for (const [role, file] of Object.entries(ROLE_FILE)) {
+  for (const file of [...Object.values(ROLE_FILE), ...Object.values(LANE_FILE)]) {
     const im = new Image();
     im.src = ROLE_WIKI + file;
-    preloaded.set(role, im);
+    preloaded.set(file, im);
   }
 };
-var roleChip = (parent, role, o) => {
-  let el = null;
-  el = chip(parent, "", { on: o.on, onTap: o.onTap });
-  holdTip(el, role);
+var iconChip = (parent, label, file, fallback, o) => {
+  const el = chip(parent, "", { on: o.on, onTap: o.onTap });
   el.classList.add("mn-chip-ic");
-  el.setAttribute("aria-label", role);
-  const file = ROLE_FILE[role];
+  el.setAttribute("aria-label", label);
+  holdTip(el, label);
   if (!file) {
-    icon(el, ROLE_ICON[role] ?? "circle");
+    icon(el, fallback);
     return el;
   }
   const im = h(el, "img", "mn-role-img");
   im.alt = "";
-  const cached = preloaded.get(role);
+  const cached = preloaded.get(file);
   if (!(cached?.complete && cached.naturalWidth)) {
     im.classList.add("is-loading");
     im.addEventListener("load", () => im.classList.remove("is-loading"), { once: true });
   }
   im.addEventListener("error", () => {
     im.remove();
-    if (el) icon(el, ROLE_ICON[role] ?? "circle");
+    icon(el, fallback);
   }, { once: true });
   im.src = ROLE_WIKI + file;
   return el;
 };
+var roleChip = (parent, role, o) => iconChip(parent, role, ROLE_FILE[role], ROLE_ICON[role] ?? "circle", o);
+var laneChip = (parent, lane, o) => iconChip(parent, lane, LANE_FILE[lane], LANE_ICON[lane] ?? "circle", o);
 var fgrid = (parent, cells) => {
   const row2 = h(parent, "div", "mn-fgrid");
   row2.style.setProperty("--n", String(cells));
@@ -1500,9 +1526,10 @@ var FEATURES = ["\u63A7\u5834", "\u7DE9\u901F", "\u4F4D\u79FB", "\u6CBB\u7642", 
 var REACH = ["\u8FD1\u6230", "\u4E2D\u7A0B", "\u9060\u7A0B"];
 var SORTS2 = [["name", "\u540D\u7A31"], ["easy", "\u7C21\u55AE\u512A\u5148"], ["range", "\u5C04\u7A0B\u9060\u512A\u5148"]];
 var SEARCH_EXTRA = 8;
-var F = { roles: /* @__PURE__ */ new Set(), dmg: "", feat: /* @__PURE__ */ new Map(), reach: "", sort: "name", open: false };
+var F = { lanes: /* @__PURE__ */ new Set(), roles: /* @__PURE__ */ new Set(), dmg: "", feat: /* @__PURE__ */ new Map(), reach: "", sort: "name", open: false };
 var activeFilters = () => F.roles.size + (F.dmg ? 1 : 0) + F.feat.size + (F.reach ? 1 : 0);
-function matches(c) {
+function matches(c, lanes) {
+  if (F.lanes.size && !lanes.some((l) => F.lanes.has(l))) return false;
   if (F.roles.size && !c.roles.some((r) => F.roles.has(r))) return false;
   if (F.dmg && c.damageType !== F.dmg) return false;
   for (const [f, want] of F.feat) if (c.features.includes(f) !== (want === 1)) return false;
@@ -1548,7 +1575,7 @@ function championPicker(parent, ctx) {
     grid.empty();
     extra.empty();
     const q = query.trim().toLowerCase();
-    const hits = sorted(all.filter((c) => matches(c) && (!q || c.name.toLowerCase().includes(q) || c.title.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))));
+    const hits = sorted(all.filter((c) => matches(c, store.lanes(c)) && (!q || c.name.toLowerCase().includes(q) || c.title.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))));
     count2.textContent = `${hits.length} / ${all.length}`;
     for (const c of hits) {
       const tile2 = h(grid, "button", "mn-tile");
@@ -1588,20 +1615,22 @@ function championPicker(parent, ctx) {
   };
   const drawFilters = () => {
     filters.empty();
-    const roleRow = fgrid(filters, ROLES.length);
-    for (const r of ROLES) roleChip(roleRow, r, { on: F.roles.has(r), onTap: () => {
-      F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r);
-      redraw();
-    } });
-    const kindRow = fgrid(filters, DAMAGES.length + 1);
-    for (const d of DAMAGES) chip(kindRow, d, { on: F.dmg === d, color: DAMAGE_COLOR[d], onTap: () => {
-      F.dmg = F.dmg === d ? "" : d;
-      redraw();
-    } });
+    const row2 = fgrid(filters, LANES.length + 1);
+    const known = store.hasLanes();
+    for (const l of LANES) {
+      const chipEl = laneChip(row2, l, { on: F.lanes.has(l), onTap: () => {
+        if (!known) {
+          tip(chipEl, "\u9084\u6C92\u6709\u5206\u8DEF\u8CC7\u6599");
+          return;
+        }
+        F.lanes.has(l) ? F.lanes.delete(l) : F.lanes.add(l);
+        redraw();
+      } });
+    }
     const n = activeFilters();
-    const fb = h(kindRow, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
+    const fb = h(row2, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
+    fb.setAttribute("aria-label", "\u7BE9\u9078");
     icon(fb, "sliders-horizontal", "mn-filterbtn-ic");
-    h(fb, "span", "", "\u7BE9\u9078");
     if (n) h(fb, "span", "mn-filterbtn-n", String(n));
     fb.addEventListener("click", (e) => {
       e.preventDefault();
@@ -1636,6 +1665,16 @@ function championPicker(parent, ctx) {
       if (hint) h(head, "span", "mn-fp-hint", hint);
       return s;
     };
+    const roleRow = fgrid(sect("\u5B9A\u4F4D"), ROLES.length);
+    for (const r of ROLES) roleChip(roleRow, r, { on: F.roles.has(r), onTap: () => {
+      F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r);
+      redraw();
+    } });
+    const kindRow = fgrid(sect("\u50B7\u5BB3"), DAMAGES.length);
+    for (const d of DAMAGES) chip(kindRow, d, { on: F.dmg === d, color: DAMAGE_COLOR[d], onTap: () => {
+      F.dmg = F.dmg === d ? "" : d;
+      redraw();
+    } });
     const ab = fgrid(sect("\u6280\u80FD"), FEATURES.length);
     for (const f of FEATURES) {
       const on2 = F.feat.get(f) === 1;

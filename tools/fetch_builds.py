@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Count what players really build and pick in ARAM Mayhem, from Riot's Match-V5 API.
+"""Count what players really build and pick in ARAM Mayhem, and which lanes champions play in ranked, from Riot's Match-V5 API.
 
     python3 tools/fetch_builds.py --seed "Name#TAG" --platform tw2 --matches 300
     python3 tools/fetch_builds.py --aggregate-only            # only recount the matches already downloaded
+    python3 tools/fetch_builds.py --mode ranked --seed "Name#TAG" --matches 500   # lanes (Solo/Duo) -> _data/positions.json
 
 Needs a Riot API key (free, developer.riotgames.com) in the environment as RIOT_API_KEY, or in a `.env` file in the
 repo root (`RIOT_API_KEY=RGAPI-...`, not committed). Starting from the seed player's recent Mayhem games, the crawl
@@ -10,7 +11,8 @@ follows the other players in those games until it has --matches games. Matches a
 rerun continues where it stopped.
 
 Writes _data/builds.<mode>.json: per champion the games and wins, the most common completed items, the most common
-three-item cores, and the augments picked. It holds no player names or ids. Standard library only.
+three-item cores, and the augments picked. --mode ranked writes _data/positions.json instead: per champion the games played
+in each lane (Riot's teamPosition). Neither holds player names or ids. Standard library only.
 """
 import argparse
 import datetime
@@ -28,9 +30,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))   # python3 -I does not
 import fetch_data as fd   # noqa: E402
 
 ROOT = fd.ROOT
-CACHE = ROOT / ".cache" / "matches"
+CACHE = ROOT / ".cache" / "matches"   # Mayhem; other modes use .cache/matches-<mode>
 OUT_DIR = ROOT / "_data"
-QUEUES = {"mayhem": 2400}
+QUEUES = {"mayhem": 2400, "ranked": 420}   # 420 = ranked Solo/Duo (for lanes)
 # platform -> (account-v1 host, match-v5 host)
 ROUTES = {
     "tw2": ("asia", "sea"), "sg2": ("asia", "sea"), "ph2": ("asia", "sea"), "th2": ("asia", "sea"), "vn2": ("asia", "sea"),
@@ -91,6 +93,10 @@ class Riot:
         sys.exit("Riot API did not answer; try again later.")
 
 
+def cache_dir(mode):
+    return CACHE if mode == "mayhem" else CACHE.parent / f"matches-{mode}"
+
+
 def trim(match):
     """Keep only what is counted, plus the players' ids (cache only, never written to the output)."""
     info = match["info"]
@@ -100,6 +106,7 @@ def trim(match):
             "puuid": p.get("puuid", ""), "champion": p.get("championId"), "win": bool(p.get("win")),
             "items": [p.get(f"item{i}", 0) for i in range(7)],
             "augments": [p[k] for k in sorted(p) if k.startswith("playerAugment") and p[k]],
+            "position": p.get("teamPosition", ""),
         } for p in info["participants"]],
     }
 
@@ -111,11 +118,12 @@ def crawl(args, key):
     who = riot.get(f"https://{acct}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{urllib.parse.quote(name)}/{urllib.parse.quote(tag)}")
     if not who:
         sys.exit(f"Player {args.seed} not found on {args.platform}.")
-    CACHE.mkdir(parents=True, exist_ok=True)
-    cached = {p.stem for p in CACHE.glob("*.json")}
+    cache = cache_dir(args.mode)
+    cache.mkdir(parents=True, exist_ok=True)
+    cached = {p.stem for p in cache.glob("*.json")}
     frontier, seen = [who["puuid"]], set()
     for m in cached:   # resume: the cached matches' players are the first to follow
-        frontier += [p["puuid"] for p in json.loads((CACHE / f"{m}.json").read_text(encoding="utf-8"))["players"] if p["puuid"]]
+        frontier += [p["puuid"] for p in json.loads((cache / f"{m}.json").read_text(encoding="utf-8"))["players"] if p["puuid"]]
     queue = QUEUES[args.mode] if not args.queue else args.queue
     got = len(cached)
     print(f"{got} matches cached; collecting up to {args.matches}")
@@ -134,7 +142,7 @@ def crawl(args, key):
             if not match:
                 continue
             t = trim(match)
-            (CACHE / f"{mid}.json").write_text(json.dumps(t), encoding="utf-8")
+            (cache / f"{mid}.json").write_text(json.dumps(t), encoding="utf-8")
             cached.add(mid)
             got += 1
             frontier += [p["puuid"] for p in t["players"] if p["puuid"]]
@@ -163,13 +171,15 @@ def aggregate(args, ddragon_version):
     done, boots, gold = item_info(ddragon_version)
     champs = fd.fetch(f"{fd.DD}/cdn/{ddragon_version}/data/{fd.LOCALE}/champion.json", f"{ddragon_version}/champion.json")["data"]
     by_key = {int(c["key"]): c["id"] for c in champs.values()}
-    matches = [json.loads(p.read_text(encoding="utf-8")) for p in CACHE.glob("*.json")]
+    matches = [json.loads(p.read_text(encoding="utf-8")) for p in cache_dir(args.mode).glob("*.json")]
     matches = [m for m in matches if m["duration"] >= MIN_DURATION]
     if not matches:
         sys.exit("No matches to count yet.")
     patches = Counter(patch_of(m["version"]) for m in matches if m["version"])
     patch = args.patch or max(patches, key=lambda p: tuple(int(x) for x in p.split(".") if x.isdigit()))
     matches = [m for m in matches if patch_of(m["version"]) == patch]
+    if args.mode == "ranked":
+        return write_positions(matches, by_key, patch)
     stats = defaultdict(lambda: {"games": 0, "wins": 0, "items": defaultdict(lambda: [0, 0]), "sets": defaultdict(lambda: [0, 0]), "augments": defaultdict(lambda: [0, 0])})
     for m in matches:
         for p in m["players"]:
@@ -204,6 +214,25 @@ def aggregate(args, ddragon_version):
     path = OUT_DIR / f"builds.{args.mode}.json"
     path.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"{len(matches)} matches of patch {patch}, {len(out['champions'])} champions -> {path}")
+
+
+LANES = ("TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY")   # Riot's teamPosition values
+
+
+def write_positions(matches, by_key, patch):
+    """Per champion: games in each lane (ranked Solo/Duo), for the app's lane filter."""
+    lanes = defaultdict(Counter)
+    for m in matches:
+        for p in m["players"]:
+            cid = by_key.get(p["champion"])
+            if cid and p.get("position") in LANES:
+                lanes[cid][p["position"]] += 1
+    out = {"queue": QUEUES["ranked"], "patch": patch, "date": datetime.date.today().isoformat(), "matches": len(matches),
+           "champions": {cid: {lane: c[lane] for lane in LANES if c[lane]} for cid, c in sorted(lanes.items())}}
+    OUT_DIR.mkdir(exist_ok=True)
+    path = OUT_DIR / "positions.json"
+    path.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    print(f"{len(matches)} ranked matches of patch {patch}, {len(out['champions'])} champions -> {path}")
 
 
 def main():

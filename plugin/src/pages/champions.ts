@@ -1,5 +1,5 @@
 import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip } from "../ui";
+import { DAMAGE_COLOR, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, tip } from "../ui";
 import { championProfile, tagFilter } from "./profile";
 import { buildTab } from "./build";
 import type { PageCtx, PageOut } from "./index";
@@ -15,11 +15,12 @@ const SORTS: [string, string][] = [["name", "名稱"], ["easy", "簡單優先"],
 const SEARCH_EXTRA = 8;   // augments / items listed under the champions when the search box has text
 
 // The filters stay as you set them while the app is open, so coming back from a champion card keeps your list.
-interface Filter { roles: Set<string>; dmg: string; feat: Map<string, 1 | -1>; reach: string; sort: string; open: boolean }
-const F: Filter = { roles: new Set(), dmg: "", feat: new Map(), reach: "", sort: "name", open: false };
-const activeFilters = () => F.roles.size + (F.dmg ? 1 : 0) + F.feat.size + (F.reach ? 1 : 0);
+interface Filter { lanes: Set<string>; roles: Set<string>; dmg: string; feat: Map<string, 1 | -1>; reach: string; sort: string; open: boolean }
+const F: Filter = { lanes: new Set(), roles: new Set(), dmg: "", feat: new Map(), reach: "", sort: "name", open: false };
+const activeFilters = () => F.roles.size + (F.dmg ? 1 : 0) + F.feat.size + (F.reach ? 1 : 0);   // the ones inside the 篩選 panel
 
-function matches(c: Champion): boolean {
+function matches(c: Champion, lanes: string[]): boolean {
+    if (F.lanes.size && !lanes.some((l) => F.lanes.has(l))) return false;
     if (F.roles.size && !c.roles.some((r) => F.roles.has(r))) return false;
     if (F.dmg && c.damageType !== F.dmg) return false;
     for (const [f, want] of F.feat) if (c.features.includes(f) !== (want === 1)) return false;
@@ -66,7 +67,7 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
         grid.empty();
         extra.empty();
         const q = query.trim().toLowerCase();
-        const hits = sorted(all.filter((c) => matches(c) && (!q || c.name.toLowerCase().includes(q) || c.title.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))));
+        const hits = sorted(all.filter((c) => matches(c, store.lanes(c)) && (!q || c.name.toLowerCase().includes(q) || c.title.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))));
         count.textContent = `${hits.length} / ${all.length}`;
         for (const c of hits) {
             const tile = h(grid, "button", "mn-tile");
@@ -90,18 +91,21 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
         }
     };
     const redraw = () => { drawFilters(); drawPanel(); draw(); };
+    // always in view: the five lanes and the 篩選 button; everything else is in the folding panel
     const drawFilters = () => {
         filters.empty();
-        // two rows that fill the width: the six roles, then the damage kinds and the filter button
-        const roleRow = fgrid(filters, ROLES.length);
-        for (const r of ROLES) roleChip(roleRow, r, { on: F.roles.has(r), onTap: () => { F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r); redraw(); } });
-        const kindRow = fgrid(filters, DAMAGES.length + 1);
-        for (const d of DAMAGES) chip(kindRow, d, { on: F.dmg === d, color: DAMAGE_COLOR[d], onTap: () => { F.dmg = F.dmg === d ? "" : d; redraw(); } });
+        const row = fgrid(filters, LANES.length + 1);
+        const known = store.hasLanes();
+        for (const l of LANES) {
+            const chipEl = laneChip(row, l, { on: F.lanes.has(l), onTap: () => {
+                if (!known) { tip(chipEl, "還沒有分路資料"); return; }
+                F.lanes.has(l) ? F.lanes.delete(l) : F.lanes.add(l); redraw();
+            } });
+        }
         const n = activeFilters();
-        // a button of its own (not a chip): sliders icon, the number of active filters, opens the panel
-        const fb = h(kindRow, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
+        const fb = h(row, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
+        fb.setAttribute("aria-label", "篩選");
         icon(fb, "sliders-horizontal", "mn-filterbtn-ic");
-        h(fb, "span", "", "篩選");
         if (n) h(fb, "span", "mn-filterbtn-n", String(n));
         fb.addEventListener("click", (e) => { e.preventDefault(); F.open = !F.open; drawFilters(); drawPanel(); });
     };
@@ -124,6 +128,10 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
             if (hint) h(head, "span", "mn-fp-hint", hint);
             return s;
         };
+        const roleRow = fgrid(sect("定位"), ROLES.length);
+        for (const r of ROLES) roleChip(roleRow, r, { on: F.roles.has(r), onTap: () => { F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r); redraw(); } });
+        const kindRow = fgrid(sect("傷害"), DAMAGES.length);
+        for (const d of DAMAGES) chip(kindRow, d, { on: F.dmg === d, color: DAMAGE_COLOR[d], onTap: () => { F.dmg = F.dmg === d ? "" : d; redraw(); } });
         const ab = fgrid(sect("技能"), FEATURES.length);
         for (const f of FEATURES) {
             const on = F.feat.get(f) === 1;

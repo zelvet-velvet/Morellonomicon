@@ -132,33 +132,39 @@ export const ROLE_ICON: Record<string, string> = { 戰士: "swords", 坦克: "sh
 // The game's class icons, shown from the League of Legends Wiki by address (never stored in the vault). The wiki's classes differ
 // a little from Riot's role tags: 刺客 is under its Slayer class, 輔助 its Controller class. A missing file falls back to ROLE_ICON.
 const ROLE_WIKI = "https://wiki.leagueoflegends.com/en-us/Special:FilePath/";
+// Lanes the same way (the wiki's position icons; a missing file falls back to these look-alikes)
+export const LANES = ["上路", "打野", "中路", "下路", "輔助"];
+const LANE_ICON: Record<string, string> = { 上路: "arrow-up-left", 打野: "trees", 中路: "move-diagonal-2", 下路: "arrow-down-right", 輔助: "heart-handshake" };
+const LANE_FILE: Record<string, string> = { 上路: "Top_icon.png", 打野: "Jungle_icon.png", 中路: "Middle_icon.png", 下路: "Bottom_icon.png", 輔助: "Support_icon.png" };
 const ROLE_FILE: Record<string, string> = { 戰士: "Fighter_icon.png", 坦克: "Tank_icon.png", 法師: "Mage_icon.png", 刺客: "Slayer_icon.png", 射手: "Marksman_icon.png", 輔助: "Controller_icon.png" };
-// Fetch the class icons once when the plugin loads, so the role chips have them ready
+// Fetch the class and lane icons once when the plugin loads, so the chips have them ready
 const preloaded = new Map<string, HTMLImageElement>();
 export const preloadRoleIcons = (): void => {
     if (preloaded.size) return;
-    for (const [role, file] of Object.entries(ROLE_FILE)) { const im = new Image(); im.src = ROLE_WIKI + file; preloaded.set(role, im); }
+    for (const file of [...Object.values(ROLE_FILE), ...Object.values(LANE_FILE)]) { const im = new Image(); im.src = ROLE_WIKI + file; preloaded.set(file, im); }
 };
-export const roleChip = (parent: HTMLElement, role: string, o: { on: boolean; onTap: () => void }): HTMLElement => {
-    let el: HTMLElement | null = null;
-    el = chip(parent, "", { on: o.on, onTap: o.onTap });
-    holdTip(el, role);
+
+// An icon-only filter chip with the game's icon (drawn at once when cached, else fading in; a look-alike if it fails to load).
+// Hold for its name.
+const iconChip = (parent: HTMLElement, label: string, file: string | undefined, fallback: string, o: { on: boolean; onTap: () => void }): HTMLElement => {
+    const el = chip(parent, "", { on: o.on, onTap: o.onTap });
     el.classList.add("mn-chip-ic");
-    el.setAttribute("aria-label", role);
-    // the game's icon: drawn at once when cached; otherwise it fades in when it arrives. The look-alike only if it fails to load
-    const file = ROLE_FILE[role];
-    if (!file) { icon(el, ROLE_ICON[role] ?? "circle"); return el; }
+    el.setAttribute("aria-label", label);
+    holdTip(el, label);
+    if (!file) { icon(el, fallback); return el; }
     const im = h(el, "img", "mn-role-img");
     im.alt = "";
-    const cached = preloaded.get(role);
+    const cached = preloaded.get(file);
     if (!(cached?.complete && cached.naturalWidth)) {
         im.classList.add("is-loading");
         im.addEventListener("load", () => im.classList.remove("is-loading"), { once: true });
     }
-    im.addEventListener("error", () => { im.remove(); if (el) icon(el, ROLE_ICON[role] ?? "circle"); }, { once: true });
+    im.addEventListener("error", () => { im.remove(); icon(el, fallback); }, { once: true });
     im.src = ROLE_WIKI + file;
     return el;
 };
+export const roleChip = (parent: HTMLElement, role: string, o: { on: boolean; onTap: () => void }): HTMLElement => iconChip(parent, role, ROLE_FILE[role], ROLE_ICON[role] ?? "circle", o);
+export const laneChip = (parent: HTMLElement, lane: string, o: { on: boolean; onTap: () => void }): HTMLElement => iconChip(parent, lane, LANE_FILE[lane], LANE_ICON[lane] ?? "circle", o);
 
 // A row of equal-width cells that fills the page width (role chips, filter buttons)
 export const fgrid = (parent: HTMLElement, cells: number): HTMLElement => {

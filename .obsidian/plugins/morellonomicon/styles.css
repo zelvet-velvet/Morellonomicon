@@ -616,3 +616,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 
 /* elements with a hold-to-name bubble: no text selection or iOS callout while held */
 .mn-holdable { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+
+/* the lane row's last cell: the 篩選 button as an icon (with the number of panel filters in use) */
+.mn-app .mn-fgrid .mn-filterbtn { justify-content: center; gap: 4px; height: 44px; padding: 0; border-radius: 12px; }

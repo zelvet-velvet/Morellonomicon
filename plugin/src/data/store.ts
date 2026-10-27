@@ -8,7 +8,7 @@ type FM = Record<string, unknown>;
 export interface Champion {
     id: string; key: number; name: string; title: string; blurb: string; tier: string; roles: string[]; damageType: string; skillDamage: string[];
     archetypes: string[]; features: string[]; resource: string; attack: number; magic: number; defense: number; difficulty: number;
-    range: number; icon: string; skills: Skill[]; patch: string; pinned: string[]; avoid: string[]; video?: string;
+    range: number; icon: string; skills: Skill[]; patch: string; pinned: string[]; avoid: string[]; video?: string; positions: string[];
     builds: Build[]; tips: Tip[]; path: string;
 }
 export interface SkillRow { label: string; vals: string[]; note: string }   // one value per rank, or one value for all ranks
@@ -81,12 +81,16 @@ const skillList = (v: unknown): Skill[] => (Array.isArray(v) ? v.flatMap((x) => 
 const list = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 
 // Reads come from Obsidian's metadata cache (instant, no Dataview). Parsed lists are kept until a note in the folders changes.
+const LANE_MIN_SHARE = 0.1;   // a lane counts for a champion when at least this share of its ranked games are there
+export const LANE_ZH: Record<string, string> = { TOP: "上路", JUNGLE: "打野", MIDDLE: "中路", BOTTOM: "下路", UTILITY: "輔助" };
+
 export class Store {
     private champs: Champion[] | null = null;
     private its: Item[] | null = null;
     private augs: Augment[] | null = null;
     stats: BuildStats | null = null;
     changes: ChangeData | null = null;
+    positions: { patch: string; date: string; matches: number; champions: Record<string, Record<string, number>> } | null = null;   // _data/positions.json
     riotNotes: PatchNote[] = [];
     gameText: Record<string, { text: string; partial: boolean }> = {};   // augment id -> the game's own description (tools/fetch_augment_text.py)
 
@@ -110,10 +114,25 @@ export class Store {
             this.augs = null;
         } catch { this.gameText = {}; }
         try {
+            const path = normalizePath("_data/positions.json");
+            this.positions = (await this.app.vault.adapter.exists(path)) ? JSON.parse(await this.app.vault.adapter.read(path)) : null;
+        } catch { this.positions = null; }
+        try {
             const path = normalizePath("_data/changes.json");
             this.changes = (await this.app.vault.adapter.exists(path)) ? (JSON.parse(await this.app.vault.adapter.read(path)) as ChangeData) : null;
         } catch { this.changes = null; }
     }
+
+    // The lanes a champion is played in: a hand-written `positions` list in its note, else the lanes with at least LANE_MIN_SHARE
+    // of its ranked games in _data/positions.json (tools/fetch_builds.py --mode ranked), most played first
+    lanes(c: Champion): string[] {
+        if (c.positions.length) return c.positions;
+        const counts = this.positions?.champions[c.id];
+        if (!counts) return [];
+        const total = Object.values(counts).reduce((a, b) => a + b, 0);
+        return Object.entries(counts).filter(([, n]) => n / total >= LANE_MIN_SHARE).sort((a, b) => b[1] - a[1]).map(([k]) => LANE_ZH[k] ?? k);
+    }
+    hasLanes(): boolean { return !!this.positions || this.champions().some((c) => c.positions.length); }
 
     invalidate(): void { this.champs = null; this.its = null; this.augs = null; }
     inData(path: string): boolean {
@@ -137,7 +156,7 @@ export class Store {
                 id: str(fm.id), key: num(fm.key), name: str(fm.name, file.basename), title: str(fm.title), blurb: str(fm.blurb), tier: str(fm.tier), roles: list(fm.roles), damageType: str(fm.damage_type),
                 skillDamage: list(fm.skill_damage), archetypes: [...list(fm.archetypes), ...list(fm.archetypes_extra)], features: [...list(fm.features), ...list(fm.features_extra), ...(list(fm.onhit).length ? ["攻擊特效"] : [])],
                 resource: str(fm.resource), attack: num(fm.attack), magic: num(fm.magic), defense: num(fm.defense), difficulty: num(fm.difficulty),
-                range: num(fm.range), icon: str(fm.icon), skills: withOnHit(skillList(fm.skills), list(fm.onhit)), patch: str(fm.patch), pinned: list(fm.pinned), avoid: list(fm.avoid),
+                range: num(fm.range), icon: str(fm.icon), skills: withOnHit(skillList(fm.skills), list(fm.onhit)), patch: str(fm.patch), pinned: list(fm.pinned), avoid: list(fm.avoid), positions: list(fm.positions),
                 video: typeof fm.video === "string" ? fm.video : undefined, builds: buildList(fm.builds), tips: tipList(fm.tips), path: file.path,
             })).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
         }
