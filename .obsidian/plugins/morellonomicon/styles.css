@@ -452,14 +452,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lg-e { font-size: 12px; color: var(--text-muted); }
 
 /* Quick Look */
-.mn-app .mn-qk { display: flex; align-items: center; gap: 14px; width: 100%; margin: 4px 0 12px; padding: 14px 16px; text-align: left; white-space: normal; border-radius: 20px; background: var(--mn-card); border: 1.5px solid var(--mn-accent); }
-.mn-qk-ic { display: flex; flex: none; align-items: center; justify-content: center; width: 46px; height: 46px; border-radius: 15px; background: var(--mn-accent); color: var(--text-on-accent, #fff); }
-.mn-qk-ic svg { width: 24px; height: 24px; }
-.mn-qk-main { flex: 1; min-width: 0; }
-.mn-qk-t { font-size: 17px; font-weight: 800; }
-.mn-qk-s { font-size: 13px; color: var(--mn-muted); line-height: 1.4; margin-top: 2px; }
-.mn-qk-strip { display: flex; gap: 4px; margin-top: 8px; }
-.mn-qk-strip img { width: 26px; height: 26px; border-radius: 8px; }
 .mn-rq-hint { margin: 0 4px 12px; font-size: 14px; color: var(--mn-muted); line-height: 1.5; }
 .mn-rq-head { display: flex; align-items: center; justify-content: space-between; margin: 0 4px 6px; }
 .mn-rq-count { font-size: 13px; font-weight: 700; }
@@ -583,3 +575,18 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-sd-video { pointer-events: none; }
 .mn-sd-video::-webkit-media-controls, .mn-sd-video::-webkit-media-controls-panel, .mn-sd-video::-webkit-media-controls-start-playback-button,
 .mn-sd-video::-webkit-media-controls-overlay-play-button { display: none !important; -webkit-appearance: none; }
+
+/* the search row on the Champions tab: search box, then the 速查 button (count of picked champions) */
+.mn-search-row { display: flex; gap: 8px; align-items: center; }
+.mn-search-row .mn-search { flex: 1; min-width: 0; }
+.mn-app .mn-qk-btn { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--mn-accent); background: var(--mn-card); color: var(--mn-accent); font-size: 14px; font-weight: 700; -webkit-tap-highlight-color: transparent; }
+.mn-qk-btn .mn-ic { display: flex; }
+.mn-qk-btn svg { width: 18px; height: 18px; }
+.mn-qk-n { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--mn-accent); color: var(--text-on-accent, #fff); font-size: 11px; line-height: 18px; text-align: center; }
+
+/* a tab's first page: the top bar floats (no empty strip held for the small title); it shows its background and title once scrolled */
+.mn-app.is-float .mn-top { position: absolute; left: 0; right: 0; top: 0; background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; border-bottom-color: transparent; transition: background 0.2s, border-color 0.2s; }
+.mn-app.is-float .mn-top:not(.is-scrolled) { pointer-events: none; }
+.mn-app.is-float .mn-top.is-scrolled { background: color-mix(in srgb, var(--mn-bg) 80%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom-color: var(--mn-line); }
+.mn-app.is-float .mn-top:not(.is-scrolled) .mn-top-title { opacity: 0; }
+.mn-app.is-float .mn-scroll > .mn-page { padding-top: calc(var(--mn-safe-top) + 10px); }

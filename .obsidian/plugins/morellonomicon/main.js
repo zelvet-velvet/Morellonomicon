@@ -1446,31 +1446,23 @@ function championPicker(parent, ctx) {
   }
   let query = "";
   const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)]));
-  const picked = ctx.plugin.settings.roster.map((id) => store.champion(id)).filter((c) => !!c);
-  const qk = h(parent, "button", "mn-qk");
-  icon(h(qk, "span", "mn-qk-ic"), "scan-search");
-  const qt = h(qk, "div", "mn-qk-main");
-  h(qt, "div", "mn-qk-t", "\u5927\u6DF7\u6230\u901F\u67E5");
-  h(qt, "div", "mn-qk-s", picked.length ? `\u4F60\u9078\u4E86 ${picked.length} \u4F4D\u82F1\u96C4,\u9EDE\u958B\u770B\u5404\u81EA\u7684\u5B9A\u4F4D\u548C\u80FD\u529B` : "\u62FF\u5230\u4E0D\u8A8D\u8B58\u7684\u82F1\u96C4?\u9EDE\u4E00\u4E0B\u5C31\u77E5\u9053\u5B9A\u4F4D\u548C\u80FD\u529B");
-  if (picked.length) {
-    const strip2 = h(qt, "div", "mn-qk-strip");
-    for (const c of picked.slice(0, 8)) {
-      const im = h(strip2, "img");
-      im.src = c.icon;
-      im.alt = "";
-    }
-  }
-  icon(qk, "chevron-right", "mn-row-chev");
-  qk.addEventListener("click", (e) => {
-    e.preventDefault();
-    ctx.push({ key: "roster", title: "\u901F\u67E5" });
-  });
-  const box = h(parent, "div", "mn-search");
+  const searchRow = h(parent, "div", "mn-search-row");
+  const box = h(searchRow, "div", "mn-search");
   icon(box, "search", "mn-search-ic");
   const search = h(box, "input");
   search.type = "search";
   search.placeholder = "Search champions, augments, items";
   search.setAttribute("enterkeyhint", "search");
+  const picked = ctx.plugin.settings.roster.filter((id) => store.champion(id)).length;
+  const qk = h(searchRow, "button", "mn-qk-btn");
+  qk.setAttribute("aria-label", "\u5927\u6DF7\u6230\u901F\u67E5");
+  icon(qk, "scan-search");
+  h(qk, "span", "", "\u901F\u67E5");
+  if (picked) h(qk, "span", "mn-qk-n", String(picked));
+  qk.addEventListener("click", (e) => {
+    e.preventDefault();
+    ctx.push({ key: "roster", title: "\u901F\u67E5" });
+  });
   const filters = h(parent, "div", "mn-fgroup");
   const panel = h(parent, "div", "mn-fpanel");
   const count2 = h(parent, "div", "mn-count");
@@ -2827,6 +2819,7 @@ var MnView = class extends import_obsidian8.ItemView {
     this.actsEl.toggleClass("is-hidden", !titleRow);
     this.topEl.toggleClass("has-back", this.router.depth() > 0);
     this.appEl.toggleClass("is-overlay", OVERLAY_PAGES.has(f.key));
+    this.appEl.toggleClass("is-float", this.router.depth() === 0);
     this.markScrolled();
     if (anim === "none") {
       this.loaderEl.removeClass("is-on");

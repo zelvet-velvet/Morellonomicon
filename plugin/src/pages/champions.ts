@@ -41,25 +41,21 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
     let query = "";
     // champions changed in the latest patch notes get a ▲ / ▼ / ◆ / ● mark on their icon
     const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)] as const));
-    // Quick Look: the tool for the moment the game hands you champions you do not know
-    const picked = ctx.plugin.settings.roster.map((id) => store.champion(id)).filter((c) => !!c);
-    const qk = h(parent, "button", "mn-qk");
-    icon(h(qk, "span", "mn-qk-ic"), "scan-search");
-    const qt = h(qk, "div", "mn-qk-main");
-    h(qt, "div", "mn-qk-t", "大混戰速查");
-    h(qt, "div", "mn-qk-s", picked.length ? `你選了 ${picked.length} 位英雄,點開看各自的定位和能力` : "拿到不認識的英雄?點一下就知道定位和能力");
-    if (picked.length) {
-        const strip = h(qt, "div", "mn-qk-strip");
-        for (const c of picked.slice(0, 8)) { const im = h(strip, "img"); im.src = c!.icon; im.alt = ""; }
-    }
-    icon(qk, "chevron-right", "mn-row-chev");
-    qk.addEventListener("click", (e) => { e.preventDefault(); ctx.push({ key: "roster", title: "速查" }); });
-    const box = h(parent, "div", "mn-search");
+    // the search box, with the Quick Look button beside it (the tool for the moment the game hands you champions you do not know)
+    const searchRow = h(parent, "div", "mn-search-row");
+    const box = h(searchRow, "div", "mn-search");
     icon(box, "search", "mn-search-ic");
     const search = h(box, "input");
     search.type = "search";
     search.placeholder = "Search champions, augments, items";
     search.setAttribute("enterkeyhint", "search");
+    const picked = ctx.plugin.settings.roster.filter((id) => store.champion(id)).length;
+    const qk = h(searchRow, "button", "mn-qk-btn");
+    qk.setAttribute("aria-label", "大混戰速查");
+    icon(qk, "scan-search");
+    h(qk, "span", "", "速查");
+    if (picked) h(qk, "span", "mn-qk-n", String(picked));
+    qk.addEventListener("click", (e) => { e.preventDefault(); ctx.push({ key: "roster", title: "速查" }); });
     const filters = h(parent, "div", "mn-fgroup");
     const panel = h(parent, "div", "mn-fpanel");
     const count = h(parent, "div", "mn-count");
