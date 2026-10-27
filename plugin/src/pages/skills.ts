@@ -61,8 +61,12 @@ export function demo(parent: HTMLElement, c: Champion, s: { key: string }): void
     const key = String(c.key).padStart(4, "0");
     const url = `${DEMO_BASE}/${key}/ability_${key}_${s.key}1`;
     const v = h(parent, "video", "mn-sd-video");
-    v.muted = true; v.loop = true; v.autoplay = true; v.controls = true; v.preload = "metadata";
+    // a silent looping clip, no player controls (no play / pause, seek, full screen or picture-in-picture buttons)
+    v.muted = true; v.loop = true; v.autoplay = true; v.controls = false; v.preload = "auto";
     v.setAttribute("playsinline", "");
+    v.setAttribute("disablepictureinpicture", "");
+    v.setAttribute("disableremoteplayback", "");
+    v.addEventListener("loadeddata", () => { void v.play().catch(() => undefined); }, { once: true });
     const mp4 = h(v, "source"); mp4.src = `${url}.mp4`; mp4.type = "video/mp4";
     const webm = h(v, "source"); webm.src = `${url}.webm`; webm.type = "video/webm";
     webm.addEventListener("error", () => v.remove());   // neither format loaded

@@ -1365,9 +1365,14 @@ function demo(parent, c, s) {
   v.muted = true;
   v.loop = true;
   v.autoplay = true;
-  v.controls = true;
-  v.preload = "metadata";
+  v.controls = false;
+  v.preload = "auto";
   v.setAttribute("playsinline", "");
+  v.setAttribute("disablepictureinpicture", "");
+  v.setAttribute("disableremoteplayback", "");
+  v.addEventListener("loadeddata", () => {
+    void v.play().catch(() => void 0);
+  }, { once: true });
   const mp4 = h(v, "source");
   mp4.src = `${url}.mp4`;
   mp4.type = "video/mp4";
