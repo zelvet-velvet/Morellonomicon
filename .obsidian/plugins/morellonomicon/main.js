@@ -50,6 +50,7 @@ var Store = class {
     this.plugin = plugin;
     this.champs = null;
     this.its = null;
+    this.augs = null;
   }
   get app() {
     return this.plugin.app;
@@ -60,10 +61,11 @@ var Store = class {
   invalidate() {
     this.champs = null;
     this.its = null;
+    this.augs = null;
   }
   inData(path) {
     const s = this.s;
-    return [s.championFolder, s.itemFolder, s.guideFolder].some((f) => path.startsWith((0, import_obsidian.normalizePath)(f) + "/"));
+    return [s.championFolder, s.itemFolder, s.guideFolder, s.augmentFolder].some((f) => path.startsWith((0, import_obsidian.normalizePath)(f) + "/"));
   }
   notes(folder) {
     const prefix = (0, import_obsidian.normalizePath)(folder) + "/";
@@ -128,6 +130,21 @@ var Store = class {
   }
   item(id) {
     return this.items().find((i) => i.id === id);
+  }
+  augments() {
+    if (!this.augs) {
+      this.augs = this.notes(this.s.augmentFolder).filter((n) => n.fm.type === "augment").map(({ file, fm }) => ({
+        id: num(fm.id),
+        name: str(fm.name, file.basename),
+        rarity: str(fm.rarity),
+        icon: str(fm.icon),
+        effect: str(fm.effect),
+        fits: list(fm.fits),
+        tier: str(fm.tier),
+        path: file.path
+      })).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
+    }
+    return this.augs;
   }
   guideNotes() {
     return this.notes(this.s.guideFolder).map((n) => n.file).sort((a, b) => a.path.localeCompare(b.path, "zh-Hant"));
@@ -207,6 +224,7 @@ var DEFAULTS = {
   championFolder: "\u82F1\u96C4",
   itemFolder: "\u9053\u5177",
   guideFolder: "\u65B0\u624B\u5165\u9580",
+  augmentFolder: "\u5F37\u5316",
   openOnStartup: import_obsidian2.Platform.isMobile
 };
 var MnSettingTab = class extends import_obsidian2.PluginSettingTab {
@@ -232,6 +250,7 @@ var MnSettingTab = class extends import_obsidian2.PluginSettingTab {
     }));
     folder("Champion folder", "Notes made by tools/fetch_data.py", "championFolder");
     folder("Item folder", "Notes made by tools/fetch_data.py", "itemFolder");
+    folder("Augment folder", "Notes made by tools/fetch_augments.py", "augmentFolder");
     folder("Guide folder", "Beginner guide notes", "guideFolder");
     new import_obsidian2.Setting(c).setName("Open on startup").setDesc("Show the app when Obsidian starts (on by default on a phone).").addToggle((x) => x.setValue(s.openOnStartup).onChange(async (v) => {
       s.openOnStartup = v;
@@ -480,8 +499,53 @@ function guidePage(ctx) {
   return { title: "Guide", el };
 }
 
+// src/pages/augments.ts
+var RARITIES = ["\u9280", "\u91D1", "\u7A1C\u93E1"];
+var RARITY_COLOR = { \u9280: "var(--text-muted)", \u91D1: "var(--color-yellow)", \u7A1C\u93E1: "var(--color-purple)" };
+function augmentsPage(ctx) {
+  const el = page("Augments");
+  const all = ctx.plugin.store.augments();
+  if (!all.length) {
+    empty(el, { icon: "database", title: "No augment notes yet", text: "Run python3 tools/fetch_augments.py" });
+    return { title: "Augments", el };
+  }
+  let query = "", rarity = "";
+  const box = h(el, "div", "mn-search");
+  icon(box, "search", "mn-search-ic");
+  const search = h(box, "input");
+  search.type = "search";
+  search.placeholder = "Search";
+  const chips = h(el, "div", "mn-chips");
+  const list2 = h(el, "div");
+  const draw = () => {
+    list2.empty();
+    const q = query.trim().toLowerCase();
+    const hits = all.filter((a) => (!rarity || a.rarity === rarity) && (!q || a.name.toLowerCase().includes(q)));
+    const g = group(list2);
+    for (const a of hits.slice(0, 100)) row(g, { image: a.icon, title: a.name, sub: a.effect || void 0, value: a.rarity, chevron: true, onTap: () => ctx.openNote(a.path) });
+    if (!hits.length) empty(list2, { icon: "search-x", title: "No match" });
+    else if (hits.length > 100) h(list2, "div", "mn-gf", `${hits.length - 100} more: search or filter`);
+  };
+  const drawChips = () => {
+    chips.empty();
+    for (const r of RARITIES) chip(chips, r, { on: rarity === r, color: RARITY_COLOR[r], onTap: () => {
+      rarity = rarity === r ? "" : r;
+      drawChips();
+      draw();
+    } });
+  };
+  search.addEventListener("input", () => {
+    query = search.value;
+    draw();
+  });
+  drawChips();
+  draw();
+  return { title: "Augments", el };
+}
+
 // src/pages/home.ts
 function homePage(ctx) {
+  if (ctx.frame.key === "augments") return augmentsPage(ctx);
   const mode = MODES[ctx.plugin.settings.mode];
   const el = page(mode.id === "mayhem" ? "Who are you playing?" : "Summoner's Rift");
   if (!mode.enabled) {
@@ -490,7 +554,7 @@ function homePage(ctx) {
   }
   championPicker(el, ctx, false);
   const g = group(el);
-  row(g, { icon: "sparkles", title: "Augments", value: "Soon", muted: true });
+  row(g, { icon: "sparkles", title: "Augments", chevron: true, onTap: () => ctx.push({ key: "augments", title: "Augments" }) });
   row(g, { icon: "flame", title: "Combos", value: "Soon", muted: true });
   row(g, { icon: "package", title: "ARAM items", chevron: true, onTap: () => ctx.goTab("items") });
   return { title: mode.label, el };

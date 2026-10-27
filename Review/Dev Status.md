@@ -16,6 +16,8 @@ sticker: lucide//activity
 - **Plugin shell**: `plugin/` (TypeScript, from the ZeLedger skeleton) with tabs Mayhem · Champions · Items · Guide, a page stack, a mode switch (Mayhem on, Rift planned), a tap-to-pick champion grid, a one-screen champion card (icon, role and damage chips, rating bars, damage-coloured skill icons) and an item list; built into the vault. Not yet seen in Obsidian.
 - **Less text**: generated champion notes keep a 5-row skill table and fold the descriptions, tips and base stats into collapsed callouts; no lore.
 - **Vault at the repo root**: moved `Morellonomicon Note/` up so Obsidian Git on a phone can clone the repo straight into a vault; `plugin/` and `tools/` are hidden through Excluded files; Obsidian Git is in the plugin list; the Start Guide has the phone steps.
+- **Radar and look**: the champion card uses a 5-axis radar (物理 魔法 防禦 射程 難度) and a splash-art banner; softer cards, pill search, glassy bars. Seen on the phone and liked.
+- **Mayhem augments**: `tools/fetch_augments.py` writes 249 augment notes (`強化/`: 銀 71, 金 104, 稜鏡 74) from CommunityDragon's KIWI pool with zh_TW names, rarity and icons; the plugin has an Augments list (Mayhem home → Augments).
 - **Workflow**: Copied the LLM Guide, Dev Status / Dev Log / Day note from clawd-room, simplified for a solo project (commit to `main`, no PRs) and added a Start Guide.
 
 ## 📅 Yesterday's Progress (—)
@@ -28,7 +30,9 @@ sticker: lucide//activity
 - [x] **Fetch script**: `tools/fetch_data.py` (champions + items, zh_TW, patch in every note).
 - [ ] **Item notes check**: 142 ARAM-only items (`77NNNN`) are linked to their base item; look at a few notes in Obsidian and confirm the ARAM copies are what the Mayhem shop sells.
 - [ ] **Offline images**: optional `tools/cache_images.py` into a gitignored folder.
-- [ ] **Augment data**: CommunityDragon has `cdragon/arena/zh_tw.json` (Arena augments); the ARAM Mayhem augment file is not found yet. Find the right source before building.
+- [x] **Augment data**: names, rarity, icons (no effect text exists in CommunityDragon).
+- [ ] **Augment effects**: hand-write a one-line `effect` per augment (strongest first) or pull from the League wiki with a named source; never invent them.
+- [ ] **Augment fit**: `fits` (archetypes the augment suits), `tier`, `combos` on the augment notes; then the champion card's "Best augments" block matches them to a champion's archetypes.
 - [ ] **Statistics**: win / pick rates for Mayhem augments need either Match-V5 (developer key, queue for ARAM Mayhem, many matches) or a cited community source. Decide in phase 2.
 
 ### 🎬 Videos

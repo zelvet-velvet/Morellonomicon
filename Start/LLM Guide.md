@@ -50,7 +50,7 @@ CLAUDE.md              points here
 ## ⚠️ Rules that prevent breakage
 
 - **Language.** Vault content for readers is Traditional Chinese (Taiwan wording; use the official zh_TW client names for champions, items and augments). Workflow notes (this guide, Dev Status, Dev Log, Start Guide) stay English.
-- **Frontmatter keys you may add by hand:** `video` (YouTube id), `pinned`, `avoid`, `archetypes_extra`; `tools/fetch_data.py` keeps them. Run it from the repo root: `python3 -I tools/fetch_data.py [--only Ahri,Garen]`.
+- **Frontmatter keys you may add by hand:** champions `video` (YouTube id), `pinned`, `avoid`, `archetypes_extra`; augments `effect`, `fits`, `tier`, `combos`. The fetch scripts keep them on a rerun. `python3 -I tools/fetch_augments.py` makes the Mayhem augment notes (CommunityDragon needs a User-Agent; there is no effect text, so do not make one up). Run it from the repo root: `python3 -I tools/fetch_data.py [--only Ahri,Garen]`.
 - **Generated vs written.** Generated pages carry `generated: true` in the frontmatter and a marked block; scripts only rewrite inside the marked block, never the hand-written advice around it.
 - **Data sources are public and cited.** Riot Data Dragon (`ddragon.leagueoflegends.com`, `zh_TW`) and CommunityDragon. Every page shows the **patch version** it was generated from. Never invent statistics: win rates and pick rates come from a named source with a date, or are left out.
 - **Riot policy.** Do not commit a Riot API key. Keys go in an environment variable (`RIOT_API_KEY`) or an untracked `.env`. Include Riot's legal line in the README ("not endorsed by Riot Games"). Do not copy another site's tier lists wholesale; link to them.

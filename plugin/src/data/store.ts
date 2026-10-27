@@ -11,6 +11,7 @@ export interface Champion {
     range: number; icon: string; skills: Skill[]; patch: string; pinned: string[]; avoid: string[]; video?: string; path: string;
 }
 export interface Skill { key: string; name: string; damage: string[]; icon: string }
+export interface Augment { id: number; name: string; rarity: string; icon: string; effect: string; fits: string[]; tier: string; path: string }
 export interface Item {
     id: number; name: string; tags: string[]; goldTotal: number; aram: boolean; rift: boolean; icon: string; variantOf?: string; path: string;
 }
@@ -27,15 +28,16 @@ const list = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is st
 export class Store {
     private champs: Champion[] | null = null;
     private its: Item[] | null = null;
+    private augs: Augment[] | null = null;
 
     constructor(private plugin: MorellonomiconPlugin) {}
     private get app() { return this.plugin.app; }
     private get s() { return this.plugin.settings; }
 
-    invalidate(): void { this.champs = null; this.its = null; }
+    invalidate(): void { this.champs = null; this.its = null; this.augs = null; }
     inData(path: string): boolean {
         const s = this.s;
-        return [s.championFolder, s.itemFolder, s.guideFolder].some((f) => path.startsWith(normalizePath(f) + "/"));
+        return [s.championFolder, s.itemFolder, s.guideFolder, s.augmentFolder].some((f) => path.startsWith(normalizePath(f) + "/"));
     }
 
     private notes(folder: string): { file: TFile; fm: FM }[] {
@@ -77,6 +79,16 @@ export class Store {
         return this.items().filter((i) => i[flag]);
     }
     item(id: number): Item | undefined { return this.items().find((i) => i.id === id); }
+
+    augments(): Augment[] {
+        if (!this.augs) {
+            this.augs = this.notes(this.s.augmentFolder).filter((n) => n.fm.type === "augment").map(({ file, fm }) => ({
+                id: num(fm.id), name: str(fm.name, file.basename), rarity: str(fm.rarity), icon: str(fm.icon), effect: str(fm.effect),
+                fits: list(fm.fits), tier: str(fm.tier), path: file.path,
+            })).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
+        }
+        return this.augs;
+    }
 
     guideNotes(): TFile[] {
         return this.notes(this.s.guideFolder).map((n) => n.file).sort((a, b) => a.path.localeCompare(b.path, "zh-Hant"));
