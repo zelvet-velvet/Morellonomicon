@@ -623,3 +623,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app .mn-fgrid .mn-filterbtn.is-open { box-shadow: inset 0 -2px 0 var(--mn-accent); }
 .mn-fgrid .mn-filterbtn .mn-filterbtn-ic svg { width: 24px; height: 24px; }
 .mn-fgrid .mn-filterbtn .mn-filterbtn-n { position: absolute; top: 4px; right: calc(50% - 22px); }
+
+/* the game's own icons in tags, chart chips and filters */
+.mn-gi-slot { display: flex; align-items: center; justify-content: center; }
+.mn-gi { display: block; object-fit: contain; transition: opacity 0.2s; }
+.mn-gi.is-loading { opacity: 0; }
+.mn-tg:not(.is-on) .mn-gi, .mn-scc:not(.is-on) .mn-gi { filter: grayscale(1); opacity: 0.5; }

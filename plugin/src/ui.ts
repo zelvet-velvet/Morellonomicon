@@ -137,11 +137,38 @@ export const LANES = ["上路", "打野", "中路", "下路", "輔助"];
 const LANE_ICON: Record<string, string> = { 上路: "arrow-up-left", 打野: "trees", 中路: "move-diagonal-2", 下路: "arrow-down-right", 輔助: "heart-handshake" };
 const LANE_FILE: Record<string, string> = { 上路: "Top_icon.png", 打野: "Jungle_icon.png", 中路: "Middle_icon.png", 下路: "Bottom_icon.png", 輔助: "Support_icon.png" };
 const ROLE_FILE: Record<string, string> = { 戰士: "Fighter_icon.png", 坦克: "Tank_icon.png", 法師: "Mage_icon.png", 刺客: "Slayer_icon.png", 射手: "Marksman_icon.png", 輔助: "Controller_icon.png" };
-// Fetch the class and lane icons once when the plugin loads, so the chips have them ready
+// The game's own icons for tags, damage kinds and stats (the wiki's keyword and stat icons, e.g. its "Champion stat assets").
+// Same rule as the class icons: shown by address, never stored; a file that does not load falls back to the look-alike.
+export const GAME_ICON_FILE: Record<string, string> = {
+    控場: "Stun_icon.png", 緩速: "Slow_icon.png", 位移: "Dash_icon.png", 治療: "Heal_power_icon.png", 護盾: "Shield_icon.png",
+    吸血: "Life_steal_icon.png", 強化普攻: "Basic_attack_icon.png", 攻擊特效: "On-hit_icon.png",
+    物理: "Attack_damage_icon.png", 魔法: "Ability_power_icon.png", 坦度: "Armor_icon.png", 射程: "Range_icon.png",
+};
+
+// Fetch the class, lane and game icons once when the plugin loads, so they are ready when drawn
 const preloaded = new Map<string, HTMLImageElement>();
 export const preloadRoleIcons = (): void => {
     if (preloaded.size) return;
-    for (const file of [...Object.values(ROLE_FILE), ...Object.values(LANE_FILE)]) { const im = new Image(); im.src = ROLE_WIKI + file; preloaded.set(file, im); }
+    for (const file of [...Object.values(ROLE_FILE), ...Object.values(LANE_FILE), ...Object.values(GAME_ICON_FILE)]) { const im = new Image(); im.src = ROLE_WIKI + file; preloaded.set(file, im); }
+};
+
+// An icon slot (the class "mn-ic" like icon()): the game's picture for `key` when there is one, at `size` px, drawn at once when
+// cached and faded in otherwise; the look-alike `fallback` when there is none or it does not load.
+export const gameIcon = (parent: HTMLElement, key: string, fallback: string, size: number): HTMLElement => {
+    const file = GAME_ICON_FILE[key];
+    if (!file) return icon(parent, fallback);
+    const slot = h(parent, "span", "mn-ic mn-gi-slot");
+    const im = h(slot, "img", "mn-gi");
+    im.alt = "";
+    im.style.width = im.style.height = `${size}px`;
+    const cached = preloaded.get(file);
+    if (!(cached?.complete && cached.naturalWidth)) {
+        im.classList.add("is-loading");
+        im.addEventListener("load", () => im.classList.remove("is-loading"), { once: true });
+    }
+    im.addEventListener("error", () => { slot.remove(); icon(parent, fallback); }, { once: true });
+    im.src = ROLE_WIKI + file;
+    return slot;
 };
 
 // An icon-only filter chip with the game's icon (drawn at once when cached, else fading in; a look-alike if it fails to load).

@@ -1,7 +1,7 @@
 import { Modal } from "obsidian";
 import type { App } from "obsidian";
 import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, h, holdTip, icon, svg } from "../ui";
+import { DAMAGE_COLOR, gameIcon, h, holdTip, icon, svg } from "../ui";
 
 // A champion at a glance: what it can do, drawn as a profile chart, plus the abilities it has. Every axis comes from data we have:
 //   輸出 = its stronger damage rating (Riot, 1-10)        坦度 = Riot's defence rating
@@ -86,7 +86,7 @@ class TagLegend extends Modal {
             const r = h(table, "div", "mn-lg-r");
             const ic = h(r, "span", "mn-lg-ic");
             ic.style.setProperty("--p", color);
-            icon(ic, a.icon);
+            gameIcon(ic, a.tag, a.icon, 22);
             const name = h(r, "span", "mn-lg-n", a.tag);
             name.style.color = color;
             h(name, "div", "mn-lg-w", a.what);
@@ -101,7 +101,7 @@ export function iconFilter(parent: HTMLElement, label: string, iconName: string,
     const el = h(parent, "button", "mn-ftg" + (on ? " is-yes" : ""));
     el.setAttribute("aria-label", label);
     el.style.setProperty("--p", color);
-    icon(el, iconName);
+    gameIcon(el, label, iconName, 24);
     holdTip(el, label);
     el.addEventListener("click", (e) => { e.preventDefault(); onTap(); });
     return el;
@@ -124,7 +124,7 @@ function tagChip(parent: HTMLElement, c: Champion, t: Tag): HTMLElement {
     const lit = hasTag(c, t.tag);
     const el = h(parent, "button", "mn-tg" + (lit ? " is-on" : ""));
     el.style.setProperty("--p", t.color);
-    icon(el, t.icon);
+    gameIcon(el, t.tag, t.icon, 16);
     h(el, "span", "", t.tag);
     const keys = lit ? keysOf(c, t.tag) : "";
     if (keys) h(el, "span", "mn-tg-k", keys);
@@ -255,7 +255,7 @@ function styleChart(parent: HTMLElement, c: Champion): void {
         chip.style.top = `${(y / SH) * 100}%`;
         chip.style.setProperty("--p", ax.color);
         const top = h(chip, "span", "mn-scc-t");
-        icon(top, ax.icon);
+        gameIcon(top, ax.label === "輸出" ? (c.damageType === "物理" ? "物理" : "魔法") : ax.tag ?? ax.label, ax.icon, 16);
         h(top, "span", "", ax.label);
         h(top, "b", "", String(ax.value));
         h(chip, "span", "mn-scc-k", on && ax.sub ? ax.sub : "—");
