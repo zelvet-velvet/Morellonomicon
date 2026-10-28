@@ -39,7 +39,7 @@ function withOnHit(skills: Skill[], keys: string[]): Skill[] {
     return keys.length ? skills.map((s) => (keys.includes(s.key) && !s.tags.includes("攻擊特效") ? { ...s, tags: [...s.tags, "攻擊特效"] } : s)) : skills;
 }
 
-export interface Skill { key: string; name: string; damage: string[]; tags: string[]; icon: string; desc: string; upgrade: string; range: string; rows: SkillRow[] }
+export interface Skill { key: string; name: string; damage: string[]; tags: string[]; icon: string; desc: string; upgrade: string; range: string; rows: SkillRow[]; levels: number[] }   // levels: a passive's numbers are by champion level (Lv 1, 6, 11 ...), not by rank
 export interface Augment { id: number; name: string; rarity: string; icon: string; effect: string; partial: boolean; fits: string[]; tier: string; path: string }
 export interface Item {
     id: number; name: string; tags: string[]; desc: string; from: number[]; into: number[]; goldTotal: number; aram: boolean; rift: boolean; icon: string; variantOf?: string; path: string;
@@ -77,7 +77,7 @@ const tipList = (v: unknown): Tip[] => (Array.isArray(v) ? v.flatMap((x) => {
 }) : []);
 const skillList = (v: unknown): Skill[] => (Array.isArray(v) ? v.flatMap((x) => {
     const o = x as Record<string, unknown> | null;
-    return o && typeof o === "object" ? [{ key: str(o.key), name: str(o.name), damage: list(o.damage), tags: list(o.tags), icon: str(o.icon), desc: str(o.desc), upgrade: str(o.upgrade), range: str(o.range), rows: rowList(o.rows) }] : [];
+    return o && typeof o === "object" ? [{ key: str(o.key), name: str(o.name), damage: list(o.damage), tags: list(o.tags), icon: str(o.icon), desc: str(o.desc), upgrade: str(o.upgrade), range: str(o.range), rows: rowList(o.rows), levels: numList(o.levels) }] : [];
 }) : []);
 const list = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 

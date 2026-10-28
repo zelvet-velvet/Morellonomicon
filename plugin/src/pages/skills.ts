@@ -180,7 +180,7 @@ export function rankTable(parent: HTMLElement, s: Skill, changes: Change[]): voi
     grid.style.setProperty("--r", String(ranks));
     if (ranks > 1) {
         h(grid, "div", "mn-rk-h");
-        for (let i = 1; i <= ranks; i++) h(grid, "div", "mn-rk-h", String(i));
+        for (let i = 1; i <= ranks; i++) h(grid, "div", "mn-rk-h", s.levels[i - 1] ? `Lv${s.levels[i - 1]}` : String(i));   // a passive: champion levels
     }
     for (const r of rows) {
         const name = h(grid, "div", "mn-rk-l");

@@ -41,7 +41,10 @@ def spell_objects(bin_data):
 class Calc:
     """Evaluates a spell's calculations for one rank into (flat, {stat: coefficient})."""
 
-    def __init__(self, mspell):
+    def __init__(self, mspell, by_level=False):
+        # by_level: a passive. Its numbers depend on the champion's level, so `rank` below is the level and the level formulas
+        # (start value + bonus per level, interpolation) can be read. For a skill a rank is not a level: those stay unresolved.
+        self.by_level = by_level
         self.values = {}
         for dv in mspell.get("DataValues") or mspell.get("mDataValues") or []:
             if isinstance(dv, dict) and "name" in dv:
@@ -107,7 +110,25 @@ class Calc:
             return None if a is None or b is None else mul(a, b)
         if t in ("GameCalculation", "GameCalculationModified"):
             return self.calc(p, rank)
-        return None   # level breakpoints, buff counters, conditionals...: not resolved
+        if self.by_level and t == "ByCharLevelInterpolationCalculationPart":   # linear from level 1 to level 18
+            a, b = p.get("mStartValue", 0.0), p.get("mEndValue", 0.0)
+            return (a + (b - a) * (min(max(rank, 1), 18) - 1) / 17, {})
+        if self.by_level and t == "ByCharLevelBreakpointsCalculationPart":
+            return (breakpoints_value(p, rank), {})
+        return None   # buff counters, conditionals, other level formulas...: not resolved
+
+
+def breakpoints_value(p, level):
+    """A start value that grows by a bonus per level; at each breakpoint level the bonus per level may change and a one-off bonus may be added."""
+    value, per_level = p.get("mLevel1Value", 0.0), p.get("mInitialBonusPerLevel", 0.0)
+    points = {bp.get("mLevel"): bp for bp in p.get("mBreakpoints") or []}
+    for lv in range(2, int(level) + 1):
+        bp = points.get(lv)
+        if bp:
+            value += bp.get("mAdditionalBonusAtThisLevel", 0.0)
+            per_level = bp.get("mBonusPerLevelAtAndAfter", per_level)
+        value += per_level
+    return value
 
 
 def mul(a, b):
@@ -130,7 +151,8 @@ def stat_label(key):
 
 
 def damage_row(label, calc, name, ranks):
-    results = [calc.named(name, r) for r in range(1, ranks + 1)]
+    """`ranks` is how many ranks (1..n), or the list of ranks / levels to work out."""
+    results = [calc.named(name, r) for r in (range(1, ranks + 1) if isinstance(ranks, int) else ranks)]
     if any(r is None for r in results):
         return None
     vals = [num(r[0]) if r[0] or not r[1] else "" for r in results]
@@ -232,3 +254,53 @@ def rank_rows(spell, mspell, partype):
     if cost:
         rows.append(cost)
     return rows
+
+
+# ---- passives: numbers by champion level
+PASSIVE_LEVELS = [1, 6, 11, 16, 18]   # the levels shown (a passive often grows at 6 / 11 / 16)
+# what a tooltip tag may say besides its number for the number to be a flat amount ("@X@ 物理傷害"); "...% 最大生命的物理傷害" is a percent
+FLAT_AMOUNT = re.compile(r"^(額外)?(魔法|物理|真實)?(傷害|治療|護盾值?)?$")
+
+
+def passive_spell(bin_data):
+    """The passive's spell object (its calculations), found through the champion record."""
+    root = next((v for k, v in bin_data.items() if k.endswith("/CharacterRecords/Root") and isinstance(v, dict)), None)
+    path = root.get("mCharacterPassiveSpell") if root else None
+    return ((bin_data.get(path) or {}).get("mSpell") or {}) if path else {}
+
+
+def passive_rows(bin_data, strings):
+    """(rows, levels) for a passive: the damage / heal / shield amounts its own tooltip names (game text, `@Name@` placeholders inside
+    <magicDamage> / <physicalDamage> / <trueDamage> / <healing> / <shield>), worked out for PASSIVE_LEVELS. Percent amounts and anything
+    this module cannot resolve are left out, never guessed."""
+    mspell = passive_spell(bin_data)
+    key = (((mspell.get("mClientData") or {}).get("mTooltipData") or {}).get("mLocKeys") or {}).get("keyTooltip", "")
+    tooltip = strings.get(key.lower(), "") if key else ""
+    if not mspell or not tooltip:
+        return [], []
+    calc = Calc(mspell, by_level=True)
+    rows, seen, counts = [], set(), {}
+    for found in re.finditer(r"<(magicDamage|physicalDamage|trueDamage|healing|shield)>(.*?)</\1>", tooltip, re.S):
+        tag, body = found.group(1), found.group(2)
+        m = re.search(r"@([\w.]+?)(\*100)?@", body)
+        if not m or "上限" in tooltip[max(0, found.start() - 10):found.start()]:   # a cap ("回復上限為 ...") is not the amount itself
+            continue
+        rest = re.sub(r"\s+", "", body.replace(m.group(0), ""))
+        name = m.group(1).split(".")[0].lower()
+        if not FLAT_AMOUNT.match(rest) or m.group(2) or name in seen or not calc.has(name):
+            continue
+        seen.add(name)
+        row = damage_row(TAG_LABEL[tag], calc, name, PASSIVE_LEVELS)
+        # nothing flat and a stat we cannot name ("0 +其他加成", usually a percent of health): not a number worth showing
+        if row and not (set(row["vals"]) <= {"0"} and row["note"] in ("", "+" + UNKNOWN_STAT)):
+            counts[tag] = counts.get(tag, 0) + 1
+            row["tag"] = tag
+            rows.append(row)
+    index = {}
+    for row in rows:   # two rows of one kind: number them in tooltip order
+        tag = row.pop("tag")
+        index[tag] = index.get(tag, 0) + 1
+        if counts[tag] > 1:
+            row["label"] += str(index[tag])
+    rows = [collapse(r) for r in rows[:MAX_DAMAGE_ROWS]]
+    return rows, (PASSIVE_LEVELS if any(len(r["vals"]) > 1 for r in rows) else [])

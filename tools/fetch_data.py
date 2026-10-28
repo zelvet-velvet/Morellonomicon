@@ -233,6 +233,30 @@ def skill_tags(spell):
     return [name for name in FEATURES if tag_search(name, blob)]
 
 
+GAME_TEXT_URL = "https://raw.communitydragon.org/latest/game/zh_tw/data/menu/en_us/lol.stringtable.json"
+_game_text = None
+
+
+def game_text():
+    """The game's own zh_TW strings (lol.stringtable.json, about 32 MB), cached for the day in the folder fetch_augment_text.py also uses;
+    {} if it cannot be fetched (the passives are then made without numbers)."""
+    global _game_text
+    if _game_text is None:
+        path = CACHE / f"cdragon-{datetime.date.today().isoformat()}" / "lol.stringtable.json"
+        try:
+            if not path.exists():
+                req = urllib.request.Request(GAME_TEXT_URL, headers={"User-Agent": "Morellonomicon/0.1 (+https://github.com/zelvet-velvet/Morellonomicon)"})
+                with urllib.request.urlopen(req, timeout=180) as r:
+                    raw = r.read()
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(raw)
+            _game_text = json.loads(path.read_text(encoding="utf-8"))["entries"]
+        except Exception as e:
+            print(f"! no game text for the passives ({e})", file=sys.stderr)
+            _game_text = {}
+    return _game_text
+
+
 def skills_fm(c, version, bin_data=None):
     """Passive + Q W E R as small objects for the plugin (key, name, damage types, abilities, description, cooldown, cost, range, icon)."""
     p = c["passive"]
@@ -240,6 +264,9 @@ def skills_fm(c, version, bin_data=None):
     base, up = split_upgrade(p["description"])
     out = [{"key": "P", "name": p["name"], "damage": [], "tags": skill_tags(p), "desc": base, "upgrade": up,
             "icon": f"{DD}/cdn/{version}/img/passive/{p['image']['full']}"}]
+    rows, levels = spells.passive_rows(bin_data, game_text()) if bin_data else ([], [])
+    if rows:   # damage / heal / shield by champion level, from the passive's own tooltip
+        out[0]["rows"], out[0]["levels"] = rows, levels
     for key, s in zip("QWER", c["spells"]):
         base, up = split_upgrade(s["description"])
         out.append({"key": key, "name": s["name"], "damage": spell_damage(s), "tags": skill_tags(s), "desc": base, "upgrade": up,

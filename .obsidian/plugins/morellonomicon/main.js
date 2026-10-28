@@ -142,7 +142,7 @@ var tipList = (v) => Array.isArray(v) ? v.flatMap((x) => {
 }) : [];
 var skillList = (v) => Array.isArray(v) ? v.flatMap((x) => {
   const o = x;
-  return o && typeof o === "object" ? [{ key: str(o.key), name: str(o.name), damage: list(o.damage), tags: list(o.tags), icon: str(o.icon), desc: str(o.desc), upgrade: str(o.upgrade), range: str(o.range), rows: rowList(o.rows) }] : [];
+  return o && typeof o === "object" ? [{ key: str(o.key), name: str(o.name), damage: list(o.damage), tags: list(o.tags), icon: str(o.icon), desc: str(o.desc), upgrade: str(o.upgrade), range: str(o.range), rows: rowList(o.rows), levels: numList(o.levels) }] : [];
 }) : [];
 var list = (v) => Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
 var LANE_MIN_SHARE = 0.1;
@@ -2054,7 +2054,7 @@ function rankTable(parent, s, changes) {
   grid.style.setProperty("--r", String(ranks));
   if (ranks > 1) {
     h(grid, "div", "mn-rk-h");
-    for (let i = 1; i <= ranks; i++) h(grid, "div", "mn-rk-h", String(i));
+    for (let i = 1; i <= ranks; i++) h(grid, "div", "mn-rk-h", s.levels[i - 1] ? `Lv${s.levels[i - 1]}` : String(i));
   }
   for (const r of rows) {
     const name = h(grid, "div", "mn-rk-l");
@@ -2734,7 +2734,7 @@ var numbers2 = (el, { s }) => {
   el.style.setProperty("--r", String(ranks));
   if (ranks > 1) {
     h(el, "div");
-    for (let i = 1; i <= ranks; i++) h(el, "div", "mn-ck-h", `${i} \u7D1A`);
+    for (let i = 1; i <= ranks; i++) h(el, "div", "mn-ck-h", s.levels[i - 1] ? `Lv ${s.levels[i - 1]}` : `${i} \u7D1A`);
   }
   for (const r of rows) {
     const color = DAMAGE_COLOR[r.label.slice(0, 2)] ?? (r.label.startsWith("\u6CBB\u7642") ? "var(--mn-heal)" : "var(--mn-shield)");

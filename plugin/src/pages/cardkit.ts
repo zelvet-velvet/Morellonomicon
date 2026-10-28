@@ -60,7 +60,7 @@ const numbers: Fill = (el, { s }) => {
     if (!rows.length) return;
     const ranks = Math.max(1, ...rows.map((r) => r.vals.length));
     el.style.setProperty("--r", String(ranks));
-    if (ranks > 1) { h(el, "div"); for (let i = 1; i <= ranks; i++) h(el, "div", "mn-ck-h", `${i} 級`); }
+    if (ranks > 1) { h(el, "div"); for (let i = 1; i <= ranks; i++) h(el, "div", "mn-ck-h", s.levels[i - 1] ? `Lv ${s.levels[i - 1]}` : `${i} 級`); }
     for (const r of rows) {
         const color = DAMAGE_COLOR[r.label.slice(0, 2)] ?? (r.label.startsWith("治療") ? "var(--mn-heal)" : "var(--mn-shield)");
         const name = h(el, "div", "mn-ck-l", r.label);
