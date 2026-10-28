@@ -4,2698 +4,2528 @@
 "tips": [
 {
 "key": "game_startup_tip_1002_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "克雷德的眾多稱號中，最為人所知的是「第一軍團最高指揮官暨先鋒部隊總司令」。"
 },
 {
 "key": "game_startup_tip_1004_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "煞卡麗是蘇瑞瑪最險象環生的一座沙漠，因為這座沙漠裡面住著兇殘嗜血的煞族。"
 },
 {
 "key": "game_startup_tip_1005_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "許多虛空生物的名稱都源自於古蘇瑞瑪語。"
 },
 {
 "key": "game_startup_tip_1006_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "神之柳樹是一棵被殘酷戰士埃爾文砍伐，原生長於愛歐尼亞的古老神木。"
 },
 {
 "key": "game_startup_tip_1007_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "在慎的父親－－孤朽死亡後，他繼承「暮光之眼」的名號。"
 },
 {
 "key": "game_startup_tip_1009_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "好運姐的手槍是她的母親為了年輕時的剛普朗克打造出來的，只是剛普朗克恩將仇報，用這些槍殺死製造它們的人。"
 },
 {
 "key": "game_startup_tip_1010_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "傳說中巨石峰的峰頂之上矗立著一座領域，裡面存在著偉大且具有神聖力量的生命，世人都稱其為星靈。"
 },
 {
 "key": "game_startup_tip_1011_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "蒂瑪西亞人使用已變為化石的古樹樹皮製造出反魔法英石。這種石頭可以吸收魔法，他們都用來建造城牆。"
 },
 {
 "key": "game_startup_tip_1012_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "犽宿與犽凝在同一所劍塾拜師學藝。訓練導致了兄弟倆日後的殊死決戰。"
 },
 {
 "key": "game_startup_tip_1013_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "蓋倫和拉克絲都是皇冠守衛家族的成員，數個世紀已來終其一生的守護著蒂瑪西亞皇室。"
 },
 {
 "key": "game_startup_tip_1014_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "菲歐拉目前是蒂瑪西亞羅倫特家族的當家，這個位置本來屬於她的父親，但是自從菲歐拉在與父親的決鬥中將他殺死之後便轉交予她。"
 },
 {
 "key": "game_startup_tip_1015_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "就如古時住在此地的蘇瑞瑪人一樣，現代佐恩人也敬奉女神珍娜（全名為「珍娜瑞姆」），人稱她會在暴風雨中保護信徒。"
 },
 {
 "key": "game_startup_tip_1016_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "自稱為王的特朗德現在是一個巨魔部族的頭目。"
 },
 {
 "key": "game_startup_tip_1017_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "以真霜冰晶打造而成的武器均蘊藏著強大的力量，但是只有寒霜之裔才能發揮其中的力量。"
 },
 {
 "key": "game_startup_tip_1018_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "麗珊卓的眼睛被半神的弗力貝爾的利爪所弄瞎，就在她與她的兩名姊妹試圖馴服那遠古的弗雷爾卓德時。"
 },
 {
 "key": "game_startup_tip_1019_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "特朗德手中以真霜冰晶打造而成的棍棒被命名為「凍骨者」。"
 },
 {
 "key": "game_startup_tip_1020_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "時間的流逝在班德爾城顯得特別奇怪，也因此，對外界來說，約德爾人看起來幾乎不會老。"
 },
 {
 "key": "game_startup_tip_1021_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "悲痛欲絕的君王維爾戈試圖用天堂島上的魔法泉水復活他死去的王后。最終他失敗了，並引發了殞落詛咒。"
 },
 {
 "key": "game_startup_tip_1022_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "闇影島被殞落王者詛咒之前本來被稱作天堂島。"
 },
 {
 "key": "game_startup_tip_1023_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "魔鬥凱薩的戰錘被命名為夜禍。"
 },
 {
 "key": "game_startup_tip_1024_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "為了抵禦海淵深處的黑暗生物，瑪拉族使用月之石照亮危機四伏的深海。"
 },
 {
 "key": "game_startup_tip_1026_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "諾克薩斯人有時會飼養森林裡的巨蜥怪，並且把牠們當做戰爭武器。"
 },
 {
 "key": "game_startup_tip_1027_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "龍犬是龍族的遠房親戚，某些富裕，或許也可以說是愚蠢的諾克薩斯人會把牠們當成寵物養。"
 },
 {
 "key": "game_startup_tip_1028_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "諾克薩斯的戰爭探子不只需要制定並規劃基礎設施的建立，同時還必須為了未來的侵略計畫偵察敵方的陣地。"
 },
 {
 "key": "game_startup_tip_1030_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "蒂瑪西亞特有的銀翼烈鷹來自於北方，只有少數幾人曾經成功豢養並駕馭這群猛禽。"
 },
 {
 "key": "game_startup_tip_1031_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "傳說艾伐洛森 － 古代統治弗雷爾卓德的皇后是被她的親生妹妹所背叛的。"
 },
 {
 "key": "game_startup_tip_1032_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "皮爾托福的貿易世家掌管了城市大部分的貿易產業... 並獨吞了大多數的利益。"
 },
 {
 "key": "game_startup_tip_1033_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "佐恩的富裕人家通常會出現在地下長廊，這裡是佐恩與皮爾托福的交界處。"
 },
 {
 "key": "game_startup_tip_1034_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "佐恩的半樓是整座城邦貿易及商業活動最頻繁的地區。"
 },
 {
 "key": "game_startup_tip_1035_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "汙水坑是佐恩最深層的地區。鮮少有人願意長時間居住於此。"
 },
 {
 "key": "game_startup_tip_1036_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "李星在喚醒龍魂時失去了雙眼的視力，作為他仍未完全懂得保持謙虛的教訓。"
 },
 {
 "key": "game_startup_tip_1037_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "天堂島是社會學者的集散地，他們會將在符文大地上蒐集到的歷史文物或具有魔力的工藝品聚集在此。"
 },
 {
 "key": "game_startup_tip_1038_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "拉克絲曾信任過賽勒斯。現在蒂瑪西亞人為此賠上性命。"
 },
 {
 "key": "game_startup_tip_1039_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "吶兒曾長時間被冰封在真霜冰晶之中。"
 },
 {
 "key": "game_startup_tip_1040_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "蘇瑞瑪首都的深處座落著一座「黎明綠洲」，許多人都相信所有河流的源頭都出自於此。"
 },
 {
 "key": "game_startup_tip_1041_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "有些蘇瑞瑪的游牧民族僅靠多爾蒙 － 體型龐大的猛獸建立起好幾座城鎮。你總會看到這種野獸悠然漫步在蘇瑞瑪的沙漠裡。"
 },
 {
 "key": "game_startup_tip_1042_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "守門人。狐神。辜麥亞。所有名字指的都是同一名靈花祭的著名神靈。"
 },
 {
 "key": "game_startup_tip_1043_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "在蘇瑞瑪中，那些在飛昇儀式失敗後倖存的生還者又被稱作巴凱，他們的外觀通常都會扭曲變形。"
 },
 {
 "key": "game_startup_tip_1044_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "日輪教的教徒信奉太陽，並且否定所有其它形式的光芒。他們的信仰幾乎主宰了巨石峰大部份地區。"
 },
 {
 "key": "game_startup_tip_1045_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "靈花祭的傳說同時是歷史故事也是寓言。"
 },
 {
 "key": "game_startup_tip_1046_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "愛歐尼亞的南方有一座花園，那裡的花可以消除人們心中的回憶。"
 },
 {
 "key": "game_startup_tip_1047_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "蓋倫帶領了無畏先鋒，這蒂瑪西亞最精銳的軍事部隊之一。"
 },
 {
 "key": "game_startup_tip_1048_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "魁馱．燼只是一個藝名，燼的真實身份至今仍是一個謎。"
 },
 {
 "key": "game_startup_tip_1049_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "赫克林還是正常人類的時候領導著鐵血秩序。這個組織是一個惡名昭彰，行徑十分殘忍的騎士團。"
 },
 {
 "key": "game_startup_tip_1050_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "茂凱使用了淨水將他生長的島嶼從荒蕪之地變成一個翠綠的天堂。"
 },
 {
 "key": "game_startup_tip_1051_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "賽恩在瀕死之際殺死了嘉文一世。當時嘉文一世的王冠現在變成了賽恩的下巴。"
 },
 {
 "key": "game_startup_tip_1052_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "當梵斯塔雅部族的「空」在一場決鬥中成功擊敗了他的老師，並且獲得了只有最聰明的無極弟子才會擁有的名號。從那時起，他便成為了悟空。"
 },
 {
 "key": "game_startup_tip_1053_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "藍寶駕駛的機器人叫作堅尼，為了紀念一個對他非常重要的約德爾人。"
 },
 {
 "key": "game_startup_tip_1054_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "波比曾經有個非常親密的男性友人，叫作奧倫。波比在他死後繼承了他的戰錘。"
 },
 {
 "key": "game_startup_tip_1055_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "布里茨是維克特創造出來的機器人。並變得比其它魁儡或機器還要來的更強壯、迅速且聰明。"
 },
 {
 "key": "game_startup_tip_1056_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "艾克是野火幫的首領，這個幫派由佐恩人組成，以為了更美好的未來奮鬥而聞名……不過過程中經常會對皮爾托福財產造成破壞。"
 },
 {
 "key": "game_startup_tip_1057_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "伊羅旖的武器名為「神祇之眼」，這是神聖的布爾魯的神像。"
 },
 {
 "key": "game_startup_tip_1058_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "海潮之音的權杖會賦予使用者操控潮汐的能力，並且還會吸引到月亮的力量。"
 },
 {
 "key": "game_startup_tip_1059_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "由於卡蜜兒的心臟是透過海克斯科技打造而成的，所以她的外表可以一直維持在年輕時候的狀態。"
 },
 {
 "key": "game_startup_tip_1060_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "吉茵珂絲的火箭發射器、迷你手槍和電擊槍分別叫作惡鯊火箭、砰砰鏈砲和衝擊槍。"
 },
 {
 "key": "game_startup_tip_1061_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "蒙多醫生實際上不是一名真正的醫生，他只是自認為自己是醫生。"
 },
 {
 "key": "game_startup_tip_1063_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "加里歐是蒂瑪西亞的傳奇雕刻家杜蘭德打造出來的。"
 },
 {
 "key": "game_startup_tip_1064_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "葵恩和她的雙胞胎哥哥凱勒出生於蒂瑪西亞的鄉村「尤文戴爾」。"
 },
 {
 "key": "game_startup_tip_1065_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "雷葛爾來自奇拉什族，這是一個位於蘇瑞瑪的梵斯塔雅部族。"
 },
 {
 "key": "game_startup_tip_1066_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "娜米來自瑪拉族，這是一個位於巨石峰西邊海域的梵斯塔雅部族。"
 },
 {
 "key": "game_startup_tip_1067_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "剎雅和銳空來自梵斯塔雅部族，一個源自於愛歐尼亞高地的洛特蘭族。"
 },
 {
 "key": "game_startup_tip_1068_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "悟空所屬的梵斯塔雅部族－－什蒙族，居住於愛歐尼亞高度最高的樹林之間。"
 },
 {
 "key": "game_startup_tip_1069_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "賈克斯最喜歡的食物是蛋。"
 },
 {
 "key": "game_startup_tip_1070_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "比爾吉沃特的人民非常尊敬駭人的怪物，所以他們把使用的貨幣命名為海妖金幣及毒蛇銀幣。"
 },
 {
 "key": "game_startup_tip_1071_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "黃道地窖受到吉茵珂絲嚴重破壞之前曾被認為是皮爾托福最安全的銀行。"
 },
 {
 "key": "game_startup_tip_1072_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "凱特琳的步槍裝有最先進的海克斯科技，這是身為杰西．塔利斯的青梅竹馬的好處，其他執法者只能望塵莫及。"
 },
 {
 "key": "game_startup_tip_1073_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "杰西的變形戰槌由海克斯科技驅動，是他在家族鍛爐花費數不清的時間設計出來的。"
 },
 {
 "key": "game_startup_tip_1074_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "塔里克，前蒂瑪西亞戰士，現在是巨石峰頂的星靈 －「保護者」的宿主。"
 },
 {
 "key": "game_startup_tip_1076_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "當奧莉安娜死於毒霧時，她的父親用機械零件取代已腐壞的身體器官，並且將她改造成發條少女。"
 },
 {
 "key": "game_startup_tip_1077_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "菲艾裝備一對注入海克斯科技力量的拳套，原本由杰西．塔利斯製作來觸碰過熱物件。"
 },
 {
 "key": "game_startup_tip_1078_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "毒蛇群島的呼喚者會在懸崖邊上吹起響亮的號角，以此吸引巨大的海怪過來。"
 },
 {
 "key": "game_startup_tip_1079_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "逆命來自於蛇紋石河的遊牧民族，這條河流位於比爾吉沃特的附近。"
 },
 {
 "key": "game_startup_tip_1080_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "努努的雪怪同伴叫作威朗普。威朗普的人類同伴叫作努努。"
 },
 {
 "key": "game_startup_tip_1081_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "達瑞斯和達瑞文兄弟從小是孤兒，並在巴斯里奇的港口城市長大。"
 },
 {
 "key": "game_startup_tip_1082_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "貪啃奇只不過是河中巨怪的其中一個名字。其他有些名字還是不要說出來會比較好。"
 },
 {
 "key": "game_startup_tip_1083_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "比爾吉沃特碼頭的老鼠若是聚集在一起，牠們可以在數分鐘之內活吞一名成年人類。"
 },
 {
 "key": "game_startup_tip_1084_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "像諾克斯托拉這類使用黑曜石打造的拱門經常出現在受到諾克薩斯侵略的各個地區。"
 },
 {
 "key": "game_startup_tip_1085_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "海克斯科技是魔法與科技的結合，它的原理是利用稀有水晶蘊藏的能量發展出強大的科技。"
 },
 {
 "key": "game_startup_tip_1087_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "佐恩強大的化學男爵們彼此建立起鬆散的同盟，防止城市陷入無法掌控的混亂。"
 },
 {
 "key": "game_startup_tip_1088_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "化學煙霧多年污染環境，使佐恩幾乎常年被稱為「灰毒」的毒煙覆蓋。在最底層吸入灰毒，有時足以讓人致命。"
 },
 {
 "key": "game_startup_tip_1089_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "愛歐尼亞的建築因其與大自然之間形成和諧的流動而聞名世界。"
 },
 {
 "key": "game_startup_tip_1091_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "比爾吉沃特的許多建築都是用撞毀在岩岸上的船隻殘骸所建成的。"
 },
 {
 "key": "game_startup_tip_1092_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "在比爾吉沃特，死者並不會被埋葬－－他們的軀體通常會被安置在盒中，這些木盒最終會被投向大海。"
 },
 {
 "key": "game_startup_tip_1094_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "傳聞冰霜守望者現在正被禁錮在咆嘯深淵中。"
 },
 {
 "key": "game_startup_tip_1095_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "希維爾的十字刃「夏力卡」曾經屬於蘇瑞瑪的神聖戰士熙塔卡。"
 },
 {
 "key": "game_startup_tip_1096_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "努努在部族遇襲時失去了他的母親，但他仍抱持希望，深信母親還活著。有時努努能聽見她在他的夢中歌唱。"
 },
 {
 "key": "game_startup_tip_1098_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "傳言約德爾人知道一些符文大地上其他人無法察覺的祕密通道。"
 },
 {
 "key": "game_startup_tip_1099_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "倒刺女神和海蛇之母都是比爾吉沃特的人民對於當地神祇的稱呼。"
 },
 {
 "key": "game_startup_tip_11001_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「我相信我發現了某些不可思議的東西......透過科學操控魔法的方法！」 - 杰西"
 },
 {
 "key": "game_startup_tip_11002_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「這點風險值得一冒，你不這麼認為嗎？」 - 杰西"
 },
 {
 "key": "game_startup_tip_11003_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「我希望海克斯科技能助我們打造一個更美好的世界。」 - 杰西"
 },
 {
 "key": "game_startup_tip_11004_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「這個科技？它真實存在。而且不管發生了什麼事，它肯定能改變我們的世界。」 - 杰西"
 },
 {
 "key": "game_startup_tip_11005_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「這個男孩很有野心。 這就是我們首先支持他的原因。」 - 吉拉曼恩市議員"
 },
 {
 "key": "game_startup_tip_11006_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「我知道，我就要突破了。」 - 杰西"
 },
 {
 "key": "game_startup_tip_11007_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「我知道這聽起來像天方夜譚，但我們從不因此停下腳步。」 - 杰西"
 },
 {
 "key": "game_startup_tip_11008_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「我們捍衛新發現。當我們能夠掌控時，為何要畏懼？」 - 杰西"
 },
 {
 "key": "game_startup_tip_11009_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「此乃進步之城。想想我們能創造的驚奇吧。」 - 杰西"
 },
 {
 "key": "game_startup_tip_1100_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "巨石峰座落的位置遠離文明，相當偏僻。只有真正具有決心的探求者才能抵達得了。"
 },
 {
 "key": "game_startup_tip_11010_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「總有一天，這座城市會敬仰我們。」- 菲艾"
 },
 {
 "key": "game_startup_tip_11011_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「我們都有過糟糕的日子，但我們不斷學習，並且團結一心。」- 菲艾"
 },
 {
 "key": "game_startup_tip_11012_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「使你與眾不同的東西會讓你更強大。」- 菲艾"
 },
 {
 "key": "game_startup_tip_11013_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「何必聽命於他們？這裡是我們的地盤。」- 菲艾"
 },
 {
 "key": "game_startup_tip_11014_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「他們不會停下。我們必須回擊。就算你不這麼做，我也會動手。」- 菲艾"
 },
 {
 "key": "game_startup_tip_11015_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「我從小就知道我不如他們，地位低下。」- 菲艾"
 },
 {
 "key": "game_startup_tip_11016_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「這個世界就是如此，一直都是這樣。以為那會改變的我實在太愚蠢了。」- 菲艾"
 },
 {
 "key": "game_startup_tip_11017_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「不論這個世界怎麼打擊你，保護好你的家人。」- 范德爾"
 },
 {
 "key": "game_startup_tip_11018_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「她只要碰上麻煩就會一頭栽進去。」- 范德爾"
 },
 {
 "key": "game_startup_tip_11019_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「我可是超強的狙擊手。」- 凱特琳"
 },
 {
 "key": "game_startup_tip_1101_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "那些透過蘇瑞瑪的烈日巨環順利飛昇的人能夠活上數千年。"
 },
 {
 "key": "game_startup_tip_11020_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「我想我也挺格格不入的呢。\\n」- 凱特琳"
 },
 {
 "key": "game_startup_tip_11021_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「妳是市議員的女兒。妳的行為將影響整體。」 - 吉拉曼恩市議員"
 },
 {
 "key": "game_startup_tip_11022_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「如果你想讓人開口，你就得讓他們覺得你有他們想要的東西。」- 菲艾"
 },
 {
 "key": "game_startup_tip_11023_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「凱特琳吉拉曼恩。我怎麼一點都不驚訝呢？妨礙調查？又一次？」- 馬克斯"
 },
 {
 "key": "game_startup_tip_11024_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「吉拉曼恩，我知道你習慣了隨心所欲，但指揮鏈之所以存在是有原因的。」- 馬克斯"
 },
 {
 "key": "game_startup_tip_11025_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「你知道還有什麼反映了議會嗎？ 它流落街頭的市民。\\n」- 凱特琳"
 },
 {
 "key": "game_startup_tip_11026_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「成為他們的恐懼。」- 吉茵珂絲"
 },
 {
 "key": "game_startup_tip_11027_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「我是個無助的小女孩，然後我不小心放火燒了那棟建築。 純屬意外啦。」- 吉茵珂絲"
 },
 {
 "key": "game_startup_tip_11028_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「為什麼你要離開我？！」- 爆爆"
 },
 {
 "key": "game_startup_tip_11029_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「但是，你的腦子裡有個東西，它不停肆虐，瘋狂地點燃每一根神經。 告訴你要戰鬥、要活下去。」- 希爾科"
 },
 {
 "key": "game_startup_tip_11030_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「我當時要救你。我只是想幫忙。我只是想幫忙。我只是想幫忙。」- 爆爆"
 },
 {
 "key": "game_startup_tip_11031_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「吉茵珂絲登場。準備開炸。」- 吉茵珂絲"
 },
 {
 "key": "game_startup_tip_11032_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「家人會團結在一起！你自己說的。」- 爆爆"
 },
 {
 "key": "game_startup_tip_11033_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「你可以在福根酒館發現各種祕密......如果你知道該問誰的話。」"
 },
 {
 "key": "game_startup_tip_11034_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「你可以在佐恩買到石怪，但他們實在不是什麼優秀的寵物。」"
 },
 {
 "key": "game_startup_tip_11035_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「皮爾托福的海克斯科技新研究吸引了一些諾克薩斯名人的注意。」"
 },
 {
 "key": "game_startup_tip_11036_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「謠傳佐恩的中心潛伏著一頭怪物。」"
 },
 {
 "key": "game_startup_tip_11037_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「佐恩的孩子們擅於抓住每一個機會，有時甚至是靠武力。」"
 },
 {
 "key": "game_startup_tip_11038_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「齒輪、螺栓、螺絲、金屬屑：這些只是佐恩的孩子從皮爾托福偷來換錢的一小部分東西。」"
 },
 {
 "key": "game_startup_tip_11039_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「找工作？小伙子或許能替你在皮爾托福打聽到有用的消息。」"
 },
 {
 "key": "game_startup_tip_1103_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "比爾吉沃特經濟的繁盛及蕭條都建立在狩獵和捕獲海怪。"
 },
 {
 "key": "game_startup_tip_11040_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「有些新發現在書桌前就能進行，但並非全部。杰西得跨越符文大地才能使他的海克斯科技研究更進一步。」"
 },
 {
 "key": "game_startup_tip_11041_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「塔利斯家族靠著為人們鍛造槌子而取得地位。」"
 },
 {
 "key": "game_startup_tip_11042_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「在福根酒館演奏的樂團聽起來有種奇怪的熟悉感。可信的蛇？不，不太對。」"
 },
 {
 "key": "game_startup_tip_11043_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「皮爾托福的屋頂上都裝著警報器，就怕有什麼萬一。謝天謝地，現在似乎一片祥和。」"
 },
 {
 "key": "game_startup_tip_11044_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「吉茵珂絲的武器也是她最親近的朋友。 不完全是我們所說的健康關係。」"
 },
 {
 "key": "game_startup_tip_11045_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「爆爆不是朋友們中唯一的藝術家。邁羅在屋頂上被標記好幾次了。」"
 },
 {
 "key": "game_startup_tip_11046_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「傑利科大廚以精緻的攤位美食聞名，當然，這只有在地下城找得到。」"
 },
 {
 "key": "game_startup_tip_11047_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「在靜水監獄和毒淵之間，皮爾托福有一個地點，能應付地下城引起的最糟情況。」"
 },
 {
 "key": "game_startup_tip_11048_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「從杰西小時候起，奧術就成了他生命中的一部份──遠比他母親承認的重要得多。」"
 },
 {
 "key": "game_startup_tip_11049_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「謠言傳遍了整個地下城，說是皮爾托福的首席執法者在神祕的情況下過世了。」"
 },
 {
 "key": "game_startup_tip_1104_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "根據傳說，真霜冰晶從來不會溶化。然而，元素魔法或者半神所賦予的力量都有可能推翻這個說法..."
 },
 {
 "key": "game_startup_tip_11050_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「多數人透過地下城的層層關係拿到探測球。而當地人則......另有門路。」"
 },
 {
 "key": "game_startup_tip_11051_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「商場的功用可不只是讓人贏得獎品。在地下城的一間商場，吉茵珂絲學會了射擊，而菲艾學會了拳擊。」"
 },
 {
 "key": "game_startup_tip_11052_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「如果不是因為一些地下城的惡棍——以及隨之而來的爆炸——杰西和維克特永遠也不會相遇。」"
 },
 {
 "key": "game_startup_tip_11053_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「凱特琳的相機是塔利斯的原裝品。 皮爾托福可沒有一個相機和它一樣！」"
 },
 {
 "key": "game_startup_tip_11054_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「阿特拉斯拳套用來幫助皮爾托福的礦工輕鬆搬動大塊岩石」"
 },
 {
 "key": "game_startup_tip_11055_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「市議員伊里斯波爾柏克從頭到腳都不相信奧術。」"
 },
 {
 "key": "game_startup_tip_11056_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「汙水坑是美麗而奇怪的生物的家園，儘管很少有人看過牠們……或是能活著說出看見了什麼。」"
 },
 {
 "key": "game_startup_tip_11057_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「漢默丁格教授的發明導論是該學院所有一年級的必修課。」"
 },
 {
 "key": "game_startup_tip_11058_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「范德爾一直戴著他破舊的手套，作為一個時時刻刻的提醒......以及一個承諾。」"
 },
 {
 "key": "game_startup_tip_11059_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「皮爾托福的執法者已經與巷內的居民暫時休戰。」"
 },
 {
 "key": "game_startup_tip_1105_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "真霜冰晶被寒冰護衛視為神聖的，而其腐敗後則會變成黑暗冰晶。"
 },
 {
 "key": "game_startup_tip_11060_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "梅德拉達的母親是一位有才華的領主，同時也是諾克薩斯的政治家。"
 },
 {
 "key": "game_startup_tip_11061_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「謎語盒」由皮爾托福的工匠手工製作。 它們全都獨一無二，沒有一個相同，每個都藏著一個獎品。"
 },
 {
 "key": "game_startup_tip_11062_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "皮爾托福仍未走出灰燼之日的陰霾，而執法者們也沒有忘記他們在海港大橋上屠殺的那些地下城抗議者。"
 },
 {
 "key": "game_startup_tip_11063_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "在爆爆的幫助下，范德爾在福根酒館中安裝了一個緊急按鈕。 但願他們永遠都用不到就好了……"
 },
 {
 "key": "game_startup_tip_11064_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "凱特琳吉拉曼恩仍是執法者射擊場中最快時間的紀錄保持人。"
 },
 {
 "key": "game_startup_tip_1106_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "卡薩丁的名子源自於蘇瑞瑪的俚語：「Kas sai a dyn？」，又或稱為「沙漠知道哪個人阿？」"
 },
 {
 "key": "game_startup_tip_1107_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "努努的笛子名叫斯弗頌歌爾。"
 },
 {
 "key": "game_startup_tip_1108_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "努努和他的母親蕾卡是諾泰的一名成員，一個敬拜艾妮維亞的弗雷爾卓德游牧部族。"
 },
 {
 "key": "game_startup_tip_1109_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "阿卡莉最喜愛的武器是鈎鐮及苦無，一種手持的鐮刀和投擲的匕首。"
 },
 {
 "key": "game_startup_tip_1110_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "伊瑞莉雅在那歐起義時切斷了斯溫的左手，阻止了諾克薩斯繼續往平典城前進。"
 },
 {
 "key": "game_startup_tip_1111_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "蒂瑪西亞的首都，同時也是帝制的所在，就是蒂瑪西亞王都。"
 },
 {
 "key": "game_startup_tip_1112_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "布蘭德的童年在瑞格恩流域外圍的弗雷爾卓德定居度過。"
 },
 {
 "key": "game_startup_tip_1113_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "派克在血港以串叉手建立起了他的名聲，一個位於比爾吉沃特的殘惡碼頭。"
 },
 {
 "key": "game_startup_tip_1114_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "安妮在很年幼的時候就失去了她的母親。她的父親、姐妹及繼母也在數年後相繼去世。"
 },
 {
 "key": "game_startup_tip_1115_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "希維爾是阿祈爾的後代子嗣，而阿祈爾正是蘇瑞瑪的昇天神皇。"
 },
 {
 "key": "game_startup_tip_1116_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "巴德有很多名字，其中包括宇宙漂泊者和偉大的守望者。"
 },
 {
 "key": "game_startup_tip_1117_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "伊莉絲曾是諾凱瑟拉家族裡的女士，一個強大的諾克薩斯貴族。"
 },
 {
 "key": "game_startup_tip_1118_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "伊芙琳是一個因受害者痛苦而成長茁壯的惡魔。"
 },
 {
 "key": "game_startup_tip_1119_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "伊澤瑞爾在蘇瑞瑪中尼祖的失落之墓發現了他的手套。"
 },
 {
 "key": "game_startup_tip_1120_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "吶兒的迴力鏢其實是德魯瓦斯克的顎骨，是一種原產於弗雷爾卓德的野豬。"
 },
 {
 "key": "game_startup_tip_1121_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "葛雷夫的散彈槍名為命運。"
 },
 {
 "key": "game_startup_tip_1122_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "漢默丁格和希格斯曾在皮爾托福一同經營一家煙火商店。"
 },
 {
 "key": "game_startup_tip_1123_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "桃子是凱莎最愛的水果。"
 },
 {
 "key": "game_startup_tip_1124_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "銳空非常喜愛巧克力。"
 },
 {
 "key": "game_startup_tip_1125_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "慨影的全名叫做席達．慨影。"
 },
 {
 "key": "game_startup_tip_1126_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "李星和烏迪爾並肩作戰，打擊入侵愛歐尼亞的諾克薩斯人。"
 },
 {
 "key": "game_startup_tip_1127_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "納瑟斯跟雷尼克頓曾是親兄弟，他們一同加入了飛昇者的行列。"
 },
 {
 "key": "game_startup_tip_1128_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "歐拉夫來自洛克法的弗雷爾卓德半島。"
 },
 {
 "key": "game_startup_tip_1129_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "艾妮維亞、鄂爾、赫斯特爾及弗力貝爾是古代弗雷爾卓德無數半神中的一員。"
 },
 {
 "key": "game_startup_tip_1130_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "夜曲曾威嚇困擾過蒂瑪西亞的城市弗斯巴洛。"
 },
 {
 "key": "game_startup_tip_1131_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "雷玟曾懇求愛歐尼亞的一位長老，索瑪，摧毀她的刀刃。而在這麼做的同時，她意外的造成他的死亡。"
 },
 {
 "key": "game_startup_tip_1132_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "雷茲曾是基恩．羅西的主人，就在基恩變成布蘭德之前。"
 },
 {
 "key": "game_startup_tip_1133_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "史瓦尼的德魯瓦斯克野豬名叫布鬃。"
 },
 {
 "key": "game_startup_tip_1134_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "煞蜜拉用刺青記錄下那些最為驚險刺激的任務。如果你問她，她會說身上還有空間能刺下更多。"
 },
 {
 "key": "game_startup_tip_1135_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "辛吉德的化學武器曾被用在諾克薩斯侵略愛歐尼亞的戰爭。"
 },
 {
 "key": "game_startup_tip_1136_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "索拉卡預見了許多潛在的未來，並引導了一些人選擇他們的命運。"
 },
 {
 "key": "game_startup_tip_1137_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "塔莉亞在愛歐尼亞時曾被犽宿所指導。"
 },
 {
 "key": "game_startup_tip_1138_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "卡特蓮娜、卡莎碧雅及塔隆都是諾克薩斯貴族杜．克卡奧家族的成員。"
 },
 {
 "key": "game_startup_tip_1139_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "瑟雷西的燈籠是無數靈魂的監獄，其中也包括了路西恩的妻子姍娜 ─ 而她之後逃了出去..."
 },
 {
 "key": "game_startup_tip_1140_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "崔絲塔娜的火箭砲名叫砰爆。"
 },
 {
 "key": "game_startup_tip_1141_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "泰達米爾在雷克危城的神聖之地艾伐洛森對艾希宣誓效忠。"
 },
 {
 "key": "game_startup_tip_1142_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "作為諾克薩斯的前首領，烏爾加特遭到了背叛並被監禁在一個位在佐恩且名為毒淵的礦井之中。"
 },
 {
 "key": "game_startup_tip_1143_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "法洛士是個冥血族，在名為菲爾瑪及凱的兩個愛歐尼亞人的混合肉體中重生。"
 },
 {
 "key": "game_startup_tip_1144_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "威寇茲名字翻譯成古蘇瑞瑪語的意思大致上是「透過解構來了解」。"
 },
 {
 "key": "game_startup_tip_1145_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "曾是一名佐恩的黑道，沃維克在被辛吉德改造後成為了一個怪物。"
 },
 {
 "key": "game_startup_tip_1146_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "沃維克正在獵殺你。"
 },
 {
 "key": "game_startup_tip_1147_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "靈花祭是愛歐尼亞的一個節日，讓生者得以與已故親人們溝通並展現敬意。"
 },
 {
 "key": "game_startup_tip_1148_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "約瑞科配戴著生命之淚，一瓶從聖島的神聖泉水中抽取的水。"
 },
 {
 "key": "game_startup_tip_1149_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "劫在成立自己的幽影軍團之前，曾是「均衡」的一員。"
 },
 {
 "key": "game_startup_tip_1150_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "慨影的師父是劫，而劫相信著這個年輕人有一天將有能力領導整個幽影軍團。"
 },
 {
 "key": "game_startup_tip_1151_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "極靈是一名因虛空在伊卡西亞發動的毀滅攻擊中的倖存者。"
 },
 {
 "key": "game_startup_tip_1152_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "柔依在成為暮光星靈之前，是月環之子。"
 },
 {
 "key": "game_startup_tip_1153_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "暮光星靈為凡人提供追捕厄薩斯和其他冥血族所需的知識。"
 },
 {
 "key": "game_startup_tip_1154_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "歐洲是第一個把輔助放到下路的地區。"
 },
 {
 "key": "game_startup_tip_1158_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "皮爾托福人稱他們的家鄉為「進步之城」。佐恩人則通常會用沒這樣恭维的名字稱呼那裡。"
 },
 {
 "key": "game_startup_tip_1159_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "別跟賽特的媽媽告狀說他是做什麼維生的。我們不會想害她操心，對吧？"
 },
 {
 "key": "game_startup_tip_1160_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "儘管執法者擁有佐恩底城的管轄權，但化學巨頭們可不想這些高高在上的上城人統治。"
 },
 {
 "key": "game_startup_tip_1161_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "亞菲利歐的雙胞胎妹妹－亞盧妮，只能在他服下致使他失去聲音的毒藥時，才能投注魔法力量來輔助他。"
 },
 {
 "key": "game_startup_tip_1162_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「進步之日」是皮爾托福的一個節日，旨在紀念各種創新發明；不過，對佐恩來說，它卻是一個悼念日。"
 },
 {
 "key": "game_startup_tip_1163_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "為了開鑿一條穿過皮爾托福的運河，這災難性的嘗試使得城市的一部分崩毀－佐恩也因此而誕生。"
 },
 {
 "key": "game_startup_tip_1164_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "身為一名孩童，銳兒遭受了殘酷的實驗。多虧她鋼鐵般的意志，她的導師們沒能活下來。"
 },
 {
 "key": "game_startup_tip_1165_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "在蘇瑞瑪深處，沙土如水一般流動。也許就是這不停歇的移動，讓復仇業火法師－布蘭德持續被深埋在沙丘之下。"
 },
 {
 "key": "game_startup_tip_1166_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「幻石」，一頭巨大的岩石生命體，在數千年前被打造來對抗虛空。墨菲特是僅存的幻石，但他的使命仍未改變。"
 },
 {
 "key": "game_startup_tip_1167_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "蘇瑞瑪的北海岸有一部份被諾克薩斯所掌控，但重生的蘇瑞瑪帝王阿祈爾也許會想收復失土。"
 },
 {
 "key": "game_startup_tip_1168_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "雷珂煞的獵場上散布著數千具受害者的遺骸，該地也被稱為「骨骸之海」"
 },
 {
 "key": "game_startup_tip_1169_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "艾克可以逆轉時間。過去人們以為漢默丁格才能做到。"
 },
 {
 "key": "game_startup_tip_1170_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "蘇瑞瑪最大的沙漠之一名為「大煞沙漠」。是許多劫掠部族的家鄉，其中也包含那些殺死希維爾家人的。"
 },
 {
 "key": "game_startup_tip_1171_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "伊克斯塔爾的茂密叢林就緊鄰著蘇瑞瑪沙漠，但只有極少數蘇瑞瑪人知道有個蓬勃發展的文明就位在那片荒野之中。"
 },
 {
 "key": "game_startup_tip_1172_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "殘酷的冥血族曾經是蘇瑞瑪帝國的偉大戰士。"
 },
 {
 "key": "game_startup_tip_1173_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "普羅大眾完全不知道光之哨兵以古老神聖的武器在守護符文大地，免於闇影島惡靈的危害。"
 },
 {
 "key": "game_startup_tip_1174_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "幽魂克黎思妲曾效忠於殞落王者維爾戈。這份忠誠使她賠上了性命。"
 },
 {
 "key": "game_startup_tip_1175_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "一千年前，迦瑪沃爾的君王維爾戈愛上了一名裁縫師－伊索德。一段浪漫童話就此展開，最終將引起殞落的詛咒。"
 },
 {
 "key": "game_startup_tip_1176_narrative",
-"mode": "一般",
+"kind": "背景故事",
 "text": "維爾戈來自遙遠的迦瑪沃爾帝國。在他缺席的這一千年，他的帝國衰亡，並被世人遺忘。"
 },
 {
 "key": "game_startup_tip_2001_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "你的英雄會在你點擊滑鼠右鍵一下之後繼續攻擊。"
 },
 {
 "key": "game_startup_tip_2002_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "在選項清單裡面你可以設定快速鍵，按下之後可以直接開啟和關閉道具商店。"
 },
 {
 "key": "game_startup_tip_2003_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "躲在召喚峽谷各個區域的草叢可以讓你不被敵人發現。"
 },
 {
 "key": "game_startup_tip_2004_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "只要一購買道具就會立刻獲得它們的效果和能力加成。不需要另外裝備它們喔！"
 },
 {
 "key": "game_startup_tip_2005_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "在選項清單裡面你可以設定快速鍵，幫助你和隊伍內的其他玩家聊天。"
 },
 {
 "key": "game_startup_tip_2005_gameplay_1key",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "準備好與隊友文字聊天時，可在選單中開啟聊天功能！"
 },
 {
 "key": "game_startup_tip_2006_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "野區的野怪不會主動傷害你，除非你攻擊牠們。"
 },
 {
 "key": "game_startup_tip_2007_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "需要18360經驗值才能升至18級。"
 },
 {
 "key": "game_startup_tip_2008_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "金錢可用來購買道具，讓你變得更加強大。"
 },
 {
 "key": "game_startup_tip_2100_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "附近沒有敵方士兵時，防禦塔承受的傷害會大幅降低。"
 },
 {
 "key": "game_startup_tip_2101_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "在選項清單裡面你可以設定快速鍵，按下之後會讓你的英雄停止攻擊。"
 },
 {
 "key": "game_startup_tip_2102_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "你可以在死亡期間購買道具。"
 },
 {
 "key": "game_startup_tip_2103_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "巴龍納什出現時，可能會形成外觀不同的巢穴，分為三種。"
 },
 {
 "key": "game_startup_tip_2104_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "遠古巨龍會在一個隊伍擊殺 4 隻飛龍之後出現。擊殺牠會給予你的隊伍強大的力量！"
 },
 {
 "key": "game_startup_tip_2105_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "放置守衛可讓你看到當下你並沒有經過的地方，即使是草叢也一樣！"
 },
 {
 "key": "game_startup_tip_2106_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "如果你按下 Ctrl 或 Alt，你可以接著點擊滑鼠並拖曳游標以進入地圖信號清單。"
 },
 {
 "key": "game_startup_tip_2107_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "單一士兵並不會造成太多傷害，但是如果他們集結在一起的話，他們的傷害還真不是蓋的！"
 },
 {
 "key": "game_startup_tip_2108_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "如果你攻擊敵方士兵附近的英雄，他們將會轉為攻擊你。"
 },
 {
 "key": "game_startup_tip_2109_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "某些技能，像是蓋倫的致命打擊，可以對建築物造成傷害。"
 },
 {
 "key": "game_startup_tip_2110_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "等級達到 9 等時，你將解鎖一個額外的飾品選項。你可以在商店中免費升級你的飾品。"
 },
 {
 "key": "game_startup_tip_2111_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "某些英雄可以使用技能穿牆，讓他們出奇不意地攻擊或逃離戰場。"
 },
 {
 "key": "game_startup_tip_2112_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "技能說明裡面的特殊顏色可以給你一點提示，像是哪些道具的能力加成會讓這個技能變得更強大。"
 },
 {
 "key": "game_startup_tip_2113_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "若你的攻擊恰好擊殺了士兵或野怪，你將會獲得金錢獎勵。"
 },
 {
 "key": "game_startup_tip_2114_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "魔法攻擊可以提升許多技能的整體能力，不是只有傷害而已。"
 },
 {
 "key": "game_startup_tip_2115_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "你可以按住 Alt 並將技能施放在自己身上。"
 },
 {
 "key": "game_startup_tip_2116_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "你可以藉由按住 Ctrl 並按下技能熱鍵來快速升級技能。"
 },
 {
 "key": "game_startup_tip_2117_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "傳送不像其它多數需要時間發動的技能，它可以被一般傷害中斷。善加利用這點來妨礙敵人的計畫！"
 },
 {
 "key": "game_startup_tip_2118_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "兵營會在短時間內一口氣產生數名士兵，一般都稱之為一「波」士兵。"
 },
 {
 "key": "game_startup_tip_2119_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "英雄頭上的生命條，每一小格都代表著 100 生命。"
 },
 {
 "key": "game_startup_tip_2120_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "在兩頭巨龍被擊殺後，地圖會開始變化。變化之後只會生成與該地圖相同屬性的巨龍。"
 },
 {
 "key": "game_startup_tip_2121_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "打虛空幼蟲時，請特別注意。擊殺一隻會回復其他幼蟲的生命！"
 },
 {
 "key": "game_startup_tip_2200_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "滑鼠右鍵除了可以購買道具，也可以用來販售道具。"
 },
 {
 "key": "game_startup_tip_2201_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "遊戲一開始的時候，擊殺 3 波士兵獲得的金錢比擊殺 1 名英雄還多。進入中後期的時候士兵的價值甚至會變得更高！"
 },
 {
 "key": "game_startup_tip_2202_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "拖曳道具商店的右下角可以調整它的大小。"
 },
 {
 "key": "game_startup_tip_2203_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "你可以藉由點擊防禦塔查看它們的道具欄。你會發現防禦塔擁有非常多種類的特殊效果。"
 },
 {
 "key": "game_startup_tip_2204_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "飛龍每次死亡時都必須等待 5 分鐘才會重生。"
 },
 {
 "key": "game_startup_tip_2205_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "防禦塔持續對同一目標進行攻擊時它的傷害會越來越高。"
 },
 {
 "key": "game_startup_tip_2206_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "隊友頭像上面的綠點是表示他們的大絕已準備就緒！"
 },
 {
 "key": "game_startup_tip_2207_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "可透過某些飾品來使隱形英雄顯現他們的輪廓。"
 },
 {
 "key": "game_startup_tip_2208_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "部份可以使出強化普攻的英雄（像是賈克斯）可以透過技能重置他們的普攻。"
 },
 {
 "key": "game_startup_tip_2209_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "小地圖上的防禦塔會在它們受到傷害時漸漸變成空心的圖示。"
 },
 {
 "key": "game_startup_tip_2210_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "擊殺巴龍會賦予你的隊伍大量金錢，並且大幅提升回城速度，讓你可以更快速地返回基地並升級你的裝備。"
 },
 {
 "key": "game_startup_tip_2211_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "若你在回城過程的最後0.1秒遭到干擾，回城不會取消。"
 },
 {
 "key": "game_startup_tip_2212_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "若你離開基地時沒有飾品，就會自動獲得潛行守衛。"
 },
 {
 "key": "game_startup_tip_2213_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "有時候扣著技能會比馬上用掉技能帶來更大的威脅。"
 },
 {
 "key": "game_startup_tip_2214_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "如果身上的多個道具共用了一個相同名稱的被動效果。那麼這些被動效果只會有一個生效。"
 },
 {
 "key": "game_startup_tip_2215_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "殺死虛空幼蟲會獲得「渴望虛空」堆層。累加4層時，你對建築物進行普攻時，會召喚虛空蟎蟲攻擊你的目標！"
 },
 {
 "key": "game_startup_tip_2216_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "召喚預示者為隊伍戰鬥後，可以跳到他背上加以操控！"
 },
 {
 "key": "game_startup_tip_2217_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "最小隻、最閃耀的石怪們持有最多的金錢。"
 },
 {
 "key": "game_startup_tip_2218_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "重踏蠑螈愛吃蜂蜜漿果。"
 },
 {
 "key": "game_startup_tip_2219_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "與隊友分享一條路線上的經驗值，獲得的總經驗值會大於只有單一英雄時獲得的經驗值。"
 },
 {
 "key": "game_startup_tip_2220_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "遠古巨龍只會在有一支隊伍擊殺了 4 隻飛龍並獲得龍魂後出現。"
 },
 {
 "key": "game_startup_tip_2221_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "如果一支隊伍擊殺了四隻飛龍，那麼作為獎勵，他們會獲得一個強力的永久增益：龍魂。"
 },
 {
 "key": "game_startup_tip_2300_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "只要你尚未離開溫泉或使用技能，就可以重啟商店並取消購買。"
 },
 {
 "key": "game_startup_tip_2301_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "蜂蜜漿果會在河道各處生成，記得隨時留意！"
 },
 {
 "key": "game_startup_tip_2302_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "熾爪獵犬在野外會利用爆破毬果來飛越險惡的熔岩平原。"
 },
 {
 "key": "game_startup_tip_2303_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "只要攻擊偵察守衛，敵方隊伍就會注意到你，即便該守衛失效也一樣。"
 },
 {
 "key": "game_startup_tip_2304_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "如果你朝著地形物發動閃現，你將會出現在離地形物最近的位置。善加利用這點來獲得額外的距離。"
 },
 {
 "key": "game_startup_tip_2305_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "你可以在某些技能施法的過程中發動閃現，給予對手一個大大的驚喜。"
 },
 {
 "key": "game_startup_tip_2306_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "馭風靈狐會利用真知之花來偵察掠食者。"
 },
 {
 "key": "game_startup_tip_2307_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "如果目前飛龍尚未出現，你可以透過查看飛龍野區牆上的圖樣來瞭解接下來出現的會是哪種飛龍。"
 },
 {
 "key": "game_startup_tip_2308_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "中立野怪會攻擊最靠近他們的目標。"
 },
 {
 "key": "game_startup_tip_2309_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "召喚峽谷中有一片披薩，你能找到嗎？"
 },
 {
 "key": "game_startup_tip_2310_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "我方隊伍擊殺的飛龍越多，牠們對你來說就越強大！"
 },
 {
 "key": "game_startup_tip_2311_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "大部分偵察守衛只能存活一段時間。你可以點按它們來查看剩餘的時間。"
 },
 {
 "key": "game_startup_tip_2312_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "上路士兵會在 30 秒之內從基地抵達上路的中間點。中路士兵則是會在 20 秒之內抵達中路的中間點。"
 },
 {
 "key": "game_startup_tip_2313_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "被摧毀的守衛會在原地留下殘骸。它們的亮度越亮，就表示距離它們失效的時間越近。"
 },
 {
 "key": "game_startup_tip_2314_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "你可以在發動技能（像是回城）的時候放置守衛或喝藥水。"
 },
 {
 "key": "game_startup_tip_2315_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "你可以透過查看小地圖裡友方士兵的位置來判斷敵方士兵目前的位置在哪。"
 },
 {
 "key": "game_startup_tip_2316_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "若是你在線上留下幾隻敵方士兵在原地，友方士兵推線的速度會變得比較慢，你也不需要一直待在那裡。"
 },
 {
 "key": "game_startup_tip_2317_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "開啟計分板的時候，只要點擊上方的野怪計時器就可以把相關資訊傳給你的隊友。不需要按 Alt。"
 },
 {
 "key": "game_startup_tip_2318_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "帶有復活、法術護盾等效果都會有對應的生命條指示器！"
 },
 {
 "key": "game_startup_tip_2319_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "英雄聯盟的遊戲內容經常更動，定期閱讀遊戲的指示說明會幫助你跟上最新的遊戲內容！"
 },
 {
 "key": "game_startup_tip_2320_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "英雄執行動作指令的途中是最容易遭受攻擊的時候，像是攻擊一名士兵時。"
 },
 {
 "key": "game_startup_tip_2321_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "巴龍對身後的敵人會造成更多傷害。"
 },
 {
 "key": "game_startup_tip_2322_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "在草叢裡面攻擊敵人時會暴露你的行蹤。"
 },
 {
 "key": "game_startup_tip_2323_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "許多英雄創造出來的目標物都可以被傳送指定。包括瑟雷西的燈籠、嘉文四世的旗子還有札克掉落在地上的軟泥。"
 },
 {
 "key": "game_startup_tip_2324_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "升級之後賦予的能力加成通常比擊殺英雄的金錢獎勵還更具價值。"
 },
 {
 "key": "game_startup_tip_2325_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "英雄的視野範圍比偵察守衛的還大。"
 },
 {
 "key": "game_startup_tip_2326_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "道具加速能使你身上道具的主動效果和被動效果的冷卻時間都獲得縮短。"
 },
 {
 "key": "game_startup_tip_2327_gameplay",
-"mode": "一般",
+"kind": "遊戲技巧",
 "text": "正在被巴龍攻擊的目標，會對巴龍造成較低傷害。"
 },
 {
 "key": "game_startup_tip_3000_misc",
-"mode": "一般",
+"kind": "冷知識",
 "text": "吉茵珂絲經典造型美術圖的場景跟菲艾相同，只是吉茵珂絲身後的是受到破壞之後的景象。"
 },
 {
 "key": "game_startup_tip_3001_misc",
-"mode": "一般",
+"kind": "冷知識",
 "text": "中國的一間日式料理餐廳曾經根據顧客在聯盟裡的牌階給予不同的折扣。"
 },
 {
 "key": "game_startup_tip_3002_misc",
-"mode": "一般",
+"kind": "冷知識",
 "text": "如果只用閃現的話（沒有裝備符文的前提下），從我方基地移動到敵方基地一共需要 3 小時又 20 分。"
 },
 {
-"key": "game_startup_tip_3302",
-"mode": "一般",
-"text": "悠咪.AI任務需要整支隊伍才能啟動！"
-},
-{
-"key": "game_startup_tip_3303",
-"mode": "一般",
-"text": "一天一增幅裝置，遠古霸者遠離我！請慎選。"
-},
-{
-"key": "game_startup_tip_3304",
-"mode": "一般",
-"text": "遠古霸者把你打爆了嗎？花錢變得更強，然後再試一次！"
-},
-{
-"key": "game_startup_tip_3305",
-"mode": "一般",
-"text": "完成所有地圖的第一個難易度後就能解鎖配對系統。"
-},
-{
-"key": "game_startup_tip_3306",
-"mode": "一般",
-"text": "武器可以進化，變得更強！記得查看進化組合。"
-},
-{
-"key": "game_startup_tip_3307",
-"mode": "一般",
-"text": "你可以切換自動瞄準或手動瞄準(預設按鍵：C)。"
-},
-{
 "key": "game_startup_tip_4000_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "對戰時講一些垃圾話有助於身心健康，但是仇恨言論？我們可就不這麼同意了。"
 },
 {
 "key": "game_startup_tip_4001_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "人生不如意事十之八九，這點我們都懂。但是那些常常怒跳遊戲的人還是會受到懲罰的。"
 },
 {
 "key": "game_startup_tip_4002_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "某個玩家主導了戰局，引領隊友走向勝利嗎？記得在遊戲結束後給他們一個讚喔！"
 },
 {
 "key": "game_startup_tip_4003_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "某個隊友讓這場對戰變得十分精彩嗎？記得在遊戲結束後給他們一個讚喔！"
 },
 {
 "key": "game_startup_tip_4004_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "別讓其他玩家的惡言惡語掌控了自己的行為。"
 },
 {
 "key": "game_startup_tip_4005_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "某個隊友不屈不饒，扭轉風向嗎？記得給他們一個 GG <3"
 },
 {
 "key": "game_startup_tip_4006_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "每個人指向技都有不準的時候，相信我，你偶爾也會狀況不好的。"
 },
 {
 "key": "game_startup_tip_4007_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "錯誤反而給了你機會，你懂的－－Reignover。"
 },
 {
 "key": "game_startup_tip_4008_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "有玩家在對戰中怒火中燒亂噴嗎？你可以透過聊天欄或是 TAB 選單靜音那些玩家。"
 },
 {
 "key": "game_startup_tip_4009_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "就算是吉茵珂絲這樣的人，也會保持冷靜，專注在一件事上：打爆敵方核心。"
 },
 {
 "key": "game_startup_tip_4010_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "比賽可以變得白熱化，但是種族歧視言論在英雄聯盟中是絕對不允許的。"
 },
 {
 "key": "game_startup_tip_4011_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "遊戲中犯下的錯誤可能會是新機會，再次思考你的策略吧。"
 },
 {
 "key": "game_startup_tip_4012_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "有誰不愛東山再起的復仇故事呢？千萬別放棄了！"
 },
 {
 "key": "game_startup_tip_4013_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "沒有團隊哪叫作團隊合作遊戲－－千萬別當中離玩家！"
 },
 {
 "key": "game_startup_tip_4014_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "善用警示燈號可以讓你的隊友遠離威脅。你肯定能透過這點贏得更多場對戰。"
 },
 {
 "key": "game_startup_tip_4015_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "警示燈號能夠在你需要時使用喔！"
 },
 {
 "key": "game_startup_tip_4016_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "隊友突破種種困境，態度冷靜堅持到最後嗎？記得在遊戲結束後給他們一個讚！"
 },
 {
 "key": "game_startup_tip_4017_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "我不可能每次的指向技都命中。我只是個凡人。－－GorillA"
 },
 {
 "key": "game_startup_tip_4018_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "如果某個玩家表現突出，記得在對戰結束後給他們一個讚喔！"
 },
 {
 "key": "game_startup_tip_4019_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "那些願意團隊合作的玩家會解鎖很酷的獎勵，像是戰利品！"
 },
 {
 "key": "game_startup_tip_4020_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "保持專注，保持冷靜：你會贏得更多場對戰。"
 },
 {
 "key": "game_startup_tip_4021_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "達到榮譽等級 3 了嗎？在這場比賽獲得讚就可以在下場比賽中的讀取畫面看到到榮譽勳章囉～"
 },
 {
 "key": "game_startup_tip_4022_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "沒有隊伍是完美的，但至少你們還是同隊伍的嘛！。快出來繼續戰鬥爭取！"
 },
 {
 "key": "game_startup_tip_4023_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "幫助你的隊友，尊重對戰裡的所有人，你就能夠提昇榮譽等級。"
 },
 {
 "key": "game_startup_tip_4024_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "在壓力下態度依舊保持冷靜是需要練習的，必要時，可以深呼吸一下。"
 },
 {
 "key": "game_startup_tip_4025_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "以榮譽為名，奮力戰鬥吧！"
 },
 {
 "key": "game_startup_tip_4026_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "你不能控制別人的情緒，但是你可以冷靜的應對。"
 },
 {
 "key": "game_startup_tip_4027_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "當一個隊友保持專注，不因困境而動搖，給他們一個「態度冷靜」吧！"
 },
 {
 "key": "game_startup_tip_4028_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "保持遊戲環境的友善。記得檢舉那些毒瘤玩家。"
 },
 {
 "key": "game_startup_tip_4029_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "善用警示燈來指引隊友，給他們建議。"
 },
 {
 "key": "game_startup_tip_4030_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "連勝好幾場了？充電休息一下吧！"
 },
 {
 "key": "game_startup_tip_4031_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "聽起來很笨，但其實深呼吸真的有助於自己不被挑釁影響！"
 },
 {
 "key": "game_startup_tip_4032_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "如果某個人讓你覺得這場對戰不是很開心，檢舉他們就好了！"
 },
 {
 "key": "game_startup_tip_4033_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "別被輕易挑釁了！"
 },
 {
 "key": "game_startup_tip_4034_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "不要成為挑釁自己隊友的人，這可會大幅提升對戰失敗的風險！"
 },
 {
 "key": "game_startup_tip_4035_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "如果有隊友成功扭轉戰局困境，別忘了在對戰結束後給他們一個讚喔！"
 },
 {
 "key": "game_startup_tip_4036_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "有時候保持冷靜真的很難，但如果你成功做到的話，一定會多贏幾場對戰的！"
 },
 {
 "key": "game_startup_tip_4037_pb",
-"mode": "一般",
+"kind": "遊戲禮儀",
 "text": "不被輕易激怒也代表你越來越有備無患了！"
 },
 {
 "key": "game_startup_tip_5000_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "李星是世界大賽創辦以來選用率最高的英雄，他總共被選了 129 次。"
 },
 {
 "key": "game_startup_tip_5001_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "亞歷斯塔是世界大賽創辦以來禁用率最高的英雄，他總共被禁了 86 次。"
 },
 {
 "key": "game_startup_tip_5002_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "奈德麗是 2016 年世界大賽禁用率最高的英雄。她當時的禁用率為 71%。"
 },
 {
 "key": "game_startup_tip_5003_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "庫奇是世界大賽創辦以來選用率最高的下路射手。"
 },
 {
 "key": "game_startup_tip_5004_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "奧莉安娜是世界大賽創辦以來選用率最高的中路英雄。"
 },
 {
 "key": "game_startup_tip_5005_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "瑟雷西是世界大賽創辦以來選用率最高的輔助英雄。"
 },
 {
 "key": "game_startup_tip_5006_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "藍寶是世界大賽創辦以來選用率最高的上路英雄。"
 },
 {
 "key": "game_startup_tip_5007_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "卡瑪是 2016 年世界大賽選用率最高的英雄。她當時的選用率為 54%。"
 },
 {
 "key": "game_startup_tip_5008_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "曾於 2011-2016 年的世界大賽登場的英雄一共有120 名。"
 },
 {
 "key": "game_startup_tip_5009_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "世界大賽創辦以來，沒有計入敵方擊殺或助攻數的死亡次數為 26。"
 },
 {
 "key": "game_startup_tip_5010_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "世界大賽創辦以來，有被系統計入的擊殺數為 9581。"
 },
 {
 "key": "game_startup_tip_5011_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "世界大賽創辦以來，一共有 683361 隻士兵及野怪遭到擊殺。"
 },
 {
 "key": "game_startup_tip_5012_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "世界大賽創辦以來英雄的死亡次數一共是9607。"
 },
 {
 "key": "game_startup_tip_5013_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "世界大賽創辦以來一共進行了 350 場對戰。"
 },
 {
 "key": "game_startup_tip_5014_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "世界大賽創辦以來，有被系統計入的助攻數為 22055。"
 },
 {
 "key": "game_startup_tip_5015_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "伊芙琳是世界大賽創辦以來單場擊殺數最高的英雄。她曾經在一場對戰中擊殺了 19 次敵方英雄。"
 },
 {
 "key": "game_startup_tip_5016_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "索娜和瑟雷西是世界大賽創辦以來單場助攻數最高的英雄。他們曾經在一場對戰中獲得了 28 次助攻。"
 },
 {
 "key": "game_startup_tip_5017_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "魔鬥凱薩是世界大賽創辦以來單場 KDA 最高的英雄。他的紀錄為 20.75。"
 },
 {
 "key": "game_startup_tip_5018_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "李星是世界大賽創辦以來總擊殺數最高的英雄。他一共造成了 357 次擊殺。"
 },
 {
 "key": "game_startup_tip_5019_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "2015 年世界大賽期間，魔鬥凱薩的禁用率高達 93%。只要他有被選到，選用的那一方最終都會贏得比賽。"
 },
 {
 "key": "game_startup_tip_5020_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "2015 年世界大賽期間，剛普朗克的禁用率高達 95%。其中有四場比賽他沒被禁用，且被其中一方選走，選用的那一方最終均贏得了比賽。"
 },
 {
 "key": "game_startup_tip_5021_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "雷玟、瑟雷西、希瓦娜、克黎思妲、劫和艾希是目前擁有永恆榮耀造型的英雄。"
 },
 {
 "key": "game_startup_tip_5022_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "Faker 是世界大賽上場次數最多的選手，他的紀錄是 50 場。Yellowstar 則是 48 場，名列第二。"
 },
 {
 "key": "game_startup_tip_5023_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "SK telecom T1 是唯一一支拿過不只一次世界冠軍的隊伍，他們拿過 3 次！"
 },
 {
 "key": "game_startup_tip_5024_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "Sneaky在2016年世界大賽C9 vs FW的比賽中破了單場尾兵數的最高紀錄。他用凱特琳擊殺了690名小兵。"
 },
 {
 "key": "game_startup_tip_5025_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "2011 年到現在，一共有 56 支隊伍參加世界大賽。"
 },
 {
 "key": "game_startup_tip_5026_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "2011 年，Fnatic 在瑞典的延雪平市贏得第一屆世界大賽冠軍。"
 },
 {
 "key": "game_startup_tip_5027_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "2012 年，台北暗殺星在美國加州的洛杉磯市贏得第二屆世界大賽冠軍。"
 },
 {
 "key": "game_startup_tip_5028_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "2013 年，SK telecom T1 在美國加州的洛杉磯市贏得第三屆世界大賽冠軍。"
 },
 {
 "key": "game_startup_tip_5029_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "2014 年，Samsung Galaxy White 在韓國的首爾市贏得第四屆世界大賽冠軍。"
 },
 {
 "key": "game_startup_tip_5030_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "2015 年，SK telecom T1 在德國的柏林市贏得第五屆世界大賽冠軍。"
 },
 {
 "key": "game_startup_tip_5031_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "2016 年，SK telecom T1 在美國加州的洛杉磯市贏得第六座世界大賽冠軍。"
 },
 {
 "key": "game_startup_tip_5032_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "今年誰會成為世界冠軍？"
 },
 {
 "key": "game_startup_tip_5033_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "Faker、Uzi 跟 imp 在歷屆世界大賽中均造成大約 200 次擊殺，是所有選手中的紀錄保持者。"
 },
 {
 "key": "game_startup_tip_5034_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "Piglet 跟 Toyz 是所有世界冠軍中，總體 KDA 最高的紀錄保持者。兩人的總體 KDA 皆為 9.73。"
 },
 {
 "key": "game_startup_tip_5035_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "Faker 在歷屆世界大賽中一共擊殺了 16306 隻小兵，是所有選手中的紀錄保持者。Pray 則是擊殺了 13807 隻小兵，名列第二。"
 },
 {
 "key": "game_startup_tip_5036_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "GorillA 在歷屆世界大賽中一共取得了 439 次助攻，是所有選手中的紀錄保持者。"
 },
 {
 "key": "game_startup_tip_5037_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "Piglet 是所有世界冠軍中，單場平均擊殺數最高的紀錄保持者。他單場的平均擊殺數為 6.39。"
 },
 {
 "key": "game_startup_tip_5038_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "Jensen是所有世界大賽參賽選手中，單場平均尾兵數最高的紀錄保持者。他單場的平均尾兵數為417。"
 },
 {
 "key": "game_startup_tip_5039_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "Cloud 是所有世界大賽參賽選手中，單場平均助攻數最高的紀錄保持者。他單場的平均助攻數為 12.63。"
 },
 {
 "key": "game_startup_tip_5040_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "卡爾瑟斯是歷屆世界大賽中，單場死亡數最高的英雄。他的紀錄是 12 次。"
 },
 {
 "key": "game_startup_tip_5041_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "2011 年到現在，世界大賽已經在 10 個不同的國家舉辦。"
 },
 {
 "key": "game_startup_tip_5042_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "2016 年世界大賽的決賽，一共有 4 千 3 百萬名獨立觀眾。"
 },
 {
 "key": "game_startup_tip_5043_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "2017 年世界大賽的決賽將於 11 月 4 日舉辦，地點在北京。"
 },
 {
 "key": "game_startup_tip_5044_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "英雄志逐傳奇"
 },
 {
 "key": "game_startup_tip_5046_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "2011 年到現在，世界大賽一共花費了 209 個小時在隊伍之間的比賽上。"
 },
 {
 "key": "game_startup_tip_5047_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "世界大賽每場比賽的平均對戰時間為 35:23。"
 },
 {
 "key": "game_startup_tip_5048_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "2011 年世界大賽的平均對戰時間最短（31:31）；2016 年世界大賽的平均對戰時間最長（38:32）。"
 },
 {
 "key": "game_startup_tip_5049_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "2015 年世界大賽擁有最短的單場對戰時間。EDG vs BKT 的比賽僅花 20 分 21 秒就結束。"
 },
 {
 "key": "game_startup_tip_5050_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "2014 年世界大賽擁有最長的單場對戰時間。FNC vs OMG 的比賽花了 1 小時 11 分 34 秒才結束。"
 },
 {
 "key": "game_startup_tip_5051_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "追求至高無上的境界就像是經歷一場沒有盡頭的旅程，只有堅持到底的人才能在歷史上刻劃自己的名字。"
 },
 {
 "key": "game_startup_tip_5052_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "對於那些在世界舞台競爭的選手來說，如果想要達到至高無上的境界，必須從四大基柱開始做起：技巧、堅韌、團隊合作及勇氣。"
 },
 {
 "key": "game_startup_tip_5053_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "堅韌是從失敗中汲取教訓，並將其轉化成進步動力的能力。它是一名冠軍需要具備的其中一項特質。"
 },
 {
 "key": "game_startup_tip_5054_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "展現超出預期的力量是一名冠軍需要具備的其中一項特質。"
 },
 {
 "key": "game_startup_tip_5055_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "堅持不懈的企圖心是邁向成功的驅動力，也是一名冠軍需要具備的其中一項特質。"
 },
 {
 "key": "game_startup_tip_5056_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "2016 年世界大賽共舉辦了 56 場比賽，是比賽場數最多的一屆。"
 },
 {
 "key": "game_startup_tip_5057_worlds",
-"mode": "一般",
+"kind": "世界大賽",
 "text": "2011 年世界大賽僅舉辦了 28 場比賽，是比賽場數最少的一屆。"
 },
 {
-"key": "game_startup_tip_6000_project2017",
-"mode": "一般",
-"text": "摧毀運輸機器人並攔劫它們身上的增幅斷片，蒐集到一定數量的斷片後隊伍內的成員就會進入超載狀態。"
-},
-{
 "key": "game_startup_tip_7000_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「我的王國必定歷久不衰。」－ 聖獅戰神 蓋倫"
 },
 {
 "key": "game_startup_tip_7001_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "所有律法都應當追隨蓋倫的理念，他的正義是絕對且不可撼動的。"
 },
 {
 "key": "game_startup_tip_7002_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "蓋倫身邊的聖獅來自天界，牠是蓋倫體內遠古力量的體現。"
 },
 {
 "key": "game_startup_tip_7003_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "由聖獅戰神蓋倫掌管的理想國叫作「蒂瑪西亞」。所有不遵守蒂瑪西亞律法的人都會立刻遭到處決。"
 },
 {
 "key": "game_startup_tip_7004_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "蒂瑪西亞的聖獅戰神自詡為王國的守護者和審判者。對於信奉他的人來說，只要能夠換來和平，捨棄個人的自由意志不過是微乎其微的代價。"
 },
 {
 "key": "game_startup_tip_7005_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「立下永遠效忠聖獅戰神的誓言，那麼你在他的王國將得到永恆的安寧。」－ 蓋倫 13:14"
 },
 {
 "key": "game_startup_tip_7006_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「我們的信仰是足以守護一切的盾牌。而我，便是蒂瑪西亞的信仰。」－ 聖獅戰神 蓋倫"
 },
 {
 "key": "game_startup_tip_7007_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "在聖獅戰神蓋倫的眼裡，能夠對他的帝國造成威脅的最後一個因素就是魔狼戰神達瑞斯。"
 },
 {
 "key": "game_startup_tip_7008_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "聖獅戰神蓋倫的神聖怒火一旦延燒，沒有人可以擋得住。膽敢反抗他的帝國最後的下場都是消滅殆盡。"
 },
 {
 "key": "game_startup_tip_7009_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "蓋倫手中的正義之劍是古代戰爭遺留下來的神器，只有像他這樣的戰神才有資格揮舞它並制裁所有罪惡。"
 },
 {
 "key": "game_startup_tip_7010_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「我不是救世主，而是一名劊子手。」魔狼戰神 達瑞斯"
 },
 {
 "key": "game_startup_tip_7011_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "只要魔狼戰神達瑞斯還對鮮血有所渴求，戰爭將永遠不會有消停的那一天。沒有人可以阻擋他鋼鐵般的意志。"
 },
 {
 "key": "game_startup_tip_7012_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "跟隨在達瑞斯身邊的魔狼是他體內野性之力的體現。"
 },
 {
 "key": "game_startup_tip_7013_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "魔狼戰神達瑞斯帶領著一群兇猛殘暴的戰士。他們渴求衝突，汲於想要透過證明自己的力量來換取榮耀。"
 },
 {
 "key": "game_startup_tip_7014_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "魔狼戰神達瑞斯心中沒有任何雜念，他唯一在乎的只有戰爭。長久以來他都在期待著有一天他的戰士們能夠強大到親手將他摧毀。"
 },
 {
 "key": "game_startup_tip_7015_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "無數王國都毀在魔狼戰神達瑞斯的手裡。這世上沒有任何事物可以阻擋他，即使是眾神也不例外。"
 },
 {
 "key": "game_startup_tip_7016_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "「我的嚎叫將引來無盡的戰爭與死亡。」－ 魔狼戰神 達瑞斯"
 },
 {
 "key": "game_startup_tip_7017_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "在魔狼戰神達瑞斯的眼裡，唯一能夠阻止他使世界陷入無盡紛爭的阻礙就是聖獅戰神蓋倫。"
 },
 {
 "key": "game_startup_tip_7018_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "魔狼戰神達瑞斯認為這個由國家所組成的世界是虛假的現實，唯有真正的暴戾能夠導正這一切。"
 },
 {
 "key": "game_startup_tip_7019_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "達瑞斯手中的斧頭是從古代戰爭遺留下來的無名兵器，唯有如他一般的戰神才有資格揮舞它，帶領世界進入無止境的戰爭時代。"
 },
 {
 "key": "game_startup_tip_7020_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "在史詩對決活動結束前（2018/7/11 14:59）完成任務來取得限定獎勵！"
 },
 {
 "key": "game_startup_tip_7021_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "一旦選擇「聖獅戰神」蓋倫或「魔狼戰神」達瑞斯其中一條任務線，另外一條任務線就會關閉。你只會收到該任務線提供的任務和獎勵。"
 },
 {
 "key": "game_startup_tip_7022_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "2018/7/11 14:59 以前召喚師們可以在阿福快打模式中，以受到戰火肆虐的召喚峽谷為戰場，對兩位戰神致敬。記得這次可以選用所有已擁有的英雄喔！"
 },
 {
 "key": "game_startup_tip_7023_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "完成你選擇的戰神提供的所有任務來解鎖「 2018 史詩對決」限定表情。"
 },
 {
 "key": "game_startup_tip_7024_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "透過完成任務來賺取史詩對決代幣，並將代幣合成為「聖獅戰神」蓋倫和「魔狼戰神」達瑞斯的載入畫面飾框。"
 },
 {
 "key": "game_startup_tip_7025_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "戰爭所及之處必會顯現真正的力量，只不過僅只一人能夠將它據為己有。審慎挑選你想跟隨的戰神吧！"
 },
 {
 "key": "game_startup_tip_7026_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "2017 年的「史詩對決 秩序」和「史詩對決 混沌」兩款表情會在 2018 史詩對決活動期間重新上架。2018/7/11 14:59 之後將永久停止販售。"
 },
 {
 "key": "game_startup_tip_7027_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "透過完成任務來取得史詩對決代幣，並在活動期間將這些代幣合成為聖獅晶球和魔狼晶球。晶球開啟後將會掉落造型碎片，並有機會掉落額外的獎勵！"
 },
 {
 "key": "game_startup_tip_7028_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "史詩對決結束後，只要再完成一項最終任務即可獲得用來慶祝這次贏家的頭像。如果你選擇的戰神是最後的贏家，你還會獲得 1000 藍色結晶粉末。"
 },
 {
 "key": "game_startup_tip_7029_vs2018",
-"mode": "一般",
+"kind": "背景故事",
 "text": "2018/7/11 14:59 以前魔狼晶球、聖獅晶球、精雕寶箱跟海克斯科技寶箱的組合包都會包含額外的史詩對決代幣喔！"
 },
 {
-"key": "game_startup_tip_8000_slime",
-"mode": "一般",
-"text": "兩個打野一起清理閃電急擊野區中的野怪是很簡單的。如果你們形影不離地一起合作，你將從野怪身上獲得額外的金錢和經驗值！"
+"key": "game_startup_tip_narrative_arc2_001",
+"kind": "背景故事",
+"text": "梅爾在被黑玫瑰囚禁的期間學會了駕馭自身沉睡的魔法能量，能夠讀取他人的心智。"
 },
 {
-"key": "game_startup_tip_8001_slime",
-"mode": "一般",
-"text": "開啟音效來聆聽閃電急擊的音樂和遊戲提示音。"
+"key": "game_startup_tip_narrative_arc2_002",
+"kind": "背景故事",
+"text": "安比薩差點在洛克荒的戰場中喪生，但她死裡逃生再次出現，準備依自身意志來改變世界。"
 },
 {
-"key": "game_startup_tip_8002_slime",
-"mode": "一般",
-"text": "如果長時間沒有任何一隊贏得勝利，雙方的主堡將獲得生命，加入大混戰直至被破壞。"
+"key": "game_startup_tip_narrative_arc2_003",
+"kind": "背景故事",
+"text": "吉茵珂絲不製造騷亂的時候就在自己的基地中修修補補，她的基地是一艘深藏於佐恩地底裂縫的老舊飛艇。"
 },
 {
-"key": "game_startup_tip_8003_slime",
-"mode": "一般",
-"text": "點擊戰地雪橇來跳上它。按回城來跳離它。"
+"key": "game_startup_tip_narrative_arc2_004",
+"kind": "背景故事",
+"text": "吉茵珂絲從小聽著珍娜守護底城的睡前故事長大。"
 },
 {
-"key": "game_startup_tip_8004_slime",
-"mode": "一般",
-"text": "快點到閃電急擊頁面中的底部來查看閃電急擊的新道具們！"
+"key": "game_startup_tip_narrative_arc2_005",
+"kind": "背景故事",
+"text": "佐恩這個名字源自於古代蘇瑞瑪人，他們稱這座城市為歐什．伐佐恩。"
 },
 {
-"key": "game_startup_tip_8005_slime",
-"mode": "一般",
-"text": "藉由贏下英雄彈射器或戰地雪橇，並在它們出現在你的基地時點擊它們，以試試這些能讓你在地圖上穿梭的新方法。"
+"key": "game_startup_tip_narrative_arc2_006",
+"kind": "背景故事",
+"text": "吉拉曼恩是皮爾托福最古老的家族之一，其影響力極其深遠。"
 },
 {
-"key": "game_startup_tip_8006_slime",
-"mode": "一般",
-"text": "閃電急擊中的預示者將同時賦予你預示者之眼的增益效果。"
+"key": "game_startup_tip_narrative_arc2_007",
+"kind": "背景故事",
+"text": "維克特是在裂隙中成長的孩子，出生貧困，患有罕見惡疾。儘管生活艱辛，但他的思想卻十分超前。"
 },
 {
-"key": "game_startup_tip_8007_slime",
-"mode": "一般",
-"text": "閃電急擊中的紅Buff和藍Buff強度比平常大幅增加，而擊殺他們時所獲得的增益效果也會同時給予兩位英雄！"
+"key": "game_startup_tip_narrative_arc2_008",
+"kind": "背景故事",
+"text": "灰燼之日的某一天後，整座底城都開始流傳一則消息，訴說有名治療師能消除所有痛苦。他風度翩翩、說話柔聲細語，承諾要讓大家的未來充滿榮光。"
 },
 {
-"key": "game_startup_tip_8008_slime",
-"mode": "一般",
-"text": "注意敵方野區中的防禦塔，它是無敵的…但你可不是。"
+"key": "game_startup_tip_narrative_arc2_009",
+"kind": "背景故事",
+"text": "杰西與他的母親席門娜曾困於暴風雪中，一名法師救了他們，也燃起了杰西學習奧術的熱忱。"
 },
 {
-"key": "game_startup_tip_8009_slime",
-"mode": "一般",
-"text": "在兩座防禦塔都被摧毀之前，對水晶防禦塔所造成的傷害是會減少的。"
+"key": "game_startup_tip_narrative_arc2_010",
+"kind": "背景故事",
+"text": "艾克的父母工作時會將他送到班卓的工作室，他就是在那邊搞出了自己第一批發明。"
 },
 {
-"key": "game_startup_tip_8011_slime",
-"mode": "一般",
-"text": "快來實驗不同的野區英雄組合吧！許多的英雄都比你想像中的強。"
+"key": "game_startup_tip_narrative_arc2_011",
+"kind": "背景故事",
+"text": "漢默丁格曾警告議會海克斯科技的危險。但他們充耳不聞，導致皮爾托福跟底城都付出慘痛的代價。"
 },
 {
-"key": "game_startup_tip_8012_slime",
-"mode": "一般",
-"text": "野區守護神永遠無法被真正摧毀，並且會在 30 秒內重新生長回來。"
+"key": "game_startup_tip_narrative_y1s1a1_001",
+"kind": "背景故事",
+"text": "梅爾重返諾克薩斯讓人很驚訝。許多梅德拉達人都對這位曾經被放逐的繼承人充滿好奇……與不信任。"
 },
 {
-"key": "game_startup_tip_8013_slime",
-"mode": "一般",
-"text": "青蛙是愛歐尼亞受人尊敬的象徵。而我們發現那些石頭青蛙很少會跳下懸崖，還不錯。"
+"key": "game_startup_tip_narrative_y1s1a1_002",
+"kind": "背景故事",
+"text": "達瑞文舉辦了大角鬥賽，慶祝他的哥哥達瑞斯將軍從軍事行動中凱旋歸來。"
 },
 {
-"key": "game_startup_tip_8014_slime",
-"mode": "一般",
-"text": "閃電急擊最上方和最下方青蛙大砲可以用來幫助你更輕鬆地到達目的地。"
+"key": "game_startup_tip_narrative_y1s1a1_003",
+"kind": "背景故事",
+"text": "在為所有諾克薩斯人獻上表演時，角鬥士堅守著這樣的信念：力量值得讚許，任何人都可以在角鬥場上證明自己的價值。"
 },
 {
-"key": "game_startup_tip_8015_slime",
-"mode": "一般",
-"text": "阿福死亡對決中的技能會在每輪之間重置，所以保持瘋狂吧。"
+"key": "game_startup_tip_narrative_y1s1a1_004",
+"kind": "背景故事",
+"text": "亞歷斯塔被迫在角鬥場中戰鬥，儘管生性善良、嚮往自由，他還是替自己贏得了強大戰士的美名。"
 },
 {
-"key": "game_startup_tip_8016_slime",
-"mode": "一般",
-"text": "傳說中，坎加皮部落是由雙棲的梵斯塔雅族人所組成，他們崇拜著水與地的結合。"
+"key": "game_startup_tip_narrative_y1s1a1_005",
+"kind": "背景故事",
+"text": "一名孤獨的角鬥士遠離了家鄉愛歐尼亞，他備受對手畏懼，也深受群眾愛戴。在諾克薩斯，人們只知道他叫「維瑟羅」。"
 },
 {
-"key": "game_startup_tip_8017_slime",
-"mode": "一般",
-"text": "坎加皮人居住於山巔，並以之作為他們的神聖之地 ─ 其正位處於堅硬的大地與雨潤的雲朵之間。"
+"key": "game_startup_tip_narrative_y1s1a1_006",
+"kind": "背景故事",
+"text": "許多諾克薩斯人都希望死亡後能抵達沃拉奇努，那是光榮的死後世界，居住著戰狼最忠實的追隨者。"
 },
 {
-"key": "game_startup_tip_8018_slime",
-"mode": "一般",
-"text": "百合花象徵著神廟信徒的平靜與均衡，而蓮花象徵著啟蒙。"
+"key": "game_startup_tip_narrative_y1s1a1_007",
+"kind": "背景故事",
+"text": "薩恩巫佐生前身材魁武且威風凜凜，其他戰士在他面前都顯得非常渺小。"
 },
 {
-"key": "game_startup_tip_8019_slime",
-"mode": "一般",
-"text": "據說前往坎加皮的路途，會經過童年之沼澤、高聳之山以及雨季的神廟。"
+"key": "game_startup_tip_narrative_y1s1a1_008",
+"kind": "背景故事",
+"text": "薩恩巫佐擁有眾多稱號：屠魔者、大草原暴君，不敗之王。"
 },
 {
-"key": "game_startup_tip_8020_slime",
-"mode": "一般",
-"text": "散佈於神廟地景之上的青蛙雕像可能是坎加皮部落所崇拜的守護之靈的象徵。"
+"key": "game_startup_tip_narrative_y1s1a1_009",
+"kind": "背景故事",
+"text": "薩恩巫佐的信念難以動搖，他堅信自己一定能抵達骸骨殿堂……直到他看見眼前的一片荒涼，那空無一物的死亡之地。"
 },
 {
-"key": "game_startup_tip_8021_slime",
-"mode": "一般",
-"text": "其中一座青蛙雕像的背後似乎被刻上了名字…"
+"key": "game_startup_tip_narrative_y1s1a1_010",
+"kind": "背景故事",
+"text": "絲綢舞會是伊莉絲為諾克薩斯貴族舉辦的化妝舞會。賓客都隱去身分，因此這場盛會成了密謀的完美溫床。"
 },
 {
-"key": "game_startup_tip_8022_slime",
-"mode": "一般",
-"text": "在一個坎加皮神龕上寫著：「盛開之花植根於淵，卻仰望蒼穹。」"
+"key": "game_startup_tip_narrative_y1s1a1_011",
+"kind": "背景故事",
+"text": "達瑞斯尊重弗雷爾卓德巨魔的傳統，向牠們的王者特朗德發起挑戰。他們鬥得難分難捨，但達瑞斯最終勝出。"
 },
 {
-"key": "game_startup_tip_8023_slime",
-"mode": "一般",
-"text": "在一個坎加皮神龕上銘刻著：「浮花若現，自無爭鬥。」"
+"key": "game_startup_tip_narrative_y1s1a2_001",
+"kind": "背景故事",
+"text": "勒布朗找到了惡魔亞塔坎。數世紀以來，這隻惡魔受困於不朽堡壘內，以自己曾經戴過的頭盔為牢籠。"
 },
 {
-"key": "game_startup_tip_8024_slime",
-"mode": "一般",
-"text": "一些傳說宣稱坎加皮人離開了故土，因為他們不相信愛歐尼亞之靈能夠永遠提供均衡。"
+"key": "game_startup_tip_narrative_y1s1a2_002",
+"kind": "背景故事",
+"text": "亞塔坎在符文大地上肆虐，重獲的自由激起它無盡的飢餓。鮮血的氣味吸引它來到一個既陌生……又熟悉的地方。"
 },
 {
-"key": "game_startup_tip_8025_slime",
-"mode": "一般",
-"text": "居住在神殿內的猛獸，似乎是僅存的守護者與照顧者…"
+"key": "game_startup_tip_narrative_y1s1a2_003",
+"kind": "背景故事",
+"text": "「滅世者」亞塔坎曾為薩恩巫佐效力。當薩恩巫佐以魔鬥凱薩之姿重生後，嗜血的亞塔坎仍忠誠地投入他的麾下。"
 },
 {
-"key": "game_startup_tip_8026_slime",
-"mode": "一般",
-"text": "在神廟附近所發現的紅樹上的樹皮條，被用以作為愛歐尼亞東部某些料理中的苦味來源。"
+"key": "game_startup_tip_narrative_y1s1a2_004",
+"kind": "背景故事",
+"text": "薩恩巫佐的軍隊會聚集在晦暗的營地角落，準備施展謀略與詭計，再次體驗征服的榮耀。"
 },
 {
-"key": "game_startup_tip_8027_slime",
-"mode": "一般",
-"text": "即使島嶼為水所繞，坎加皮人更喜歡聖山的霧氣，而非海洋的整齊劃一。"
+"key": "game_startup_tip_narrative_y1s1a2_005",
+"kind": "背景故事",
+"text": "許多在戰鬥中遭薩恩巫佐擊敗的部族，都被他收於麾下，納入他不斷成長的軍隊中。他征服的人越多，就變得越強大。"
 },
 {
-"key": "game_startup_tip_8028_slime",
-"mode": "一般",
-"text": "坎加皮的石材加工並不是藉由槌子和鑿子所完成，而是使用水流來進行切割、鑽孔和塑形。"
+"key": "game_startup_tip_narrative_y1s1a2_006",
+"kind": "背景故事",
+"text": "吟遊詩人四處傳唱薩恩巫佐的事蹟，使敵人在實際開戰、親眼見證薩恩巫佐壓倒性的力量之前，就自陷於風聲鶴唳的恐懼之中。"
 },
 {
-"key": "game_startup_tip_8029_slime",
-"mode": "一般",
-"text": "百合與蓮花之神廟坐落於魁臨東海岸之外的森林之島上。"
+"key": "game_startup_tip_narrative_y1s1a2_007",
+"kind": "背景故事",
+"text": "薩恩巫佐的大軍有許多成員。受困於其早逝將領卡韃敘里身軀之中的亞塔坎，可說是最令人聞風喪膽的存在。"
 },
 {
-"key": "game_startup_tip_8100_aprfools2019",
-"mode": "一般",
-"text": "關於貓的一件事：有時候我的貓就站在那，呆呆地把嘴張開，像是一頭石像鬼那樣。"
+"key": "game_startup_tip_narrative_y1s1a2_008",
+"kind": "背景故事",
+"text": "在諾克薩斯人眼中，弗拉迪米爾是一位魅力十足的貴族，但他同時也是神祕組織「黑玫瑰」的祕密領袖。"
 },
 {
-"key": "game_startup_tip_8101_aprfools2019",
-"mode": "一般",
-"text": "關於貓的一件事：貓相信鏡子只是長得比較奇怪的門。"
+"key": "game_startup_tip_narrative_y1s1a2_009",
+"kind": "背景故事",
+"text": "勒布朗的無數事跡為她奠定了「詐欺師」的稱號。要欺騙惡魔並不容易。"
 },
 {
-"key": "game_startup_tip_8102_aprfools2019",
-"mode": "一般",
-"text": "關於貓的一件事：從來沒有人指控貓是狡猾的生物。"
+"key": "game_startup_tip_narrative_y1s1a2_010",
+"kind": "背景故事",
+"text": "即便是最周詳的計畫，也可能被虛偽的血術士搞砸。因此勒布朗一定有備用計畫。"
 },
 {
-"key": "game_startup_tip_8103_aprfools2019",
-"mode": "一般",
-"text": "關於貓的一件事：一隻胖貓的體重可以是兩隻小貓的總和。"
+"key": "game_startup_tip_narrative_y1s1a2_011",
+"kind": "背景故事",
+"text": "情緒是惡魔的糧食，而亞塔坎嗜食暴力和衝突創造的痛苦。"
 },
 {
-"key": "game_startup_tip_8104_aprfools2019",
-"mode": "一般",
-"text": "關於貓的一件事：貓和人類的骨頭數量不一樣。"
+"key": "game_startup_tip_narrative_y1s2a1_001",
+"kind": "背景故事",
+"text": "靈花季是愛歐尼亞文化的重要慶典。不論何時何地，只要靈花綻放，愛歐尼亞人就會開始慶祝。"
 },
 {
-"key": "game_startup_tip_8105_aprfools2019",
-"mode": "一般",
-"text": "關於貓的一件事：在青銅時代貓的尾巴被用來攪拌冷湯。"
+"key": "game_startup_tip_narrative_y1s2a1_002",
+"kind": "背景故事",
+"text": "許多愛歐尼亞人相信靈界和物質界必須達成平衡，周遭地區的靈花才會綻放。"
 },
 {
-"key": "game_startup_tip_8106_aprfools2019",
-"mode": "一般",
-"text": "關於貓的一件事：貓是用超音速震動耳朵的方式來發出咕嚕聲。"
+"key": "game_startup_tip_narrative_y1s2a1_003",
+"kind": "背景故事",
+"text": "靈花祭期間，參與者會沉浸在睿智感銘和躁動赤奈的傳說中，思考每則故事的啟示。"
 },
 {
-"key": "game_startup_tip_8107_aprfools2019",
-"mode": "一般",
-"text": "關於貓的一件事：世界上第一隻貓叫做「條紋先生」。"
+"key": "game_startup_tip_narrative_y1s2a1_004",
+"kind": "背景故事",
+"text": "靈花可以用來泡茶，據說這種茶能讓愛歐尼亞人與祖先和過世的親友交流。"
 },
 {
-"key": "game_startup_tip_8108_aprfools2019",
-"mode": "一般",
-"text": "關於貓的一件事：貓可以縮到他們的殼內來躲避危險。"
+"key": "game_startup_tip_narrative_y1s2a1_005",
+"kind": "背景故事",
+"text": "諾克薩斯的兵力入侵愛歐尼亞後，靈花的花瓣已多年未在空中飛舞。人們不禁懷疑未來是否再也無緣參加此慶典。"
 },
 {
-"key": "game_startup_tip_8109_aprfools2019",
-"mode": "一般",
-"text": "關於貓的一件事：一隻體型中等的貓，牠的貓舌可以長達四英尺。"
+"key": "game_startup_tip_narrative_y1s2a1_006",
+"kind": "背景故事",
+"text": "傳聞靈花會在符文大地偏僻且充滿魔力的地方綻放，不過親眼見證過這種現象的愛歐尼亞人已寥若晨星。"
 },
 {
-"key": "game_startup_tip_8110_aprfools2019",
-"mode": "一般",
-"text": "關於貓的一件事：法律規定貓必須在青春期階段學習樂器。"
+"key": "game_startup_tip_narrative_y1s2a1_007",
+"kind": "背景故事",
+"text": "很久很久以前，在愛歐尼亞境外找到的靈花會稱為「野靈花」。"
 },
 {
-"key": "game_startup_tip_8111_aprfools2019",
-"mode": "一般",
-"text": "關於貓的一件事：要一隻貓舉起一台車是不可能的。"
+"key": "game_startup_tip_narrative_y1s2a1_008",
+"kind": "背景故事",
+"text": "最後一次找到野靈花大約是在1500年前，也就是在冥血戰役的最後幾年。"
 },
 {
-"key": "game_startup_tip_8112_aprfools2019",
-"mode": "一般",
-"text": "關於貓的一件事：貓只有在備好一張得體的金融安全網時才能在著陸時四腳著地。"
+"key": "game_startup_tip_narrative_y1s2a1_009",
+"kind": "背景故事",
+"text": "趙信過了三十多年後再次回到愛歐尼亞，想要進一步了解在蒂瑪西亞神祕出現的靈花。"
 },
 {
-"key": "game_startup_tip_8113_aprfools2019",
-"mode": "一般",
-"text": "關於貓的一件事：澳洲是以一隻貓的名字命名的。"
+"key": "game_startup_tip_narrative_y1s2a1_010",
+"kind": "背景故事",
+"text": "高辛的寺廟再度成為均衡教團的根據地，這個愛歐尼亞組織致力於維持物質界與靈界之間的平衡。"
 },
 {
-"key": "game_startup_tip_8114_aprfools2019",
-"mode": "一般",
-"text": "關於狗的一件事：據說狗擁有出色的嗅覺，但其實牠們並沒有。"
+"key": "game_startup_tip_narrative_y1s2a1_011",
+"kind": "背景故事",
+"text": "偽感銘之戰是愛歐尼亞歷史上的黑暗時期，當時有許多意志薄弱的凡人被邪靈誘惑，走向毀滅。"
 },
 {
-"key": "game_startup_tip_8115_aprfools2019",
-"mode": "一般",
-"text": "關於狗的一件事：需要兩隻狗才能安全地操作一台壓力機。"
+"key": "game_startup_tip_narrative_y1s2a1_012",
+"kind": "背景故事",
+"text": "愛歐尼亞人稱開悟的神靈為「感銘」，並稱受痛苦和不安困擾的神靈為「赤奈」。"
 },
 {
-"key": "game_startup_tip_8116_aprfools2019",
-"mode": "一般",
-"text": "關於狗的一件事：有的時候，悲傷一下也無妨。"
+"key": "game_startup_tip_narrative_y1s2a1_013",
+"kind": "背景故事",
+"text": "對於虔誠巫女及其守護靈被流放的地點，愛歐尼亞人有許多揣測……但至今未找到確鑿的證據。"
 },
 {
-"key": "game_startup_tip_8117_aprfools2019",
-"mode": "一般",
-"text": "關於狗的一件事：我家的狗咬壞了我最愛的枕頭。"
+"key": "game_startup_tip_narrative_y1s2a1_014",
+"kind": "背景故事",
+"text": "虔誠巫女之傳說提醒我們，與他人締結羈絆，意味著兩者將成為命運共同體。"
 },
 {
-"key": "game_startup_tip_8118_aprfools2019",
-"mode": "一般",
-"text": "關於狗的一件事：艾菲爾鐵塔的高度大約是幾隻狗疊在一起。"
+"key": "game_startup_tip_narrative_y1s2a1_015",
+"kind": "背景故事",
+"text": "自從藝術家虐殺了神射手庇護的僧侶們後，神射手至今對其恨之入骨，但每個故事都有兩面……"
 },
 {
-"key": "game_startup_tip_8119_aprfools2019",
-"mode": "一般",
-"text": "關於狗的一件事：沒有一隻狗曾經得過奧運金牌。"
+"key": "game_startup_tip_narrative_y1s2a1_016",
+"kind": "背景故事",
+"text": "御前之手的命運與漂泊女王密不可分。她們的故事講述著未能履行的責任，以及隨著懷疑而來的痛苦會逐漸侵蝕人心。"
 },
 {
-"key": "game_startup_tip_8120_aprfools2019",
-"mode": "一般",
-"text": "關於狗的一件事：狗和鯊魚有許多共通點。"
+"key": "game_startup_tip_narrative_y1s2a1_017",
+"kind": "背景故事",
+"text": "御前之手的眾多劍刃時刻提醒著她，她再也不會猶豫，因為懲罰工具永遠觸手可及。"
 },
 {
-"key": "game_startup_tip_8121_aprfools2019",
-"mode": "一般",
-"text": "關於狗的一件事：狗毛的基因和人類的牙齒一樣。"
+"key": "game_startup_tip_narrative_y1s2a2_001",
+"kind": "背景故事",
+"text": "根據愛歐尼亞神話，林地聖母是一位創造者，她所創造出的面具邪靈，以吞噬情感為生。"
 },
 {
-"key": "game_startup_tip_8122_aprfools2019",
-"mode": "一般",
-"text": "關於狗的一件事：身高最高的狗居住在布魯塞爾。"
+"key": "game_startup_tip_narrative_y1s2a2_002",
+"kind": "背景故事",
+"text": "在愛歐尼亞的傳說中，有一對名為葉枝靈衛的雙生姐妹靈魂，其中一位為了追尋自身的渴望而離開。"
 },
 {
-"key": "game_startup_tip_8123_aprfools2019",
-"mode": "一般",
-"text": "關於狗的一件事：狗的大腦位在牠們尾巴末端。"
+"key": "game_startup_tip_narrative_y1s2a2_003",
+"kind": "背景故事",
+"text": "精神領袖卡瑪過去僅將「淨土的初始之靈」視為寓言……但隨著時間的推移，她開始體認到代代相傳的神話所蘊含的價值。"
 },
 {
-"key": "game_startup_tip_8124_aprfools2019",
-"mode": "一般",
-"text": "關於狗的一件事：狗生下的蛋最多可以休眠兩年，以等待合適的孵化條件。"
+"key": "game_startup_tip_narrative_y1s2a2_004",
+"kind": "背景故事",
+"text": "烈焰影武者，由煙霧和闇影所構成的幻影，據說會接納任何願意釋放內心黑暗的人。"
 },
 {
-"key": "game_startup_tip_8125_aprfools2019",
-"mode": "一般",
-"text": "關於狗的一件事：狗的唾液在加熱後會成為一種強力的黏膠。"
+"key": "game_startup_tip_narrative_y1s2a2_005",
+"kind": "背景故事",
+"text": "漂泊女王為了拯救林地聖母與御前之手而犧牲自己，卻未曾料到，她的離去將會留下多少痛苦……"
 },
 {
-"key": "game_startup_tip_8126_aprfools2019",
-"mode": "一般",
-"text": "關於狗的一件事：荷馬的鉅作「伊利亞德」的主角一開始是一隻叫做「波奇」的狗。"
+"key": "game_startup_tip_narrative_y1s2a2_006",
+"kind": "背景故事",
+"text": "這件被稱為「艾恩厄納」的古代神器，曾在歷代的暗影之拳之間傳承，直到一千多年前，它神祕地消失了。"
 },
 {
-"key": "game_startup_tip_8127_aprfools2019",
-"mode": "一般",
-"text": "關於狗的一件事：歷史上有兩隻狗曾獲得過宗師牌階。"
+"key": "game_startup_tip_narrative_y1s2a2_007",
+"kind": "背景故事",
+"text": "當暮光之寺從靈界歸來時，一併帶來了大批的邪靈，而率領他們的是偽裝成林地聖母的邪惡阿薩卡納。"
 },
 {
-"key": "game_startup_tip_8128_aprfools2019",
-"mode": "一般",
-"text": "關於狗的一件事：狗會搖動牠們的尾巴。"
+"key": "game_startup_tip_narrative_y1s2a2_008",
+"kind": "背景故事",
+"text": "尤娜拉和趙信，互不相識的兩人，同樣被家鄉視為外來者，卻成為了意想不到的盟友。儘管如此，他們仍對邪靈宣戰，守護自己的人民，不讓他們受到任何傷害。"
 },
 {
-"key": "game_startup_tip_8129_aprfools2019",
-"mode": "一般",
-"text": "關於貓的一件事：貓眼石內含有極少量的貓眼睛。"
+"key": "game_startup_tip_narrative_y1s2a2_009",
+"kind": "背景故事",
+"text": "有人說守門人的形體是一隻狐狸，還有人相信她是水獺或熊，但在所有傳說中，她的使命始終如一——救贖之路的引導者。"
 },
 {
-"key": "game_startup_tip_9001_cherry",
-"mode": "一般",
-"text": "戰鬥持續一定時間以上的話，火圈會開始在競技場中央縮小。"
+"key": "game_startup_tip_narrative_y1s2a2_010",
+"kind": "背景故事",
+"text": "傳說中，貪婪的靈魂收集者，蒐靈人，對守門人和她所救贖的靈魂心生嫉妒。"
 },
 {
-"key": "game_startup_tip_9002_cherry",
-"mode": "一般",
-"text": "奈德麗小時候遇到危險時，都會用爆破毬果脫身"
+"key": "game_startup_tip_narrative_y1s2a2_011",
+"kind": "背景故事",
+"text": "根據愛歐尼亞神話，鏡爪會以不同的形態顯現——被稱為「送行人」的蒙面孩童，以及她心愛的野獸。"
 },
 {
-"key": "game_startup_tip_9003_cherry",
-"mode": "一般",
-"text": "你可以在特定的回合選取增幅裝置，獲得強力效果"
+"key": "game_startup_tip_narrative_y1s3a1_001",
+"kind": "背景故事",
+"text": "高辛大寺之戰總算結束，本應該值得好好慶祝，但為了戰勝邪靈，均衡教團付出了相當慘痛的代價——暮光之寺遭到更為強大的惡魔入侵。"
 },
 {
-"key": "game_startup_tip_9004_cherry",
-"mode": "一般",
-"text": "跟藥劑說再見囉，競技場流行的是果汁！你最好是渴了！"
+"key": "game_startup_tip_narrative_y1s3a1_002",
+"kind": "背景故事",
+"text": "趙信看到了可怕的未來幻象——德瑪西亞淪陷於冥血族之手，他的至親好友都被他們的力量腐化。他絕不允許這樣的未來發生。"
 },
 {
-"key": "game_startup_tip_9005_cherry",
-"mode": "一般",
-"text": "聽說巴豆龍很喜歡熱舞派對！"
+"key": "game_startup_tip_narrative_y1s3a1_003",
+"kind": "背景故事",
+"text": "冥血族被封印在武器中上千年，身陷囹圄的他們只能幻想著終有一天能重返世間……但與世隔絕的孤獨反而讓他們深深陷入瘋狂之中。"
 },
 {
-"key": "game_startup_tip_9006_cherry",
-"mode": "一般",
-"text": "奈德麗會用蜂蜜漿果製作藥膏。"
+"key": "game_startup_tip_narrative_y1s3a1_004",
+"kind": "背景故事",
+"text": "勒布朗已讓軍隊、君主和惡魔都臣服於她的意志。如今她還想將古老的冥血兵器收入囊中。"
 },
 {
-"key": "game_startup_tip_9007_cherry",
-"mode": "一般",
-"text": "與隊友協調要選哪個增幅裝置是勝利的關鍵！"
+"key": "game_startup_tip_narrative_y1s3a1_005",
+"kind": "背景故事",
+"text": "趙信的長槍是嘉文三世國王贈予他的禮物，象徵趙信對所選之主的忠義之心。為了迎接暮光試煉，他在愛歐尼亞織木者的協助下修復了長槍。"
 },
 {
-"key": "game_startup_tip_9008",
-"mode": "一般",
-"text": "查看敵隊選的增幅裝置，靠這點來擬定戰略吧！"
+"key": "game_startup_tip_narrative_y1s3a1_006",
+"kind": "背景故事",
+"text": "趙信的身分幾經變化，他當過漁夫、角鬥士、徵召兵。他真正的志向一直是成為蒂瑪西亞總管。"
 },
 {
-"key": "game_startup_tip_9009",
-"mode": "一般",
-"text": "這張地圖的道具店老闆有些以「！」標示的限定道具"
+"key": "game_startup_tip_narrative_y1s3a1_007",
+"kind": "背景故事",
+"text": "在冥血戰役接近尾聲時，薩亨自願被封印在自己的武器中，囚禁於靈界。"
 },
 {
-"key": "game_startup_tip_9010",
-"mode": "一般",
-"text": "客串英雄會在部分戰鬥回合出現，用他們的招牌技能改變戰場！"
+"key": "game_startup_tip_narrative_y1s3a1_008",
+"kind": "背景故事",
+"text": "數百年前，許多冥血族在愛歐尼亞各地發動戰爭。其中一位是兇殘的鐮刀使者，另一位則是渴望復仇的弓箭手……"
 },
 {
-"key": "game_startup_tip_9011",
-"mode": "一般",
-"text": "力量之花的花之力威力強大，每次受到攻擊時，魔法花粉都會賦予攻擊者生命、資源、護盾並縮短冷卻時間！"
+"key": "game_startup_tip_narrative_y1s3a1_009",
+"kind": "背景故事",
+"text": "趙信終於得知均衡教團在冥血戰役中真正扮演的角色……以及這個組織曾經幾乎徹底滅亡。"
 },
 {
-"key": "game_startup_tip_9012",
-"mode": "一般",
-"text": "太早結束回合了？只要按下「觀戰」按鈕或敵隊的頭像，就能觀看另一邊的戰鬥。"
-},
-{
-"key": "game_startup_tip_9013",
-"mode": "一般",
-"text": "使用計分板查看所有人選擇的道具和增幅裝置"
-},
-{
-"key": "game_startup_tip_9014",
-"mode": "一般",
-"text": "在勝利畫面擺出帥氣姿勢，讓煞氣等級達到S。"
-},
-{
-"key": "game_startup_tip_9015",
-"mode": "一般",
-"text": "金幣太多嗎？那就來買帽帽果汁！雖然它沒什麼有用的增益效果……但會給你一頂帽子！"
-},
-{
-"key": "game_startup_tip_9016",
-"mode": "一般",
-"text": "如果你對著鏡子唸四次燼的名字，就……什麼事也不會發生。"
-},
-{
-"key": "game_startup_tip_9017",
-"mode": "一般",
-"text": "將游標停在回合計時器上方的圖示上，可查看即將到來的回合的資訊。"
-},
-{
-"key": "game_startup_tip_9018",
-"mode": "一般",
-"text": "維爾戈的妻子名叫伊索德，她已經過世了。"
-},
-{
-"key": "game_startup_tip_9019",
-"mode": "一般",
-"text": "啾吉的全名是呱呱沃斯的啾吉普拉斯凱文瑞比敦勳爵。"
-},
-{
-"key": "game_startup_tip_9020",
-"mode": "一般",
-"text": "一群普羅叫做「普羅大眾」。"
-},
-{
-"key": "game_startup_tip_9021",
-"mode": "一般",
-"text": "如果有一個詭異的漁人在暗地裡跟蹤你，小心，你可能在派克的名單上。"
-},
-{
-"key": "game_startup_tip_9022",
-"mode": "一般",
-"text": "「凜冬碎星 賽勒斯」會賦予每位英雄一個可施放一次的隨機大絕。"
-},
-{
-"key": "game_startup_tip_9023",
-"mode": "一般",
-"text": "煞蜜拉把她的武器命名為烈炎、荊棘和征服。"
-},
-{
-"key": "game_startup_tip_9024",
-"mode": "一般",
-"text": "你的戰友打得精彩的時候記得稱讚他們，表現掉漆的時候就假裝沒看到吧。"
-},
-{
-"key": "game_startup_tip_9025",
-"mode": "一般",
-"text": "一般來說，努力才能賺到錢……但在競技場，有時候黃金會從天而降！"
-},
-{
-"key": "game_startup_tip_9026",
-"mode": "一般",
-"text": "巴豆龍開了一間健身房和道具商店？！接下來呢？是開醫院還是太空港，還是蓋一座城堡？！"
-},
-{
-"key": "game_startup_tip_9027",
-"mode": "一般",
-"text": "在競技場，你的等級會跟著對手一起提升，所以再也不用擔心你的經驗值吊車尾了！"
-},
-{
-"key": "game_startup_tip_9028",
-"mode": "一般",
-"text": "「凜冬碎星 瑟雷西」喜歡站在陣亡的玩家旁邊，並將自己的燈籠丟給其友軍。"
-},
-{
-"key": "game_startup_tip_9029",
-"mode": "一般",
-"text": "站在陣亡友軍身邊幾秒後可使其復活，每回合只能復活一次。"
-},
-{
-"key": "game_startup_tip_9030",
-"mode": "一般",
-"text": "在競技場，所有人一開始都擁有奧術清除者飾品，可用來偵察敵情！"
-},
-{
-"key": "game_tip_baron_name",
-"mode": "一般",
-"text": "巴龍獎勵將不再提供生命/魔力回復，它將大幅度強化鄰近士兵！"
-},
-{
-"key": "game_tip_dragonbuff_name",
-"mode": "一般",
-"text": "飛龍將不再給與隊伍金錢，它將給予一個可堆積的強大增益！"
-},
-{
-"key": "game_tip_playerhassmite_updated_items_category",
-"mode": "一般",
-"text": "全新的打野道具"
-},
-{
-"key": "game_tip_playerhassmite_updated_items_name",
-"mode": "一般",
-"text": "狩獵者彎刀現在可依照打野風格的不同，打造成四個不同的道具。"
-},
-{
-"key": "game_tip_playerhassmite_updated_smite_name",
-"mode": "一般",
-"text": "使用重擊後擊殺野怪，將會獲得額外的獎勵。"
-},
-{
-"key": "game_tip_text_cameralock",
-"mode": "一般",
-"text": "鏡頭選項已改變，選單有更多選項。"
-},
-{
-"key": "game_tip_text_runespanel",
-"mode": "一般",
-"text": "使用 Ctrl+C（或是英雄頭像左側按鈕）以切換符文及能力數值。"
-},
-{
-"key": "game_tip_title_cameralock",
-"mode": "一般",
-"text": "鏡頭角度已調整"
-},
-{
-"key": "game_tip_title_runespanel",
-"mode": "一般",
-"text": "試試全新的符文面板"
+"key": "game_startup_tip_narrative_y1s3a1_010",
+"kind": "背景故事",
+"text": "由於趙信自己那套蒂瑪西亞鋼製盔甲會妨礙暮光試煉，因此他換上均衡教團為他量身打造的愛歐尼亞式替代裝備。"
 }
 ]
 }
