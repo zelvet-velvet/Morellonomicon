@@ -1,3 +1,4 @@
+import { requestUrl } from "obsidian";
 import type { Champion, Change, Skill } from "../data/store";
 import { DIR_COLOR } from "./changes";
 import { DAMAGE_COLOR, chip, h, icon } from "../ui";
@@ -63,12 +64,44 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
 // Riot's own ability demo (the clip the official champion page plays): <champion key, 4 digits>/ability_<key>_<P|Q|W|E|R>1.mp4/.webm.
 // An unofficial but public Riot CDN path, so if a clip is missing or the address changes the video simply does not appear.
 const DEMO_BASE = "https://d28xe8vt774jo5.cloudfront.net/champion-abilities";
+const clipAddress = (c: Champion, key: string): string => {
+    const k = String(c.key).padStart(4, "0");
+    // "Q" is the ability's first clip; "Q2" the second one (the other form of Jayce, Nidalee, Elise… where Riot made one)
+    return `${DEMO_BASE}/${k}/ability_${k}_${/\d$/.test(key) ? key : `${key}1`}`;
+};
+// Clips downloaded ahead of time (see preloadClip): clip address -> a local address of the whole file, which plays at once
+const downloaded = new Map<string, string>();
+const downloading = new Map<string, Promise<void>>();
+// Downloads a clip into memory with Obsidian's own request (Riot's server allows no cross-site fetch from a page), so the card that
+// uses it later has the whole file already. Does nothing for a clip already fetched; a clip that cannot be fetched is skipped.
+export function preloadClip(c: Champion, key: string): Promise<void> {
+    if (!c.key) return Promise.resolve();
+    const url = clipAddress(c, key);
+    const have = downloading.get(url);
+    if (have) return have;
+    const job = (async () => {
+        for (const ext of ["mp4", "webm"]) {
+            try {
+                const r = await requestUrl({ url: `${url}.${ext}`, throw: false });
+                if (r.status === 200) { downloaded.set(url, URL.createObjectURL(new Blob([r.arrayBuffer], { type: `video/${ext}` }))); return; }
+            } catch { /* try the next format */ }
+        }
+    })();
+    downloading.set(url, job);
+    return job;
+}
 export function demo(parent: HTMLElement, c: Champion, s: { key: string }): void {
     if (!c.key) return;
-    const key = String(c.key).padStart(4, "0");
-    // "Q" is the ability's first clip; "Q2" the second one (the other form of Jayce, Nidalee, Elise… where Riot made one)
-    const url = `${DEMO_BASE}/${key}/ability_${key}_${/\d$/.test(s.key) ? s.key : `${s.key}1`}`;
+    const url = clipAddress(c, s.key);
     const v = h(parent, "video", "mn-sd-video");
+    const local = downloaded.get(url);
+    if (local) {   // already downloaded: a clip of one file, no waiting
+        v.muted = true; v.loop = true; v.autoplay = true; v.controls = false;
+        v.setAttribute("playsinline", ""); v.setAttribute("disablepictureinpicture", ""); v.setAttribute("disableremoteplayback", "");
+        v.src = local;
+        void v.play().catch(() => undefined);
+        return;
+    }
     // a silent looping clip, no player controls (no play / pause, seek, full screen or picture-in-picture buttons)
     v.muted = true; v.loop = true; v.autoplay = true; v.controls = false; v.preload = "auto";
     v.setAttribute("playsinline", "");

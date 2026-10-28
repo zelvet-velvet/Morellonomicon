@@ -23,7 +23,7 @@ __export(main_exports, {
   default: () => MorellonomiconPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian9 = require("obsidian");
+var import_obsidian10 = require("obsidian");
 
 // src/data/sound.ts
 function loose(s) {
@@ -1115,7 +1115,7 @@ var MnSettingTab = class extends import_obsidian3.PluginSettingTab {
 };
 
 // src/view.ts
-var import_obsidian8 = require("obsidian");
+var import_obsidian9 = require("obsidian");
 
 // src/pages/augments.ts
 var RARITIES = ["\u9280", "\u91D1", "\u7A1C\u93E1"];
@@ -1734,6 +1734,7 @@ function changesBlock(parent, c, ctx) {
 }
 
 // src/pages/skills.ts
+var import_obsidian5 = require("obsidian");
 function skillStrip(parent, c, changes = []) {
   if (!c.skills.length) return;
   const strip2 = h(parent, "div", "mn-skills");
@@ -1793,11 +1794,49 @@ function skillStrip(parent, c, changes = []) {
   };
 }
 var DEMO_BASE = "https://d28xe8vt774jo5.cloudfront.net/champion-abilities";
+var clipAddress = (c, key) => {
+  const k = String(c.key).padStart(4, "0");
+  return `${DEMO_BASE}/${k}/ability_${k}_${/\d$/.test(key) ? key : `${key}1`}`;
+};
+var downloaded = /* @__PURE__ */ new Map();
+var downloading = /* @__PURE__ */ new Map();
+function preloadClip(c, key) {
+  if (!c.key) return Promise.resolve();
+  const url = clipAddress(c, key);
+  const have = downloading.get(url);
+  if (have) return have;
+  const job = (async () => {
+    for (const ext of ["mp4", "webm"]) {
+      try {
+        const r = await (0, import_obsidian5.requestUrl)({ url: `${url}.${ext}`, throw: false });
+        if (r.status === 200) {
+          downloaded.set(url, URL.createObjectURL(new Blob([r.arrayBuffer], { type: `video/${ext}` })));
+          return;
+        }
+      } catch {
+      }
+    }
+  })();
+  downloading.set(url, job);
+  return job;
+}
 function demo(parent, c, s) {
   if (!c.key) return;
-  const key = String(c.key).padStart(4, "0");
-  const url = `${DEMO_BASE}/${key}/ability_${key}_${/\d$/.test(s.key) ? s.key : `${s.key}1`}`;
+  const url = clipAddress(c, s.key);
   const v = h(parent, "video", "mn-sd-video");
+  const local = downloaded.get(url);
+  if (local) {
+    v.muted = true;
+    v.loop = true;
+    v.autoplay = true;
+    v.controls = false;
+    v.setAttribute("playsinline", "");
+    v.setAttribute("disablepictureinpicture", "");
+    v.setAttribute("disableremoteplayback", "");
+    v.src = local;
+    void v.play().catch(() => void 0);
+    return;
+  }
   v.muted = true;
   v.loop = true;
   v.autoplay = true;
@@ -2161,10 +2200,10 @@ function tips(body, c, ctx) {
 }
 
 // src/pages/detail.ts
-var import_obsidian6 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 
 // src/pages/deck.ts
-var import_obsidian5 = require("obsidian");
+var import_obsidian6 = require("obsidian");
 
 // src/pages/handbook.ts
 var SNIPPET = 46;
@@ -2173,6 +2212,8 @@ var KEYWORDS = 8;
 var GLOSSARY = "\u540D\u8A5E\u8868";
 var TRIVIA_TILT = 10;
 var TRIVIA_MS = 300;
+var WARM_CLIPS = 3;
+var WARM_DELAY_MS = 1500;
 var HOME_WAIT_MS = 3e3;
 var coverUrl = (cover) => {
   const [a, b] = cover.trim().split(/\s+/);
@@ -2408,6 +2449,23 @@ function handbookPage(ctx) {
     if (!q) void home();
     else void results(q);
   });
+  const warm = () => {
+    if (navigator.connection?.saveData) return;
+    const decks = notes.filter((n) => n.layout === "deck");
+    const next = [decks.filter((n) => n.level !== "advanced"), decks.filter((n) => n.level === "advanced")].flatMap((list2) => list2.find((n) => !read.has(n.file.path)) ?? []);
+    void (async () => {
+      for (const n of next) {
+        const md = await ctx.app.vault.cachedRead(n.file);
+        const clips = parseSlides(md).slice(0, WARM_CLIPS).flatMap((s) => {
+          const [kind, id, key] = s.visual.split(/\s+/);
+          const c = id ? store.champion(id) : void 0;
+          return (kind === "video" || kind === "clip") && c ? [{ c, key: key ?? "Q" }] : [];
+        });
+        for (const { c, key } of clips) await preloadClip(c, key);
+      }
+    })();
+  };
+  window.setTimeout(warm, WARM_DELAY_MS);
   const tipsLoaded = home();
   void keywords();
   const tilesLoaded = whenLoaded(el, HOME_WAIT_MS, 99);
@@ -2740,11 +2798,11 @@ function deckPage(ctx, file) {
       h(words2, "h2", "mn-sl-t", s.title);
       const tip2 = /^([\s\S]*?)\*\*([^*\n]{1,8})[:：]\*\*\s*([\s\S]+)$/.exec(s.text);
       const main = tip2 ? tip2[1].trim() : s.text;
-      if (main) void import_obsidian5.MarkdownRenderer.render(ctx.app, main, h(words2, "div", "mn-sl-x markdown-rendered"), file.path, ctx.component);
+      if (main) void import_obsidian6.MarkdownRenderer.render(ctx.app, main, h(words2, "div", "mn-sl-x markdown-rendered"), file.path, ctx.component);
       if (tip2) {
         const box = h(words2, "div", "mn-sl-tip");
         h(box, "div", "mn-sl-tip-k", tip2[2]);
-        void import_obsidian5.MarkdownRenderer.render(ctx.app, tip2[3].trim(), h(box, "div", "mn-sl-tip-x markdown-rendered"), file.path, ctx.component);
+        void import_obsidian6.MarkdownRenderer.render(ctx.app, tip2[3].trim(), h(box, "div", "mn-sl-tip-x markdown-rendered"), file.path, ctx.component);
       }
       sec.push(section2);
     });
@@ -2816,11 +2874,14 @@ function deckPage(ctx, file) {
     };
     layout(false);
     pager.addClass("is-wait");
+    const ripple = h(wrap, "div", "mn-ripple");
+    for (let i = 0; i < 3; i++) h(ripple, "i");
     sec.forEach((c) => c.querySelectorAll("video").forEach((v) => {
       void v.play().catch(() => void 0);
     }));
     void whenMediaLoaded(sec.slice(0, WAIT_CARDS), DECK_WAIT_MS).then(() => {
       pager.removeClass("is-wait");
+      ripple.remove();
       layout(false);
     });
     const onResize = () => layout(false);
@@ -3203,14 +3264,14 @@ function notePage(ctx) {
   const path = String(ctx.frame.params?.path ?? "");
   const file = ctx.app.vault.getAbstractFileByPath(path);
   const el = h(null, "div", "mn-page");
-  if (!(file instanceof import_obsidian6.TFile)) {
+  if (!(file instanceof import_obsidian7.TFile)) {
     empty(el, { icon: "file-x", title: "Note not found" });
     return { title: "", el };
   }
   if (ctx.plugin.store.guideNotes().some((n) => n.file.path === path && n.layout === "deck")) return deckPage(ctx, file);
   h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
   const body = h(el, "div", "mn-note markdown-rendered");
-  void ctx.app.vault.cachedRead(file).then((text) => import_obsidian6.MarkdownRenderer.render(ctx.app, text.replace(/^---[\s\S]*?---\n/, ""), body, path, ctx.component));
+  void ctx.app.vault.cachedRead(file).then((text) => import_obsidian7.MarkdownRenderer.render(ctx.app, text.replace(/^---[\s\S]*?---\n/, ""), body, path, ctx.component));
   const guide = ctx.plugin.store.guideNotes();
   const at = guide.findIndex((n) => n.file.path === path);
   if (at >= 0) {
@@ -3489,7 +3550,7 @@ function mayhemSection(el, ctx, n) {
 }
 
 // src/pages/roster.ts
-var import_obsidian7 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 var MAX_PICKS = 15;
 var SPLIT = /[\s,，、;；和跟與及]+/;
 var tab = "pick";
@@ -3661,7 +3722,7 @@ function rosterPage(ctx) {
   const toggle = (id) => {
     if (picks.includes(id)) picks = picks.filter((p) => p !== id);
     else if (picks.length >= MAX_PICKS) {
-      new import_obsidian7.Notice(`\u6700\u591A\u9078 ${MAX_PICKS} \u4F4D`);
+      new import_obsidian8.Notice(`\u6700\u591A\u9078 ${MAX_PICKS} \u4F4D`);
       return;
     } else picks = [...picks, id];
     save();
@@ -3864,7 +3925,7 @@ function arrive(page2, anim) {
   const from = anim === "push" ? "translateX(28px)" : anim === "back" ? "translateX(-28px)" : "translateY(10px)";
   page2.animate([{ opacity: 0, transform: from }, { opacity: 1, transform: "none" }], { duration: ARRIVE_MS, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" });
 }
-var MnView = class extends import_obsidian8.ItemView {
+var MnView = class extends import_obsidian9.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.plugin = plugin;
@@ -3894,7 +3955,7 @@ var MnView = class extends import_obsidian8.ItemView {
     c.addClass("mn-host");
     const app = h(c, "div", "mn-app");
     this.appEl = app;
-    app.toggleClass("is-full", import_obsidian8.Platform.isMobile);
+    app.toggleClass("is-full", import_obsidian9.Platform.isMobile);
     this.topEl = h(app, "div", "mn-top");
     this.backEl = h(this.topEl, "button", "mn-btn mn-back");
     icon(this.backEl, "chevron-left");
@@ -3953,7 +4014,7 @@ var MnView = class extends import_obsidian8.ItemView {
     for (const [k, v] of Object.entries(vars)) this.appEl.style.setProperty(k, v);
   }
   themeMenu(e) {
-    const menu = new import_obsidian8.Menu();
+    const menu = new import_obsidian9.Menu();
     for (const t of THEMES) menu.addItem((i) => i.setTitle(t.name).setChecked(this.plugin.settings.theme === t.id).onClick(() => {
       this.plugin.settings.theme = t.id;
       void this.plugin.saveTheme();
@@ -3961,7 +4022,7 @@ var MnView = class extends import_obsidian8.ItemView {
     menu.showAtMouseEvent(e);
   }
   modeMenu(e) {
-    const menu = new import_obsidian8.Menu();
+    const menu = new import_obsidian9.Menu();
     for (const id of MODE_ORDER) {
       const m = MODES[id];
       menu.addItem((i) => i.setTitle(m.label + (m.enabled ? "" : " (coming soon)")).setIcon(m.icon).setChecked(this.plugin.settings.mode === id).setDisabled(!m.enabled).onClick(() => {
@@ -4089,7 +4150,7 @@ var MnView = class extends import_obsidian8.ItemView {
 };
 
 // src/main.ts
-var MorellonomiconPlugin = class extends import_obsidian9.Plugin {
+var MorellonomiconPlugin = class extends import_obsidian10.Plugin {
   constructor() {
     super(...arguments);
     this.settings = { ...DEFAULTS };
@@ -4116,7 +4177,7 @@ var MorellonomiconPlugin = class extends import_obsidian9.Plugin {
     this.registerEvent(this.app.vault.on("rename", (f, old) => onFile(f, old)));
     this.registerEvent(this.app.metadataCache.on("resolved", () => this.dataChanged()));
     this.home = createEl("button", { cls: "mn-home", attr: { "aria-label": "Open Morellonomicon" } });
-    (0, import_obsidian9.setIcon)(this.home, "book-open");
+    (0, import_obsidian10.setIcon)(this.home, "book-open");
     this.home.addEventListener("click", (e) => {
       e.preventDefault();
       void this.activate(false);
@@ -4139,9 +4200,9 @@ var MorellonomiconPlugin = class extends import_obsidian9.Plugin {
     const ws = this.app.workspace;
     const on = !!ws.getActiveViewOfType(MnView);
     document.body.toggleClass("mn-on", on);
-    document.body.toggleClass("mn-full", on && import_obsidian9.Platform.isMobile);
-    if (!import_obsidian9.Platform.isMobile) return;
-    const v = ws.getActiveViewOfType(import_obsidian9.View);
+    document.body.toggleClass("mn-full", on && import_obsidian10.Platform.isMobile);
+    if (!import_obsidian10.Platform.isMobile) return;
+    const v = ws.getActiveViewOfType(import_obsidian10.View);
     if (!v || v instanceof MnView || v.leaf.getRoot() !== ws.rootSplit) {
       this.home.remove();
       return;
@@ -4166,7 +4227,7 @@ var MorellonomiconPlugin = class extends import_obsidian9.Plugin {
     const ws = this.app.workspace;
     let leaf = ws.getLeavesOfType(VIEW_TYPE)[0] ?? null;
     if (!leaf) {
-      leaf = ws.getLeaf(startup || import_obsidian9.Platform.isMobile ? false : "tab");
+      leaf = ws.getLeaf(startup || import_obsidian10.Platform.isMobile ? false : "tab");
       await leaf.setViewState({ type: VIEW_TYPE, active: true });
     }
     await ws.revealLeaf(leaf);
@@ -4176,7 +4237,7 @@ var MorellonomiconPlugin = class extends import_obsidian9.Plugin {
   // A note in a tab of its own; a tab that already shows it is brought forward instead of opening a second one
   async openPath(path) {
     const f = this.app.vault.getAbstractFileByPath(path);
-    if (!(f instanceof import_obsidian9.TFile)) return;
+    if (!(f instanceof import_obsidian10.TFile)) return;
     const ws = this.app.workspace;
     const open = ws.getLeavesOfType("markdown").find((l) => l.view.file?.path === path);
     if (open) {

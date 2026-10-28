@@ -1,5 +1,7 @@
 import { SWIPE, empty, h, icon, page, whenLoaded } from "../ui";
+import { parseSlides } from "./deck";
 import type { PageCtx, PageOut } from "./index";
+import { preloadClip } from "./skills";
 
 const SNIPPET = 46;      // characters of context around a match
 const MAX_PER_NOTE = 2;  // matching lines shown per guide card
@@ -7,6 +9,8 @@ const KEYWORDS = 8;      // quick-search chips taken from the glossary (two full
 const GLOSSARY = "名詞表";
 const TRIVIA_TILT = 10;   // degrees the tip card tilts per card width it is dragged
 const TRIVIA_MS = 300;    // how long the card takes to leave or spring back
+const WARM_CLIPS = 3;       // clips of a topic downloaded ahead of time (its first cards)
+const WARM_DELAY_MS = 1500; // after the home is shown
 const HOME_WAIT_MS = 3000;   // the Handbook waits this long at most for all its pictures
 // A topic's cover picture from its `cover:` frontmatter: a champion id (its splash art) or `map <name>` (an ARAM loading screen)
 export const coverUrl = (cover: string): string => {
@@ -215,6 +219,25 @@ export function handbookPage(ctx: PageCtx): PageOut {
         const q = search.value.trim().toLowerCase();
         if (!q) void home(); else void results(q);
     });
+    // while you look at the home, the first clips of the topic to read next in each block are downloaded one by one, so opening it
+    // shows the cards at once (nothing is fetched on a data-saver connection)
+    const warm = () => {
+        if ((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData) return;
+        const decks = notes.filter((n) => n.layout === "deck");
+        const next = [decks.filter((n) => n.level !== "advanced"), decks.filter((n) => n.level === "advanced")].flatMap((list) => list.find((n) => !read.has(n.file.path)) ?? []);
+        void (async () => {
+            for (const n of next) {
+                const md = await ctx.app.vault.cachedRead(n.file);
+                const clips = parseSlides(md).slice(0, WARM_CLIPS).flatMap((s) => {
+                    const [kind, id, key] = s.visual.split(/\s+/);
+                    const c = id ? store.champion(id) : undefined;
+                    return (kind === "video" || kind === "clip") && c ? [{ c, key: key ?? "Q" }] : [];
+                });
+                for (const { c, key } of clips) await preloadClip(c, key);
+            }
+        })();
+    };
+    window.setTimeout(warm, WARM_DELAY_MS);
     const tipsLoaded = home();
     void keywords();
     // the home shows once its pictures (tiles and the tip's background) have all loaded, not piece by piece, so nothing grows in from above

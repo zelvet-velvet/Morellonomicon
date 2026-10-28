@@ -394,8 +394,16 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-deckwrap { --mn-lift: 44px; --mn-pile: 34px; position: relative; height: 520px; margin: calc(-1 * var(--mn-lift)) -16px 0; }
 .mn-pager { position: relative; z-index: 1; height: 100%; box-sizing: border-box; overflow: hidden; touch-action: none; }   /* clipped, so cards swiped away never make the page scroll; every touch is ours (a card's long text is scrolled by hand, see deck.ts), so the browser never cancels a drag */
 .mn-pager { transition: filter 0.3s ease-out, opacity 0.3s ease-out; }
-.mn-pager.is-wait { filter: blur(12px) saturate(0.8); pointer-events: none; animation: mn-breathe 1.5s ease-in-out infinite; }
-@keyframes mn-breathe { 0%, 100% { opacity: 0.45; transform: scale(0.985); } 50% { opacity: 0.85; transform: scale(1); } }
+.mn-pager.is-wait { filter: blur(10px) saturate(0.85); pointer-events: none; }
+/* while a topic loads: light rings spread from the middle of the blurred cards and a soft band of light sweeps across */
+.mn-ripple { position: absolute; z-index: 2; top: var(--mn-lift); bottom: var(--mn-pile); left: 10px; right: 10px; overflow: hidden; border-radius: 26px; pointer-events: none; }
+.mn-ripple i { position: absolute; left: 50%; top: 50%; width: 70%; aspect-ratio: 1; border-radius: 50%; opacity: 0; border: 2px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 0 26px rgba(255, 255, 255, 0.4), inset 0 0 26px rgba(255, 255, 255, 0.3); animation: mn-ripple 2.4s ease-out infinite; }
+.mn-ripple i:nth-child(2) { animation-delay: 0.8s; }
+.mn-ripple i:nth-child(3) { animation-delay: 1.6s; }
+.mn-ripple::after { content: ""; position: absolute; inset: -20% -40%; background: linear-gradient(110deg, transparent 42%, rgba(255, 255, 255, 0.2) 50%, transparent 58%); animation: mn-sweep 2.4s ease-in-out infinite; }
+@keyframes mn-ripple { 0% { transform: translate(-50%, -50%) scale(0.12); opacity: 0.9; } 100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; } }
+@keyframes mn-sweep { from { transform: translateX(-45%); } to { transform: translateX(45%); } }
 .mn-pager.is-drag { user-select: none; cursor: grabbing; }
 /* the cards lie in one pile; the top one is dragged away (see deck.ts); the room above them lets a tilted card pass over the bars */
 .mn-slide { position: absolute; left: 0; right: 0; top: var(--mn-lift); bottom: var(--mn-pile); box-sizing: border-box; padding: 0 10px; display: flex; transform-origin: 50% 130%; will-change: transform; }
@@ -536,6 +544,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* clip */
 .mn-ck-clip { gap: 0; }
 .mn-ck-media { position: relative; overflow: hidden; }
+.mn-ck-media .mn-sl-video { position: absolute; inset: 0; width: auto; height: auto; }   /* fills its area whatever the grid makes of percentage heights */
 .mn-ck-hud { position: absolute; z-index: 3; top: 10px; left: 10px; right: 10px; display: flex; align-items: center; gap: 8px; }
 .mn-ck-hudn { padding: 4px 10px; border-radius: 999px; background: rgba(10, 12, 18, 0.65); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); font-family: var(--mn-serif); font-weight: 700; font-size: 13px; color: #fff; }
 .mn-ck-clip .mn-ck-tags { padding: 8px 12px 40px; background: #000; }
