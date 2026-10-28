@@ -90,27 +90,39 @@ export function preloadClip(c: Champion, key: string): Promise<void> {
     downloading.set(url, job);
     return job;
 }
-export function demo(parent: HTMLElement, c: Champion, s: { key: string }): void {
+export function demo(parent: HTMLElement, c: Champion, s: { key: string }, onFail?: () => void): void {
     if (!c.key) return;
     const url = clipAddress(c, s.key);
     const v = h(parent, "video", "mn-sd-video");
-    const local = downloaded.get(url);
-    if (local) {   // already downloaded: a clip of one file, no waiting
-        v.muted = true; v.loop = true; v.autoplay = true; v.controls = false;
-        v.setAttribute("playsinline", ""); v.setAttribute("disablepictureinpicture", ""); v.setAttribute("disableremoteplayback", "");
-        v.src = local;
-        void v.play().catch(() => undefined);
-        return;
-    }
     // a silent looping clip, no player controls (no play / pause, seek, full screen or picture-in-picture buttons)
     v.muted = true; v.loop = true; v.autoplay = true; v.controls = false; v.preload = "auto";
     v.setAttribute("playsinline", "");
     v.setAttribute("disablepictureinpicture", "");
     v.setAttribute("disableremoteplayback", "");
+    const fail = () => { v.remove(); onFail?.(); };
+    // the whole file, played from memory: for a clip already downloaded, and the way out for a clip that does not stream
+    const playLocal = (local: string) => {
+        v.replaceChildren();
+        v.addEventListener("error", fail, { once: true });
+        v.src = local;
+        v.load();
+        void v.play().catch(() => undefined);
+    };
+    const local = downloaded.get(url);
+    if (local) { playLocal(local); return; }
     v.addEventListener("loadeddata", () => { void v.play().catch(() => undefined); }, { once: true });
+    // Some champions (Pyke…) have only a WebM clip, which Riot's server labels as plain text; a phone refuses to stream that.
+    // Downloading the file and playing it as a video makes the format known, so when neither source streams that is tried before giving up.
+    let tried = false;
+    const fallback = () => {
+        if (tried) return;
+        tried = true;
+        void preloadClip(c, s.key).then(() => { const f = downloaded.get(url); if (f) playLocal(f); else fail(); });
+    };
     const mp4 = h(v, "source"); mp4.src = `${url}.mp4`; mp4.type = "video/mp4";
     const webm = h(v, "source"); webm.src = `${url}.webm`; webm.type = "video/webm";
-    webm.addEventListener("error", () => v.remove());   // neither format loaded
+    mp4.addEventListener("error", fallback);
+    webm.addEventListener("error", fallback);
 }
 
 // Kinds of crowd control and weakening, by the words Riot's zh_TW text uses

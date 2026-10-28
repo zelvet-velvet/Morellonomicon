@@ -1820,23 +1820,10 @@ function preloadClip(c, key) {
   downloading.set(url, job);
   return job;
 }
-function demo(parent, c, s) {
+function demo(parent, c, s, onFail) {
   if (!c.key) return;
   const url = clipAddress(c, s.key);
   const v = h(parent, "video", "mn-sd-video");
-  const local = downloaded.get(url);
-  if (local) {
-    v.muted = true;
-    v.loop = true;
-    v.autoplay = true;
-    v.controls = false;
-    v.setAttribute("playsinline", "");
-    v.setAttribute("disablepictureinpicture", "");
-    v.setAttribute("disableremoteplayback", "");
-    v.src = local;
-    void v.play().catch(() => void 0);
-    return;
-  }
   v.muted = true;
   v.loop = true;
   v.autoplay = true;
@@ -1845,16 +1832,43 @@ function demo(parent, c, s) {
   v.setAttribute("playsinline", "");
   v.setAttribute("disablepictureinpicture", "");
   v.setAttribute("disableremoteplayback", "");
+  const fail = () => {
+    v.remove();
+    onFail?.();
+  };
+  const playLocal = (local2) => {
+    v.replaceChildren();
+    v.addEventListener("error", fail, { once: true });
+    v.src = local2;
+    v.load();
+    void v.play().catch(() => void 0);
+  };
+  const local = downloaded.get(url);
+  if (local) {
+    playLocal(local);
+    return;
+  }
   v.addEventListener("loadeddata", () => {
     void v.play().catch(() => void 0);
   }, { once: true });
+  let tried = false;
+  const fallback = () => {
+    if (tried) return;
+    tried = true;
+    void preloadClip(c, s.key).then(() => {
+      const f = downloaded.get(url);
+      if (f) playLocal(f);
+      else fail();
+    });
+  };
   const mp4 = h(v, "source");
   mp4.src = `${url}.mp4`;
   mp4.type = "video/mp4";
   const webm = h(v, "source");
   webm.src = `${url}.webm`;
   webm.type = "video/webm";
-  webm.addEventListener("error", () => v.remove());
+  mp4.addEventListener("error", fallback);
+  webm.addEventListener("error", fallback);
 }
 var EFFECT_WORDS = [
   ["\u63A7\u5834", "var(--mn-cc)", [
@@ -2573,7 +2587,12 @@ var stats = (el, { s }) => {
 };
 var media = (el, { c, s, args }) => {
   const wrap = h(el, "div", "mn-sl-video");
-  demo(wrap, c, { key: args.find((a) => /^[PQWER]\d?$/i.test(a))?.toUpperCase() ?? s.key });
+  demo(wrap, c, { key: args.find((a) => /^[PQWER]\d?$/i.test(a))?.toUpperCase() ?? s.key }, () => {
+    const im = h(wrap, "img", "mn-ck-failic");
+    im.src = s.icon;
+    im.alt = "";
+    wrap.querySelectorAll(".mn-sl-vblur").forEach((b) => b.remove());
+  });
   const v = wrap.querySelector("video");
   if (v) blurBackdrop(wrap, v);
   const hud = h(el, "div", "mn-ck-hud");

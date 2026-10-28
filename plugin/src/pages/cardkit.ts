@@ -86,7 +86,11 @@ const stats: Fill = (el, { s }) => {
 // the clip fills the picture area (the whole clip, the room around it is the same clip blurred), with the skill's key and name on top
 const media: Fill = (el, { c, s, args }) => {
     const wrap = h(el, "div", "mn-sl-video");
-    demo(wrap, c, { key: args.find((a) => /^[PQWER]\d?$/i.test(a))?.toUpperCase() ?? s.key });
+    demo(wrap, c, { key: args.find((a) => /^[PQWER]\d?$/i.test(a))?.toUpperCase() ?? s.key }, () => {
+        // the clip cannot play on this device: the skill's picture takes its place
+        const im = h(wrap, "img", "mn-ck-failic"); im.src = s.icon; im.alt = "";
+        wrap.querySelectorAll(".mn-sl-vblur").forEach((b) => b.remove());
+    });
     const v = wrap.querySelector("video");
     if (v) blurBackdrop(wrap, v);
     const hud = h(el, "div", "mn-ck-hud");
