@@ -28,7 +28,7 @@ The one layout every Handbook card (`新手入門/`, one `## ` per card) follows
 
 - **Words** grow up from the bottom to the height of their content (no fixed height, no scrolling); the stage takes the rest.
 - **Dock** is always the 46 px band right above the words, so tags and steps sit at the same distance from the text on every card.
-- **Stage** for a picture (splash, `img`, map) is the whole card behind the words. A clip ends at the top of the words, so its full height shows (Riot's clips keep the champion between 1/5 and 4/5 from the top); its lower edge fades into the words' dark in steps (no line).
+- **Stage** for a picture (splash, `img`, map) is the whole card behind the words. A clip ends at the top of the words, so its full height shows (Riot's clips keep the champion between 1/5 and 4/5 from the top), raised by its empty top 15% (`--mn-clip-lift` in `plugin/styles.css`); its lower edge fades into the words' dark in steps (no line).
 - Clips are cut at the sides to keep the part three quarters from the left (where Riot's clips have the champion).
 
 ## ✏️ Text limits
