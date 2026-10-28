@@ -157,6 +157,10 @@ button.mn-skill-box.is-on::after { content: ""; position: absolute; inset: 0; bo
 .mn-skill-up svg { width: 11px; height: 11px; }
 .mn-sd-video { display: block; width: 100%; max-width: none; height: auto; border-radius: 12px; margin: 12px 0 2px; background: none; }
 /* in a skill card the clip runs to the card edges at its own shape (no letterbox bars) and closes the card */
+/* the clip's box: the room of the clip's shape, held from the moment a skill is opened; the clip fills it */
+.mn-sd-clipbox { position: relative; aspect-ratio: 22 / 15; margin: 12px 0 2px; border-radius: 12px; overflow: hidden; background: color-mix(in srgb, var(--mn-text) 5%, transparent); }
+.mn-skill-detail .mn-sd-clipbox { width: calc(100% + 32px); margin: 12px -16px -14px; border-radius: 0 0 var(--mn-radius) var(--mn-radius); }
+.mn-skill-detail .mn-sd-clipbox .mn-sd-video { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; border-radius: 0; object-fit: cover; }
 .mn-skill-detail .mn-sd-video { width: calc(100% + 32px); max-width: none; margin: 12px -16px -14px; border-radius: 0 0 var(--mn-radius) var(--mn-radius); }
 .mn-sd-up { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--color-green) 14%, var(--mn-card)); border: 1px solid var(--color-green); }
 .mn-sd-up-t { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--color-green); }

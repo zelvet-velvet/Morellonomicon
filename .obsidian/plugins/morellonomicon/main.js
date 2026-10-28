@@ -1880,17 +1880,26 @@ function skillStrip(parent, c, changes = []) {
       h(t, "span", "", "\u9032\u5316 / \u5347\u7D1A");
       h(up, "p", "mn-sd-desc", s.upgrade);
     }
-    demo(detail, c, s);
+    const clipBox = h(detail, "div", "mn-sd-clipbox");
+    demo(clipBox, c, s, () => clipBox.remove());
     const reveal = () => {
+      if (open !== i) return;
       const view = detail.closest(".mn-scroll");
       const tall = view ? detail.offsetHeight > view.clientHeight - 80 : false;
       detail.scrollIntoView({ behavior: "smooth", block: tall ? "start" : "end" });
     };
-    window.requestAnimationFrame(reveal);
-    detail.querySelector("video")?.addEventListener("loadedmetadata", reveal, { once: true });
+    if (!clipBox.querySelector("video")) {
+      clipBox.remove();
+      window.requestAnimationFrame(reveal);
+      return;
+    }
+    const loaded = whenMediaLoaded([clipBox], CLIP_WAIT_MS);
+    blockUntil(clipBox, loaded);
+    void loaded.then(() => window.requestAnimationFrame(reveal));
   };
 }
 var DEMO_BASE = "https://d28xe8vt774jo5.cloudfront.net/champion-abilities";
+var CLIP_WAIT_MS = 8e3;
 var CLIP_STALL_MS = 5e3;
 var clipAddress = (c, key) => {
   const k = String(c.key).padStart(4, "0");

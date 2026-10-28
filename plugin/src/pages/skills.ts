@@ -1,7 +1,7 @@
 import { requestUrl } from "obsidian";
 import type { Champion, Change, Skill } from "../data/store";
 import { DIR_COLOR } from "./changes";
-import { DAMAGE_COLOR, chip, h, icon } from "../ui";
+import { DAMAGE_COLOR, blockUntil, chip, h, icon, whenMediaLoaded } from "../ui";
 
 // Passive + Q W E R as icons; the frame colour is the damage type of the skill (orange physical, blue magic, yellow true).
 // Tap an icon to open its details right below (tap again to close); no new page.
@@ -49,21 +49,29 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
             h(t, "span", "", "進化 / 升級");
             h(up, "p", "mn-sd-desc", s.upgrade);
         }
-        demo(detail, c, s);
+        // The clip has its room from the start (a box of the clip's shape) and loads as a block of its own, with the blur and the band
+        // of light; the page scrolls down to the end of the card only once the clip is there, so it is never scrolled to a card that
+        // is about to grow. A clip that cannot play takes its box away.
+        const clipBox = h(detail, "div", "mn-sd-clipbox");
+        demo(clipBox, c, s, () => clipBox.remove());
         // scroll down to the end of the card (its clip included); a card taller than the screen shows from its top instead
         const reveal = () => {
+            if (open !== i) return;   // another skill was opened meanwhile
             const view = detail.closest<HTMLElement>(".mn-scroll");
             const tall = view ? detail.offsetHeight > view.clientHeight - 80 : false;
             detail.scrollIntoView({ behavior: "smooth", block: tall ? "start" : "end" });
         };
-        window.requestAnimationFrame(reveal);
-        detail.querySelector("video")?.addEventListener("loadedmetadata", reveal, { once: true });   // the clip adds its height once it knows its size
+        if (!clipBox.querySelector("video")) { clipBox.remove(); window.requestAnimationFrame(reveal); return; }   // no clip for this skill
+        const loaded = whenMediaLoaded([clipBox], CLIP_WAIT_MS);
+        blockUntil(clipBox, loaded);
+        void loaded.then(() => window.requestAnimationFrame(reveal));
     };
 }
 
 // Riot's own ability demo (the clip the official champion page plays): <champion key, 4 digits>/ability_<key>_<P|Q|W|E|R>1.mp4/.webm.
 // An unofficial but public Riot CDN path, so if a clip is missing or the address changes the video simply does not appear.
 const DEMO_BASE = "https://d28xe8vt774jo5.cloudfront.net/champion-abilities";
+const CLIP_WAIT_MS = 8000;    // a skill's clip box shows its loading look this long at most before the page scrolls to it anyway
 const CLIP_STALL_MS = 5000;   // a downloaded clip that still has no frame after this long is given up
 const clipAddress = (c: Champion, key: string): string => {
     const k = String(c.key).padStart(4, "0");
