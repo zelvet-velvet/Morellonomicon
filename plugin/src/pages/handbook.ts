@@ -98,11 +98,21 @@ export function handbookPage(ctx: PageCtx): PageOut {
         if (!tips.length) return null;
         const order = tips.map((_, i) => i);
         for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
-        const url = ARAM_ART[Math.floor(Math.random() * ARAM_ART.length)];
+        // every tip card gets a random one of the loading screens, never the same as the card before it
+        let lastArt = "";
+        const pickArt = (): string => {
+            const choices = ARAM_ART.filter((u) => u !== lastArt);
+            lastArt = choices[Math.floor(Math.random() * choices.length)];
+            return lastArt;
+        };
+        const loadArt = (u: string) => new Promise<void>((done) => { const im = new Image(); im.onload = im.onerror = () => done(); im.src = u; });
         const stack = h(parent, "div", "mn-trv-stack");
+        const arts: string[] = [];
         const make = (i: number, z: number): HTMLElement => {
             const c = h(stack, "div", "mn-trv");
-            c.style.backgroundImage = `url("${url}")`;
+            const art = pickArt();
+            c.style.backgroundImage = `url("${art}")`;
+            arts.push(art);
             c.style.zIndex = String(z);
             h(c, "div", "mn-trv-tip", tips[order[i % order.length]].text);
             return c;
@@ -148,12 +158,13 @@ export function handbookPage(ctx: PageCtx): PageOut {
                 top = under; top.style.zIndex = "2";
                 n += 1;
                 under = make(n + 1, 1);
+                void loadArt(arts[arts.length - 1]);   // the next card's picture is fetched while the top one is read (all three are small and cached after the first time)
                 busy = false;
             }, TRIVIA_MS);
         };
         stack.addEventListener("pointerup", end);
         stack.addEventListener("pointercancel", end);
-        return new Promise((done) => { const im = new Image(); im.onload = im.onerror = () => done(); im.src = url; });
+        return Promise.all(arts.slice(0, 2).map(loadArt)).then(() => undefined);   // the first two cards' pictures
     };
 
     // quick-search chips: the glossary's terms

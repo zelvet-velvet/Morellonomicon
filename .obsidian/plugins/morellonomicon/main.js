@@ -2423,11 +2423,24 @@ function handbookPage(ctx) {
       const j = Math.floor(Math.random() * (i + 1));
       [order[i], order[j]] = [order[j], order[i]];
     }
-    const url = ARAM_ART[Math.floor(Math.random() * ARAM_ART.length)];
+    let lastArt = "";
+    const pickArt = () => {
+      const choices = ARAM_ART.filter((u) => u !== lastArt);
+      lastArt = choices[Math.floor(Math.random() * choices.length)];
+      return lastArt;
+    };
+    const loadArt = (u) => new Promise((done) => {
+      const im = new Image();
+      im.onload = im.onerror = () => done();
+      im.src = u;
+    });
     const stack = h(parent, "div", "mn-trv-stack");
+    const arts = [];
     const make = (i, z) => {
       const c = h(stack, "div", "mn-trv");
-      c.style.backgroundImage = `url("${url}")`;
+      const art = pickArt();
+      c.style.backgroundImage = `url("${art}")`;
+      arts.push(art);
       c.style.zIndex = String(z);
       h(c, "div", "mn-trv-tip", tips2[order[i % order.length]].text);
       return c;
@@ -2487,16 +2500,13 @@ function handbookPage(ctx) {
         top.style.zIndex = "2";
         n += 1;
         under = make(n + 1, 1);
+        void loadArt(arts[arts.length - 1]);
         busy = false;
       }, TRIVIA_MS);
     };
     stack.addEventListener("pointerup", end);
     stack.addEventListener("pointercancel", end);
-    return new Promise((done) => {
-      const im = new Image();
-      im.onload = im.onerror = () => done();
-      im.src = url;
-    });
+    return Promise.all(arts.slice(0, 2).map(loadArt)).then(() => void 0);
   };
   const keywords = async () => {
     const g = notes.find((n) => n.title === GLOSSARY);
