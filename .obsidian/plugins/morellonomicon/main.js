@@ -2424,6 +2424,7 @@ var SWIPE_AT = 0.25;
 var FLICK = 0.5;
 var DECK_WAIT_MS = 800;
 var SETTLE_MS = 280;
+var DECK_BELOW = 34;
 function parseSlides(md) {
   const body = md.replace(/^---[\s\S]*?---\n/, "");
   return body.split(/^## /m).slice(1).map((part) => {
@@ -2488,7 +2489,7 @@ function deckPage(ctx, file) {
     const scroll = el.closest(".mn-scroll");
     if (!scroll) return;
     const top = wrap.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
-    wrap.style.height = `${Math.max(380, scroll.clientHeight - top - 14)}px`;
+    wrap.style.height = `${Math.max(380, scroll.clientHeight - top - DECK_BELOW)}px`;
   };
   void ctx.app.vault.cachedRead(file).then((md) => {
     const slides = parseSlides(md);

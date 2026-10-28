@@ -36,7 +36,8 @@ const STEP_Y = 6;      // px each card under the top one sits lower, so their ed
 const SWIPE_AT = 0.25; // fraction of the width a drag must cover to turn the card
 const FLICK = 0.5;     // px/ms: a quicker, shorter drag turns the card too
 const DECK_WAIT_MS = 800;   // the pile waits this long at most for the first card's pictures
-const SETTLE_MS = 280; // how long a card takes to land after a swipe
+const SETTLE_MS = 280;
+const DECK_BELOW = 34;   // px kept free under the deck for the lower edges and shadow of the cards under the top one // how long a card takes to land after a swipe
 
 export function parseSlides(md: string): Slide[] {
     const body = md.replace(/^---[\s\S]*?---\n/, "");
@@ -101,7 +102,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         const scroll = el.closest<HTMLElement>(".mn-scroll");
         if (!scroll) return;
         const top = wrap.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
-        wrap.style.height = `${Math.max(380, scroll.clientHeight - top - 14)}px`;
+        wrap.style.height = `${Math.max(380, scroll.clientHeight - top - DECK_BELOW)}px`;
     };
 
     void ctx.app.vault.cachedRead(file).then((md) => {
