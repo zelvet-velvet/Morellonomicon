@@ -29,7 +29,6 @@ const STRIP = 6;   // icons in a strip
 const PULL = 0.6;      // how far the last card moves per px pulled (it resists a little, like a rubber band)
 const GO_AT = 130;     // px of card movement that opens the next topic when the finger lifts
 const TILT = 12;       // degrees a card tilts when it is fully swiped away (like a Tinder card); left swipe tilts left
-const PEEK_OVERLAP = 30;   // px the next-topic panel reaches behind the pulled card, so no gap shows at its rounded corners
 
 export function parseSlides(md: string): Slide[] {
     const body = md.replace(/^---[\s\S]*?---\n/, "");
@@ -75,8 +74,8 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
     h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
     const bars = h(el, "div", "mn-bars");   // one short bar per card, filled up to the one in view (like stories)
     const wrap = h(el, "div", "mn-deckwrap");
-    const peek = h(wrap, "div", "mn-peek");   // behind the cards: what pulling the last card leads to; grows to fill the gap the card leaves
-    const peekIn = h(peek, "div", "mn-peek-in");   // fixed width, so the text does not reflow while the panel grows
+    const peek = h(wrap, "div", "mn-peek");   // behind the cards: what pulling the last card leads to; fills the whole card area, the pulled card uncovers it
+    const peekIn = h(peek, "div", "mn-peek-in");   // the text sits at the right side, where the card leaves first
     const pager = h(wrap, "div", "mn-pager");
     // the deck owns sideways swipes: Obsidian's own edge swipes (open a sidebar) must not take them
     for (const ev of ["touchstart", "touchmove"]) pager.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
@@ -176,7 +175,6 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             e.preventDefault();   // the card moves, not the page
             const move = Math.min(0, dx) * PULL;
             last.style.transform = `translateX(${move}px) rotate(${(move / GO_AT * TILT).toFixed(2)}deg)`;
-            peek.style.width = `${-move + PEEK_OVERLAP}px`;
             peek.style.opacity = String(Math.min(1, -move / 30));
             const ready = -move >= GO_AT;
             if (ready !== armed) { armed = ready; peek.toggleClass("is-ready", ready); if (ready) haptic(); }
@@ -193,7 +191,6 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             last.addClass("is-back");
             last.style.transform = "";
             peek.addClass("is-back");
-            peek.style.width = "";
             peek.style.opacity = "";
             peek.removeClass("is-ready");
             window.setTimeout(() => { last.removeClass("is-back"); peek.removeClass("is-back"); }, 380);   // the spring is done; the tilt follows the scroll again without lag

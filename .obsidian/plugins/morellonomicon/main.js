@@ -2340,7 +2340,6 @@ var STRIP = 6;
 var PULL = 0.6;
 var GO_AT = 130;
 var TILT = 12;
-var PEEK_OVERLAP = 30;
 function parseSlides(md) {
   const body = md.replace(/^---[\s\S]*?---\n/, "");
   return body.split(/^## /m).slice(1).map((part) => {
@@ -2489,7 +2488,6 @@ function deckPage(ctx, file) {
       e.preventDefault();
       const move = Math.min(0, dx) * PULL;
       last.style.transform = `translateX(${move}px) rotate(${(move / GO_AT * TILT).toFixed(2)}deg)`;
-      peek.style.width = `${-move + PEEK_OVERLAP}px`;
       peek.style.opacity = String(Math.min(1, -move / 30));
       const ready = -move >= GO_AT;
       if (ready !== armed) {
@@ -2510,7 +2508,6 @@ function deckPage(ctx, file) {
       last.addClass("is-back");
       last.style.transform = "";
       peek.addClass("is-back");
-      peek.style.width = "";
       peek.style.opacity = "";
       peek.removeClass("is-ready");
       window.setTimeout(() => {
