@@ -3063,6 +3063,10 @@ function deckPage(ctx, file) {
       const face = h(card, "div", "mn-sl-face");
       visual(ctx, h(face, "div", "mn-sl-vis"), s);
       const words2 = h(face, "div", "mn-sl-words");
+      const measure = () => face.style.setProperty("--mn-words-h", `${words2.offsetHeight}px`);
+      const watch = new ResizeObserver(measure);
+      watch.observe(words2);
+      ctx.component.register(() => watch.disconnect());
       h(words2, "div", "mn-sl-kn", `${file.basename} \xB7 ${i + 1} / ${slides.length}`);
       h(words2, "h2", "mn-sl-t", s.title);
       const tip2 = /^([\s\S]*?)\*\*([^*\n]{1,8})[:：]\*\*\s*([\s\S]+)$/.exec(s.text);

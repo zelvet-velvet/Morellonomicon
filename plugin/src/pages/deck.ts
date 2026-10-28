@@ -128,6 +128,11 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             visual(ctx, h(face, "div", "mn-sl-vis"), s);
             // under the picture: where you are, the title, the line, and a closing "**label：** tip" in its own box
             const words = h(face, "div", "mn-sl-words");
+            // the words' height, for the stage (Card Layout F2): the dock sits on it, the clip fades into it, templates keep above it
+            const measure = () => face.style.setProperty("--mn-words-h", `${words.offsetHeight}px`);
+            const watch = new ResizeObserver(measure);
+            watch.observe(words);
+            ctx.component.register(() => watch.disconnect());
             h(words, "div", "mn-sl-kn", `${file.basename} · ${i + 1} / ${slides.length}`);
             h(words, "h2", "mn-sl-t", s.title);
             const tip = /^([\s\S]*?)\*\*([^*\n]{1,8})[:：]\*\*\s*([\s\S]+)$/.exec(s.text);
