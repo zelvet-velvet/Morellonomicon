@@ -60,6 +60,10 @@ def main():
     for prefix, keys in sorted(groups.items(), key=lambda kv: -len(kv[1])):
         example = fat.clean(tipish[keys[0]])[0][:60].replace("|", "/")
         lines.append(f"| `{prefix}` | {len(keys)} | {sum(k in took for k in keys)} | {example} |")
+    # the plain "tips…" keys (100 of them) and anything named did-you-know: every text, to tell which set the loading screen uses
+    extra = sorted(k for k in tipish if re.match(r"tips?[_\d]", k, re.I) or re.search(r"did_?you_?know|dyk", k, re.I))
+    lines += ["", "## tips… and did-you-know keys, in full", "", "| Key | Text |", "| --- | --- |"]
+    lines += [f"| `{k}` | {fat.clean(tipish[k])[0].replace('|', '/')} |" for k in extra]
     REVIEW.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"{OUT.relative_to(fd.ROOT)}: {len(taken)} tips ({dict(collections.Counter(t['kind'] for t in taken))}); {len(groups)} tip-like key groups in {REVIEW.relative_to(fd.ROOT)}")
 
