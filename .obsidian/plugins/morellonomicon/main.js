@@ -558,12 +558,25 @@ function whenMediaLoaded(roots, ms) {
 var BLOCK_MAX_MS = 8e3;
 var BLOCK_MIN_MS = 500;
 var blockState = /* @__PURE__ */ new WeakMap();
+function endBand(el) {
+  let gone = false;
+  const rm = () => {
+    if (!gone) {
+      gone = true;
+      el.remove();
+    }
+  };
+  el.addEventListener("animationiteration", (e) => {
+    if (e.target === el) rm();
+  });
+  window.setTimeout(rm, 1700);
+}
 function lift(host, state) {
   window.setTimeout(() => {
     if (blockState.get(host) !== state) return;
     blockState.delete(host);
     state.veil.classList.remove("is-in");
-    window.setTimeout(() => state.veil.remove(), 300);
+    endBand(state.veil);
   }, Math.max(0, BLOCK_MIN_MS - (Date.now() - state.since)));
 }
 function blockLoad(host) {
@@ -3003,7 +3016,7 @@ function deckPage(ctx, file) {
       layout(false);
       window.setTimeout(() => {
         pager.removeClass("is-wait");
-        band.remove();
+        endBand(band);
       }, Math.max(0, LOOK_MIN_MS - (Date.now() - since)));
     });
     const onResize = () => layout(false);
@@ -4246,7 +4259,7 @@ var MnView = class extends import_obsidian9.ItemView {
     this.veil = null;
     v.removeClass("is-instant");
     v.removeClass("is-in");
-    window.setTimeout(() => v.remove(), 300);
+    endBand(v);
   }
   // How a new page arrives: slides in from the right (deeper), from the left (back), or rises in (another tab); "none" for a refresh
   draw(anim = "none") {

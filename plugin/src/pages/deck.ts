@@ -1,7 +1,7 @@
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { Champion } from "../data/store";
 import { mapUrl } from "./handbook";
-import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg, whenMediaLoaded, blurBackdrop, SWIPE } from "../ui";
+import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg, whenMediaLoaded, blurBackdrop, endBand, SWIPE } from "../ui";
 import { factsStrip, profileAxes, profileRadar, styleCard, tagRow } from "./profile";
 import type { PageCtx, PageOut } from "./index";
 import { cardKit } from "./cardkit";
@@ -205,7 +205,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         // the cards were blurred from the start (see the top); they sharpen when loaded, never before half a second so it is no blink
         void loaded.then(() => {
             layout(false);
-            window.setTimeout(() => { pager.removeClass("is-wait"); band.remove(); }, Math.max(0, LOOK_MIN_MS - (Date.now() - since)));
+            window.setTimeout(() => { pager.removeClass("is-wait"); endBand(band); }, Math.max(0, LOOK_MIN_MS - (Date.now() - since)));
         });
         const onResize = () => layout(false);
         window.addEventListener("resize", onResize);

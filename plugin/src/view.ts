@@ -5,7 +5,7 @@ import { THEMES, themeVars } from "./themes";
 import { PageOut, renderPage } from "./pages";
 import { rememberSub } from "./pages/champions";
 import type { Frame } from "./router";
-import { empty, h, icon, preloadRoleIcons, releaseVideos, slideSeg, whenLoaded } from "./ui";
+import { empty, endBand, h, icon, preloadRoleIcons, releaseVideos, slideSeg, whenLoaded } from "./ui";
 
 export const VIEW_TYPE = "morellonomicon";
 
@@ -202,8 +202,8 @@ export class MnView extends ItemView {
         if (!v) return;
         this.veil = null;
         v.removeClass("is-instant");
-        v.removeClass("is-in");
-        window.setTimeout(() => v.remove(), 300);
+        v.removeClass("is-in");   // the blur fades out, the band finishes its pass
+        endBand(v);
     }
 
     // How a new page arrives: slides in from the right (deeper), from the left (back), or rises in (another tab); "none" for a refresh

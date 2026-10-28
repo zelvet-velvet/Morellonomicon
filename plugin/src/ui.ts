@@ -98,12 +98,20 @@ export function whenMediaLoaded(roots: HTMLElement[], ms: number): Promise<void>
 // emptied by its owner (the veil lives in it), so give a container that is redrawn its own host.
 const BLOCK_MAX_MS = 8000, BLOCK_MIN_MS = 500;
 const blockState = new WeakMap<HTMLElement, { veil: HTMLElement; since: number }>();
+// Takes a loading veil away once its band has gone off the left edge (the end of the current pass), at the latest after 1.7 s; the
+// blur has been fading meanwhile, so the light seems to sweep the sharp page into view
+export function endBand(el: HTMLElement): void {
+    let gone = false;
+    const rm = () => { if (!gone) { gone = true; el.remove(); } };
+    el.addEventListener("animationiteration", (e) => { if (e.target === el) rm(); });
+    window.setTimeout(rm, 1700);
+}
 function lift(host: HTMLElement, state: { veil: HTMLElement; since: number }): void {
     window.setTimeout(() => {
         if (blockState.get(host) !== state) return;
         blockState.delete(host);
-        state.veil.classList.remove("is-in");
-        window.setTimeout(() => state.veil.remove(), 300);
+        state.veil.classList.remove("is-in");   // the blur fades out, the band finishes its pass
+        endBand(state.veil);
     }, Math.max(0, BLOCK_MIN_MS - (Date.now() - state.since)));
 }
 export function blockLoad(host: HTMLElement): void {
