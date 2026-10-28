@@ -319,7 +319,7 @@ export function slideSeg(seg: HTMLElement, key = "", opt: { item?: string; fit?:
     seg.addEventListener("pointerdown", (e) => { at = under(e.clientX); moved = false; startX = e.clientX; });
     seg.addEventListener("pointermove", (e) => {
         if (!at || (!moved && Math.abs(e.clientX - startX) < 8)) return;
-        if (!moved) { moved = true; seg.addClass("is-drag"); }
+        if (!moved) { moved = true; seg.addClass("is-drag"); try { seg.setPointerCapture(e.pointerId); } catch { /* the pointer is already gone */ } }
         const b = under(e.clientX);
         if (b && b !== at) { at = b; buttons().forEach((x) => x.toggleClass("is-pv", x === b)); place(b, true); haptic(); }
     });
@@ -336,5 +336,8 @@ export function slideSeg(seg: HTMLElement, key = "", opt: { item?: string; fit?:
     };
     seg.addEventListener("pointerup", end);
     seg.addEventListener("pointercancel", end);
+    // dragging along a bar is ours: Obsidian must not read it as the swipe that opens a sidebar
+    for (const ev of ["touchstart", "touchmove"]) seg.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
+    seg.addEventListener("touchmove", (e) => { if (moved && e.cancelable) e.preventDefault(); }, { passive: false });
     seg.addEventListener("click", (e) => { if (e.isTrusted && Date.now() < quietUntil) { e.stopPropagation(); e.preventDefault(); } }, { capture: true });
 }

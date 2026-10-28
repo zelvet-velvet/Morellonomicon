@@ -499,13 +499,12 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 @keyframes mn-shiver { 20% { translate: -5px 0; } 45% { translate: 4px 0; } 70% { translate: -2px 0; } 100% { translate: 0 0; } }
 
 /* the "did you know" stack: two tip cards in one cell, the next fully under the top one; the top is swiped away (handbook.ts) */
-.mn-trv-stack { display: grid; margin: 0 0 18px; min-height: 190px; touch-action: pan-y; }
+.mn-trv-stack { display: grid; margin: 0 0 18px; min-height: 190px; touch-action: none; }
 .mn-app .mn-trv { grid-area: 1 / 1; position: relative; display: flex; align-items: center; justify-content: center; padding: 26px 30px; overflow: hidden; transform-origin: 50% 130%; will-change: transform;
     border-radius: 22px; text-align: center; white-space: normal; background-color: var(--mn-card-hi); background-size: cover; background-position: center 20%;
     border: 1.5px solid color-mix(in srgb, var(--mn-text) 24%, var(--mn-line)); box-shadow: 0 8px 22px rgba(0, 0, 0, 0.26); }
 .mn-trv::after { content: ""; position: absolute; inset: 0; background: rgba(8, 10, 16, 0.62); }
 .mn-trv-tip { position: relative; z-index: 1; font-size: 16px; line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; line-break: strict; text-wrap: balance; max-width: 100%; font-weight: 600; color: #f2e5bc; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7); }
-.mn-trv-hint { position: absolute; z-index: 1; left: 0; right: 0; bottom: 8px; font-size: 11px; letter-spacing: 0.12em; color: rgba(242, 229, 188, 0.55); }
 @keyframes mn-fade { from { opacity: 0; } to { opacity: 1; } }
 
 /* champion card: a taller banner, then the profile (style line, hexagon chart, abilities) */
@@ -740,20 +739,11 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-seg-line .mn-seg-hl { top: auto; bottom: -1px; height: 2px; border-radius: 0; box-shadow: none; }
 .mn-app .mn-seg-line.has-hl .mn-seg-b.is-on { box-shadow: none; }
 .mn-app .mn-seg-line.is-drag .mn-seg-b.is-pv { color: var(--mn-text); }
-/* the bottom tab bar: one glass pill behind the chosen tab (slideSeg sizes it to the tab); the buttons draw no highlight of their own */
+/* the bottom tab bar: one pill behind the chosen tab (slideSeg sizes it to the tab); the buttons draw no highlight of their own */
 .mn-tabs.has-hl { position: relative; touch-action: pan-y; }
 .mn-tabs .mn-seg-hl { top: 3px; bottom: calc(var(--mn-safe-bottom) + 1px); border-radius: 0; background: none; box-shadow: none; }
-/* liquid glass: clear body that bends what is behind it (blur + saturation), a bright rim lit from the top left, a faint inner glow,
-   a soft specular sheen across the top, and it swells under a finger */
-.mn-tabs .mn-seg-hl::before { content: ""; position: absolute; inset: 0 4px; border-radius: 999px; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.04) 55%, rgba(255, 255, 255, 0.1)), rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(5px) saturate(1.9) brightness(1.12); -webkit-backdrop-filter: blur(5px) saturate(1.9) brightness(1.12);
-    box-shadow: inset 1.5px 1.5px 1px -0.5px rgba(255, 255, 255, 0.75), inset -1.5px -1.5px 1px -0.5px rgba(255, 255, 255, 0.35), inset 0 0 14px rgba(255, 255, 255, 0.16),
-        0 0 0 0.5px rgba(255, 255, 255, 0.28), 0 6px 18px rgba(0, 0, 0, 0.2); }
-.mn-tabs .mn-seg-hl::after { content: ""; position: absolute; left: 14%; right: 14%; top: 4px; height: 38%; border-radius: 999px; pointer-events: none;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0)); opacity: 0.55; }
-.mn-tabs.is-drag .mn-seg-hl::before { transform: scale(1.1, 1.14); box-shadow: inset 1.5px 1.5px 1px -0.5px rgba(255, 255, 255, 0.9), inset -1.5px -1.5px 1px -0.5px rgba(255, 255, 255, 0.45), inset 0 0 18px rgba(255, 255, 255, 0.22),
-        0 0 0 0.5px rgba(255, 255, 255, 0.4), 0 10px 26px rgba(0, 0, 0, 0.28); }
+/* a plain pill behind the chosen tab */
+.mn-tabs .mn-seg-hl::before { content: ""; position: absolute; inset: 0 4px; border-radius: 16px; background: color-mix(in srgb, var(--mn-text) 10%, transparent); }
 .mn-app .mn-tabs .mn-tab, .mn-app .mn-tabs .mn-tab:hover, .mn-app .mn-tabs .mn-tab:active, .mn-app .mn-tabs .mn-tab:focus, .mn-app .mn-tabs .mn-tab:focus-visible { background: none; box-shadow: none; outline: none; }
 .mn-app .mn-tabs.has-hl .mn-tab { position: relative; z-index: 1; transition: color 0.2s; }
 .mn-app .mn-tabs.is-drag .mn-tab.is-on:not(.is-pv) { color: var(--mn-muted); }

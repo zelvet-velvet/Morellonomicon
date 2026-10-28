@@ -7,6 +7,8 @@ const KEYWORDS = 8;      // quick-search chips taken from the glossary (two full
 const GLOSSARY = "名詞表";
 const TRIVIA_TILT = 10;   // degrees the tip card tilts per card width it is dragged
 const TRIVIA_AT = 0.25;   // fraction of the width a drag must cover to send the card away
+const TRIVIA_SLOP = 6;    // px of movement before the direction is decided
+const TRIVIA_BIAS = 0.7;  // sideways wins unless the move is clearly more vertical than horizontal
 const TRIVIA_MS = 300;    // how long the card takes to leave or spring back
 const HOME_WAIT_MS = 3000;   // the Handbook waits this long at most for all its pictures
 // A topic's cover picture from its `cover:` frontmatter: a champion id (its splash art) or `map <name>` (an ARAM loading screen)
@@ -98,27 +100,30 @@ export function handbookPage(ctx: PageCtx): PageOut {
             c.style.backgroundImage = `url("${url}")`;
             c.style.zIndex = String(z);
             h(c, "div", "mn-trv-tip", tips[order[i % order.length]].text);
-            h(c, "div", "mn-trv-hint", "← 滑動換一則 →");
             return c;
         };
         let n = 0, top = make(0, 2), under = make(1, 1);
-        let busy = false, pid = -1, x0 = 0, y0 = 0, t0 = 0, dx = 0, mode: "" | "x" | "y" = "";
+        let busy = false, pid = -1, x0 = 0, y0 = 0, t0 = 0, dx = 0, lastY = 0, mode: "" | "x" | "y" = "";
+        const scroller = () => stack.closest<HTMLElement>(".mn-scroll");
         for (const ev of ["touchstart", "touchmove"]) stack.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });   // Obsidian's edge swipes stay out
         const pose = (x: number) => { top.style.transform = `translateX(${x.toFixed(1)}px) rotate(${(x / Math.max(1, stack.clientWidth) * TRIVIA_TILT).toFixed(2)}deg)`; };
         stack.addEventListener("pointerdown", (e) => {
             if (busy || pid !== -1 || (e.pointerType === "mouse" && e.button !== 0)) return;
-            pid = e.pointerId; x0 = e.clientX; y0 = e.clientY; t0 = e.timeStamp; dx = 0; mode = "";
+            pid = e.pointerId; x0 = e.clientX; y0 = e.clientY; lastY = e.clientY; t0 = e.timeStamp; dx = 0; mode = "";
         });
         stack.addEventListener("pointermove", (e) => {
             if (e.pointerId !== pid) return;
             dx = e.clientX - x0;
             const dy = e.clientY - y0;
             if (!mode) {
-                if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-                mode = Math.abs(dx) > Math.abs(dy) ? "x" : "y";   // sideways is ours; vertical scrolls the page
-                if (mode === "x") { stack.setPointerCapture(pid); top.style.transition = "none"; }
+                if (Math.abs(dx) < TRIVIA_SLOP && Math.abs(dy) < TRIVIA_SLOP) return;
+                mode = Math.abs(dx) > Math.abs(dy) * TRIVIA_BIAS ? "x" : "y";   // a slightly diagonal swipe still counts as sideways
+                stack.setPointerCapture(pid);
+                if (mode === "x") top.style.transition = "none";
             }
             if (mode === "x") pose(dx);
+            else { scroller()?.scrollBy(0, lastY - e.clientY); }   // the block takes every touch (so a swipe is never cancelled by the page), and passes vertical moves on
+            lastY = e.clientY;
         });
         const end = (e: PointerEvent) => {
             if (e.pointerId !== pid) return;

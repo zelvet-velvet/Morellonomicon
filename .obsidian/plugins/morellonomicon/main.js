@@ -792,6 +792,10 @@ function slideSeg(seg, key = "", opt = {}) {
     if (!moved) {
       moved = true;
       seg.addClass("is-drag");
+      try {
+        seg.setPointerCapture(e.pointerId);
+      } catch {
+      }
     }
     const b = under(e.clientX);
     if (b && b !== at) {
@@ -816,6 +820,10 @@ function slideSeg(seg, key = "", opt = {}) {
   };
   seg.addEventListener("pointerup", end);
   seg.addEventListener("pointercancel", end);
+  for (const ev of ["touchstart", "touchmove"]) seg.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
+  seg.addEventListener("touchmove", (e) => {
+    if (moved && e.cancelable) e.preventDefault();
+  }, { passive: false });
   seg.addEventListener("click", (e) => {
     if (e.isTrusted && Date.now() < quietUntil) {
       e.stopPropagation();
@@ -2141,6 +2149,8 @@ var KEYWORDS = 8;
 var GLOSSARY = "\u540D\u8A5E\u8868";
 var TRIVIA_TILT = 10;
 var TRIVIA_AT = 0.25;
+var TRIVIA_SLOP = 6;
+var TRIVIA_BIAS = 0.7;
 var TRIVIA_MS = 300;
 var HOME_WAIT_MS = 3e3;
 var coverUrl = (cover) => {
@@ -2234,11 +2244,11 @@ function handbookPage(ctx) {
       c.style.backgroundImage = `url("${url}")`;
       c.style.zIndex = String(z);
       h(c, "div", "mn-trv-tip", tips2[order[i % order.length]].text);
-      h(c, "div", "mn-trv-hint", "\u2190 \u6ED1\u52D5\u63DB\u4E00\u5247 \u2192");
       return c;
     };
     let n = 0, top = make(0, 2), under = make(1, 1);
-    let busy = false, pid = -1, x0 = 0, y0 = 0, t0 = 0, dx = 0, mode = "";
+    let busy = false, pid = -1, x0 = 0, y0 = 0, t0 = 0, dx = 0, lastY = 0, mode = "";
+    const scroller = () => stack.closest(".mn-scroll");
     for (const ev of ["touchstart", "touchmove"]) stack.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
     const pose = (x) => {
       top.style.transform = `translateX(${x.toFixed(1)}px) rotate(${(x / Math.max(1, stack.clientWidth) * TRIVIA_TILT).toFixed(2)}deg)`;
@@ -2248,6 +2258,7 @@ function handbookPage(ctx) {
       pid = e.pointerId;
       x0 = e.clientX;
       y0 = e.clientY;
+      lastY = e.clientY;
       t0 = e.timeStamp;
       dx = 0;
       mode = "";
@@ -2257,14 +2268,16 @@ function handbookPage(ctx) {
       dx = e.clientX - x0;
       const dy = e.clientY - y0;
       if (!mode) {
-        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-        mode = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
-        if (mode === "x") {
-          stack.setPointerCapture(pid);
-          top.style.transition = "none";
-        }
+        if (Math.abs(dx) < TRIVIA_SLOP && Math.abs(dy) < TRIVIA_SLOP) return;
+        mode = Math.abs(dx) > Math.abs(dy) * TRIVIA_BIAS ? "x" : "y";
+        stack.setPointerCapture(pid);
+        if (mode === "x") top.style.transition = "none";
       }
       if (mode === "x") pose(dx);
+      else {
+        scroller()?.scrollBy(0, lastY - e.clientY);
+      }
+      lastY = e.clientY;
     });
     const end = (e) => {
       if (e.pointerId !== pid) return;
