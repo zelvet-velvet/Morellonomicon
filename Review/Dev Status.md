@@ -11,6 +11,11 @@ sticker: lucide//activity
 ## 🚀 Today's Progress (2026-10-28)
 - **Loading screen tips in the Handbook**: the trivia card shows the game's own loading screen tips in zh_TW, only the ones Zaviel picked from the wiki (2017 Miscellaneous and 2025 Did You Know, all 152 found), over one of ARAM's three loading screen backgrounds (Howling Abyss, Butcher's Bridge, the Ionian bridge); random each visit, no repeats.
 - **Patch job push**: the job puts its commit on top of a newer main before pushing (a push made while it ran used to make it fail).
+- **Handbook home**: opens with the loading tip on an ARAM map, then two blocks, 初來乍到 (basics) and 高手必備 (advanced), each with its own progress, the next topic as a large picture and the rest two across; the glossary is a row at the end.
+- **Handbook cards**: picture on top, a line, then a text panel (where you are, title, line, and a 大混戰裡 tip box); text breaks only between phrases; clips shown whole over a blurred copy; pulling the last card left (shiver, haptic) opens the next topic.
+- **New and rewritten topics**: role counters as a graph of role icons with coloured arrows; item recipes drawn like the shop; 高手必備: 跳出定位的英雄 (7 champions, each with the ability that breaks the role), 躲技能, 限制走位 and 視野 (Rift wards on the minimap).
+- **Scope**: the project is described as a guide for both Summoner's Rift and ARAM Mayhem.
+- **Tidy-up**: unused code, styles, the art finder and a placeholder augment removed (248 augments); ARAM item copies show the normal item's current art.
 
 ## 📅 Yesterday's Progress (2026-10-27)
 - **Project start**: Chose an Obsidian vault over a C desktop app (opens on a phone); named it Morellonomicon (黑魔禁書).
@@ -113,7 +118,8 @@ sticker: lucide//activity
 
 ### 🖼️ Handbook pictures
 - [ ] **In-game screenshots** (Zaviel): save them in the vault (e.g. `Assets/`) and put `visual: img Assets/name.png` under a card. Wanted: where the skill damage and cooldown show in the HUD; the augment pick screen (silver / gold / prismatic); the item shop with the recipe tree; the scoreboard; the minimap and ward icons.
-- [ ] **More decks**: Rift basics, ward and map reading, ping etiquette; one card each for the trick-of-the-week.
+- [>] **More decks**: 視野 (Rift wards) is in; still to write: Rift basics (lanes, objectives), ping etiquette, one card each for the trick-of-the-week.
+- [ ] **Ward spots**: the 視野 cards place wards by eye on the minimap; check them against real games and adjust `WARDS` in `plugin/src/pages/deck.ts`.
 
 ### 🎬 Videos
 - [ ] **Other forms**: champions that swap forms or upgrade through a mechanic Riot's text does not word as 進化 / 升級 (Viktor, Jayce, Elise, Nidalee, Gnar, Aphelios…) show their base skill only; list them and add hand-written upgrade text.
@@ -125,7 +131,7 @@ sticker: lucide//activity
 - [ ] **Sheets and settings panel** when a flow needs them (the skeleton has a bottom sheet to copy).
 
 ### 📖 Content
-- [ ] **Beginner guide**: roles, damage types (AD / AP / true), tank / bruiser / carry / support, item logic (when to build armor or magic resist).
+- [x] **Beginner guide**: 初來乍到 covers the champion page, roles and counters, damage types, item logic with recipe trees, and what Mayhem is; 高手必備 has roles beyond the label, dodging, zoning and vision.
 - [ ] **ARAM Mayhem**: augment tiers (silver / gold / prismatic), which champion archetypes fit which augment types, overpowered combos. First version: a few popular champions as examples, then fill in.
 - [ ] **Modes**: item-pick differences for Normal, Ranked and ARAM.
 
