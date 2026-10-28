@@ -529,24 +529,6 @@ function whenLoaded(root, ms, count2 = FIRST_SCREEN) {
     }
   });
 }
-function blurBackdrop(wrap, v) {
-  const make = () => {
-    if (!v.isConnected) return;
-    const still = document.createElement("canvas");
-    still.width = 64;
-    still.height = 36;
-    still.className = "mn-sl-vblur";
-    still.setAttribute("aria-hidden", "true");
-    try {
-      still.getContext("2d")?.drawImage(v, 0, 0, still.width, still.height);
-    } catch {
-      return;
-    }
-    wrap.prepend(still);
-  };
-  if (v.readyState >= 2) make();
-  else v.addEventListener("loadeddata", make, { once: true });
-}
 function releaseVideos(root) {
   root.querySelectorAll("video").forEach((v) => {
     v.pause();
@@ -2790,11 +2772,8 @@ var media = (el, { c, s, args }) => {
     const im = h(wrap, "img", "mn-ck-failic");
     im.src = s.icon;
     im.alt = "";
-    wrap.querySelectorAll(".mn-sl-vblur").forEach((b) => b.remove());
   });
-  const v = wrap.querySelector("video");
-  if (v) blurBackdrop(wrap, v);
-  const hud = h(el, "div", "mn-ck-hud");
+  const hud = h(wrap, "div", "mn-ck-hud");
   keyBadge(hud, s.key, kindColor(s));
   h(hud, "span", "mn-ck-hudn", s.name);
 };
@@ -2803,7 +2782,7 @@ function scaling(s) {
   if (!row2) return null;
   const m = SCALING.exec(row2.note);
   if (!m) return null;
-  return { base: lastNum2(row2.vals[row2.vals.length - 1]), pct: lastNum2(m[1]), stat: m[2], color: statColor(m[2]) };
+  return { base: lastNum2(row2.vals[row2.vals.length - 1]), ranks: row2.vals.length, pct: lastNum2(m[1]), stat: m[2], color: statColor(m[2]) };
 }
 var hero = (el, { s }) => {
   const sc = scaling(s);
@@ -2835,7 +2814,7 @@ var bars = (el, { s }) => {
   const lg = h(el, "div", "mn-ck-lg");
   const one = h(lg, "span");
   h(one, "i").style.background = "#6e7b92";
-  one.append("\u57FA\u672C\u50B7\u5BB3");
+  one.append(sc.ranks > 1 ? `\u57FA\u672C\u50B7\u5BB3\uFF08${sc.ranks} \u7D1A\uFF09` : "\u57FA\u672C\u50B7\u5BB3");
   const two = h(lg, "span");
   h(two, "i").style.background = sc.color;
   two.append(`${sc.stat}\u5E36\u4F86`);
@@ -2895,11 +2874,11 @@ var formCols = (el, { c, args }) => {
   });
 };
 var LAYOUTS = {
-  ability: { areas: ["head", "tags", "desc", "numbers", "stats"], rows: "auto auto auto 1fr auto", fill: { head, tags, desc, numbers: numbers2, stats } },
-  clip: { areas: ["media", "tags"], rows: "1fr auto", fill: { media, tags } },
-  number: { areas: ["hero", "bars"], rows: "auto 1fr", fill: { hero, bars } },
-  forms: { areas: ["formsTitle", "formCols"], rows: "auto 1fr", fill: { formsTitle, formCols } },
-  formset: { areas: ["formsTitle", "formSets"], rows: "auto 1fr", fill: { formsTitle, formSets } }
+  ability: { areas: ["head", "tags", "desc", "numbers", "stats"], rows: "auto auto auto auto auto", fill: { head, tags, desc, numbers: numbers2, stats } },
+  clip: { areas: ["media", "tags"], rows: "auto auto", fill: { media, tags } },
+  number: { areas: ["hero", "bars"], rows: "auto auto", fill: { hero, bars } },
+  forms: { areas: ["formsTitle", "formCols"], rows: "auto auto", fill: { formsTitle, formCols } },
+  formset: { areas: ["formsTitle", "formSets"], rows: "auto auto", fill: { formsTitle, formSets } }
 };
 function cardKit(box, kind, c, args) {
   const layout = LAYOUTS[kind];
@@ -3227,10 +3206,7 @@ function visual(ctx, box, s) {
   if (kind === "video") {
     const c = champ(args[0]);
     if (c) {
-      const wrap = h(box, "div", "mn-sl-video");
-      demo(wrap, c, { key: args[1] ?? "Q" });
-      const v = wrap.querySelector("video");
-      if (v) blurBackdrop(wrap, v);
+      demo(h(box, "div", "mn-sl-video"), c, { key: args[1] ?? "Q" });
       return;
     }
   } else if (kind === "img") {

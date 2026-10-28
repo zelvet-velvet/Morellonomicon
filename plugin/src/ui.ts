@@ -57,23 +57,6 @@ export function whenLoaded(root: HTMLElement, ms: number, count = FIRST_SCREEN):
     });
 }
 
-// The blurred copy of a clip that fills the card around it. It starts only once the clip itself has its first frame (the browser
-// then has the file cached), so the two never download the same clip side by side.
-export function blurBackdrop(wrap: HTMLElement, v: HTMLVideoElement): void {
-    // a small still of the clip's first frame, blurred by CSS: a second playing copy would take a second video decoder, and a phone
-    // only has a few (the clips of earlier pages were then stuck black)
-    const make = () => {
-        if (!v.isConnected) return;
-        const still = document.createElement("canvas");
-        still.width = 64; still.height = 36;
-        still.className = "mn-sl-vblur";
-        still.setAttribute("aria-hidden", "true");
-        try { still.getContext("2d")?.drawImage(v, 0, 0, still.width, still.height); } catch { return; }
-        wrap.prepend(still);
-    };
-    if (v.readyState >= 2) make(); else v.addEventListener("loadeddata", make, { once: true });
-}
-
 // Lets go of the clips on a page that is being replaced: a detached <video> keeps its decoder until it is collected, and a phone
 // has only a few, so after a few pages the new clips stayed black or stuck.
 export function releaseVideos(root: HTMLElement): void {

@@ -1,7 +1,7 @@
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { Champion } from "../data/store";
 import { mapUrl } from "./handbook";
-import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg, whenMediaLoaded, blurBackdrop, endBand, trackBand, SWIPE } from "../ui";
+import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg, whenMediaLoaded, endBand, trackBand, SWIPE } from "../ui";
 import { factsStrip, profileAxes, profileRadar, styleCard, tagRow } from "./profile";
 import type { PageCtx, PageOut } from "./index";
 import { cardKit } from "./cardkit";
@@ -312,11 +312,8 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
     if (kind === "video") {
         const c = champ(args[0]);
         if (c) {
-            // the whole clip, never cropped; the space around it is the same clip, blurred (it fills the card without cutting it)
-            const wrap = h(box, "div", "mn-sl-video");
-            demo(wrap, c, { key: args[1] ?? "Q" });
-            const v = wrap.querySelector("video");
-            if (v) blurBackdrop(wrap, v);
+            // the whole clip at its own shape, centred on the card's background
+            demo(h(box, "div", "mn-sl-video"), c, { key: args[1] ?? "Q" });
             return;
         }
     } else if (kind === "img") {

@@ -1,5 +1,5 @@
 import type { Champion, Skill } from "../data/store";
-import { DAMAGE_COLOR, blurBackdrop, h, icon } from "../ui";
+import { DAMAGE_COLOR, h, icon } from "../ui";
 import { tagInfo } from "./profile";
 import { demo } from "./skills";
 
@@ -83,7 +83,7 @@ const stats: Fill = (el, { s }) => {
     box("droplet", val(/^消耗/), "消耗");
     box("crosshair", s.range, "射程");
 };
-// the clip fills the picture area (the whole clip, the room around it is the same clip blurred), with the skill's key and name on top
+// the whole clip at its own shape, centred in the picture area on the card's own background, with the skill's key and name on top
 const media: Fill = (el, { c, s, args }) => {
     const wrap = h(el, "div", "mn-sl-video");
     const span = args.map((a) => /^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)$/.exec(a)).find((m) => m);   // "0-4.5": only those seconds of the clip
@@ -91,21 +91,18 @@ const media: Fill = (el, { c, s, args }) => {
     demo(wrap, c, { key: args.find((a) => /^[PQWER]\d?$/i.test(a))?.toUpperCase() ?? s.key, seconds }, () => {
         // the clip cannot play on this device: the skill's picture takes its place
         const im = h(wrap, "img", "mn-ck-failic"); im.src = s.icon; im.alt = "";
-        wrap.querySelectorAll(".mn-sl-vblur").forEach((b) => b.remove());
     });
-    const v = wrap.querySelector("video");
-    if (v) blurBackdrop(wrap, v);
-    const hud = h(el, "div", "mn-ck-hud");
+    const hud = h(wrap, "div", "mn-ck-hud");
     keyBadge(hud, s.key, kindColor(s));
     h(hud, "span", "mn-ck-hudn", s.name);
 };
 // the skill's first damage line: its base at the top rank, and what it scales with
-function scaling(s: Skill): { base: number; pct: number; stat: string; color: string } | null {
+function scaling(s: Skill): { base: number; ranks: number; pct: number; stat: string; color: string } | null {
     const row = s.rows.find((r) => /^(物理|魔法|真實)傷害/.test(r.label));
     if (!row) return null;
     const m = SCALING.exec(row.note);
     if (!m) return null;
-    return { base: lastNum(row.vals[row.vals.length - 1]), pct: lastNum(m[1]), stat: m[2], color: statColor(m[2]) };
+    return { base: lastNum(row.vals[row.vals.length - 1]), ranks: row.vals.length, pct: lastNum(m[1]), stat: m[2], color: statColor(m[2]) };
 }
 const hero: Fill = (el, { s }) => {
     const sc = scaling(s);
@@ -134,7 +131,7 @@ const bars: Fill = (el, { s }) => {
     const lg = h(el, "div", "mn-ck-lg");
     const one = h(lg, "span");
     h(one, "i").style.background = "#6e7b92";
-    one.append("基本傷害");
+    one.append(sc.ranks > 1 ? `基本傷害（${sc.ranks} 級）` : "基本傷害");   // the top rank, so the bars are not mistaken for rank 1
     const two = h(lg, "span");
     h(two, "i").style.background = sc.color;
     two.append(`${sc.stat}帶來`);
@@ -191,11 +188,11 @@ const formCols: Fill = (el, { c, args }) => {
 
 // ---- the layout templates: grid areas, and which component fills each
 const LAYOUTS: Record<string, Layout> = {
-    ability: { areas: ["head", "tags", "desc", "numbers", "stats"], rows: "auto auto auto 1fr auto", fill: { head, tags, desc, numbers, stats } },
-    clip: { areas: ["media", "tags"], rows: "1fr auto", fill: { media, tags } },
-    number: { areas: ["hero", "bars"], rows: "auto 1fr", fill: { hero, bars } },
-    forms: { areas: ["formsTitle", "formCols"], rows: "auto 1fr", fill: { formsTitle, formCols } },
-    formset: { areas: ["formsTitle", "formSets"], rows: "auto 1fr", fill: { formsTitle, formSets } },
+    ability: { areas: ["head", "tags", "desc", "numbers", "stats"], rows: "auto auto auto auto auto", fill: { head, tags, desc, numbers, stats } },
+    clip: { areas: ["media", "tags"], rows: "auto auto", fill: { media, tags } },
+    number: { areas: ["hero", "bars"], rows: "auto auto", fill: { hero, bars } },
+    forms: { areas: ["formsTitle", "formCols"], rows: "auto auto", fill: { formsTitle, formCols } },
+    formset: { areas: ["formsTitle", "formSets"], rows: "auto auto", fill: { formsTitle, formSets } },
 };
 
 // Lays out a card's picture area from a template; false when the champion or skill is not there (the caller shows nothing special)
