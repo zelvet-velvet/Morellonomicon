@@ -1,71 +1,98 @@
-"""Write _data/loading-tips.json: the tips the game shows in the middle of the loading screen, in Riot's own zh_TW text.
+"""Write _data/loading-tips.json: the loading screen tips the Handbook shows, in Riot's own zh_TW text.
 
-They come from the game's string table (lol.stringtable.json on CommunityDragon, the same file fetch_augment_text.py reads).
-The Handbook shows one at random in its "你知道嗎?" card. Tips are the entries whose key names a loading screen tip; the
-keys that look like tips but were not taken are listed in Review/Loading Tip Keys.md, so a person can check the choice.
+Which tips: tools/data/loading-tips-pick.txt, in English as the League wiki lists them (Loading tips 2017 / Miscellaneous
+and Loading tips 2025 / Default / Did You Know, by region). Each line is looked up in the game's English text to find its
+string key, and the zh_TW text of that key is taken (both from the game's string tables on CommunityDragon, the file
+fetch_augment_text.py reads). Lines that could not be found are listed in Review/Loading Tip Keys.md.
 Standard library only.
 
     python3 -I tools/fetch_loading_tips.py
 """
-import collections
 import datetime
+import difflib
 import json
 import re
 import sys
+import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # python3 -I does not add the script folder
-import fetch_augment_text as fat   # noqa: E402  (load_strings, clean)
+import fetch_augment_text as fat   # noqa: E402  (load_strings, clean, USER_AGENT)
 import fetch_data as fd            # noqa: E402
 
 OUT = fd.ROOT / "_data" / "loading-tips.json"
 REVIEW = fd.ROOT / "Review" / "Loading Tip Keys.md"
-TIP_KEY = re.compile(r"tip", re.I)
-SKIP_KEY = re.compile(r"tooltip|stipend|multip|tipping", re.I)   # tooltips and words that only contain "tip"
-# the loading screen's own tips (game_startup_tip_<n>_<kind>) and the seasonal lore ones (game_startup_tip_narrative_<season>_<n>).
-# Left out: April Fools cat facts (aprfools), event modes (slime, the plain numbered ones), Arena (cherry), one-off events (project)
-KINDS = {"narrative": "背景故事", "gameplay": "遊戲技巧", "misc": "冷知識", "worlds": "世界大賽", "pb": "遊戲禮儀", "vs": "背景故事"}
-LOADING_KEY = re.compile(r"^game_startup_tip_(?:\d+_(?P<kind>narrative|gameplay|misc|worlds|pb|vs)(?:\d+|_\dkey)?|(?P<lore>narrative)_(?:y\d+s\d+a?|arc)[_\d]*)$", re.I)
+PICK = Path(__file__).resolve().parent / "data" / "loading-tips-pick.txt"
+EN_URLS = ["https://raw.communitydragon.org/latest/game/data/menu/en_us/lol.stringtable.json",
+           "https://raw.communitydragon.org/latest/game/en_us/data/menu/en_us/lol.stringtable.json"]
+CLOSE = 0.88   # how alike a wiki line and the game's text must be when they are not the same (punctuation, a word)
 
 
-def kind_of(key):
-    m = LOADING_KEY.match(key)
-    return KINDS[(m.group("kind") or m.group("lore")).lower()]
+def load_english():
+    day = datetime.date.today().isoformat()
+    path = fd.CACHE / f"cdragon-{day}" / "lol.stringtable.en_us.json"
+    if not path.exists():
+        for url in EN_URLS:
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": fat.USER_AGENT})
+                with urllib.request.urlopen(req, timeout=180) as r:
+                    raw = r.read()
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(raw)
+                break
+            except Exception as e:   # try the other address
+                print(f"! {url}: {e}", file=sys.stderr)
+        else:
+            sys.exit("the game's English text could not be downloaded")
+    return json.loads(path.read_text(encoding="utf-8"))["entries"]
+
+
+def norm(text):
+    """For comparing: lower case, no markup, quotes, dashes or other punctuation, single spaces."""
+    text = re.sub(r"<[^>]+>", "", text).lower()
+    text = re.sub(r"[^\w\s]", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def picks():
+    """(group, English line) from the pick list; a short line without end punctuation starts a group."""
+    group, out = "", []
+    for line in PICK.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if len(line) <= 20 and not re.search(r"[.?!…\"”]$", line):
+            group = line
+        else:
+            out.append((group, line))
+    return out
 
 
 def main():
-    strings = fat.load_strings()
-    tipish = {k: v for k, v in strings.items() if TIP_KEY.search(k) and not SKIP_KEY.search(k) and isinstance(v, str) and v.strip()}
-    taken, seen = [], set()
-    for key in sorted(tipish):
-        if not LOADING_KEY.match(key):
-            continue
-        text, partial = fat.clean(tipish[key])
-        if len(text) < 6 or partial or text in seen:
-            continue
-        seen.add(text)
-        taken.append({"key": key, "kind": kind_of(key), "text": text})
-    out = {"source": "League of Legends game text, zh_TW (CommunityDragon lol.stringtable.json)", "date": datetime.date.today().isoformat(), "tips": taken}
+    english, chinese = load_english(), fat.load_strings()
+    tips = {k: v for k, v in english.items() if k.lower().startswith("game_startup_tip") and isinstance(v, str)}
+    by_text = {norm(v): k for k, v in tips.items()}
+    keys = list(by_text)
+    taken, missed = [], []
+    for group, line in picks():
+        n = norm(line)
+        key = by_text.get(n)
+        if not key:
+            near = difflib.get_close_matches(n, keys, n=1, cutoff=CLOSE)
+            key = by_text[near[0]] if near else None
+        zh = fat.clean(chinese.get(key, ""))[0] if key else ""
+        if key and zh:
+            taken.append({"key": key, "group": group, "text": zh})
+        else:
+            missed.append((group, line, key or ""))
+    out = {"source": "League of Legends loading screen tips, zh_TW game text (CommunityDragon lol.stringtable.json); "
+                     "picked from the wiki's Loading tips 2017 / Miscellaneous and 2025 / Did You Know", "date": datetime.date.today().isoformat(), "tips": taken}
     OUT.write_text(json.dumps(out, ensure_ascii=False, indent=0) + "\n", encoding="utf-8")
-
-    # what else looks like a tip: grouped by key without its trailing number, with two examples each
-    groups = collections.defaultdict(list)
-    for key in sorted(tipish):
-        if key.lower().startswith("game_"):   # the game's own UI text; champion tips and mode strings stay out (they made the file 1 MB)
-            groups[re.sub(r"[_\d]+$", "", key)].append(key)
-    lines = ["# Loading Tip Keys", "", f"Generated by `tools/fetch_loading_tips.py` ({out['date']}). Taken: {len(taken)} tips "
-             "(keys matching LOADING_KEY). Every game_ string key containing \"tip\", by prefix, to check that no loading screen tips are missed.", "",
-             "| Prefix | Keys | Taken | Example |", "| --- | --- | --- | --- |"]
-    took = {t["key"] for t in taken}
-    for prefix, keys in sorted(groups.items(), key=lambda kv: -len(kv[1])):
-        example = fat.clean(tipish[keys[0]])[0][:60].replace("|", "/")
-        lines.append(f"| `{prefix}` | {len(keys)} | {sum(k in took for k in keys)} | {example} |")
-    # the plain "tips…" keys (100 of them) and anything named did-you-know: every text, to tell which set the loading screen uses
-    extra = sorted(k for k in tipish if re.match(r"tips?[_\d]", k, re.I) or re.search(r"did_?you_?know|dyk", k, re.I))
-    lines += ["", "## tips… and did-you-know keys, in full", "", "| Key | Text |", "| --- | --- |"]
-    lines += [f"| `{k}` | {fat.clean(tipish[k])[0].replace('|', '/')} |" for k in extra]
+    lines = ["# Loading Tip Keys", "", f"Generated by `tools/fetch_loading_tips.py` ({out['date']}): {len(taken)} of {len(taken) + len(missed)} lines of "
+             "`tools/data/loading-tips-pick.txt` found in the game's text. Lines not found (no matching English key, or no zh_TW text for it):", ""]
+    lines += [f"- {g}: {line}" + (f" (key `{k}` has no zh_TW text)" if k else "") for g, line, k in missed] or ["- none"]
     REVIEW.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"{OUT.relative_to(fd.ROOT)}: {len(taken)} tips ({dict(collections.Counter(t['kind'] for t in taken))}); {len(groups)} tip-like key groups in {REVIEW.relative_to(fd.ROOT)}")
+    print(f"{OUT.relative_to(fd.ROOT)}: {len(taken)} tips, {len(missed)} not found (see {REVIEW.relative_to(fd.ROOT)})")
 
 
 if __name__ == "__main__":

@@ -160,8 +160,9 @@ var Store = class {
     // _data/positions.json
     this.riotNotes = [];
     this.sounds = null;
+    // _data/sounds.json: how characters are said, for finding names from speech to text
     this.loadingTips = [];
-    // _data/loading-tips.json: the game's loading screen tips (zh_TW)   // _data/sounds.json: how characters are said, for finding names from speech to text
+    // _data/loading-tips.json: the game's loading screen tips (zh_TW)
     this.gameText = {};
   }
   get app() {

@@ -1,0 +1,169 @@
+# The loading screen tips to show in the Handbook, in English as the League wiki lists them (Loading Screen page):
+# "Loading tips 2017 / Miscellaneous" first, then "Loading tips 2025 / Default / Did You Know" by region.
+# tools/fetch_loading_tips.py finds each line in the game's English text and takes Riot's zh_TW text of the same key.
+# A line without a full stop or question mark that names a group starts that group.
+Miscellaneous
+Jinx's classic splash background is a demolished version of Vi's.
+A sushi restaurant in China once offered discounts based on League rank.
+It takes 3 hours and 20 minutes to travel from fountain to fountain only using flash (without runes).
+Bandle City
+Time flows strangely in Bandle City, making yordles seem almost ageless to outsiders.
+Some say yordles know secret ways through Runeterra that others cannot perceive.
+Rumble's mech is named Tristy, in honor of a yordle who is very important to him.
+Tristana's cannon is named Boomer.
+Bilgewater
+In Bilgewater, the dead are not always buried - they are often given back to the ocean in submerged caskets below bobbing tombstones.
+Many structures in Bilgewater are made from remains of ships gutted upon its rocky shores.
+When the wharf rats of Bilgewater gather in great swarms, they can devour an adult human in minutes.
+The people of Bilgewater deeply respect the creatures of the deep, so much so, that their currency is Golden Krakens and Silver Serpents.
+Bilgewater's boom-and-bust economy is based almost entirely on the hunting and harvesting of sea monsters.
+The callers of the Serpent Isles sound enormous horns carved into the cliffs to beckon forth great sea monsters.
+The Bearded Lady, and Mother Serpent, are both names for the Bilgewater deity Nagakabouros.
+Miss Fortune's pistols were crafted by her mother for the young reaver Gangplank, who then turned the guns on their creator.
+Illaoi wields "the Eye of God," an idol sacred to the Buhru.
+Twisted Fate was born to the nomadic river-folk of the Serpentine, a river flowing near Bilgewater.
+Tahm Kench is but one of the River King's many names. Some others may be better left unsaid.
+Pyke made his name as a harpooner in Bloodharbor, a district of slaughter docks in Bilgewater.
+Graves' shotgun is named Destiny.
+Demacia
+The Demacian capital, and seat of the monarchy, is the Great City of Demacia.
+Demacians use the fossilized bark of ancient trees to create petricite, a magic-absorbing substance with which they build their city walls.
+Native to northern Demacia are the rare, ferocious raptors. Only a few talented individuals are able to tame and ride these beasts.
+Garen and Lux are members of the Crownguard family, which has protected the Demacian throne for generations.
+Garen leads the Dauntless Vanguard, the kingdom of Demacia's most elite military force.
+Lux trusted Sylas. Now Demacians are dead.
+Fiora is the head of House Laurent in Demacia, a position she claimed upon killing her father in a duel.
+Poppy was once close friends with a man named Orlon. She took up his hammer upon his death.
+Galio was created by a legendary Demacian sculptor named Durand.
+Quinn and her twin brother Caleb were born in the rural Demacian town of Uwendale.
+Nocturne once haunted the Demacian city of Fossbarrow.
+Freljord
+Legends speak of Avarosa, a queen of the ancient Freljord, and how she was betrayed by her own sister.
+While attempting to tame the ancient Freljord with her two sisters, Lissandra was permanently blinded by the claws of the demi-god Volibear.
+Anivia, Ornn, Haestryr, and Volibear are among the countless demi-gods of the ancient Freljord.
+The Frozen Watchers are believed to be trapped in the Howling Abyss.
+According to legend, True Ice never melts. However, elemental magic or the power bestowed by demi-gods may test that truth…
+Gnar was frozen in True Ice for a long, long time.
+Sacred to the Frostguard, Dark Ice is True Ice that has been corrupted.
+Artifacts of True Ice hold incredible power, but only the Iceborn can wield them.
+Many frost trolls have rallied behind their self proclaimed king, Trundle.
+Trundle's True Ice club is named Boneshiver.
+Nunu's yeti companion is named Willump. Willump's human companion is named Nunu.
+Nunu and his mother, Layka, were members of the Notai, a nomadic Freljordian tribe that worshipped Anivia.
+Nunu lost his mother when their caravan was attacked, but he holds onto hope that she's still alive. Sometimes he can hear her, singing in his dreams.
+Nunu's flute is named Svellsongur.
+Brand spent his childhood in the outlying Freljordian settlement of Rygann's Reach.
+Gnar's boomerang is actually the jawbone of a drüvask, a type of boar native to the Freljord.
+Olaf hails from the Freljordian peninsula of Lokfar.
+Sejuani's drüvask boar is named Bristle.
+Tryndamere became oathbound to Ashe at the sacred Avarosan site of Rakelstake.
+Ionia
+Ionian architecture is known for its harmonious fluidity with nature.
+The God-Willow was an ancient tree found in Ionia, which was felled by Ivern the Cruel.
+Yasuo and Yone both studied at the same school of swordcraft. It was this training that the brothers called upon in their fight to the death.
+Shen became the Eye of Twilight after the death of his father, Great Master Kusho.
+Zed was a member of the Kinkou, before he left and formed his Order of Shadow.
+The myths of the Spirit Blossom festival serve as both tales of history and moral lessons.
+The Gatekeeper. The Fox. The Khumaia. All are names for the same spirit celebrated during the Spirit Blossom festival.
+There is a garden in southern Ionia where flowers consume memories.
+Akali's favored weapons are the kama and kunai - a handheld sickle and a throwing dagger.
+Irelia severed Swain's left arm during the Great Stand at Navori, halting the Noxian advance at the Placidium.
+Xayah and Rakan are vastaya, from the Lhotlan tribelands in Ionia.
+Rakan loves chocolate.
+Kayn's master is Zed, who believes the young man could one day lead the Order of Shadow.
+Kayn's full name is Shieda Kayn.
+Khada Jhin is a stage name. Jhin's true identity remains a mystery.
+Lee Sin lost his vision when he invoked the dragon spirit, a lesson in humility he has yet to fully master.
+Lee Sin and Udyr fought side by side against the Noxian invasion of Ionia.
+Upon besting his teacher in combat, the vastaya Kong earned an honorific reserved only for the brightest of Wuju students, becoming Wukong.
+Wukong's vastayan tribe, the Shimon, dwells among the canopies of Ionia's tallest trees.
+Varus is a Darkin, reborn in the combined flesh of two Ionian hunters, Valmar and Kai.
+Don't tell Sett's mom what he does for a living. We wouldn't want her to worry, right?
+Ixtal
+The lush jungles of Ixtal border the Shuriman desert, yet few Shurimans know that a thriving civilization still dwells in the heart of that wilderness.
+The Monolith, a massive structure of living rock, was built thousands of years ago to fight the Void. Malphite is all that remains of the Monolith, but his duty is unchanged.
+Rengar is one of the Kiilash, a vastayan tribe from Shurima.
+Noxus
+Gateways of dark stone known as Noxtoraa are raised over roads in territories conquered by Noxus.
+Drakehounds, a distant relative of dragons, are kept by some rich, and perhaps foolish, Noxians as pets.
+Warmasons are tasked by Noxus not only to plot and plan infrastructure, but also to scout out enemy territory for future invasions.
+Annie lost her mother at a very young age. Her father, sister, and stepmother all died some years later.
+The brothers Darius and Draven grew up as orphans in the port city of Basilich.
+Elise was once a lady of House Kythera, a powerful Noxian noble family.
+Katarina, Cassiopeia, and Talon are all members of the Noxian noble House Du Couteau.
+One of Kled's many titles is "High Major Commodore of the First Legion Third Multiplication Double Admiral Artillery Vanguard Company."
+Mordekaiser's mace is named Nightfall.
+Riven begged an Ionian elder, Souma, to destroy her blade. In doing so, she inadvertently caused his death.
+Samira's tattoos tell the story of her most daring missions. If you ask her, she'll say she still has space for more.
+With his dying breath, Sion killed Jarvan I. The king's crown now serves as Sion's jaw.
+Piltover & Zaun
+Piltovans call their home "the City of Progress." Zaunites typically use far less complimentary terms.
+Progress Day is a celebration in Piltover, meant to commemorate the ingenuity of invention in their fair city. In Zaun, it is a day of remembrance.
+Hextech is the fusion of magic and technology, harnessing the power contained within extremely rare crystals.
+Thanks to her hextech heart, Camille has managed to retain some of her youthful looks despite her age.
+Caitlyn's rifle is unique among the Enforcers, outfitted with the very best of hextech. Being childhood friends with Jayce Talis has its advantages.
+Jayce's transforming hammer is powered by hextech, and owes its design to Jayce's hours toiling in the forges of his family's business.
+Vi wields a pair of gauntlets imbued with hextech power. They were crafted by Jayce Talis, their original purpose to handle superheated objects.
+Ezreal discovered his gauntlet inside the lost tomb of Ne'Zuk, in Shurima.
+Like the ancient Shurimans that once inhabited their land, modern-day Zaunites revere Janna— or Jan'ahrem— as a goddess, said to protect her followers from furious tempests.
+Though the undercity of Zaun falls under the jurisdiction of the Enforcers, the chembarons and their gangs are not particularly interested in being ruled by distant topsiders.
+Zaun's wealthiest can often be found on the city's Promenade levels, which intersect with Piltover's lowest regions.
+The Entresol levels of Zaun are where most of the city's trade and business occur.
+The Sump is the lowest region of Zaun. Few choose to dwell here for long.
+Years of polluting the atmosphere with chemical fumes caused a near-permanent blanket of noxious vapor to fester in Zaun. At its lowest levels, "the Gray" can be, at times, fatal to breathe.
+Blitzcrank was created by Viktor, and eventually became stronger, faster, and smarter than any golem or automaton.
+Ekko is the leader of the Firelights, a band of Zaunites known for their fiery devotion to building a better future… often at the expense of Piltover property.
+Jinx's rocket launcher, mini-gun, and electric pistol are named Fishbones, Pow-Pow, and Zapper.
+Dr. Mundo isn't actually a doctor. He just thinks he is.
+A former Noxian headsman, Urgot was betrayed and imprisoned in the Dredge, a mine deep beneath Zaun.
+Ekko can rewind time. This tip used to be about Heimerdinger.
+Warwick is hunting you right now.
+Shadow Isles
+King Viego of Camavor fell in love with a seamstress, Isolde, a thousand years ago - beginning a fairytale romance that would lead to ruin.
+Viego hails from the distant land of Camavor. In his thousand-year absence, his kingdom has fallen, forgotten.
+The grieving king Viego tried to bring his dead queen back to life in the magical waters of the Blessed Isles. He failed, giving rise to the Ruination.
+Before the Ruination, the Shadow Isles were known as the Blessed Isles.
+The Blessed Isles were home to a society of scholars, who gathered magical artifacts and historical records from across Runeterra.
+The wraith Kalista once faithfully served the Ruined King, Viego. This loyalty cost Kalista her life.
+In life, Hecarim led the Iron Order, an infamous brotherhood of mounted knights.
+Using enchanted waters, Maokai turned the desolate islands of his birth into a verdant paradise.
+Thresh's lantern is a prison for countless souls, including that of Senna, Lucian's wife—who later escaped…
+Yorick wears the Tears of Life, a vial of water drawn from the Blessed Isles' sacred springs.
+Ordinary citizens have no idea that the Sentinels of Light patrol Runeterra with ancient relic weapons, keeping them safe from the Shadow Isles' wraiths.
+Shurima
+Deep beneath Shurima's ancient capital lies the Oasis of the Dawn, believed by many to be the source of all rivers in the land.
+Some Shuriman nomads have created entire towns upon the backs of the dormun - enormous beasts that wander the desert.
+The northern coast of Shurima is partially controlled by Noxus, though the rebirth of Shurima's Emperor Azir may bring that to an end.
+Those Ascended by the Sun Disc of Shurima can live for thousands of years.
+Nasus and Renekton were mortal brothers, and joined the ranks of the Ascended Host together.
+In Shurima, those who survived a failed Ascension ritual are known as the Baccai, who are often twisted and malformed.
+The monstrous Darkin were once noble warriors of the Shuriman Empire.
+Deep in Shurima, the sand itself flows like water. Perhaps it is this constant shifting that keeps Brand, the vengeful fire mage, trapped beneath its dunes.
+One of the largest deserts in Shurima is known as the Great Sai. It is home to a number of raider tribes, including those who killed Sivir's family.
+Sivir is a descendent of Azir, the Ascended god-emperor of Shurima.
+Sivir's crossblade, the Chalicar, once belonged to Setaka, an Ascended god-warrior of Shurima.
+Taliyah was mentored by Yasuo during her time in Ionia.
+Sai Kahleek is one of Shurima's most feared deserts, as it is populated by the ravenous Xer'Sai.
+Many of the Voidborn have names derived from the ancient Shuriman language.
+The hunting grounds of Rek'Sai, littered with the remains of thousands of her victims, are sometimes called the "Bone Sea"
+Kassadin's name originates from the Shuriman phrase, "Kas sai a dyn?" or "Whom does the desert know?"
+Peaches are Kai'Sa's favorite fruit.
+Jax's favorite food is eggs.
+Vel'Koz's name translates roughly in the ancient Shuriman language as "to understand by unmaking."
+Zilean is a survivor of Icathia's destruction by the Void.
+Targon
+Located far from civilization, Mount Targon is utterly remote, reachable only by the most determined seeker.
+Legends tell of another realm beyond Mount Targon's peak, inhabited by great celestial beings.
+The Solari revere the sun, and denounce all other forms of light as inferior. Their faith dominates the many cultures of Targon.
+Nami is one of the Marai, a vastayan tribe from the seas west of Mount Targon.
+To stave off a great danger beneath the ocean, the Marai illuminate the depths with a moonstone.
+The Tidecaller's staff allows its wielder to command water, and is drawn to the power of the moon.
+Taric, a former Demacian soldier, is host to the Targonian Aspect of the Protector.
+Soraka sees many potential futures, and has guided certain individuals to choose their own destiny.
+Before she became the Aspect of Twilight, Zoe was a child of the Lunari.
+The Aspect of Twilight gave mortals the knowledge to trap Aatrox and the other Darkin.
+Aphelios' twin sister, Alune, can only project her magical support to him when he consumes a poison that renders him mute.
+Runeterra
+Bard has been known by many names, including the Cosmic Vagabond and the Great Caretaker.
+Evelynn is a demon who thrives on the pain of her victims.
+Ryze was Kegan Rodhe's master, before Kegan became Brand.
