@@ -105,7 +105,7 @@ export function preloadClip(c: Champion, key: string): Promise<void> {
     downloading.set(url, job);
     return job;
 }
-export function demo(parent: HTMLElement, c: Champion, s: { key: string; seconds?: [number, number] }, onFail?: () => void): void {
+export function demo(parent: HTMLElement, c: Champion, s: { key: string; seconds?: [number, number][] }, onFail?: () => void): void {
     if (!c.key) return;
     const url = clipAddress(c, s.key);
     const v = h(parent, "video", "mn-sd-video");
@@ -115,15 +115,20 @@ export function demo(parent: HTMLElement, c: Champion, s: { key: string; seconds
     v.setAttribute("disablepictureinpicture", "");
     v.setAttribute("disableremoteplayback", "");
     const fail = () => { v.remove(); onFail?.(); };
-    // only the important part of a long clip: it plays from `start` to `end` seconds and jumps back, so the rest is never shown
-    // (the file is still downloaded whole; a clip cannot be cut without re-encoding it)
-    if (s.seconds) {
-        const [start, end] = s.seconds;
+    // only the important parts of a long clip: each [start, end] piece in turn, then back to the first, so the rest (a fast-forward,
+    // a long wait) is never shown (the file is still downloaded whole; a clip cannot be cut without re-encoding it)
+    const parts = s.seconds?.length ? s.seconds : undefined;
+    if (parts) {
+        let at = 0;
         v.loop = false;
-        v.addEventListener("loadedmetadata", () => { v.currentTime = start; });
+        v.addEventListener("loadedmetadata", () => { v.currentTime = parts[0][0]; });
         const guard = window.setInterval(() => {
             if (!v.isConnected) { window.clearInterval(guard); return; }
-            if (v.currentTime >= end || v.ended) { v.currentTime = start; if (v.paused) void v.play().catch(() => undefined); }
+            if (v.currentTime >= parts[at][1] || v.ended) {
+                at = (at + 1) % parts.length;
+                v.currentTime = parts[at][0];
+                if (v.paused) void v.play().catch(() => undefined);
+            }
         }, 60);
     }
     // the whole file, played from memory: for a clip already downloaded, and the way out for a clip that does not stream

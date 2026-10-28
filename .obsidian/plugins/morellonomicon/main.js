@@ -1955,19 +1955,21 @@ function demo(parent, c, s, onFail) {
     v.remove();
     onFail?.();
   };
-  if (s.seconds) {
-    const [start, end] = s.seconds;
+  const parts = s.seconds?.length ? s.seconds : void 0;
+  if (parts) {
+    let at = 0;
     v.loop = false;
     v.addEventListener("loadedmetadata", () => {
-      v.currentTime = start;
+      v.currentTime = parts[0][0];
     });
     const guard = window.setInterval(() => {
       if (!v.isConnected) {
         window.clearInterval(guard);
         return;
       }
-      if (v.currentTime >= end || v.ended) {
-        v.currentTime = start;
+      if (v.currentTime >= parts[at][1] || v.ended) {
+        at = (at + 1) % parts.length;
+        v.currentTime = parts[at][0];
         if (v.paused) void v.play().catch(() => void 0);
       }
     }, 60);
@@ -2766,8 +2768,8 @@ var stats = (el, { s }) => {
 };
 var media = (el, { c, s, args }) => {
   const wrap = h(el, "div", "mn-sl-video");
-  const span = args.map((a) => /^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)$/.exec(a)).find((m) => m);
-  const seconds = span ? [Number(span[1]), Number(span[2])] : void 0;
+  const spec = args.find((a) => /^\d+(?:\.\d+)?-\d+(?:\.\d+)?(?:\+\d+(?:\.\d+)?-\d+(?:\.\d+)?)*$/.test(a));
+  const seconds = spec?.split("+").map((p) => p.split("-").map(Number));
   demo(wrap, c, { key: args.find((a) => /^[PQWER]\d?$/i.test(a))?.toUpperCase() ?? s.key, seconds }, () => {
     const im = h(wrap, "img", "mn-ck-failic");
     im.src = s.icon;

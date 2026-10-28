@@ -8,7 +8,7 @@ import { demo } from "./skills";
 // template lays the components out, so every card of a kind has the same structure, colours and icons.
 //
 //   ability  Champ Key        head · tags · text · numbers per rank with scaling · cooldown / cost / range
-//   clip     Champ Key[2] [a-b]   the ability's clip fills the picture (cut to where the champion stands), key + name on top, tags on its lower edge; a-b = play only seconds a to b
+//   clip     Champ Key[2] [a-b]   the ability's clip fills the picture (cut to where the champion stands), key + name on top, tags on its lower edge; a-b = play only seconds a to b; a-b+c-d = those pieces in turn (skips what lies between, e.g. a fast-forward)
 //   levels   Champ Key [n]    per rank (R: Lv 6 / 11 / 16) two bars: the rank's own damage, and with n of the stat it scales with added
 //   forms    Champ A B [*B]   two forms side by side, one line of Q / W / E each; * marks the form to look at
 //   combo    Champ A B *B K1 K2 [= word word]   the clips of K1 then K2 play one after the other, big, with K1 → K2 as pictures and the result chips on the picture's lower edge (A B *B pick the form's art)
@@ -87,8 +87,9 @@ const stats: Fill = (el, { s }) => {
 // the whole clip at its own shape, centred in the picture area on the card's own background, with the skill's key and name on top
 const media: Fill = (el, { c, s, args }) => {
     const wrap = h(el, "div", "mn-sl-video");
-    const span = args.map((a) => /^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)$/.exec(a)).find((m) => m);   // "0-4.5": only those seconds of the clip
-    const seconds = span ? ([Number(span[1]), Number(span[2])] as [number, number]) : undefined;
+    // "0-4.5": only those seconds of the clip; "0-2.4+3.8-6": those pieces in turn, skipping what lies between them
+    const spec = args.find((a) => /^\d+(?:\.\d+)?-\d+(?:\.\d+)?(?:\+\d+(?:\.\d+)?-\d+(?:\.\d+)?)*$/.test(a));
+    const seconds = spec?.split("+").map((p) => p.split("-").map(Number) as [number, number]);
     demo(wrap, c, { key: args.find((a) => /^[PQWER]\d?$/i.test(a))?.toUpperCase() ?? s.key, seconds }, () => {
         // the clip cannot play on this device: the skill's picture takes its place
         const im = h(wrap, "img", "mn-ck-failic"); im.src = s.icon; im.alt = "";

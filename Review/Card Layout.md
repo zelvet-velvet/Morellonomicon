@@ -45,7 +45,7 @@ Counted with full-width characters as 1 and ASCII as ½. Full-width punctuation 
 
 | Template | `visual:` | Stage | Dock |
 | --- | --- | --- | --- |
-| clip | `clip Champ Key [a-b]` | the ability's clip, whole card; key + name at the top left | the ability's tags |
+| clip | `clip Champ Key [a-b or a-b+c-d]` (pieces of the clip, skipping the rest) | the ability's clip, whole card; key + name at the top left | the ability's tags |
 | combo | `combo Champ A *B K1 K2 = word word` | K1's clip then K2's, in turn | ① K1 → ② K2 pictures and the result chips |
 | levels | `levels Champ Key [amount]` (default 300 AP / 200 AD) | skill head; per ability rank (Lv 6 / 11 / 16) a base bar and a with-stat bar (M1) | legend |
 | ability | `ability Champ Key` | skill head, damage per rank, cooldown / cost / range | the ability's tags |
