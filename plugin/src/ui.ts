@@ -114,21 +114,26 @@ function lift(host: HTMLElement, state: { veil: HTMLElement; since: number }): v
         endBand(state.veil);
     }, Math.max(0, BLOCK_MIN_MS - (Date.now() - state.since)));
 }
-export function blockLoad(host: HTMLElement): void {
-    const pending = Array.from(host.querySelectorAll<HTMLImageElement>("img")).filter((im) => im.src && !im.complete);
-    let st = blockState.get(host);
-    if (!pending.length) { if (st) lift(host, st); return; }   // redrawn with every picture already there
+// The same for a block that waits for something that is not a plain <img> (a CSS background, a promise): veil until `until` settles
+export function blockUntil(host: HTMLElement, until: Promise<void>): void {
     host.classList.add("mn-blk");
+    let st = blockState.get(host);
     if (!st) {
         st = { veil: h(host, "div", "mn-blkveil is-in"), since: Date.now() };
         blockState.set(host, st);
     }
     const state = st;
-    let left = pending.length;
-    const finish = () => { window.clearTimeout(cap); lift(host, state); };
-    const cap = window.setTimeout(finish, BLOCK_MAX_MS);
-    const one = () => { left -= 1; if (left <= 0) finish(); };
-    for (const im of pending) { im.addEventListener("load", one, { once: true }); im.addEventListener("error", one, { once: true }); }
+    const cap = window.setTimeout(() => lift(host, state), BLOCK_MAX_MS);
+    void until.then(() => { window.clearTimeout(cap); lift(host, state); });
+}
+export function blockLoad(host: HTMLElement): void {
+    const pending = Array.from(host.querySelectorAll<HTMLImageElement>("img")).filter((im) => im.src && !im.complete);
+    const st = blockState.get(host);
+    if (!pending.length) { if (st) lift(host, st); return; }   // redrawn with every picture already there
+    blockUntil(host, Promise.all(pending.map((im) => new Promise<void>((done) => {
+        im.addEventListener("load", () => done(), { once: true });
+        im.addEventListener("error", () => done(), { once: true });
+    }))).then(() => undefined));
 }
 
 // Fetches pictures into the browser's cache a few at a time, in the background, so a list that shows them later (Champions, Augments)

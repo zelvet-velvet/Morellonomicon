@@ -416,6 +416,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-page.mn-loading { pointer-events: none; }
 .mn-artload.is-page { z-index: 6; border-radius: 0; transition: backdrop-filter 0.4s ease-out, -webkit-backdrop-filter 0.4s ease-out, background-color 0.4s ease-out; }
 .mn-artload.is-page.is-in { backdrop-filter: blur(4px) saturate(0.95); -webkit-backdrop-filter: blur(4px) saturate(0.95); background-color: color-mix(in srgb, var(--mn-bg) 12%, transparent); }
+.mn-artload.is-page::before { display: none; }   /* the page-wide veil only blurs; the band of light belongs to blocks */
 .mn-artload.is-page.is-instant { transition: none; }   /* start-up: blurred from the first frame, not fading in over a sharp page */
 .mn-pager.is-drag { user-select: none; cursor: grabbing; }
 /* the cards lie in one pile; the top one is dragged away (see deck.ts); the room above them lets a tilted card pass over the bars */

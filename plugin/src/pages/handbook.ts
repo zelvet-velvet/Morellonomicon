@@ -1,4 +1,4 @@
-import { SWIPE, empty, h, icon, page, whenLoaded } from "../ui";
+import { SWIPE, blockLoad, blockUntil, empty, h, icon, page } from "../ui";
 import { parseSlides } from "./deck";
 import type { PageCtx, PageOut } from "./index";
 import { preloadClip } from "./skills";
@@ -11,7 +11,6 @@ const TRIVIA_TILT = 10;   // degrees the tip card tilts per card width it is dra
 const TRIVIA_MS = 300;    // how long the card takes to leave or spring back
 const WARM_CLIPS = 3;       // clips of a topic downloaded ahead of time (its first cards)
 const WARM_DELAY_MS = 1500; // after the home is shown
-const HOME_WAIT_MS = 3000;   // the Handbook waits this long at most for all its pictures
 // A topic's cover picture from its `cover:` frontmatter: a champion id (its splash art) or `map <name>` (an ARAM loading screen)
 export const coverUrl = (cover: string): string => {
     const [a, b] = cover.trim().split(/\s+/);
@@ -56,7 +55,9 @@ export function handbookPage(ctx: PageCtx): PageOut {
     const home = (): Promise<void> | null => {
         out.empty();
         if (!notes.length) { empty(out, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." }); return null; }
-        const tipsReady = trivia(out);
+        const triviaHost = h(out, "div");   // the tip stack loads as a block of its own
+        const tipsReady = trivia(triviaHost);
+        if (tipsReady) blockUntil(triviaHost, tipsReady);
         const decks = notes.filter((n) => n.layout === "deck");
         const block = (name: string, list: typeof decks) => {
             if (!list.length) return;
@@ -69,7 +70,7 @@ export function handbookPage(ctx: PageCtx): PageOut {
             const tile = (parent: HTMLElement, n: (typeof notes)[number], big: boolean) => {
                 const b = h(parent, "button", "mn-hb-tile" + (big ? " is-big" : "") + (read.has(n.file.path) ? " is-read" : ""));
                 const url = coverUrl(n.cover);
-                if (url) { const im = h(b, "img", "mn-hb-art"); im.alt = ""; im.loading = "lazy"; im.onerror = () => im.remove(); im.src = url; }   // no picture: the plain tile
+                if (url) { const im = h(b, "img", "mn-hb-art"); im.alt = ""; im.onerror = () => im.remove(); im.src = url; }   // no picture: the plain tile
                 const txt = h(b, "div", "mn-hb-ov");
                 const num = String(list.indexOf(n) + 1).padStart(2, "0");
                 h(txt, "div", "mn-hb-kn", big ? `${done ? "繼續" : "開始"} · ${num}` : read.has(n.file.path) ? `✓ ${num}` : num);
@@ -77,9 +78,12 @@ export function handbookPage(ctx: PageCtx): PageOut {
                 if (big && n.summary) h(txt, "div", "mn-hb-s", n.summary);
                 b.addEventListener("click", (e) => { e.preventDefault(); ctx.openNote(n.file.path); });
             };
-            if (next) tile(out, next, true);
+            // each group of topic tiles loads as a block of its own, under its heading
+            const tiles = h(out, "div");
+            if (next) tile(tiles, next, true);
             const rest = list.filter((n) => n !== next);
-            if (rest.length) { const grid = h(out, "div", "mn-hb-grid"); rest.forEach((n) => tile(grid, n, false)); }
+            if (rest.length) { const grid = h(tiles, "div", "mn-hb-grid"); rest.forEach((n) => tile(grid, n, false)); }
+            blockLoad(tiles);
         };
         block("初來乍到", decks.filter((n) => n.level !== "advanced"));
         block("高手必備", decks.filter((n) => n.level === "advanced"));
@@ -156,7 +160,11 @@ export function handbookPage(ctx: PageCtx): PageOut {
     const keywords = async () => {
         const g = notes.find((n) => n.title === GLOSSARY);
         if (!g) return;
+        // a hidden chip holds the row's height until the real ones are read, so the page below does not jump when they arrive
+        const spacer = h(chips, "button", "mn-key", "AD");
+        spacer.style.visibility = "hidden";
         const terms = ((await load()).get(g.file.path) ?? []).map((l) => l.split(/[:：]/)[0].trim()).filter((t) => t && t.length <= 8).slice(0, KEYWORDS);
+        spacer.remove();
         for (const t of terms) {
             const b = h(chips, "button", "mn-key", t);
             b.addEventListener("click", (e) => { e.preventDefault(); search.value = t; void results(t.toLowerCase()); });
@@ -238,14 +246,10 @@ export function handbookPage(ctx: PageCtx): PageOut {
         })();
     };
     window.setTimeout(warm, WARM_DELAY_MS);
-    const tipsLoaded = home();
+    home();
     void keywords();
-    // the home shows once its pictures (tiles and the tip's background) have all loaded, not piece by piece, so nothing grows in from above
-    const tilesLoaded = whenLoaded(el, HOME_WAIT_MS, 99);
-    const ready = tilesLoaded || tipsLoaded
-        ? Promise.race([Promise.all([tipsLoaded, tilesLoaded]).then(() => undefined), new Promise<void>((done) => window.setTimeout(done, HOME_WAIT_MS))])
-        : null;
-    return { title: "Handbook", el, ready };
+    // the page shows at once; the tip stack and each group of tiles load as blocks of their own
+    return { title: "Handbook", el, ready: null };
 }
 
 // Markdown to plain text for a search line

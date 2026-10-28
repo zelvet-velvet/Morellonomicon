@@ -579,33 +579,31 @@ function lift(host, state) {
     endBand(state.veil);
   }, Math.max(0, BLOCK_MIN_MS - (Date.now() - state.since)));
 }
-function blockLoad(host) {
-  const pending = Array.from(host.querySelectorAll("img")).filter((im) => im.src && !im.complete);
-  let st = blockState.get(host);
-  if (!pending.length) {
-    if (st) lift(host, st);
-    return;
-  }
+function blockUntil(host, until) {
   host.classList.add("mn-blk");
+  let st = blockState.get(host);
   if (!st) {
     st = { veil: h(host, "div", "mn-blkveil is-in"), since: Date.now() };
     blockState.set(host, st);
   }
   const state = st;
-  let left = pending.length;
-  const finish = () => {
+  const cap = window.setTimeout(() => lift(host, state), BLOCK_MAX_MS);
+  void until.then(() => {
     window.clearTimeout(cap);
     lift(host, state);
-  };
-  const cap = window.setTimeout(finish, BLOCK_MAX_MS);
-  const one = () => {
-    left -= 1;
-    if (left <= 0) finish();
-  };
-  for (const im of pending) {
-    im.addEventListener("load", one, { once: true });
-    im.addEventListener("error", one, { once: true });
+  });
+}
+function blockLoad(host) {
+  const pending = Array.from(host.querySelectorAll("img")).filter((im) => im.src && !im.complete);
+  const st = blockState.get(host);
+  if (!pending.length) {
+    if (st) lift(host, st);
+    return;
   }
+  blockUntil(host, Promise.all(pending.map((im) => new Promise((done) => {
+    im.addEventListener("load", () => done(), { once: true });
+    im.addEventListener("error", () => done(), { once: true });
+  }))).then(() => void 0));
 }
 async function warmPictures(urls, batch = 6) {
   for (let i = 0; i < urls.length; i += batch) {
@@ -2338,7 +2336,6 @@ var TRIVIA_TILT = 10;
 var TRIVIA_MS = 300;
 var WARM_CLIPS = 3;
 var WARM_DELAY_MS = 1500;
-var HOME_WAIT_MS = 3e3;
 var coverUrl = (cover) => {
   const [a, b] = cover.trim().split(/\s+/);
   if (!a) return "";
@@ -2374,7 +2371,9 @@ function handbookPage(ctx) {
       empty(out, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." });
       return null;
     }
-    const tipsReady = trivia(out);
+    const triviaHost = h(out, "div");
+    const tipsReady = trivia(triviaHost);
+    if (tipsReady) blockUntil(triviaHost, tipsReady);
     const decks = notes.filter((n) => n.layout === "deck");
     const block = (name, list2) => {
       if (!list2.length) return;
@@ -2390,7 +2389,6 @@ function handbookPage(ctx) {
         if (url) {
           const im = h(b, "img", "mn-hb-art");
           im.alt = "";
-          im.loading = "lazy";
           im.onerror = () => im.remove();
           im.src = url;
         }
@@ -2404,12 +2402,14 @@ function handbookPage(ctx) {
           ctx.openNote(n.file.path);
         });
       };
-      if (next) tile2(out, next, true);
+      const tiles = h(out, "div");
+      if (next) tile2(tiles, next, true);
       const rest = list2.filter((n) => n !== next);
       if (rest.length) {
-        const grid = h(out, "div", "mn-hb-grid");
+        const grid = h(tiles, "div", "mn-hb-grid");
         rest.forEach((n) => tile2(grid, n, false));
       }
+      blockLoad(tiles);
     };
     block("\u521D\u4F86\u4E4D\u5230", decks.filter((n) => n.level !== "advanced"));
     block("\u9AD8\u624B\u5FC5\u5099", decks.filter((n) => n.level === "advanced"));
@@ -2501,7 +2501,10 @@ function handbookPage(ctx) {
   const keywords = async () => {
     const g = notes.find((n) => n.title === GLOSSARY);
     if (!g) return;
+    const spacer = h(chips, "button", "mn-key", "AD");
+    spacer.style.visibility = "hidden";
     const terms = ((await load()).get(g.file.path) ?? []).map((l) => l.split(/[:：]/)[0].trim()).filter((t) => t && t.length <= 8).slice(0, KEYWORDS);
+    spacer.remove();
     for (const t of terms) {
       const b = h(chips, "button", "mn-key", t);
       b.addEventListener("click", (e) => {
@@ -2590,11 +2593,9 @@ function handbookPage(ctx) {
     })();
   };
   window.setTimeout(warm, WARM_DELAY_MS);
-  const tipsLoaded = home();
+  home();
   void keywords();
-  const tilesLoaded = whenLoaded(el, HOME_WAIT_MS, 99);
-  const ready = tilesLoaded || tipsLoaded ? Promise.race([Promise.all([tipsLoaded, tilesLoaded]).then(() => void 0), new Promise((done) => window.setTimeout(done, HOME_WAIT_MS))]) : null;
-  return { title: "Handbook", el, ready };
+  return { title: "Handbook", el, ready: null };
 }
 var clean = (l) => l.replace(/^\s*(?:[-*]|\d+\.|>)\s*/, "").replace(/[*_`]/g, "").replace(/!?\[\[?([^\]|]*)(?:\|[^\]]*)?\]\]?/g, "$1").trim();
 function snippet(line, q) {
@@ -4259,7 +4260,7 @@ var MnView = class extends import_obsidian9.ItemView {
     this.veil = null;
     v.removeClass("is-instant");
     v.removeClass("is-in");
-    endBand(v);
+    window.setTimeout(() => v.remove(), 450);
   }
   // How a new page arrives: slides in from the right (deeper), from the left (back), or rises in (another tab); "none" for a refresh
   draw(anim = "none") {
