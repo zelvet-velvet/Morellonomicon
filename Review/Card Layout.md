@@ -14,7 +14,7 @@ The one layout every Handbook card (`新手入門/`, one `## ` per card) follows
 
 ```
 ┌──────────────────────────┐
-│ stage (background layer) │  the clip / picture fills the whole card, its lower part fades under the words
+│ stage (background layer) │  a picture fills the whole card; a clip ends at the top of the words, its lower edge faded
 │   template content       │  templates (levels, ability…) sit in the room above the words
 │                          │
 │ ┌──────── dock ────────┐ │  46 px, centred, right on top of the words: tags, steps, legend
@@ -22,14 +22,14 @@ The one layout every Handbook card (`新手入門/`, one `## ` per card) follows
 │ kicker                   │  <topic> · n / N (made by the app)
 │ title                    │  1 line
 │ body                     │  ≤ 2 lines (optional)
-│ tip                      │  **大混戰裡：** ≤ 1 line, in its box (optional)
+│ tip                      │  **小技巧：** ≤ 1 line, in its box (optional)
 └──────────────────────────┘
 ```
 
 - **Words** grow up from the bottom to the height of their content (no fixed height, no scrolling); the stage takes the rest.
 - **Dock** is always the 46 px band right above the words, so tags and steps sit at the same distance from the text on every card.
-- **Stage** for media (clip, picture, splash) is the whole card behind the words; its lower edge fades into the words' dark (no line).
-- Clips are cut to keep the part three quarters from the left (where Riot's clips have the champion).
+- **Stage** for a picture (splash, `img`, map) is the whole card behind the words. A clip ends at the top of the words, so its full height shows (Riot's clips keep the champion between 1/5 and 4/5 from the top); its lower edge fades into the words' dark in steps (no line).
+- Clips are cut at the sides to keep the part three quarters from the left (where Riot's clips have the champion).
 
 ## ✏️ Text limits
 
@@ -37,7 +37,7 @@ The one layout every Handbook card (`新手入門/`, one `## ` per card) follows
 | --- | --- | --- |
 | title | 1 line | ≤ 12 full-width characters |
 | body | ≤ 2 lines | ≤ 36 characters |
-| tip | ≤ 1 line | ≤ 18 characters |
+| tip (`**小技巧：**`) | ≤ 1 line | ≤ 18 characters |
 
 Counted with full-width characters as 1 and ASCII as ½. Full-width punctuation (，。：) so lines break between phrases.
 

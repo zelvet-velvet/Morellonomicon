@@ -9,6 +9,7 @@ sticker: lucide//activity
 > Read [[LLM Guide]] before any `CMD_` or status update. This note is kept by `CMD_SYNC` / `CMD_ROLLOVER` / `CMD_NOTES_SYNC`; the day notes in `Review/Log/` by `CMD_JOURNAL`.
 
 ## 🚀 Today's Progress (2026-10-28)
+- **Clip height and 小技巧**: clips end at the top of the words so the whole height shows; the card tip label is 小技巧 (to check on the phone).
 - **Frame F2 in the app**: the picture fills the card behind the words, the words fit their content, the dock and the clip fade follow the text height (to check on the phone).
 - **Card layout rules**: one frame for every Handbook card (F2, whole-card stage, words fit their content, dock on top of the words), text limits and stage templates in [[Card Layout]]; `tools/check_cards.py` finds 35 of 68 cards over the limits.
 - **Clip crop and fade**: every clip card fills the picture, cut to where the champion stands (about three quarters from the left), with an eased fade (no edge line) and the tags / steps just above the words (to check on the phone).
