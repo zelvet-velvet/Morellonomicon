@@ -53,6 +53,10 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
         // of light. The page scrolls down to the end of the card at once, and once more when the clip is in (a no-op when the card is
         // already where it should be). A clip that cannot play takes its box away.
         const clipBox = h(detail, "div", "mn-sd-clipbox");
+        // something to blur from the first moment, before the clip has a single frame: the skill's own picture, enlarged and blurred;
+        // the clip covers it when it appears
+        const ph = h(clipBox, "div", "mn-sd-clipph");
+        ph.style.backgroundImage = `url("${s.icon}")`;
         demo(clipBox, c, s, () => clipBox.remove());
         // scroll down to the end of the card (its clip included); a card taller than the screen shows from its top instead
         const reveal = () => {

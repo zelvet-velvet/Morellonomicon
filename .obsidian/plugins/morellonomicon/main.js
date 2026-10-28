@@ -1892,6 +1892,8 @@ function skillStrip(parent, c, changes = []) {
       h(up, "p", "mn-sd-desc", s.upgrade);
     }
     const clipBox = h(detail, "div", "mn-sd-clipbox");
+    const ph = h(clipBox, "div", "mn-sd-clipph");
+    ph.style.backgroundImage = `url("${s.icon}")`;
     demo(clipBox, c, s, () => clipBox.remove());
     const reveal = () => {
       if (open !== i || !detail.isConnected) return;
