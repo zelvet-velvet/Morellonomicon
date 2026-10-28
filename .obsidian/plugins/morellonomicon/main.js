@@ -496,6 +496,7 @@ var tip = (anchor, text) => {
     document.addEventListener("scroll", closeBubble, true);
   }, 0);
 };
+var SWIPE = { slop: 6, bias: 0.7, at: 0.25, flick: 0.5, flickMin: 24 };
 var FIRST_SCREEN = 16;
 function whenLoaded(root, ms, count2 = FIRST_SCREEN) {
   const pending = Array.from(root.querySelectorAll("img")).slice(0, count2).filter((im) => im.src && !im.complete);
@@ -2148,9 +2149,6 @@ var MAX_PER_NOTE = 2;
 var KEYWORDS = 8;
 var GLOSSARY = "\u540D\u8A5E\u8868";
 var TRIVIA_TILT = 10;
-var TRIVIA_AT = 0.25;
-var TRIVIA_SLOP = 6;
-var TRIVIA_BIAS = 0.7;
 var TRIVIA_MS = 300;
 var HOME_WAIT_MS = 3e3;
 var coverUrl = (cover) => {
@@ -2268,8 +2266,8 @@ function handbookPage(ctx) {
       dx = e.clientX - x0;
       const dy = e.clientY - y0;
       if (!mode) {
-        if (Math.abs(dx) < TRIVIA_SLOP && Math.abs(dy) < TRIVIA_SLOP) return;
-        mode = Math.abs(dx) > Math.abs(dy) * TRIVIA_BIAS ? "x" : "y";
+        if (Math.abs(dx) < SWIPE.slop && Math.abs(dy) < SWIPE.slop) return;
+        mode = Math.abs(dx) > Math.abs(dy) * SWIPE.bias ? "x" : "y";
         stack.setPointerCapture(pid);
         if (mode === "x") top.style.transition = "none";
       }
@@ -2286,7 +2284,7 @@ function handbookPage(ctx) {
       mode = "";
       if (m !== "x") return;
       const w = stack.clientWidth, v = dx / Math.max(1, e.timeStamp - t0);
-      const far = e.type !== "pointercancel" && (Math.abs(dx) > TRIVIA_AT * w || Math.abs(v) > 0.5 && Math.abs(dx) > 24);
+      const far = Math.abs(dx) > SWIPE.at * w || Math.abs(v) > SWIPE.flick && Math.abs(dx) > SWIPE.flickMin;
       top.style.transition = `transform ${TRIVIA_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity ${TRIVIA_MS}ms`;
       if (!far) {
         top.style.transform = "";
@@ -2420,8 +2418,6 @@ var TILT = 12;
 var GONE = -1.2;
 var FAN = [0, 2.6, -2.2, -2.2];
 var STEP_Y = 6;
-var SWIPE_AT = 0.25;
-var FLICK = 0.5;
 var DECK_WAIT_MS = 800;
 var SETTLE_MS = 280;
 var DECK_BELOW = 10;
@@ -2636,8 +2632,8 @@ function deckPage(ctx, file) {
       dx = e.clientX - x0;
       const dy = e.clientY - y0;
       if (!mode) {
-        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-        mode = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+        if (Math.abs(dx) < SWIPE.slop && Math.abs(dy) < SWIPE.slop) return;
+        mode = Math.abs(dx) > Math.abs(dy) * SWIPE.bias ? "x" : "y";
         if (mode === "y") pager.setPointerCapture(pid);
         if (mode === "x") {
           pager.setPointerCapture(pid);
@@ -2665,12 +2661,7 @@ function deckPage(ctx, file) {
       if (m !== "x") return;
       sec[cur].firstElementChild?.removeClass("is-shiver");
       const w = pager.clientWidth, v = dx / Math.max(1, e.timeStamp - t0);
-      const far = Math.abs(dx) > SWIPE_AT * w || Math.abs(v) > FLICK && Math.abs(dx) > 24;
-      if (e.type === "pointercancel") {
-        resetPeek();
-        layout(true);
-        return;
-      }
+      const far = Math.abs(dx) > SWIPE.at * w || Math.abs(v) > SWIPE.flick && Math.abs(dx) > SWIPE.flickMin;
       if (dx < 0 && far && cur < lastIdx) cur++;
       else if (dx > 0 && far && cur > 0) cur--;
       else if (dx < 0 && cur === lastIdx && armed) {

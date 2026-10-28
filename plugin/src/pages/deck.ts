@@ -1,7 +1,7 @@
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { Champion } from "../data/store";
 import { mapUrl } from "./handbook";
-import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg, whenLoaded } from "../ui";
+import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg, whenLoaded, SWIPE } from "../ui";
 import { factsStrip, profileAxes, profileRadar, styleCard, tagRow } from "./profile";
 import type { PageCtx, PageOut } from "./index";
 import { demo } from "./skills";
@@ -33,8 +33,6 @@ const TILT = 12;       // degrees a card tilts per card width it is dragged (lik
 const GONE = -1.2;     // where a swiped-away card rests, in card widths to the left of the pile
 const FAN = [0, 2.6, -2.2, -2.2];   // degrees the cards under the top one lean, so the pile looks laid on a table
 const STEP_Y = 6;      // px each card under the top one sits lower, so their edges show like a stack of cards
-const SWIPE_AT = 0.25; // fraction of the width a drag must cover to turn the card
-const FLICK = 0.5;     // px/ms: a quicker, shorter drag turns the card too
 const DECK_WAIT_MS = 800;   // the pile waits this long at most for the first card's pictures
 const SETTLE_MS = 280;
 const DECK_BELOW = 10;   // px kept free under the deck (the room for the pile's lower edges is inside the deck, --mn-pile) // how long a card takes to land after a swipe
@@ -231,8 +229,8 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             dx = e.clientX - x0;
             const dy = e.clientY - y0;
             if (!mode) {
-                if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-                mode = Math.abs(dx) > Math.abs(dy) ? "x" : "y";   // sideways: ours; vertical: the card's text or the page scrolls
+                if (Math.abs(dx) < SWIPE.slop && Math.abs(dy) < SWIPE.slop) return;
+                mode = Math.abs(dx) > Math.abs(dy) * SWIPE.bias ? "x" : "y";   // sideways: ours; vertical: the card's text or the page scrolls
                 if (mode === "y") pager.setPointerCapture(pid);
                 if (mode === "x") {
                     pager.setPointerCapture(pid);
@@ -254,8 +252,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             if (m !== "x") return;
             sec[cur].firstElementChild?.removeClass("is-shiver");
             const w = pager.clientWidth, v = dx / Math.max(1, e.timeStamp - t0);
-            const far = Math.abs(dx) > SWIPE_AT * w || (Math.abs(v) > FLICK && Math.abs(dx) > 24);
-            if (e.type === "pointercancel") { resetPeek(); layout(true); return; }
+            const far = Math.abs(dx) > SWIPE.at * w || (Math.abs(v) > SWIPE.flick && Math.abs(dx) > SWIPE.flickMin);
             if (dx < 0 && far && cur < lastIdx) cur++;
             else if (dx > 0 && far && cur > 0) cur--;
             else if (dx < 0 && cur === lastIdx && armed) {

@@ -37,6 +37,11 @@ export const tip = (anchor: HTMLElement, text: string): void => {
 };
 
 // The name bubble while a finger rests on an element: it shows after a short hold and goes the moment the finger lifts.
+// How a card swipe is read, shared by the Handbook's tip stack and the topic cards so they feel the same: the direction is decided
+// after `slop` px (sideways wins unless the move is clearly more vertical than horizontal, `bias`), a drag past `at` of the width or a
+// quicker, shorter one (`flick` px/ms over at least `flickMin` px) turns the card, anything less springs back
+export const SWIPE = { slop: 6, bias: 0.7, at: 0.25, flick: 0.5, flickMin: 24 };
+
 // Pictures a page waits for before it shows (the ones at its top), so it does not appear with empty frames; never longer than `ms`.
 // Returns null when there is nothing to wait for. Pictures set to load lazily are made eager, since a page not on screen yet
 // would never load them.

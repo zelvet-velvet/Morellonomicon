@@ -1,4 +1,4 @@
-import { empty, h, icon, page, whenLoaded } from "../ui";
+import { SWIPE, empty, h, icon, page, whenLoaded } from "../ui";
 import type { PageCtx, PageOut } from "./index";
 
 const SNIPPET = 46;      // characters of context around a match
@@ -6,9 +6,6 @@ const MAX_PER_NOTE = 2;  // matching lines shown per guide card
 const KEYWORDS = 8;      // quick-search chips taken from the glossary (two full rows of four)
 const GLOSSARY = "名詞表";
 const TRIVIA_TILT = 10;   // degrees the tip card tilts per card width it is dragged
-const TRIVIA_AT = 0.25;   // fraction of the width a drag must cover to send the card away
-const TRIVIA_SLOP = 6;    // px of movement before the direction is decided
-const TRIVIA_BIAS = 0.7;  // sideways wins unless the move is clearly more vertical than horizontal
 const TRIVIA_MS = 300;    // how long the card takes to leave or spring back
 const HOME_WAIT_MS = 3000;   // the Handbook waits this long at most for all its pictures
 // A topic's cover picture from its `cover:` frontmatter: a champion id (its splash art) or `map <name>` (an ARAM loading screen)
@@ -116,8 +113,8 @@ export function handbookPage(ctx: PageCtx): PageOut {
             dx = e.clientX - x0;
             const dy = e.clientY - y0;
             if (!mode) {
-                if (Math.abs(dx) < TRIVIA_SLOP && Math.abs(dy) < TRIVIA_SLOP) return;
-                mode = Math.abs(dx) > Math.abs(dy) * TRIVIA_BIAS ? "x" : "y";   // a slightly diagonal swipe still counts as sideways
+                if (Math.abs(dx) < SWIPE.slop && Math.abs(dy) < SWIPE.slop) return;
+                mode = Math.abs(dx) > Math.abs(dy) * SWIPE.bias ? "x" : "y";   // a slightly diagonal swipe still counts as sideways
                 stack.setPointerCapture(pid);
                 if (mode === "x") top.style.transition = "none";
             }
@@ -132,7 +129,7 @@ export function handbookPage(ctx: PageCtx): PageOut {
             mode = "";
             if (m !== "x") return;
             const w = stack.clientWidth, v = dx / Math.max(1, e.timeStamp - t0);
-            const far = e.type !== "pointercancel" && (Math.abs(dx) > TRIVIA_AT * w || (Math.abs(v) > 0.5 && Math.abs(dx) > 24));
+            const far = Math.abs(dx) > SWIPE.at * w || (Math.abs(v) > SWIPE.flick && Math.abs(dx) > SWIPE.flickMin);
             top.style.transition = `transform ${TRIVIA_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity ${TRIVIA_MS}ms`;
             if (!far) { top.style.transform = ""; return; }
             busy = true;
