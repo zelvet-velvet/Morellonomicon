@@ -1,7 +1,7 @@
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { Champion } from "../data/store";
 import { mapUrl } from "./handbook";
-import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg, whenMediaLoaded, blurBackdrop, loadingLook, SWIPE } from "../ui";
+import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg, whenMediaLoaded, blurBackdrop, SWIPE } from "../ui";
 import { factsStrip, profileAxes, profileRadar, styleCard, tagRow } from "./profile";
 import type { PageCtx, PageOut } from "./index";
 import { cardKit } from "./cardkit";
@@ -35,6 +35,7 @@ const GONE = -1.2;     // where a swiped-away card rests, in card widths to the 
 const FAN = [0, 2.6, -2.2, -2.2];   // degrees the cards under the top one lean, so the pile looks laid on a table
 const STEP_Y = 6;      // px each card under the top one sits lower, so their edges show like a stack of cards
 const WAIT_CARDS = 3;      // the pile waits for this many cards' pictures and clips; the others keep loading behind them
+const LOOK_MIN_MS = 500;   // the cards stay blurred at least this long, so a fast load does not read as a blink
 const DECK_WAIT_MS = 8000;   // the pile waits this long at most for the topic's pictures and clips
 const NEAR_BEHIND = 1;   // cards already seen that are still painted (the one that comes back on a right swipe)
 const NEAR_AHEAD = 2;    // cards under the top one that are painted (the pile shows two)
@@ -97,6 +98,10 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
     const peek = h(wrap, "div", "mn-peek");   // behind the cards: what pulling the last card leads to; fills the whole card area, the pulled card uncovers it
     const peekIn = h(peek, "div", "mn-peek-in");   // the text sits at the right side, where the card leaves first
     const pager = h(wrap, "div", "mn-pager");
+    // blurred from the very first frame, with a soft band of light sliding over it, until the topic's pictures and clips are in
+    pager.addClass("is-wait");
+    const band = h(wrap, "div", "mn-artload");
+    const since = Date.now();
     // the deck owns sideways swipes: Obsidian's own edge swipes (open a sidebar) must not take them
     for (const ev of ["touchstart", "touchmove"]) pager.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
     // cards fill the screen down to the tab bar
@@ -196,13 +201,11 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         // while swiping. Clips under the top card are told to play meanwhile: a phone may not fetch a paused clip at all.
         sec.forEach((c) => c.querySelectorAll("video").forEach((v) => { void v.play().catch(() => undefined); }));
         const loaded = whenMediaLoaded(sec.slice(0, WAIT_CARDS), DECK_WAIT_MS);
-        // meanwhile (when it takes more than a moment) the cards show blurred with a soft band of light sliding over them
-        loadingLook(loaded, () => {
-            pager.addClass("is-wait");
-            const band = h(wrap, "div", "mn-artload");
-            return () => { pager.removeClass("is-wait"); band.remove(); };
+        // the cards were blurred from the start (see the top); they sharpen when loaded, never before half a second so it is no blink
+        void loaded.then(() => {
+            layout(false);
+            window.setTimeout(() => { pager.removeClass("is-wait"); band.remove(); }, Math.max(0, LOOK_MIN_MS - (Date.now() - since)));
         });
-        void loaded.then(() => layout(false));
         const onResize = () => layout(false);
         window.addEventListener("resize", onResize);
         ctx.component.register(() => window.removeEventListener("resize", onResize));

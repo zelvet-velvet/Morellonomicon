@@ -2768,6 +2768,7 @@ var GONE = -1.2;
 var FAN = [0, 2.6, -2.2, -2.2];
 var STEP_Y = 6;
 var WAIT_CARDS = 3;
+var LOOK_MIN_MS = 500;
 var DECK_WAIT_MS = 8e3;
 var NEAR_BEHIND = 1;
 var NEAR_AHEAD = 2;
@@ -2832,6 +2833,9 @@ function deckPage(ctx, file) {
   const peek = h(wrap, "div", "mn-peek");
   const peekIn = h(peek, "div", "mn-peek-in");
   const pager = h(wrap, "div", "mn-pager");
+  pager.addClass("is-wait");
+  const band = h(wrap, "div", "mn-artload");
+  const since = Date.now();
   for (const ev of ["touchstart", "touchmove"]) pager.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
   const fit = () => {
     const scroll = el.closest(".mn-scroll");
@@ -2935,15 +2939,13 @@ function deckPage(ctx, file) {
       void v.play().catch(() => void 0);
     }));
     const loaded = whenMediaLoaded(sec.slice(0, WAIT_CARDS), DECK_WAIT_MS);
-    loadingLook(loaded, () => {
-      pager.addClass("is-wait");
-      const band = h(wrap, "div", "mn-artload");
-      return () => {
+    void loaded.then(() => {
+      layout(false);
+      window.setTimeout(() => {
         pager.removeClass("is-wait");
         band.remove();
-      };
+      }, Math.max(0, LOOK_MIN_MS - (Date.now() - since)));
     });
-    void loaded.then(() => layout(false));
     const onResize = () => layout(false);
     window.addEventListener("resize", onResize);
     ctx.component.register(() => window.removeEventListener("resize", onResize));
