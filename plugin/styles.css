@@ -895,3 +895,14 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* a picture still loading is clear, then fades in (the page itself shows at once) */
 .mn-app img { transition: opacity 0.25s ease-out; }
 .mn-app img.is-loading { opacity: 0; }
+
+/* No native press look on any button: Obsidian gives every button a grey hover / press / focus background and shadow, which on a
+   phone sticks after a tap (a grey blob around an icon). Picture buttons stay clear in every state; buttons with a fill of their
+   own keep that fill. (button + class + state outranks Obsidian's button:not(.clickable-icon):hover.) */
+.mn-app button { -webkit-tap-highlight-color: transparent; }
+.mn-app button:not(.mn-seg-b.is-on):is(:hover, :active, :focus, :focus-visible) { box-shadow: none; outline: none; }   /* a chosen segment keeps its own shadow */
+.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face),
+.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face):is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }
+.mn-app button:is(.mn-rc, .mn-key, .mn-tg.is-on):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card); }
+.mn-app button:is(.mn-rq-x, .mn-with-b):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card-hi); }
+.mn-app button.mn-hb-tile:is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }   /* its fill is a gradient image, the colour under it stays clear */
