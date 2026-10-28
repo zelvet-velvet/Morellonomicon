@@ -59,6 +59,9 @@ FEATURES = {
     "隊友增益": r"(友軍|隊友|友方)[^。]{0,16}(治療|回復|護盾|跑速|移動速度)|(治療|回復|護盾|跑速|移動速度)[^。]{0,16}(友軍|隊友|友方)",
     # skills that empower basic attacks: the next one(s), every Nth one, or an attack the text calls 強化. Not a lasting "attacks deal
     # extra damage" passive (that is an on-hit effect), and not on-hit itself: that one is set by hand (`onhit`, `features_extra`)
+    # damage that is a share of the target's health (Fiora, Gwen, Varus, Vayne ...): found in the game's own tooltips (spells.deals_percent_health),
+    # never in the text, so this pattern can never match; the entry is here so the tag keeps its place in the order and survives retag_features.py
+    spells.PERCENT_TAG: r"(?!)",
     "強化普攻": r"(下[一二三]?次|接下來的?[ 0-9一二三兩]*次?)[^。，]{0,8}(基本攻擊|普通攻擊|普攻|攻擊)|注入[^。]{0,10}(普攻|基本攻擊)|(每|第|連續)[ 0-9一二三四]+[次下][^。，]{0,2}(基本攻擊|普攻)|(首次|最後一次)[^。，]{0,2}(基本攻擊|普攻)|強化[^。，]{0,6}(普攻|基本攻擊)|普攻將被強化",
 }
 
@@ -257,6 +260,11 @@ def game_text():
     return _game_text
 
 
+def with_tag(tags, tag):
+    """`tags` with `tag` added, in the order of FEATURES."""
+    return [n for n in FEATURES if n in tags or n == tag]
+
+
 def skills_fm(c, version, bin_data=None):
     """Passive + Q W E R as small objects for the plugin (key, name, damage types, abilities, description, cooldown, cost, range, icon)."""
     p = c["passive"]
@@ -264,13 +272,18 @@ def skills_fm(c, version, bin_data=None):
     base, up = split_upgrade(p["description"])
     out = [{"key": "P", "name": p["name"], "damage": [], "tags": skill_tags(p), "desc": base, "upgrade": up,
             "icon": f"{DD}/cdn/{version}/img/passive/{p['image']['full']}"}]
-    rows, levels = spells.passive_rows(bin_data, game_text()) if bin_data else ([], [])
+    strings = game_text() if bin_data else {}
+    rows, levels = spells.passive_rows(bin_data, strings) if bin_data else ([], [])
     if rows:   # damage / heal / shield by champion level, from the passive's own tooltip
         out[0]["rows"], out[0]["levels"] = rows, levels
+    if bin_data and spells.deals_percent_health(spells.passive_spell(bin_data), strings):
+        out[0]["tags"] = with_tag(out[0]["tags"], spells.PERCENT_TAG)
     for key, s in zip("QWER", c["spells"]):
         base, up = split_upgrade(s["description"])
-        out.append({"key": key, "name": s["name"], "damage": spell_damage(s), "tags": skill_tags(s), "desc": base, "upgrade": up,
-                    "range": clean_range(s), "rows": spells.rank_rows(s, objs.get(s["id"].lower(), {}).get("mSpell") or {}, c["partype"]),
+        mspell = objs.get(s["id"].lower(), {}).get("mSpell") or {}
+        tags = with_tag(skill_tags(s), spells.PERCENT_TAG) if spells.deals_percent_health(mspell, strings) else skill_tags(s)
+        out.append({"key": key, "name": s["name"], "damage": spell_damage(s), "tags": tags, "desc": base, "upgrade": up,
+                    "range": clean_range(s), "rows": spells.rank_rows(s, mspell, c["partype"]),
                     "icon": f"{DD}/cdn/{version}/img/spell/{s['image']['full']}"})
     return out
 
@@ -283,12 +296,15 @@ def champion_note(c, version, bin_data, name_en=""):
         "type": "champion", "id": c["id"], "key": int(c["key"]), "name": c["name"], "name_en": name_en or c["id"], "title": c["title"], "blurb": strip_html(c.get("blurb", "")).replace("\n", " "),
         "roles": [ROLE_ZH.get(t, t) for t in c["tags"]], "damage_type": damage_type(info),
         "skill_damage": dmg_all, "archetypes": archetypes(c),
-        "features": spell_features(spells, c["passive"]), "resource": c["partype"],
+        "features": None, "resource": c["partype"],
         "attack": info["attack"], "magic": info["magic"], "defense": info["defense"], "difficulty": info["difficulty"],
         "range": st["attackrange"], "icon": f"{DD}/cdn/{version}/img/champion/{c['image']['full']}",
         "skills": skills_fm(c, version, bin_data),
         "patch": version, "generated": True,
     }
+    # the abilities of the champion: those read from the text, and the ones found in the game's tooltips (on its skills' tags)
+    read = spell_features(spells, c["passive"])
+    fm["features"] = [n for n in FEATURES if n in read or any(n in s["tags"] for s in fm["skills"])]
     desc = lambda t: strip_html(t).replace("\n", " ")
     dmg = lambda sp: "、".join(spell_damage(sp)) or "—"
     lines = [f"![{c['name']}|64]({fm['icon']})  **{c['name']}**,{c['title']}", "",

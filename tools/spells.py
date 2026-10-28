@@ -304,3 +304,28 @@ def passive_rows(bin_data, strings):
             row["label"] += str(index[tag])
     rows = [collapse(r) for r in rows[:MAX_DAMAGE_ROWS]]
     return rows, (PASSIVE_LEVELS if any(len(r["vals"]) > 1 for r in rows) else [])
+
+
+# ---- damage that is a percent of the target's health
+PERCENT_TAG = "%生命傷害"
+HEALTH_WORDS = re.compile(r"(最大|目前|當前|現有|已損失|損失|剩餘)生命")
+SELF_WORDS = re.compile(r"自身|自己|[他她它牠]的|本身")
+
+
+def tooltip_of(mspell, strings):
+    """The game's own tooltip text of a spell (its zh_TW string), or ''."""
+    key = (((mspell.get("mClientData") or {}).get("mTooltipData") or {}).get("mLocKeys") or {}).get("keyTooltip", "")
+    return strings.get(key.lower(), "") if key else ""
+
+
+def deals_percent_health(mspell, strings):
+    """True when the spell's tooltip names a damage tag (<magicDamage> / <physicalDamage> / <trueDamage>) together with a share of the
+    max / current / missing health ("...% 最大生命的魔法傷害"). The tooltip rarely says whose health: it is skipped only when it says so
+    ("自身", "她的")."""
+    tip = tooltip_of(mspell, strings)
+    for m in re.finditer(r"<(magicDamage|physicalDamage|trueDamage)>(.*?)</\1>", tip, re.S):
+        window = tip[max(0, m.start() - 14):m.end()]
+        h = HEALTH_WORDS.search(window)
+        if h and not SELF_WORDS.search(window[max(0, h.start() - 6):h.start()]):
+            return True
+    return False
