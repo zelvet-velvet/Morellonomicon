@@ -396,8 +396,16 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* the cards lie in one pile; the top one is dragged away (see deck.ts); the room above them lets a tilted card pass over the bars */
 .mn-slide { position: absolute; left: 0; right: 0; top: var(--mn-lift); bottom: 12px; box-sizing: border-box; padding: 0 10px; display: flex; transform-origin: 50% 130%; will-change: transform; }
 .mn-slide.is-settle { transition: transform 0.34s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s; }
-.mn-sl-card { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 26px; background: var(--mn-card); border: 1.5px solid color-mix(in srgb, var(--mn-text) 24%, var(--mn-line)); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 10px 26px rgba(0, 0, 0, 0.3); }
-.mn-sl-words { flex: 0 1 auto; max-height: 60%; overflow-y: auto; padding: 16px 22px 22px; border-top: 1px solid var(--mn-line); }
+/* a collectible card: white border, a dark full-art face, the number in a badge, a rainbow sheen, the text on the face's lower part */
+.mn-sl-card { flex: 1; min-width: 0; display: flex; padding: 7px; border-radius: 26px; background: #f4f2ec; box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 12px 28px rgba(0, 0, 0, 0.38); }
+.mn-sl-face { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 20px; background: #12141b;
+    --mn-bg: #12141b; --mn-card: #1a1d26; --mn-card-hi: #252937; --mn-text: #f4f1e8; --mn-muted: #c9c5b8; --mn-faint: #8f8c83; --mn-line: rgba(255, 255, 255, 0.16); }
+.mn-sl-face::after { content: ""; position: absolute; inset: 0; z-index: 4; pointer-events: none; mix-blend-mode: screen; background-size: 260% 100%; background-position: var(--sheen, 30%) 0;
+    background-image: linear-gradient(112deg, transparent 30%, rgba(255, 120, 200, 0.2) 40%, rgba(120, 220, 255, 0.22) 50%, rgba(255, 230, 120, 0.18) 60%, transparent 70%); }
+.mn-sl-badge { position: absolute; z-index: 3; top: 12px; left: 12px; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: rgba(10, 12, 18, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); font-family: var(--mn-serif); font-weight: 700; font-size: 16px; color: #fff; }
+.mn-sl-words { position: relative; z-index: 2; flex: 0 1 auto; max-height: 62%; overflow-y: auto; margin-top: -34px; padding: 50px 20px 20px;
+    background: linear-gradient(180deg, rgba(8, 10, 16, 0), rgba(8, 10, 16, 0.88) 42px, rgba(8, 10, 16, 0.95)); }
 .mn-sl-kn { font-size: 11px; font-weight: 700; letter-spacing: 0.16em; color: var(--mn-accent); font-variant-numeric: tabular-nums; }
 .mn-sl-t { font-family: var(--mn-serif); font-size: 26px; font-weight: 700; letter-spacing: 0.02em; margin: 4px 0 8px; color: var(--mn-text); }
 .mn-sl-x, .mn-sl-tip-x { word-break: keep-all; overflow-wrap: anywhere; line-break: strict; text-wrap: pretty; }
@@ -411,7 +419,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-sl-x ul { margin: 0; padding-left: 1.2em; }
 
 /* the picture takes all the room above the words, and what is in it is sized to fill that room */
-.mn-sl-vis { flex: 1 1 auto; min-height: 40%; display: flex; align-items: center; justify-content: center; padding: 18px 14px 0; overflow: hidden;
+.mn-sl-vis { flex: 1 1 auto; min-height: 40%; display: flex; align-items: center; justify-content: center; padding: 56px 14px 40px; overflow: hidden;
     background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--mn-accent) 10%, var(--mn-card-hi)), var(--mn-card) 75%); }
 .mn-sl-vis.is-video, .mn-sl-vis.is-img { padding: 0; background: #000; }
 .mn-sl-video { position: relative; width: 100%; height: 100%; overflow: hidden; }

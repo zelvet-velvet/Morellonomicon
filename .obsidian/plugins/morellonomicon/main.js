@@ -2500,9 +2500,11 @@ function deckPage(ctx, file) {
       h(bars, "span", "mn-bar");
       const section2 = h(pager, "section", "mn-slide");
       const card = h(section2, "div", "mn-sl-card");
-      visual(ctx, h(card, "div", "mn-sl-vis"), s);
-      const words = h(card, "div", "mn-sl-words");
-      h(words, "div", "mn-sl-kn", `${i + 1} / ${slides.length}`);
+      const face = h(card, "div", "mn-sl-face");
+      visual(ctx, h(face, "div", "mn-sl-vis"), s);
+      h(face, "div", "mn-sl-badge", String(i + 1));
+      const words = h(face, "div", "mn-sl-words");
+      h(words, "div", "mn-sl-kn", `${file.basename} \xB7 ${i + 1} / ${slides.length}`);
       h(words, "h2", "mn-sl-t", s.title);
       const tip2 = /^([\s\S]*?)\*\*([^*\n]{1,8})[:：]\*\*\s*([\s\S]+)$/.exec(s.text);
       const main = tip2 ? tip2[1].trim() : s.text;
@@ -2546,6 +2548,7 @@ function deckPage(ctx, file) {
         if (u > 2) op = String(Math.max(0, 3 - u));
       }
       el2.style.transform = `translateX(${x.toFixed(1)}px) translateY(${y.toFixed(1)}px) rotate(${deg.toFixed(2)}deg)`;
+      el2.style.setProperty("--sheen", `${(30 - Math.min(u, 0) * 70).toFixed(0)}%`);
       el2.style.opacity = op;
     };
     let busy = false, settleT = 0;

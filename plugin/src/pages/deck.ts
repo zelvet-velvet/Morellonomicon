@@ -114,11 +114,13 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         slides.forEach((s, i) => {
             h(bars, "span", "mn-bar");
             const section = h(pager, "section", "mn-slide");
-            const card = h(section, "div", "mn-sl-card");
-            visual(ctx, h(card, "div", "mn-sl-vis"), s);
+            const card = h(section, "div", "mn-sl-card");   // the white collectible border
+            const face = h(card, "div", "mn-sl-face");      // the dark face inside it: picture, number badge, rainbow sheen, text on the lower part
+            visual(ctx, h(face, "div", "mn-sl-vis"), s);
+            h(face, "div", "mn-sl-badge", String(i + 1));
             // under the picture: where you are, the title, the line, and a closing "**label：** tip" in its own box
-            const words = h(card, "div", "mn-sl-words");
-            h(words, "div", "mn-sl-kn", `${i + 1} / ${slides.length}`);
+            const words = h(face, "div", "mn-sl-words");
+            h(words, "div", "mn-sl-kn", `${file.basename} · ${i + 1} / ${slides.length}`);
             h(words, "h2", "mn-sl-t", s.title);
             const tip = /^([\s\S]*?)\*\*([^*\n]{1,8})[:：]\*\*\s*([\s\S]+)$/.exec(s.text);
             const main = tip ? tip[1].trim() : s.text;
@@ -162,6 +164,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
                 if (u > 2) op = String(Math.max(0, 3 - u));
             }
             el.style.transform = `translateX(${x.toFixed(1)}px) translateY(${y.toFixed(1)}px) rotate(${deg.toFixed(2)}deg)`;
+            el.style.setProperty("--sheen", `${(30 - Math.min(u, 0) * 70).toFixed(0)}%`);   // the rainbow sheen slides across the face as the card is dragged
             el.style.opacity = op;
         };
         let busy = false, settleT = 0;

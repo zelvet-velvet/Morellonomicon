@@ -13,6 +13,7 @@ sticker: lucide//activity
 - **Patch job push**: the job puts its commit on top of a newer main before pushing (a push made while it ran used to make it fail).
 - **Handbook home**: opens with the loading tip on an ARAM map, then two blocks, 初來乍到 (basics) and 高手必備 (advanced), each with its own progress, the next topic as a large picture and the rest two across; the glossary is a row at the end.
 - **Roles and lanes**: 英雄定位 explains how roles map to lanes (下路 pair, 中路 roaming, 打野) and why counters change with lane and time; the last-card next-topic panel is now fixed under the card, and a tilted card passes over the progress bars.
+- **Collectible cards**: Handbook topic cards use mock D (white border, dark full-art face, number badge, rainbow sheen that follows the drag) (to check on the phone).
 - **Tip swipe and tab bar fixes**: the tip stack is easier to swipe (no hint text); the tab highlight is a plain pill and dragging it no longer opens the sidebar (to check on the phone).
 - **Cards and glass**: clearer card frames and a visible pile; the tip block is a swipeable card stack (no refresh button); the Handbook home shows only when all its pictures are loaded; the tab bar highlight is a liquid-glass pill (to check on the phone).
 - **Patch order and pictures**: the Patch tab lists champions (buffs first), items, new Mayhem augments, removed augments; pages and the first Handbook card wait briefly for their pictures instead of showing empty frames (to check on the phone).
