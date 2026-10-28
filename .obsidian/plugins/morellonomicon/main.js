@@ -2356,6 +2356,22 @@ function parseSlides(md) {
     return { title, icon: ic || "sparkles", visual: visual2, text: text.join("\n").trim() };
   });
 }
+var COUNTERS = [
+  ["\u523A\u5BA2", "\u5C04\u624B", "var(--color-red)"],
+  ["\u523A\u5BA2", "\u6CD5\u5E2B", "var(--color-red)"],
+  ["\u5766\u514B", "\u523A\u5BA2", "var(--color-blue)"],
+  ["\u8F14\u52A9", "\u523A\u5BA2", "var(--color-blue)"],
+  ["\u5C04\u624B", "\u5766\u514B", "var(--color-orange)"],
+  ["\u6CD5\u5E2B", "\u6230\u58EB", "var(--color-purple)"]
+];
+var RING = ["\u6230\u58EB", "\u5766\u514B", "\u5C04\u624B", "\u8F14\u52A9", "\u6CD5\u5E2B"];
+var MIDDLE = "\u523A\u5BA2";
+var WARDS = {
+  lane: { wards: [[27, 33, "w"], [73, 66, "w"], [46, 54, "w"]] },
+  dragon: { obj: [["\u5C0F\u9F8D", 67, 70]], wards: [[60, 66, "c"], [62, 76, "w"], [73, 61, "w"]] },
+  baron: { obj: [["\u5DF4\u9F8D", 33, 30]], wards: [[40, 34, "c"], [38, 24, "w"], [27, 39, "w"]] },
+  steal: { obj: [["\u5C0F\u9F8D", 67, 70]], wards: [[64, 74, "w"], [76, 58, "w"], [83, 70, "c"]] }
+};
 var hashStr = (s) => {
   let x = 2166136261;
   for (let i = 0; i < s.length; i++) x = Math.imul(x ^ s.charCodeAt(i), 16777619);
@@ -2590,6 +2606,54 @@ function visual(ctx, box, s) {
       node(h(box, "div", "mn-tree"), root.id, 0);
       return;
     }
+  } else if (kind === "counters") {
+    const lit = new Set(args);
+    const wrap = h(box, "div", "mn-ctr");
+    const at = (r) => {
+      if (r === MIDDLE) return [50, 52];
+      const a = -Math.PI / 2 + RING.indexOf(r) * 2 * Math.PI / RING.length;
+      return [50 + 39 * Math.cos(a), 52 + 39 * Math.sin(a)];
+    };
+    const g = svg(wrap, "svg", { viewBox: "0 0 100 100", "aria-hidden": "true" }, "mn-ctr-svg");
+    const defs = svg(g, "defs");
+    COUNTERS.forEach(([from, to, color], i) => {
+      const mk = svg(defs, "marker", { id: `mn-ah-${i}`, viewBox: "0 0 10 10", refX: 8, refY: 5, markerWidth: 3.6, markerHeight: 3.6, orient: "auto-start-reverse" });
+      svg(mk, "path", { d: "M0,0 L10,5 L0,10 z" }).setAttribute("style", `fill:${color}`);
+      const [x1, y1] = at(from), [x2, y2] = at(to);
+      const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy), cut = 12 / len;
+      const line = svg(g, "line", { x1: x1 + dx * cut, y1: y1 + dy * cut, x2: x2 - dx * cut, y2: y2 - dy * cut, "marker-end": `url(#mn-ah-${i})` }, "mn-ctr-a");
+      line.setAttribute("style", `stroke:${color}`);
+      if (lit.size && !lit.has(from)) line.addClass("is-dim");
+    });
+    for (const r of [...RING, MIDDLE]) {
+      const [x, y] = at(r);
+      const node = h(wrap, "div", "mn-ctr-n" + (lit.size && !lit.has(r) && !COUNTERS.some(([f, to]) => lit.has(f) && to === r) ? " is-dim" : ""));
+      node.style.left = `${x}%`;
+      node.style.top = `${y}%`;
+      roleChip(node, r, { on: false, onTap: () => void 0 });
+      h(node, "span", "mn-ctr-l", r);
+    }
+    return;
+  } else if (kind === "wards") {
+    const scene = WARDS[args[0] ?? "lane"] ?? WARDS.lane;
+    const ver = /\/cdn\/([\d.]+)\//.exec(store.champions()[0]?.icon ?? "")?.[1] ?? "";
+    const map = h(box, "div", "mn-wmap");
+    const im = h(map, "img", "mn-wmap-img");
+    im.src = `https://ddragon.leagueoflegends.com/cdn/${ver}/img/map/map11.png`;
+    im.alt = "";
+    for (const [label, x, y] of scene.obj ?? []) {
+      const o = h(map, "span", "mn-wmap-obj", label);
+      o.style.left = `${x}%`;
+      o.style.top = `${y}%`;
+    }
+    for (const [x, y, k] of scene.wards) {
+      const w = h(map, "img", "mn-wmap-ward is-" + k);
+      w.src = `https://ddragon.leagueoflegends.com/cdn/${ver}/img/item/${k === "c" ? 2055 : 3340}.png`;
+      w.alt = "";
+      w.style.left = `${x}%`;
+      w.style.top = `${y}%`;
+    }
+    return;
   } else if (kind === "splash") {
     const c = champ(args[0]);
     if (c) {
