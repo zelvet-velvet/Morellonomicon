@@ -7,7 +7,9 @@ const CHARS_PER_MINUTE = 350;   // reading speed for the "N min" label (Chinese)
 const KEYWORDS = 8;      // quick-search chips taken from the glossary (two full rows of four)
 const TILE_COLORS = ["--color-blue", "--color-purple", "--color-orange", "--color-green", "--color-cyan", "--color-pink", "--color-yellow", "--color-red"];
 const GLOSSARY = "名詞表";
-const TRIVIA_AFTER = 4;   // topic cards above the lore trivia card
+const TRIVIA_AFTER = 4;   // topic cards above the loading tip card
+// the game's ARAM loading screen backgrounds (CommunityDragon, shown by address): Howling Abyss, Butcher's Bridge, the Ionian bridge
+const ARAM_ART = ["habackground", "arambilgewater", "arambloom"].map((n) => `https://raw.communitydragon.org/latest/game/assets/ux/loadingscreen/${n}.png`);
 
 // The Handbook: a short, friendly start page (where to begin, topic tiles with a read time, a small fact of the day) and a search over
 // everything we have written (guide cards, champion tips and our own builds), so a detail read once can be found again in a couple of taps.
@@ -76,25 +78,25 @@ export function handbookPage(ctx: PageCtx): PageOut {
         }
     };
 
-    // a loading screen tip (the game's own text) in the middle of a dimmed splash, like the loading screen: a random one each
-    // visit, a tap shows another, none comes back until all were shown
+    // a loading screen tip (the game's own text) in the middle of one of ARAM's three loading screen backgrounds, dimmed: a random
+    // map and tip each visit; a tap shows another tip on the same map, none comes back until all were shown
     const trivia = (parent: HTMLElement) => {
         const tips = store.loadingTips;
-        const champs = store.champions();
         if (!tips.length) return;
         const order = tips.map((_, i) => i);
         for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
         let n = 0;
+        const art = Math.floor(Math.random() * ARAM_ART.length);
         const card = h(parent, "button", "mn-trv");
         const bg = h(card, "div", "mn-trv-bg");
         const text = h(card, "div", "mn-trv-tip");
         icon(h(card, "span", "mn-trv-next"), "refresh-cw");
         const draw = () => {
             text.textContent = tips[order[n % order.length]].text;
-            const c = champs.length ? champs[Math.floor(Math.random() * champs.length)] : null;
+            const url = ARAM_ART[art];
+            if (bg.dataset.url === url) return;
+            bg.dataset.url = url;
             bg.removeClass("is-in");
-            if (!c) return;
-            const url = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg`;
             const img = new Image();
             img.onload = () => { bg.style.backgroundImage = `url("${url}")`; bg.addClass("is-in"); };   // the tip shows at once; the picture fades in under it
             img.src = url;

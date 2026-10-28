@@ -2564,6 +2564,7 @@ var KEYWORDS = 8;
 var TILE_COLORS = ["--color-blue", "--color-purple", "--color-orange", "--color-green", "--color-cyan", "--color-pink", "--color-yellow", "--color-red"];
 var GLOSSARY = "\u540D\u8A5E\u8868";
 var TRIVIA_AFTER = 4;
+var ARAM_ART = ["habackground", "arambilgewater", "arambloom"].map((n) => `https://raw.communitydragon.org/latest/game/assets/ux/loadingscreen/${n}.png`);
 function handbookPage(ctx) {
   const store = ctx.plugin.store;
   const el = page("Handbook");
@@ -2633,7 +2634,6 @@ function handbookPage(ctx) {
   };
   const trivia = (parent) => {
     const tips2 = store.loadingTips;
-    const champs = store.champions();
     if (!tips2.length) return;
     const order = tips2.map((_, i) => i);
     for (let i = order.length - 1; i > 0; i--) {
@@ -2641,16 +2641,17 @@ function handbookPage(ctx) {
       [order[i], order[j]] = [order[j], order[i]];
     }
     let n = 0;
+    const art = Math.floor(Math.random() * ARAM_ART.length);
     const card = h(parent, "button", "mn-trv");
     const bg = h(card, "div", "mn-trv-bg");
     const text = h(card, "div", "mn-trv-tip");
     icon(h(card, "span", "mn-trv-next"), "refresh-cw");
     const draw = () => {
       text.textContent = tips2[order[n % order.length]].text;
-      const c = champs.length ? champs[Math.floor(Math.random() * champs.length)] : null;
+      const url = ARAM_ART[art];
+      if (bg.dataset.url === url) return;
+      bg.dataset.url = url;
       bg.removeClass("is-in");
-      if (!c) return;
-      const url = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg`;
       const img = new Image();
       img.onload = () => {
         bg.style.backgroundImage = `url("${url}")`;
