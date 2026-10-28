@@ -2823,7 +2823,7 @@ var formsTitle = (el, { c, args }) => {
   const im = h(el, "img", "mn-ck-sq");
   im.src = c.icon;
   im.alt = "";
-  h(el, "span", void 0, `${c.name} \xB7 ${args.filter((a) => !a.startsWith("*")).length || 2} \u7A2E\u578B\u614B`);
+  h(el, "span", void 0, `${c.name} \xB7 ${args.filter((a) => !/^[PQWER]\d?$/i.test(a)).length || 2} \u7A2E\u578B\u614B`);
 };
 var formSets = (el, { c, args }) => {
   const names = args.map((a) => a.replace(/^\*/, "")).filter((a) => !/^[PQWER]\d?$/i.test(a));
@@ -2854,6 +2854,42 @@ var formSets = (el, { c, args }) => {
     for (const k of ["Q", "W", "E"]) pic(row2, k, false);
   });
 };
+var RESULT_ICON = [[/快|速/, "zap"], [/遠|長/, "move-horizontal"], [/痛|傷|強/, "flame"], [/穩|盾/, "shield"]];
+var beforeEquals = (args) => args.includes("=") ? args.slice(0, args.indexOf("=")) : args;
+var comboMedia = (el, { c, args }) => {
+  const keys = beforeEquals(args).filter((a) => /^[PQWER]\d?$/i.test(a)).map((a) => a.toUpperCase());
+  const key = keys[keys.length - 1] ?? "Q";
+  const s = c.skills.find((x) => x.key === key.charAt(0));
+  if (s) media(el, { c, s, args: [key] });
+};
+var comboFlow = (el, { c, args }) => {
+  const spec = beforeEquals(args);
+  const names = spec.filter((a) => !/^[PQWER]\d?$/i.test(a)).map((a) => a.replace(/^\*/, ""));
+  const form = Math.max(0, names.indexOf(spec.find((a) => a.startsWith("*"))?.slice(1) ?? ""));
+  const keys = spec.filter((a) => /^[PQWER]\d?$/i.test(a)).map((a) => a.toUpperCase());
+  const id = c.id.toLowerCase();
+  keys.forEach((key, i) => {
+    if (i) icon(el, "arrow-right", "mn-ck-arrow");
+    const s = c.skills.find((x) => x.key === key.charAt(0));
+    if (!s) return;
+    const cell = h(el, "div", "mn-ck-cell is-step");
+    const ic = h(cell, "div", "mn-ck-ic is-huge");
+    ic.style.setProperty("--c", kindColor(s));
+    const im = h(ic, "img");
+    im.alt = "";
+    im.src = `${FORM_ART}/${id}/hud/icons2d/${id}${key.toLowerCase()}_${form === 0 ? "melee" : "ranged"}.png`;
+    im.addEventListener("error", () => {
+      im.src = s.icon;
+    }, { once: true });
+    keyBadge(ic, key, kindColor(s));
+    h(ic, "span", "mn-ck-step", String(i + 1));
+    h(cell, "span", "mn-ck-cn", s.name.split("\uFF0F")[form] ?? s.name);
+  });
+  const at = args.indexOf("=");
+  if (at < 0) return;
+  const chips = h(el, "div", "mn-ck-comboChips");
+  for (const w of args.slice(at + 1)) pill(chips, w, "#f0b074", RESULT_ICON.find(([re]) => re.test(w))?.[1] ?? "sparkles");
+};
 var formCols = (el, { c, args }) => {
   const names = args.map((a) => a.replace(/^\*/, "")).filter((a) => !/^[PQWER]$/i.test(a));
   const on = args.find((a) => a.startsWith("*"))?.slice(1);
@@ -2878,6 +2914,7 @@ var LAYOUTS = {
   clip: { areas: ["media", "tags"], rows: "auto auto", fill: { media, tags } },
   number: { areas: ["hero", "bars"], rows: "auto auto", fill: { hero, bars } },
   forms: { areas: ["formsTitle", "formCols"], rows: "auto auto", fill: { formsTitle, formCols } },
+  combo: { areas: ["comboMedia", "comboFlow"], rows: "auto auto", fill: { comboMedia, comboFlow } },
   formset: { areas: ["formsTitle", "formSets"], rows: "auto auto", fill: { formsTitle, formSets } }
 };
 function cardKit(box, kind, c, args) {
@@ -2885,7 +2922,7 @@ function cardKit(box, kind, c, args) {
   if (!layout || !c) return false;
   const key = (args.find((a) => /^[PQWER]\d?$/i.test(a)) ?? "Q").toUpperCase();
   const s = c.skills.find((x) => x.key === key.charAt(0));
-  if (!s && kind !== "forms" && kind !== "formset") return false;
+  if (!s && kind !== "forms" && kind !== "formset" && kind !== "combo") return false;
   const root = h(box, "div", `mn-ck mn-ck-${kind}`);
   root.style.gridTemplateAreas = layout.areas.map((a) => `"${a}"`).join(" ");
   root.style.gridTemplateRows = layout.rows;
@@ -3254,7 +3291,7 @@ function visual(ctx, box, s) {
       d.style.setProperty("--c", DAMAGE_COLOR[k]);
     }
     return;
-  } else if (kind === "ability" || kind === "clip" || kind === "number" || kind === "forms" || kind === "formset") {
+  } else if (kind === "ability" || kind === "clip" || kind === "number" || kind === "forms" || kind === "formset" || kind === "combo") {
     if (cardKit(box, kind, champ(args[0]), args.slice(1))) return;
   } else if (kind === "skill") {
     const c = champ(args[0]), k = (args[1] ?? "Q").toUpperCase();

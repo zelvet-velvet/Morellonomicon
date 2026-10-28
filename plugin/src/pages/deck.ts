@@ -348,7 +348,7 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
         const row = h(box, "div", "mn-sl-dmg");
         for (const k of ["物理", "魔法", "真實"]) { const d = h(row, "div", "mn-sl-dmg-k", k); d.style.setProperty("--c", DAMAGE_COLOR[k]); }
         return;
-    } else if (kind === "ability" || kind === "clip" || kind === "number" || kind === "forms" || kind === "formset") {
+    } else if (kind === "ability" || kind === "clip" || kind === "number" || kind === "forms" || kind === "formset" || kind === "combo") {
         if (cardKit(box, kind, champ(args[0]), args.slice(1))) return;
     } else if (kind === "skill") {
         const c = champ(args[0]), k = (args[1] ?? "Q").toUpperCase();

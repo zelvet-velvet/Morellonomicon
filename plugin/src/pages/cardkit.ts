@@ -11,6 +11,7 @@ import { demo } from "./skills";
 //   clip     Champ Key[2] [a-b]   the ability's clip fills the picture, key + name on top, tags below; a-b = play only seconds a to b
 //   number   Champ Key        the scaling as one big number, and what it adds up to at a few stat values
 //   forms    Champ A B [*B]   two forms side by side, one line of Q / W / E each; * marks the form to look at
+//   combo    Champ A B *B K1 K2 [= word word]   the clip of K2 on top, under it K1 → K2 as pictures and the result as short chips (A B *B pick the form's art)
 //   formset  Champ A B        both forms' ability pictures: the R of each big, its Q W E under it (Jayce-style files: <id>q_melee / _ranged)
 export interface CardData { c: Champion; s: Skill; args: string[] }
 type Fill = (el: HTMLElement, d: CardData) => void;
@@ -138,7 +139,7 @@ const bars: Fill = (el, { s }) => {
 };
 const formsTitle: Fill = (el, { c, args }) => {
     const im = h(el, "img", "mn-ck-sq"); im.src = c.icon; im.alt = "";   // the champion's square picture
-    h(el, "span", undefined, `${c.name} · ${args.filter((a) => !a.startsWith("*")).length || 2} 種型態`);
+    h(el, "span", undefined, `${c.name} · ${args.filter((a) => !/^[PQWER]\d?$/i.test(a)).length || 2} 種型態`);
 };
 // both forms as pictures: each column has its R big, then Q W E under it, every one with its short name
 const formSets: Fill = (el, { c, args }) => {
@@ -164,6 +165,41 @@ const formSets: Fill = (el, { c, args }) => {
         const row = h(col, "div", "mn-ck-qwe");
         for (const k of ["Q", "W", "E"]) pic(row, k, false);
     });
+};
+// the words after "=" on a combo card, each with a picture: what the combo gives you
+const RESULT_ICON: [RegExp, string][] = [[/快|速/, "zap"], [/遠|長/, "move-horizontal"], [/痛|傷|強/, "flame"], [/穩|盾/, "shield"]];
+// a combo of one form: its two abilities as pictures with a step number and an arrow, no sentences
+const beforeEquals = (args: string[]): string[] => (args.includes("=") ? args.slice(0, args.indexOf("=")) : args);
+// the demo clip of the combo's last ability above, the steps and the result below
+const comboMedia: Fill = (el, { c, args }) => {
+    const keys = beforeEquals(args).filter((a) => /^[PQWER]\d?$/i.test(a)).map((a) => a.toUpperCase());
+    const key = keys[keys.length - 1] ?? "Q";
+    const s = c.skills.find((x) => x.key === key.charAt(0));
+    if (s) media(el, { c, s, args: [key] });
+};
+const comboFlow: Fill = (el, { c, args }) => {
+    const spec = beforeEquals(args);
+    const names = spec.filter((a) => !/^[PQWER]\d?$/i.test(a)).map((a) => a.replace(/^\*/, ""));
+    const form = Math.max(0, names.indexOf(spec.find((a) => a.startsWith("*"))?.slice(1) ?? ""));
+    const keys = spec.filter((a) => /^[PQWER]\d?$/i.test(a)).map((a) => a.toUpperCase());
+    const id = c.id.toLowerCase();
+    keys.forEach((key, i) => {
+        if (i) icon(el, "arrow-right", "mn-ck-arrow");
+        const s = c.skills.find((x) => x.key === key.charAt(0));
+        if (!s) return;
+        const cell = h(el, "div", "mn-ck-cell is-step");
+        const ic = h(cell, "div", "mn-ck-ic is-huge");
+        ic.style.setProperty("--c", kindColor(s));
+        const im = h(ic, "img"); im.alt = ""; im.src = `${FORM_ART}/${id}/hud/icons2d/${id}${key.toLowerCase()}_${form === 0 ? "melee" : "ranged"}.png`;
+        im.addEventListener("error", () => { im.src = s.icon; }, { once: true });
+        keyBadge(ic, key, kindColor(s));
+        h(ic, "span", "mn-ck-step", String(i + 1));
+        h(cell, "span", "mn-ck-cn", s.name.split("／")[form] ?? s.name);
+    });
+    const at = args.indexOf("=");
+    if (at < 0) return;
+    const chips = h(el, "div", "mn-ck-comboChips");
+    for (const w of args.slice(at + 1)) pill(chips, w, "#f0b074", RESULT_ICON.find(([re]) => re.test(w))?.[1] ?? "sparkles");
 };
 // one column per form; each of Q W E is the part of its text that follows "<form>型態："
 const formCols: Fill = (el, { c, args }) => {
@@ -192,6 +228,7 @@ const LAYOUTS: Record<string, Layout> = {
     clip: { areas: ["media", "tags"], rows: "auto auto", fill: { media, tags } },
     number: { areas: ["hero", "bars"], rows: "auto auto", fill: { hero, bars } },
     forms: { areas: ["formsTitle", "formCols"], rows: "auto auto", fill: { formsTitle, formCols } },
+    combo: { areas: ["comboMedia", "comboFlow"], rows: "auto auto", fill: { comboMedia, comboFlow } },
     formset: { areas: ["formsTitle", "formSets"], rows: "auto auto", fill: { formsTitle, formSets } },
 };
 
@@ -201,7 +238,7 @@ export function cardKit(box: HTMLElement, kind: string, c: Champion | undefined,
     if (!layout || !c) return false;
     const key = (args.find((a) => /^[PQWER]\d?$/i.test(a)) ?? "Q").toUpperCase();
     const s = c.skills.find((x) => x.key === key.charAt(0));
-    if (!s && kind !== "forms" && kind !== "formset") return false;
+    if (!s && kind !== "forms" && kind !== "formset" && kind !== "combo") return false;
     const root = h(box, "div", `mn-ck mn-ck-${kind}`);
     root.style.gridTemplateAreas = layout.areas.map((a) => `"${a}"`).join(" ");
     root.style.gridTemplateRows = layout.rows;
