@@ -87,8 +87,8 @@ const stats: Fill = (el, { s }) => {
 const media: Fill = (el, { c, s, args }) => {
     const wrap = h(el, "div", "mn-sl-video");
     const span = args.map((a) => /^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)$/.exec(a)).find((m) => m);   // "0-4.5": only those seconds of the clip
-    const range = span ? ([Number(span[1]), Number(span[2])] as [number, number]) : undefined;
-    demo(wrap, c, { key: args.find((a) => /^[PQWER]\d?$/i.test(a))?.toUpperCase() ?? s.key, range }, () => {
+    const seconds = span ? ([Number(span[1]), Number(span[2])] as [number, number]) : undefined;
+    demo(wrap, c, { key: args.find((a) => /^[PQWER]\d?$/i.test(a))?.toUpperCase() ?? s.key, seconds }, () => {
         // the clip cannot play on this device: the skill's picture takes its place
         const im = h(wrap, "img", "mn-ck-failic"); im.src = s.icon; im.alt = "";
         wrap.querySelectorAll(".mn-sl-vblur").forEach((b) => b.remove());

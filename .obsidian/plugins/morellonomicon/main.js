@@ -1862,8 +1862,8 @@ function demo(parent, c, s, onFail) {
     v.remove();
     onFail?.();
   };
-  if (s.range) {
-    const [start, end] = s.range;
+  if (s.seconds) {
+    const [start, end] = s.seconds;
     v.loop = false;
     v.addEventListener("loadedmetadata", () => {
       v.currentTime = start;
@@ -2641,8 +2641,8 @@ var stats = (el, { s }) => {
 var media = (el, { c, s, args }) => {
   const wrap = h(el, "div", "mn-sl-video");
   const span = args.map((a) => /^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)$/.exec(a)).find((m) => m);
-  const range = span ? [Number(span[1]), Number(span[2])] : void 0;
-  demo(wrap, c, { key: args.find((a) => /^[PQWER]\d?$/i.test(a))?.toUpperCase() ?? s.key, range }, () => {
+  const seconds = span ? [Number(span[1]), Number(span[2])] : void 0;
+  demo(wrap, c, { key: args.find((a) => /^[PQWER]\d?$/i.test(a))?.toUpperCase() ?? s.key, seconds }, () => {
     const im = h(wrap, "img", "mn-ck-failic");
     im.src = s.icon;
     im.alt = "";
