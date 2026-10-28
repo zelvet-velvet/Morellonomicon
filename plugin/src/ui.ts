@@ -92,6 +92,37 @@ export function whenMediaLoaded(roots: HTMLElement[], ms: number): Promise<void>
     });
 }
 
+// A block (a row of icons, a grid) that loads on its own: while its pictures are still arriving it shows blurred with the soft band of
+// light sliding over it, and sharpens when they are in (never sooner than half a second after it appeared, so it is no blink). The page
+// itself shows at once. Call it after the block is filled; a block whose pictures are all there gets no veil. `host` must not be
+// emptied by its owner (the veil lives in it), so give a container that is redrawn its own host.
+const BLOCK_MAX_MS = 8000, BLOCK_MIN_MS = 500;
+const blockState = new WeakMap<HTMLElement, { veil: HTMLElement; since: number }>();
+function lift(host: HTMLElement, state: { veil: HTMLElement; since: number }): void {
+    window.setTimeout(() => {
+        if (blockState.get(host) !== state) return;
+        blockState.delete(host);
+        state.veil.classList.remove("is-in");
+        window.setTimeout(() => state.veil.remove(), 300);
+    }, Math.max(0, BLOCK_MIN_MS - (Date.now() - state.since)));
+}
+export function blockLoad(host: HTMLElement): void {
+    const pending = Array.from(host.querySelectorAll<HTMLImageElement>("img")).filter((im) => im.src && !im.complete);
+    let st = blockState.get(host);
+    if (!pending.length) { if (st) lift(host, st); return; }   // redrawn with every picture already there
+    host.classList.add("mn-blk");
+    if (!st) {
+        st = { veil: h(host, "div", "mn-blkveil is-in"), since: Date.now() };
+        blockState.set(host, st);
+    }
+    const state = st;
+    let left = pending.length;
+    const finish = () => { window.clearTimeout(cap); lift(host, state); };
+    const cap = window.setTimeout(finish, BLOCK_MAX_MS);
+    const one = () => { left -= 1; if (left <= 0) finish(); };
+    for (const im of pending) { im.addEventListener("load", one, { once: true }); im.addEventListener("error", one, { once: true }); }
+}
+
 // Fetches pictures into the browser's cache a few at a time, in the background, so a list that shows them later (Champions, Augments)
 // has them at once instead of each one fading in as it arrives
 export async function warmPictures(urls: string[], batch = 6): Promise<void> {

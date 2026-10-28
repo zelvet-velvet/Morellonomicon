@@ -265,7 +265,7 @@ export class MnView extends ItemView {
         if (!this.plugin.booted) {
             show();
             // the pictures are checked once the data has settled, on the page as it is then (it may have been rebuilt meanwhile)
-            this.holdVeil(page, this.plugin.whenBooted().then(() => whenLoaded(page.el, BOOT_PICTURES_MS)).then(() => undefined), id);
+            this.holdVeil(page, this.plugin.whenBooted().then(() => (page.ready === undefined ? whenLoaded(page.el, BOOT_PICTURES_MS) : page.ready)).then(() => undefined), id);
             return;
         }
         if (!wait || anim === "none") { show(); this.hideVeil(); return; }

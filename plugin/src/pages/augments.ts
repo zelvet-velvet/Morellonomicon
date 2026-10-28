@@ -1,4 +1,4 @@
-import { chip, empty, group, h, icon, page, row, segmented } from "../ui";
+import { chip, empty, group, h, icon, page, row, segmented, blockLoad } from "../ui";
 import type { PageCtx, PageOut } from "./index";
 
 export const RARITIES = ["銀", "金", "稜鏡"];
@@ -28,7 +28,7 @@ export function augmentsPage(ctx: PageCtx): PageOut {
     search.placeholder = "Search";
     const sortHost = h(el, "div", "mn-aug-sort");
     const chips = h(el, "div", "mn-chips mn-aug-rar");
-    const list = h(el, "div");
+    const list = h(el, "div", "mn-blk");
     const links = group(el, "Tier lists (other sites)");
     row(links, { icon: "external-link", title: "OP.GG Mayhem tier list", chevron: true, onTap: () => window.open("https://op.gg/lol/modes/aram-mayhem") });
     row(links, { icon: "external-link", title: "U.GG augment tier list", chevron: true, onTap: () => window.open("https://u.gg/lol/aram-mayhem-augment-tier-list") });
@@ -49,6 +49,7 @@ export function augmentsPage(ctx: PageCtx): PageOut {
             row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || undefined, value: isNew ? `${a.rarity} · 新` : a.rarity, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
         }
         if (!hits.length) empty(list, { icon: "search-x", title: "No match" });
+        blockLoad(list);
     };
     // tapping the chosen sort again flips it; only the chosen one shows its arrow
     const drawSort = () => {
@@ -69,5 +70,5 @@ export function augmentsPage(ctx: PageCtx): PageOut {
     drawSort();
     drawChips();
     draw();
-    return { title: "Augments", el };
+    return { title: "Augments", el, ready: null };   // the page shows at once; the list loads as a block
 }

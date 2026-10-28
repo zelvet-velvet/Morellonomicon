@@ -555,6 +555,45 @@ function whenMediaLoaded(roots, ms) {
     tick();
   });
 }
+var BLOCK_MAX_MS = 8e3;
+var BLOCK_MIN_MS = 500;
+var blockState = /* @__PURE__ */ new WeakMap();
+function lift(host, state) {
+  window.setTimeout(() => {
+    if (blockState.get(host) !== state) return;
+    blockState.delete(host);
+    state.veil.classList.remove("is-in");
+    window.setTimeout(() => state.veil.remove(), 300);
+  }, Math.max(0, BLOCK_MIN_MS - (Date.now() - state.since)));
+}
+function blockLoad(host) {
+  const pending = Array.from(host.querySelectorAll("img")).filter((im) => im.src && !im.complete);
+  let st = blockState.get(host);
+  if (!pending.length) {
+    if (st) lift(host, st);
+    return;
+  }
+  host.classList.add("mn-blk");
+  if (!st) {
+    st = { veil: h(host, "div", "mn-blkveil is-in"), since: Date.now() };
+    blockState.set(host, st);
+  }
+  const state = st;
+  let left = pending.length;
+  const finish = () => {
+    window.clearTimeout(cap);
+    lift(host, state);
+  };
+  const cap = window.setTimeout(finish, BLOCK_MAX_MS);
+  const one = () => {
+    left -= 1;
+    if (left <= 0) finish();
+  };
+  for (const im of pending) {
+    im.addEventListener("load", one, { once: true });
+    im.addEventListener("error", one, { once: true });
+  }
+}
 async function warmPictures(urls, batch = 6) {
   for (let i = 0; i < urls.length; i += batch) {
     await Promise.all(urls.slice(i, i + batch).map((u) => new Promise((done) => {
@@ -1170,7 +1209,7 @@ function augmentsPage(ctx) {
   search.placeholder = "Search";
   const sortHost = h(el, "div", "mn-aug-sort");
   const chips = h(el, "div", "mn-chips mn-aug-rar");
-  const list2 = h(el, "div");
+  const list2 = h(el, "div", "mn-blk");
   const links = group(el, "Tier lists (other sites)");
   row(links, { icon: "external-link", title: "OP.GG Mayhem tier list", chevron: true, onTap: () => window.open("https://op.gg/lol/modes/aram-mayhem") });
   row(links, { icon: "external-link", title: "U.GG augment tier list", chevron: true, onTap: () => window.open("https://u.gg/lol/aram-mayhem-augment-tier-list") });
@@ -1189,6 +1228,7 @@ function augmentsPage(ctx) {
       row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || void 0, value: isNew ? `${a.rarity} \xB7 \u65B0` : a.rarity, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
     }
     if (!hits.length) empty(list2, { icon: "search-x", title: "No match" });
+    blockLoad(list2);
   };
   const drawSort = () => {
     sortHost.empty();
@@ -1218,7 +1258,7 @@ function augmentsPage(ctx) {
   drawSort();
   drawChips();
   draw();
-  return { title: "Augments", el };
+  return { title: "Augments", el, ready: null };
 }
 
 // src/pages/profile.ts
@@ -2026,10 +2066,12 @@ function championPicker(parent, ctx) {
     e.preventDefault();
     ctx.push({ key: "roster", title: "\u901F\u67E5" });
   });
-  const filters = h(parent, "div", "mn-fgroup");
+  const filtersHost = h(parent, "div");
+  const filters = h(filtersHost, "div", "mn-fgroup");
   const panel = h(parent, "div", "mn-fpanel");
   const count2 = h(parent, "div", "mn-count");
-  const grid = h(parent, "div", "mn-grid");
+  const gridHost = h(parent, "div");
+  const grid = h(gridHost, "div", "mn-grid");
   const extra = h(parent, "div");
   const draw = () => {
     grid.empty();
@@ -2054,6 +2096,7 @@ function championPicker(parent, ctx) {
         ctx.openChampion(c.id);
       });
     }
+    blockLoad(gridHost);
     if (!q) return;
     if (!hits.length) empty(grid, { icon: "search-x", title: "No champion" });
     const augs = ctx.plugin.settings.mode === "mayhem" ? store.augments().filter((a) => a.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA) : [];
@@ -2097,6 +2140,7 @@ function championPicker(parent, ctx) {
       drawFilters();
       drawPanel();
     });
+    blockLoad(filtersHost);
   };
   const drawPanel = () => {
     panel.empty();
@@ -2170,7 +2214,7 @@ function championsPage(ctx) {
   if (ctx.frame.key === "champion") return championCard(ctx);
   const el = page("Champions");
   championPicker(el, ctx);
-  return { title: "Champions", el };
+  return { title: "Champions", el, ready: null };
 }
 var lastSub = /* @__PURE__ */ new Map();
 function rememberSub(id, sub) {
@@ -3526,6 +3570,7 @@ function patchPage(ctx) {
       const c = store.champions().find((x) => x.name === e.name);
       if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "skills"), { dir });
     }
+    blockLoad(grid);
     h(el, "div", "mn-gf", LEGEND);
   }
   if (latest?.items?.length) {
@@ -3535,6 +3580,7 @@ function patchPage(ctx) {
       const i = store.items().find((x) => x.name === e.name);
       if (i) tile(grid, i.icon, i.name, () => ctx.openItem(i.id), { dir });
     }
+    blockLoad(grid);
     h(el, "div", "mn-gf", LEGEND);
   }
   if (latest && ctx.plugin.settings.mode === "mayhem") mayhemSection(el, ctx, latest);
@@ -3563,7 +3609,7 @@ function patchPage(ctx) {
     }
     if (stale.length > 30) h(el, "div", "mn-gf", `${stale.length - 30} more`);
   }
-  return { title: "Patch", el };
+  return { title: "Patch", el, ready: null };
 }
 var DIR_ORDER = ["buff", "nerf", "mixed", "change"];
 function byDir(list2) {
@@ -3606,6 +3652,7 @@ function latestCard(el, n) {
     window.open(n.url);
   });
   h(body, "div", "mn-pn-src", "Riot Games \xB7 \u7248\u672C\u66F4\u65B0\u516C\u544A");
+  blockLoad(card);
 }
 function mayhemSection(el, ctx, n) {
   const added = n.augments_new ?? [], removed = n.augments_removed ?? [];
@@ -3618,6 +3665,7 @@ function mayhemSection(el, ctx, n) {
       const mine = byName.get(a.name);
       if (mine) tile(grid, mine.icon, a.name, () => ctx.openAugment(mine.id), { rarity: a.rarity });
     }
+    blockLoad(grid);
   }
   if (removed.length) {
     h(el, "div", "mn-gh", `Removed augments \xB7 ${removed.length}`);
@@ -4259,7 +4307,7 @@ var MnView = class extends import_obsidian9.ItemView {
     const wait = page2.ready !== void 0 ? page2.ready : whenLoaded(page2.el, PAGE_WAIT_MS);
     if (!this.plugin.booted) {
       show();
-      this.holdVeil(page2, this.plugin.whenBooted().then(() => whenLoaded(page2.el, BOOT_PICTURES_MS)).then(() => void 0), id);
+      this.holdVeil(page2, this.plugin.whenBooted().then(() => page2.ready === void 0 ? whenLoaded(page2.el, BOOT_PICTURES_MS) : page2.ready).then(() => void 0), id);
       return;
     }
     if (!wait || anim === "none") {

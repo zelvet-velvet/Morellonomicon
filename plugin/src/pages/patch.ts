@@ -1,5 +1,5 @@
 import type { NoteEntry, PatchNote } from "../data/store";
-import { AUG_CLASS, augIcon, chip, empty, group, h, page, row } from "../ui";
+import { AUG_CLASS, augIcon, blockLoad, chip, empty, group, h, page, row } from "../ui";
 import { RARITY_COLOR } from "./augments";
 import { entryDir, marker, type OfficialDir } from "./changes";
 import type { PageCtx, PageOut } from "./index";
@@ -29,6 +29,7 @@ export function patchPage(ctx: PageCtx): PageOut {
             const c = store.champions().find((x) => x.name === e.name);
             if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "skills"), { dir });
         }
+        blockLoad(grid);
         h(el, "div", "mn-gf", LEGEND);
     }
     if (latest?.items?.length) {
@@ -38,6 +39,7 @@ export function patchPage(ctx: PageCtx): PageOut {
             const i = store.items().find((x) => x.name === e.name);
             if (i) tile(grid, i.icon, i.name, () => ctx.openItem(i.id), { dir });
         }
+        blockLoad(grid);
         h(el, "div", "mn-gf", LEGEND);
     }
 
@@ -63,7 +65,7 @@ export function patchPage(ctx: PageCtx): PageOut {
         }
         if (stale.length > 30) h(el, "div", "mn-gf", `${stale.length - 30} more`);
     }
-    return { title: "Patch", el };
+    return { title: "Patch", el, ready: null };   // the page shows at once; its grids and the headline picture load as blocks
 }
 
 // Entries grouped by the marker they carry: buffs first, then nerfs, then mixed, then plain adjustments (each keeps Riot's order)
@@ -92,6 +94,7 @@ function latestCard(el: HTMLElement, n: PatchNote): void {
     const btn = h(body, "button", "mn-pn-btn", "Read the full notes ↗");
     btn.addEventListener("click", (e) => { e.preventDefault(); window.open(n.url); });
     h(body, "div", "mn-pn-src", "Riot Games · 版本更新公告");
+    blockLoad(card);
 }
 
 function mayhemSection(el: HTMLElement, ctx: PageCtx, n: PatchNote): void {
@@ -105,6 +108,7 @@ function mayhemSection(el: HTMLElement, ctx: PageCtx, n: PatchNote): void {
             const mine = byName.get(a.name);
             if (mine) tile(grid, mine.icon, a.name, () => ctx.openAugment(mine.id), { rarity: a.rarity });
         }
+        blockLoad(grid);
     }
     if (removed.length) {
         h(el, "div", "mn-gh", `Removed augments · ${removed.length}`);

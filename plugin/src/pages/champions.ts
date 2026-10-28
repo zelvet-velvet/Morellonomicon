@@ -1,5 +1,5 @@
 import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, slideSeg, tip } from "../ui";
+import { DAMAGE_COLOR, blockLoad, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, slideSeg, tip } from "../ui";
 import { TAG_GROUPS, championProfile, iconFilter, tagFilter } from "./profile";
 import { buildTab } from "./build";
 import type { PageCtx, PageOut } from "./index";
@@ -59,10 +59,12 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
     h(qk, "span", "", "速查");
     if (picked) h(qk, "span", "mn-qk-n", String(picked));
     qk.addEventListener("click", (e) => { e.preventDefault(); ctx.push({ key: "roster", title: "速查" }); });
-    const filters = h(parent, "div", "mn-fgroup");
+    const filtersHost = h(parent, "div");   // the lane row loads as a block of its own
+    const filters = h(filtersHost, "div", "mn-fgroup");
     const panel = h(parent, "div", "mn-fpanel");
     const count = h(parent, "div", "mn-count");
-    const grid = h(parent, "div", "mn-grid");
+    const gridHost = h(parent, "div");      // so does the grid of champion icons
+    const grid = h(gridHost, "div", "mn-grid");
     const extra = h(parent, "div");
 
     const draw = () => {
@@ -79,6 +81,7 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
             h(tile, "span", "mn-tile-n", c.name);
             tile.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); });
         }
+        blockLoad(gridHost);
         if (!q) return;
         if (!hits.length) empty(grid, { icon: "search-x", title: "No champion" });
         const augs = ctx.plugin.settings.mode === "mayhem" ? store.augments().filter((a) => a.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA) : [];
@@ -110,6 +113,7 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
         icon(fb, "sliders-horizontal", "mn-filterbtn-ic");
         if (n) h(fb, "span", "mn-filterbtn-n", String(n));
         fb.addEventListener("click", (e) => { e.preventDefault(); F.open = !F.open; drawFilters(); drawPanel(); });
+        blockLoad(filtersHost);
     };
     const drawPanel = () => {
         panel.empty();
@@ -161,7 +165,7 @@ export function championsPage(ctx: PageCtx): PageOut {
     if (ctx.frame.key === "champion") return championCard(ctx);
     const el = page("Champions");
     championPicker(el, ctx);
-    return { title: "Champions", el };
+    return { title: "Champions", el, ready: null };   // the page shows at once; its blocks load on their own
 }
 
 export type SubTab = "skills" | "build" | "augments" | "tips";
