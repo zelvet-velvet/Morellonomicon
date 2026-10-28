@@ -36,9 +36,28 @@ function pill(parent: HTMLElement, label: string, color: string, ic?: string): v
     if (ic) icon(p, ic);
     h(p, "span", undefined, label);
 }
+// The key letter's offset that puts its ink (not its line box) in the middle of the badge, measured in the badge's own font:
+// capitals sit high in a line box and 被 low, by an amount that differs per font, so no fixed nudge is right everywhere
+let measure: CanvasRenderingContext2D | null = null;
+function centreInk(letter: HTMLElement): void {
+    if (!letter.isConnected) return;
+    measure ??= document.createElement("canvas").getContext("2d");
+    if (!measure) return;
+    const cs = getComputedStyle(letter);
+    measure.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    const m = measure.measureText(letter.textContent ?? "");
+    // with line-height 1 the letter's box is the font size tall and its baseline sits (ascent - descent) / 2 below the box's middle;
+    // the ink's middle is (ink ascent - ink descent) / 2 above the baseline: move the letter by the difference
+    const box = (m.fontBoundingBoxAscent - m.fontBoundingBoxDescent) / 2;
+    const ink = (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+    if (Number.isFinite(ink) && Number.isFinite(box)) letter.style.setProperty("--dy", `${(ink - box).toFixed(2)}px`);
+}
 function keyBadge(parent: HTMLElement, key: string, color: string): HTMLElement {
-    const k = h(parent, "span", "mn-ck-key" + (key === "P" ? " is-zh" : ""), key === "P" ? "被" : key);   // is-zh: a Chinese character, sized to match the capitals
+    const k = h(parent, "span", "mn-ck-key" + (key === "P" ? " is-zh" : ""));   // is-zh: a Chinese character, sized to match the capitals
+    const letter = h(k, "span", undefined, key === "P" ? "被" : key);
     k.style.setProperty("--c", color);
+    requestAnimationFrame(() => centreInk(letter));
+    void document.fonts?.ready.then(() => centreInk(letter));
     return k;
 }
 const head: Fill = (el, { c, s }) => {

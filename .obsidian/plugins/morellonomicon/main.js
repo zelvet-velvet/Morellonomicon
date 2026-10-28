@@ -2717,9 +2717,24 @@ function pill(parent, label, color, ic) {
   if (ic) icon(p, ic);
   h(p, "span", void 0, label);
 }
+var measure = null;
+function centreInk(letter) {
+  if (!letter.isConnected) return;
+  measure ?? (measure = document.createElement("canvas").getContext("2d"));
+  if (!measure) return;
+  const cs = getComputedStyle(letter);
+  measure.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  const m = measure.measureText(letter.textContent ?? "");
+  const box = (m.fontBoundingBoxAscent - m.fontBoundingBoxDescent) / 2;
+  const ink = (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+  if (Number.isFinite(ink) && Number.isFinite(box)) letter.style.setProperty("--dy", `${(ink - box).toFixed(2)}px`);
+}
 function keyBadge(parent, key, color) {
-  const k = h(parent, "span", "mn-ck-key" + (key === "P" ? " is-zh" : ""), key === "P" ? "\u88AB" : key);
+  const k = h(parent, "span", "mn-ck-key" + (key === "P" ? " is-zh" : ""));
+  const letter = h(k, "span", void 0, key === "P" ? "\u88AB" : key);
   k.style.setProperty("--c", color);
+  requestAnimationFrame(() => centreInk(letter));
+  void document.fonts?.ready.then(() => centreInk(letter));
   return k;
 }
 var head = (el, { c, s }) => {
@@ -3076,8 +3091,8 @@ function deckPage(ctx, file) {
       const face = h(card, "div", "mn-sl-face");
       visual(ctx, h(face, "div", "mn-sl-vis"), s);
       const words2 = h(face, "div", "mn-sl-words");
-      const measure = () => face.style.setProperty("--mn-words-h", `${words2.offsetHeight}px`);
-      const watch = new ResizeObserver(measure);
+      const measure2 = () => face.style.setProperty("--mn-words-h", `${words2.offsetHeight}px`);
+      const watch = new ResizeObserver(measure2);
       watch.observe(words2);
       ctx.component.register(() => watch.disconnect());
       h(words2, "div", "mn-sl-kn", `${file.basename} \xB7 ${i + 1} / ${slides.length}`);
