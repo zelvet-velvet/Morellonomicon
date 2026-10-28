@@ -44,7 +44,8 @@ export function handbookPage(ctx: PageCtx): PageOut {
     };
 
     // The loading screen on top (an ARAM map with a tip on it), then two blocks of topics, 初來乍到 (the basics) and 高手必備 (advanced):
-    // in each, the next one to read large and the others two across (✓ when read). The glossary is a row at the end.
+    // in each, an odd number of topics shows the next one to read large and the rest two across, an even number is all two across
+    // (✓ when read). The glossary is the i button on a topic's page.
     const home = () => {
         out.empty();
         if (!notes.length) { empty(out, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." }); return; }
@@ -53,7 +54,7 @@ export function handbookPage(ctx: PageCtx): PageOut {
         const block = (name: string, list: typeof decks) => {
             if (!list.length) return;
             const done = list.filter((n) => read.has(n.file.path)).length;
-            const next = list.find((n) => !read.has(n.file.path));
+            const next = list.length % 2 ? list.find((n) => !read.has(n.file.path)) : undefined;
             const head = h(out, "div", "mn-hb-head");
             h(head, "span", "mn-hb-k", name);
             h(head, "span", "mn-hb-n", done >= list.length ? "全部讀完了" : `${done} / ${list.length}`);
@@ -75,13 +76,6 @@ export function handbookPage(ctx: PageCtx): PageOut {
         };
         block("初來乍到", decks.filter((n) => n.level !== "advanced"));
         block("高手必備", decks.filter((n) => n.level === "advanced"));
-        for (const n of notes.filter((x) => x.layout !== "deck")) {
-            const r = h(out, "button", "mn-hb-row");
-            icon(r, n.icon, "mn-hb-ric");
-            h(r, "span", "mn-hb-rt", n.title);
-            icon(r, "chevron-right", "mn-hb-chev");
-            r.addEventListener("click", (e) => { e.preventDefault(); ctx.openNote(n.file.path); });
-        }
     };
 
     // a loading screen tip (the game's own text) in the middle of one of ARAM's three loading screen backgrounds, dimmed: a random

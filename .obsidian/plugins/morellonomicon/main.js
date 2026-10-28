@@ -2159,7 +2159,7 @@ function handbookPage(ctx) {
     const block = (name, list2) => {
       if (!list2.length) return;
       const done = list2.filter((n) => read.has(n.file.path)).length;
-      const next = list2.find((n) => !read.has(n.file.path));
+      const next = list2.length % 2 ? list2.find((n) => !read.has(n.file.path)) : void 0;
       const head = h(out, "div", "mn-hb-head");
       h(head, "span", "mn-hb-k", name);
       h(head, "span", "mn-hb-n", done >= list2.length ? "\u5168\u90E8\u8B80\u5B8C\u4E86" : `${done} / ${list2.length}`);
@@ -2193,16 +2193,6 @@ function handbookPage(ctx) {
     };
     block("\u521D\u4F86\u4E4D\u5230", decks.filter((n) => n.level !== "advanced"));
     block("\u9AD8\u624B\u5FC5\u5099", decks.filter((n) => n.level === "advanced"));
-    for (const n of notes.filter((x) => x.layout !== "deck")) {
-      const r = h(out, "button", "mn-hb-row");
-      icon(r, n.icon, "mn-hb-ric");
-      h(r, "span", "mn-hb-rt", n.title);
-      icon(r, "chevron-right", "mn-hb-chev");
-      r.addEventListener("click", (e) => {
-        e.preventDefault();
-        ctx.openNote(n.file.path);
-      });
-    }
   };
   const trivia = (parent) => {
     const tips2 = store.loadingTips;
@@ -2336,6 +2326,7 @@ function marked(parent, text, q) {
 }
 
 // src/pages/deck.ts
+var GLOSSARY2 = "\u540D\u8A5E\u8868";
 var STRIP = 6;
 var PULL = 0.6;
 var GO_AT = 130;
@@ -2387,7 +2378,18 @@ var day = () => String(Math.floor(Date.now() / 864e5));
 function deckPage(ctx, file) {
   const store = ctx.plugin.store;
   const el = h(null, "div", "mn-page mn-deckpage");
-  h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
+  const titleRow = h(el, "div", "mn-title-row");
+  h(titleRow, "h1", "mn-title", file.basename);
+  const glossary = store.guideNotes().find((n) => n.layout !== "deck" && n.title === GLOSSARY2);
+  if (glossary) {
+    const info = h(titleRow, "button", "mn-btn");
+    info.setAttribute("aria-label", GLOSSARY2);
+    icon(info, "info");
+    info.addEventListener("click", (e) => {
+      e.preventDefault();
+      ctx.openNote(glossary.file.path);
+    });
+  }
   const bars = h(el, "div", "mn-bars");
   const wrap = h(el, "div", "mn-deckwrap");
   const peek = h(wrap, "div", "mn-peek");

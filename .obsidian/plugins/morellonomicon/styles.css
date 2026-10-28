@@ -351,13 +351,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-hb-tile.is-big .mn-hb-t { font-size: 22px; }
 .mn-hb-s { margin-top: 2px; font-size: 13px; color: rgba(255, 255, 255, 0.85); word-break: keep-all; overflow-wrap: anywhere; line-break: strict; }
 .mn-hb-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.mn-app .mn-hb-row { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 10px; padding: 14px; border-radius: 16px; text-align: left;
-    background: var(--mn-card); border: 1px solid var(--mn-line); }
-.mn-hb-ric { display: flex; color: var(--mn-muted); }
-.mn-hb-ric svg { width: 20px; height: 20px; }
-.mn-hb-rt { flex: 1; font-family: var(--mn-serif); font-size: 17px; font-weight: 700; color: var(--mn-text); }
-.mn-hb-chev { flex: none; display: flex; color: var(--mn-faint); }
-.mn-hb-chev svg { width: 18px; height: 18px; }
 
 /* next card at the end of a guide note */
 .mn-app .mn-nextcard { white-space: normal; display: flex; align-items: center; gap: 10px; width: 100%; margin: 18px 0 10px; padding: 16px 18px; border-radius: 18px; text-align: left; background: var(--mn-accent); color: var(--text-on-accent, #fff); }

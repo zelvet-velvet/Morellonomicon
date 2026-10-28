@@ -13,11 +13,12 @@ sticker: lucide//activity
 - **Patch job push**: the job puts its commit on top of a newer main before pushing (a push made while it ran used to make it fail).
 - **Handbook home**: opens with the loading tip on an ARAM map, then two blocks, 初來乍到 (basics) and 高手必備 (advanced), each with its own progress, the next topic as a large picture and the rest two across; the glossary is a row at the end.
 - **Roles and lanes**: 英雄定位 explains how roles map to lanes (下路 pair, 中路 roaming, 打野) and why counters change with lane and time; the last-card next-topic panel is now fixed under the card, and a tilted card passes over the progress bars.
+- **Handbook tidy**: 高手必備 as a 2x2 grid; topics renamed 走位技巧, 視野控制, 跳脫定位框架; the glossary is an i button beside each topic title instead of a row on the home (to check on the phone).
 - **Glass tab highlight**: the bottom bar shows one glass pill behind the chosen tab instead of the orange tint (to check on the phone).
 - **Card pile**: Handbook cards lie in a pile like the last page; swipe left to turn a card away (tilting), swipe right to bring the previous one back (to check on the phone).
 - **Tinder-style swiping**: cards tilt while swiped; pulling the last card tilts it and the next topic fills the gap on the right as a growing panel (to check on the phone).
 - **Handbook cards**: picture on top, a line, then a text panel (where you are, title, line, and a 大混戰裡 tip box); text breaks only between phrases; clips shown whole over a blurred copy; pulling the last card left (shiver, haptic) opens the next topic.
-- **New and rewritten topics**: role counters as a graph of role icons with coloured arrows; item recipes drawn like the shop; 高手必備: 跳出定位的英雄 (7 champions, each with the ability that breaks the role), 躲技能, 限制走位 and 視野 (Rift wards on the minimap).
+- **New and rewritten topics**: role counters as a graph of role icons with coloured arrows; item recipes drawn like the shop; 高手必備: 跳脫定位框架 (7 champions, each with the ability that breaks the role), 走位技巧, 限制走位 and 視野控制 (Rift wards on the minimap).
 - **Scope**: the project is described as a guide for both Summoner's Rift and ARAM Mayhem.
 - **Tidy-up**: unused code, styles, the art finder and a placeholder augment removed (248 augments); ARAM item copies show the normal item's current art.
 
@@ -122,8 +123,8 @@ sticker: lucide//activity
 
 ### 🖼️ Handbook pictures
 - [ ] **In-game screenshots** (Zaviel): save them in the vault (e.g. `Assets/`) and put `visual: img Assets/name.png` under a card. Wanted: where the skill damage and cooldown show in the HUD; the augment pick screen (silver / gold / prismatic); the item shop with the recipe tree; the scoreboard; the minimap and ward icons.
-- [>] **More decks**: 視野 (Rift wards) is in; still to write: Rift basics (lanes, objectives), ping etiquette, one card each for the trick-of-the-week.
-- [ ] **Ward spots**: the 視野 cards place wards by eye on the minimap; check them against real games and adjust `WARDS` in `plugin/src/pages/deck.ts`.
+- [>] **More decks**: 視野控制 (Rift wards) is in; still to write: Rift basics (lanes, objectives), ping etiquette, one card each for the trick-of-the-week.
+- [ ] **Ward spots**: the 視野控制 cards place wards by eye on the minimap; check them against real games and adjust `WARDS` in `plugin/src/pages/deck.ts`.
 
 ### 🎬 Videos
 - [ ] **Other forms**: champions that swap forms or upgrade through a mechanic Riot's text does not word as 進化 / 升級 (Viktor, Jayce, Elise, Nidalee, Gnar, Aphelios…) show their base skill only; list them and add hand-written upgrade text.

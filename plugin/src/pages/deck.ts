@@ -25,6 +25,7 @@ import { demo } from "./skills";
 //   itemtag Armor       items of that kind (Armor, SpellBlock, Health…)      item 3089            one item and what it is built from
 //   augs 稜鏡           Mayhem augments of that rarity (a few, changing daily)
 interface Slide { title: string; icon: string; visual: string; text: string }
+const GLOSSARY = "名詞表";   // the plain-list guide note the i button opens
 const STRIP = 6;   // icons in a strip
 const PULL = 0.6;      // how far the last card moves per px pulled (it resists a little, like a rubber band)
 const GO_AT = 130;     // px of card movement that opens the next topic when the finger lifts
@@ -76,7 +77,16 @@ const day = () => String(Math.floor(Date.now() / 86_400_000));
 export function deckPage(ctx: PageCtx, file: TFile): PageOut {
     const store = ctx.plugin.store;
     const el = h(null, "div", "mn-page mn-deckpage");
-    h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
+    const titleRow = h(el, "div", "mn-title-row");
+    h(titleRow, "h1", "mn-title", file.basename);
+    // the glossary is one tap away from every topic: an i button at the right of the title
+    const glossary = store.guideNotes().find((n) => n.layout !== "deck" && n.title === GLOSSARY);
+    if (glossary) {
+        const info = h(titleRow, "button", "mn-btn");
+        info.setAttribute("aria-label", GLOSSARY);
+        icon(info, "info");
+        info.addEventListener("click", (e) => { e.preventDefault(); ctx.openNote(glossary.file.path); });
+    }
     const bars = h(el, "div", "mn-bars");   // one short bar per card, filled up to the one in view (like stories)
     const wrap = h(el, "div", "mn-deckwrap");
     const peek = h(wrap, "div", "mn-peek");   // behind the cards: what pulling the last card leads to; fills the whole card area, the pulled card uncovers it
