@@ -22,12 +22,11 @@ The one layout every Handbook card (`新手入門/`, one `## ` per card) follows
 │ kicker                   │  <topic> · n / N (made by the app), 1 line
 │ title                    │  1 line
 │ body                     │  room for 2 lines, always (optional text)
-├──────────────────────────┤
-│ 小技巧  tip strip         │  1 line along the lower edge, always (empty room when there is no tip)
+│ ▎小技巧  tip              │  1 line, always: a short accent line, the label, the tip (empty room when there is no tip)
 └──────────────────────────┘
 ```
 
-- **Words** have fixed rows (kicker, title, two body lines, the tip strip), so they are the same height on every card and the kicker, dock and clip sit in the same place everywhere (updated 2026-10-28, Zaviel). Text longer than its row is cut with …; keep to the limits below. No scrolling.
+- **Words** have fixed rows (kicker, title, two body lines, the tip line), so they are the same height on every card and the kicker, dock and clip sit in the same place everywhere (updated 2026-10-28, Zaviel). Text longer than its row is cut with …; keep to the limits below. No scrolling.
 - **Dock** is always the 46 px band right above the words, so tags and steps sit at the same distance from the text on every card.
 - **Stage** for a picture (splash, `img`, map) is the whole card behind the words. A clip ends at the top of the words, so its full height shows (Riot's clips keep the champion between 1/5 and 4/5 from the top), raised by its empty top 15% (`--mn-clip-lift` in `plugin/styles.css`); its lower edge fades into the words' dark in steps (no line).
 - Clips are cut at the sides to keep the part three quarters from the left (where Riot's clips have the champion).
@@ -38,7 +37,7 @@ The one layout every Handbook card (`新手入門/`, one `## ` per card) follows
 | --- | --- | --- |
 | title | 1 line | ≤ 12 full-width characters |
 | body | ≤ 2 lines | ≤ 36 characters |
-| tip (`**小技巧：**`) | 1-line strip | ≤ 16 characters |
+| tip (`**小技巧：**`) | 1 line beside its label | ≤ 16 characters |
 
 Counted with full-width characters as 1 and ASCII as ½. Full-width punctuation (，。：) so lines break between phrases.
 

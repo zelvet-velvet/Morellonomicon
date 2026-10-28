@@ -448,11 +448,12 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-sl-x p, .mn-sl-x ul { margin: 0; }
 .mn-sl-x ul { padding-left: 1.2em; }
 .mn-sl-x strong { color: var(--mn-text); }
-/* the tip strip runs along the card's lower edge; a card without a tip keeps the room empty */
-.mn-sl-tip { display: flex; align-items: center; gap: 10px; height: 46px; margin: 14px -20px -20px; padding: 0 20px; background: color-mix(in srgb, var(--mn-accent) 12%, var(--mn-card-hi)); }
-.mn-sl-tip.is-empty { background: none; }
-.mn-sl-tip-k { flex: none; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; color: var(--mn-accent); }
-.mn-sl-tip-x { flex: 1; min-width: 0; font-size: 15px; color: var(--mn-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* the tip: a short accent line, the label and one line of text (T3); a card without a tip keeps the room empty */
+.mn-sl-tip { position: relative; display: flex; align-items: center; gap: 8px; height: 34px; margin: 12px 0 0; padding-left: 12px; }
+.mn-sl-tip::before { content: ""; position: absolute; left: 0; top: 50%; width: 3px; height: 14px; border-radius: 2px; transform: translateY(-50%); background: var(--mn-accent); }
+.mn-sl-tip.is-empty::before { content: none; }
+.mn-sl-tip-k { flex: none; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: var(--mn-accent); }
+.mn-sl-tip-x { flex: 1; min-width: 0; font-size: 15px; color: #e8e0cc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mn-sl-tip-x p { display: inline; margin: 0; }
 
 /* the picture takes all the room above the words, and what is in it is sized to fill that room */
