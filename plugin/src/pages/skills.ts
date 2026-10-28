@@ -58,6 +58,8 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
         const ph = h(clipBox, "div", "mn-sd-clipph");
         ph.style.backgroundImage = `url("${s.icon}")`;
         demo(clipBox, c, s, () => clipBox.remove());
+        // once the clip shows a frame the blurred stand-in goes (left under the clip, its blur showed at the edges)
+        clipBox.querySelector("video")?.addEventListener("loadeddata", () => ph.remove(), { once: true });
         // scroll down to the end of the card (its clip included); a card taller than the screen shows from its top instead
         const reveal = () => {
             if (open !== i || !detail.isConnected) return;   // another skill was opened meanwhile, or the page was left

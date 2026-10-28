@@ -1904,6 +1904,7 @@ function skillStrip(parent, c, changes = []) {
     const ph = h(clipBox, "div", "mn-sd-clipph");
     ph.style.backgroundImage = `url("${s.icon}")`;
     demo(clipBox, c, s, () => clipBox.remove());
+    clipBox.querySelector("video")?.addEventListener("loadeddata", () => ph.remove(), { once: true });
     const reveal = () => {
       if (open !== i || !detail.isConnected) return;
       const view = detail.closest(".mn-scroll");
