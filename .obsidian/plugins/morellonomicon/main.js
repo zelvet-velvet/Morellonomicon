@@ -407,10 +407,7 @@ var Router = class {
     this.stacks = {};
     try {
       const s = this.app.loadLocalStorage(KEY);
-      if (s && s.tab) {
-        this.tab = s.tab;
-        if (Date.now() - s.t < STACK_TTL) this.stacks = s.stacks || {};
-      }
+      if (s && Date.now() - s.t < STACK_TTL) this.stacks = s.stacks || {};
     } catch {
     }
   }

@@ -6,7 +6,7 @@ export interface Frame { key: string; title: string; params?: Record<string, str
 
 interface Saved { tab: TabId; stacks: Partial<Record<TabId, Frame[]>>; t: number }
 const KEY = "morellonomicon-nav";
-const STACK_TTL = 30 * 60 * 1000;   // detail pages are restored for 30 minutes after a restart; the tab always is
+const STACK_TTL = 30 * 60 * 1000;   // detail pages are restored for 30 minutes after a restart; the app always starts on Champions
 
 // Which tab is open and the page stack of every tab. Plain state, no DOM.
 export class Router {
@@ -16,10 +16,8 @@ export class Router {
     constructor(private app: App) {
         try {
             const s = this.app.loadLocalStorage(KEY) as Saved | null;
-            if (s && s.tab) {
-                this.tab = s.tab;
-                if (Date.now() - s.t < STACK_TTL) this.stacks = s.stacks || {};
-            }
+            // the app always starts on the Champions tab; only the detail pages opened before are brought back
+            if (s && Date.now() - s.t < STACK_TTL) this.stacks = s.stacks || {};
         } catch { /* fresh start */ }
     }
 
