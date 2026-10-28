@@ -393,7 +393,7 @@ var Store = class {
   }
   // The Learn cards: notes in the guide folder, ordered by their `order` (then name); `icon` and `summary` come from frontmatter
   guideNotes() {
-    return this.notes(this.s.guideFolder).map(({ file, fm }) => ({ file, title: file.basename, icon: str(fm.icon, "file-text"), summary: str(fm.summary), order: num(fm.order, 99), layout: str(fm.layout, "deck") })).sort((a, b) => a.order - b.order || a.title.localeCompare(b.title, "zh-Hant"));
+    return this.notes(this.s.guideFolder).map(({ file, fm }) => ({ file, title: file.basename, icon: str(fm.icon, "file-text"), summary: str(fm.summary), order: num(fm.order, 99), layout: str(fm.layout, "deck"), cover: str(fm.cover) })).sort((a, b) => a.order - b.order || a.title.localeCompare(b.title, "zh-Hant"));
   }
 };
 
@@ -2160,15 +2160,23 @@ function deckPage(ctx, file) {
     const at = guide.findIndex((n) => n.file.path === file.path);
     const next = guide[at + 1];
     const cards = [];
-    for (const s of slides) {
+    slides.forEach((s, i) => {
       h(bars, "span", "mn-bar");
       const card = h(h(pager, "section", "mn-slide"), "div", "mn-sl-card");
       visual(ctx, h(card, "div", "mn-sl-vis"), s);
       const words = h(card, "div", "mn-sl-words");
+      h(words, "div", "mn-sl-kn", `${i + 1} / ${slides.length}`);
       h(words, "h2", "mn-sl-t", s.title);
-      if (s.text) void import_obsidian5.MarkdownRenderer.render(ctx.app, s.text, h(words, "div", "mn-sl-x markdown-rendered"), file.path, ctx.component);
+      const tip2 = /^([\s\S]*?)\*\*([^*\n]{1,8})[:：]\*\*\s*([\s\S]+)$/.exec(s.text);
+      const main = tip2 ? tip2[1].trim() : s.text;
+      if (main) void import_obsidian5.MarkdownRenderer.render(ctx.app, main, h(words, "div", "mn-sl-x markdown-rendered"), file.path, ctx.component);
+      if (tip2) {
+        const box = h(words, "div", "mn-sl-tip");
+        h(box, "div", "mn-sl-tip-k", tip2[2]);
+        void import_obsidian5.MarkdownRenderer.render(ctx.app, tip2[3].trim(), h(box, "div", "mn-sl-tip-x markdown-rendered"), file.path, ctx.component);
+      }
       cards.push(card);
-    }
+    });
     if (next) {
       icon(h(peek, "div", "mn-peek-ic"), next.icon);
       h(peek, "div", "mn-peek-k", "\u4E0B\u4E00\u7BC7");
@@ -2595,6 +2603,11 @@ var SNIPPET = 46;
 var MAX_PER_NOTE = 2;
 var KEYWORDS = 8;
 var GLOSSARY = "\u540D\u8A5E\u8868";
+var coverUrl = (cover) => {
+  const [a, b] = cover.trim().split(/\s+/);
+  if (!a) return "";
+  return a === "map" ? `https://raw.communitydragon.org/latest/game/assets/ux/loadingscreen/${b ?? "habackground"}.png` : `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(a)}_0.jpg`;
+};
 var ARAM_ART = ["habackground", "arambilgewater", "arambloom"].map((n) => `https://raw.communitydragon.org/latest/game/assets/ux/loadingscreen/${n}.png`);
 function handbookPage(ctx) {
   const store = ctx.plugin.store;
@@ -2621,6 +2634,7 @@ function handbookPage(ctx) {
       empty(out, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." });
       return;
     }
+    trivia(out);
     const decks = notes.filter((n) => n.layout === "deck");
     const done = decks.filter((n) => read.has(n.file.path)).length;
     const next = decks.find((n) => !read.has(n.file.path));
@@ -2628,25 +2642,42 @@ function handbookPage(ctx) {
     h(head, "span", "mn-hb-k", done >= decks.length ? "\u5168\u90E8\u8B80\u5B8C\u4E86" : "\u65B0\u624B\u8AB2\u7A0B");
     h(head, "span", "mn-hb-n", `${done} / ${decks.length}`);
     h(h(out, "div", "mn-hb-track"), "div", "mn-hb-fill").style.width = `${done / Math.max(1, decks.length) * 100}%`;
-    const list2 = h(out, "div", "mn-hb-list");
-    notes.forEach((n) => {
-      const isRead = read.has(n.file.path);
-      const r = h(list2, "button", "mn-hb-row" + (n === next ? " is-next" : "") + (isRead ? " is-read" : ""));
-      const num2 = h(r, "span", "mn-hb-num");
-      if (n.layout !== "deck") icon(num2, "book-a");
-      else if (isRead) icon(num2, "check");
-      else num2.textContent = String(decks.indexOf(n) + 1).padStart(2, "0");
-      const main = h(r, "div", "mn-hb-main");
-      h(main, "div", "mn-hb-t", n.title);
-      if (n.summary) h(main, "div", "mn-hb-s", n.summary);
-      if (n === next) h(r, "span", "mn-hb-go", done ? "\u7E7C\u7E8C" : "\u958B\u59CB");
-      else icon(r, "chevron-right", "mn-hb-chev");
+    const tile2 = (parent, n, big) => {
+      const b = h(parent, "button", "mn-hb-tile" + (big ? " is-big" : "") + (read.has(n.file.path) ? " is-read" : ""));
+      const url = coverUrl(n.cover);
+      if (url) {
+        const im = h(b, "img", "mn-hb-art");
+        im.alt = "";
+        im.loading = "lazy";
+        im.onerror = () => im.remove();
+        im.src = url;
+      }
+      const txt = h(b, "div", "mn-hb-ov");
+      const num2 = String(decks.indexOf(n) + 1).padStart(2, "0");
+      h(txt, "div", "mn-hb-kn", big ? `${done ? "\u7E7C\u7E8C" : "\u958B\u59CB"} \xB7 ${num2}` : read.has(n.file.path) ? `\u2713 ${num2}` : num2);
+      h(txt, "div", "mn-hb-t", n.title);
+      if (big && n.summary) h(txt, "div", "mn-hb-s", n.summary);
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        ctx.openNote(n.file.path);
+      });
+    };
+    if (next) tile2(out, next, true);
+    const rest = decks.filter((n) => n !== next);
+    if (rest.length) {
+      const grid = h(out, "div", "mn-hb-grid");
+      rest.forEach((n) => tile2(grid, n, false));
+    }
+    for (const n of notes.filter((x) => x.layout !== "deck")) {
+      const r = h(out, "button", "mn-hb-row");
+      icon(r, n.icon, "mn-hb-ric");
+      h(r, "span", "mn-hb-rt", n.title);
+      icon(r, "chevron-right", "mn-hb-chev");
       r.addEventListener("click", (e) => {
         e.preventDefault();
         ctx.openNote(n.file.path);
       });
-    });
-    trivia(out);
+    }
   };
   const trivia = (parent) => {
     const tips2 = store.loadingTips;

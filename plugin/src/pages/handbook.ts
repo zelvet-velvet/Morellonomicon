@@ -5,6 +5,13 @@ const SNIPPET = 46;      // characters of context around a match
 const MAX_PER_NOTE = 2;  // matching lines shown per guide card
 const KEYWORDS = 8;      // quick-search chips taken from the glossary (two full rows of four)
 const GLOSSARY = "名詞表";
+// A topic's cover picture from its `cover:` frontmatter: a champion id (its splash art) or `map <name>` (an ARAM loading screen)
+export const coverUrl = (cover: string): string => {
+    const [a, b] = cover.trim().split(/\s+/);
+    if (!a) return "";
+    return a === "map" ? `https://raw.communitydragon.org/latest/game/assets/ux/loadingscreen/${b ?? "habackground"}.png`
+        : `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(a)}_0.jpg`;
+};
 // the game's ARAM loading screen backgrounds (CommunityDragon, shown by address): Howling Abyss, Butcher's Bridge, the Ionian bridge
 const ARAM_ART = ["habackground", "arambilgewater", "arambloom"].map((n) => `https://raw.communitydragon.org/latest/game/assets/ux/loadingscreen/${n}.png`);
 
@@ -31,11 +38,12 @@ export function handbookPage(ctx: PageCtx): PageOut {
         return texts;
     };
 
-    // One calm list: a thin progress line, then a row per topic (number or ✓, icon, title, one line); the next topic to read is
-    // marked 繼續. The glossary is the last row, and a loading screen tip closes the page like a loading screen.
+    // The loading screen on top (an ARAM map with a tip on it), then the topics as pictures: the next one to read large, the others in a
+    // 2-column grid (✓ when read), and the glossary as a row under them.
     const home = () => {
         out.empty();
         if (!notes.length) { empty(out, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." }); return; }
+        trivia(out);
         const decks = notes.filter((n) => n.layout === "deck");
         const done = decks.filter((n) => read.has(n.file.path)).length;
         const next = decks.find((n) => !read.has(n.file.path));
@@ -43,22 +51,27 @@ export function handbookPage(ctx: PageCtx): PageOut {
         h(head, "span", "mn-hb-k", done >= decks.length ? "全部讀完了" : "新手課程");
         h(head, "span", "mn-hb-n", `${done} / ${decks.length}`);
         h(h(out, "div", "mn-hb-track"), "div", "mn-hb-fill").style.width = `${(done / Math.max(1, decks.length)) * 100}%`;
-        const list = h(out, "div", "mn-hb-list");
-        notes.forEach((n) => {
-            const isRead = read.has(n.file.path);
-            const r = h(list, "button", "mn-hb-row" + (n === next ? " is-next" : "") + (isRead ? " is-read" : ""));
-            const num = h(r, "span", "mn-hb-num");
-            if (n.layout !== "deck") icon(num, "book-a");
-            else if (isRead) icon(num, "check");
-            else num.textContent = String(decks.indexOf(n) + 1).padStart(2, "0");
-            const main = h(r, "div", "mn-hb-main");
-            h(main, "div", "mn-hb-t", n.title);
-            if (n.summary) h(main, "div", "mn-hb-s", n.summary);
-            if (n === next) h(r, "span", "mn-hb-go", done ? "繼續" : "開始");
-            else icon(r, "chevron-right", "mn-hb-chev");
+        const tile = (parent: HTMLElement, n: (typeof notes)[number], big: boolean) => {
+            const b = h(parent, "button", "mn-hb-tile" + (big ? " is-big" : "") + (read.has(n.file.path) ? " is-read" : ""));
+            const url = coverUrl(n.cover);
+            if (url) { const im = h(b, "img", "mn-hb-art"); im.alt = ""; im.loading = "lazy"; im.onerror = () => im.remove(); im.src = url; }   // no picture: the plain tile
+            const txt = h(b, "div", "mn-hb-ov");
+            const num = String(decks.indexOf(n) + 1).padStart(2, "0");
+            h(txt, "div", "mn-hb-kn", big ? `${done ? "繼續" : "開始"} · ${num}` : read.has(n.file.path) ? `✓ ${num}` : num);
+            h(txt, "div", "mn-hb-t", n.title);
+            if (big && n.summary) h(txt, "div", "mn-hb-s", n.summary);
+            b.addEventListener("click", (e) => { e.preventDefault(); ctx.openNote(n.file.path); });
+        };
+        if (next) tile(out, next, true);
+        const rest = decks.filter((n) => n !== next);
+        if (rest.length) { const grid = h(out, "div", "mn-hb-grid"); rest.forEach((n) => tile(grid, n, false)); }
+        for (const n of notes.filter((x) => x.layout !== "deck")) {
+            const r = h(out, "button", "mn-hb-row");
+            icon(r, n.icon, "mn-hb-ric");
+            h(r, "span", "mn-hb-rt", n.title);
+            icon(r, "chevron-right", "mn-hb-chev");
             r.addEventListener("click", (e) => { e.preventDefault(); ctx.openNote(n.file.path); });
-        });
-        trivia(out);
+        }
     };
 
     // a loading screen tip (the game's own text) in the middle of one of ARAM's three loading screen backgrounds, dimmed: a random

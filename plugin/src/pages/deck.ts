@@ -67,15 +67,24 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         const next = guide[at + 1];
         const cards: HTMLElement[] = [];
 
-        for (const s of slides) {
+        slides.forEach((s, i) => {
             h(bars, "span", "mn-bar");
             const card = h(h(pager, "section", "mn-slide"), "div", "mn-sl-card");
             visual(ctx, h(card, "div", "mn-sl-vis"), s);
+            // under the picture: where you are, the title, the line, and a closing "**label：** tip" in its own box
             const words = h(card, "div", "mn-sl-words");
+            h(words, "div", "mn-sl-kn", `${i + 1} / ${slides.length}`);
             h(words, "h2", "mn-sl-t", s.title);
-            if (s.text) void MarkdownRenderer.render(ctx.app, s.text, h(words, "div", "mn-sl-x markdown-rendered"), file.path, ctx.component);
+            const tip = /^([\s\S]*?)\*\*([^*\n]{1,8})[:：]\*\*\s*([\s\S]+)$/.exec(s.text);
+            const main = tip ? tip[1].trim() : s.text;
+            if (main) void MarkdownRenderer.render(ctx.app, main, h(words, "div", "mn-sl-x markdown-rendered"), file.path, ctx.component);
+            if (tip) {
+                const box = h(words, "div", "mn-sl-tip");
+                h(box, "div", "mn-sl-tip-k", tip[2]);
+                void MarkdownRenderer.render(ctx.app, tip[3].trim(), h(box, "div", "mn-sl-tip-x markdown-rendered"), file.path, ctx.component);
+            }
             cards.push(card);
-        }
+        });
         // behind the last card: the next topic (or, after the last topic, the way back)
         if (next) {
             icon(h(peek, "div", "mn-peek-ic"), next.icon);
