@@ -12,7 +12,7 @@ from vault_paths import GUIDE  # noqa: E402
 
 TITLE_MAX = 12   # one line
 BODY_MAX = 36    # two lines
-TIP_MAX = 18     # one line
+TIP_MAX = 16     # one line, beside its label
 TIP = re.compile(r"^([\s\S]*?)\*\*([^*\n]{1,8})[:：]\*\*\s*([\s\S]+)$")
 MARKUP = re.compile(r"\*\*|`|\[\[|\]\]")
 

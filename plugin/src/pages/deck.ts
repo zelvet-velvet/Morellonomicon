@@ -126,7 +126,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             const card = h(section, "div", "mn-sl-card");   // the white collectible border
             const face = h(card, "div", "mn-sl-face");      // the dark face inside it: picture, text on the lower part
             visual(ctx, h(face, "div", "mn-sl-vis"), s);
-            // under the picture: where you are, the title, the line, and a closing "**label：** tip" in its own box
+            // under the picture: where you are, the title, the line, and a closing "**label：** tip" as a strip on the lower edge
             const words = h(face, "div", "mn-sl-words");
             // the words' height, for the stage (Card Layout F2): the dock sits on it, the clip fades into it, templates keep above it
             const measure = () => face.style.setProperty("--mn-words-h", `${words.offsetHeight}px`);
@@ -137,9 +137,11 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             h(words, "h2", "mn-sl-t", s.title);
             const tip = /^([\s\S]*?)\*\*([^*\n]{1,8})[:：]\*\*\s*([\s\S]+)$/.exec(s.text);
             const main = tip ? tip[1].trim() : s.text;
-            if (main) void MarkdownRenderer.render(ctx.app, main, h(words, "div", "mn-sl-x markdown-rendered"), file.path, ctx.component);
+            // every row is there on every card, empty or not, so the words have the same height everywhere (Card Layout)
+            const body = h(words, "div", "mn-sl-x markdown-rendered");
+            if (main) void MarkdownRenderer.render(ctx.app, main, body, file.path, ctx.component);
+            const box = h(words, "div", "mn-sl-tip" + (tip ? "" : " is-empty"));
             if (tip) {
-                const box = h(words, "div", "mn-sl-tip");
                 h(box, "div", "mn-sl-tip-k", tip[2]);
                 void MarkdownRenderer.render(ctx.app, tip[3].trim(), h(box, "div", "mn-sl-tip-x markdown-rendered"), file.path, ctx.component);
             }

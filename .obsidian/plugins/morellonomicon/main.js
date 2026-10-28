@@ -3071,9 +3071,10 @@ function deckPage(ctx, file) {
       h(words2, "h2", "mn-sl-t", s.title);
       const tip2 = /^([\s\S]*?)\*\*([^*\n]{1,8})[:：]\*\*\s*([\s\S]+)$/.exec(s.text);
       const main = tip2 ? tip2[1].trim() : s.text;
-      if (main) void import_obsidian6.MarkdownRenderer.render(ctx.app, main, h(words2, "div", "mn-sl-x markdown-rendered"), file.path, ctx.component);
+      const body = h(words2, "div", "mn-sl-x markdown-rendered");
+      if (main) void import_obsidian6.MarkdownRenderer.render(ctx.app, main, body, file.path, ctx.component);
+      const box = h(words2, "div", "mn-sl-tip" + (tip2 ? "" : " is-empty"));
       if (tip2) {
-        const box = h(words2, "div", "mn-sl-tip");
         h(box, "div", "mn-sl-tip-k", tip2[2]);
         void import_obsidian6.MarkdownRenderer.render(ctx.app, tip2[3].trim(), h(box, "div", "mn-sl-tip-x markdown-rendered"), file.path, ctx.component);
       }

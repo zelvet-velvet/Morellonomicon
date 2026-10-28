@@ -437,19 +437,23 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
    --mn-words-h (set by deck.ts) is the words' height, so the dock, the fade and the templates' room follow it */
 .mn-sl-face { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; --mn-dock: 46px; border-radius: 20px; background: #12141b;
     --mn-bg: #12141b; --mn-card: #1a1d26; --mn-card-hi: #252937; --mn-text: #f4f1e8; --mn-muted: #c9c5b8; --mn-faint: #8f8c83; --mn-line: rgba(255, 255, 255, 0.16); }
-.mn-sl-words { position: relative; z-index: 2; flex: none; padding: 26px 20px 20px;
-    background: linear-gradient(180deg, rgba(8, 10, 16, 0), rgba(8, 10, 16, 0.88) 22px, rgba(8, 10, 16, 0.95)); }
-.mn-sl-kn { font-size: 11px; font-weight: 700; letter-spacing: 0.16em; color: var(--mn-accent); font-variant-numeric: tabular-nums; }
-.mn-sl-t { font-family: var(--mn-serif); font-size: 26px; font-weight: 700; letter-spacing: 0.02em; margin: 4px 0 8px; color: var(--mn-text); }
-.mn-sl-x, .mn-sl-tip-x { word-break: keep-all; overflow-wrap: anywhere; line-break: strict; text-wrap: pretty; }
-.mn-sl-x { font-size: 16px; line-height: 1.75; color: var(--mn-muted); }
-.mn-sl-tip { margin-top: 12px; padding: 10px 13px; border-radius: 12px; background: color-mix(in srgb, var(--mn-accent) 12%, var(--mn-card-hi)); }
-.mn-sl-tip-k { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; color: var(--mn-accent); margin-bottom: 2px; }
-.mn-sl-tip-x { font-size: 15px; line-height: 1.6; color: var(--mn-text); }
-.mn-sl-tip-x p { margin: 0; }
-.mn-sl-x p { margin: 0 0 6px; }
+.mn-sl-words { position: relative; z-index: 2; flex: none; padding: 12px 20px 20px;
+    background: linear-gradient(180deg, rgba(8, 10, 16, 0), rgba(8, 10, 16, 0.88) 12px, rgba(8, 10, 16, 0.95)); }
+/* fixed rows (Card Layout): kicker 1 line, title 1 line, body 2 lines, tip strip 1 line, the same height on every card */
+.mn-sl-kn { height: 16px; font-size: 11px; line-height: 16px; font-weight: 700; letter-spacing: 0.16em; color: var(--mn-accent); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; }
+.mn-sl-t { height: 36px; font-family: var(--mn-serif); font-size: 26px; line-height: 36px; font-weight: 700; letter-spacing: 0.02em; margin: 2px 0 4px; color: var(--mn-text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mn-sl-x { height: 56px; font-size: 16px; line-height: 28px; color: var(--mn-muted); word-break: keep-all; overflow-wrap: anywhere; line-break: strict; text-wrap: pretty;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mn-sl-x p, .mn-sl-x ul { margin: 0; }
+.mn-sl-x ul { padding-left: 1.2em; }
 .mn-sl-x strong { color: var(--mn-text); }
-.mn-sl-x ul { margin: 0; padding-left: 1.2em; }
+/* the tip strip runs along the card's lower edge; a card without a tip keeps the room empty */
+.mn-sl-tip { display: flex; align-items: center; gap: 10px; height: 46px; margin: 14px -20px -20px; padding: 0 20px; background: color-mix(in srgb, var(--mn-accent) 12%, var(--mn-card-hi)); }
+.mn-sl-tip.is-empty { background: none; }
+.mn-sl-tip-k { flex: none; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; color: var(--mn-accent); }
+.mn-sl-tip-x { flex: 1; min-width: 0; font-size: 15px; color: var(--mn-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mn-sl-tip-x p { display: inline; margin: 0; }
 
 /* the picture takes all the room above the words, and what is in it is sized to fill that room */
 .mn-sl-vis { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 22px 14px calc(var(--mn-words-h, 40%) + 12px); overflow: hidden;
