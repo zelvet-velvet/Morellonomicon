@@ -388,13 +388,13 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-bars { display: flex; gap: 4px; margin: 0 2px 12px; }
 .mn-bar { flex: 1; height: 3px; border-radius: 2px; background: var(--mn-line); transition: background 0.25s; }
 .mn-bar.is-on { background: var(--mn-accent); }
-.mn-deckwrap { --mn-lift: 44px; position: relative; height: 520px; margin: calc(-1 * var(--mn-lift)) -16px 0; }
-.mn-pager { position: relative; z-index: 1; height: 100%; box-sizing: border-box; overflow-x: clip; overflow-y: visible; touch-action: pan-y; }   /* the pile's lower edges and shadow reach below the top card */
+.mn-deckwrap { --mn-lift: 44px; --mn-pile: 34px; position: relative; height: 520px; margin: calc(-1 * var(--mn-lift)) -16px 0; }
+.mn-pager { position: relative; z-index: 1; height: 100%; box-sizing: border-box; overflow: hidden; touch-action: pan-y; }   /* clipped, so cards swiped away never make the page scroll */
 .mn-pager { transition: opacity 0.25s ease-out; }
 .mn-pager.is-wait { opacity: 0; }
 .mn-pager.is-drag { user-select: none; cursor: grabbing; }
 /* the cards lie in one pile; the top one is dragged away (see deck.ts); the room above them lets a tilted card pass over the bars */
-.mn-slide { position: absolute; left: 0; right: 0; top: var(--mn-lift); bottom: 12px; box-sizing: border-box; padding: 0 10px; display: flex; transform-origin: 50% 130%; will-change: transform; }
+.mn-slide { position: absolute; left: 0; right: 0; top: var(--mn-lift); bottom: var(--mn-pile); box-sizing: border-box; padding: 0 10px; display: flex; transform-origin: 50% 130%; will-change: transform; }
 .mn-slide.is-settle { transition: transform 0.34s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s; }
 /* a collectible card: a white border carrying a rainbow sheen (only the border, never the contents), a dark full-art face, the text on its lower part */
 .mn-sl-card { flex: 1; min-width: 0; display: flex; padding: 7px; border-radius: 26px; background-color: #f4f2ec; background-size: 260% 100%; background-position: var(--sheen, 30%) 0;
@@ -491,7 +491,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-wmap-ward.is-c { border-color: #ff6fae; box-shadow: 0 0 0 3px rgba(255, 111, 174, 0.25), 0 2px 6px rgba(0, 0, 0, 0.6); }
 .mn-wmap-obj { position: absolute; z-index: 1; transform: translate(-50%, -140%); padding: 3px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; color: #fff; background: rgba(150, 40, 40, 0.85); white-space: nowrap; }
 /* pulling the last card: it shivers once, then follows the finger at a fraction of the distance and reveals the next topic behind it */
-.mn-peek { position: absolute; z-index: 0; top: var(--mn-lift); bottom: 12px; left: 10px; right: 10px; display: flex; align-items: center; justify-content: flex-end; padding-right: 18px;
+.mn-peek { position: absolute; z-index: 0; top: var(--mn-lift); bottom: var(--mn-pile); left: 10px; right: 10px; display: flex; align-items: center; justify-content: flex-end; padding-right: 18px;
     border-radius: 26px; background: var(--mn-card-hi); border: 1px solid var(--mn-line); opacity: 0; transition: opacity 0.15s, background 0.2s; }
 .mn-peek.is-ready { background: color-mix(in srgb, var(--mn-accent) 16%, var(--mn-card-hi)); border-color: var(--mn-accent); }
 .mn-peek-in { flex: none; width: 112px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }

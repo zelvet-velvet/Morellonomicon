@@ -37,7 +37,7 @@ const SWIPE_AT = 0.25; // fraction of the width a drag must cover to turn the ca
 const FLICK = 0.5;     // px/ms: a quicker, shorter drag turns the card too
 const DECK_WAIT_MS = 800;   // the pile waits this long at most for the first card's pictures
 const SETTLE_MS = 280;
-const DECK_BELOW = 34;   // px kept free under the deck for the lower edges and shadow of the cards under the top one // how long a card takes to land after a swipe
+const DECK_BELOW = 10;   // px kept free under the deck (the room for the pile's lower edges is inside the deck, --mn-pile) // how long a card takes to land after a swipe
 
 export function parseSlides(md: string): Slide[] {
     const body = md.replace(/^---[\s\S]*?---\n/, "");

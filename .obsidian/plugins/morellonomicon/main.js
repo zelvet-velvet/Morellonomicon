@@ -2424,7 +2424,7 @@ var SWIPE_AT = 0.25;
 var FLICK = 0.5;
 var DECK_WAIT_MS = 800;
 var SETTLE_MS = 280;
-var DECK_BELOW = 34;
+var DECK_BELOW = 10;
 function parseSlides(md) {
   const body = md.replace(/^---[\s\S]*?---\n/, "");
   return body.split(/^## /m).slice(1).map((part) => {
