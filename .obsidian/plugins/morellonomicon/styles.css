@@ -388,6 +388,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-bar.is-on { background: var(--mn-accent); }
 .mn-deckwrap { --mn-lift: 44px; position: relative; height: 520px; margin: calc(-1 * var(--mn-lift)) -16px 0; }
 .mn-pager { position: relative; z-index: 1; height: 100%; box-sizing: border-box; overflow: hidden; touch-action: pan-y; }
+.mn-pager { transition: opacity 0.25s ease-out; }
+.mn-pager.is-wait { opacity: 0; }
 .mn-pager.is-drag { user-select: none; cursor: grabbing; }
 /* the cards lie in one pile; the top one is dragged away (see deck.ts); the room above them lets a tilted card pass over the bars */
 .mn-slide { position: absolute; left: 0; right: 0; top: var(--mn-lift); bottom: 12px; box-sizing: border-box; padding: 0 10px; display: flex; transform-origin: 50% 130%; will-change: transform; }

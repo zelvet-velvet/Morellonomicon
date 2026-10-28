@@ -5,7 +5,7 @@ import { THEMES, themeVars } from "./themes";
 import { PageOut, renderPage } from "./pages";
 import { rememberSub } from "./pages/champions";
 import type { Frame } from "./router";
-import { empty, h, icon, preloadRoleIcons, slideSeg } from "./ui";
+import { empty, h, icon, preloadRoleIcons, slideSeg, whenLoaded } from "./ui";
 
 export const VIEW_TYPE = "morellonomicon";
 
@@ -15,16 +15,15 @@ const OVERLAY_PAGES = new Set(["champion"]);
 const OVERLAY_SCROLL = 220;   // px scrolled before the top bar gets its background back over a splash
 const ARRIVE_MS = 240;
 
-// Pictures in the first screen of a page that have not loaded yet, each as a promise that settles when it loads or fails
-function fadeInImages(page: HTMLElement): void {
-    for (const im of page.querySelectorAll<HTMLImageElement>("img")) {
-        if (!im.src || im.complete) continue;
-        im.addClass("is-loading");
-        const shown = () => im.removeClass("is-loading");
-        im.addEventListener("load", shown, { once: true });
-        im.addEventListener("error", shown, { once: true });
-    }
+// A picture that arrives after its page is on screen (a card built later, a lazy one) stays clear, then fades in
+function fadeIn(im: HTMLImageElement): void {
+    if (!im.src || im.complete) return;
+    im.addClass("is-loading");
+    const shown = () => im.removeClass("is-loading");
+    im.addEventListener("load", shown, { once: true });
+    im.addEventListener("error", shown, { once: true });
 }
+const PAGE_WAIT_MS = 700;   // a page waits this long at most for the pictures at its top
 
 function arrive(page: HTMLElement, anim: "push" | "back" | "tab"): void {
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || !page.animate) return;
@@ -75,6 +74,15 @@ export class MnView extends ItemView {
         this.modeBtn = modeBtn;
         this.scrollEl = h(app, "div", "mn-scroll");
         this.registerDomEvent(this.scrollEl, "scroll", () => this.markScrolled(), { passive: true });
+        // pictures added to a page after it showed (cards built later, lazy ones) fade in instead of popping in
+        const late = new MutationObserver((list) => {
+            for (const m of list) m.addedNodes.forEach((n) => {
+                if (n instanceof HTMLImageElement) fadeIn(n);
+                else if (n instanceof HTMLElement) n.querySelectorAll("img").forEach(fadeIn);
+            });
+        });
+        late.observe(this.scrollEl, { childList: true, subtree: true });
+        this.register(() => late.disconnect());
         this.tabsEl = h(app, "div", "mn-tabs");
         this.applyTheme();
         this.registerEvent(this.app.workspace.on("css-change", () => this.applyTheme()));   // Obsidian switched light / dark
@@ -185,30 +193,34 @@ export class MnView extends ItemView {
             empty(el, { icon: "alert-triangle", title: "This page could not be drawn", text: String(e instanceof Error ? e.message : e).slice(0, 200) });
             out = { title: "Error", el };
         }
-        // forget the old page's scrolled state first: restoring the scroll below lays the new page out at once, and a stale
-        // "scrolled" would draw the title row's bottom line and then fade it out (a blink)
-        this.appEl.addClass("is-switching");   // and no fades while the classes flip: a line fading out on the new page reads as a blink
-        this.appEl.removeClass("has-scrolled");
-        this.topEl.removeClass("is-scrolled");
-        this.scrollEl.replaceChildren(out.el);
-        this.shown = key;
-        this.scrollEl.scrollTop = this.scrolls.get(key) ?? 0;
-        this.scrollEl.scrollLeft = 0;   // never carry a sideways offset from the previous page
-        this.titleEl.textContent = out.title;
-        const titleRow = this.router.depth() === 0 ? out.el.querySelector(":scope > .mn-title-row") : null;
-        (titleRow ?? this.topEl).appendChild(this.actsEl);
-        this.actsEl.toggleClass("is-hidden", !titleRow);   // only a tab's first page has them
-        this.topEl.toggleClass("has-back", this.router.depth() > 0);
-        // a champion page puts its splash under the top bar (Back floats on the picture) until it scrolls past it
-        this.appEl.toggleClass("is-overlay", OVERLAY_PAGES.has(f.key));
-        this.appEl.toggleClass("is-float", this.router.depth() === 0);
-        this.appEl.toggleClass("is-sub", this.router.depth() > 0 && !OVERLAY_PAGES.has(f.key));   // Back sits on the title's line   // a tab's first page: no empty strip above its big title
-        this.markScrolled();
-        requestAnimationFrame(() => requestAnimationFrame(() => this.appEl.removeClass("is-switching")));
-        if (anim === "none") return;
-                // the page comes in at once; a picture still loading stays clear and fades in when it arrives (hiding the whole page
-        // until then made a quick load blink: blank, then the page)
-        fadeInImages(out.el);
-        arrive(out.el, anim);
+        // the page shows once the pictures at its top have loaded (or after PAGE_WAIT_MS), so it does not appear with empty frames
+        const page = out;
+        const show = () => {
+            if (id !== this.drawId) return;   // another page was asked for meanwhile
+            // forget the old page's scrolled state first: restoring the scroll below lays the new page out at once, and a stale
+            // "scrolled" would draw the title row's bottom line and then fade it out (a blink)
+            this.appEl.addClass("is-switching");   // and no fades while the classes flip: a line fading out on the new page reads as a blink
+            this.appEl.removeClass("has-scrolled");
+            this.topEl.removeClass("is-scrolled");
+            this.scrollEl.replaceChildren(page.el);
+            this.shown = key;
+            this.scrollEl.scrollTop = this.scrolls.get(key) ?? 0;
+            this.scrollEl.scrollLeft = 0;   // never carry a sideways offset from the previous page
+            this.titleEl.textContent = page.title;
+            const titleRow = this.router.depth() === 0 ? page.el.querySelector(":scope > .mn-title-row") : null;
+            (titleRow ?? this.topEl).appendChild(this.actsEl);
+            this.actsEl.toggleClass("is-hidden", !titleRow);   // only a tab's first page has them
+            this.topEl.toggleClass("has-back", this.router.depth() > 0);
+            // a champion page puts its splash under the top bar (Back floats on the picture) until it scrolls past it
+            this.appEl.toggleClass("is-overlay", OVERLAY_PAGES.has(f.key));
+            this.appEl.toggleClass("is-float", this.router.depth() === 0);
+            this.appEl.toggleClass("is-sub", this.router.depth() > 0 && !OVERLAY_PAGES.has(f.key));   // Back sits on the title's line   // a tab's first page: no empty strip above its big title
+            this.markScrolled();
+            requestAnimationFrame(() => requestAnimationFrame(() => this.appEl.removeClass("is-switching")));
+            if (anim === "none") return;
+            arrive(page.el, anim);
+        };
+        const wait = whenLoaded(page.el, PAGE_WAIT_MS);
+        if (wait) void wait.then(show); else show();
     }
 }

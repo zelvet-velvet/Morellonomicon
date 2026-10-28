@@ -496,6 +496,26 @@ var tip = (anchor, text) => {
     document.addEventListener("scroll", closeBubble, true);
   }, 0);
 };
+var FIRST_SCREEN = 16;
+function whenLoaded(root, ms, count2 = FIRST_SCREEN) {
+  const pending = Array.from(root.querySelectorAll("img")).slice(0, count2).filter((im) => im.src && !im.complete);
+  if (!pending.length) return null;
+  return new Promise((done) => {
+    let left = pending.length;
+    const t = window.setTimeout(done, ms);
+    const one = () => {
+      if (--left <= 0) {
+        window.clearTimeout(t);
+        done();
+      }
+    };
+    for (const im of pending) {
+      im.loading = "eager";
+      im.addEventListener("load", one, { once: true });
+      im.addEventListener("error", one, { once: true });
+    }
+  });
+}
 var HOLD_MS = 280;
 var holdTip = (el, text) => {
   let timer = 0, shown = false;
@@ -2335,6 +2355,7 @@ var GONE = -1.2;
 var FAN = [0, 1.6, -1.3, -1.3];
 var SWIPE_AT = 0.25;
 var FLICK = 0.5;
+var DECK_WAIT_MS = 800;
 var SETTLE_MS = 360;
 function parseSlides(md) {
   const body = md.replace(/^---[\s\S]*?---\n/, "");
@@ -2477,6 +2498,11 @@ function deckPage(ctx, file) {
       show();
     };
     layout(false);
+    const first = whenLoaded(sec[0], DECK_WAIT_MS);
+    if (first) {
+      pager.addClass("is-wait");
+      void first.then(() => pager.removeClass("is-wait"));
+    }
     const onResize = () => layout(false);
     window.addEventListener("resize", onResize);
     ctx.component.register(() => window.removeEventListener("resize", onResize));
@@ -3031,25 +3057,25 @@ function patchPage(ctx) {
     h(hero, "div", "mn-patch-v", store.riotPatch() || "\u2014");
     h(hero, "div", "mn-patch-s", "Run tools/fetch_patch_notes.py to show Riot's patch notes here.");
   }
-  if (latest && ctx.plugin.settings.mode === "mayhem") mayhemSection(el, ctx, latest);
   if (latest?.champions?.length) {
     h(el, "div", "mn-gh", `Champions \xB7 ${latest.champions.length}`);
     const grid = h(el, "div", "mn-grid");
-    for (const e of latest.champions) {
+    for (const { e, dir } of byDir(latest.champions)) {
       const c = store.champions().find((x) => x.name === e.name);
-      if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "skills"), { dir: entryDir(e) });
+      if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "skills"), { dir });
     }
     h(el, "div", "mn-gf", LEGEND);
   }
   if (latest?.items?.length) {
     h(el, "div", "mn-gh", `Items \xB7 ${latest.items.length}`);
     const grid = h(el, "div", "mn-grid");
-    for (const e of latest.items) {
+    for (const { e, dir } of byDir(latest.items)) {
       const i = store.items().find((x) => x.name === e.name);
-      if (i) tile(grid, i.icon, i.name, () => ctx.openItem(i.id), { dir: entryDir(e) });
+      if (i) tile(grid, i.icon, i.name, () => ctx.openItem(i.id), { dir });
     }
     h(el, "div", "mn-gf", LEGEND);
   }
+  if (latest && ctx.plugin.settings.mode === "mayhem") mayhemSection(el, ctx, latest);
   if (older.length) {
     const g2 = group(el, "Earlier patches");
     for (const n of older) row(g2, { icon: "newspaper", title: n.title, sub: n.summary || void 0, value: n.date, chevron: true, clamp: true, onTap: () => window.open(n.url) });
@@ -3076,6 +3102,10 @@ function patchPage(ctx) {
     if (stale.length > 30) h(el, "div", "mn-gf", `${stale.length - 30} more`);
   }
   return { title: "Patch", el };
+}
+var DIR_ORDER = ["buff", "nerf", "mixed", "change"];
+function byDir(list2) {
+  return list2.map((e) => ({ e, dir: entryDir(e) })).sort((a, b) => DIR_ORDER.indexOf(a.dir) - DIR_ORDER.indexOf(b.dir));
 }
 function tile(grid, src, name, onTap, o = {}) {
   const t = h(grid, "button", "mn-tile");
@@ -3498,15 +3528,14 @@ var VIEW_TYPE = "morellonomicon";
 var OVERLAY_PAGES = /* @__PURE__ */ new Set(["champion"]);
 var OVERLAY_SCROLL = 220;
 var ARRIVE_MS = 240;
-function fadeInImages(page2) {
-  for (const im of page2.querySelectorAll("img")) {
-    if (!im.src || im.complete) continue;
-    im.addClass("is-loading");
-    const shown = () => im.removeClass("is-loading");
-    im.addEventListener("load", shown, { once: true });
-    im.addEventListener("error", shown, { once: true });
-  }
+function fadeIn(im) {
+  if (!im.src || im.complete) return;
+  im.addClass("is-loading");
+  const shown = () => im.removeClass("is-loading");
+  im.addEventListener("load", shown, { once: true });
+  im.addEventListener("error", shown, { once: true });
 }
+var PAGE_WAIT_MS = 700;
 function arrive(page2, anim) {
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || !page2.animate) return;
   const from = anim === "push" ? "translateX(28px)" : anim === "back" ? "translateX(-28px)" : "translateY(10px)";
@@ -3569,6 +3598,14 @@ var MnView = class extends import_obsidian8.ItemView {
     this.modeBtn = modeBtn;
     this.scrollEl = h(app, "div", "mn-scroll");
     this.registerDomEvent(this.scrollEl, "scroll", () => this.markScrolled(), { passive: true });
+    const late = new MutationObserver((list2) => {
+      for (const m of list2) m.addedNodes.forEach((n) => {
+        if (n instanceof HTMLImageElement) fadeIn(n);
+        else if (n instanceof HTMLElement) n.querySelectorAll("img").forEach(fadeIn);
+      });
+    });
+    late.observe(this.scrollEl, { childList: true, subtree: true });
+    this.register(() => late.disconnect());
     this.tabsEl = h(app, "div", "mn-tabs");
     this.applyTheme();
     this.registerEvent(this.app.workspace.on("css-change", () => this.applyTheme()));
@@ -3698,26 +3735,32 @@ var MnView = class extends import_obsidian8.ItemView {
       empty(el, { icon: "alert-triangle", title: "This page could not be drawn", text: String(e instanceof Error ? e.message : e).slice(0, 200) });
       out = { title: "Error", el };
     }
-    this.appEl.addClass("is-switching");
-    this.appEl.removeClass("has-scrolled");
-    this.topEl.removeClass("is-scrolled");
-    this.scrollEl.replaceChildren(out.el);
-    this.shown = key;
-    this.scrollEl.scrollTop = this.scrolls.get(key) ?? 0;
-    this.scrollEl.scrollLeft = 0;
-    this.titleEl.textContent = out.title;
-    const titleRow = this.router.depth() === 0 ? out.el.querySelector(":scope > .mn-title-row") : null;
-    (titleRow ?? this.topEl).appendChild(this.actsEl);
-    this.actsEl.toggleClass("is-hidden", !titleRow);
-    this.topEl.toggleClass("has-back", this.router.depth() > 0);
-    this.appEl.toggleClass("is-overlay", OVERLAY_PAGES.has(f.key));
-    this.appEl.toggleClass("is-float", this.router.depth() === 0);
-    this.appEl.toggleClass("is-sub", this.router.depth() > 0 && !OVERLAY_PAGES.has(f.key));
-    this.markScrolled();
-    requestAnimationFrame(() => requestAnimationFrame(() => this.appEl.removeClass("is-switching")));
-    if (anim === "none") return;
-    fadeInImages(out.el);
-    arrive(out.el, anim);
+    const page2 = out;
+    const show = () => {
+      if (id !== this.drawId) return;
+      this.appEl.addClass("is-switching");
+      this.appEl.removeClass("has-scrolled");
+      this.topEl.removeClass("is-scrolled");
+      this.scrollEl.replaceChildren(page2.el);
+      this.shown = key;
+      this.scrollEl.scrollTop = this.scrolls.get(key) ?? 0;
+      this.scrollEl.scrollLeft = 0;
+      this.titleEl.textContent = page2.title;
+      const titleRow = this.router.depth() === 0 ? page2.el.querySelector(":scope > .mn-title-row") : null;
+      (titleRow ?? this.topEl).appendChild(this.actsEl);
+      this.actsEl.toggleClass("is-hidden", !titleRow);
+      this.topEl.toggleClass("has-back", this.router.depth() > 0);
+      this.appEl.toggleClass("is-overlay", OVERLAY_PAGES.has(f.key));
+      this.appEl.toggleClass("is-float", this.router.depth() === 0);
+      this.appEl.toggleClass("is-sub", this.router.depth() > 0 && !OVERLAY_PAGES.has(f.key));
+      this.markScrolled();
+      requestAnimationFrame(() => requestAnimationFrame(() => this.appEl.removeClass("is-switching")));
+      if (anim === "none") return;
+      arrive(page2.el, anim);
+    };
+    const wait = whenLoaded(page2.el, PAGE_WAIT_MS);
+    if (wait) void wait.then(show);
+    else show();
   }
 };
 

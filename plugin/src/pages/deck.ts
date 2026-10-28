@@ -1,7 +1,7 @@
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { Champion } from "../data/store";
 import { mapUrl } from "./handbook";
-import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg } from "../ui";
+import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg, whenLoaded } from "../ui";
 import { factsStrip, profileAxes, profileRadar, styleCard, tagRow } from "./profile";
 import type { PageCtx, PageOut } from "./index";
 import { demo } from "./skills";
@@ -34,6 +34,7 @@ const GONE = -1.2;     // where a swiped-away card rests, in card widths to the 
 const FAN = [0, 1.6, -1.3, -1.3];   // degrees the cards under the top one lean, so the pile looks laid on a table
 const SWIPE_AT = 0.25; // fraction of the width a drag must cover to turn the card
 const FLICK = 0.5;     // px/ms: a quicker, shorter drag turns the card too
+const DECK_WAIT_MS = 800;   // the pile waits this long at most for the first card's pictures
 const SETTLE_MS = 360; // how long a card takes to land after a swipe
 
 export function parseSlides(md: string): Slide[] {
@@ -173,6 +174,9 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             show();
         };
         layout(false);
+        // the pile shows once the top card's pictures have loaded (or after a moment), not with empty frames
+        const first = whenLoaded(sec[0], DECK_WAIT_MS);
+        if (first) { pager.addClass("is-wait"); void first.then(() => pager.removeClass("is-wait")); }
         const onResize = () => layout(false);
         window.addEventListener("resize", onResize);
         ctx.component.register(() => window.removeEventListener("resize", onResize));

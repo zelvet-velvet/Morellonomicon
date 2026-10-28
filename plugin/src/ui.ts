@@ -37,6 +37,21 @@ export const tip = (anchor: HTMLElement, text: string): void => {
 };
 
 // The name bubble while a finger rests on an element: it shows after a short hold and goes the moment the finger lifts.
+// Pictures a page waits for before it shows (the ones at its top), so it does not appear with empty frames; never longer than `ms`.
+// Returns null when there is nothing to wait for. Pictures set to load lazily are made eager, since a page not on screen yet
+// would never load them.
+export const FIRST_SCREEN = 16;
+export function whenLoaded(root: HTMLElement, ms: number, count = FIRST_SCREEN): Promise<void> | null {
+    const pending = Array.from(root.querySelectorAll<HTMLImageElement>("img")).slice(0, count).filter((im) => im.src && !im.complete);
+    if (!pending.length) return null;
+    return new Promise((done) => {
+        let left = pending.length;
+        const t = window.setTimeout(done, ms);
+        const one = () => { if (--left <= 0) { window.clearTimeout(t); done(); } };
+        for (const im of pending) { im.loading = "eager"; im.addEventListener("load", one, { once: true }); im.addEventListener("error", one, { once: true }); }
+    });
+}
+
 // A hold does not count as a tap (the element's tap action stays for a quick tap).
 const HOLD_MS = 280;
 export const holdTip = (el: HTMLElement, text: string | (() => string)): void => {

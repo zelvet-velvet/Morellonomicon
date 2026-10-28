@@ -1,4 +1,4 @@
-import type { PatchNote } from "../data/store";
+import type { NoteEntry, PatchNote } from "../data/store";
 import { AUG_CLASS, augIcon, chip, empty, group, h, page, row } from "../ui";
 import { RARITY_COLOR } from "./augments";
 import { entryDir, marker, type OfficialDir } from "./changes";
@@ -22,26 +22,26 @@ export function patchPage(ctx: PageCtx): PageOut {
         h(hero, "div", "mn-patch-s", "Run tools/fetch_patch_notes.py to show Riot's patch notes here.");
     }
 
-    if (latest && ctx.plugin.settings.mode === "mayhem") mayhemSection(el, ctx, latest);
-
     if (latest?.champions?.length) {
         h(el, "div", "mn-gh", `Champions · ${latest.champions.length}`);
         const grid = h(el, "div", "mn-grid");
-        for (const e of latest.champions) {
+        for (const { e, dir } of byDir(latest.champions)) {
             const c = store.champions().find((x) => x.name === e.name);
-            if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "skills"), { dir: entryDir(e) });
+            if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "skills"), { dir });
         }
         h(el, "div", "mn-gf", LEGEND);
     }
     if (latest?.items?.length) {
         h(el, "div", "mn-gh", `Items · ${latest.items.length}`);
         const grid = h(el, "div", "mn-grid");
-        for (const e of latest.items) {
+        for (const { e, dir } of byDir(latest.items)) {
             const i = store.items().find((x) => x.name === e.name);
-            if (i) tile(grid, i.icon, i.name, () => ctx.openItem(i.id), { dir: entryDir(e) });
+            if (i) tile(grid, i.icon, i.name, () => ctx.openItem(i.id), { dir });
         }
         h(el, "div", "mn-gf", LEGEND);
     }
+
+    if (latest && ctx.plugin.settings.mode === "mayhem") mayhemSection(el, ctx, latest);
 
     if (older.length) {
         const g = group(el, "Earlier patches");
@@ -64,6 +64,12 @@ export function patchPage(ctx: PageCtx): PageOut {
         if (stale.length > 30) h(el, "div", "mn-gf", `${stale.length - 30} more`);
     }
     return { title: "Patch", el };
+}
+
+// Entries grouped by the marker they carry: buffs first, then nerfs, then mixed, then plain adjustments (each keeps Riot's order)
+const DIR_ORDER: OfficialDir[] = ["buff", "nerf", "mixed", "change"];
+function byDir<T extends NoteEntry>(list: T[]): { e: T; dir: OfficialDir }[] {
+    return list.map((e) => ({ e, dir: entryDir(e) })).sort((a, b) => DIR_ORDER.indexOf(a.dir) - DIR_ORDER.indexOf(b.dir));
 }
 
 // An icon with its name under it; `badge` is the number of changes, `ring` an outline colour (rarity)
