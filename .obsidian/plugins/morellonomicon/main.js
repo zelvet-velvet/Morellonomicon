@@ -723,10 +723,11 @@ var row = (parent, r) => {
   return el;
 };
 var DAMAGE_COLOR = { \u7269\u7406: "var(--mn-phys)", \u9B54\u6CD5: "var(--mn-magic)", \u771F\u5BE6: "var(--mn-true)", \u6DF7\u5408: "var(--mn-mixed)" };
-var scalingParts = (note) => (note.match(/\+[^+]+/g) ?? []).map((p) => p.trim()).filter(Boolean).map((text) => ({
-  text,
-  color: text.includes("\u9B54\u6CD5") ? DAMAGE_COLOR["\u9B54\u6CD5"] : text.includes("\u7269\u7406") ? DAMAGE_COLOR["\u7269\u7406"] : "var(--mn-muted)"
-}));
+var DAMAGE_ICON = { \u7269\u7406: "sword", \u9B54\u6CD5: "sparkles", \u771F\u5BE6: "gem", \u6DF7\u5408: "blend" };
+var scalingParts = (note) => (note.match(/\+[^+]+/g) ?? []).map((p) => p.trim()).filter(Boolean).map((text) => {
+  const kind = text.includes("\u9B54\u6CD5") ? "\u9B54\u6CD5" : text.includes("\u7269\u7406") ? "\u7269\u7406" : "";
+  return { text, color: kind ? DAMAGE_COLOR[kind] : "var(--mn-muted)", icon: kind ? DAMAGE_ICON[kind] : "plus" };
+});
 var chip = (parent, text, o = {}) => {
   const el = h(parent, o.onTap ? "button" : "span", "mn-chip" + (o.on ? " is-on" : "") + (o.color ? " has-color" : "") + (o.onTap ? " is-tap" : ""));
   if (o.color && o.onTap && !o.on) h(el, "span", "mn-dot");
@@ -2093,7 +2094,6 @@ var DAMAGES = ["\u7269\u7406", "\u9B54\u6CD5", "\u6DF7\u5408"];
 var REACH = ["\u8FD1\u6230", "\u4E2D\u7A0B", "\u9060\u7A0B"];
 var SORTS2 = [["name", "\u540D\u7A31"], ["diff", "\u96E3\u5EA6"], ["range", "\u5C04\u7A0B"]];
 var SORT_DIR2 = { name: 1, diff: 1, range: -1 };
-var DAMAGE_ICON = { \u7269\u7406: "sword", \u9B54\u6CD5: "sparkles", \u6DF7\u5408: "blend" };
 var SEARCH_EXTRA = 8;
 var F = { lanes: /* @__PURE__ */ new Set(), roles: /* @__PURE__ */ new Set(), dmg: "", feat: /* @__PURE__ */ new Map(), reach: "", sort: "name", dir: 1, open: false };
 var activeFilters = () => F.roles.size + (F.dmg ? 1 : 0) + F.feat.size + (F.reach ? 1 : 0);
@@ -2707,7 +2707,8 @@ var FORM_ICONS = ["hammer", "crosshair"];
 var FORM_ART = "https://raw.communitydragon.org/latest/game/assets/characters";
 var DAMAGE_ROW = /^(物理|魔法|真實)傷害|^治療|^護盾/;
 var SCALING = /\+([\d./]+)%\s*(額外物理攻擊|物理攻擊|魔法攻擊)/;
-var kindColor = (s) => DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--mn-muted)";
+var NEUTRAL = "#6b7183";
+var kindColor = (s) => DAMAGE_COLOR[s.damage[0] ?? ""] ?? NEUTRAL;
 var statColor = (stat) => stat.includes("\u9B54\u6CD5") ? DAMAGE_COLOR["\u9B54\u6CD5"] : DAMAGE_COLOR["\u7269\u7406"];
 var lastNum2 = (v) => parseFloat(v.split("/").pop() ?? "") || 0;
 function pill(parent, label, color, ic) {
@@ -2734,7 +2735,7 @@ var head = (el, { c, s }) => {
   h(who, "div", "mn-ck-name", s.name);
 };
 var tags = (el, { s }) => {
-  for (const k of s.damage) pill(el, `${k}\u50B7\u5BB3`, DAMAGE_COLOR[k] ?? "var(--mn-muted)", "flame");
+  for (const k of s.damage) pill(el, `${k}\u50B7\u5BB3`, DAMAGE_COLOR[k] ?? NEUTRAL, DAMAGE_ICON[k] ?? "flame");
   for (const t of s.tags) {
     const i = tagInfo(t);
     pill(el, t, i?.color ?? "var(--mn-muted)", i?.icon);
@@ -2764,7 +2765,7 @@ var numbers2 = (el, { s }) => {
     if (r.note) {
       const sc = h(el, "div", "mn-ck-sc");
       sc.style.gridColumn = "1 / -1";
-      for (const p of scalingParts(r.note)) pill(sc, p.text, p.color, "sparkles");
+      for (const p of scalingParts(r.note)) pill(sc, p.text, p.color, p.icon);
     }
   }
 };

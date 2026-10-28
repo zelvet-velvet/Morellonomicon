@@ -1,5 +1,5 @@
 import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, blockLoad, blockUntil, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, slideSeg, tip } from "../ui";
+import { DAMAGE_COLOR, DAMAGE_ICON, blockLoad, blockUntil, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, slideSeg, tip } from "../ui";
 import { TAG_GROUPS, championProfile, iconFilter, tagFilter } from "./profile";
 import { buildTab } from "./build";
 import type { PageCtx, PageOut } from "./index";
@@ -12,7 +12,6 @@ const DAMAGES = ["物理", "魔法", "混合"];
 const REACH = ["近戰", "中程", "遠程"];
 const SORTS: [string, string][] = [["name", "名稱"], ["diff", "難度"], ["range", "射程"]];
 const SORT_DIR: Record<string, 1 | -1> = { name: 1, diff: 1, range: -1 };   // first direction when a sort is picked: A first, easy first, far first
-const DAMAGE_ICON: Record<string, string> = { 物理: "sword", 魔法: "sparkles", 混合: "blend" };
 const SEARCH_EXTRA = 8;   // augments / items listed under the champions when the search box has text
 
 // The filters stay as you set them while the app is open, so coming back from a champion card keeps your list.

@@ -1,5 +1,5 @@
 import type { Champion, Skill } from "../data/store";
-import { DAMAGE_COLOR, h, icon, scalingParts } from "../ui";
+import { DAMAGE_COLOR, DAMAGE_ICON, h, icon, scalingParts } from "../ui";
 import { tagInfo } from "./profile";
 import { demo } from "./skills";
 
@@ -24,7 +24,8 @@ const FORM_ART = "https://raw.communitydragon.org/latest/game/assets/characters"
 const DAMAGE_ROW = /^(物理|魔法|真實)傷害|^治療|^護盾/;
 const SCALING = /\+([\d./]+)%\s*(額外物理攻擊|物理攻擊|魔法攻擊)/;
 
-const kindColor = (s: Skill): string => DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--mn-muted)";
+const NEUTRAL = "#6b7183";   // a skill with no damage (most passives): dark enough for the white key letter (被) on it
+const kindColor = (s: Skill): string => DAMAGE_COLOR[s.damage[0] ?? ""] ?? NEUTRAL;
 const statColor = (stat: string): string => (stat.includes("魔法") ? DAMAGE_COLOR["魔法"] : DAMAGE_COLOR["物理"]);
 const lastNum = (v: string): number => parseFloat(v.split("/").pop() ?? "") || 0;
 
@@ -51,7 +52,7 @@ const head: Fill = (el, { c, s }) => {
     h(who, "div", "mn-ck-name", s.name);
 };
 const tags: Fill = (el, { s }) => {
-    for (const k of s.damage) pill(el, `${k}傷害`, DAMAGE_COLOR[k] ?? "var(--mn-muted)", "flame");
+    for (const k of s.damage) pill(el, `${k}傷害`, DAMAGE_COLOR[k] ?? NEUTRAL, DAMAGE_ICON[k] ?? "flame");
     for (const t of s.tags) { const i = tagInfo(t); pill(el, t, i?.color ?? "var(--mn-muted)", i?.icon); }
 };
 const desc: Fill = (el, { s }) => { el.textContent = s.desc; };
@@ -70,7 +71,7 @@ const numbers: Fill = (el, { s }) => {
         else for (const v of r.vals) h(el, "div", "mn-ck-v", v).style.color = color;
         if (r.note) {   // one pill per stat it scales with, each in that stat's colour
             const sc = h(el, "div", "mn-ck-sc"); sc.style.gridColumn = "1 / -1";
-            for (const p of scalingParts(r.note)) pill(sc, p.text, p.color, "sparkles");
+            for (const p of scalingParts(r.note)) pill(sc, p.text, p.color, p.icon);
         }
     }
 };
