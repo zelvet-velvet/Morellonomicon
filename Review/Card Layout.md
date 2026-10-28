@@ -17,7 +17,7 @@ The one layout every Handbook card (`新手入門/`, one `## ` per card) follows
 │ stage (background layer) │  a picture fills the whole card; a clip ends at the top of the words, its lower edge faded
 │   template content       │  templates (levels, ability…) sit in the room above the words
 │                          │
-│ ┌──────── dock ────────┐ │  46 px, centred, 8 px above the words (`--mn-dock-gap`): tags, steps, legend
+│ ┌──────── dock ────────┐ │  46 px, centred, 6 px above the words (`--mn-dock-gap`): tags, steps, legend
 ├──────────────────────────┤
 │ kicker                   │  <topic> · n / N (made by the app), 1 line
 │ title                    │  1 line
@@ -27,7 +27,7 @@ The one layout every Handbook card (`新手入門/`, one `## ` per card) follows
 ```
 
 - **Words** have fixed rows (kicker, title, two body lines, the tip line), so they are the same height on every card and the kicker, dock and clip sit in the same place everywhere (updated 2026-10-28, Zaviel). Text longer than its row is cut with …; keep to the limits below. No scrolling.
-- **Dock** is always the 46 px band 8 px above the words, so tags and steps sit at the same distance from the text on every card.
+- **Dock** is always the 46 px band 6 px above the words, so tags and steps sit at the same distance from the text on every card.
 - **Stage** for a picture (splash, `img`, map) is the whole card behind the words. A clip ends at the top of the words, so its full height shows (Riot's clips keep the champion between 1/5 and 4/5 from the top), raised by its empty top 15% (`--mn-clip-lift` in `plugin/styles.css`); its lower edge fades into the words' dark in steps (no line).
 - Clips are cut at the sides to keep the part three quarters from the left (where Riot's clips have the champion).
 
