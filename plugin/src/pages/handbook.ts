@@ -5,16 +5,9 @@ const SNIPPET = 46;      // characters of context around a match
 const MAX_PER_NOTE = 2;  // matching lines shown per guide card
 const CHARS_PER_MINUTE = 350;   // reading speed for the "N min" label (Chinese)
 const KEYWORDS = 8;      // quick-search chips taken from the glossary (two full rows of four)
-const LOAD_TIMEOUT = 8000;   // ms before the trivia card shows its text even if the picture has not arrived
 const TILE_COLORS = ["--color-blue", "--color-purple", "--color-orange", "--color-green", "--color-cyan", "--color-pink", "--color-yellow", "--color-red"];
 const GLOSSARY = "名詞表";
 const TRIVIA_AFTER = 4;   // topic cards above the lore trivia card
-
-// the first sentence of a champion's lore, kept to one line or two
-function firstSentence(blurb: string): string {
-    const s = blurb.split(/(?<=[。!?!?])/)[0] ?? blurb;
-    return s.length > 64 ? s.slice(0, 62) + "…" : s;
-}
 
 // The Handbook: a short, friendly start page (where to begin, topic tiles with a read time, a small fact of the day) and a search over
 // everything we have written (guide cards, champion tips and our own builds), so a detail read once can be found again in a couple of taps.
@@ -83,44 +76,30 @@ export function handbookPage(ctx: PageCtx): PageOut {
         }
     };
 
-    // "你知道嗎?": one line of a champion's lore on its splash art, a random one each time; a tap shows another, and none comes
-    // back until all of them have been shown
+    // a loading screen tip (the game's own text) in the middle of a dimmed splash, like the loading screen: a random one each
+    // visit, a tap shows another, none comes back until all were shown
     const trivia = (parent: HTMLElement) => {
-        const champs = store.champions().filter((c) => c.blurb);
-        if (!champs.length) return;
-        const order = champs.map((_, i) => i);
+        const tips = store.loadingTips;
+        const champs = store.champions();
+        if (!tips.length) return;
+        const order = tips.map((_, i) => i);
         for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
         let n = 0;
         const card = h(parent, "button", "mn-trv");
-        let seq = 0;   // a newer card replaces one still loading
-        // The picture loads first behind a spinner; the text only appears together with it (never text on an empty card).
+        const bg = h(card, "div", "mn-trv-bg");
+        const text = h(card, "div", "mn-trv-tip");
+        icon(h(card, "span", "mn-trv-next"), "refresh-cw");
         const draw = () => {
-            const mine = ++seq;
-            const c = champs[order[n % order.length]];
+            text.textContent = tips[order[n % order.length]].text;
+            const c = champs.length ? champs[Math.floor(Math.random() * champs.length)] : null;
+            bg.removeClass("is-in");
+            if (!c) return;
             const url = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg`;
-            card.empty();
-            card.addClass("is-loading");
-            h(h(card, "div", "mn-trv-load"), "span", "mn-spin");
-            let shown = false;
-            const show = () => {
-                if (shown || mine !== seq) return;
-                shown = true;
-                card.empty();
-                card.removeClass("is-loading");
-                h(card, "div", "mn-trv-bg").style.backgroundImage = `url("${url}")`;
-                const body = h(card, "div", "mn-trv-body");
-                h(body, "div", "mn-trv-k", "你知道嗎?");
-                h(body, "div", "mn-trv-t", `${c.name} · ${c.title}`);
-                h(body, "div", "mn-trv-s", firstSentence(c.blurb));
-                icon(h(card, "span", "mn-trv-next"), "refresh-cw");
-            };
             const img = new Image();
-            img.onload = show;
-            img.onerror = show;   // no picture: show the text on the plain card
+            img.onload = () => { bg.style.backgroundImage = `url("${url}")`; bg.addClass("is-in"); };   // the tip shows at once; the picture fades in under it
             img.src = url;
-            window.setTimeout(show, LOAD_TIMEOUT);
         };
-        card.addEventListener("click", (e) => { e.preventDefault(); if (card.hasClass("is-loading")) return; n += 1; draw(); });
+        card.addEventListener("click", (e) => { e.preventDefault(); n += 1; draw(); });
         draw();
     };
 

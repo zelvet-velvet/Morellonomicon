@@ -160,7 +160,8 @@ var Store = class {
     // _data/positions.json
     this.riotNotes = [];
     this.sounds = null;
-    // _data/sounds.json: how characters are said, for finding names from speech to text
+    this.loadingTips = [];
+    // _data/loading-tips.json: the game's loading screen tips (zh_TW)   // _data/sounds.json: how characters are said, for finding names from speech to text
     this.gameText = {};
   }
   get app() {
@@ -195,6 +196,12 @@ var Store = class {
       this.positions = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)) : null;
     } catch {
       this.positions = null;
+    }
+    try {
+      const path = (0, import_obsidian.normalizePath)("_data/loading-tips.json");
+      this.loadingTips = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)).tips ?? [] : [];
+    } catch {
+      this.loadingTips = [];
     }
     if (!this.sounds) try {
       const path = (0, import_obsidian.normalizePath)("_data/sounds.json");
@@ -2553,14 +2560,9 @@ var SNIPPET = 46;
 var MAX_PER_NOTE = 2;
 var CHARS_PER_MINUTE = 350;
 var KEYWORDS = 8;
-var LOAD_TIMEOUT = 8e3;
 var TILE_COLORS = ["--color-blue", "--color-purple", "--color-orange", "--color-green", "--color-cyan", "--color-pink", "--color-yellow", "--color-red"];
 var GLOSSARY = "\u540D\u8A5E\u8868";
 var TRIVIA_AFTER = 4;
-function firstSentence(blurb) {
-  const s = blurb.split(/(?<=[。!?!?])/)[0] ?? blurb;
-  return s.length > 64 ? s.slice(0, 62) + "\u2026" : s;
-}
 function handbookPage(ctx) {
   const store = ctx.plugin.store;
   const el = page("Handbook");
@@ -2629,45 +2631,34 @@ function handbookPage(ctx) {
     }
   };
   const trivia = (parent) => {
-    const champs = store.champions().filter((c) => c.blurb);
-    if (!champs.length) return;
-    const order = champs.map((_, i) => i);
+    const tips2 = store.loadingTips;
+    const champs = store.champions();
+    if (!tips2.length) return;
+    const order = tips2.map((_, i) => i);
     for (let i = order.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [order[i], order[j]] = [order[j], order[i]];
     }
     let n = 0;
     const card = h(parent, "button", "mn-trv");
-    let seq = 0;
+    const bg = h(card, "div", "mn-trv-bg");
+    const text = h(card, "div", "mn-trv-tip");
+    icon(h(card, "span", "mn-trv-next"), "refresh-cw");
     const draw = () => {
-      const mine = ++seq;
-      const c = champs[order[n % order.length]];
+      text.textContent = tips2[order[n % order.length]].text;
+      const c = champs.length ? champs[Math.floor(Math.random() * champs.length)] : null;
+      bg.removeClass("is-in");
+      if (!c) return;
       const url = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg`;
-      card.empty();
-      card.addClass("is-loading");
-      h(h(card, "div", "mn-trv-load"), "span", "mn-spin");
-      let shown = false;
-      const show = () => {
-        if (shown || mine !== seq) return;
-        shown = true;
-        card.empty();
-        card.removeClass("is-loading");
-        h(card, "div", "mn-trv-bg").style.backgroundImage = `url("${url}")`;
-        const body = h(card, "div", "mn-trv-body");
-        h(body, "div", "mn-trv-k", "\u4F60\u77E5\u9053\u55CE?");
-        h(body, "div", "mn-trv-t", `${c.name} \xB7 ${c.title}`);
-        h(body, "div", "mn-trv-s", firstSentence(c.blurb));
-        icon(h(card, "span", "mn-trv-next"), "refresh-cw");
-      };
       const img = new Image();
-      img.onload = show;
-      img.onerror = show;
+      img.onload = () => {
+        bg.style.backgroundImage = `url("${url}")`;
+        bg.addClass("is-in");
+      };
       img.src = url;
-      window.setTimeout(show, LOAD_TIMEOUT);
     };
     card.addEventListener("click", (e) => {
       e.preventDefault();
-      if (card.hasClass("is-loading")) return;
       n += 1;
       draw();
     });

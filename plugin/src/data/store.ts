@@ -93,7 +93,8 @@ export class Store {
     changes: ChangeData | null = null;
     positions: { patch: string; date: string; matches: number; champions: Record<string, Record<string, number>> } | null = null;   // _data/positions.json
     riotNotes: PatchNote[] = [];
-    sounds: Sounds | null = null;   // _data/sounds.json: how characters are said, for finding names from speech to text
+    sounds: Sounds | null = null;
+    loadingTips: { mode: string; text: string }[] = [];   // _data/loading-tips.json: the game's loading screen tips (zh_TW)   // _data/sounds.json: how characters are said, for finding names from speech to text
     gameText: Record<string, { text: string; partial: boolean }> = {};   // augment id -> the game's own description (tools/fetch_augment_text.py)
 
     constructor(private plugin: MorellonomiconPlugin) {}
@@ -119,6 +120,10 @@ export class Store {
             const path = normalizePath("_data/positions.json");
             this.positions = (await this.app.vault.adapter.exists(path)) ? JSON.parse(await this.app.vault.adapter.read(path)) : null;
         } catch { this.positions = null; }
+        try {
+            const path = normalizePath("_data/loading-tips.json");
+            this.loadingTips = (await this.app.vault.adapter.exists(path)) ? ((JSON.parse(await this.app.vault.adapter.read(path)) as { tips: { mode: string; text: string }[] }).tips ?? []) : [];
+        } catch { this.loadingTips = []; }
         if (!this.sounds) try {
             const path = normalizePath("_data/sounds.json");
             if (await this.app.vault.adapter.exists(path)) {
