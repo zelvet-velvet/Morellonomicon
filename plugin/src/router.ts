@@ -17,7 +17,8 @@ export class Router {
         try {
             const s = this.app.loadLocalStorage(KEY) as Saved | null;
             // the app always starts on the Champions tab; only the detail pages opened before are brought back
-            if (s && Date.now() - s.t < STACK_TTL) this.stacks = s.stacks || {};
+            // only the pages opened on the tab the app starts on come back (a topic left open on another tab starts at its home)
+            if (s && Date.now() - s.t < STACK_TTL && s.stacks?.[this.tab]) this.stacks = { [this.tab]: s.stacks[this.tab] };
         } catch { /* fresh start */ }
     }
 

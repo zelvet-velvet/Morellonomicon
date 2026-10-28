@@ -5,11 +5,31 @@ import { preloadRoleIcons } from "./ui";
 import { DEFAULTS, MnSettingTab, MnSettings } from "./settings";
 import { MnView, VIEW_TYPE } from "./view";
 
+const BOOT_QUIET_MS = 600;   // how long the data must stay unchanged before start-up counts as over
+const BOOT_MAX_MS = 6000;    // start-up never keeps the loading veil longer than this
+
 export default class MorellonomiconPlugin extends Plugin {
     settings: MnSettings = { ...DEFAULTS };
     router!: Router;
     store!: Store;
     private dataTimer = 0;
+    // Start-up is over when the data files are read, the champion notes are indexed and nothing has changed for BOOT_QUIET_MS (the
+    // page is rebuilt each time the data changes; the loading veil stays up until it stops), or after BOOT_MAX_MS
+    booted = false;
+    private lastChange = Date.now();
+    private bootPromise: Promise<void> | null = null;
+    whenBooted(): Promise<void> {
+        if (this.booted) return Promise.resolve();
+        this.bootPromise ??= new Promise<void>((done) => {
+            const t0 = Date.now();
+            const tick = () => {
+                const settled = this.store.ready && this.store.champions().length > 0 && Date.now() - this.lastChange > BOOT_QUIET_MS;
+                if (settled || Date.now() - t0 > BOOT_MAX_MS) { this.booted = true; done(); } else window.setTimeout(tick, 100);
+            };
+            tick();
+        });
+        return this.bootPromise;
+    }
     private home!: HTMLElement;
 
     async onload(): Promise<void> {
@@ -41,7 +61,7 @@ export default class MorellonomiconPlugin extends Plugin {
         this.registerEvent(this.app.workspace.on("layout-change", () => this.updateBody()));
 
         this.app.workspace.onLayoutReady(() => {
-            void this.store.loadStats().then(() => this.views().forEach((v) => v.refresh()));
+            void this.store.loadStats().then(() => { this.lastChange = Date.now(); this.views().forEach((v) => v.refresh()); });
             if (this.settings.openOnStartup) void this.activate(true);
             this.updateBody();
         });
@@ -71,6 +91,7 @@ export default class MorellonomiconPlugin extends Plugin {
 
     private dataChanged(): void {
         window.clearTimeout(this.dataTimer);
+        this.lastChange = Date.now();
         this.dataTimer = window.setTimeout(() => { this.store.invalidate(); void this.store.loadStats().then(() => this.views().forEach((v) => v.refresh())); }, 300);
     }
 

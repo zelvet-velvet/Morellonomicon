@@ -45,7 +45,7 @@ export const SWIPE = { slop: 6, bias: 0.7, at: 0.25, flick: 0.5, flickMin: 24 };
 // Pictures a page waits for before it shows (the ones at its top), so it does not appear with empty frames; never longer than `ms`.
 // Returns null when there is nothing to wait for. Pictures set to load lazily are made eager, since a page not on screen yet
 // would never load them.
-export const FIRST_SCREEN = 16;
+export const FIRST_SCREEN = 36;
 export function whenLoaded(root: HTMLElement, ms: number, count = FIRST_SCREEN): Promise<void> | null {
     const pending = Array.from(root.querySelectorAll<HTMLImageElement>("img")).slice(0, count).filter((im) => im.src && !im.complete);
     if (!pending.length) return null;

@@ -64,6 +64,7 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
 // Riot's own ability demo (the clip the official champion page plays): <champion key, 4 digits>/ability_<key>_<P|Q|W|E|R>1.mp4/.webm.
 // An unofficial but public Riot CDN path, so if a clip is missing or the address changes the video simply does not appear.
 const DEMO_BASE = "https://d28xe8vt774jo5.cloudfront.net/champion-abilities";
+const CLIP_STALL_MS = 5000;   // a downloaded clip that still has no frame after this long is given up
 const clipAddress = (c: Champion, key: string): string => {
     const k = String(c.key).padStart(4, "0");
     // "Q" is the ability's first clip; "Q2" the second one (the other form of Jayce, Nidalee, Elise… where Riot made one)
@@ -117,7 +118,14 @@ export function demo(parent: HTMLElement, c: Champion, s: { key: string }, onFai
     const fallback = () => {
         if (tried) return;
         tried = true;
-        void preloadClip(c, s.key).then(() => { const f = downloaded.get(url); if (f) playLocal(f); else fail(); });
+        // a device that cannot decode WebM at all would only stall: show the skill picture at once instead
+        if (!document.createElement("video").canPlayType("video/webm")) { fail(); return; }
+        void preloadClip(c, s.key).then(() => {
+            const f = downloaded.get(url);
+            if (!f) { fail(); return; }
+            playLocal(f);
+            window.setTimeout(() => { if (v.isConnected && v.readyState < 2) fail(); }, CLIP_STALL_MS);   // loaded but never shows a frame: give up
+        });
     };
     const mp4 = h(v, "source"); mp4.src = `${url}.mp4`; mp4.type = "video/mp4";
     const webm = h(v, "source"); webm.src = `${url}.webm`; webm.type = "video/webm";

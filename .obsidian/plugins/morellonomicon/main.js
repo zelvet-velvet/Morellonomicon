@@ -166,14 +166,6 @@ var Store = class {
     // augment id -> the game's own description (tools/fetch_augment_text.py)
     // false until the data files (_data/*.json) have been read once after start-up
     this.ready = false;
-    this.markReady = () => void 0;
-    this.readyPromise = new Promise((r) => {
-      this.markReady = r;
-    });
-  }
-  // resolves when the first read is done, or after `ms` at the latest
-  whenReady(ms) {
-    return Promise.race([this.readyPromise, new Promise((r) => window.setTimeout(r, ms))]);
   }
   get app() {
     return this.plugin.app;
@@ -230,7 +222,6 @@ var Store = class {
       this.changes = null;
     }
     this.ready = true;
-    this.markReady();
   }
   // The lanes a champion is played in: a hand-written `positions` list in its note, else the lanes with at least LANE_MIN_SHARE
   // of its ranked games in _data/positions.json (tools/fetch_builds.py --mode ranked), most played first
@@ -419,7 +410,7 @@ var Router = class {
     this.stacks = {};
     try {
       const s = this.app.loadLocalStorage(KEY);
-      if (s && Date.now() - s.t < STACK_TTL) this.stacks = s.stacks || {};
+      if (s && Date.now() - s.t < STACK_TTL && s.stacks?.[this.tab]) this.stacks = { [this.tab]: s.stacks[this.tab] };
     } catch {
     }
   }
@@ -506,7 +497,7 @@ var tip = (anchor, text) => {
   }, 0);
 };
 var SWIPE = { slop: 6, bias: 0.7, at: 0.25, flick: 0.5, flickMin: 24 };
-var FIRST_SCREEN = 16;
+var FIRST_SCREEN = 36;
 function whenLoaded(root, ms, count2 = FIRST_SCREEN) {
   const pending = Array.from(root.querySelectorAll("img")).slice(0, count2).filter((im) => im.src && !im.complete);
   if (!pending.length) return null;
@@ -1819,6 +1810,7 @@ function skillStrip(parent, c, changes = []) {
   };
 }
 var DEMO_BASE = "https://d28xe8vt774jo5.cloudfront.net/champion-abilities";
+var CLIP_STALL_MS = 5e3;
 var clipAddress = (c, key) => {
   const k = String(c.key).padStart(4, "0");
   return `${DEMO_BASE}/${k}/ability_${k}_${/\d$/.test(key) ? key : `${key}1`}`;
@@ -1880,10 +1872,20 @@ function demo(parent, c, s, onFail) {
   const fallback = () => {
     if (tried) return;
     tried = true;
+    if (!document.createElement("video").canPlayType("video/webm")) {
+      fail();
+      return;
+    }
     void preloadClip(c, s.key).then(() => {
       const f = downloaded.get(url);
-      if (f) playLocal(f);
-      else fail();
+      if (!f) {
+        fail();
+        return;
+      }
+      playLocal(f);
+      window.setTimeout(() => {
+        if (v.isConnected && v.readyState < 2) fail();
+      }, CLIP_STALL_MS);
     });
   };
   const mp4 = h(v, "source");
@@ -3967,7 +3969,6 @@ function fadeIn(im) {
   im.addEventListener("load", shown, { once: true });
   im.addEventListener("error", shown, { once: true });
 }
-var STARTUP_WAIT_MS = 6e3;
 var VEIL_DELAY_MS = 250;
 var VEIL_MIN_MS = 500;
 var PAGE_WAIT_MS = 2500;
@@ -3982,7 +3983,6 @@ var MnView = class extends import_obsidian9.ItemView {
     this.plugin = plugin;
     this.scrolls = /* @__PURE__ */ new Map();
     this.shown = "";
-    this.firstReadyDrawn = false;
     this.veil = null;
     this.veilSince = 0;
     // the loading veil over the page area
@@ -4230,37 +4230,66 @@ var MnView = class extends import_obsidian9.ItemView {
       arrive(page2.el, anim);
     };
     const wait = page2.ready !== void 0 ? page2.ready : whenLoaded(page2.el, PAGE_WAIT_MS);
-    show();
-    const starting = !this.plugin.store.ready;
-    const first = !starting && !this.firstReadyDrawn;
-    if (!starting) this.firstReadyDrawn = true;
-    const until = starting ? this.plugin.store.whenReady(STARTUP_WAIT_MS) : wait;
-    const needs = !!until && (anim !== "none" || starting || first);
-    if (needs) {
-      const now = starting || first || !!this.veil;
-      page2.el.addClass("mn-loading");
-      const timer = now ? 0 : window.setTimeout(() => {
-        if (id === this.drawId) this.showVeil(false);
-      }, VEIL_DELAY_MS);
-      if (now) this.showVeil(true);
-      void until.then(() => {
-        window.clearTimeout(timer);
-        page2.el.removeClass("mn-loading");
-        if (id !== this.drawId) return;
-        window.setTimeout(() => {
-          if (id === this.drawId) this.hideVeil();
-        }, Math.max(0, VEIL_MIN_MS - (Date.now() - this.veilSince)));
-      });
-    } else this.hideVeil();
+    if (!this.plugin.booted) {
+      show();
+      this.holdVeil(page2, Promise.all([this.plugin.whenBooted(), wait ?? Promise.resolve()]).then(() => void 0), id);
+      return;
+    }
+    if (!wait || anim === "none") {
+      show();
+      this.hideVeil();
+      return;
+    }
+    const quick = Promise.race([wait.then(() => true), new Promise((r) => window.setTimeout(() => r(false), VEIL_DELAY_MS))]);
+    void quick.then((loaded) => {
+      if (id !== this.drawId) return;
+      show();
+      if (loaded) this.hideVeil();
+      else this.holdVeil(page2, wait, id);
+    });
+  }
+  // Puts the loading veil over the page until `until`, then (never sooner than half a second after it appeared) takes it off
+  holdVeil(page2, until, id) {
+    page2.el.addClass("mn-loading");
+    this.showVeil(true);
+    void until.then(() => {
+      page2.el.removeClass("mn-loading");
+      if (id !== this.drawId) return;
+      window.setTimeout(() => {
+        if (id === this.drawId) this.hideVeil();
+      }, Math.max(0, VEIL_MIN_MS - (Date.now() - this.veilSince)));
+    });
   }
 };
 
 // src/main.ts
+var BOOT_QUIET_MS = 600;
+var BOOT_MAX_MS = 6e3;
 var MorellonomiconPlugin = class extends import_obsidian10.Plugin {
   constructor() {
     super(...arguments);
     this.settings = { ...DEFAULTS };
     this.dataTimer = 0;
+    // Start-up is over when the data files are read, the champion notes are indexed and nothing has changed for BOOT_QUIET_MS (the
+    // page is rebuilt each time the data changes; the loading veil stays up until it stops), or after BOOT_MAX_MS
+    this.booted = false;
+    this.lastChange = Date.now();
+    this.bootPromise = null;
+  }
+  whenBooted() {
+    if (this.booted) return Promise.resolve();
+    this.bootPromise ?? (this.bootPromise = new Promise((done) => {
+      const t0 = Date.now();
+      const tick = () => {
+        const settled = this.store.ready && this.store.champions().length > 0 && Date.now() - this.lastChange > BOOT_QUIET_MS;
+        if (settled || Date.now() - t0 > BOOT_MAX_MS) {
+          this.booted = true;
+          done();
+        } else window.setTimeout(tick, 100);
+      };
+      tick();
+    }));
+    return this.bootPromise;
   }
   async onload() {
     preloadRoleIcons();
@@ -4292,7 +4321,10 @@ var MorellonomiconPlugin = class extends import_obsidian10.Plugin {
     this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.updateBody()));
     this.registerEvent(this.app.workspace.on("layout-change", () => this.updateBody()));
     this.app.workspace.onLayoutReady(() => {
-      void this.store.loadStats().then(() => this.views().forEach((v) => v.refresh()));
+      void this.store.loadStats().then(() => {
+        this.lastChange = Date.now();
+        this.views().forEach((v) => v.refresh());
+      });
       if (this.settings.openOnStartup) void this.activate(true);
       this.updateBody();
     });
@@ -4323,6 +4355,7 @@ var MorellonomiconPlugin = class extends import_obsidian10.Plugin {
   }
   dataChanged() {
     window.clearTimeout(this.dataTimer);
+    this.lastChange = Date.now();
     this.dataTimer = window.setTimeout(() => {
       this.store.invalidate();
       void this.store.loadStats().then(() => this.views().forEach((v) => v.refresh()));

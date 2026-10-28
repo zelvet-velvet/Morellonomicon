@@ -23,8 +23,7 @@ function fadeIn(im: HTMLImageElement): void {
     im.addEventListener("load", shown, { once: true });
     im.addEventListener("error", shown, { once: true });
 }
-const STARTUP_WAIT_MS = 6000;   // the start-up loading look lasts this long at most
-const VEIL_DELAY_MS = 250;   // a later page shows the loading look only if loading takes longer than this
+const VEIL_DELAY_MS = 250;   // a later page waits this long for its pictures before it shows under the loading veil
 const VEIL_MIN_MS = 500;     // and once shown it stays at least this long
 const PAGE_WAIT_MS = 2500;   // a page shows its loading look this long at most while the pictures at its top arrive
 
@@ -97,7 +96,6 @@ export class MnView extends ItemView {
     async onClose(): Promise<void> { this.scrolls.clear(); }
 
     private modeBtn!: HTMLElement;
-    private firstReadyDrawn = false;
     private veil: HTMLElement | null = null;
     private veilSince = 0;   // the loading veil over the page area
     private drawId = 0;
@@ -261,29 +259,32 @@ export class MnView extends ItemView {
             arrive(page.el, anim);
         };
         const wait = page.ready !== undefined ? page.ready : whenLoaded(page.el, PAGE_WAIT_MS);
-        show();
-        // at start-up the data files are still being read: the page shows with the same loading look until they are in
-        const starting = !this.plugin.store.ready;
-        // the first page drawn once the data is in (the one after start-up) waits for its pictures too, so the lane and role icons are there with it
-        const first = !starting && !this.firstReadyDrawn;
-        if (!starting) this.firstReadyDrawn = true;
-        const until = starting ? this.plugin.store.whenReady(STARTUP_WAIT_MS) : wait;
-        const needs = !!until && (anim !== "none" || starting || first);
-        if (needs) {
-            // The loading look is one veil over the screen area (blurring the whole tall page instead would make iOS draw nothing), with a
-            // soft band of light sliding across it. At start-up and for the first page after it the veil is there from the first frame and
-            // is kept across the page being rebuilt when the data arrives, so no sharp, half-loaded page shows between; later pages show
-            // it only if loading takes more than a moment. Once shown it stays at least half a second (no blink).
-            const now = starting || first || !!this.veil;
-            page.el.addClass("mn-loading");
-            const timer = now ? 0 : window.setTimeout(() => { if (id === this.drawId) this.showVeil(false); }, VEIL_DELAY_MS);
-            if (now) this.showVeil(true);
-            void until.then(() => {
-                window.clearTimeout(timer);
-                page.el.removeClass("mn-loading");
-                if (id !== this.drawId) return;   // another page was asked for meanwhile; it decides what happens to the veil
-                window.setTimeout(() => { if (id === this.drawId) this.hideVeil(); }, Math.max(0, VEIL_MIN_MS - (Date.now() - this.veilSince)));
-            });
-        } else this.hideVeil();
+        // Start-up: the page shows at once under the loading veil, which stays up (and survives the page being rebuilt as the data
+        // arrives) until the data has settled and the first pictures are in; no sharp half-loaded page shows between.
+        if (!this.plugin.booted) {
+            show();
+            this.holdVeil(page, Promise.all([this.plugin.whenBooted(), wait ?? Promise.resolve()]).then(() => undefined), id);
+            return;
+        }
+        if (!wait || anim === "none") { show(); this.hideVeil(); return; }
+        // A page with pictures to wait for: the old page stays for a quarter second. If the pictures are in by then the new page
+        // shows complete (no blur, nothing popping in); if not, it shows under the veil until they are, and keeps it at least half a second.
+        const quick = Promise.race([wait.then(() => true), new Promise<boolean>((r) => window.setTimeout(() => r(false), VEIL_DELAY_MS))]);
+        void quick.then((loaded) => {
+            if (id !== this.drawId) return;
+            show();
+            if (loaded) this.hideVeil(); else this.holdVeil(page, wait, id);
+        });
+    }
+
+    // Puts the loading veil over the page until `until`, then (never sooner than half a second after it appeared) takes it off
+    private holdVeil(page: PageOut, until: Promise<void>, id: number): void {
+        page.el.addClass("mn-loading");
+        this.showVeil(true);
+        void until.then(() => {
+            page.el.removeClass("mn-loading");
+            if (id !== this.drawId) return;   // another page was asked for meanwhile; it decides what happens to the veil
+            window.setTimeout(() => { if (id === this.drawId) this.hideVeil(); }, Math.max(0, VEIL_MIN_MS - (Date.now() - this.veilSince)));
+        });
     }
 }
