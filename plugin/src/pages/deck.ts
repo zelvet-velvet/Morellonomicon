@@ -309,6 +309,27 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
     return { title: "", el };
 }
 
+// The shop's recipe tree: the item, then the items it is built from on the row below, joined by lines (two levels down, as in the
+// game's shop). Each item opens its own page. Used by the `tree` card and the item page.
+export function itemTree(parent: HTMLElement, ctx: PageCtx, id: number): void {
+    const store = ctx.plugin.store;
+    const node = (at: HTMLElement, itemId: number, depth: number) => {
+        const it = store.item(itemId);
+        if (!it) return;
+        const n = h(at, "div", "mn-tree-n");
+        const b = h(n, "button", "mn-tree-item" + (depth === 0 ? " is-root" : ""));
+        const im = h(b, "img"); im.src = it.icon; im.alt = "";
+        h(b, "span", "mn-tree-g", String(it.goldTotal));
+        h(b, "span", "mn-tree-name", it.name);
+        if (depth > 0 || ctx.frame.key !== "item") b.addEventListener("click", (e) => { e.preventDefault(); ctx.openItem(it.id); });
+        if (it.from.length && depth < 2) {
+            const kids = h(n, "div", "mn-tree-kids");
+            for (const f of it.from) node(kids, f, depth + 1);
+        }
+    };
+    node(h(parent, "div", "mn-tree"), id, 0);
+}
+
 // ---- the picture of a card
 function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
     const store = ctx.plugin.store;
@@ -373,26 +394,8 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
             return;
         }
     } else if (kind === "tree") {
-        // the shop's recipe tree: each item, then the items it is built from on the row below, joined by lines
         const root = store.item(Number(args[0]));
-        if (root) {
-            const node = (parent: HTMLElement, id: number, depth: number) => {
-                const it = store.item(id);
-                if (!it) return;
-                const n = h(parent, "div", "mn-tree-n");
-                const b = h(n, "button", "mn-tree-item" + (depth === 0 ? " is-root" : ""));
-                const im = h(b, "img"); im.src = it.icon; im.alt = "";
-                h(b, "span", "mn-tree-g", String(it.goldTotal));
-                h(b, "span", "mn-tree-name", it.name);
-                b.addEventListener("click", (e) => { e.preventDefault(); ctx.openItem(it.id); });
-                if (it.from.length && depth < 2) {
-                    const kids = h(n, "div", "mn-tree-kids");
-                    for (const f of it.from) node(kids, f, depth + 1);
-                }
-            };
-            node(h(box, "div", "mn-tree"), root.id, 0);
-            return;
-        }
+        if (root) { itemTree(box, ctx, root.id); return; }
     } else if (kind === "counters") {
         // role icons around a ring; an arrow from each role to the one it counters, its colour per kind of matchup
         const lit = new Set(args);

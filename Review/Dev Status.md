@@ -9,6 +9,7 @@ sticker: lucide//activity
 > Read [[LLM Guide]] before any `CMD_` or status update. This note is kept by `CMD_SYNC` / `CMD_ROLLOVER` / `CMD_NOTES_SYNC`; the day notes in `Review/Log/` by `CMD_JOURNAL`.
 
 ## 🚀 Today's Progress (2026-10-28)
+- **Item page**: recipe as the shop's tree above 版本調整; the Build tab links to the item page (to check on the phone).
 - **Icons in one place**: [[Icons]] records which icon means what (from the filter panel) and the code maps they live in; skill cards now use the same damage icons; the 被 badge is readable (to check on the phone).
 - **Scaling colours and %生命傷害 icon**: magic and physical scaling are separate pills in their own colours; the %生命傷害 tag no longer shows % twice (to check on the phone).
 - **No press highlight on icons**: no grey blob or shadow around any tapped icon or button (to check on the phone).

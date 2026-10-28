@@ -241,6 +241,8 @@ button.mn-skill-box.is-on::after { content: ""; position: absolute; inset: 0; bo
 .mn-item-panel.is-open { display: block; animation: mn-pop 0.16s ease-out; }
 .mn-ip-head { display: flex; justify-content: space-between; gap: 8px; }
 .mn-ip-name { font-weight: 700; }
+.mn-app .mn-ip-more { display: block; margin: 8px 0 0 auto; padding: 4px 0; height: auto; background: none; box-shadow: none; font-size: 13px; font-weight: 600; color: var(--mn-accent); }
+.mn-itree { padding: 16px 8px; overflow-x: auto; }   /* the item page's recipe tree */
 .mn-ip-gold { color: var(--color-yellow); font-weight: 600; font-variant-numeric: tabular-nums; }
 .mn-with { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
 .mn-app .mn-with-b { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: 999px; background: var(--mn-card-hi); font-size: 12px; }
@@ -910,8 +912,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
    own keep that fill. (button + class + state outranks Obsidian's button:not(.clickable-icon):hover.) */
 .mn-app button { -webkit-tap-highlight-color: transparent; }
 .mn-app button:not(.mn-seg-b.is-on):is(:hover, :active, :focus, :focus-visible) { box-shadow: none; outline: none; }   /* a chosen segment keeps its own shadow */
-.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face),
-.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face):is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }
+.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face),
+.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face):is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }
 .mn-app button:is(.mn-rc, .mn-key, .mn-tg.is-on):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card); }
 .mn-app button:is(.mn-rq-x, .mn-with-b):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card-hi); }
 .mn-app button.mn-hb-tile:is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }   /* its fill is a gradient image, the colour under it stays clear */

@@ -95,6 +95,10 @@ function itemRow(parent: HTMLElement, c: Champion, ctx: PageCtx, ids: number[], 
             h(head, "span", "mn-ip-name", item?.name ?? `#${id}`);
             if (item) h(head, "span", "mn-ip-gold", `${item.goldTotal}`);
             if (item?.desc) h(panel, "p", "mn-sd-desc", item.desc);
+            if (item) {   // the item's own page: its recipe tree, what it builds into, its patch changes
+                const more = h(panel, "button", "mn-ip-more", "道具頁 ›");
+                more.addEventListener("click", (e) => { e.preventDefault(); ctx.openItem(item.id); });
+            }
         });
     });
 }

@@ -1735,6 +1735,13 @@ function itemRow(parent, c, ctx, ids, captions = []) {
       h(head2, "span", "mn-ip-name", item?.name ?? `#${id}`);
       if (item) h(head2, "span", "mn-ip-gold", `${item.goldTotal}`);
       if (item?.desc) h(panel, "p", "mn-sd-desc", item.desc);
+      if (item) {
+        const more = h(panel, "button", "mn-ip-more", "\u9053\u5177\u9801 \u203A");
+        more.addEventListener("click", (e2) => {
+          e2.preventDefault();
+          ctx.openItem(item.id);
+        });
+      }
     });
   });
 }
@@ -3299,6 +3306,29 @@ function deckPage(ctx, file) {
   ctx.component.register(() => window.removeEventListener("resize", fit));
   return { title: "", el };
 }
+function itemTree(parent, ctx, id) {
+  const store = ctx.plugin.store;
+  const node = (at, itemId, depth) => {
+    const it = store.item(itemId);
+    if (!it) return;
+    const n = h(at, "div", "mn-tree-n");
+    const b = h(n, "button", "mn-tree-item" + (depth === 0 ? " is-root" : ""));
+    const im = h(b, "img");
+    im.src = it.icon;
+    im.alt = "";
+    h(b, "span", "mn-tree-g", String(it.goldTotal));
+    h(b, "span", "mn-tree-name", it.name);
+    if (depth > 0 || ctx.frame.key !== "item") b.addEventListener("click", (e) => {
+      e.preventDefault();
+      ctx.openItem(it.id);
+    });
+    if (it.from.length && depth < 2) {
+      const kids = h(n, "div", "mn-tree-kids");
+      for (const f of it.from) node(kids, f, depth + 1);
+    }
+  };
+  node(h(parent, "div", "mn-tree"), id, 0);
+}
 function visual(ctx, box, s) {
   const store = ctx.plugin.store;
   const [kind, ...args] = s.visual.split(/\s+/).filter(Boolean);
@@ -3377,26 +3407,7 @@ function visual(ctx, box, s) {
   } else if (kind === "tree") {
     const root = store.item(Number(args[0]));
     if (root) {
-      const node = (parent, id, depth) => {
-        const it = store.item(id);
-        if (!it) return;
-        const n = h(parent, "div", "mn-tree-n");
-        const b = h(n, "button", "mn-tree-item" + (depth === 0 ? " is-root" : ""));
-        const im = h(b, "img");
-        im.src = it.icon;
-        im.alt = "";
-        h(b, "span", "mn-tree-g", String(it.goldTotal));
-        h(b, "span", "mn-tree-name", it.name);
-        b.addEventListener("click", (e) => {
-          e.preventDefault();
-          ctx.openItem(it.id);
-        });
-        if (it.from.length && depth < 2) {
-          const kids = h(n, "div", "mn-tree-kids");
-          for (const f of it.from) node(kids, f, depth + 1);
-        }
-      };
-      node(h(box, "div", "mn-tree"), root.id, 0);
+      itemTree(box, ctx, root.id);
       return;
     }
   } else if (kind === "counters") {
@@ -3701,13 +3712,16 @@ function itemPage(ctx) {
     h(panel, "p", "mn-dtext", item.desc);
   }
   if (item.variantOf) h(el, "div", "mn-gf", "\u9019\u662F ARAM \u5C08\u7528\u7248\u672C,\u50F9\u683C\u8207\u6578\u503C\u548C\u4E00\u822C\u7248\u672C\u4E0D\u540C\u3002");
+  if (item.from.length) {
+    h(el, "div", "mn-gh", "\u5408\u6210\u6750\u6599");
+    itemTree(h(el, "div", "mn-panel mn-itree"), ctx, item.id);
+  }
+  recipe(el, ctx, "\u53EF\u5408\u6210", item.into.map((id) => store.item(id)).filter((i) => !!i));
   const official = store.officialFor("items", item.name);
   if (official.length) {
     h(el, "div", "mn-gh", "\u7248\u672C\u8ABF\u6574");
     officialBlock(el, official);
   }
-  recipe(el, ctx, "\u5408\u6210\u6750\u6599", item.from.map((id) => store.item(id)).filter((i) => !!i));
-  recipe(el, ctx, "\u53EF\u5408\u6210", item.into.map((id) => store.item(id)).filter((i) => !!i));
   return { title: "", el };
 }
 function recipe(el, ctx, title, items) {

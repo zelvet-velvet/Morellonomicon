@@ -3,7 +3,7 @@ import type { Champion, Item } from "../data/store";
 import { augIcon, chip, empty, group, h, icon, row } from "../ui";
 import { RARITY_COLOR } from "./augments";
 import { officialBlock } from "./changes";
-import { deckPage } from "./deck";
+import { deckPage, itemTree } from "./deck";
 import type { PageCtx, PageOut } from "./index";
 
 const TAG_ZH: Record<string, string> = {
@@ -132,7 +132,7 @@ export function augmentPage(ctx: PageCtx): PageOut {
     return { title: "", el };   // the name is already the big heading
 }
 
-// ---- an item: effect, what it is built from and builds into, and what Riot changed in it
+// ---- an item: effect, its recipe tree, what it builds into, and what Riot changed in it
 export function itemPage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const item = store.item(Number(ctx.frame.params?.id));
@@ -148,10 +148,11 @@ export function itemPage(ctx: PageCtx): PageOut {
 
     if (item.desc) { const panel = h(el, "div", "mn-panel mn-dpanel"); h(panel, "p", "mn-dtext", item.desc); }
     if (item.variantOf) h(el, "div", "mn-gf", "這是 ARAM 專用版本,價格與數值和一般版本不同。");
+    // what it is made of, drawn like the shop's tree; then what it builds into; Riot's changes last
+    if (item.from.length) { h(el, "div", "mn-gh", "合成材料"); itemTree(h(el, "div", "mn-panel mn-itree"), ctx, item.id); }
+    recipe(el, ctx, "可合成", item.into.map((id) => store.item(id)).filter((i): i is Item => !!i));
     const official = store.officialFor("items", item.name);
     if (official.length) { h(el, "div", "mn-gh", "版本調整"); officialBlock(el, official); }
-    recipe(el, ctx, "合成材料", item.from.map((id) => store.item(id)).filter((i): i is Item => !!i));
-    recipe(el, ctx, "可合成", item.into.map((id) => store.item(id)).filter((i): i is Item => !!i));
     return { title: "", el };
 }
 
