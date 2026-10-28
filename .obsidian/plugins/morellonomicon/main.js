@@ -2729,6 +2729,186 @@ function marked(parent, text, q) {
   if (at < text.length) parent.appendChild(document.createTextNode(text.slice(at)));
 }
 
+// src/pages/pile.ts
+var PULL = 0.6;
+var GO_AT = 130;
+var TILT = 12;
+var GONE = -1.2;
+var FAN = [0, 2.6, -2.2, -2.2];
+var STEP_Y = 6;
+var SETTLE_MS = 280;
+function cardPile(pager, sec, o) {
+  const count2 = sec.length;
+  let cur = 0;
+  const right = [];
+  const pose = (el, u, toRight = false) => {
+    const w = pager.clientWidth;
+    let x = 0, y = 0, deg = 0, op = "";
+    if (u < 0) {
+      const s = toRight ? -1 : 1;
+      x = s * u * w;
+      deg = s * u * TILT;
+    } else {
+      const k = Math.min(FAN.length - 1, Math.floor(u)), a = FAN[k], b = FAN[Math.min(FAN.length - 1, k + 1)];
+      deg = a + (b - a) * (u - k);
+      y = Math.min(u, 2) * STEP_Y;
+      if (u > 2) op = String(Math.max(0, 3 - u));
+    }
+    el.style.transform = `translateX(${x.toFixed(1)}px) translateY(${y.toFixed(1)}px) rotate(${deg.toFixed(2)}deg)`;
+    el.style.setProperty("--sheen", `${(30 - Math.min(u, 0) * 70).toFixed(0)}%`);
+    el.style.opacity = op;
+  };
+  let busy = false, leaving = false, settleT = 0;
+  const layout = (animate) => {
+    if (animate) {
+      busy = true;
+      sec.forEach((c) => c.addClass("is-settle"));
+      window.clearTimeout(settleT);
+      settleT = window.setTimeout(() => {
+        sec.forEach((c) => c.removeClass("is-settle"));
+        busy = false;
+      }, SETTLE_MS);
+    }
+    sec.forEach((c, i) => {
+      pose(c, i < cur ? GONE : i - cur, !!right[i]);
+      c.style.zIndex = String(i < cur ? 100 + i : count2 - i);
+    });
+    o.onLayout?.(cur);
+  };
+  const decide = (like) => {
+    if (!o.judge || cur >= count2 || leaving) return;
+    right[cur] = like;
+    o.onJudge?.(cur, like);
+    o.onDrag?.(0, pager.clientWidth);
+    cur++;
+    haptic();
+    layout(true);
+    if (cur >= count2) {
+      leaving = true;
+      window.setTimeout(() => o.onEnd?.(), SETTLE_MS);
+    }
+  };
+  const lastIdx = count2 - 1;
+  let x0 = 0, y0 = 0, t0 = 0, pid = -1, dx = 0, lastY = 0, mode = "", armed = false;
+  let scroller = null;
+  const drag = () => {
+    const w = pager.clientWidth, top = sec[cur];
+    if (!top) return;
+    if (o.judge) {
+      pose(top, -Math.abs(dx) / w, dx > 0);
+      const p = Math.min(1, Math.abs(dx) / w / 0.8);
+      for (let i = cur + 1; i < count2; i++) pose(sec[i], i - cur - p);
+      o.onDrag?.(dx, w);
+      return;
+    }
+    if (dx < 0) {
+      if (cur === lastIdx) {
+        const move = dx * PULL;
+        top.style.transform = `translateX(${move.toFixed(1)}px) translateY(0px) rotate(${(move / GO_AT * TILT).toFixed(2)}deg)`;
+        if (o.last) {
+          const ready = o.last.move(-move);
+          if (ready !== armed) {
+            armed = ready;
+            if (ready) haptic();
+          }
+        }
+        return;
+      }
+      pose(top, dx / w);
+      const p = Math.min(1, -dx / w / 0.8);
+      for (let i = cur + 1; i < count2; i++) pose(sec[i], i - cur - p);
+    } else {
+      if (cur === 0) {
+        top.style.transform = `translateX(${(dx * 0.2).toFixed(1)}px) translateY(0px) rotate(${(dx * 0.2 / w * TILT).toFixed(2)}deg)`;
+        return;
+      }
+      o.last?.reset();
+      armed = false;
+      pose(sec[cur - 1], Math.min(0, GONE + dx / w));
+      const p = Math.min(1, dx / w / 0.8);
+      for (let i = cur; i < count2; i++) pose(sec[i], i - cur + p);
+    }
+  };
+  pager.addEventListener("pointerdown", (e) => {
+    if (leaving || pid !== -1 || cur >= count2 || e.pointerType === "mouse" && e.button !== 0) return;
+    if (busy) {
+      window.clearTimeout(settleT);
+      sec.forEach((c) => c.removeClass("is-settle"));
+      busy = false;
+      layout(false);
+    }
+    x0 = e.clientX;
+    y0 = e.clientY;
+    lastY = e.clientY;
+    t0 = e.timeStamp;
+    pid = e.pointerId;
+    mode = "";
+    dx = 0;
+    scroller = o.scroll ? e.target.closest(o.scroll) : null;
+  });
+  pager.addEventListener("pointermove", (e) => {
+    if (e.pointerId !== pid) return;
+    dx = e.clientX - x0;
+    const dy = e.clientY - y0;
+    if (!mode) {
+      if (Math.abs(dx) < SWIPE.slop && Math.abs(dy) < SWIPE.slop) return;
+      mode = Math.abs(dx) > Math.abs(dy) * SWIPE.bias ? "x" : "y";
+      pager.setPointerCapture(pid);
+      if (mode === "x") {
+        pager.addClass("is-drag");
+        sec.forEach((c) => c.removeClass("is-settle"));
+        if (!o.judge && cur === lastIdx && dx < 0) {
+          const card = sec[cur].firstElementChild;
+          card?.removeClass("is-shiver");
+          void card?.offsetWidth;
+          card?.addClass("is-shiver");
+          haptic();
+        }
+      }
+    }
+    if (mode === "x") drag();
+    else if (scroller) scroller.scrollTop += lastY - e.clientY;
+    lastY = e.clientY;
+  });
+  const end = (e) => {
+    if (e.pointerId !== pid) return;
+    pid = -1;
+    const m = mode;
+    mode = "";
+    pager.removeClass("is-drag");
+    if (m !== "x") return;
+    sec[cur]?.firstElementChild?.removeClass("is-shiver");
+    const w = pager.clientWidth, v = dx / Math.max(1, e.timeStamp - t0);
+    const far = Math.abs(dx) > SWIPE.at * w || Math.abs(v) > SWIPE.flick && Math.abs(dx) > SWIPE.flickMin;
+    if (o.judge) {
+      if (far) {
+        decide(dx > 0);
+        return;
+      }
+      o.onDrag?.(0, w);
+      layout(true);
+      return;
+    }
+    if (dx < 0 && far && cur < lastIdx) cur++;
+    else if (dx > 0 && far && cur > 0) cur--;
+    else if (dx < 0 && cur === lastIdx && armed && o.last) {
+      busy = leaving = true;
+      sec[cur].addClass("is-settle");
+      pose(sec[cur], GONE);
+      window.setTimeout(o.last.go, 220);
+      return;
+    }
+    o.last?.reset();
+    armed = false;
+    layout(true);
+  };
+  pager.addEventListener("pointerup", end);
+  pager.addEventListener("pointercancel", end);
+  return { layout, decide, get cur() {
+    return cur;
+  } };
+}
+
 // src/pages/cardkit.ts
 var LEVELS_STAT = { ap: 300, ad: 200 };
 var ULT_LEVELS = [6, 11, 16];
@@ -3024,18 +3204,11 @@ function cardKit(box, kind, c, args) {
 // src/pages/deck.ts
 var GLOSSARY2 = "\u540D\u8A5E\u8868";
 var STRIP = 6;
-var PULL = 0.6;
-var GO_AT = 130;
-var TILT = 12;
-var GONE = -1.2;
-var FAN = [0, 2.6, -2.2, -2.2];
-var STEP_Y = 6;
 var WAIT_CARDS = 3;
 var LOOK_MIN_MS = 500;
 var DECK_WAIT_MS = 8e3;
 var NEAR_BEHIND = 1;
 var NEAR_AHEAD = 2;
-var SETTLE_MS = 280;
 var DECK_BELOW = 10;
 function parseSlides(md) {
   const body = md.replace(/^---[\s\S]*?---\n/, "");
@@ -3119,18 +3292,18 @@ function deckPage(ctx, file) {
       const card = h(section2, "div", "mn-sl-card");
       const face = h(card, "div", "mn-sl-face");
       visual(ctx, h(face, "div", "mn-sl-vis"), s);
-      const words2 = h(face, "div", "mn-sl-words");
-      const measure2 = () => face.style.setProperty("--mn-words-h", `${words2.offsetHeight}px`);
+      const words = h(face, "div", "mn-sl-words");
+      const measure2 = () => face.style.setProperty("--mn-words-h", `${words.offsetHeight}px`);
       const watch = new ResizeObserver(measure2);
-      watch.observe(words2);
+      watch.observe(words);
       ctx.component.register(() => watch.disconnect());
-      h(words2, "div", "mn-sl-kn", `${file.basename} \xB7 ${i + 1} / ${slides.length}`);
-      h(words2, "h2", "mn-sl-t", s.title);
+      h(words, "div", "mn-sl-kn", `${file.basename} \xB7 ${i + 1} / ${slides.length}`);
+      h(words, "h2", "mn-sl-t", s.title);
       const tip2 = /^([\s\S]*?)\*\*([^*\n]{1,8})[:：]\*\*\s*([\s\S]+)$/.exec(s.text);
       const main = tip2 ? tip2[1].trim() : s.text;
-      const body = h(words2, "div", "mn-sl-x markdown-rendered");
+      const body = h(words, "div", "mn-sl-x markdown-rendered");
       if (main) void import_obsidian6.MarkdownRenderer.render(ctx.app, main, body, file.path, ctx.component);
-      const box = h(words2, "div", "mn-sl-tip" + (tip2 ? "" : " is-empty"));
+      const box = h(words, "div", "mn-sl-tip" + (tip2 ? "" : " is-empty"));
       if (tip2) {
         h(box, "div", "mn-sl-tip-k", tip2[2]);
         void import_obsidian6.MarkdownRenderer.render(ctx.app, tip2[3].trim(), h(box, "div", "mn-sl-tip-x markdown-rendered"), file.path, ctx.component);
@@ -3150,177 +3323,59 @@ function deckPage(ctx, file) {
       ctx.pop();
       if (next) ctx.openNote(next.file.path);
     };
-    const count2 = slides.length;
-    let cur = 0;
-    const show = () => {
-      Array.from(bars.children).forEach((b, j) => b.toggleClass("is-on", j <= cur));
-      if (cur >= count2 - 1) void ctx.plugin.markRead(file.path);
+    const resetPeek = () => {
+      peek.style.opacity = "";
+      peek.removeClass("is-ready");
     };
-    const pose = (el2, u) => {
-      const w = pager.clientWidth;
-      let x = 0, y = 0, deg = 0, op = "";
-      if (u < 0) {
-        x = u * w;
-        deg = u * TILT;
-      } else {
-        const k = Math.min(FAN.length - 1, Math.floor(u)), a = FAN[k], b = FAN[Math.min(FAN.length - 1, k + 1)];
-        deg = a + (b - a) * (u - k);
-        y = Math.min(u, 2) * STEP_Y;
-        if (u > 2) op = String(Math.max(0, 3 - u));
-      }
-      el2.style.transform = `translateX(${x.toFixed(1)}px) translateY(${y.toFixed(1)}px) rotate(${deg.toFixed(2)}deg)`;
-      el2.style.setProperty("--sheen", `${(30 - Math.min(u, 0) * 70).toFixed(0)}%`);
-      el2.style.opacity = op;
-    };
-    let busy = false, leaving = false, settleT = 0;
-    const layout = (animate) => {
-      if (animate) {
-        busy = true;
-        sec.forEach((c) => c.addClass("is-settle"));
-        window.clearTimeout(settleT);
-        settleT = window.setTimeout(() => {
-          sec.forEach((c) => c.removeClass("is-settle"));
-          busy = false;
-        }, SETTLE_MS);
-      }
-      sec.forEach((c, i) => {
-        pose(c, i < cur ? GONE : i - cur);
-        c.style.zIndex = String(i < cur ? 100 + i : count2 - i);
-      });
-      sec.forEach((c, i) => {
-        c.style.visibility = i >= cur - NEAR_BEHIND && i <= cur + NEAR_AHEAD ? "" : "hidden";
-        c.querySelectorAll("video").forEach((v) => {
-          const live = () => v.dataset.heavy === "1" ? i === cur : i >= cur - 1 && i <= cur + 1;
-          if (live()) {
-            void v.play().catch(() => void 0);
-            return;
-          }
-          if (v.readyState >= 2) v.pause();
-          else v.addEventListener("loadeddata", () => {
-            if (!live()) v.pause();
-          }, { once: true });
+    const pile = cardPile(pager, sec, {
+      scroll: ".mn-sl-words",
+      // the progress bars; only the cards near the top are painted, and only the ones in view play their clip: a topic with
+      // many clips otherwise has them all running under the top card, which makes some swipes smooth and others not
+      onLayout: (cur) => {
+        Array.from(bars.children).forEach((b, j) => b.toggleClass("is-on", j <= cur));
+        if (cur >= sec.length - 1) void ctx.plugin.markRead(file.path);
+        sec.forEach((c, i) => {
+          c.style.visibility = i >= cur - NEAR_BEHIND && i <= cur + NEAR_AHEAD ? "" : "hidden";
+          c.querySelectorAll("video").forEach((v) => {
+            const live = () => v.dataset.heavy === "1" ? i === cur : i >= cur - 1 && i <= cur + 1;
+            if (live()) {
+              void v.play().catch(() => void 0);
+              return;
+            }
+            if (v.readyState >= 2) v.pause();
+            else v.addEventListener("loadeddata", () => {
+              if (!live()) v.pause();
+            }, { once: true });
+          });
         });
-      });
-      show();
-    };
-    layout(false);
+      },
+      // pulling the last card shows the next topic under it (fixed panel); let go far enough and that topic opens
+      last: {
+        move: (px) => {
+          peek.style.opacity = String(Math.min(1, px / 30));
+          const ready = px >= GO_AT;
+          peek.toggleClass("is-ready", ready);
+          return ready;
+        },
+        reset: resetPeek,
+        go
+      }
+    });
+    pile.layout(false);
     sec.forEach((c) => c.querySelectorAll("video").forEach((v) => {
       void v.play().catch(() => void 0);
     }));
     const loaded = whenMediaLoaded(sec.slice(0, WAIT_CARDS), DECK_WAIT_MS);
     void loaded.then(() => {
-      layout(false);
+      pile.layout(false);
       window.setTimeout(() => {
         pager.removeClass("is-wait");
         endBand(band);
       }, Math.max(0, LOOK_MIN_MS - (Date.now() - since)));
     });
-    const onResize = () => layout(false);
+    const onResize = () => pile.layout(false);
     window.addEventListener("resize", onResize);
     ctx.component.register(() => window.removeEventListener("resize", onResize));
-    const lastIdx = count2 - 1;
-    let x0 = 0, y0 = 0, t0 = 0, pid = -1, dx = 0, lastY = 0, mode = "", armed = false;
-    let words = null;
-    const resetPeek = () => {
-      peek.style.opacity = "";
-      peek.removeClass("is-ready");
-      armed = false;
-    };
-    const drag = () => {
-      const w = pager.clientWidth, top = sec[cur];
-      if (dx < 0) {
-        if (cur === lastIdx) {
-          const move = dx * PULL;
-          top.style.transform = `translateX(${move.toFixed(1)}px) translateY(0px) rotate(${(move / GO_AT * TILT).toFixed(2)}deg)`;
-          peek.style.opacity = String(Math.min(1, -move / 30));
-          const ready = -move >= GO_AT;
-          if (ready !== armed) {
-            armed = ready;
-            peek.toggleClass("is-ready", ready);
-            if (ready) haptic();
-          }
-          return;
-        }
-        pose(top, dx / w);
-        const p = Math.min(1, -dx / w / 0.8);
-        for (let i = cur + 1; i < count2; i++) pose(sec[i], i - cur - p);
-      } else {
-        if (cur === 0) {
-          top.style.transform = `translateX(${(dx * 0.2).toFixed(1)}px) translateY(0px) rotate(${(dx * 0.2 / w * TILT).toFixed(2)}deg)`;
-          return;
-        }
-        resetPeek();
-        pose(sec[cur - 1], Math.min(0, GONE + dx / w));
-        const p = Math.min(1, dx / w / 0.8);
-        for (let i = cur; i < count2; i++) pose(sec[i], i - cur + p);
-      }
-    };
-    pager.addEventListener("pointerdown", (e) => {
-      if (leaving || pid !== -1 || e.pointerType === "mouse" && e.button !== 0) return;
-      if (busy) {
-        window.clearTimeout(settleT);
-        sec.forEach((c) => c.removeClass("is-settle"));
-        busy = false;
-        layout(false);
-      }
-      x0 = e.clientX;
-      y0 = e.clientY;
-      lastY = e.clientY;
-      t0 = e.timeStamp;
-      pid = e.pointerId;
-      mode = "";
-      dx = 0;
-      words = e.target.closest(".mn-sl-words");
-    });
-    pager.addEventListener("pointermove", (e) => {
-      if (e.pointerId !== pid) return;
-      dx = e.clientX - x0;
-      const dy = e.clientY - y0;
-      if (!mode) {
-        if (Math.abs(dx) < SWIPE.slop && Math.abs(dy) < SWIPE.slop) return;
-        mode = Math.abs(dx) > Math.abs(dy) * SWIPE.bias ? "x" : "y";
-        if (mode === "y") pager.setPointerCapture(pid);
-        if (mode === "x") {
-          pager.setPointerCapture(pid);
-          pager.addClass("is-drag");
-          sec.forEach((c) => c.removeClass("is-settle"));
-          if (cur === lastIdx && dx < 0) {
-            const card = sec[cur].firstElementChild;
-            card?.removeClass("is-shiver");
-            void card?.offsetWidth;
-            card?.addClass("is-shiver");
-            haptic();
-          }
-        }
-      }
-      if (mode === "x") drag();
-      else if (words) words.scrollTop += lastY - e.clientY;
-      lastY = e.clientY;
-    });
-    const end = (e) => {
-      if (e.pointerId !== pid) return;
-      pid = -1;
-      const m = mode;
-      mode = "";
-      pager.removeClass("is-drag");
-      if (m !== "x") return;
-      sec[cur].firstElementChild?.removeClass("is-shiver");
-      const w = pager.clientWidth, v = dx / Math.max(1, e.timeStamp - t0);
-      const far = Math.abs(dx) > SWIPE.at * w || Math.abs(v) > SWIPE.flick && Math.abs(dx) > SWIPE.flickMin;
-      if (dx < 0 && far && cur < lastIdx) cur++;
-      else if (dx > 0 && far && cur > 0) cur--;
-      else if (dx < 0 && cur === lastIdx && armed) {
-        busy = leaving = true;
-        sec[cur].addClass("is-settle");
-        pose(sec[cur], GONE);
-        window.setTimeout(go, 220);
-        return;
-      }
-      resetPeek();
-      layout(true);
-    };
-    pager.addEventListener("pointerup", end);
-    pager.addEventListener("pointercancel", end);
     requestAnimationFrame(fit);
   });
   window.addEventListener("resize", fit);
@@ -3890,6 +3945,7 @@ function mayhemSection(el, ctx, n) {
 // src/pages/roster.ts
 var import_obsidian8 = require("obsidian");
 var MAX_PICKS = 15;
+var BTN_ROOM = 84;
 var SPLIT = /[\s,，、;；和跟與及]+/;
 var tab = "pick";
 function matchScore(c, raw) {
@@ -4022,6 +4078,13 @@ function rosterPage(ctx) {
   const save = () => {
     void ctx.plugin.setRoster(picks);
   };
+  let at = 0;
+  let liked = [];
+  const restart = () => {
+    at = 0;
+    liked = [];
+    drawResults();
+  };
   const { score: score2, within } = finder(all, store.sounds);
   const box = h(el, "div", "mn-search");
   icon(box, "search", "mn-search-ic");
@@ -4065,7 +4128,7 @@ function rosterPage(ctx) {
     } else picks = [...picks, id];
     save();
     drawCount();
-    drawResults();
+    restart();
     drawGrid();
   };
   let named = [];
@@ -4080,8 +4143,8 @@ function rosterPage(ctx) {
       search.focus();
     } else if (query) drawSuggest();
   };
-  const card = (c) => {
-    const r = h(results, "div", "mn-rq");
+  const card = (c, parent) => {
+    const r = h(parent, "div", "mn-rq");
     const top = h(r, "div", "mn-rq-top");
     const im = h(top, "img", "mn-rq-img");
     im.src = c.icon;
@@ -4161,6 +4224,7 @@ function rosterPage(ctx) {
       tagRow(body, c, void 0, true);
     });
     r.addEventListener("click", () => ctx.openChampion(c.id));
+    return r;
   };
   const drawResults = () => {
     results.empty();
@@ -4169,20 +4233,106 @@ function rosterPage(ctx) {
       return;
     }
     const head2 = h(results, "div", "mn-rq-head");
-    h(head2, "span", "mn-rq-count", `${picks.length} / ${MAX_PICKS}`);
+    const done = at >= picks.length;
+    const progress = () => at >= picks.length ? `\u559C\u6B61\u7684\u82F1\u96C4 \xB7 ${liked.length}` : `${at + 1} / ${picks.length} \xB7 \u559C\u6B61 ${liked.length}`;
+    const count2 = h(head2, "span", "mn-rq-count", progress());
     const clear = h(head2, "button", "mn-clear", "\u5168\u90E8\u6E05\u9664");
     clear.addEventListener("click", (e) => {
       e.preventDefault();
       picks = [];
       save();
       drawCount();
-      drawResults();
+      restart();
       drawGrid();
     });
-    for (const id of picks) {
-      const c = all.find((x) => x.id === id);
-      if (c) card(c);
+    if (done) {
+      likedGrid();
+      return;
     }
+    const wrap = h(results, "div", "mn-deckwrap mn-rq-deck");
+    const pager = h(wrap, "div", "mn-pager");
+    for (const ev of ["touchstart", "touchmove"]) pager.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
+    const ids = picks.slice(at);
+    const sec = [];
+    const stamps = [];
+    for (const id of ids) {
+      const c = all.find((x) => x.id === id);
+      if (!c) continue;
+      const section2 = h(pager, "section", "mn-slide");
+      const face = h(h(section2, "div", "mn-sl-card"), "div", "mn-sl-face mn-rq-face");
+      card(c, face);
+      stamps.push(h(face, "div", "mn-rq-stamp"));
+      sec.push(section2);
+    }
+    const pile = cardPile(pager, sec, {
+      judge: true,
+      scroll: ".mn-rq-face",
+      onLayout: (cur) => sec.forEach((c, i) => {
+        c.style.visibility = i >= cur - 1 && i <= cur + 2 ? "" : "hidden";
+      }),
+      onDrag: (dx, w) => {
+        const st = stamps[pile?.cur ?? 0];
+        if (!st) return;
+        st.textContent = dx > 0 ? "\u559C\u6B61" : "\u7565\u904E";
+        st.toggleClass("is-like", dx > 0);
+        st.style.opacity = String(Math.min(1, Math.abs(dx) / (w * SWIPE.at)));
+      },
+      onJudge: (i, like) => {
+        at++;
+        if (like) liked = [...liked, ids[i]];
+        count2.textContent = progress();
+      },
+      onEnd: () => drawResults()
+    });
+    pile.layout(false);
+    const fit = () => {
+      const scroll = el.closest(".mn-scroll");
+      if (!scroll || !wrap.isConnected) return;
+      const top = wrap.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
+      wrap.style.height = `${Math.max(380, scroll.clientHeight - top - DECK_BELOW - BTN_ROOM)}px`;
+    };
+    requestAnimationFrame(fit);
+    const btns = h(results, "div", "mn-rq-btns");
+    const no = h(btns, "button", "mn-rq-no");
+    icon(no, "x");
+    no.setAttribute("aria-label", "\u7565\u904E");
+    const yes = h(btns, "button", "mn-rq-yes");
+    icon(yes, "heart");
+    yes.setAttribute("aria-label", "\u559C\u6B61");
+    no.addEventListener("click", (e) => {
+      e.preventDefault();
+      pile.decide(false);
+    });
+    yes.addEventListener("click", (e) => {
+      e.preventDefault();
+      pile.decide(true);
+    });
+  };
+  const likedGrid = () => {
+    if (liked.length) {
+      const g = h(results, "div", "mn-rq-liked");
+      for (const id of liked) {
+        const c = all.find((x) => x.id === id);
+        if (!c) continue;
+        const b = h(g, "button", "mn-rq-lk");
+        const im = h(b, "img");
+        im.src = c.icon;
+        im.alt = "";
+        h(b, "b", void 0, c.name);
+        if (c.punch) h(b, "span", void 0, c.punch);
+        b.addEventListener("click", (e) => {
+          e.preventDefault();
+          ctx.openChampion(c.id);
+        });
+      }
+    } else empty(results, { icon: "heart-off", title: "\u4E00\u500B\u90FD\u6C92\u559C\u6B61" });
+    const again = h(results, "button", "mn-rq-again");
+    icon(again, "rotate-ccw");
+    again.append("\u518D\u6ED1\u4E00\u6B21");
+    again.addEventListener("click", (e) => {
+      e.preventDefault();
+      restart();
+    });
   };
   const drawSuggest = () => {
     suggest2.empty();
@@ -4213,7 +4363,7 @@ function rosterPage(ctx) {
       query = "";
       drawCount();
       drawSuggest();
-      drawResults();
+      restart();
       drawGrid();
     } });
   };

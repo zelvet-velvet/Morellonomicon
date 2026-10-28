@@ -1,7 +1,8 @@
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { Champion } from "../data/store";
 import { mapUrl } from "./handbook";
-import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg, whenMediaLoaded, endBand, trackBand, SWIPE } from "../ui";
+import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, icon, laneChip, roleChip, svg, whenMediaLoaded, endBand, trackBand } from "../ui";
+import { GO_AT, cardPile } from "./pile";
 import { factsStrip, profileAxes, profileRadar, styleCard, tagRow } from "./profile";
 import type { PageCtx, PageOut } from "./index";
 import { cardKit } from "./cardkit";
@@ -28,19 +29,12 @@ import { demo, rankTable } from "./skills";
 interface Slide { title: string; icon: string; visual: string; text: string }
 const GLOSSARY = "名詞表";   // the plain-list guide note the i button opens
 const STRIP = 6;   // icons in a strip
-const PULL = 0.6;      // how far the last card moves per px pulled (it resists a little, like a rubber band)
-const GO_AT = 130;     // px of card movement that opens the next topic when the finger lifts
-const TILT = 12;       // degrees a card tilts per card width it is dragged (like a Tinder card); left swipe tilts left
-const GONE = -1.2;     // where a swiped-away card rests, in card widths to the left of the pile
-const FAN = [0, 2.6, -2.2, -2.2];   // degrees the cards under the top one lean, so the pile looks laid on a table
-const STEP_Y = 6;      // px each card under the top one sits lower, so their edges show like a stack of cards
 const WAIT_CARDS = 3;      // the pile waits for this many cards' pictures and clips; the others keep loading behind them
 const LOOK_MIN_MS = 500;   // the cards stay blurred at least this long, so a fast load does not read as a blink
 const DECK_WAIT_MS = 8000;   // the pile waits this long at most for the topic's pictures and clips
 const NEAR_BEHIND = 1;   // cards already seen that are still painted (the one that comes back on a right swipe)
 const NEAR_AHEAD = 2;    // cards under the top one that are painted (the pile shows two)
-const SETTLE_MS = 280;
-const DECK_BELOW = 10;   // px kept free under the deck (the room for the pile's lower edges is inside the deck, --mn-pile) // how long a card takes to land after a swipe
+export const DECK_BELOW = 10;   // px kept free under the deck (the room for the pile's lower edges is inside the deck, --mn-pile)
 
 export function parseSlides(md: string): Slide[] {
     const body = md.replace(/^---[\s\S]*?---\n/, "");
@@ -159,149 +153,45 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         }
         const go = () => { ctx.pop(); if (next) ctx.openNote(next.file.path); };
 
-        const count = slides.length;
-        let cur = 0;   // the card on top
-        const show = () => {
-            Array.from(bars.children).forEach((b, j) => (b as HTMLElement).toggleClass("is-on", j <= cur));
-            if (cur >= count - 1) void ctx.plugin.markRead(file.path);   // reached the last card: counts as read
-        };
-
-        // The cards are a pile: the top one at rest, the next ones leaning under it, the ones already seen parked off to the left.
-        // `u` places a card: 0 = on top, 1 = first under it … , below 0 = dragged to the left by that many card widths.
-        const pose = (el: HTMLElement, u: number) => {
-            const w = pager.clientWidth;
-            let x = 0, y = 0, deg = 0, op = "";
-            if (u < 0) { x = u * w; deg = u * TILT; }
-            else {
-                const k = Math.min(FAN.length - 1, Math.floor(u)), a = FAN[k], b = FAN[Math.min(FAN.length - 1, k + 1)];
-                deg = a + (b - a) * (u - k);
-                y = Math.min(u, 2) * STEP_Y;
-                if (u > 2) op = String(Math.max(0, 3 - u));
-            }
-            el.style.transform = `translateX(${x.toFixed(1)}px) translateY(${y.toFixed(1)}px) rotate(${deg.toFixed(2)}deg)`;
-            el.style.setProperty("--sheen", `${(30 - Math.min(u, 0) * 70).toFixed(0)}%`);   // the rainbow sheen slides across the face as the card is dragged
-            el.style.opacity = op;
-        };
-        let busy = false, leaving = false, settleT = 0;
-        const layout = (animate: boolean) => {
-            if (animate) {
-                busy = true;
-                sec.forEach((c) => c.addClass("is-settle"));
-                window.clearTimeout(settleT);
-                settleT = window.setTimeout(() => { sec.forEach((c) => c.removeClass("is-settle")); busy = false; }, SETTLE_MS);
-            }
-            sec.forEach((c, i) => { pose(c, i < cur ? GONE : i - cur); c.style.zIndex = String(i < cur ? 100 + i : count - i); });
-            // only the cards near the top are painted, and only the ones in view play their clip: a topic with many clips (each with
-            // a blurred copy) otherwise has them all running under the top card, which makes some swipes smooth and others not
-            sec.forEach((c, i) => {
-                c.style.visibility = i >= cur - NEAR_BEHIND && i <= cur + NEAR_AHEAD ? "" : "hidden";
-                c.querySelectorAll("video").forEach((v) => {
-                    // a heavy clip (WebM only, decoded in software) plays only while it is the top card; the others also while they are next to it
-                    const live = () => (v.dataset.heavy === "1" ? i === cur : i >= cur - 1 && i <= cur + 1);
-                    if (live()) { void v.play().catch(() => undefined); return; }
-                    // a clip still loading keeps playing (a phone may not fetch a paused one), and is paused once it has its first frame
-                    if (v.readyState >= 2) v.pause(); else v.addEventListener("loadeddata", () => { if (!live()) v.pause(); }, { once: true });
+        const resetPeek = () => { peek.style.opacity = ""; peek.removeClass("is-ready"); };
+        const pile = cardPile(pager, sec, {
+            scroll: ".mn-sl-words",
+            // the progress bars; only the cards near the top are painted, and only the ones in view play their clip: a topic with
+            // many clips otherwise has them all running under the top card, which makes some swipes smooth and others not
+            onLayout: (cur) => {
+                Array.from(bars.children).forEach((b, j) => (b as HTMLElement).toggleClass("is-on", j <= cur));
+                if (cur >= sec.length - 1) void ctx.plugin.markRead(file.path);   // reached the last card: counts as read
+                sec.forEach((c, i) => {
+                    c.style.visibility = i >= cur - NEAR_BEHIND && i <= cur + NEAR_AHEAD ? "" : "hidden";
+                    c.querySelectorAll("video").forEach((v) => {
+                        // a heavy clip (WebM only, decoded in software) plays only while it is the top card; the others also while next to it
+                        const live = () => (v.dataset.heavy === "1" ? i === cur : i >= cur - 1 && i <= cur + 1);
+                        if (live()) { void v.play().catch(() => undefined); return; }
+                        // a clip still loading keeps playing (a phone may not fetch a paused one), and is paused once it has its first frame
+                        if (v.readyState >= 2) v.pause(); else v.addEventListener("loadeddata", () => { if (!live()) v.pause(); }, { once: true });
+                    });
                 });
-            });
-            show();
-        };
-        layout(false);
+            },
+            // pulling the last card shows the next topic under it (fixed panel); let go far enough and that topic opens
+            last: {
+                move: (px) => { peek.style.opacity = String(Math.min(1, px / 30)); const ready = px >= GO_AT; peek.toggleClass("is-ready", ready); return ready; },
+                reset: resetPeek,
+                go,
+            },
+        });
+        pile.layout(false);
         // The pile shows once every picture and clip of the topic has its first frame (or after DECK_WAIT_MS), so nothing pops in
         // while swiping. Clips under the top card are told to play meanwhile: a phone may not fetch a paused clip at all.
         sec.forEach((c) => c.querySelectorAll("video").forEach((v) => { void v.play().catch(() => undefined); }));
         const loaded = whenMediaLoaded(sec.slice(0, WAIT_CARDS), DECK_WAIT_MS);
         // the cards were blurred from the start (see the top); they sharpen when loaded, never before half a second so it is no blink
         void loaded.then(() => {
-            layout(false);
+            pile.layout(false);
             window.setTimeout(() => { pager.removeClass("is-wait"); endBand(band); }, Math.max(0, LOOK_MIN_MS - (Date.now() - since)));
         });
-        const onResize = () => layout(false);
+        const onResize = () => pile.layout(false);
         window.addEventListener("resize", onResize);
         ctx.component.register(() => window.removeEventListener("resize", onResize));
-
-        // Dragging the top card: it follows the finger and tilts, the pile under it moves up; right drags the previous card back
-        // on top. The last card resists, shivers once, and shows the next topic under it (fixed panel); let go far enough and that
-        // topic opens, otherwise the card springs back.
-        const lastIdx = count - 1;
-        let x0 = 0, y0 = 0, t0 = 0, pid = -1, dx = 0, lastY = 0, mode: "" | "x" | "y" = "", armed = false;
-        let words: HTMLElement | null = null;   // the text area under the finger, scrolled by hand on a vertical move
-        const resetPeek = () => { peek.style.opacity = ""; peek.removeClass("is-ready"); armed = false; };
-        const drag = () => {
-            const w = pager.clientWidth, top = sec[cur];
-            if (dx < 0) {
-                if (cur === lastIdx) {
-                    const move = dx * PULL;
-                    top.style.transform = `translateX(${move.toFixed(1)}px) translateY(0px) rotate(${(move / GO_AT * TILT).toFixed(2)}deg)`;
-                    peek.style.opacity = String(Math.min(1, -move / 30));
-                    const ready = -move >= GO_AT;
-                    if (ready !== armed) { armed = ready; peek.toggleClass("is-ready", ready); if (ready) haptic(); }
-                    return;
-                }
-                pose(top, dx / w);
-                const p = Math.min(1, -dx / w / 0.8);
-                for (let i = cur + 1; i < count; i++) pose(sec[i], i - cur - p);
-            } else {
-                if (cur === 0) { top.style.transform = `translateX(${(dx * 0.2).toFixed(1)}px) translateY(0px) rotate(${(dx * 0.2 / w * TILT).toFixed(2)}deg)`; return; }
-                resetPeek();
-                pose(sec[cur - 1], Math.min(0, GONE + dx / w));
-                const p = Math.min(1, dx / w / 0.8);
-                for (let i = cur; i < count; i++) pose(sec[i], i - cur + p);
-            }
-        };
-        pager.addEventListener("pointerdown", (e) => {
-            if (leaving || pid !== -1 || (e.pointerType === "mouse" && e.button !== 0)) return;
-            if (busy) {   // a new drag while the cards are still landing: let them land at once, never make the finger wait
-                window.clearTimeout(settleT);
-                sec.forEach((c) => c.removeClass("is-settle"));
-                busy = false;
-                layout(false);
-            }
-            x0 = e.clientX; y0 = e.clientY; lastY = e.clientY; t0 = e.timeStamp; pid = e.pointerId; mode = ""; dx = 0;
-            words = (e.target as HTMLElement).closest<HTMLElement>(".mn-sl-words");
-        });
-        pager.addEventListener("pointermove", (e) => {
-            if (e.pointerId !== pid) return;
-            dx = e.clientX - x0;
-            const dy = e.clientY - y0;
-            if (!mode) {
-                if (Math.abs(dx) < SWIPE.slop && Math.abs(dy) < SWIPE.slop) return;
-                mode = Math.abs(dx) > Math.abs(dy) * SWIPE.bias ? "x" : "y";   // sideways: ours; vertical: the card's text or the page scrolls
-                if (mode === "y") pager.setPointerCapture(pid);
-                if (mode === "x") {
-                    pager.setPointerCapture(pid);
-                    pager.addClass("is-drag");
-                    sec.forEach((c) => c.removeClass("is-settle"));
-                    if (cur === lastIdx && dx < 0) { const card = sec[cur].firstElementChild; card?.removeClass("is-shiver"); void (card as HTMLElement | null)?.offsetWidth; card?.addClass("is-shiver"); haptic(); }
-                }
-            }
-            if (mode === "x") drag();
-            else if (words) words.scrollTop += lastY - e.clientY;
-            lastY = e.clientY;
-        });
-        const end = (e: PointerEvent) => {
-            if (e.pointerId !== pid) return;
-            pid = -1;
-            const m = mode;
-            mode = "";
-            pager.removeClass("is-drag");
-            if (m !== "x") return;
-            sec[cur].firstElementChild?.removeClass("is-shiver");
-            const w = pager.clientWidth, v = dx / Math.max(1, e.timeStamp - t0);
-            const far = Math.abs(dx) > SWIPE.at * w || (Math.abs(v) > SWIPE.flick && Math.abs(dx) > SWIPE.flickMin);
-            if (dx < 0 && far && cur < lastIdx) cur++;
-            else if (dx > 0 && far && cur > 0) cur--;
-            else if (dx < 0 && cur === lastIdx && armed) {
-                busy = leaving = true;
-                sec[cur].addClass("is-settle");
-                pose(sec[cur], GONE);   // flies off, then the next topic opens
-                window.setTimeout(go, 220);
-                return;
-            }
-            resetPeek();
-            layout(true);
-        };
-        pager.addEventListener("pointerup", end);
-        pager.addEventListener("pointercancel", end);
         requestAnimationFrame(fit);
     });
     window.addEventListener("resize", fit);

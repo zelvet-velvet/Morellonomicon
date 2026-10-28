@@ -702,6 +702,27 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-name { font-size: 17px; font-weight: 800; }
 .mn-app .mn-rq-x { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; color: var(--mn-muted); background: var(--mn-card-hi); }
 .mn-rq-x svg { width: 16px; height: 16px; }
+/* 速查 swipe: the picked champions as the Handbook's card pile (pile.ts), the top card dragged right (like) or left (pass) */
+.mn-deckwrap.mn-rq-deck { margin: -36px -16px 0; }   /* the lift room lets a tilted card pass over the count line, like the Handbook bars */
+.mn-sl-face.mn-rq-face { justify-content: flex-start; overflow-y: auto; overscroll-behavior: contain; padding: 14px 14px 18px; }
+.mn-rq-face .mn-rq { margin: 0; padding: 0; background: none; border: 0; cursor: default; }
+.mn-rq-face .mn-rq:active { background: none; }
+.mn-rq-stamp { position: absolute; z-index: 3; top: 18px; right: 18px; padding: 3px 12px; border: 3px solid #e06a6a; border-radius: 10px; color: #e06a6a; font-size: 20px; font-weight: 900;
+    transform: rotate(10deg); opacity: 0; pointer-events: none; }
+.mn-rq-stamp.is-like { left: 16px; right: auto; transform: rotate(-10deg); border-color: #6fd28a; color: #6fd28a; }
+.mn-rq-btns { display: flex; justify-content: center; gap: 36px; margin: 6px 0 4px; }
+.mn-app .mn-rq-btns button { display: grid; place-items: center; width: 58px; height: 58px; padding: 0; border-radius: 50%; background: var(--mn-card); border: 2px solid; box-shadow: none; }
+.mn-app .mn-rq-no { color: #e06a6a; border-color: #e06a6a; }
+.mn-app .mn-rq-yes { color: #6fd28a; border-color: #6fd28a; }
+.mn-rq-btns svg { width: 26px; height: 26px; stroke-width: 2.4; }
+/* after the last card: the liked champions two across */
+.mn-rq-liked { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.mn-app .mn-rq-lk { display: flex; flex-direction: column; align-items: stretch; gap: 3px; height: auto; padding: 8px 8px 10px; border-radius: var(--mn-radius); background: var(--mn-card); border: 1px solid var(--mn-line); box-shadow: none; text-align: left; white-space: normal; }
+.mn-rq-lk img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; margin-bottom: 4px; }
+.mn-rq-lk b { font-size: 15px; color: var(--mn-text); }
+.mn-rq-lk span { font-size: 12px; line-height: 1.35; color: var(--mn-accent); }
+.mn-app .mn-rq-again { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 14px auto 4px; height: auto; padding: 8px 16px; background: none; box-shadow: none; font-size: 14px; font-weight: 700; color: var(--mn-accent); }
+.mn-rq-again svg { width: 16px; height: 16px; }
 /* 速查 card: a one-line overview under the name, two big tiles (damage kind, roles), the 靈魂 box, then folds */
 .mn-rq-punch { margin-top: 2px; font-size: 14px; font-weight: 700; line-height: 1.4; color: var(--mn-accent); }
 .mn-rq-big { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0 0; }
@@ -933,8 +954,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
    own keep that fill. (button + class + state outranks Obsidian's button:not(.clickable-icon):hover.) */
 .mn-app button { -webkit-tap-highlight-color: transparent; }
 .mn-app button:not(.mn-seg-b.is-on):is(:hover, :active, :focus, :focus-visible) { box-shadow: none; outline: none; }   /* a chosen segment keeps its own shadow */
-.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-rq-fh, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face),
-.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-rq-fh, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face):is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }
-.mn-app button:is(.mn-rc, .mn-key, .mn-tg.is-on):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card); }
-.mn-app button:is(.mn-rq-x, .mn-with-b):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card-hi); }
+.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-rq-fh, .mn-rq-again, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face),
+.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-rq-fh, .mn-rq-again, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face):is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }
+.mn-app button:is(.mn-rc, .mn-key, .mn-tg.is-on, .mn-rq-no, .mn-rq-yes):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card); }
+.mn-app button:is(.mn-rq-x, .mn-with-b, .mn-rq-lk):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card-hi); }
 .mn-app button.mn-hb-tile:is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }   /* its fill is a gradient image, the colour under it stays clear */

@@ -1,13 +1,16 @@
 import { Notice } from "obsidian";
 import type { Champion } from "../data/store";
 import { findSaid, type Said, type Sounds, soundScore } from "../data/sound";
-import { DAMAGE_COLOR, DAMAGE_ICON, chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, roleArt, slideSeg, tip } from "../ui";
+import { DAMAGE_COLOR, DAMAGE_ICON, SWIPE, chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, roleArt, slideSeg, tip } from "../ui";
 import { entryDir, marker } from "./changes";
 import type { PageCtx, PageOut } from "./index";
 import { keyBadge } from "./cardkit";
+import { DECK_BELOW } from "./deck";
+import { cardPile } from "./pile";
 import { factsStrip, tagRow } from "./profile";
 
 const MAX_PICKS = 15;   // a Mayhem game can hand you a lot of champions
+const BTN_ROOM = 84;   // px under the 速查 pile kept for the ✕ / ♥ buttons
 const SPLIT = /[\s,，、;；和跟與及]+/;
 let tab: "pick" | "list" = "pick";   // 挑選 or 已選, kept while the app is open   // several names said or typed in one go
 
@@ -151,6 +154,10 @@ export function rosterPage(ctx: PageCtx): PageOut {
     let query = "", lane = "";
     const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)] as const));
     const save = () => { void ctx.plugin.setRoster(picks); };
+    // the swipe through the picked champions: where it is, and which were liked (both start over when the picks change)
+    let at = 0;
+    let liked: string[] = [];
+    const restart = () => { at = 0; liked = []; drawResults(); };
 
     const { score, within } = finder(all, store.sounds);
 
@@ -189,7 +196,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
         else picks = [...picks, id];
         save();
         drawCount();
-        drawResults();
+        restart();
         drawGrid();
     };
     // a face tapped while searching: add it; once every name that was said is picked, empty the box and keep the keyboard up
@@ -204,8 +211,8 @@ export function rosterPage(ctx: PageCtx): PageOut {
 
     // A picked champion: name and a one-line overview, its damage kind and roles big, the thing that makes it work, then its abilities
     // in plain words and the full facts, each folded away (punch / soul / plain are hand-written in the champion note)
-    const card = (c: Champion) => {
-        const r = h(results, "div", "mn-rq");
+    const card = (c: Champion, parent: HTMLElement): HTMLElement => {
+        const r = h(parent, "div", "mn-rq");
         const top = h(r, "div", "mn-rq-top");
         const im = h(top, "img", "mn-rq-img"); im.src = c.icon; im.alt = "";
         const who = h(top, "div", "mn-rq-who");
@@ -263,16 +270,83 @@ export function rosterPage(ctx: PageCtx): PageOut {
         });
         fold("詳細", (body) => { factsStrip(body, c); tagRow(body, c, undefined, true); });
         r.addEventListener("click", () => ctx.openChampion(c.id));
+        return r;
     };
 
     const drawResults = () => {
         results.empty();
         if (!picks.length) { empty(results, { icon: "users", title: "還沒選英雄" }); return; }
         const head = h(results, "div", "mn-rq-head");
-        h(head, "span", "mn-rq-count", `${picks.length} / ${MAX_PICKS}`);
+        const done = at >= picks.length;
+        const progress = () => (at >= picks.length ? `喜歡的英雄 · ${liked.length}` : `${at + 1} / ${picks.length} · 喜歡 ${liked.length}`);
+        const count = h(head, "span", "mn-rq-count", progress());
         const clear = h(head, "button", "mn-clear", "全部清除");
-        clear.addEventListener("click", (e) => { e.preventDefault(); picks = []; save(); drawCount(); drawResults(); drawGrid(); });
-        for (const id of picks) { const c = all.find((x) => x.id === id); if (c) card(c); }
+        clear.addEventListener("click", (e) => { e.preventDefault(); picks = []; save(); drawCount(); restart(); drawGrid(); });
+        if (done) { likedGrid(); return; }
+        // the picked champions as the Handbook's pile of cards (pile.ts, judge mode): swipe the top one right (or ♥) to like it,
+        // left (or ✕) to pass; a 喜歡 / 略過 stamp shows on it while dragged
+        const wrap = h(results, "div", "mn-deckwrap mn-rq-deck");
+        const pager = h(wrap, "div", "mn-pager");
+        for (const ev of ["touchstart", "touchmove"]) pager.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });   // not Obsidian's edge swipes
+        const ids = picks.slice(at);
+        const sec: HTMLElement[] = [];
+        const stamps: HTMLElement[] = [];
+        for (const id of ids) {
+            const c = all.find((x) => x.id === id);
+            if (!c) continue;
+            const section = h(pager, "section", "mn-slide");
+            const face = h(h(section, "div", "mn-sl-card"), "div", "mn-sl-face mn-rq-face");
+            card(c, face);
+            stamps.push(h(face, "div", "mn-rq-stamp"));
+            sec.push(section);
+        }
+        const pile = cardPile(pager, sec, {
+            judge: true,
+            scroll: ".mn-rq-face",
+            onLayout: (cur) => sec.forEach((c, i) => { c.style.visibility = i >= cur - 1 && i <= cur + 2 ? "" : "hidden"; }),
+            onDrag: (dx, w) => {
+                const st = stamps[pile?.cur ?? 0];
+                if (!st) return;
+                st.textContent = dx > 0 ? "喜歡" : "略過";
+                st.toggleClass("is-like", dx > 0);
+                st.style.opacity = String(Math.min(1, Math.abs(dx) / (w * SWIPE.at)));
+            },
+            onJudge: (i, like) => { at++; if (like) liked = [...liked, ids[i]]; count.textContent = progress(); },
+            onEnd: () => drawResults(),
+        });
+        pile.layout(false);
+        // the pile fills the screen down to the tab bar, like a Handbook topic
+        const fit = () => {
+            const scroll = el.closest<HTMLElement>(".mn-scroll");
+            if (!scroll || !wrap.isConnected) return;
+            const top = wrap.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
+            wrap.style.height = `${Math.max(380, scroll.clientHeight - top - DECK_BELOW - BTN_ROOM)}px`;
+        };
+        requestAnimationFrame(fit);
+        const btns = h(results, "div", "mn-rq-btns");
+        const no = h(btns, "button", "mn-rq-no"); icon(no, "x"); no.setAttribute("aria-label", "略過");
+        const yes = h(btns, "button", "mn-rq-yes"); icon(yes, "heart"); yes.setAttribute("aria-label", "喜歡");
+        no.addEventListener("click", (e) => { e.preventDefault(); pile.decide(false); });
+        yes.addEventListener("click", (e) => { e.preventDefault(); pile.decide(true); });
+    };
+    // after the last card: the liked champions two across (picture, name, overview line), and a way to swipe again
+    const likedGrid = () => {
+        if (liked.length) {
+            const g = h(results, "div", "mn-rq-liked");
+            for (const id of liked) {
+                const c = all.find((x) => x.id === id);
+                if (!c) continue;
+                const b = h(g, "button", "mn-rq-lk");
+                const im = h(b, "img"); im.src = c.icon; im.alt = "";
+                h(b, "b", undefined, c.name);
+                if (c.punch) h(b, "span", undefined, c.punch);
+                b.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); });
+            }
+        } else empty(results, { icon: "heart-off", title: "一個都沒喜歡" });
+        const again = h(results, "button", "mn-rq-again");
+        icon(again, "rotate-ccw");
+        again.append("再滑一次");
+        again.addEventListener("click", (e) => { e.preventDefault(); restart(); });
     };
 
     // several names typed or said together: a button per name that matched, and one to add them all
@@ -300,7 +374,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
         if (unique.length === 1 && !guessed) return;
         if (guessed) h(suggest, "span", "mn-dym", "你是不是在找:");
         for (const c of unique) chip(suggest, `${picks.includes(c.id) ? "✓ " : "+ "}${c.name}`, { color: "var(--color-green)", onTap: () => pickFromSearch(c.id) });
-        if (unique.length > 1) chip(suggest, "全部加入", { on: true, onTap: () => { for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) picks = [...picks, c.id]; save(); search.value = ""; query = ""; drawCount(); drawSuggest(); drawResults(); drawGrid(); } });
+        if (unique.length > 1) chip(suggest, "全部加入", { on: true, onTap: () => { for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) picks = [...picks, c.id]; save(); search.value = ""; query = ""; drawCount(); drawSuggest(); restart(); drawGrid(); } });
     };
 
     const drawGrid = () => {
