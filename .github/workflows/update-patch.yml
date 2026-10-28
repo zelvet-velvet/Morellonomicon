@@ -41,5 +41,5 @@ jobs:
           else
             git commit -m "data(patch): update the generated notes and data"
             # main may have moved while this ran (someone pushed): put this one new commit on top, then push
-            for i in 1 2 3; do git pull --rebase origin main && git push && break; sleep 5; done
+            for i in 1 2 3; do git pull --rebase origin main && git push && break; [ "$i" = 3 ] && exit 1; sleep 5; done
           fi
