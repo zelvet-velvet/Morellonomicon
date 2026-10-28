@@ -2423,7 +2423,7 @@ var STEP_Y = 6;
 var SWIPE_AT = 0.25;
 var FLICK = 0.5;
 var DECK_WAIT_MS = 800;
-var SETTLE_MS = 360;
+var SETTLE_MS = 280;
 function parseSlides(md) {
   const body = md.replace(/^---[\s\S]*?---\n/, "");
   return body.split(/^## /m).slice(1).map((part) => {
@@ -2502,7 +2502,6 @@ function deckPage(ctx, file) {
       const card = h(section2, "div", "mn-sl-card");
       const face = h(card, "div", "mn-sl-face");
       visual(ctx, h(face, "div", "mn-sl-vis"), s);
-      h(face, "div", "mn-sl-badge", String(i + 1));
       const words = h(face, "div", "mn-sl-words");
       h(words, "div", "mn-sl-kn", `${file.basename} \xB7 ${i + 1} / ${slides.length}`);
       h(words, "h2", "mn-sl-t", s.title);
@@ -2551,7 +2550,7 @@ function deckPage(ctx, file) {
       el2.style.setProperty("--sheen", `${(30 - Math.min(u, 0) * 70).toFixed(0)}%`);
       el2.style.opacity = op;
     };
-    let busy = false, settleT = 0;
+    let busy = false, leaving = false, settleT = 0;
     const layout = (animate) => {
       if (animate) {
         busy = true;
@@ -2614,7 +2613,13 @@ function deckPage(ctx, file) {
       }
     };
     pager.addEventListener("pointerdown", (e) => {
-      if (busy || pid !== -1 || e.pointerType === "mouse" && e.button !== 0) return;
+      if (leaving || pid !== -1 || e.pointerType === "mouse" && e.button !== 0) return;
+      if (busy) {
+        window.clearTimeout(settleT);
+        sec.forEach((c) => c.removeClass("is-settle"));
+        busy = false;
+        layout(false);
+      }
       x0 = e.clientX;
       y0 = e.clientY;
       t0 = e.timeStamp;
@@ -2662,7 +2667,7 @@ function deckPage(ctx, file) {
       if (dx < 0 && far && cur < lastIdx) cur++;
       else if (dx > 0 && far && cur > 0) cur--;
       else if (dx < 0 && cur === lastIdx && armed) {
-        busy = true;
+        busy = leaving = true;
         sec[cur].addClass("is-settle");
         pose(sec[cur], GONE);
         window.setTimeout(go, 220);

@@ -36,7 +36,7 @@ const STEP_Y = 6;      // px each card under the top one sits lower, so their ed
 const SWIPE_AT = 0.25; // fraction of the width a drag must cover to turn the card
 const FLICK = 0.5;     // px/ms: a quicker, shorter drag turns the card too
 const DECK_WAIT_MS = 800;   // the pile waits this long at most for the first card's pictures
-const SETTLE_MS = 360; // how long a card takes to land after a swipe
+const SETTLE_MS = 280; // how long a card takes to land after a swipe
 
 export function parseSlides(md: string): Slide[] {
     const body = md.replace(/^---[\s\S]*?---\n/, "");
@@ -115,9 +115,8 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             h(bars, "span", "mn-bar");
             const section = h(pager, "section", "mn-slide");
             const card = h(section, "div", "mn-sl-card");   // the white collectible border
-            const face = h(card, "div", "mn-sl-face");      // the dark face inside it: picture, number badge, rainbow sheen, text on the lower part
+            const face = h(card, "div", "mn-sl-face");      // the dark face inside it: picture, text on the lower part
             visual(ctx, h(face, "div", "mn-sl-vis"), s);
-            h(face, "div", "mn-sl-badge", String(i + 1));
             // under the picture: where you are, the title, the line, and a closing "**label：** tip" in its own box
             const words = h(face, "div", "mn-sl-words");
             h(words, "div", "mn-sl-kn", `${file.basename} · ${i + 1} / ${slides.length}`);
@@ -167,7 +166,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             el.style.setProperty("--sheen", `${(30 - Math.min(u, 0) * 70).toFixed(0)}%`);   // the rainbow sheen slides across the face as the card is dragged
             el.style.opacity = op;
         };
-        let busy = false, settleT = 0;
+        let busy = false, leaving = false, settleT = 0;
         const layout = (animate: boolean) => {
             if (animate) {
                 busy = true;
@@ -215,7 +214,13 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             }
         };
         pager.addEventListener("pointerdown", (e) => {
-            if (busy || pid !== -1 || (e.pointerType === "mouse" && e.button !== 0)) return;
+            if (leaving || pid !== -1 || (e.pointerType === "mouse" && e.button !== 0)) return;
+            if (busy) {   // a new drag while the cards are still landing: let them land at once, never make the finger wait
+                window.clearTimeout(settleT);
+                sec.forEach((c) => c.removeClass("is-settle"));
+                busy = false;
+                layout(false);
+            }
             x0 = e.clientX; y0 = e.clientY; t0 = e.timeStamp; pid = e.pointerId; mode = ""; dx = 0;
         });
         pager.addEventListener("pointermove", (e) => {
@@ -248,7 +253,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             if (dx < 0 && far && cur < lastIdx) cur++;
             else if (dx > 0 && far && cur > 0) cur--;
             else if (dx < 0 && cur === lastIdx && armed) {
-                busy = true;
+                busy = leaving = true;
                 sec[cur].addClass("is-settle");
                 pose(sec[cur], GONE);   // flies off, then the next topic opens
                 window.setTimeout(go, 220);
