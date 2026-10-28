@@ -1,6 +1,6 @@
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, icon, laneChip, roleChip } from "../ui";
+import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip } from "../ui";
 import { factsStrip, profileAxes, profileRadar, styleCard, tagRow } from "./profile";
 import type { PageCtx, PageOut } from "./index";
 import { demo } from "./skills";
@@ -19,6 +19,8 @@ import { demo } from "./skills";
 //   augs 稜鏡           Mayhem augments of that rarity (a few, changing daily)
 interface Slide { title: string; icon: string; visual: string; text: string }
 const STRIP = 6;   // icons in a strip
+const PULL = 0.42;     // how far the last card moves per px pulled (it resists, like a rubber band)
+const GO_AT = 120;     // px of card movement that opens the next topic when the finger lifts
 
 export function parseSlides(md: string): Slide[] {
     const body = md.replace(/^---[\s\S]*?---\n/, "");
@@ -43,15 +45,17 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
     const el = h(null, "div", "mn-page mn-deckpage");
     h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
     const bars = h(el, "div", "mn-bars");   // one short bar per card, filled up to the one in view (like stories)
-    const pager = h(el, "div", "mn-pager");
+    const wrap = h(el, "div", "mn-deckwrap");
+    const peek = h(wrap, "div", "mn-peek");   // behind the cards: what pulling the last card leads to
+    const pager = h(wrap, "div", "mn-pager");
     // the deck owns sideways swipes: Obsidian's own edge swipes (open a sidebar) must not take them
     for (const ev of ["touchstart", "touchmove"]) pager.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
     // cards fill the screen down to the tab bar
     const fit = () => {
         const scroll = el.closest<HTMLElement>(".mn-scroll");
         if (!scroll) return;
-        const top = pager.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
-        pager.style.height = `${Math.max(380, scroll.clientHeight - top - 14)}px`;
+        const top = wrap.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
+        wrap.style.height = `${Math.max(380, scroll.clientHeight - top - 14)}px`;
     };
 
     void ctx.app.vault.cachedRead(file).then((md) => {
@@ -59,6 +63,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         const guide = store.guideNotes().filter((n) => n.layout === "deck");
         const at = guide.findIndex((n) => n.file.path === file.path);
         const next = guide[at + 1];
+        const cards: HTMLElement[] = [];
 
         for (const s of slides) {
             h(bars, "span", "mn-bar");
@@ -67,38 +72,76 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             const words = h(card, "div", "mn-sl-words");
             h(words, "h2", "mn-sl-t", s.title);
             if (s.text) void MarkdownRenderer.render(ctx.app, s.text, h(words, "div", "mn-sl-x markdown-rendered"), file.path, ctx.component);
+            cards.push(card);
         }
-        // the last card: the next topic. Swiping onto it fills its bar, then that topic opens (swipe back to stay)
-        const end = h(h(pager, "section", "mn-slide"), "div", "mn-sl-card mn-sl-end");
-        let advance: (() => void) | null = null;
+        // behind the last card: the next topic (or, after the last topic, the way back)
         if (next) {
-            h(end, "div", "mn-sl-end-k", "下一篇");
-            icon(h(end, "div", "mn-sl-hero"), next.icon);
-            h(end, "h2", "mn-sl-t", next.title);
-            if (next.summary) h(end, "div", "mn-sl-end-s", next.summary);
-            const fill = h(h(end, "div", "mn-sl-go"), "span", "mn-sl-go-fill");
-            fill.addEventListener("animationend", () => advance?.());
-            advance = () => { advance = null; ctx.pop(); ctx.openNote(next.file.path); };
+            icon(h(peek, "div", "mn-peek-ic"), next.icon);
+            h(peek, "div", "mn-peek-k", "下一篇");
+            h(peek, "div", "mn-peek-t", next.title);
         } else {
-            h(end, "div", "mn-sl-end-k", "讀完了");
-            h(end, "div", "mn-sl-hero mn-sl-done").appendChild(document.createTextNode("🎉"));
-            h(end, "h2", "mn-sl-t", "全部主題都看完了");
-            const back = h(end, "button", "mn-sl-back", "回到 Handbook");
-            back.addEventListener("click", (e) => { e.preventDefault(); ctx.pop(); });
+            icon(h(peek, "div", "mn-peek-ic"), "check");
+            h(peek, "div", "mn-peek-k", "全部讀完了");
+            h(peek, "div", "mn-peek-t", "回到 Handbook");
         }
+        const go = () => { ctx.pop(); if (next) ctx.openNote(next.file.path); };
 
-        const count = slides.length + 1;
+        const count = slides.length;
+        let shown = -1;
         const show = (i: number) => {
             Array.from(bars.children).forEach((b, j) => (b as HTMLElement).toggleClass("is-on", j <= i));
-            end.toggleClass("is-go", i === count - 1 && !!next);   // starts (or, swiped away, stops) the fill
-            if (i >= count - 1) void ctx.plugin.markRead(file.path);   // reached the end: counts as read
+            if (i >= count - 1) void ctx.plugin.markRead(file.path);   // reached the last card: counts as read
         };
-        let shown = -1;
         pager.addEventListener("scroll", () => {
             const i = Math.max(0, Math.min(count - 1, Math.round(pager.scrollLeft / Math.max(1, pager.clientWidth))));
             if (i !== shown) { shown = i; show(i); }
         }, { passive: true });
         show(0);
+
+        // pulling the last card further left: it shivers (a tick), then follows the finger at a fraction of the distance and
+        // shows the next topic behind it; let go far enough and that topic opens, otherwise the card springs back
+        const last = cards[cards.length - 1];
+        let x0 = 0, y0 = 0, pulling = false, armed = false, decided = false;
+        pager.addEventListener("touchstart", (e) => {
+            x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; pulling = false; armed = false; decided = false;
+        }, { passive: true });
+        pager.addEventListener("touchmove", (e) => {
+            if (!last || shown !== count - 1) return;
+            const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
+            if (!decided) {
+                if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+                decided = true;
+                pulling = dx < 0 && Math.abs(dx) > Math.abs(dy);   // only a leftward, mostly sideways move on the last card
+                if (pulling) {
+                    last.removeClass("is-back");
+                    last.addClass("is-shiver");
+                    haptic();
+                }
+            }
+            if (!pulling) return;
+            e.preventDefault();   // the card moves, not the page
+            const move = Math.min(0, dx) * PULL;
+            last.style.transform = `translateX(${move}px)`;
+            peek.style.opacity = String(Math.min(1, -move / GO_AT));
+            const ready = -move >= GO_AT;
+            if (ready !== armed) { armed = ready; peek.toggleClass("is-ready", ready); if (ready) haptic(); }
+        }, { passive: false });
+        const end = () => {
+            if (!pulling) return;
+            pulling = false;
+            last.removeClass("is-shiver");
+            if (armed) {
+                last.addClass("is-gone");   // slides away, then the next topic opens
+                window.setTimeout(go, 220);
+                return;
+            }
+            last.addClass("is-back");
+            last.style.transform = "";
+            peek.style.opacity = "";
+            peek.removeClass("is-ready");
+        };
+        pager.addEventListener("touchend", end);
+        pager.addEventListener("touchcancel", end);
         requestAnimationFrame(fit);
     });
     window.addEventListener("resize", fit);
@@ -110,6 +153,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
 function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
     const store = ctx.plugin.store;
     const [kind, ...args] = s.visual.split(/\s+/).filter(Boolean);
+    box.addClass(`is-${kind || "icon"}`);   // the picture's kind: media fills the card edge to edge, the rest is scaled up
     const champ = (id?: string): Champion | undefined => (id ? store.champion(id) : undefined);
 
     if (kind === "video") {
@@ -177,6 +221,7 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
         if (list.length) { strip(box, list.map((a) => ({ src: a.icon, label: a.name, rarity: a.rarity, tap: () => ctx.openAugment(a.id) }))); return; }
     }
     // nothing to show (or not enough data): the card's own big icon
+    box.className = "mn-sl-vis is-icon";
     icon(h(box, "div", "mn-sl-hero"), s.icon);
 }
 

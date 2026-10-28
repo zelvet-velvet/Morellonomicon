@@ -2114,6 +2114,8 @@ var import_obsidian6 = require("obsidian");
 // src/pages/deck.ts
 var import_obsidian5 = require("obsidian");
 var STRIP = 6;
+var PULL = 0.42;
+var GO_AT = 120;
 function parseSlides(md) {
   const body = md.replace(/^---[\s\S]*?---\n/, "");
   return body.split(/^## /m).slice(1).map((part) => {
@@ -2142,19 +2144,22 @@ function deckPage(ctx, file) {
   const el = h(null, "div", "mn-page mn-deckpage");
   h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
   const bars = h(el, "div", "mn-bars");
-  const pager = h(el, "div", "mn-pager");
+  const wrap = h(el, "div", "mn-deckwrap");
+  const peek = h(wrap, "div", "mn-peek");
+  const pager = h(wrap, "div", "mn-pager");
   for (const ev of ["touchstart", "touchmove"]) pager.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
   const fit = () => {
     const scroll = el.closest(".mn-scroll");
     if (!scroll) return;
-    const top = pager.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
-    pager.style.height = `${Math.max(380, scroll.clientHeight - top - 14)}px`;
+    const top = wrap.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
+    wrap.style.height = `${Math.max(380, scroll.clientHeight - top - 14)}px`;
   };
   void ctx.app.vault.cachedRead(file).then((md) => {
     const slides = parseSlides(md);
     const guide = store.guideNotes().filter((n) => n.layout === "deck");
     const at = guide.findIndex((n) => n.file.path === file.path);
     const next = guide[at + 1];
+    const cards = [];
     for (const s of slides) {
       h(bars, "span", "mn-bar");
       const card = h(h(pager, "section", "mn-slide"), "div", "mn-sl-card");
@@ -2162,38 +2167,27 @@ function deckPage(ctx, file) {
       const words = h(card, "div", "mn-sl-words");
       h(words, "h2", "mn-sl-t", s.title);
       if (s.text) void import_obsidian5.MarkdownRenderer.render(ctx.app, s.text, h(words, "div", "mn-sl-x markdown-rendered"), file.path, ctx.component);
+      cards.push(card);
     }
-    const end = h(h(pager, "section", "mn-slide"), "div", "mn-sl-card mn-sl-end");
-    let advance = null;
     if (next) {
-      h(end, "div", "mn-sl-end-k", "\u4E0B\u4E00\u7BC7");
-      icon(h(end, "div", "mn-sl-hero"), next.icon);
-      h(end, "h2", "mn-sl-t", next.title);
-      if (next.summary) h(end, "div", "mn-sl-end-s", next.summary);
-      const fill = h(h(end, "div", "mn-sl-go"), "span", "mn-sl-go-fill");
-      fill.addEventListener("animationend", () => advance?.());
-      advance = () => {
-        advance = null;
-        ctx.pop();
-        ctx.openNote(next.file.path);
-      };
+      icon(h(peek, "div", "mn-peek-ic"), next.icon);
+      h(peek, "div", "mn-peek-k", "\u4E0B\u4E00\u7BC7");
+      h(peek, "div", "mn-peek-t", next.title);
     } else {
-      h(end, "div", "mn-sl-end-k", "\u8B80\u5B8C\u4E86");
-      h(end, "div", "mn-sl-hero mn-sl-done").appendChild(document.createTextNode("\u{1F389}"));
-      h(end, "h2", "mn-sl-t", "\u5168\u90E8\u4E3B\u984C\u90FD\u770B\u5B8C\u4E86");
-      const back = h(end, "button", "mn-sl-back", "\u56DE\u5230 Handbook");
-      back.addEventListener("click", (e) => {
-        e.preventDefault();
-        ctx.pop();
-      });
+      icon(h(peek, "div", "mn-peek-ic"), "check");
+      h(peek, "div", "mn-peek-k", "\u5168\u90E8\u8B80\u5B8C\u4E86");
+      h(peek, "div", "mn-peek-t", "\u56DE\u5230 Handbook");
     }
-    const count2 = slides.length + 1;
+    const go = () => {
+      ctx.pop();
+      if (next) ctx.openNote(next.file.path);
+    };
+    const count2 = slides.length;
+    let shown = -1;
     const show = (i) => {
       Array.from(bars.children).forEach((b, j) => b.toggleClass("is-on", j <= i));
-      end.toggleClass("is-go", i === count2 - 1 && !!next);
       if (i >= count2 - 1) void ctx.plugin.markRead(file.path);
     };
-    let shown = -1;
     pager.addEventListener("scroll", () => {
       const i = Math.max(0, Math.min(count2 - 1, Math.round(pager.scrollLeft / Math.max(1, pager.clientWidth))));
       if (i !== shown) {
@@ -2202,6 +2196,56 @@ function deckPage(ctx, file) {
       }
     }, { passive: true });
     show(0);
+    const last = cards[cards.length - 1];
+    let x0 = 0, y0 = 0, pulling = false, armed = false, decided = false;
+    pager.addEventListener("touchstart", (e) => {
+      x0 = e.touches[0].clientX;
+      y0 = e.touches[0].clientY;
+      pulling = false;
+      armed = false;
+      decided = false;
+    }, { passive: true });
+    pager.addEventListener("touchmove", (e) => {
+      if (!last || shown !== count2 - 1) return;
+      const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
+      if (!decided) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        decided = true;
+        pulling = dx < 0 && Math.abs(dx) > Math.abs(dy);
+        if (pulling) {
+          last.removeClass("is-back");
+          last.addClass("is-shiver");
+          haptic();
+        }
+      }
+      if (!pulling) return;
+      e.preventDefault();
+      const move = Math.min(0, dx) * PULL;
+      last.style.transform = `translateX(${move}px)`;
+      peek.style.opacity = String(Math.min(1, -move / GO_AT));
+      const ready = -move >= GO_AT;
+      if (ready !== armed) {
+        armed = ready;
+        peek.toggleClass("is-ready", ready);
+        if (ready) haptic();
+      }
+    }, { passive: false });
+    const end = () => {
+      if (!pulling) return;
+      pulling = false;
+      last.removeClass("is-shiver");
+      if (armed) {
+        last.addClass("is-gone");
+        window.setTimeout(go, 220);
+        return;
+      }
+      last.addClass("is-back");
+      last.style.transform = "";
+      peek.style.opacity = "";
+      peek.removeClass("is-ready");
+    };
+    pager.addEventListener("touchend", end);
+    pager.addEventListener("touchcancel", end);
     requestAnimationFrame(fit);
   });
   window.addEventListener("resize", fit);
@@ -2211,6 +2255,7 @@ function deckPage(ctx, file) {
 function visual(ctx, box, s) {
   const store = ctx.plugin.store;
   const [kind, ...args] = s.visual.split(/\s+/).filter(Boolean);
+  box.addClass(`is-${kind || "icon"}`);
   const champ = (id) => id ? store.champion(id) : void 0;
   if (kind === "video") {
     const c = champ(args[0]);
@@ -2305,6 +2350,7 @@ function visual(ctx, box, s) {
       return;
     }
   }
+  box.className = "mn-sl-vis is-icon";
   icon(h(box, "div", "mn-sl-hero"), s.icon);
 }
 function strip(box, items) {
@@ -2521,11 +2567,8 @@ function recipe(el, ctx, title, items) {
 // src/pages/handbook.ts
 var SNIPPET = 46;
 var MAX_PER_NOTE = 2;
-var CHARS_PER_MINUTE = 350;
 var KEYWORDS = 8;
-var TILE_COLORS = ["--color-blue", "--color-purple", "--color-orange", "--color-green", "--color-cyan", "--color-pink", "--color-yellow", "--color-red"];
 var GLOSSARY = "\u540D\u8A5E\u8868";
-var TRIVIA_AFTER = 4;
 var ARAM_ART = ["habackground", "arambilgewater", "arambloom"].map((n) => `https://raw.communitydragon.org/latest/game/assets/ux/loadingscreen/${n}.png`);
 function handbookPage(ctx) {
   const store = ctx.plugin.store;
@@ -2540,7 +2583,6 @@ function handbookPage(ctx) {
   const notes = store.guideNotes();
   let texts = null;
   const read = new Set(ctx.plugin.settings.read);
-  const minutes = (size) => Math.max(1, Math.round(size / 3 / CHARS_PER_MINUTE));
   const load = async () => {
     if (texts) return texts;
     texts = /* @__PURE__ */ new Map();
@@ -2553,46 +2595,32 @@ function handbookPage(ctx) {
       empty(out, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." });
       return;
     }
-    const done = notes.filter((n) => read.has(n.file.path)).length;
-    const next = notes.find((n) => !read.has(n.file.path)) ?? notes[Math.floor(Math.random() * notes.length)];
-    const hero = h(out, "button", "mn-hh");
-    const body = h(hero, "div", "mn-hh-body");
-    h(body, "div", "mn-hh-k", done >= notes.length ? "\u5168\u90E8\u8B80\u5B8C\u4E86 \u{1F389} \u518D\u8907\u7FD2\u4E00\u4E0B?" : done ? "\u63A5\u8457\u770B" : "\u5F9E\u9019\u88E1\u958B\u59CB");
-    h(body, "div", "mn-hh-t", next.title);
-    if (next.summary) h(body, "div", "mn-hh-s", next.summary);
-    const go = h(body, "span", "mn-hh-go", `${minutes(next.file.stat.size)} \u5206\u9418 \xB7 \u958B\u59CB \u2192`);
-    void go;
-    const ic = h(hero, "div", "mn-hh-ic");
-    icon(ic, next.icon);
-    const prog = h(out, "div", "mn-prog");
-    const bar = h(h(prog, "div", "mn-prog-track"), "div", "mn-prog-fill");
-    bar.style.width = `${done / notes.length * 100}%`;
-    h(prog, "div", "mn-prog-t", `${done} / ${notes.length}`);
-    hero.addEventListener("click", (e) => {
-      e.preventDefault();
-      ctx.openNote(next.file.path);
-    });
-    const tile2 = (grid, n, i) => {
-      const t = h(grid, "button", "mn-ht");
-      t.style.setProperty("--c", `var(${TILE_COLORS[i % TILE_COLORS.length]})`);
-      const top = h(t, "div", "mn-ht-top");
-      icon(h(top, "span", "mn-ht-ic"), n.icon);
-      if (read.has(n.file.path)) icon(h(top, "span", "mn-ht-done"), "check");
-      h(t, "div", "mn-ht-t", n.title);
-      if (n.summary) h(t, "div", "mn-ht-s", n.summary);
-      h(t, "div", "mn-ht-m", n.layout === "deck" ? `${minutes(n.file.stat.size)} \u5206\u9418` : "\u67E5\u8A62");
-      t.addEventListener("click", (e) => {
+    const decks = notes.filter((n) => n.layout === "deck");
+    const done = decks.filter((n) => read.has(n.file.path)).length;
+    const next = decks.find((n) => !read.has(n.file.path));
+    const head = h(out, "div", "mn-hb-head");
+    h(head, "span", "mn-hb-k", done >= decks.length ? "\u5168\u90E8\u8B80\u5B8C\u4E86" : "\u65B0\u624B\u8AB2\u7A0B");
+    h(head, "span", "mn-hb-n", `${done} / ${decks.length}`);
+    h(h(out, "div", "mn-hb-track"), "div", "mn-hb-fill").style.width = `${done / Math.max(1, decks.length) * 100}%`;
+    const list2 = h(out, "div", "mn-hb-list");
+    notes.forEach((n) => {
+      const isRead = read.has(n.file.path);
+      const r = h(list2, "button", "mn-hb-row" + (n === next ? " is-next" : "") + (isRead ? " is-read" : ""));
+      const num2 = h(r, "span", "mn-hb-num");
+      if (n.layout !== "deck") icon(num2, "book-a");
+      else if (isRead) icon(num2, "check");
+      else num2.textContent = String(decks.indexOf(n) + 1).padStart(2, "0");
+      const main = h(r, "div", "mn-hb-main");
+      h(main, "div", "mn-hb-t", n.title);
+      if (n.summary) h(main, "div", "mn-hb-s", n.summary);
+      if (n === next) h(r, "span", "mn-hb-go", done ? "\u7E7C\u7E8C" : "\u958B\u59CB");
+      else icon(r, "chevron-right", "mn-hb-chev");
+      r.addEventListener("click", (e) => {
         e.preventDefault();
         ctx.openNote(n.file.path);
       });
-    };
-    const first = h(out, "div", "mn-ht-grid");
-    notes.slice(0, TRIVIA_AFTER).forEach((n, i) => tile2(first, n, i));
+    });
     trivia(out);
-    if (notes.length > TRIVIA_AFTER) {
-      const rest = h(out, "div", "mn-ht-grid");
-      notes.slice(TRIVIA_AFTER).forEach((n, i) => tile2(rest, n, i + TRIVIA_AFTER));
-    }
   };
   const trivia = (parent) => {
     const tips2 = store.loadingTips;

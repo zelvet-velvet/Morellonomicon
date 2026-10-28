@@ -3,11 +3,8 @@ import type { PageCtx, PageOut } from "./index";
 
 const SNIPPET = 46;      // characters of context around a match
 const MAX_PER_NOTE = 2;  // matching lines shown per guide card
-const CHARS_PER_MINUTE = 350;   // reading speed for the "N min" label (Chinese)
 const KEYWORDS = 8;      // quick-search chips taken from the glossary (two full rows of four)
-const TILE_COLORS = ["--color-blue", "--color-purple", "--color-orange", "--color-green", "--color-cyan", "--color-pink", "--color-yellow", "--color-red"];
 const GLOSSARY = "名詞表";
-const TRIVIA_AFTER = 4;   // topic cards above the loading tip card
 // the game's ARAM loading screen backgrounds (CommunityDragon, shown by address): Howling Abyss, Butcher's Bridge, the Ionian bridge
 const ARAM_ART = ["habackground", "arambilgewater", "arambloom"].map((n) => `https://raw.communitydragon.org/latest/game/assets/ux/loadingscreen/${n}.png`);
 
@@ -26,7 +23,6 @@ export function handbookPage(ctx: PageCtx): PageOut {
     const notes = store.guideNotes();
     let texts: Map<string, string[]> | null = null;   // guide note path -> its lines, read on the first search
     const read = new Set(ctx.plugin.settings.read);
-    const minutes = (size: number) => Math.max(1, Math.round(size / 3 / CHARS_PER_MINUTE));   // UTF-8: about 3 bytes per Chinese character
 
     const load = async () => {
         if (texts) return texts;
@@ -35,47 +31,34 @@ export function handbookPage(ctx: PageCtx): PageOut {
         return texts;
     };
 
+    // One calm list: a thin progress line, then a row per topic (number or ✓, icon, title, one line); the next topic to read is
+    // marked 繼續. The glossary is the last row, and a loading screen tip closes the page like a loading screen.
     const home = () => {
         out.empty();
         if (!notes.length) { empty(out, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." }); return; }
-        const done = notes.filter((n) => read.has(n.file.path)).length;
-
-        // where to begin: the first card you have not opened (or a random one to review when you have read them all)
-        const next = notes.find((n) => !read.has(n.file.path)) ?? notes[Math.floor(Math.random() * notes.length)];
-        const hero = h(out, "button", "mn-hh");
-        const body = h(hero, "div", "mn-hh-body");
-        h(body, "div", "mn-hh-k", done >= notes.length ? "全部讀完了 🎉 再複習一下?" : done ? "接著看" : "從這裡開始");
-        h(body, "div", "mn-hh-t", next.title);
-        if (next.summary) h(body, "div", "mn-hh-s", next.summary);
-        const go = h(body, "span", "mn-hh-go", `${minutes(next.file.stat.size)} 分鐘 · 開始 →`);
-        void go;
-        const ic = h(hero, "div", "mn-hh-ic");
-        icon(ic, next.icon);
-        const prog = h(out, "div", "mn-prog");
-        const bar = h(h(prog, "div", "mn-prog-track"), "div", "mn-prog-fill");
-        bar.style.width = `${(done / notes.length) * 100}%`;
-        h(prog, "div", "mn-prog-t", `${done} / ${notes.length}`);
-        hero.addEventListener("click", (e) => { e.preventDefault(); ctx.openNote(next.file.path); });
-
-        // topic cards in two groups with a lore trivia card between them (like a loading screen)
-        const tile = (grid: HTMLElement, n: (typeof notes)[number], i: number) => {
-            const t = h(grid, "button", "mn-ht");
-            t.style.setProperty("--c", `var(${TILE_COLORS[i % TILE_COLORS.length]})`);
-            const top = h(t, "div", "mn-ht-top");
-            icon(h(top, "span", "mn-ht-ic"), n.icon);
-            if (read.has(n.file.path)) icon(h(top, "span", "mn-ht-done"), "check");
-            h(t, "div", "mn-ht-t", n.title);
-            if (n.summary) h(t, "div", "mn-ht-s", n.summary);
-            h(t, "div", "mn-ht-m", n.layout === "deck" ? `${minutes(n.file.stat.size)} 分鐘` : "查詢");
-            t.addEventListener("click", (e) => { e.preventDefault(); ctx.openNote(n.file.path); });
-        };
-        const first = h(out, "div", "mn-ht-grid");
-        notes.slice(0, TRIVIA_AFTER).forEach((n, i) => tile(first, n, i));
+        const decks = notes.filter((n) => n.layout === "deck");
+        const done = decks.filter((n) => read.has(n.file.path)).length;
+        const next = decks.find((n) => !read.has(n.file.path));
+        const head = h(out, "div", "mn-hb-head");
+        h(head, "span", "mn-hb-k", done >= decks.length ? "全部讀完了" : "新手課程");
+        h(head, "span", "mn-hb-n", `${done} / ${decks.length}`);
+        h(h(out, "div", "mn-hb-track"), "div", "mn-hb-fill").style.width = `${(done / Math.max(1, decks.length)) * 100}%`;
+        const list = h(out, "div", "mn-hb-list");
+        notes.forEach((n) => {
+            const isRead = read.has(n.file.path);
+            const r = h(list, "button", "mn-hb-row" + (n === next ? " is-next" : "") + (isRead ? " is-read" : ""));
+            const num = h(r, "span", "mn-hb-num");
+            if (n.layout !== "deck") icon(num, "book-a");
+            else if (isRead) icon(num, "check");
+            else num.textContent = String(decks.indexOf(n) + 1).padStart(2, "0");
+            const main = h(r, "div", "mn-hb-main");
+            h(main, "div", "mn-hb-t", n.title);
+            if (n.summary) h(main, "div", "mn-hb-s", n.summary);
+            if (n === next) h(r, "span", "mn-hb-go", done ? "繼續" : "開始");
+            else icon(r, "chevron-right", "mn-hb-chev");
+            r.addEventListener("click", (e) => { e.preventDefault(); ctx.openNote(n.file.path); });
+        });
         trivia(out);
-        if (notes.length > TRIVIA_AFTER) {
-            const rest = h(out, "div", "mn-ht-grid");
-            notes.slice(TRIVIA_AFTER).forEach((n, i) => tile(rest, n, i + TRIVIA_AFTER));
-        }
     };
 
     // a loading screen tip (the game's own text) in the middle of one of ARAM's three loading screen backgrounds, dimmed: a random
