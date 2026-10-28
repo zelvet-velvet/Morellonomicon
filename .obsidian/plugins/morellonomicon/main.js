@@ -2874,8 +2874,7 @@ function deckPage(ctx, file) {
     };
     layout(false);
     pager.addClass("is-wait");
-    const ripple = h(wrap, "div", "mn-ripple");
-    for (let i = 0; i < 3; i++) h(ripple, "i");
+    const ripple = h(wrap, "div", "mn-lineload");
     sec.forEach((c) => c.querySelectorAll("video").forEach((v) => {
       void v.play().catch(() => void 0);
     }));
@@ -4149,8 +4148,7 @@ var MnView = class extends import_obsidian9.ItemView {
     show();
     if (wait && anim !== "none") {
       page2.el.addClass("mn-loading");
-      const ripple = h(page2.el, "div", "mn-ripple is-page");
-      for (let i = 0; i < 3; i++) h(ripple, "i");
+      const ripple = h(page2.el, "div", "mn-lineload is-page");
       void wait.then(() => {
         page2.el.removeClass("mn-loading");
         ripple.remove();

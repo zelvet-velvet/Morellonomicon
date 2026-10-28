@@ -194,9 +194,8 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         layout(false);
         // The pile shows once every picture and clip of the topic has its first frame (or after DECK_WAIT_MS), so nothing pops in
         // while swiping. Clips under the top card are told to play meanwhile: a phone may not fetch a paused clip at all.
-        pager.addClass("is-wait");   // meanwhile the cards show blurred with light rippling over them
-        const ripple = h(wrap, "div", "mn-ripple");
-        for (let i = 0; i < 3; i++) h(ripple, "i");
+        pager.addClass("is-wait");   // meanwhile the cards show blurred with a tilted line of light passing over them
+        const ripple = h(wrap, "div", "mn-lineload");
         sec.forEach((c) => c.querySelectorAll("video").forEach((v) => { void v.play().catch(() => undefined); }));
         void whenMediaLoaded(sec.slice(0, WAIT_CARDS), DECK_WAIT_MS).then(() => { pager.removeClass("is-wait"); ripple.remove(); layout(false); });
         const onResize = () => layout(false);

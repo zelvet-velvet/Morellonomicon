@@ -229,8 +229,7 @@ export class MnView extends ItemView {
         show();
         if (wait && anim !== "none") {   // the page is there at once, blurred with light rippling over it until its pictures are in
             page.el.addClass("mn-loading");
-            const ripple = h(page.el, "div", "mn-ripple is-page");
-            for (let i = 0; i < 3; i++) h(ripple, "i");
+            const ripple = h(page.el, "div", "mn-lineload is-page");
             void wait.then(() => { page.el.removeClass("mn-loading"); ripple.remove(); });
         }
     }
