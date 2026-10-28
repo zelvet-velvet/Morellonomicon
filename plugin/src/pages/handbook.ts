@@ -9,8 +9,13 @@ const GLOSSARY = "名詞表";
 export const coverUrl = (cover: string): string => {
     const [a, b] = cover.trim().split(/\s+/);
     if (!a) return "";
-    return a === "map" ? `https://raw.communitydragon.org/latest/game/assets/ux/loadingscreen/${b ?? "habackground"}.png`
+    return a === "map" ? mapUrl(b)
         : `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(a)}_0.jpg`;
+};
+// An ARAM map's loading screen picture by name, or one of the three at random
+export const mapUrl = (name?: string): string => {
+    const n = name || ["habackground", "arambilgewater", "arambloom"][Math.floor(Math.random() * 3)];
+    return `https://raw.communitydragon.org/latest/game/assets/ux/loadingscreen/${n}.png`;
 };
 // the game's ARAM loading screen backgrounds (CommunityDragon, shown by address): Howling Abyss, Butcher's Bridge, the Ionian bridge
 const ARAM_ART = ["habackground", "arambilgewater", "arambloom"].map((n) => `https://raw.communitydragon.org/latest/game/assets/ux/loadingscreen/${n}.png`);

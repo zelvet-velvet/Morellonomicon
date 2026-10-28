@@ -1,5 +1,6 @@
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { Champion } from "../data/store";
+import { mapUrl } from "./handbook";
 import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip } from "../ui";
 import { factsStrip, profileAxes, profileRadar, styleCard, tagRow } from "./profile";
 import type { PageCtx, PageOut } from "./index";
@@ -14,7 +15,8 @@ import { demo } from "./skills";
 //   facts Ahri          the 技能傷害 block (bar and table)                    tags Ahri            the ability tags it has
 //   roles               the six role icons                                   lanes                the five lane icons
 //   tabs                the champion page's four tabs                        damage               the three damage kinds in their colours
-//   map habackground    an ARAM loading screen picture (habackground, arambilgewater, arambloom)
+//   map habackground    an ARAM loading screen picture (habackground, arambilgewater, arambloom; no name = one at random)
+//   splash Swain        the champion's splash art
 //   radar Ahri          the older radar chart
 //   role 戰士           champions of that role (a few, changing daily)       champs Ahri Garen    those champions
 //   itemtag Armor       items of that kind (Armor, SpellBlock, Health…)      item 3089            one item and what it is built from
@@ -216,9 +218,17 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
         const row = h(box, "div", "mn-sl-dmg");
         for (const k of ["物理", "魔法", "真實"]) { const d = h(row, "div", "mn-sl-dmg-k", k); d.style.setProperty("--c", DAMAGE_COLOR[k]); }
         return;
+    } else if (kind === "splash") {
+        // a champion's splash art, filling the card (its face kept in view)
+        const c = champ(args[0]);
+        if (c) {
+            const im = h(box, "img", "mn-sl-img mn-sl-splash"); im.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg`; im.alt = "";
+            box.className = "mn-sl-vis is-img";
+            return;
+        }
     } else if (kind === "map") {
         // ARAM's loading screen picture (the game's, shown from CommunityDragon by address)
-        const im = h(box, "img", "mn-sl-img"); im.src = `https://raw.communitydragon.org/latest/game/assets/ux/loadingscreen/${args[0] ?? "habackground"}.png`; im.alt = "";
+        const im = h(box, "img", "mn-sl-img"); im.src = mapUrl(args[0]); im.alt = "";
         box.className = "mn-sl-vis is-img";
         return;
     } else if (kind === "radar") {
