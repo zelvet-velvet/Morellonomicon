@@ -3919,7 +3919,7 @@ function fadeIn(im) {
   im.addEventListener("load", shown, { once: true });
   im.addEventListener("error", shown, { once: true });
 }
-var PAGE_WAIT_MS = 700;
+var PAGE_WAIT_MS = 2500;
 function arrive(page2, anim) {
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || !page2.animate) return;
   const from = anim === "push" ? "translateX(28px)" : anim === "back" ? "translateX(-28px)" : "translateY(10px)";
@@ -4128,7 +4128,9 @@ var MnView = class extends import_obsidian9.ItemView {
       this.topEl.removeClass("is-scrolled");
       this.scrollEl.replaceChildren(page2.el);
       this.shown = key;
-      this.scrollEl.scrollTop = this.scrolls.get(key) ?? 0;
+      const fresh = anim === "push" || OVERLAY_PAGES.has(f.key);
+      if (fresh) this.scrolls.delete(key);
+      this.scrollEl.scrollTop = fresh ? 0 : this.scrolls.get(key) ?? 0;
       this.scrollEl.scrollLeft = 0;
       this.titleEl.textContent = page2.title;
       const titleRow = this.router.depth() === 0 ? page2.el.querySelector(":scope > .mn-title-row") : null;
@@ -4144,8 +4146,16 @@ var MnView = class extends import_obsidian9.ItemView {
       arrive(page2.el, anim);
     };
     const wait = page2.ready !== void 0 ? page2.ready : whenLoaded(page2.el, PAGE_WAIT_MS);
-    if (wait) void wait.then(show);
-    else show();
+    show();
+    if (wait && anim !== "none") {
+      page2.el.addClass("mn-loading");
+      const ripple = h(page2.el, "div", "mn-ripple is-page");
+      for (let i = 0; i < 3; i++) h(ripple, "i");
+      void wait.then(() => {
+        page2.el.removeClass("mn-loading");
+        ripple.remove();
+      });
+    }
   }
 };
 

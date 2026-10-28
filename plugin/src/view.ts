@@ -23,7 +23,7 @@ function fadeIn(im: HTMLImageElement): void {
     im.addEventListener("load", shown, { once: true });
     im.addEventListener("error", shown, { once: true });
 }
-const PAGE_WAIT_MS = 700;   // a page waits this long at most for the pictures at its top
+const PAGE_WAIT_MS = 2500;   // a page shows its loading look this long at most while the pictures at its top arrive
 
 function arrive(page: HTMLElement, anim: "push" | "back" | "tab"): void {
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || !page.animate) return;
@@ -205,7 +205,11 @@ export class MnView extends ItemView {
             this.topEl.removeClass("is-scrolled");
             this.scrollEl.replaceChildren(page.el);
             this.shown = key;
-            this.scrollEl.scrollTop = this.scrolls.get(key) ?? 0;
+            // a page opened on top of another, and a champion page (its splash sits under the top bar) always start at the top; the
+            // others (a tab, a page you come back to) are where you left them
+            const fresh = anim === "push" || OVERLAY_PAGES.has(f.key);
+            if (fresh) this.scrolls.delete(key);
+            this.scrollEl.scrollTop = fresh ? 0 : (this.scrolls.get(key) ?? 0);
             this.scrollEl.scrollLeft = 0;   // never carry a sideways offset from the previous page
             this.titleEl.textContent = page.title;
             const titleRow = this.router.depth() === 0 ? page.el.querySelector(":scope > .mn-title-row") : null;
@@ -222,6 +226,12 @@ export class MnView extends ItemView {
             arrive(page.el, anim);
         };
         const wait = page.ready !== undefined ? page.ready : whenLoaded(page.el, PAGE_WAIT_MS);
-        if (wait) void wait.then(show); else show();
+        show();
+        if (wait && anim !== "none") {   // the page is there at once, blurred with light rippling over it until its pictures are in
+            page.el.addClass("mn-loading");
+            const ripple = h(page.el, "div", "mn-ripple is-page");
+            for (let i = 0; i < 3; i++) h(ripple, "i");
+            void wait.then(() => { page.el.removeClass("mn-loading"); ripple.remove(); });
+        }
     }
 }
