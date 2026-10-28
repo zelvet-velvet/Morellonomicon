@@ -11,7 +11,7 @@ import { demo } from "./skills";
 //   clip     Champ Key[2] [a-b]   the ability's clip fills the picture, key + name on top, tags below; a-b = play only seconds a to b
 //   number   Champ Key        the scaling as one big number, and what it adds up to at a few stat values
 //   forms    Champ A B [*B]   two forms side by side, one line of Q / W / E each; * marks the form to look at
-//   combo    Champ A B *B K1 K2 [= word word]   the clip of K2 on top, under it K1 → K2 as pictures and the result as short chips (A B *B pick the form's art)
+//   combo    Champ A B *B K1 K2 [= word word]   the clips of K1 then K2 play one after the other, big, with K1 → K2 as pictures and the result chips on the picture's lower edge (A B *B pick the form's art)
 //   formset  Champ A B        both forms' ability pictures: the R of each big, its Q W E under it (Jayce-style files: <id>q_melee / _ranged)
 export interface CardData { c: Champion; s: Skill; args: string[] }
 type Fill = (el: HTMLElement, d: CardData) => void;
@@ -170,12 +170,32 @@ const formSets: Fill = (el, { c, args }) => {
 const RESULT_ICON: [RegExp, string][] = [[/快|速/, "zap"], [/遠|長/, "move-horizontal"], [/痛|傷|強/, "flame"], [/穩|盾/, "shield"]];
 // a combo of one form: its two abilities as pictures with a step number and an arrow, no sentences
 const beforeEquals = (args: string[]): string[] => (args.includes("=") ? args.slice(0, args.indexOf("=")) : args);
-// the demo clip of the combo's last ability above, the steps and the result below
+// the combo's clips one after the other (Riot has one clip per ability, none for a combo), big and cut to the middle where the
+// champion is; the steps and the result sit on the lower edge of the picture
 const comboMedia: Fill = (el, { c, args }) => {
     const keys = beforeEquals(args).filter((a) => /^[PQWER]\d?$/i.test(a)).map((a) => a.toUpperCase());
-    const key = keys[keys.length - 1] ?? "Q";
-    const s = c.skills.find((x) => x.key === key.charAt(0));
-    if (s) media(el, { c, s, args: [key] });
+    const wrap = h(el, "div", "mn-sl-video is-square");
+    const reels = keys.map((key) => {
+        const box = h(wrap, "div", "mn-ck-reel");
+        demo(box, c, { key });
+        return box;
+    });
+    let now = 0;
+    const show = (i: number) => {
+        now = i;
+        reels.forEach((box, n) => { box.classList.toggle("is-on", n === i); if (n !== i) box.querySelector("video")?.pause(); });
+        const v = reels[i]?.querySelector("video");
+        if (v) { v.currentTime = 0; void v.play().catch(() => undefined); }
+    };
+    reels.forEach((box, i) => {
+        const v = box.querySelector("video");
+        if (!v || reels.length < 2) return;
+        v.loop = false;
+        v.addEventListener("ended", () => { if (now === i) show((i + 1) % reels.length); });
+        v.addEventListener("play", () => { if (now !== i) v.pause(); });
+    });
+    reels[0]?.classList.add("is-on");
+    comboFlow(h(wrap, "div", "mn-ck-comboFlow"), { c, s: c.skills[0], args });
 };
 const comboFlow: Fill = (el, { c, args }) => {
     const spec = beforeEquals(args);
@@ -228,7 +248,7 @@ const LAYOUTS: Record<string, Layout> = {
     clip: { areas: ["media", "tags"], rows: "auto auto", fill: { media, tags } },
     number: { areas: ["hero", "bars"], rows: "auto auto", fill: { hero, bars } },
     forms: { areas: ["formsTitle", "formCols"], rows: "auto auto", fill: { formsTitle, formCols } },
-    combo: { areas: ["comboMedia", "comboFlow"], rows: "auto auto", fill: { comboMedia, comboFlow } },
+    combo: { areas: ["comboMedia"], rows: "1fr", fill: { comboMedia } },
     formset: { areas: ["formsTitle", "formSets"], rows: "auto auto", fill: { formsTitle, formSets } },
 };
 

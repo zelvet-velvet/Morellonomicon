@@ -2858,9 +2858,38 @@ var RESULT_ICON = [[/快|速/, "zap"], [/遠|長/, "move-horizontal"], [/痛|傷
 var beforeEquals = (args) => args.includes("=") ? args.slice(0, args.indexOf("=")) : args;
 var comboMedia = (el, { c, args }) => {
   const keys = beforeEquals(args).filter((a) => /^[PQWER]\d?$/i.test(a)).map((a) => a.toUpperCase());
-  const key = keys[keys.length - 1] ?? "Q";
-  const s = c.skills.find((x) => x.key === key.charAt(0));
-  if (s) media(el, { c, s, args: [key] });
+  const wrap = h(el, "div", "mn-sl-video is-square");
+  const reels = keys.map((key) => {
+    const box = h(wrap, "div", "mn-ck-reel");
+    demo(box, c, { key });
+    return box;
+  });
+  let now = 0;
+  const show = (i) => {
+    now = i;
+    reels.forEach((box, n) => {
+      box.classList.toggle("is-on", n === i);
+      if (n !== i) box.querySelector("video")?.pause();
+    });
+    const v = reels[i]?.querySelector("video");
+    if (v) {
+      v.currentTime = 0;
+      void v.play().catch(() => void 0);
+    }
+  };
+  reels.forEach((box, i) => {
+    const v = box.querySelector("video");
+    if (!v || reels.length < 2) return;
+    v.loop = false;
+    v.addEventListener("ended", () => {
+      if (now === i) show((i + 1) % reels.length);
+    });
+    v.addEventListener("play", () => {
+      if (now !== i) v.pause();
+    });
+  });
+  reels[0]?.classList.add("is-on");
+  comboFlow(h(wrap, "div", "mn-ck-comboFlow"), { c, s: c.skills[0], args });
 };
 var comboFlow = (el, { c, args }) => {
   const spec = beforeEquals(args);
@@ -2914,7 +2943,7 @@ var LAYOUTS = {
   clip: { areas: ["media", "tags"], rows: "auto auto", fill: { media, tags } },
   number: { areas: ["hero", "bars"], rows: "auto auto", fill: { hero, bars } },
   forms: { areas: ["formsTitle", "formCols"], rows: "auto auto", fill: { formsTitle, formCols } },
-  combo: { areas: ["comboMedia", "comboFlow"], rows: "auto auto", fill: { comboMedia, comboFlow } },
+  combo: { areas: ["comboMedia"], rows: "1fr", fill: { comboMedia } },
   formset: { areas: ["formsTitle", "formSets"], rows: "auto auto", fill: { formsTitle, formSets } }
 };
 function cardKit(box, kind, c, args) {

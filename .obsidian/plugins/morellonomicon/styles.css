@@ -604,12 +604,19 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-ck-ic.is-sm img { border-radius: 9px; }
 .mn-ck-ic.is-sm .mn-ck-key { width: 19px; height: 19px; font-size: 10.5px; right: -6px; bottom: -6px; border-width: 1.5px; border-radius: 6px; }
 .mn-ck-qwe { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; width: 100%; }
-/* combo: the clip on top; below it two ability pictures, an arrow and the result chips */
-.mn-ck-comboFlow { display: flex; align-items: center; justify-content: center; gap: 8px; }
-.mn-ck-comboMedia { position: relative; }
+/* combo: big clips cut to the middle, the steps and result chips on the lower edge */
+.mn-sl-vis.is-combo { padding: 0 0 40px; align-items: center; }
+.mn-ck-combo { gap: 0; }
+.mn-ck-combo .mn-ck-comboMedia { height: 100%; }
+.mn-sl-video.is-square { height: 100%; aspect-ratio: auto; border-radius: 0; }   /* fills the whole picture area; the clip is cut to its middle */
+.mn-ck-reel { position: absolute; inset: 0; visibility: hidden; }
+.mn-ck-reel.is-on { visibility: visible; }
+.mn-ck-reel video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.mn-ck-comboFlow { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 34px 12px 38px;
+    background: linear-gradient(180deg, rgba(18, 20, 27, 0), rgba(18, 20, 27, 0.82) 60%); }
 .mn-ck-cell.is-step { width: 76px; }
-.mn-ck-ic.is-huge { width: 62px; height: 62px; border-radius: 17px; }
-.mn-ck-ic.is-huge img { border-radius: 13px; }
+.mn-ck-ic.is-huge { width: 56px; height: 56px; border-radius: 16px; }
+.mn-ck-ic.is-huge img { border-radius: 12px; }
 .mn-ck-ic.is-huge .mn-ck-key { width: 22px; height: 22px; font-size: 12px; }
 .mn-ck-step { position: absolute; left: -7px; top: -7px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--mn-accent); color: #12141b; font-size: 11px; font-weight: 800; border: 2px solid #12141b; }
 .mn-ck-arrow { margin-top: -18px; color: var(--mn-accent); }
