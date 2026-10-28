@@ -97,6 +97,12 @@ export class Store {
     loadingTips: { group: string; text: string }[] = [];   // _data/loading-tips.json: the game's loading screen tips (zh_TW)
     gameText: Record<string, { text: string; partial: boolean }> = {};   // augment id -> the game's own description (tools/fetch_augment_text.py)
 
+    // false until the data files (_data/*.json) have been read once after start-up
+    ready = false;
+    private markReady: () => void = () => undefined;
+    private readyPromise = new Promise<void>((r) => { this.markReady = r; });
+    // resolves when the first read is done, or after `ms` at the latest
+    whenReady(ms: number): Promise<void> { return Promise.race([this.readyPromise, new Promise<void>((r) => window.setTimeout(r, ms))]); }
     constructor(private plugin: MorellonomiconPlugin) {}
     private get app() { return this.plugin.app; }
     private get s() { return this.plugin.settings; }
@@ -135,6 +141,8 @@ export class Store {
             const path = normalizePath("_data/changes.json");
             this.changes = (await this.app.vault.adapter.exists(path)) ? (JSON.parse(await this.app.vault.adapter.read(path)) as ChangeData) : null;
         } catch { this.changes = null; }
+        this.ready = true;
+        this.markReady();
     }
 
     // The lanes a champion is played in: a hand-written `positions` list in its note, else the lanes with at least LANE_MIN_SHARE

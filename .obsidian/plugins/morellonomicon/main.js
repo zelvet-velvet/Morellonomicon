@@ -148,7 +148,6 @@ var list = (v) => Array.isArray(v) ? v.filter((x) => typeof x === "string") : []
 var LANE_MIN_SHARE = 0.1;
 var LANE_ZH = { TOP: "\u4E0A\u8DEF", JUNGLE: "\u6253\u91CE", MIDDLE: "\u4E2D\u8DEF", BOTTOM: "\u4E0B\u8DEF", UTILITY: "\u8F14\u52A9" };
 var Store = class {
-  // augment id -> the game's own description (tools/fetch_augment_text.py)
   constructor(plugin) {
     this.plugin = plugin;
     this.champs = null;
@@ -164,6 +163,17 @@ var Store = class {
     this.loadingTips = [];
     // _data/loading-tips.json: the game's loading screen tips (zh_TW)
     this.gameText = {};
+    // augment id -> the game's own description (tools/fetch_augment_text.py)
+    // false until the data files (_data/*.json) have been read once after start-up
+    this.ready = false;
+    this.markReady = () => void 0;
+    this.readyPromise = new Promise((r) => {
+      this.markReady = r;
+    });
+  }
+  // resolves when the first read is done, or after `ms` at the latest
+  whenReady(ms) {
+    return Promise.race([this.readyPromise, new Promise((r) => window.setTimeout(r, ms))]);
   }
   get app() {
     return this.plugin.app;
@@ -219,6 +229,8 @@ var Store = class {
     } catch {
       this.changes = null;
     }
+    this.ready = true;
+    this.markReady();
   }
   // The lanes a champion is played in: a hand-written `positions` list in its note, else the lanes with at least LANE_MIN_SHARE
   // of its ranked games in _data/positions.json (tools/fetch_builds.py --mode ranked), most played first
@@ -3937,6 +3949,7 @@ function fadeIn(im) {
   im.addEventListener("load", shown, { once: true });
   im.addEventListener("error", shown, { once: true });
 }
+var STARTUP_WAIT_MS = 6e3;
 var PAGE_WAIT_MS = 2500;
 function arrive(page2, anim) {
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || !page2.animate) return;
@@ -4169,7 +4182,9 @@ var MnView = class extends import_obsidian9.ItemView {
     };
     const wait = page2.ready !== void 0 ? page2.ready : whenLoaded(page2.el, PAGE_WAIT_MS);
     show();
-    if (wait && anim !== "none") {
+    const starting = !this.plugin.store.ready;
+    const until = starting ? this.plugin.store.whenReady(STARTUP_WAIT_MS) : wait;
+    if (until && (anim !== "none" || starting)) {
       page2.el.addClass("mn-loading");
       const veil = h(this.appEl, "div", "mn-artload is-page");
       veil.style.top = `${this.scrollEl.offsetTop}px`;
@@ -4177,7 +4192,7 @@ var MnView = class extends import_obsidian9.ItemView {
       veil.style.width = `${this.scrollEl.clientWidth}px`;
       veil.style.height = `${this.scrollEl.clientHeight}px`;
       this.veil = veil;
-      void wait.then(() => {
+      void until.then(() => {
         page2.el.removeClass("mn-loading");
         veil.remove();
         if (this.veil === veil) this.veil = null;

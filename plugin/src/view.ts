@@ -23,6 +23,7 @@ function fadeIn(im: HTMLImageElement): void {
     im.addEventListener("load", shown, { once: true });
     im.addEventListener("error", shown, { once: true });
 }
+const STARTUP_WAIT_MS = 6000;   // the start-up loading look lasts this long at most
 const PAGE_WAIT_MS = 2500;   // a page shows its loading look this long at most while the pictures at its top arrive
 
 function arrive(page: HTMLElement, anim: "push" | "back" | "tab"): void {
@@ -230,7 +231,10 @@ export class MnView extends ItemView {
         };
         const wait = page.ready !== undefined ? page.ready : whenLoaded(page.el, PAGE_WAIT_MS);
         show();
-        if (wait && anim !== "none") {   // the page is there at once, blurred with light rippling over it until its pictures are in
+        // at start-up the data files are still being read: the page shows with the same loading look until they are in
+        const starting = !this.plugin.store.ready;
+        const until = starting ? this.plugin.store.whenReady(STARTUP_WAIT_MS) : wait;
+        if (until && (anim !== "none" || starting)) {   // the page is there at once, blurred with a band of light over it until its pictures are in
             // a veil the size of the screen area (blurring the whole tall page instead would make iOS draw nothing), with a soft band of
             // light sliding across it from the bottom right to the left
             page.el.addClass("mn-loading");
@@ -240,7 +244,7 @@ export class MnView extends ItemView {
             veil.style.width = `${this.scrollEl.clientWidth}px`;
             veil.style.height = `${this.scrollEl.clientHeight}px`;
             this.veil = veil;
-            void wait.then(() => { page.el.removeClass("mn-loading"); veil.remove(); if (this.veil === veil) this.veil = null; });
+            void until.then(() => { page.el.removeClass("mn-loading"); veil.remove(); if (this.veil === veil) this.veil = null; });
         }
     }
 }
