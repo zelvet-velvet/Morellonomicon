@@ -94,6 +94,7 @@ export class MnView extends ItemView {
     async onClose(): Promise<void> { this.scrolls.clear(); }
 
     private modeBtn!: HTMLElement;
+    private veil: HTMLElement | null = null;   // the loading veil over the page area
     private drawId = 0;
     private markScrolled(): void {
         const past = this.appEl.hasClass("is-overlay") ? OVERLAY_SCROLL : 36;
@@ -176,6 +177,8 @@ export class MnView extends ItemView {
     // How a new page arrives: slides in from the right (deeper), from the left (back), or rises in (another tab); "none" for a refresh
     draw(anim: "none" | "push" | "back" | "tab" = "none"): void {
         const id = ++this.drawId;
+        this.veil?.remove();
+        this.veil = null;
         if (this.shown) this.scrolls.set(this.shown, this.scrollEl.scrollTop);
         const key = this.key();
         const f = this.router.top();
@@ -228,9 +231,16 @@ export class MnView extends ItemView {
         const wait = page.ready !== undefined ? page.ready : whenLoaded(page.el, PAGE_WAIT_MS);
         show();
         if (wait && anim !== "none") {   // the page is there at once, blurred with light rippling over it until its pictures are in
+            // a veil the size of the screen area (blurring the whole tall page instead would make iOS draw nothing), with soft colour
+            // washing across it from the bottom right to the left
             page.el.addClass("mn-loading");
-            const ripple = h(page.el, "div", "mn-lineload is-page");
-            void wait.then(() => { page.el.removeClass("mn-loading"); ripple.remove(); });
+            const veil = h(this.appEl, "div", "mn-artload is-page");
+            veil.style.top = `${this.scrollEl.offsetTop}px`;
+            veil.style.left = `${this.scrollEl.offsetLeft}px`;
+            veil.style.width = `${this.scrollEl.clientWidth}px`;
+            veil.style.height = `${this.scrollEl.clientHeight}px`;
+            this.veil = veil;
+            void wait.then(() => { page.el.removeClass("mn-loading"); veil.remove(); if (this.veil === veil) this.veil = null; });
         }
     }
 }

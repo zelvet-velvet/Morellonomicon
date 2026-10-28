@@ -2874,7 +2874,7 @@ function deckPage(ctx, file) {
     };
     layout(false);
     pager.addClass("is-wait");
-    const ripple = h(wrap, "div", "mn-lineload");
+    const ripple = h(wrap, "div", "mn-artload");
     sec.forEach((c) => c.querySelectorAll("video").forEach((v) => {
       void v.play().catch(() => void 0);
     }));
@@ -3930,6 +3930,8 @@ var MnView = class extends import_obsidian9.ItemView {
     this.plugin = plugin;
     this.scrolls = /* @__PURE__ */ new Map();
     this.shown = "";
+    this.veil = null;
+    // the loading veil over the page area
     this.drawId = 0;
     this.themed = [];
   }
@@ -4092,6 +4094,8 @@ var MnView = class extends import_obsidian9.ItemView {
   // How a new page arrives: slides in from the right (deeper), from the left (back), or rises in (another tab); "none" for a refresh
   draw(anim = "none") {
     const id = ++this.drawId;
+    this.veil?.remove();
+    this.veil = null;
     if (this.shown) this.scrolls.set(this.shown, this.scrollEl.scrollTop);
     const key = this.key();
     const f = this.router.top();
@@ -4148,10 +4152,16 @@ var MnView = class extends import_obsidian9.ItemView {
     show();
     if (wait && anim !== "none") {
       page2.el.addClass("mn-loading");
-      const ripple = h(page2.el, "div", "mn-lineload is-page");
+      const veil = h(this.appEl, "div", "mn-artload is-page");
+      veil.style.top = `${this.scrollEl.offsetTop}px`;
+      veil.style.left = `${this.scrollEl.offsetLeft}px`;
+      veil.style.width = `${this.scrollEl.clientWidth}px`;
+      veil.style.height = `${this.scrollEl.clientHeight}px`;
+      this.veil = veil;
       void wait.then(() => {
         page2.el.removeClass("mn-loading");
-        ripple.remove();
+        veil.remove();
+        if (this.veil === veil) this.veil = null;
       });
     }
   }
