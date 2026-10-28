@@ -98,13 +98,39 @@ export function whenMediaLoaded(roots: HTMLElement[], ms: number): Promise<void>
 // emptied by its owner (the veil lives in it), so give a container that is redrawn its own host.
 const BLOCK_MAX_MS = 8000, BLOCK_MIN_MS = 500;
 const blockState = new WeakMap<HTMLElement, { veil: HTMLElement; since: number }>();
-// Takes a loading veil away once its band has gone off the left edge (the end of the current pass), at the latest after 1.7 s; the
-// blur has been fading meanwhile, so the light seems to sweep the sharp page into view
+// The loading band. Every block that is loading draws its part of ONE slanted line that crosses the screen on one clock, so
+// neighbouring blocks (the lane row and the grid under it) show the same line, not two bands out of step with each other.
+// trackBand puts a veil on that clock; a frame loop sets --bx (where the band's middle is inside the veil) and --bw (its width).
+const BAND_MS = 1500;          // one pass
+const BAND_RUN = 0.8;          // the part of the pass in which the band crosses; the rest it is off screen
+const BAND_TILT = Math.tan((22 * Math.PI) / 180);   // the slope of the line (22 degrees from upright)
+const bandVeils = new Set<HTMLElement>();
+let bandFrame = 0;
+const bandPhase = (): number => (performance.now() % BAND_MS) / BAND_MS;
+function bandStep(): void {
+    const w = window.innerWidth, hh = window.innerHeight, bw = w * 0.55;
+    const q = Math.min(1, bandPhase() / BAND_RUN), e = 1 - Math.pow(1 - q, 2.2);
+    const start = w + bw / 2 + 0.4 * hh, end = -bw / 2 - 0.4 * hh;
+    const lineX = start + (end - start) * e;   // where the line crosses the middle of the screen
+    for (const el of bandVeils) {
+        if (!el.isConnected) { bandVeils.delete(el); continue; }
+        const r = el.getBoundingClientRect();
+        const x = lineX - (r.top + r.height / 2 - hh / 2) * BAND_TILT;   // the same line, at the middle of this veil
+        el.style.setProperty("--bx", `${(x - r.left - bw / 2).toFixed(1)}px`);
+        el.style.setProperty("--bw", `${bw.toFixed(0)}px`);
+    }
+    bandFrame = bandVeils.size ? requestAnimationFrame(bandStep) : 0;
+}
+export function trackBand(el: HTMLElement): void {
+    bandVeils.add(el);
+    if (!bandFrame) bandFrame = requestAnimationFrame(bandStep);
+}
+// Takes a loading veil away once its band has crossed and gone off the left edge (the end of the current pass, at most one pass away);
+// the blur has been fading meanwhile, so the light seems to sweep the sharp page into view
 export function endBand(el: HTMLElement): void {
-    let gone = false;
-    const rm = () => { if (!gone) { gone = true; el.remove(); } };
-    el.addEventListener("animationiteration", (e) => { if (e.target === el) rm(); });
-    window.setTimeout(rm, 1700);
+    const p = bandPhase();
+    const wait = (p < BAND_RUN ? BAND_RUN - p : 1 - p + BAND_RUN) * BAND_MS;
+    window.setTimeout(() => { bandVeils.delete(el); el.remove(); }, wait);
 }
 function lift(host: HTMLElement, state: { veil: HTMLElement; since: number }): void {
     window.setTimeout(() => {
@@ -120,6 +146,7 @@ export function blockUntil(host: HTMLElement, until: Promise<void>): void {
     let st = blockState.get(host);
     if (!st) {
         st = { veil: h(host, "div", "mn-blkveil is-in"), since: Date.now() };
+        trackBand(st.veil);
         blockState.set(host, st);
     }
     const state = st;

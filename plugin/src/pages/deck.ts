@@ -1,7 +1,7 @@
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { Champion } from "../data/store";
 import { mapUrl } from "./handbook";
-import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg, whenMediaLoaded, blurBackdrop, endBand, SWIPE } from "../ui";
+import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg, whenMediaLoaded, blurBackdrop, endBand, trackBand, SWIPE } from "../ui";
 import { factsStrip, profileAxes, profileRadar, styleCard, tagRow } from "./profile";
 import type { PageCtx, PageOut } from "./index";
 import { cardKit } from "./cardkit";
@@ -101,6 +101,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
     // blurred from the very first frame, with a soft band of light sliding over it, until the topic's pictures and clips are in
     pager.addClass("is-wait");
     const band = h(wrap, "div", "mn-artload");
+    trackBand(band);
     const since = Date.now();
     // the deck owns sideways swipes: Obsidian's own edge swipes (open a sidebar) must not take them
     for (const ev of ["touchstart", "touchmove"]) pager.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });

@@ -35,6 +35,9 @@ export default class MorellonomiconPlugin extends Plugin {
     async onload(): Promise<void> {
         preloadRoleIcons();   // start fetching the class icons before any view is drawn
         await this.loadSettings();
+        // On a phone, when the app opens by itself at start-up, Obsidian's own bottom toolbar is hidden from the first moment (updateBody
+        // would only do it once the app view is in place, and the toolbar showed over the tab bar until then)
+        if (Platform.isMobile && this.settings.openOnStartup) document.body.addClass("mn-on", "mn-full");
         this.router = new Router(this.app);
         this.store = new Store(this);
         this.registerView(VIEW_TYPE, (leaf) => new MnView(leaf, this));

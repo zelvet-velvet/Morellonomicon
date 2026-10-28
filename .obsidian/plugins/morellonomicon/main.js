@@ -558,18 +558,40 @@ function whenMediaLoaded(roots, ms) {
 var BLOCK_MAX_MS = 8e3;
 var BLOCK_MIN_MS = 500;
 var blockState = /* @__PURE__ */ new WeakMap();
-function endBand(el) {
-  let gone = false;
-  const rm = () => {
-    if (!gone) {
-      gone = true;
-      el.remove();
+var BAND_MS = 1500;
+var BAND_RUN = 0.8;
+var BAND_TILT = Math.tan(22 * Math.PI / 180);
+var bandVeils = /* @__PURE__ */ new Set();
+var bandFrame = 0;
+var bandPhase = () => performance.now() % BAND_MS / BAND_MS;
+function bandStep() {
+  const w = window.innerWidth, hh = window.innerHeight, bw = w * 0.55;
+  const q = Math.min(1, bandPhase() / BAND_RUN), e = 1 - Math.pow(1 - q, 2.2);
+  const start = w + bw / 2 + 0.4 * hh, end = -bw / 2 - 0.4 * hh;
+  const lineX = start + (end - start) * e;
+  for (const el of bandVeils) {
+    if (!el.isConnected) {
+      bandVeils.delete(el);
+      continue;
     }
-  };
-  el.addEventListener("animationiteration", (e) => {
-    if (e.target === el) rm();
-  });
-  window.setTimeout(rm, 1700);
+    const r = el.getBoundingClientRect();
+    const x = lineX - (r.top + r.height / 2 - hh / 2) * BAND_TILT;
+    el.style.setProperty("--bx", `${(x - r.left - bw / 2).toFixed(1)}px`);
+    el.style.setProperty("--bw", `${bw.toFixed(0)}px`);
+  }
+  bandFrame = bandVeils.size ? requestAnimationFrame(bandStep) : 0;
+}
+function trackBand(el) {
+  bandVeils.add(el);
+  if (!bandFrame) bandFrame = requestAnimationFrame(bandStep);
+}
+function endBand(el) {
+  const p = bandPhase();
+  const wait = (p < BAND_RUN ? BAND_RUN - p : 1 - p + BAND_RUN) * BAND_MS;
+  window.setTimeout(() => {
+    bandVeils.delete(el);
+    el.remove();
+  }, wait);
 }
 function lift(host, state) {
   window.setTimeout(() => {
@@ -584,6 +606,7 @@ function blockUntil(host, until) {
   let st = blockState.get(host);
   if (!st) {
     st = { veil: h(host, "div", "mn-blkveil is-in"), since: Date.now() };
+    trackBand(st.veil);
     blockState.set(host, st);
   }
   const state = st;
@@ -2919,6 +2942,7 @@ function deckPage(ctx, file) {
   const pager = h(wrap, "div", "mn-pager");
   pager.addClass("is-wait");
   const band = h(wrap, "div", "mn-artload");
+  trackBand(band);
   const since = Date.now();
   for (const ev of ["touchstart", "touchmove"]) pager.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
   const fit = () => {
@@ -4393,6 +4417,7 @@ var MorellonomiconPlugin = class extends import_obsidian10.Plugin {
   async onload() {
     preloadRoleIcons();
     await this.loadSettings();
+    if (import_obsidian10.Platform.isMobile && this.settings.openOnStartup) document.body.addClass("mn-on", "mn-full");
     this.router = new Router(this.app);
     this.store = new Store(this);
     this.registerView(VIEW_TYPE, (leaf) => new MnView(leaf, this));
