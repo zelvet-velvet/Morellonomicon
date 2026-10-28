@@ -155,6 +155,7 @@ export class MnView extends ItemView {
             else this.scrollEl.scrollTo({ top: 0, behavior: "smooth" });
             return;
         }
+        this.router.popToRoot();   // leaving a tab resets it: coming back shows its main page, not the page left open
         this.router.setTab(id);
         this.markTab();
         this.draw("tab");

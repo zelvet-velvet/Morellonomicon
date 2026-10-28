@@ -13,6 +13,7 @@ sticker: lucide//activity
 - **Patch job push**: the job puts its commit on top of a newer main before pushing (a push made while it ran used to make it fail).
 - **Handbook home**: opens with the loading tip on an ARAM map, then two blocks, 初來乍到 (basics) and 高手必備 (advanced), each with its own progress, the next topic as a large picture and the rest two across; the glossary is a row at the end.
 - **Roles and lanes**: 英雄定位 explains how roles map to lanes (下路 pair, 中路 roaming, 打野) and why counters change with lane and time; the last-card next-topic panel is now fixed under the card, and a tilted card passes over the progress bars.
+- **Loading and tabs**: topic cards breathe blurred while loading (waits for the first three cards' media); switching tabs resets the tab you left to its main page.
 - **Topic loading and Jayce**: a topic shows once all its clips and pictures have loaded; 杰西 has a form-set card with both forms' ability pictures (no cannon clip: Riot's clips Q2 / E2 are the hammer).
 - **Card layout templates**: `ability`, `clip`, `number`, `forms` cards place shared components in grid areas (`cardkit.ts`); used by 跳脫定位框架; other topics can switch their skill cards over (to check on the phone).
 - **跳脫定位框架 in detail**: 杰西 (R and the cannon Q, E clips), 派克 (R clip and R card), 墨菲特 (R clip and R numbers with AP scaling); new card options `skill … grid` and `video … Q2`.

@@ -514,8 +514,21 @@ function whenLoaded(root, ms, count2 = FIRST_SCREEN) {
     }
   });
 }
-function whenMediaLoaded(root, ms) {
-  const media2 = Array.from(root.querySelectorAll("img, video"));
+function blurBackdrop(wrap, v) {
+  const make = () => {
+    if (!wrap.isConnected && !v.isConnected) return;
+    const blur = v.cloneNode(true);
+    blur.className = "mn-sl-vblur";
+    blur.muted = true;
+    blur.setAttribute("aria-hidden", "true");
+    wrap.prepend(blur);
+    void blur.play().catch(() => void 0);
+  };
+  if (v.readyState >= 2) make();
+  else v.addEventListener("loadeddata", make, { once: true });
+}
+function whenMediaLoaded(roots, ms) {
+  const media2 = roots.flatMap((r) => Array.from(r.querySelectorAll("img, video")));
   const ready = (m) => !m.isConnected || (m instanceof HTMLVideoElement ? m.readyState >= 2 || !!m.error : m.complete);
   return new Promise((done) => {
     const t0 = Date.now();
@@ -2504,14 +2517,7 @@ var media = (el, { c, s, args }) => {
   const wrap = h(el, "div", "mn-sl-video");
   demo(wrap, c, { key: args.find((a) => /^[PQWER]\d?$/i.test(a))?.toUpperCase() ?? s.key });
   const v = wrap.querySelector("video");
-  if (v) {
-    const blur = v.cloneNode(true);
-    blur.className = "mn-sl-vblur";
-    blur.muted = true;
-    blur.setAttribute("aria-hidden", "true");
-    wrap.prepend(blur);
-    void blur.play().catch(() => void 0);
-  }
+  if (v) blurBackdrop(wrap, v);
   const hud = h(el, "div", "mn-ck-hud");
   keyBadge(hud, s.key, kindColor(s));
   h(hud, "span", "mn-ck-hudn", s.name);
@@ -2645,6 +2651,7 @@ var TILT = 12;
 var GONE = -1.2;
 var FAN = [0, 2.6, -2.2, -2.2];
 var STEP_Y = 6;
+var WAIT_CARDS = 3;
 var DECK_WAIT_MS = 8e3;
 var NEAR_BEHIND = 1;
 var NEAR_AHEAD = 2;
@@ -2795,21 +2802,25 @@ function deckPage(ctx, file) {
         c.style.visibility = i >= cur - NEAR_BEHIND && i <= cur + NEAR_AHEAD ? "" : "hidden";
         const live = i >= cur - 1 && i <= cur + 1;
         c.querySelectorAll("video").forEach((v) => {
-          if (live) void v.play().catch(() => void 0);
-          else v.pause();
+          if (live) {
+            void v.play().catch(() => void 0);
+            return;
+          }
+          if (v.readyState >= 2) v.pause();
+          else v.addEventListener("loadeddata", () => {
+            if (!(i >= cur - 1 && i <= cur + 1)) v.pause();
+          }, { once: true });
         });
       });
       show();
     };
     layout(false);
-    const loading = h(wrap, "div", "mn-deck-load", "\u8F09\u5165\u4E2D\u2026");
     pager.addClass("is-wait");
     sec.forEach((c) => c.querySelectorAll("video").forEach((v) => {
       void v.play().catch(() => void 0);
     }));
-    void whenMediaLoaded(pager, DECK_WAIT_MS).then(() => {
+    void whenMediaLoaded(sec.slice(0, WAIT_CARDS), DECK_WAIT_MS).then(() => {
       pager.removeClass("is-wait");
-      loading.remove();
       layout(false);
     });
     const onResize = () => layout(false);
@@ -2935,14 +2946,7 @@ function visual(ctx, box, s) {
       const wrap = h(box, "div", "mn-sl-video");
       demo(wrap, c, { key: args[1] ?? "Q" });
       const v = wrap.querySelector("video");
-      if (v) {
-        const blur = v.cloneNode(true);
-        blur.className = "mn-sl-vblur";
-        blur.muted = true;
-        blur.setAttribute("aria-hidden", "true");
-        wrap.prepend(blur);
-        void blur.play().catch(() => void 0);
-      }
+      if (v) blurBackdrop(wrap, v);
       return;
     }
   } else if (kind === "img") {
@@ -4001,6 +4005,7 @@ var MnView = class extends import_obsidian8.ItemView {
       else this.scrollEl.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
+    this.router.popToRoot();
     this.router.setTab(id);
     this.markTab();
     this.draw("tab");

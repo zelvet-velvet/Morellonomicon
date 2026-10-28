@@ -57,10 +57,25 @@ export function whenLoaded(root: HTMLElement, ms: number, count = FIRST_SCREEN):
     });
 }
 
-// Every picture and clip under `root` has its first frame (or failed, or was removed because no format loaded), or `ms` passed.
+// The blurred copy of a clip that fills the card around it. It starts only once the clip itself has its first frame (the browser
+// then has the file cached), so the two never download the same clip side by side.
+export function blurBackdrop(wrap: HTMLElement, v: HTMLVideoElement): void {
+    const make = () => {
+        if (!wrap.isConnected && !v.isConnected) return;
+        const blur = v.cloneNode(true) as HTMLVideoElement;
+        blur.className = "mn-sl-vblur";
+        blur.muted = true;
+        blur.setAttribute("aria-hidden", "true");
+        wrap.prepend(blur);
+        void blur.play().catch(() => undefined);
+    };
+    if (v.readyState >= 2) make(); else v.addEventListener("loadeddata", make, { once: true });
+}
+
+// Every picture and clip under the roots has its first frame (or failed, or was removed because no format loaded), or `ms` passed.
 // Checked on a short timer rather than events, because a clip whose sources all fail is removed without any event.
-export function whenMediaLoaded(root: HTMLElement, ms: number): Promise<void> {
-    const media = Array.from(root.querySelectorAll<HTMLImageElement | HTMLVideoElement>("img, video"));
+export function whenMediaLoaded(roots: HTMLElement[], ms: number): Promise<void> {
+    const media = roots.flatMap((r) => Array.from(r.querySelectorAll<HTMLImageElement | HTMLVideoElement>("img, video")));
     const ready = (m: HTMLImageElement | HTMLVideoElement) => !m.isConnected || (m instanceof HTMLVideoElement ? m.readyState >= 2 || !!m.error : m.complete);
     return new Promise((done) => {
         const t0 = Date.now();

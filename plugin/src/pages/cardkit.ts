@@ -1,5 +1,5 @@
 import type { Champion, Skill } from "../data/store";
-import { DAMAGE_COLOR, h, icon } from "../ui";
+import { DAMAGE_COLOR, blurBackdrop, h, icon } from "../ui";
 import { tagInfo } from "./profile";
 import { demo } from "./skills";
 
@@ -88,12 +88,7 @@ const media: Fill = (el, { c, s, args }) => {
     const wrap = h(el, "div", "mn-sl-video");
     demo(wrap, c, { key: args.find((a) => /^[PQWER]\d?$/i.test(a))?.toUpperCase() ?? s.key });
     const v = wrap.querySelector("video");
-    if (v) {
-        const blur = v.cloneNode(true) as HTMLVideoElement;
-        blur.className = "mn-sl-vblur"; blur.muted = true; blur.setAttribute("aria-hidden", "true");
-        wrap.prepend(blur);
-        void blur.play().catch(() => undefined);
-    }
+    if (v) blurBackdrop(wrap, v);
     const hud = h(el, "div", "mn-ck-hud");
     keyBadge(hud, s.key, kindColor(s));
     h(hud, "span", "mn-ck-hudn", s.name);

@@ -1,7 +1,7 @@
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { Champion } from "../data/store";
 import { mapUrl } from "./handbook";
-import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg, whenMediaLoaded, SWIPE } from "../ui";
+import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg, whenMediaLoaded, blurBackdrop, SWIPE } from "../ui";
 import { factsStrip, profileAxes, profileRadar, styleCard, tagRow } from "./profile";
 import type { PageCtx, PageOut } from "./index";
 import { cardKit } from "./cardkit";
@@ -34,6 +34,7 @@ const TILT = 12;       // degrees a card tilts per card width it is dragged (lik
 const GONE = -1.2;     // where a swiped-away card rests, in card widths to the left of the pile
 const FAN = [0, 2.6, -2.2, -2.2];   // degrees the cards under the top one lean, so the pile looks laid on a table
 const STEP_Y = 6;      // px each card under the top one sits lower, so their edges show like a stack of cards
+const WAIT_CARDS = 3;      // the pile waits for this many cards' pictures and clips; the others keep loading behind them
 const DECK_WAIT_MS = 8000;   // the pile waits this long at most for the topic's pictures and clips
 const NEAR_BEHIND = 1;   // cards already seen that are still painted (the one that comes back on a right swipe)
 const NEAR_AHEAD = 2;    // cards under the top one that are painted (the pile shows two)
@@ -182,17 +183,20 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             sec.forEach((c, i) => {
                 c.style.visibility = i >= cur - NEAR_BEHIND && i <= cur + NEAR_AHEAD ? "" : "hidden";
                 const live = i >= cur - 1 && i <= cur + 1;
-                c.querySelectorAll("video").forEach((v) => { if (live) void v.play().catch(() => undefined); else v.pause(); });
+                c.querySelectorAll("video").forEach((v) => {
+                    if (live) { void v.play().catch(() => undefined); return; }
+                    // a clip still loading keeps playing (a phone may not fetch a paused one), and is paused once it has its first frame
+                    if (v.readyState >= 2) v.pause(); else v.addEventListener("loadeddata", () => { if (!(i >= cur - 1 && i <= cur + 1)) v.pause(); }, { once: true });
+                });
             });
             show();
         };
         layout(false);
         // The pile shows once every picture and clip of the topic has its first frame (or after DECK_WAIT_MS), so nothing pops in
         // while swiping. Clips under the top card are told to play meanwhile: a phone may not fetch a paused clip at all.
-        const loading = h(wrap, "div", "mn-deck-load", "載入中…");
-        pager.addClass("is-wait");
+        pager.addClass("is-wait");   // meanwhile the cards show blurred and breathing
         sec.forEach((c) => c.querySelectorAll("video").forEach((v) => { void v.play().catch(() => undefined); }));
-        void whenMediaLoaded(pager, DECK_WAIT_MS).then(() => { pager.removeClass("is-wait"); loading.remove(); layout(false); });
+        void whenMediaLoaded(sec.slice(0, WAIT_CARDS), DECK_WAIT_MS).then(() => { pager.removeClass("is-wait"); layout(false); });
         const onResize = () => layout(false);
         window.addEventListener("resize", onResize);
         ctx.component.register(() => window.removeEventListener("resize", onResize));
@@ -301,14 +305,7 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
             const wrap = h(box, "div", "mn-sl-video");
             demo(wrap, c, { key: args[1] ?? "Q" });
             const v = wrap.querySelector("video");
-            if (v) {
-                const blur = v.cloneNode(true) as HTMLVideoElement;
-                blur.className = "mn-sl-vblur";
-                blur.muted = true;
-                blur.setAttribute("aria-hidden", "true");
-                wrap.prepend(blur);
-                void blur.play().catch(() => undefined);
-            }
+            if (v) blurBackdrop(wrap, v);
             return;
         }
     } else if (kind === "img") {
