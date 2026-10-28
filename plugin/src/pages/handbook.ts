@@ -43,33 +43,38 @@ export function handbookPage(ctx: PageCtx): PageOut {
         return texts;
     };
 
-    // The loading screen on top (an ARAM map with a tip on it), then the topics as pictures: the next one to read large, the others in a
-    // 2-column grid (✓ when read), and the glossary as a row under them.
+    // The loading screen on top (an ARAM map with a tip on it), then two blocks of topics, 初來乍到 (the basics) and 高手必備 (advanced):
+    // in each, the next one to read large and the others two across (✓ when read). The glossary is a row at the end.
     const home = () => {
         out.empty();
         if (!notes.length) { empty(out, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." }); return; }
         trivia(out);
         const decks = notes.filter((n) => n.layout === "deck");
-        const done = decks.filter((n) => read.has(n.file.path)).length;
-        const next = decks.find((n) => !read.has(n.file.path));
-        const head = h(out, "div", "mn-hb-head");
-        h(head, "span", "mn-hb-k", done >= decks.length ? "全部讀完了" : "新手課程");
-        h(head, "span", "mn-hb-n", `${done} / ${decks.length}`);
-        h(h(out, "div", "mn-hb-track"), "div", "mn-hb-fill").style.width = `${(done / Math.max(1, decks.length)) * 100}%`;
-        const tile = (parent: HTMLElement, n: (typeof notes)[number], big: boolean) => {
-            const b = h(parent, "button", "mn-hb-tile" + (big ? " is-big" : "") + (read.has(n.file.path) ? " is-read" : ""));
-            const url = coverUrl(n.cover);
-            if (url) { const im = h(b, "img", "mn-hb-art"); im.alt = ""; im.loading = "lazy"; im.onerror = () => im.remove(); im.src = url; }   // no picture: the plain tile
-            const txt = h(b, "div", "mn-hb-ov");
-            const num = String(decks.indexOf(n) + 1).padStart(2, "0");
-            h(txt, "div", "mn-hb-kn", big ? `${done ? "繼續" : "開始"} · ${num}` : read.has(n.file.path) ? `✓ ${num}` : num);
-            h(txt, "div", "mn-hb-t", n.title);
-            if (big && n.summary) h(txt, "div", "mn-hb-s", n.summary);
-            b.addEventListener("click", (e) => { e.preventDefault(); ctx.openNote(n.file.path); });
+        const block = (name: string, list: typeof decks) => {
+            if (!list.length) return;
+            const done = list.filter((n) => read.has(n.file.path)).length;
+            const next = list.find((n) => !read.has(n.file.path));
+            const head = h(out, "div", "mn-hb-head");
+            h(head, "span", "mn-hb-k", name);
+            h(head, "span", "mn-hb-n", done >= list.length ? "全部讀完了" : `${done} / ${list.length}`);
+            h(h(out, "div", "mn-hb-track"), "div", "mn-hb-fill").style.width = `${(done / list.length) * 100}%`;
+            const tile = (parent: HTMLElement, n: (typeof notes)[number], big: boolean) => {
+                const b = h(parent, "button", "mn-hb-tile" + (big ? " is-big" : "") + (read.has(n.file.path) ? " is-read" : ""));
+                const url = coverUrl(n.cover);
+                if (url) { const im = h(b, "img", "mn-hb-art"); im.alt = ""; im.loading = "lazy"; im.onerror = () => im.remove(); im.src = url; }   // no picture: the plain tile
+                const txt = h(b, "div", "mn-hb-ov");
+                const num = String(list.indexOf(n) + 1).padStart(2, "0");
+                h(txt, "div", "mn-hb-kn", big ? `${done ? "繼續" : "開始"} · ${num}` : read.has(n.file.path) ? `✓ ${num}` : num);
+                h(txt, "div", "mn-hb-t", n.title);
+                if (big && n.summary) h(txt, "div", "mn-hb-s", n.summary);
+                b.addEventListener("click", (e) => { e.preventDefault(); ctx.openNote(n.file.path); });
+            };
+            if (next) tile(out, next, true);
+            const rest = list.filter((n) => n !== next);
+            if (rest.length) { const grid = h(out, "div", "mn-hb-grid"); rest.forEach((n) => tile(grid, n, false)); }
         };
-        if (next) tile(out, next, true);
-        const rest = decks.filter((n) => n !== next);
-        if (rest.length) { const grid = h(out, "div", "mn-hb-grid"); rest.forEach((n) => tile(grid, n, false)); }
+        block("初來乍到", decks.filter((n) => n.level !== "advanced"));
+        block("高手必備", decks.filter((n) => n.level === "advanced"));
         for (const n of notes.filter((x) => x.layout !== "deck")) {
             const r = h(out, "button", "mn-hb-row");
             icon(r, n.icon, "mn-hb-ric");

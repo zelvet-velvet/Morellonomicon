@@ -393,7 +393,7 @@ var Store = class {
   }
   // The Learn cards: notes in the guide folder, ordered by their `order` (then name); `icon` and `summary` come from frontmatter
   guideNotes() {
-    return this.notes(this.s.guideFolder).map(({ file, fm }) => ({ file, title: file.basename, icon: str(fm.icon, "file-text"), summary: str(fm.summary), order: num(fm.order, 99), layout: str(fm.layout, "deck"), cover: str(fm.cover) })).sort((a, b) => a.order - b.order || a.title.localeCompare(b.title, "zh-Hant"));
+    return this.notes(this.s.guideFolder).map(({ file, fm }) => ({ file, title: file.basename, icon: str(fm.icon, "file-text"), summary: str(fm.summary), order: num(fm.order, 99), layout: str(fm.layout, "deck"), cover: str(fm.cover), level: str(fm.level, "basic") })).sort((a, b) => a.order - b.order || a.title.localeCompare(b.title, "zh-Hant"));
   }
 };
 
@@ -2156,38 +2156,43 @@ function handbookPage(ctx) {
     }
     trivia(out);
     const decks = notes.filter((n) => n.layout === "deck");
-    const done = decks.filter((n) => read.has(n.file.path)).length;
-    const next = decks.find((n) => !read.has(n.file.path));
-    const head = h(out, "div", "mn-hb-head");
-    h(head, "span", "mn-hb-k", done >= decks.length ? "\u5168\u90E8\u8B80\u5B8C\u4E86" : "\u65B0\u624B\u8AB2\u7A0B");
-    h(head, "span", "mn-hb-n", `${done} / ${decks.length}`);
-    h(h(out, "div", "mn-hb-track"), "div", "mn-hb-fill").style.width = `${done / Math.max(1, decks.length) * 100}%`;
-    const tile2 = (parent, n, big) => {
-      const b = h(parent, "button", "mn-hb-tile" + (big ? " is-big" : "") + (read.has(n.file.path) ? " is-read" : ""));
-      const url = coverUrl(n.cover);
-      if (url) {
-        const im = h(b, "img", "mn-hb-art");
-        im.alt = "";
-        im.loading = "lazy";
-        im.onerror = () => im.remove();
-        im.src = url;
+    const block = (name, list2) => {
+      if (!list2.length) return;
+      const done = list2.filter((n) => read.has(n.file.path)).length;
+      const next = list2.find((n) => !read.has(n.file.path));
+      const head = h(out, "div", "mn-hb-head");
+      h(head, "span", "mn-hb-k", name);
+      h(head, "span", "mn-hb-n", done >= list2.length ? "\u5168\u90E8\u8B80\u5B8C\u4E86" : `${done} / ${list2.length}`);
+      h(h(out, "div", "mn-hb-track"), "div", "mn-hb-fill").style.width = `${done / list2.length * 100}%`;
+      const tile2 = (parent, n, big) => {
+        const b = h(parent, "button", "mn-hb-tile" + (big ? " is-big" : "") + (read.has(n.file.path) ? " is-read" : ""));
+        const url = coverUrl(n.cover);
+        if (url) {
+          const im = h(b, "img", "mn-hb-art");
+          im.alt = "";
+          im.loading = "lazy";
+          im.onerror = () => im.remove();
+          im.src = url;
+        }
+        const txt = h(b, "div", "mn-hb-ov");
+        const num2 = String(list2.indexOf(n) + 1).padStart(2, "0");
+        h(txt, "div", "mn-hb-kn", big ? `${done ? "\u7E7C\u7E8C" : "\u958B\u59CB"} \xB7 ${num2}` : read.has(n.file.path) ? `\u2713 ${num2}` : num2);
+        h(txt, "div", "mn-hb-t", n.title);
+        if (big && n.summary) h(txt, "div", "mn-hb-s", n.summary);
+        b.addEventListener("click", (e) => {
+          e.preventDefault();
+          ctx.openNote(n.file.path);
+        });
+      };
+      if (next) tile2(out, next, true);
+      const rest = list2.filter((n) => n !== next);
+      if (rest.length) {
+        const grid = h(out, "div", "mn-hb-grid");
+        rest.forEach((n) => tile2(grid, n, false));
       }
-      const txt = h(b, "div", "mn-hb-ov");
-      const num2 = String(decks.indexOf(n) + 1).padStart(2, "0");
-      h(txt, "div", "mn-hb-kn", big ? `${done ? "\u7E7C\u7E8C" : "\u958B\u59CB"} \xB7 ${num2}` : read.has(n.file.path) ? `\u2713 ${num2}` : num2);
-      h(txt, "div", "mn-hb-t", n.title);
-      if (big && n.summary) h(txt, "div", "mn-hb-s", n.summary);
-      b.addEventListener("click", (e) => {
-        e.preventDefault();
-        ctx.openNote(n.file.path);
-      });
     };
-    if (next) tile2(out, next, true);
-    const rest = decks.filter((n) => n !== next);
-    if (rest.length) {
-      const grid = h(out, "div", "mn-hb-grid");
-      rest.forEach((n) => tile2(grid, n, false));
-    }
+    block("\u521D\u4F86\u4E4D\u5230", decks.filter((n) => n.level !== "advanced"));
+    block("\u9AD8\u624B\u5FC5\u5099", decks.filter((n) => n.level === "advanced"));
     for (const n of notes.filter((x) => x.layout !== "deck")) {
       const r = h(out, "button", "mn-hb-row");
       icon(r, n.icon, "mn-hb-ric");
@@ -2544,6 +2549,47 @@ function visual(ctx, box, s) {
       d.style.setProperty("--c", DAMAGE_COLOR[k]);
     }
     return;
+  } else if (kind === "skill") {
+    const c = champ(args[0]), k = (args[1] ?? "Q").toUpperCase();
+    const sk = c?.skills.find((x) => x.key === k);
+    if (c && sk) {
+      const wrap = h(box, "div", "mn-sl-skill");
+      const top = h(wrap, "div", "mn-sl-skill-top");
+      const im = h(top, "img", "mn-sl-skill-ic");
+      im.src = sk.icon;
+      im.alt = "";
+      im.style.setProperty("--chip", DAMAGE_COLOR[sk.damage[0] ?? ""] ?? "var(--mn-line)");
+      const who = h(top, "div");
+      h(who, "div", "mn-sl-skill-k", `${c.name} \xB7 ${k === "P" ? "\u88AB\u52D5" : k}`);
+      h(who, "div", "mn-sl-skill-n", sk.name);
+      h(wrap, "div", "mn-sl-skill-d", sk.desc);
+      return;
+    }
+  } else if (kind === "tree") {
+    const root = store.item(Number(args[0]));
+    if (root) {
+      const node = (parent, id, depth) => {
+        const it = store.item(id);
+        if (!it) return;
+        const n = h(parent, "div", "mn-tree-n");
+        const b = h(n, "button", "mn-tree-item" + (depth === 0 ? " is-root" : ""));
+        const im = h(b, "img");
+        im.src = it.icon;
+        im.alt = "";
+        h(b, "span", "mn-tree-g", String(it.goldTotal));
+        h(b, "span", "mn-tree-name", it.name);
+        b.addEventListener("click", (e) => {
+          e.preventDefault();
+          ctx.openItem(it.id);
+        });
+        if (it.from.length && depth < 2) {
+          const kids = h(n, "div", "mn-tree-kids");
+          for (const f of it.from) node(kids, f, depth + 1);
+        }
+      };
+      node(h(box, "div", "mn-tree"), root.id, 0);
+      return;
+    }
   } else if (kind === "splash") {
     const c = champ(args[0]);
     if (c) {

@@ -446,6 +446,30 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-sl-ic .aug-icon { width: 84px; height: 84px; border-radius: 20px; }
 .mn-sl-ic span { max-width: 100%; font-size: 12px; color: var(--mn-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+/* one ability, large: its icon in the damage colour's frame, champion and key, name, then Riot's text */
+.mn-sl-skill { width: 100%; display: flex; flex-direction: column; gap: 14px; }
+.mn-sl-skill-top { display: flex; align-items: center; gap: 14px; }
+.mn-sl-skill-ic { width: 76px; height: 76px; border-radius: 16px; border: 3px solid var(--chip); flex: none; }
+.mn-sl-skill-k { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: var(--mn-accent); }
+.mn-sl-skill-n { font-family: var(--mn-serif); font-size: 22px; font-weight: 700; color: var(--mn-text); }
+.mn-sl-skill-d { font-size: 14px; line-height: 1.7; color: var(--mn-muted); word-break: keep-all; overflow-wrap: anywhere; line-break: strict;
+    padding: 12px 14px; border-radius: 14px; background: var(--mn-card-hi); }
+/* an item's recipe like the in-game shop: the item, a line down, a bar over its parts, each part with its price */
+.mn-tree { width: 100%; min-width: 0; display: flex; justify-content: center; }
+.mn-tree-n { position: relative; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.mn-tree-kids { position: relative; display: flex; gap: 0; padding-top: 18px; }
+.mn-tree-kids::before { content: ""; position: absolute; top: 0; left: 50%; height: 9px; border-left: 1.5px solid var(--mn-faint); }
+.mn-tree-kids > .mn-tree-n { padding-top: 9px; }
+.mn-tree-kids > .mn-tree-n::before { content: ""; position: absolute; top: 0; left: 0; right: 0; border-top: 1.5px solid var(--mn-faint); }
+.mn-tree-kids > .mn-tree-n:first-child::before { left: 50%; }
+.mn-tree-kids > .mn-tree-n:last-child::before { right: 50%; }
+.mn-tree-kids > .mn-tree-n:only-child::before { display: none; }
+.mn-tree-kids > .mn-tree-n::after { content: ""; position: absolute; top: 0; left: 50%; height: 9px; border-left: 1.5px solid var(--mn-faint); }
+.mn-app .mn-tree-item { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 60px; height: auto; padding: 0 2px; background: none; }
+.mn-tree-item img { width: 40px; height: 40px; border-radius: 9px; border: 1px solid var(--mn-line); background: var(--mn-card-hi); }
+.mn-tree-item.is-root img { width: 60px; height: 60px; border-radius: 13px; border-color: var(--mn-accent); }
+.mn-tree-g { font-size: 12px; font-weight: 700; color: #e8c15a; font-variant-numeric: tabular-nums; }
+.mn-tree-name { max-width: 100%; font-size: 10px; color: var(--mn-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* pulling the last card: it shivers once, then follows the finger at a fraction of the distance and reveals the next topic behind it */
 .mn-peek { position: absolute; z-index: 0; top: 0; bottom: 0; right: 14px; width: 116px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
     text-align: center; opacity: 0; transition: opacity 0.15s; }

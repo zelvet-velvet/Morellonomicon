@@ -16,7 +16,8 @@ import { demo } from "./skills";
 //   roles               the six role icons                                   lanes                the five lane icons
 //   tabs                the champion page's four tabs                        damage               the three damage kinds in their colours
 //   map habackground    an ARAM loading screen picture (habackground, arambilgewater, arambloom; no name = one at random)
-//   splash Swain        the champion's splash art
+//   splash Swain        the champion's splash art                            skill Gwen Q         one ability large: icon, name, Riot's text
+//   tree 3071           an item's recipe drawn like the shop: the item on top, what it is built from below, with prices
 //   radar Ahri          the older radar chart
 //   role 戰士           champions of that role (a few, changing daily)       champs Ahri Garen    those champions
 //   itemtag Armor       items of that kind (Armor, SpellBlock, Health…)      item 3089            one item and what it is built from
@@ -218,6 +219,41 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
         const row = h(box, "div", "mn-sl-dmg");
         for (const k of ["物理", "魔法", "真實"]) { const d = h(row, "div", "mn-sl-dmg-k", k); d.style.setProperty("--c", DAMAGE_COLOR[k]); }
         return;
+    } else if (kind === "skill") {
+        const c = champ(args[0]), k = (args[1] ?? "Q").toUpperCase();
+        const sk = c?.skills.find((x) => x.key === k);
+        if (c && sk) {
+            const wrap = h(box, "div", "mn-sl-skill");
+            const top = h(wrap, "div", "mn-sl-skill-top");
+            const im = h(top, "img", "mn-sl-skill-ic"); im.src = sk.icon; im.alt = "";
+            im.style.setProperty("--chip", DAMAGE_COLOR[sk.damage[0] ?? ""] ?? "var(--mn-line)");
+            const who = h(top, "div");
+            h(who, "div", "mn-sl-skill-k", `${c.name} · ${k === "P" ? "被動" : k}`);
+            h(who, "div", "mn-sl-skill-n", sk.name);
+            h(wrap, "div", "mn-sl-skill-d", sk.desc);
+            return;
+        }
+    } else if (kind === "tree") {
+        // the shop's recipe tree: each item, then the items it is built from on the row below, joined by lines
+        const root = store.item(Number(args[0]));
+        if (root) {
+            const node = (parent: HTMLElement, id: number, depth: number) => {
+                const it = store.item(id);
+                if (!it) return;
+                const n = h(parent, "div", "mn-tree-n");
+                const b = h(n, "button", "mn-tree-item" + (depth === 0 ? " is-root" : ""));
+                const im = h(b, "img"); im.src = it.icon; im.alt = "";
+                h(b, "span", "mn-tree-g", String(it.goldTotal));
+                h(b, "span", "mn-tree-name", it.name);
+                b.addEventListener("click", (e) => { e.preventDefault(); ctx.openItem(it.id); });
+                if (it.from.length && depth < 2) {
+                    const kids = h(n, "div", "mn-tree-kids");
+                    for (const f of it.from) node(kids, f, depth + 1);
+                }
+            };
+            node(h(box, "div", "mn-tree"), root.id, 0);
+            return;
+        }
     } else if (kind === "splash") {
         // a champion's splash art, filling the card (its face kept in view)
         const c = champ(args[0]);
