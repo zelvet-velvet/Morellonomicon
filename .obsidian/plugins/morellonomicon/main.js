@@ -1895,6 +1895,7 @@ function skillStrip(parent, c, changes = []) {
     }
     const loaded = whenMediaLoaded([clipBox], CLIP_WAIT_MS);
     blockUntil(clipBox, loaded);
+    window.requestAnimationFrame(reveal);
     void loaded.then(() => window.requestAnimationFrame(reveal));
   };
 }

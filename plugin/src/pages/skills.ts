@@ -50,8 +50,8 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
             h(up, "p", "mn-sd-desc", s.upgrade);
         }
         // The clip has its room from the start (a box of the clip's shape) and loads as a block of its own, with the blur and the band
-        // of light; the page scrolls down to the end of the card only once the clip is there, so it is never scrolled to a card that
-        // is about to grow. A clip that cannot play takes its box away.
+        // of light. The page scrolls down to the end of the card at once, and once more when the clip is in (a no-op when the card is
+        // already where it should be). A clip that cannot play takes its box away.
         const clipBox = h(detail, "div", "mn-sd-clipbox");
         demo(clipBox, c, s, () => clipBox.remove());
         // scroll down to the end of the card (its clip included); a card taller than the screen shows from its top instead
@@ -64,7 +64,8 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
         if (!clipBox.querySelector("video")) { clipBox.remove(); window.requestAnimationFrame(reveal); return; }   // no clip for this skill
         const loaded = whenMediaLoaded([clipBox], CLIP_WAIT_MS);
         blockUntil(clipBox, loaded);
-        void loaded.then(() => window.requestAnimationFrame(reveal));
+        window.requestAnimationFrame(reveal);   // scroll down at once (the box already has its room) so the loading can be watched ...
+        void loaded.then(() => window.requestAnimationFrame(reveal));   // ... and again once the clip is in, in case the card ended up elsewhere
     };
 }
 
