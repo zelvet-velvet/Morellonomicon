@@ -559,7 +559,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* a skill's key badge: one size variable (--k) sets the box, the radius and the letter, so every size keeps the same proportions;
    the letter is centred on its own ink by keyBadge() in cardkit.ts (fonts differ in where capitals and 被 sit in their line box) */
 .mn-ck-key { --k: 24px; display: inline-grid; place-items: center; flex: none; box-sizing: border-box; width: var(--k); height: var(--k); border-radius: calc(var(--k) * 0.32);
-    background: color-mix(in srgb, var(--c) 62%, #0a0c12); color: #fff; font-family: var(--font-interface, system-ui, sans-serif); font-weight: 800; font-size: calc(var(--k) * 0.54); line-height: 1; }
+    background: color-mix(in srgb, var(--c) 62%, #0a0c12);   /* older webviews: a plain darker mix */
+    background: oklch(from var(--c) min(l, 0.56) calc(c * 1.35) h);   /* darker for the white letter, but keeps (even lifts) the colour, so blue stays blue */
+    color: #fff; font-family: var(--font-interface, system-ui, sans-serif); font-weight: 800; font-size: calc(var(--k) * 0.54); line-height: 1; }
 .mn-ck-key > span { display: block; line-height: 1; translate: 0 var(--dy, 0px); }
 .mn-ck-key.is-zh { font-size: calc(var(--k) * 0.46); font-weight: 700; }   /* a Chinese character fills its square: a little smaller looks the same size */
 .mn-ck-ic .mn-ck-key { position: absolute; right: -7px; bottom: -7px; border: 2px solid #12141b; }
