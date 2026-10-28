@@ -92,7 +92,7 @@ export function preloadClip(c: Champion, key: string): Promise<void> {
     downloading.set(url, job);
     return job;
 }
-export function demo(parent: HTMLElement, c: Champion, s: { key: string }, onFail?: () => void): void {
+export function demo(parent: HTMLElement, c: Champion, s: { key: string; range?: [number, number] }, onFail?: () => void): void {
     if (!c.key) return;
     const url = clipAddress(c, s.key);
     const v = h(parent, "video", "mn-sd-video");
@@ -102,6 +102,17 @@ export function demo(parent: HTMLElement, c: Champion, s: { key: string }, onFai
     v.setAttribute("disablepictureinpicture", "");
     v.setAttribute("disableremoteplayback", "");
     const fail = () => { v.remove(); onFail?.(); };
+    // only the important part of a long clip: it plays from `start` to `end` seconds and jumps back, so the rest is never shown
+    // (the file is still downloaded whole; a clip cannot be cut without re-encoding it)
+    if (s.range) {
+        const [start, end] = s.range;
+        v.loop = false;
+        v.addEventListener("loadedmetadata", () => { v.currentTime = start; });
+        const guard = window.setInterval(() => {
+            if (!v.isConnected) { window.clearInterval(guard); return; }
+            if (v.currentTime >= end || v.ended) { v.currentTime = start; if (v.paused) void v.play().catch(() => undefined); }
+        }, 60);
+    }
     // the whole file, played from memory: for a clip already downloaded, and the way out for a clip that does not stream
     const playLocal = (local: string) => {
         v.replaceChildren();

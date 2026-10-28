@@ -8,7 +8,7 @@ import { demo } from "./skills";
 // template lays the components out, so every card of a kind has the same structure, colours and icons.
 //
 //   ability  Champ Key        head · tags · text · numbers per rank with scaling · cooldown / cost / range
-//   clip     Champ Key[2]     the ability's clip fills the picture, key + name on top, tags below
+//   clip     Champ Key[2] [a-b]   the ability's clip fills the picture, key + name on top, tags below; a-b = play only seconds a to b
 //   number   Champ Key        the scaling as one big number, and what it adds up to at a few stat values
 //   forms    Champ A B [*B]   two forms side by side, one line of Q / W / E each; * marks the form to look at
 //   formset  Champ A B        both forms' ability pictures: the R of each big, its Q W E under it (Jayce-style files: <id>q_melee / _ranged)
@@ -86,7 +86,9 @@ const stats: Fill = (el, { s }) => {
 // the clip fills the picture area (the whole clip, the room around it is the same clip blurred), with the skill's key and name on top
 const media: Fill = (el, { c, s, args }) => {
     const wrap = h(el, "div", "mn-sl-video");
-    demo(wrap, c, { key: args.find((a) => /^[PQWER]\d?$/i.test(a))?.toUpperCase() ?? s.key }, () => {
+    const span = args.map((a) => /^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)$/.exec(a)).find((m) => m);   // "0-4.5": only those seconds of the clip
+    const range = span ? ([Number(span[1]), Number(span[2])] as [number, number]) : undefined;
+    demo(wrap, c, { key: args.find((a) => /^[PQWER]\d?$/i.test(a))?.toUpperCase() ?? s.key, range }, () => {
         // the clip cannot play on this device: the skill's picture takes its place
         const im = h(wrap, "img", "mn-ck-failic"); im.src = s.icon; im.alt = "";
         wrap.querySelectorAll(".mn-sl-vblur").forEach((b) => b.remove());
