@@ -9,6 +9,7 @@ sticker: lucide//activity
 > Read [[LLM Guide]] before any `CMD_` or status update. This note is kept by `CMD_SYNC` / `CMD_ROLLOVER` / `CMD_NOTES_SYNC`; the day notes in `Review/Log/` by `CMD_JOURNAL`.
 
 ## 🚀 Today's Progress (2026-10-28)
+- **Card layout rules**: one frame for every Handbook card (F2, whole-card stage, words fit their content, dock on top of the words), text limits and stage templates in [[Card Layout]]; `tools/check_cards.py` finds 35 of 68 cards over the limits.
 - **Clip crop and fade**: every clip card fills the picture, cut to where the champion stands (about three quarters from the left), with an eased fade (no edge line) and the tags / steps just above the words (to check on the phone).
 - **Combo card**: Jayce's cannon page is the demo clip with the ability pictures, an arrow and three result chips instead of text columns; a new `combo` visual; its clip fills the card (cut to the middle) and plays E then Q (to check on the phone).
 - **Clip cards and centring**: clips sit as a rounded 16:9 picture on the card's own background (no black strip, no blur); skill cards are centred vertically; the number card says which rank its bars use (to check on the phone).
@@ -149,6 +150,7 @@ sticker: lucide//activity
 - [ ] **Augments sub-tab**: use the counted augment picks (and `fits`) once there is data.
 
 ### 🖼️ Handbook pictures
+- [ ] **Cards to the layout**: shorten the 35 cards over the [[Card Layout]] limits; build the `levels` template (Malphite R per ult level, tank vs AP) and fix the frame in the plugin (dock on the words, no scrolling).
 - [ ] **In-game screenshots** (Zaviel): save them in the vault (e.g. `Assets/`) and put `visual: img Assets/name.png` under a card. Wanted: where the skill damage and cooldown show in the HUD; the augment pick screen (silver / gold / prismatic); the item shop with the recipe tree; the scoreboard; the minimap and ward icons.
 - [>] **More decks**: 視野控制 (Rift wards) is in; still to write: Rift basics (lanes, objectives), ping etiquette, one card each for the trick-of-the-week.
 - [ ] **Ward spots**: the 視野控制 cards place wards by eye on the minimap; check them against real games and adjust `WARDS` in `plugin/src/pages/deck.ts`.
