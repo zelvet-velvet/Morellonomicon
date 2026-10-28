@@ -5,7 +5,7 @@ import { THEMES, themeVars } from "./themes";
 import { PageOut, renderPage } from "./pages";
 import { rememberSub } from "./pages/champions";
 import type { Frame } from "./router";
-import { empty, h, icon, preloadRoleIcons, slideSeg, whenLoaded } from "./ui";
+import { empty, h, icon, loadingLook, preloadRoleIcons, releaseVideos, slideSeg, whenLoaded } from "./ui";
 
 export const VIEW_TYPE = "morellonomicon";
 
@@ -95,6 +95,7 @@ export class MnView extends ItemView {
     async onClose(): Promise<void> { this.scrolls.clear(); }
 
     private modeBtn!: HTMLElement;
+    private firstReadyDrawn = false;
     private veil: HTMLElement | null = null;   // the loading veil over the page area
     private drawId = 0;
     private markScrolled(): void {
@@ -207,6 +208,7 @@ export class MnView extends ItemView {
             this.appEl.addClass("is-switching");   // and no fades while the classes flip: a line fading out on the new page reads as a blink
             this.appEl.removeClass("has-scrolled");
             this.topEl.removeClass("is-scrolled");
+            releaseVideos(this.scrollEl);   // the clips of the page being left give back their decoders
             this.scrollEl.replaceChildren(page.el);
             this.shown = key;
             // a page opened on top of another, and a champion page (its splash sits under the top bar) always start at the top; the
@@ -233,18 +235,31 @@ export class MnView extends ItemView {
         show();
         // at start-up the data files are still being read: the page shows with the same loading look until they are in
         const starting = !this.plugin.store.ready;
+        // the first page drawn once the data is in (the one after start-up) waits for its pictures too, so the lane and role icons are there with it
+        const first = !starting && !this.firstReadyDrawn;
+        if (!starting) this.firstReadyDrawn = true;
         const until = starting ? this.plugin.store.whenReady(STARTUP_WAIT_MS) : wait;
-        if (until && (anim !== "none" || starting)) {   // the page is there at once, blurred with a band of light over it until its pictures are in
+        if (until && (anim !== "none" || starting || first)) {   // the page is there at once, blurred with a band of light over it until its pictures are in
             // a veil the size of the screen area (blurring the whole tall page instead would make iOS draw nothing), with a soft band of
             // light sliding across it from the bottom right to the left
-            page.el.addClass("mn-loading");
-            const veil = h(this.appEl, "div", "mn-artload is-page");
-            veil.style.top = `${this.scrollEl.offsetTop}px`;
-            veil.style.left = `${this.scrollEl.offsetLeft}px`;
-            veil.style.width = `${this.scrollEl.clientWidth}px`;
-            veil.style.height = `${this.scrollEl.clientHeight}px`;
-            this.veil = veil;
-            void until.then(() => { page.el.removeClass("mn-loading"); veil.remove(); if (this.veil === veil) this.veil = null; });
+            // (only when it takes more than a moment, and then not for less than half a second, so it never reads as a blink)
+            loadingLook(until, () => {
+                if (id !== this.drawId) return () => undefined;   // another page was asked for meanwhile
+                page.el.addClass("mn-loading");
+                const veil = h(this.appEl, "div", "mn-artload is-page");
+                veil.style.top = `${this.scrollEl.offsetTop}px`;
+                veil.style.left = `${this.scrollEl.offsetLeft}px`;
+                veil.style.width = `${this.scrollEl.clientWidth}px`;
+                veil.style.height = `${this.scrollEl.clientHeight}px`;
+                requestAnimationFrame(() => veil.addClass("is-in"));
+                this.veil = veil;
+                return () => {
+                    page.el.removeClass("mn-loading");
+                    veil.removeClass("is-in");
+                    window.setTimeout(() => veil.remove(), 280);
+                    if (this.veil === veil) this.veil = null;
+                };
+            }, starting || first ? 0 : undefined);   // at start-up at once (no icons popping in before the look), later pages only if it takes a moment
         }
     }
 }

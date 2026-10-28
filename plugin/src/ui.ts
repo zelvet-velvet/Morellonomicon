@@ -60,16 +60,36 @@ export function whenLoaded(root: HTMLElement, ms: number, count = FIRST_SCREEN):
 // The blurred copy of a clip that fills the card around it. It starts only once the clip itself has its first frame (the browser
 // then has the file cached), so the two never download the same clip side by side.
 export function blurBackdrop(wrap: HTMLElement, v: HTMLVideoElement): void {
+    // a small still of the clip's first frame, blurred by CSS: a second playing copy would take a second video decoder, and a phone
+    // only has a few (the clips of earlier pages were then stuck black)
     const make = () => {
-        if (!wrap.isConnected && !v.isConnected) return;
-        const blur = v.cloneNode(true) as HTMLVideoElement;
-        blur.className = "mn-sl-vblur";
-        blur.muted = true;
-        blur.setAttribute("aria-hidden", "true");
-        wrap.prepend(blur);
-        void blur.play().catch(() => undefined);
+        if (!v.isConnected) return;
+        const still = document.createElement("canvas");
+        still.width = 64; still.height = 36;
+        still.className = "mn-sl-vblur";
+        still.setAttribute("aria-hidden", "true");
+        try { still.getContext("2d")?.drawImage(v, 0, 0, still.width, still.height); } catch { return; }
+        wrap.prepend(still);
     };
     if (v.readyState >= 2) make(); else v.addEventListener("loadeddata", make, { once: true });
+}
+
+// Lets go of the clips on a page that is being replaced: a detached <video> keeps its decoder until it is collected, and a phone
+// has only a few, so after a few pages the new clips stayed black or stuck.
+export function releaseVideos(root: HTMLElement): void {
+    root.querySelectorAll("video").forEach((v) => { v.pause(); v.removeAttribute("src"); v.replaceChildren(); v.load(); });
+}
+
+// A loading look that never blinks: it is only put on if loading takes longer than `delay`, and once on it stays at least `minShow`.
+// `on` puts the look on and returns the function that takes it off.
+export function loadingLook(until: Promise<void>, on: () => () => void, delay = 250, minShow = 500): void {
+    let off: (() => void) | null = null, shownAt = 0, done = false;
+    const t = window.setTimeout(() => { if (!done) { off = on(); shownAt = Date.now(); } }, delay);
+    void until.then(() => {
+        done = true;
+        window.clearTimeout(t);
+        if (off) window.setTimeout(off, Math.max(0, minShow - (Date.now() - shownAt)));
+    });
 }
 
 // Every picture and clip under the roots has its first frame (or failed, or was removed because no format loaded), or `ms` passed.

@@ -1,7 +1,7 @@
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { Champion } from "../data/store";
 import { mapUrl } from "./handbook";
-import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg, whenMediaLoaded, blurBackdrop, SWIPE } from "../ui";
+import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg, whenMediaLoaded, blurBackdrop, loadingLook, SWIPE } from "../ui";
 import { factsStrip, profileAxes, profileRadar, styleCard, tagRow } from "./profile";
 import type { PageCtx, PageOut } from "./index";
 import { cardKit } from "./cardkit";
@@ -194,10 +194,15 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         layout(false);
         // The pile shows once every picture and clip of the topic has its first frame (or after DECK_WAIT_MS), so nothing pops in
         // while swiping. Clips under the top card are told to play meanwhile: a phone may not fetch a paused clip at all.
-        pager.addClass("is-wait");   // meanwhile the cards show blurred with a soft band of light sliding over them from the bottom right
-        const ripple = h(wrap, "div", "mn-artload");
         sec.forEach((c) => c.querySelectorAll("video").forEach((v) => { void v.play().catch(() => undefined); }));
-        void whenMediaLoaded(sec.slice(0, WAIT_CARDS), DECK_WAIT_MS).then(() => { pager.removeClass("is-wait"); ripple.remove(); layout(false); });
+        const loaded = whenMediaLoaded(sec.slice(0, WAIT_CARDS), DECK_WAIT_MS);
+        // meanwhile (when it takes more than a moment) the cards show blurred with a soft band of light sliding over them
+        loadingLook(loaded, () => {
+            pager.addClass("is-wait");
+            const band = h(wrap, "div", "mn-artload");
+            return () => { pager.removeClass("is-wait"); band.remove(); };
+        });
+        void loaded.then(() => layout(false));
         const onResize = () => layout(false);
         window.addEventListener("resize", onResize);
         ctx.component.register(() => window.removeEventListener("resize", onResize));

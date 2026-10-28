@@ -528,16 +528,43 @@ function whenLoaded(root, ms, count2 = FIRST_SCREEN) {
 }
 function blurBackdrop(wrap, v) {
   const make = () => {
-    if (!wrap.isConnected && !v.isConnected) return;
-    const blur = v.cloneNode(true);
-    blur.className = "mn-sl-vblur";
-    blur.muted = true;
-    blur.setAttribute("aria-hidden", "true");
-    wrap.prepend(blur);
-    void blur.play().catch(() => void 0);
+    if (!v.isConnected) return;
+    const still = document.createElement("canvas");
+    still.width = 64;
+    still.height = 36;
+    still.className = "mn-sl-vblur";
+    still.setAttribute("aria-hidden", "true");
+    try {
+      still.getContext("2d")?.drawImage(v, 0, 0, still.width, still.height);
+    } catch {
+      return;
+    }
+    wrap.prepend(still);
   };
   if (v.readyState >= 2) make();
   else v.addEventListener("loadeddata", make, { once: true });
+}
+function releaseVideos(root) {
+  root.querySelectorAll("video").forEach((v) => {
+    v.pause();
+    v.removeAttribute("src");
+    v.replaceChildren();
+    v.load();
+  });
+}
+function loadingLook(until, on, delay = 250, minShow = 500) {
+  let off = null, shownAt = 0, done = false;
+  const t = window.setTimeout(() => {
+    if (!done) {
+      off = on();
+      shownAt = Date.now();
+    }
+  }, delay);
+  void until.then(() => {
+    done = true;
+    window.clearTimeout(t);
+    if (off) window.setTimeout(off, Math.max(0, minShow - (Date.now() - shownAt)));
+  });
 }
 function whenMediaLoaded(roots, ms) {
   const media2 = roots.flatMap((r) => Array.from(r.querySelectorAll("img, video")));
@@ -2904,16 +2931,19 @@ function deckPage(ctx, file) {
       show();
     };
     layout(false);
-    pager.addClass("is-wait");
-    const ripple = h(wrap, "div", "mn-artload");
     sec.forEach((c) => c.querySelectorAll("video").forEach((v) => {
       void v.play().catch(() => void 0);
     }));
-    void whenMediaLoaded(sec.slice(0, WAIT_CARDS), DECK_WAIT_MS).then(() => {
-      pager.removeClass("is-wait");
-      ripple.remove();
-      layout(false);
+    const loaded = whenMediaLoaded(sec.slice(0, WAIT_CARDS), DECK_WAIT_MS);
+    loadingLook(loaded, () => {
+      pager.addClass("is-wait");
+      const band = h(wrap, "div", "mn-artload");
+      return () => {
+        pager.removeClass("is-wait");
+        band.remove();
+      };
     });
+    void loaded.then(() => layout(false));
     const onResize = () => layout(false);
     window.addEventListener("resize", onResize);
     ctx.component.register(() => window.removeEventListener("resize", onResize));
@@ -3962,6 +3992,7 @@ var MnView = class extends import_obsidian9.ItemView {
     this.plugin = plugin;
     this.scrolls = /* @__PURE__ */ new Map();
     this.shown = "";
+    this.firstReadyDrawn = false;
     this.veil = null;
     // the loading veil over the page area
     this.drawId = 0;
@@ -4161,6 +4192,7 @@ var MnView = class extends import_obsidian9.ItemView {
       this.appEl.addClass("is-switching");
       this.appEl.removeClass("has-scrolled");
       this.topEl.removeClass("is-scrolled");
+      releaseVideos(this.scrollEl);
       this.scrollEl.replaceChildren(page2.el);
       this.shown = key;
       const fresh = anim === "push" || OVERLAY_PAGES.has(f.key);
@@ -4183,20 +4215,27 @@ var MnView = class extends import_obsidian9.ItemView {
     const wait = page2.ready !== void 0 ? page2.ready : whenLoaded(page2.el, PAGE_WAIT_MS);
     show();
     const starting = !this.plugin.store.ready;
+    const first = !starting && !this.firstReadyDrawn;
+    if (!starting) this.firstReadyDrawn = true;
     const until = starting ? this.plugin.store.whenReady(STARTUP_WAIT_MS) : wait;
-    if (until && (anim !== "none" || starting)) {
-      page2.el.addClass("mn-loading");
-      const veil = h(this.appEl, "div", "mn-artload is-page");
-      veil.style.top = `${this.scrollEl.offsetTop}px`;
-      veil.style.left = `${this.scrollEl.offsetLeft}px`;
-      veil.style.width = `${this.scrollEl.clientWidth}px`;
-      veil.style.height = `${this.scrollEl.clientHeight}px`;
-      this.veil = veil;
-      void until.then(() => {
-        page2.el.removeClass("mn-loading");
-        veil.remove();
-        if (this.veil === veil) this.veil = null;
-      });
+    if (until && (anim !== "none" || starting || first)) {
+      loadingLook(until, () => {
+        if (id !== this.drawId) return () => void 0;
+        page2.el.addClass("mn-loading");
+        const veil = h(this.appEl, "div", "mn-artload is-page");
+        veil.style.top = `${this.scrollEl.offsetTop}px`;
+        veil.style.left = `${this.scrollEl.offsetLeft}px`;
+        veil.style.width = `${this.scrollEl.clientWidth}px`;
+        veil.style.height = `${this.scrollEl.clientHeight}px`;
+        requestAnimationFrame(() => veil.addClass("is-in"));
+        this.veil = veil;
+        return () => {
+          page2.el.removeClass("mn-loading");
+          veil.removeClass("is-in");
+          window.setTimeout(() => veil.remove(), 280);
+          if (this.veil === veil) this.veil = null;
+        };
+      }, starting || first ? 0 : void 0);
     }
   }
 };
