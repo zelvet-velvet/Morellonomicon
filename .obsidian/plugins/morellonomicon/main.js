@@ -599,21 +599,6 @@ var LANES = ["\u4E0A\u8DEF", "\u6253\u91CE", "\u4E2D\u8DEF", "\u4E0B\u8DEF", "\u
 var LANE_ICON = { \u4E0A\u8DEF: "arrow-up-left", \u6253\u91CE: "trees", \u4E2D\u8DEF: "move-diagonal-2", \u4E0B\u8DEF: "arrow-down-right", \u8F14\u52A9: "heart-handshake" };
 var LANE_FILE = { \u4E0A\u8DEF: "Top_icon.png", \u6253\u91CE: "Jungle_icon.png", \u4E2D\u8DEF: "Middle_icon.png", \u4E0B\u8DEF: "Bottom_icon.png", \u8F14\u52A9: "Support_icon.png" };
 var ROLE_FILE = { \u6230\u58EB: "Fighter_icon.png", \u5766\u514B: "Tank_icon.png", \u6CD5\u5E2B: "Mage_icon.png", \u523A\u5BA2: "Slayer_icon.png", \u5C04\u624B: "Marksman_icon.png", \u8F14\u52A9: "Controller_icon.png" };
-var GAME_ICON_FILE = {
-  \u63A7\u5834: "Stun_icon.png",
-  \u7DE9\u901F: "Slow_icon.png",
-  \u52A0\u901F: "Movement_speed_icon.png",
-  \u6CBB\u7642: "Heal_power_icon.png",
-  \u8B77\u76FE: "Heal_and_shield_power_icon.png",
-  \u5438\u8840: "Life_steal_icon.png",
-  \u5F37\u5316\u666E\u653B: "Basic_attack_icon.png",
-  \u653B\u64CA\u7279\u6548: "On-hit_icon.png",
-  \u7269\u7406: "Attack_damage_icon.png",
-  \u9B54\u6CD5: "Ability_power_icon.png",
-  \u5766\u5EA6: "Armor_icon.png",
-  \u5C04\u7A0B: "Range_icon.png"
-};
-var GAME_ICONS_ON = false;
 var preloaded = /* @__PURE__ */ new Map();
 var preloadRoleIcons = () => {
   if (preloaded.size) return;
@@ -622,29 +607,6 @@ var preloadRoleIcons = () => {
     im.src = ROLE_WIKI + file;
     preloaded.set(file, im);
   }
-  if (GAME_ICONS_ON) for (const file of Object.values(GAME_ICON_FILE)) {
-    const im = new Image();
-    im.src = ROLE_WIKI + file;
-    preloaded.set(file, im);
-  }
-};
-var gameIcon = (parent, key, fallback, size) => {
-  const file = GAME_ICONS_ON ? GAME_ICON_FILE[key] : void 0;
-  if (!file) return icon(parent, fallback);
-  const slot = h(parent, "span", "mn-ic mn-gi-slot");
-  const im = h(slot, "img", "mn-gi");
-  im.alt = "";
-  im.style.width = im.style.height = `${size}px`;
-  const cached = preloaded.get(file);
-  if (!(cached?.complete && cached.naturalWidth)) {
-    im.classList.add("is-loading");
-    im.addEventListener("load", () => im.classList.remove("is-loading"), { once: true });
-  }
-  im.addEventListener("error", () => {
-    slot.replaceWith(icon(document.createElement("span"), fallback));
-  }, { once: true });
-  im.src = ROLE_WIKI + file;
-  return slot;
 };
 var iconChip = (parent, label, file, fallback, o) => {
   const el = chip(parent, "", { on: o.on, onTap: o.onTap });
@@ -1280,7 +1242,7 @@ var TagLegend = class extends import_obsidian4.Modal {
         const r = h(table, "div", "mn-lg-r");
         const ic = h(r, "span", "mn-lg-ic");
         ic.style.setProperty("--p", color);
-        gameIcon(ic, a.tag, a.icon, 22);
+        icon(ic, a.icon);
         const name = h(r, "span", "mn-lg-n", a.tag);
         name.style.color = color;
         h(name, "div", "mn-lg-w", a.what);
@@ -1296,7 +1258,7 @@ function iconFilter(parent, label, iconName, color, on, onTap) {
   const el = h(parent, "button", "mn-ftg" + (on ? " is-yes" : ""));
   el.setAttribute("aria-label", label);
   el.style.setProperty("--p", color);
-  gameIcon(el, label, iconName, 24);
+  icon(el, iconName);
   holdTip(el, label);
   el.addEventListener("click", (e) => {
     e.preventDefault();
@@ -1315,7 +1277,7 @@ function tagChip(parent, c, t) {
   const lit = hasTag(c, t.tag);
   const el = h(parent, "button", "mn-tg" + (lit ? " is-on" : ""));
   el.style.setProperty("--p", t.color);
-  gameIcon(el, t.tag, t.icon, 16);
+  icon(el, t.icon);
   h(el, "span", "", t.tag);
   const keys = lit ? keysOf(c, t.tag) : "";
   if (keys) h(el, "span", "mn-tg-k", keys);
@@ -1456,7 +1418,7 @@ function styleChart(parent, c) {
     chip2.style.top = `${y / SH * 100}%`;
     chip2.style.setProperty("--p", ax.color);
     const top = h(chip2, "span", "mn-scc-t");
-    gameIcon(top, ax.label === "\u8F38\u51FA" ? c.damageType === "\u7269\u7406" ? "\u7269\u7406" : "\u9B54\u6CD5" : ax.tag ?? ax.label, ax.icon, 16);
+    icon(top, ax.icon);
     h(top, "span", "", ax.label);
     h(top, "b", "", String(ax.value));
     h(chip2, "span", "mn-scc-k", on && ax.sub ? ax.sub : "\u2014");
@@ -3314,8 +3276,6 @@ var MnView = class extends import_obsidian8.ItemView {
     this.modeBtn = modeBtn;
     this.scrollEl = h(app, "div", "mn-scroll");
     this.registerDomEvent(this.scrollEl, "scroll", () => this.markScrolled(), { passive: true });
-    this.loaderEl = h(app, "div", "mn-loader");
-    h(this.loaderEl, "div", "mn-spin");
     this.tabsEl = h(app, "div", "mn-tabs");
     this.applyTheme();
     this.registerEvent(this.app.workspace.on("css-change", () => this.applyTheme()));
@@ -3462,11 +3422,7 @@ var MnView = class extends import_obsidian8.ItemView {
     this.appEl.toggleClass("is-sub", this.router.depth() > 0 && !OVERLAY_PAGES.has(f.key));
     this.markScrolled();
     requestAnimationFrame(() => requestAnimationFrame(() => this.appEl.removeClass("is-switching")));
-    if (anim === "none") {
-      this.loaderEl.removeClass("is-on");
-      return;
-    }
-    this.loaderEl.removeClass("is-on");
+    if (anim === "none") return;
     fadeInImages(out.el);
     arrive(out.el, anim);
   }

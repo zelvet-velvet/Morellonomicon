@@ -20,7 +20,7 @@ TOOLS = Path(__file__).resolve().parent
 ROOT = TOOLS.parent
 STEPS = [("champions and items", "fetch_data.py"), ("Mayhem augments", "fetch_augments.py"),
          ("changes since the last patch", "fetch_changes.py"), ("Riot's patch notes", "fetch_patch_notes.py"),
-         ("augment effect text", "fetch_augment_text.py"), ("lanes (Meraki)", "fetch_positions.py"), ("loading screen tips", "fetch_loading_tips.py"), ("loading screen art list", "find_loading_art.py"),
+         ("augment effect text", "fetch_augment_text.py"), ("lanes (Meraki)", "fetch_positions.py"), ("loading screen tips", "fetch_loading_tips.py"),
          ("ability tag audit", "audit_tags.py")]
 ATTRIBUTION = "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 

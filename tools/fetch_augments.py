@@ -9,6 +9,7 @@ CommunityDragon has no effect text for them, so `effect`, `fits`, `tier` and `co
 """
 import datetime
 import json
+import re
 from concurrent.futures import ThreadPoolExecutor
 import sys
 import urllib.request
@@ -94,6 +95,8 @@ def main():
     pool = next(x["augmentList"] for x in lists if x["modeName"] == POOL)
     by_api = {a["augmentNameId"]: a for a in augments}
     picked = [by_api[p.rsplit("/", 1)[1]] for p in pool if p.rsplit("/", 1)[1] in by_api]
+    # an entry without a real name is a placeholder the game never shows (GoH_PentakillAug_Generic_BlankName): no note for it
+    picked = [a for a in picked if not re.fullmatch(r"[\x00-\x7f]*_[\x00-\x7f]*", a["nameTRA"])]
     counts = {}
     for a in picked:
         counts[a["nameTRA"]] = counts.get(a["nameTRA"], 0) + 1

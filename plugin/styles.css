@@ -203,7 +203,6 @@ button.mn-skill-box.is-on::after { content: ""; position: absolute; inset: 0; bo
 .mn-tab.is-on { color: var(--mn-accent); }
 
 /* champion card sub-tabs */
-.mn-chips-top { margin: -6px 0 6px; }
 .mn-seg { display: flex; gap: 4px; padding: 4px; margin: 6px 0 8px; border-radius: 16px; background: var(--mn-card); border: 1px solid var(--mn-line); }
 .mn-app .mn-seg-b { flex: 1; min-height: 42px; padding: 0 6px; border-radius: 12px; font-size: 14px; font-weight: 600; color: var(--mn-muted); white-space: nowrap; }
 .mn-seg-b.is-on { background: var(--mn-accent); color: var(--text-on-accent, #fff); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25); }
@@ -293,7 +292,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-pn-t { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; margin: 2px 0 4px; }
 .mn-app .mn-pn-btn { margin-top: 12px; padding: 9px 16px; border-radius: 999px; background: var(--mn-accent); color: var(--text-on-accent, #fff); font-size: 14px; font-weight: 600; }
 .mn-pn-src { margin-top: 10px; font-size: 11px; color: var(--mn-faint); }
-.mn-app .mn-showall { display: block; width: 100%; padding: 12px; font-size: 14px; font-weight: 600; color: var(--mn-accent); border-top: 0.5px solid var(--mn-line); }
 
 /* one-line row text, detail pages, full lists, notes */
 .mn-row-s.is-clamp { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -357,10 +355,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-ht-t { font-size: 16px; font-weight: 800; line-height: 1.25; white-space: normal; overflow-wrap: anywhere; }
 .mn-ht-s { font-size: 12px; color: var(--mn-muted); line-height: 1.45; margin-top: 4px; white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .mn-ht-m { margin-top: auto; padding-top: 8px; font-size: 11px; font-weight: 600; color: var(--mn-muted); }
-.mn-app .mn-fact { display: block; width: 100%; white-space: normal; text-align: left; margin: 14px 0 4px; padding: 16px 18px; border-radius: 20px; background: var(--mn-card); border: 1px solid var(--mn-line); }
-.mn-fact-k { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: var(--color-yellow); }
-.mn-fact-t { font-size: 20px; font-weight: 800; margin: 4px 0 2px; }
-.mn-fact-s { font-size: 14px; color: var(--mn-muted); line-height: 1.5; }
 
 /* next card at the end of a guide note */
 .mn-app .mn-nextcard { white-space: normal; display: flex; align-items: center; gap: 10px; width: 100%; margin: 18px 0 10px; padding: 16px 18px; border-radius: 18px; text-align: left; background: var(--mn-accent); color: var(--text-on-accent, #fff); }
@@ -452,8 +446,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-trv-next { position: absolute; top: 10px; right: 10px; z-index: 1; display: flex; width: 28px; height: 28px; border-radius: 50%; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.4); color: #fff; }
 .mn-trv-next svg { width: 14px; height: 14px; }
 @keyframes mn-fade { from { opacity: 0; } to { opacity: 1; } }
-.mn-spin { width: 30px; height: 30px; border-radius: 50%; border: 3px solid color-mix(in srgb, var(--mn-text) 18%, transparent); border-top-color: var(--mn-accent); animation: mn-rot 0.8s linear infinite; }
-@keyframes mn-rot { to { transform: rotate(360deg); } }
 
 /* champion card: a taller banner, then the profile (style line, hexagon chart, abilities) */
 .mn-hero { min-height: 250px; }
@@ -504,8 +496,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app .mn-lg-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--mn-muted); }
 .mn-app .mn-lg-btn { justify-content: center; min-width: 36px; min-height: 36px; margin: -8px -8px -8px 0; }   /* a bigger tap area around the icon */
 .mn-lg-btn svg { width: 20px; height: 20px; }
-.mn-pick { position: relative; }
-.mn-pick.is-pick img { box-shadow: 0 0 0 3px var(--mn-accent); }
 .mn-pick-ok { position: absolute; top: -4px; right: 2px; display: flex; width: 20px; height: 20px; border-radius: 50%; align-items: center; justify-content: center; background: var(--mn-accent); color: var(--text-on-accent, #fff); }
 .mn-pick-ok svg { width: 12px; height: 12px; }
 .mn-dym { align-self: center; font-size: 13px; font-weight: 700; color: var(--mn-muted); padding: 0 2px; }
@@ -515,8 +505,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
     background: rgba(6, 9, 15, 0.94); color: #f3f1ea; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); animation: mn-fade 0.12s ease-out; }
 
 /* spinner over a page whose pictures are still loading */
-.mn-loader { position: absolute; inset: 0; z-index: 2; display: none; align-items: center; justify-content: center; pointer-events: none; }
-.mn-loader.is-on { display: flex; animation: mn-fade 0.2s ease-out; }
 .mn-app:not(.is-full) { position: relative; }
 
 /* spec sheet: damage meters, reach, difficulty (neutral colours) */
@@ -648,7 +636,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-role-img.is-loading { opacity: 0; }
 /* ability filters in the 篩選 panel: icon only. Off = dim; on (must have) = ring in the tag colour */
 .mn-app .mn-ftg { position: relative; display: flex; align-items: center; justify-content: center; justify-self: center; width: 100%; max-width: 44px; height: 44px; color: var(--p); -webkit-tap-highlight-color: transparent; }
-.mn-ftg .mn-gi { max-width: 100%; }
 .mn-ftg .mn-ic { display: flex; }
 .mn-ftg svg { width: 20px; height: 20px; }
 .mn-app .mn-ftg.is-yes::after { content: ""; position: absolute; left: 50%; bottom: -3px; width: 16px; height: 2px; margin-left: -8px; border-radius: 1px; background: var(--p); }
@@ -664,10 +651,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-fgrid .mn-filterbtn .mn-filterbtn-n { position: absolute; top: -4px; right: -6px; }
 
 /* the game's own icons in tags, chart chips and filters (their own colours) */
-.mn-gi-slot { display: flex; align-items: center; justify-content: center; }
-.mn-gi { display: block; object-fit: contain; transition: opacity 0.2s; }
-.mn-gi.is-loading { opacity: 0; }
-.mn-tg:not(.is-on) .mn-gi, .mn-scc:not(.is-on) .mn-gi { opacity: 0.45; }
 
 /* the 技能 filters in groups: a small label, then up to four icons */
 .mn-fcat { display: grid; grid-template-columns: 56px repeat(4, minmax(0, 1fr)); align-items: center; gap: 0 4px; }

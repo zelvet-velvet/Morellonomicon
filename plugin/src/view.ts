@@ -75,8 +75,6 @@ export class MnView extends ItemView {
         this.modeBtn = modeBtn;
         this.scrollEl = h(app, "div", "mn-scroll");
         this.registerDomEvent(this.scrollEl, "scroll", () => this.markScrolled(), { passive: true });
-        this.loaderEl = h(app, "div", "mn-loader");
-        h(this.loaderEl, "div", "mn-spin");
         this.tabsEl = h(app, "div", "mn-tabs");
         this.applyTheme();
         this.registerEvent(this.app.workspace.on("css-change", () => this.applyTheme()));   // Obsidian switched light / dark
@@ -94,7 +92,6 @@ export class MnView extends ItemView {
         this.topEl.toggleClass("is-scrolled", this.scrollEl.scrollTop > past);
         this.appEl.toggleClass("has-scrolled", this.scrollEl.scrollTop > 4);   // a pinned title row shows its bottom line once the page moves
     }
-    private loaderEl!: HTMLElement;   // a spinner over the page while its pictures load
     private actsEl!: HTMLElement;   // theme and mode buttons: in the big title row of a tab's first page, in the top bar elsewhere
 
     // The chosen colour theme as variables on the app element (none = Obsidian's own colours)
@@ -208,10 +205,9 @@ export class MnView extends ItemView {
         this.appEl.toggleClass("is-sub", this.router.depth() > 0 && !OVERLAY_PAGES.has(f.key));   // Back sits on the title's line   // a tab's first page: no empty strip above its big title
         this.markScrolled();
         requestAnimationFrame(() => requestAnimationFrame(() => this.appEl.removeClass("is-switching")));
-        if (anim === "none") { this.loaderEl.removeClass("is-on"); return; }
+        if (anim === "none") return;
                 // the page comes in at once; a picture still loading stays clear and fades in when it arrives (hiding the whole page
         // until then made a quick load blink: blank, then the page)
-        this.loaderEl.removeClass("is-on");
         fadeInImages(out.el);
         arrive(out.el, anim);
     }
