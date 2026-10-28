@@ -398,7 +398,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
     touch-action: pan-x; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .mn-pager::-webkit-scrollbar { display: none; }
 .mn-slide { flex: 0 0 100%; box-sizing: border-box; padding: 0 10px; scroll-snap-align: center; scroll-snap-stop: always; display: flex; }
-.mn-sl-card { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 26px; background: var(--mn-card); border: 1px solid var(--mn-line); }
+.mn-sl-card { transform-origin: 50% 130%; will-change: transform; flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 26px; background: var(--mn-card); border: 1px solid var(--mn-line); }
 .mn-sl-words { flex: 0 1 auto; max-height: 60%; overflow-y: auto; padding: 16px 22px 22px; border-top: 1px solid var(--mn-line); }
 .mn-sl-kn { font-size: 11px; font-weight: 700; letter-spacing: 0.16em; color: var(--mn-accent); font-variant-numeric: tabular-nums; }
 .mn-sl-t { font-family: var(--mn-serif); font-size: 26px; font-weight: 700; letter-spacing: 0.02em; margin: 4px 0 8px; color: var(--mn-text); }
@@ -487,8 +487,11 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-wmap-ward.is-c { border-color: #ff6fae; box-shadow: 0 0 0 3px rgba(255, 111, 174, 0.25), 0 2px 6px rgba(0, 0, 0, 0.6); }
 .mn-wmap-obj { position: absolute; z-index: 1; transform: translate(-50%, -140%); padding: 3px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; color: #fff; background: rgba(150, 40, 40, 0.85); white-space: nowrap; }
 /* pulling the last card: it shivers once, then follows the finger at a fraction of the distance and reveals the next topic behind it */
-.mn-peek { position: absolute; z-index: 0; top: 0; bottom: 0; right: 14px; width: 116px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
-    text-align: center; opacity: 0; transition: opacity 0.15s; }
+.mn-peek { position: absolute; z-index: 0; top: 0; bottom: 0; right: 10px; width: 0; display: flex; align-items: center; justify-content: center; overflow: hidden;
+    border-radius: 26px; background: var(--mn-card-hi); border: 1px solid var(--mn-line); opacity: 0; transition: opacity 0.15s, background 0.2s; }
+.mn-peek.is-back { transition: width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.35s, background 0.2s; }
+.mn-peek.is-ready { background: color-mix(in srgb, var(--mn-accent) 16%, var(--mn-card-hi)); border-color: var(--mn-accent); }
+.mn-peek-in { flex: none; width: 132px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
 .mn-peek-ic { display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 20px; color: var(--mn-muted); background: var(--mn-card-hi); transition: color 0.2s, background 0.2s, transform 0.2s; }
 .mn-peek-ic svg { width: 30px; height: 30px; }
 .mn-peek-k { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; color: var(--mn-muted); }
@@ -498,7 +501,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-sl-card.is-shiver { animation: mn-shiver 0.28s ease-in-out; }
 @keyframes mn-shiver { 20% { translate: -5px 0; } 45% { translate: 4px 0; } 70% { translate: -2px 0; } 100% { translate: 0 0; } }
 .mn-sl-card.is-back { transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.mn-sl-card.is-gone { transition: transform 0.22s ease-in, opacity 0.22s ease-in; transform: translateX(-110%) !important; opacity: 0; }
+.mn-sl-card.is-gone { transition: transform 0.22s ease-in, opacity 0.22s ease-in; transform: translateX(-110%) rotate(-18deg) !important; opacity: 0; }
 
 /* a loading screen tip between the topic cards: the game's tip centred on a dimmed splash (the picture fades in under the text) */
 .mn-app .mn-trv { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; min-height: 190px; margin: 0 0 18px; padding: 26px 30px; overflow: hidden;

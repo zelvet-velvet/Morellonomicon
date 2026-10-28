@@ -2337,8 +2337,10 @@ function marked(parent, text, q) {
 
 // src/pages/deck.ts
 var STRIP = 6;
-var PULL = 0.42;
-var GO_AT = 120;
+var PULL = 0.6;
+var GO_AT = 130;
+var TILT = 12;
+var PEEK_OVERLAP = 30;
 function parseSlides(md) {
   const body = md.replace(/^---[\s\S]*?---\n/, "");
   return body.split(/^## /m).slice(1).map((part) => {
@@ -2385,6 +2387,7 @@ function deckPage(ctx, file) {
   const bars = h(el, "div", "mn-bars");
   const wrap = h(el, "div", "mn-deckwrap");
   const peek = h(wrap, "div", "mn-peek");
+  const peekIn = h(peek, "div", "mn-peek-in");
   const pager = h(wrap, "div", "mn-pager");
   for (const ev of ["touchstart", "touchmove"]) pager.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
   const fit = () => {
@@ -2417,13 +2420,13 @@ function deckPage(ctx, file) {
       cards.push(card);
     });
     if (next) {
-      icon(h(peek, "div", "mn-peek-ic"), next.icon);
-      h(peek, "div", "mn-peek-k", "\u4E0B\u4E00\u7BC7");
-      h(peek, "div", "mn-peek-t", next.title);
+      icon(h(peekIn, "div", "mn-peek-ic"), next.icon);
+      h(peekIn, "div", "mn-peek-k", "\u4E0B\u4E00\u7BC7");
+      h(peekIn, "div", "mn-peek-t", next.title);
     } else {
-      icon(h(peek, "div", "mn-peek-ic"), "check");
-      h(peek, "div", "mn-peek-k", "\u5168\u90E8\u8B80\u5B8C\u4E86");
-      h(peek, "div", "mn-peek-t", "\u56DE\u5230 Handbook");
+      icon(h(peekIn, "div", "mn-peek-ic"), "check");
+      h(peekIn, "div", "mn-peek-k", "\u5168\u90E8\u8B80\u5B8C\u4E86");
+      h(peekIn, "div", "mn-peek-t", "\u56DE\u5230 Handbook");
     }
     const go = () => {
       ctx.pop();
@@ -2435,16 +2438,32 @@ function deckPage(ctx, file) {
       Array.from(bars.children).forEach((b, j) => b.toggleClass("is-on", j <= i));
       if (i >= count2 - 1) void ctx.plugin.markRead(file.path);
     };
+    let pulling = false;
+    let tiltQueued = false;
+    const tilt = () => {
+      tiltQueued = false;
+      const w = Math.max(1, pager.clientWidth);
+      cards.forEach((c, i) => {
+        if (pulling && c === cards[count2 - 1]) return;
+        if (c.hasClass("is-gone")) return;
+        const off = Math.max(-1.2, Math.min(1.2, i - pager.scrollLeft / w));
+        c.style.transform = off === 0 ? "" : `rotate(${(off * TILT).toFixed(2)}deg)`;
+      });
+    };
     pager.addEventListener("scroll", () => {
       const i = Math.max(0, Math.min(count2 - 1, Math.round(pager.scrollLeft / Math.max(1, pager.clientWidth))));
       if (i !== shown) {
         shown = i;
         show(i);
       }
+      if (!tiltQueued) {
+        tiltQueued = true;
+        requestAnimationFrame(tilt);
+      }
     }, { passive: true });
     show(0);
     const last = cards[cards.length - 1];
-    let x0 = 0, y0 = 0, pulling = false, armed = false, decided = false;
+    let x0 = 0, y0 = 0, armed = false, decided = false;
     pager.addEventListener("touchstart", (e) => {
       x0 = e.touches[0].clientX;
       y0 = e.touches[0].clientY;
@@ -2461,6 +2480,7 @@ function deckPage(ctx, file) {
         pulling = dx < 0 && Math.abs(dx) > Math.abs(dy);
         if (pulling) {
           last.removeClass("is-back");
+          peek.removeClass("is-back");
           last.addClass("is-shiver");
           haptic();
         }
@@ -2468,8 +2488,9 @@ function deckPage(ctx, file) {
       if (!pulling) return;
       e.preventDefault();
       const move = Math.min(0, dx) * PULL;
-      last.style.transform = `translateX(${move}px)`;
-      peek.style.opacity = String(Math.min(1, -move / GO_AT));
+      last.style.transform = `translateX(${move}px) rotate(${(move / GO_AT * TILT).toFixed(2)}deg)`;
+      peek.style.width = `${-move + PEEK_OVERLAP}px`;
+      peek.style.opacity = String(Math.min(1, -move / 30));
       const ready = -move >= GO_AT;
       if (ready !== armed) {
         armed = ready;
@@ -2488,8 +2509,14 @@ function deckPage(ctx, file) {
       }
       last.addClass("is-back");
       last.style.transform = "";
+      peek.addClass("is-back");
+      peek.style.width = "";
       peek.style.opacity = "";
       peek.removeClass("is-ready");
+      window.setTimeout(() => {
+        last.removeClass("is-back");
+        peek.removeClass("is-back");
+      }, 380);
     };
     pager.addEventListener("touchend", end);
     pager.addEventListener("touchcancel", end);

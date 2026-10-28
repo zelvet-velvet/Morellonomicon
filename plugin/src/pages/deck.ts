@@ -26,8 +26,10 @@ import { demo } from "./skills";
 //   augs 稜鏡           Mayhem augments of that rarity (a few, changing daily)
 interface Slide { title: string; icon: string; visual: string; text: string }
 const STRIP = 6;   // icons in a strip
-const PULL = 0.42;     // how far the last card moves per px pulled (it resists, like a rubber band)
-const GO_AT = 120;     // px of card movement that opens the next topic when the finger lifts
+const PULL = 0.6;      // how far the last card moves per px pulled (it resists a little, like a rubber band)
+const GO_AT = 130;     // px of card movement that opens the next topic when the finger lifts
+const TILT = 12;       // degrees a card tilts when it is fully swiped away (like a Tinder card); left swipe tilts left
+const PEEK_OVERLAP = 30;   // px the next-topic panel reaches behind the pulled card, so no gap shows at its rounded corners
 
 export function parseSlides(md: string): Slide[] {
     const body = md.replace(/^---[\s\S]*?---\n/, "");
@@ -73,7 +75,8 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
     h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
     const bars = h(el, "div", "mn-bars");   // one short bar per card, filled up to the one in view (like stories)
     const wrap = h(el, "div", "mn-deckwrap");
-    const peek = h(wrap, "div", "mn-peek");   // behind the cards: what pulling the last card leads to
+    const peek = h(wrap, "div", "mn-peek");   // behind the cards: what pulling the last card leads to; grows to fill the gap the card leaves
+    const peekIn = h(peek, "div", "mn-peek-in");   // fixed width, so the text does not reflow while the panel grows
     const pager = h(wrap, "div", "mn-pager");
     // the deck owns sideways swipes: Obsidian's own edge swipes (open a sidebar) must not take them
     for (const ev of ["touchstart", "touchmove"]) pager.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
@@ -112,13 +115,13 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         });
         // behind the last card: the next topic (or, after the last topic, the way back)
         if (next) {
-            icon(h(peek, "div", "mn-peek-ic"), next.icon);
-            h(peek, "div", "mn-peek-k", "下一篇");
-            h(peek, "div", "mn-peek-t", next.title);
+            icon(h(peekIn, "div", "mn-peek-ic"), next.icon);
+            h(peekIn, "div", "mn-peek-k", "下一篇");
+            h(peekIn, "div", "mn-peek-t", next.title);
         } else {
-            icon(h(peek, "div", "mn-peek-ic"), "check");
-            h(peek, "div", "mn-peek-k", "全部讀完了");
-            h(peek, "div", "mn-peek-t", "回到 Handbook");
+            icon(h(peekIn, "div", "mn-peek-ic"), "check");
+            h(peekIn, "div", "mn-peek-k", "全部讀完了");
+            h(peekIn, "div", "mn-peek-t", "回到 Handbook");
         }
         const go = () => { ctx.pop(); if (next) ctx.openNote(next.file.path); };
 
@@ -128,16 +131,30 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             Array.from(bars.children).forEach((b, j) => (b as HTMLElement).toggleClass("is-on", j <= i));
             if (i >= count - 1) void ctx.plugin.markRead(file.path);   // reached the last card: counts as read
         };
+        let pulling = false;
+        // a card tilts as the swipe moves it, pivoting below the card: away to the left it leans left, back from the left it leans right
+        let tiltQueued = false;
+        const tilt = () => {
+            tiltQueued = false;
+            const w = Math.max(1, pager.clientWidth);
+            cards.forEach((c, i) => {
+                if (pulling && c === cards[count - 1]) return;   // the pull sets its own
+                if (c.hasClass("is-gone")) return;
+                const off = Math.max(-1.2, Math.min(1.2, i - pager.scrollLeft / w));
+                c.style.transform = off === 0 ? "" : `rotate(${(off * TILT).toFixed(2)}deg)`;
+            });
+        };
         pager.addEventListener("scroll", () => {
             const i = Math.max(0, Math.min(count - 1, Math.round(pager.scrollLeft / Math.max(1, pager.clientWidth))));
             if (i !== shown) { shown = i; show(i); }
+            if (!tiltQueued) { tiltQueued = true; requestAnimationFrame(tilt); }
         }, { passive: true });
         show(0);
 
         // pulling the last card further left: it shivers (a tick), then follows the finger at a fraction of the distance and
         // shows the next topic behind it; let go far enough and that topic opens, otherwise the card springs back
         const last = cards[cards.length - 1];
-        let x0 = 0, y0 = 0, pulling = false, armed = false, decided = false;
+        let x0 = 0, y0 = 0, armed = false, decided = false;
         pager.addEventListener("touchstart", (e) => {
             x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; pulling = false; armed = false; decided = false;
         }, { passive: true });
@@ -150,6 +167,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
                 pulling = dx < 0 && Math.abs(dx) > Math.abs(dy);   // only a leftward, mostly sideways move on the last card
                 if (pulling) {
                     last.removeClass("is-back");
+                    peek.removeClass("is-back");
                     last.addClass("is-shiver");
                     haptic();
                 }
@@ -157,8 +175,9 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             if (!pulling) return;
             e.preventDefault();   // the card moves, not the page
             const move = Math.min(0, dx) * PULL;
-            last.style.transform = `translateX(${move}px)`;
-            peek.style.opacity = String(Math.min(1, -move / GO_AT));
+            last.style.transform = `translateX(${move}px) rotate(${(move / GO_AT * TILT).toFixed(2)}deg)`;
+            peek.style.width = `${-move + PEEK_OVERLAP}px`;
+            peek.style.opacity = String(Math.min(1, -move / 30));
             const ready = -move >= GO_AT;
             if (ready !== armed) { armed = ready; peek.toggleClass("is-ready", ready); if (ready) haptic(); }
         }, { passive: false });
@@ -173,8 +192,11 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             }
             last.addClass("is-back");
             last.style.transform = "";
+            peek.addClass("is-back");
+            peek.style.width = "";
             peek.style.opacity = "";
             peek.removeClass("is-ready");
+            window.setTimeout(() => { last.removeClass("is-back"); peek.removeClass("is-back"); }, 380);   // the spring is done; the tilt follows the scroll again without lag
         };
         pager.addEventListener("touchend", end);
         pager.addEventListener("touchcancel", end);
