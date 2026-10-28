@@ -18,8 +18,10 @@ OUT = ROOT / "Review" / "Loading Art.md"
 LIST = "https://raw.communitydragon.org/json/latest/"
 RAW = "https://raw.communitydragon.org/latest/"
 USER_AGENT = "Morellonomicon/0.1 (+https://github.com/zelvet-velvet/Morellonomicon)"
-START = ["game/assets/loadingscreen/", "plugins/rcp-fe-lol-loading-screen/global/default/", "game/assets/maps/", "plugins/rcp-be-lol-game-data/global/default/content/src/leagueclient/gamemodeassets/"]
-WANTED = re.compile(r"loading|map12|aram|howling|abyss|bridge|butcher|bilgewater|progress|koeshin|kiwi", re.I)
+START = ["game/assets/ux/", "game/assets/loadingscreen/", "plugins/rcp-fe-lol-loading-screen/global/default/", "game/assets/maps/",
+         "plugins/rcp-be-lol-game-data/global/default/content/src/leagueclient/gamemodeassets/"]
+NARROW = ("game/assets/maps/", "game/assets/ux/")   # big folders: only follow the subfolders that name what we look for
+WANTED = re.compile(r"loading|loadscreen|map12|aram|howling|abyss|bridge|butcher|bilgewater|progress|koeshin|kiwi|mayhem", re.I)
 IMAGE = re.compile(r"\.(png|jpe?g|webp)$", re.I)
 MAX_DEPTH, MAX_DIRS = 5, 400
 
@@ -44,8 +46,8 @@ def main():
             name = it.get("name", "")
             full = path + name
             if it.get("type") == "directory":
-                # under the maps folder only follow folders that name an ARAM map; elsewhere follow everything
-                if depth < MAX_DEPTH and (not path.startswith("game/assets/maps/") or WANTED.search(full)):
+                # under the big folders only follow folders that name a loading screen or an ARAM map; elsewhere follow everything
+                if depth < MAX_DEPTH and (not path.startswith(NARROW) or WANTED.search(full)):
                     queue.append((full + "/", depth + 1))
             elif IMAGE.search(name) and WANTED.search(full):
                 found.append((full, it.get("size", 0)))
