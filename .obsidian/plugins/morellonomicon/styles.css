@@ -744,9 +744,14 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-seg-line .mn-seg-hl { top: auto; bottom: -1px; height: 2px; border-radius: 0; box-shadow: none; }
 .mn-app .mn-seg-line.has-hl .mn-seg-b.is-on { box-shadow: none; }
 .mn-app .mn-seg-line.is-drag .mn-seg-b.is-pv { color: var(--mn-text); }
-/* the bottom tab bar: a soft pill under the chosen tab's icon (sized by slideSeg to the icon box) */
+/* the bottom tab bar: one glass pill behind the chosen tab (slideSeg sizes it to the tab); the buttons draw no highlight of their own */
 .mn-tabs.has-hl { position: relative; touch-action: pan-y; }
-.mn-tabs .mn-seg-hl { bottom: auto; border-radius: 15px; background: color-mix(in srgb, var(--mn-accent) 16%, transparent); box-shadow: none; }
+.mn-tabs .mn-seg-hl { top: 4px; bottom: calc(var(--mn-safe-bottom) + 2px); border-radius: 0; background: none; box-shadow: none; }
+.mn-tabs .mn-seg-hl::before { content: ""; position: absolute; inset: 0 6px; border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.32);
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.06)), color-mix(in srgb, var(--mn-text) 6%, transparent);
+    backdrop-filter: blur(10px) saturate(1.5); -webkit-backdrop-filter: blur(10px) saturate(1.5);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1px 0 rgba(0, 0, 0, 0.05), 0 4px 14px rgba(0, 0, 0, 0.14); }
+.mn-app .mn-tabs .mn-tab, .mn-app .mn-tabs .mn-tab:hover, .mn-app .mn-tabs .mn-tab:active, .mn-app .mn-tabs .mn-tab:focus, .mn-app .mn-tabs .mn-tab:focus-visible { background: none; box-shadow: none; outline: none; }
 .mn-app .mn-tabs.has-hl .mn-tab { position: relative; z-index: 1; transition: color 0.2s; }
 .mn-app .mn-tabs.is-drag .mn-tab.is-on:not(.is-pv) { color: var(--mn-muted); }
 .mn-app .mn-tabs.is-drag .mn-tab.is-pv { color: var(--mn-accent); }

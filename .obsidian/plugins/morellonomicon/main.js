@@ -3630,7 +3630,7 @@ var MnView = class extends import_obsidian8.ItemView {
         this.tapTab(id);
       });
     }
-    slideSeg(this.tabsEl, "main-tabs", { item: ".mn-tab", fit: ".mn-ic" });
+    slideSeg(this.tabsEl, "main-tabs", { item: ".mn-tab" });
     this.modeBtn.empty();
     icon(this.modeBtn, MODES[this.plugin.settings.mode].icon);
   }

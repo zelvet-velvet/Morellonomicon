@@ -134,7 +134,7 @@ export class MnView extends ItemView {
             h(b, "span", "mn-tab-l", this.tabLabel(id));
             b.addEventListener("click", (e) => { e.preventDefault(); this.tapTab(id); });
         }
-        slideSeg(this.tabsEl, "main-tabs", { item: ".mn-tab", fit: ".mn-ic" });   // a pill under the chosen tab's icon slides and can be dragged
+        slideSeg(this.tabsEl, "main-tabs", { item: ".mn-tab" });   // one glass pill behind the chosen tab slides and can be dragged
         this.modeBtn.empty();
         icon(this.modeBtn, MODES[this.plugin.settings.mode].icon);
     }
