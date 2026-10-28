@@ -25,6 +25,7 @@ function fadeIn(im: HTMLImageElement): void {
 }
 const VEIL_DELAY_MS = 250;   // a later page waits this long for its pictures before it shows under the loading veil
 const VEIL_MIN_MS = 500;     // and once shown it stays at least this long
+const BOOT_PICTURES_MS = 7000;   // at start-up the first page may wait this long for its icons (the first time they come over the network)
 const PAGE_WAIT_MS = 2500;   // a page shows its loading look this long at most while the pictures at its top arrive
 
 function arrive(page: HTMLElement, anim: "push" | "back" | "tab"): void {
@@ -263,7 +264,8 @@ export class MnView extends ItemView {
         // arrives) until the data has settled and the first pictures are in; no sharp half-loaded page shows between.
         if (!this.plugin.booted) {
             show();
-            this.holdVeil(page, Promise.all([this.plugin.whenBooted(), wait ?? Promise.resolve()]).then(() => undefined), id);
+            // the pictures are checked once the data has settled, on the page as it is then (it may have been rebuilt meanwhile)
+            this.holdVeil(page, this.plugin.whenBooted().then(() => whenLoaded(page.el, BOOT_PICTURES_MS)).then(() => undefined), id);
             return;
         }
         if (!wait || anim === "none") { show(); this.hideVeil(); return; }

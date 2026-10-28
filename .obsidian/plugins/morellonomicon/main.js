@@ -3997,6 +3997,7 @@ function fadeIn(im) {
 }
 var VEIL_DELAY_MS = 250;
 var VEIL_MIN_MS = 500;
+var BOOT_PICTURES_MS = 7e3;
 var PAGE_WAIT_MS = 2500;
 function arrive(page2, anim) {
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || !page2.animate) return;
@@ -4258,7 +4259,7 @@ var MnView = class extends import_obsidian9.ItemView {
     const wait = page2.ready !== void 0 ? page2.ready : whenLoaded(page2.el, PAGE_WAIT_MS);
     if (!this.plugin.booted) {
       show();
-      this.holdVeil(page2, Promise.all([this.plugin.whenBooted(), wait ?? Promise.resolve()]).then(() => void 0), id);
+      this.holdVeil(page2, this.plugin.whenBooted().then(() => whenLoaded(page2.el, BOOT_PICTURES_MS)).then(() => void 0), id);
       return;
     }
     if (!wait || anim === "none") {
