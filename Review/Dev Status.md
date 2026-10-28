@@ -13,6 +13,7 @@ sticker: lucide//activity
 - **Patch job push**: the job puts its commit on top of a newer main before pushing (a push made while it ran used to make it fail).
 - **Handbook home**: opens with the loading tip on an ARAM map, then two blocks, 初來乍到 (basics) and 高手必備 (advanced), each with its own progress, the next topic as a large picture and the rest two across; the glossary is a row at the end.
 - **Roles and lanes**: 英雄定位 explains how roles map to lanes (下路 pair, 中路 roaming, 打野) and why counters change with lane and time; the last-card next-topic panel is now fixed under the card, and a tilted card passes over the progress bars.
+- **Card pile**: Handbook cards lie in a pile like the last page; swipe left to turn a card away (tilting), swipe right to bring the previous one back (to check on the phone).
 - **Tinder-style swiping**: cards tilt while swiped; pulling the last card tilts it and the next topic fills the gap on the right as a growing panel (to check on the phone).
 - **Handbook cards**: picture on top, a line, then a text panel (where you are, title, line, and a 大混戰裡 tip box); text breaks only between phrases; clips shown whole over a blurred copy; pulling the last card left (shiver, haptic) opens the next topic.
 - **New and rewritten topics**: role counters as a graph of role icons with coloured arrows; item recipes drawn like the shop; 高手必備: 跳出定位的英雄 (7 champions, each with the ability that breaks the role), 躲技能, 限制走位 and 視野 (Rift wards on the minimap).

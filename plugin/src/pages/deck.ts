@@ -28,7 +28,12 @@ interface Slide { title: string; icon: string; visual: string; text: string }
 const STRIP = 6;   // icons in a strip
 const PULL = 0.6;      // how far the last card moves per px pulled (it resists a little, like a rubber band)
 const GO_AT = 130;     // px of card movement that opens the next topic when the finger lifts
-const TILT = 12;       // degrees a card tilts when it is fully swiped away (like a Tinder card); left swipe tilts left
+const TILT = 12;       // degrees a card tilts per card width it is dragged (like a Tinder card); left swipe tilts left
+const GONE = -1.2;     // where a swiped-away card rests, in card widths to the left of the pile
+const FAN = [0, 1.6, -1.3, -1.3];   // degrees the cards under the top one lean, so the pile looks laid on a table
+const SWIPE_AT = 0.25; // fraction of the width a drag must cover to turn the card
+const FLICK = 0.5;     // px/ms: a quicker, shorter drag turns the card too
+const SETTLE_MS = 360; // how long a card takes to land after a swipe
 
 export function parseSlides(md: string): Slide[] {
     const body = md.replace(/^---[\s\S]*?---\n/, "");
@@ -92,11 +97,12 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         const guide = store.guideNotes().filter((n) => n.layout === "deck");
         const at = guide.findIndex((n) => n.file.path === file.path);
         const next = guide[at + 1];
-        const cards: HTMLElement[] = [];
+        const sec: HTMLElement[] = [];   // one per card; the pile is made by posing these
 
         slides.forEach((s, i) => {
             h(bars, "span", "mn-bar");
-            const card = h(h(pager, "section", "mn-slide"), "div", "mn-sl-card");
+            const section = h(pager, "section", "mn-slide");
+            const card = h(section, "div", "mn-sl-card");
             visual(ctx, h(card, "div", "mn-sl-vis"), s);
             // under the picture: where you are, the title, the line, and a closing "**label：** tip" in its own box
             const words = h(card, "div", "mn-sl-words");
@@ -110,7 +116,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
                 h(box, "div", "mn-sl-tip-k", tip[2]);
                 void MarkdownRenderer.render(ctx.app, tip[3].trim(), h(box, "div", "mn-sl-tip-x markdown-rendered"), file.path, ctx.component);
             }
-            cards.push(card);
+            sec.push(section);
         });
         // behind the last card: the next topic (or, after the last topic, the way back)
         if (next) {
@@ -125,78 +131,115 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         const go = () => { ctx.pop(); if (next) ctx.openNote(next.file.path); };
 
         const count = slides.length;
-        let shown = -1;
-        const show = (i: number) => {
-            Array.from(bars.children).forEach((b, j) => (b as HTMLElement).toggleClass("is-on", j <= i));
-            if (i >= count - 1) void ctx.plugin.markRead(file.path);   // reached the last card: counts as read
+        let cur = 0;   // the card on top
+        const show = () => {
+            Array.from(bars.children).forEach((b, j) => (b as HTMLElement).toggleClass("is-on", j <= cur));
+            if (cur >= count - 1) void ctx.plugin.markRead(file.path);   // reached the last card: counts as read
         };
-        let pulling = false;
-        // a card tilts as the swipe moves it, pivoting below the card: away to the left it leans left, back from the left it leans right
-        let tiltQueued = false;
-        const tilt = () => {
-            tiltQueued = false;
-            const w = Math.max(1, pager.clientWidth);
-            cards.forEach((c, i) => {
-                if (pulling && c === cards[count - 1]) return;   // the pull sets its own
-                if (c.hasClass("is-gone")) return;
-                const off = Math.max(-1.2, Math.min(1.2, i - pager.scrollLeft / w));
-                c.style.transform = off === 0 ? "" : `rotate(${(off * TILT).toFixed(2)}deg)`;
-            });
-        };
-        pager.addEventListener("scroll", () => {
-            const i = Math.max(0, Math.min(count - 1, Math.round(pager.scrollLeft / Math.max(1, pager.clientWidth))));
-            if (i !== shown) { shown = i; show(i); }
-            if (!tiltQueued) { tiltQueued = true; requestAnimationFrame(tilt); }
-        }, { passive: true });
-        show(0);
 
-        // pulling the last card further left: it shivers (a tick), then follows the finger at a fraction of the distance and
-        // shows the next topic behind it; let go far enough and that topic opens, otherwise the card springs back
-        const last = cards[cards.length - 1];
-        let x0 = 0, y0 = 0, armed = false, decided = false;
-        pager.addEventListener("touchstart", (e) => {
-            x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; pulling = false; armed = false; decided = false;
-        }, { passive: true });
-        pager.addEventListener("touchmove", (e) => {
-            if (!last || shown !== count - 1) return;
-            const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
-            if (!decided) {
+        // The cards are a pile: the top one at rest, the next ones leaning under it, the ones already seen parked off to the left.
+        // `u` places a card: 0 = on top, 1 = first under it … , below 0 = dragged to the left by that many card widths.
+        const pose = (el: HTMLElement, u: number) => {
+            const w = pager.clientWidth;
+            let x = 0, deg = 0, op = "";
+            if (u < 0) { x = u * w; deg = u * TILT; }
+            else {
+                const k = Math.min(FAN.length - 1, Math.floor(u)), a = FAN[k], b = FAN[Math.min(FAN.length - 1, k + 1)];
+                deg = a + (b - a) * (u - k);
+                if (u > 2) op = String(Math.max(0, 3 - u));
+            }
+            el.style.transform = `translateX(${x.toFixed(1)}px) rotate(${deg.toFixed(2)}deg)`;
+            el.style.opacity = op;
+        };
+        let busy = false, settleT = 0;
+        const layout = (animate: boolean) => {
+            if (animate) {
+                busy = true;
+                sec.forEach((c) => c.addClass("is-settle"));
+                window.clearTimeout(settleT);
+                settleT = window.setTimeout(() => { sec.forEach((c) => c.removeClass("is-settle")); busy = false; }, SETTLE_MS);
+            }
+            sec.forEach((c, i) => { pose(c, i < cur ? GONE : i - cur); c.style.zIndex = String(i < cur ? 100 + i : count - i); });
+            show();
+        };
+        layout(false);
+        const onResize = () => layout(false);
+        window.addEventListener("resize", onResize);
+        ctx.component.register(() => window.removeEventListener("resize", onResize));
+
+        // Dragging the top card: it follows the finger and tilts, the pile under it moves up; right drags the previous card back
+        // on top. The last card resists, shivers once, and shows the next topic under it (fixed panel); let go far enough and that
+        // topic opens, otherwise the card springs back.
+        const lastIdx = count - 1;
+        let x0 = 0, y0 = 0, t0 = 0, pid = -1, dx = 0, mode: "" | "x" | "y" = "", armed = false;
+        const resetPeek = () => { peek.style.opacity = ""; peek.removeClass("is-ready"); armed = false; };
+        const drag = () => {
+            const w = pager.clientWidth, top = sec[cur];
+            if (dx < 0) {
+                if (cur === lastIdx) {
+                    const move = dx * PULL;
+                    top.style.transform = `translateX(${move.toFixed(1)}px) rotate(${(move / GO_AT * TILT).toFixed(2)}deg)`;
+                    peek.style.opacity = String(Math.min(1, -move / 30));
+                    const ready = -move >= GO_AT;
+                    if (ready !== armed) { armed = ready; peek.toggleClass("is-ready", ready); if (ready) haptic(); }
+                    return;
+                }
+                pose(top, dx / w);
+                const p = Math.min(1, -dx / w / 0.8);
+                for (let i = cur + 1; i < count; i++) pose(sec[i], i - cur - p);
+            } else {
+                if (cur === 0) { top.style.transform = `translateX(${(dx * 0.2).toFixed(1)}px) rotate(${(dx * 0.2 / w * TILT).toFixed(2)}deg)`; return; }
+                resetPeek();
+                pose(sec[cur - 1], Math.min(0, GONE + dx / w));
+                const p = Math.min(1, dx / w / 0.8);
+                for (let i = cur; i < count; i++) pose(sec[i], i - cur + p);
+            }
+        };
+        pager.addEventListener("pointerdown", (e) => {
+            if (busy || pid !== -1 || (e.pointerType === "mouse" && e.button !== 0)) return;
+            x0 = e.clientX; y0 = e.clientY; t0 = e.timeStamp; pid = e.pointerId; mode = ""; dx = 0;
+        });
+        pager.addEventListener("pointermove", (e) => {
+            if (e.pointerId !== pid) return;
+            dx = e.clientX - x0;
+            const dy = e.clientY - y0;
+            if (!mode) {
                 if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-                decided = true;
-                pulling = dx < 0 && Math.abs(dx) > Math.abs(dy);   // only a leftward, mostly sideways move on the last card
-                if (pulling) {
-                    last.removeClass("is-back");
-                    peek.removeClass("is-back");
-                    last.addClass("is-shiver");
-                    haptic();
+                mode = Math.abs(dx) > Math.abs(dy) ? "x" : "y";   // sideways: ours; vertical: the card's text or the page scrolls
+                if (mode === "x") {
+                    pager.setPointerCapture(pid);
+                    pager.addClass("is-drag");
+                    sec.forEach((c) => c.removeClass("is-settle"));
+                    if (cur === lastIdx && dx < 0) { const card = sec[cur].firstElementChild; card?.removeClass("is-shiver"); void (card as HTMLElement | null)?.offsetWidth; card?.addClass("is-shiver"); haptic(); }
                 }
             }
-            if (!pulling) return;
-            e.preventDefault();   // the card moves, not the page
-            const move = Math.min(0, dx) * PULL;
-            last.style.transform = `translateX(${move}px) rotate(${(move / GO_AT * TILT).toFixed(2)}deg)`;
-            peek.style.opacity = String(Math.min(1, -move / 30));
-            const ready = -move >= GO_AT;
-            if (ready !== armed) { armed = ready; peek.toggleClass("is-ready", ready); if (ready) haptic(); }
-        }, { passive: false });
-        const end = () => {
-            if (!pulling) return;
-            pulling = false;
-            last.removeClass("is-shiver");
-            if (armed) {
-                last.addClass("is-gone");   // slides away, then the next topic opens
+            if (mode === "x") drag();
+        });
+        const end = (e: PointerEvent) => {
+            if (e.pointerId !== pid) return;
+            pid = -1;
+            const m = mode;
+            mode = "";
+            pager.removeClass("is-drag");
+            if (m !== "x") return;
+            sec[cur].firstElementChild?.removeClass("is-shiver");
+            const w = pager.clientWidth, v = dx / Math.max(1, e.timeStamp - t0);
+            const far = Math.abs(dx) > SWIPE_AT * w || (Math.abs(v) > FLICK && Math.abs(dx) > 24);
+            if (e.type === "pointercancel") { resetPeek(); layout(true); return; }
+            if (dx < 0 && far && cur < lastIdx) cur++;
+            else if (dx > 0 && far && cur > 0) cur--;
+            else if (dx < 0 && cur === lastIdx && armed) {
+                busy = true;
+                sec[cur].addClass("is-settle");
+                pose(sec[cur], GONE);   // flies off, then the next topic opens
                 window.setTimeout(go, 220);
                 return;
             }
-            last.addClass("is-back");
-            last.style.transform = "";
-            peek.addClass("is-back");
-            peek.style.opacity = "";
-            peek.removeClass("is-ready");
-            window.setTimeout(() => { last.removeClass("is-back"); peek.removeClass("is-back"); }, 380);   // the spring is done; the tilt follows the scroll again without lag
+            resetPeek();
+            layout(true);
         };
-        pager.addEventListener("touchend", end);
-        pager.addEventListener("touchcancel", end);
+        pager.addEventListener("pointerup", end);
+        pager.addEventListener("pointercancel", end);
         requestAnimationFrame(fit);
     });
     window.addEventListener("resize", fit);

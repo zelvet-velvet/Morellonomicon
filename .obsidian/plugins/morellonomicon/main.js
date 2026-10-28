@@ -2340,6 +2340,11 @@ var STRIP = 6;
 var PULL = 0.6;
 var GO_AT = 130;
 var TILT = 12;
+var GONE = -1.2;
+var FAN = [0, 1.6, -1.3, -1.3];
+var SWIPE_AT = 0.25;
+var FLICK = 0.5;
+var SETTLE_MS = 360;
 function parseSlides(md) {
   const body = md.replace(/^---[\s\S]*?---\n/, "");
   return body.split(/^## /m).slice(1).map((part) => {
@@ -2400,10 +2405,11 @@ function deckPage(ctx, file) {
     const guide = store.guideNotes().filter((n) => n.layout === "deck");
     const at = guide.findIndex((n) => n.file.path === file.path);
     const next = guide[at + 1];
-    const cards = [];
+    const sec = [];
     slides.forEach((s, i) => {
       h(bars, "span", "mn-bar");
-      const card = h(h(pager, "section", "mn-slide"), "div", "mn-sl-card");
+      const section2 = h(pager, "section", "mn-slide");
+      const card = h(section2, "div", "mn-sl-card");
       visual(ctx, h(card, "div", "mn-sl-vis"), s);
       const words = h(card, "div", "mn-sl-words");
       h(words, "div", "mn-sl-kn", `${i + 1} / ${slides.length}`);
@@ -2416,7 +2422,7 @@ function deckPage(ctx, file) {
         h(box, "div", "mn-sl-tip-k", tip2[2]);
         void import_obsidian5.MarkdownRenderer.render(ctx.app, tip2[3].trim(), h(box, "div", "mn-sl-tip-x markdown-rendered"), file.path, ctx.component);
       }
-      cards.push(card);
+      sec.push(section2);
     });
     if (next) {
       icon(h(peekIn, "div", "mn-peek-ic"), next.icon);
@@ -2432,91 +2438,142 @@ function deckPage(ctx, file) {
       if (next) ctx.openNote(next.file.path);
     };
     const count2 = slides.length;
-    let shown = -1;
-    const show = (i) => {
-      Array.from(bars.children).forEach((b, j) => b.toggleClass("is-on", j <= i));
-      if (i >= count2 - 1) void ctx.plugin.markRead(file.path);
+    let cur = 0;
+    const show = () => {
+      Array.from(bars.children).forEach((b, j) => b.toggleClass("is-on", j <= cur));
+      if (cur >= count2 - 1) void ctx.plugin.markRead(file.path);
     };
-    let pulling = false;
-    let tiltQueued = false;
-    const tilt = () => {
-      tiltQueued = false;
-      const w = Math.max(1, pager.clientWidth);
-      cards.forEach((c, i) => {
-        if (pulling && c === cards[count2 - 1]) return;
-        if (c.hasClass("is-gone")) return;
-        const off = Math.max(-1.2, Math.min(1.2, i - pager.scrollLeft / w));
-        c.style.transform = off === 0 ? "" : `rotate(${(off * TILT).toFixed(2)}deg)`;
+    const pose = (el2, u) => {
+      const w = pager.clientWidth;
+      let x = 0, deg = 0, op = "";
+      if (u < 0) {
+        x = u * w;
+        deg = u * TILT;
+      } else {
+        const k = Math.min(FAN.length - 1, Math.floor(u)), a = FAN[k], b = FAN[Math.min(FAN.length - 1, k + 1)];
+        deg = a + (b - a) * (u - k);
+        if (u > 2) op = String(Math.max(0, 3 - u));
+      }
+      el2.style.transform = `translateX(${x.toFixed(1)}px) rotate(${deg.toFixed(2)}deg)`;
+      el2.style.opacity = op;
+    };
+    let busy = false, settleT = 0;
+    const layout = (animate) => {
+      if (animate) {
+        busy = true;
+        sec.forEach((c) => c.addClass("is-settle"));
+        window.clearTimeout(settleT);
+        settleT = window.setTimeout(() => {
+          sec.forEach((c) => c.removeClass("is-settle"));
+          busy = false;
+        }, SETTLE_MS);
+      }
+      sec.forEach((c, i) => {
+        pose(c, i < cur ? GONE : i - cur);
+        c.style.zIndex = String(i < cur ? 100 + i : count2 - i);
       });
+      show();
     };
-    pager.addEventListener("scroll", () => {
-      const i = Math.max(0, Math.min(count2 - 1, Math.round(pager.scrollLeft / Math.max(1, pager.clientWidth))));
-      if (i !== shown) {
-        shown = i;
-        show(i);
-      }
-      if (!tiltQueued) {
-        tiltQueued = true;
-        requestAnimationFrame(tilt);
-      }
-    }, { passive: true });
-    show(0);
-    const last = cards[cards.length - 1];
-    let x0 = 0, y0 = 0, armed = false, decided = false;
-    pager.addEventListener("touchstart", (e) => {
-      x0 = e.touches[0].clientX;
-      y0 = e.touches[0].clientY;
-      pulling = false;
+    layout(false);
+    const onResize = () => layout(false);
+    window.addEventListener("resize", onResize);
+    ctx.component.register(() => window.removeEventListener("resize", onResize));
+    const lastIdx = count2 - 1;
+    let x0 = 0, y0 = 0, t0 = 0, pid = -1, dx = 0, mode = "", armed = false;
+    const resetPeek = () => {
+      peek.style.opacity = "";
+      peek.removeClass("is-ready");
       armed = false;
-      decided = false;
-    }, { passive: true });
-    pager.addEventListener("touchmove", (e) => {
-      if (!last || shown !== count2 - 1) return;
-      const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
-      if (!decided) {
+    };
+    const drag = () => {
+      const w = pager.clientWidth, top = sec[cur];
+      if (dx < 0) {
+        if (cur === lastIdx) {
+          const move = dx * PULL;
+          top.style.transform = `translateX(${move.toFixed(1)}px) rotate(${(move / GO_AT * TILT).toFixed(2)}deg)`;
+          peek.style.opacity = String(Math.min(1, -move / 30));
+          const ready = -move >= GO_AT;
+          if (ready !== armed) {
+            armed = ready;
+            peek.toggleClass("is-ready", ready);
+            if (ready) haptic();
+          }
+          return;
+        }
+        pose(top, dx / w);
+        const p = Math.min(1, -dx / w / 0.8);
+        for (let i = cur + 1; i < count2; i++) pose(sec[i], i - cur - p);
+      } else {
+        if (cur === 0) {
+          top.style.transform = `translateX(${(dx * 0.2).toFixed(1)}px) rotate(${(dx * 0.2 / w * TILT).toFixed(2)}deg)`;
+          return;
+        }
+        resetPeek();
+        pose(sec[cur - 1], Math.min(0, GONE + dx / w));
+        const p = Math.min(1, dx / w / 0.8);
+        for (let i = cur; i < count2; i++) pose(sec[i], i - cur + p);
+      }
+    };
+    pager.addEventListener("pointerdown", (e) => {
+      if (busy || pid !== -1 || e.pointerType === "mouse" && e.button !== 0) return;
+      x0 = e.clientX;
+      y0 = e.clientY;
+      t0 = e.timeStamp;
+      pid = e.pointerId;
+      mode = "";
+      dx = 0;
+    });
+    pager.addEventListener("pointermove", (e) => {
+      if (e.pointerId !== pid) return;
+      dx = e.clientX - x0;
+      const dy = e.clientY - y0;
+      if (!mode) {
         if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-        decided = true;
-        pulling = dx < 0 && Math.abs(dx) > Math.abs(dy);
-        if (pulling) {
-          last.removeClass("is-back");
-          peek.removeClass("is-back");
-          last.addClass("is-shiver");
-          haptic();
+        mode = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+        if (mode === "x") {
+          pager.setPointerCapture(pid);
+          pager.addClass("is-drag");
+          sec.forEach((c) => c.removeClass("is-settle"));
+          if (cur === lastIdx && dx < 0) {
+            const card = sec[cur].firstElementChild;
+            card?.removeClass("is-shiver");
+            void card?.offsetWidth;
+            card?.addClass("is-shiver");
+            haptic();
+          }
         }
       }
-      if (!pulling) return;
-      e.preventDefault();
-      const move = Math.min(0, dx) * PULL;
-      last.style.transform = `translateX(${move}px) rotate(${(move / GO_AT * TILT).toFixed(2)}deg)`;
-      peek.style.opacity = String(Math.min(1, -move / 30));
-      const ready = -move >= GO_AT;
-      if (ready !== armed) {
-        armed = ready;
-        peek.toggleClass("is-ready", ready);
-        if (ready) haptic();
+      if (mode === "x") drag();
+    });
+    const end = (e) => {
+      if (e.pointerId !== pid) return;
+      pid = -1;
+      const m = mode;
+      mode = "";
+      pager.removeClass("is-drag");
+      if (m !== "x") return;
+      sec[cur].firstElementChild?.removeClass("is-shiver");
+      const w = pager.clientWidth, v = dx / Math.max(1, e.timeStamp - t0);
+      const far = Math.abs(dx) > SWIPE_AT * w || Math.abs(v) > FLICK && Math.abs(dx) > 24;
+      if (e.type === "pointercancel") {
+        resetPeek();
+        layout(true);
+        return;
       }
-    }, { passive: false });
-    const end = () => {
-      if (!pulling) return;
-      pulling = false;
-      last.removeClass("is-shiver");
-      if (armed) {
-        last.addClass("is-gone");
+      if (dx < 0 && far && cur < lastIdx) cur++;
+      else if (dx > 0 && far && cur > 0) cur--;
+      else if (dx < 0 && cur === lastIdx && armed) {
+        busy = true;
+        sec[cur].addClass("is-settle");
+        pose(sec[cur], GONE);
         window.setTimeout(go, 220);
         return;
       }
-      last.addClass("is-back");
-      last.style.transform = "";
-      peek.addClass("is-back");
-      peek.style.opacity = "";
-      peek.removeClass("is-ready");
-      window.setTimeout(() => {
-        last.removeClass("is-back");
-        peek.removeClass("is-back");
-      }, 380);
+      resetPeek();
+      layout(true);
     };
-    pager.addEventListener("touchend", end);
-    pager.addEventListener("touchcancel", end);
+    pager.addEventListener("pointerup", end);
+    pager.addEventListener("pointercancel", end);
     requestAnimationFrame(fit);
   });
   window.addEventListener("resize", fit);

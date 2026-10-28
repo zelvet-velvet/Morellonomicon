@@ -394,11 +394,12 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-bar { flex: 1; height: 3px; border-radius: 2px; background: var(--mn-line); transition: background 0.25s; }
 .mn-bar.is-on { background: var(--mn-accent); }
 .mn-deckwrap { --mn-lift: 44px; position: relative; height: 520px; margin: calc(-1 * var(--mn-lift)) -16px 0; }
-.mn-pager { position: relative; z-index: 1; display: flex; height: 100%; box-sizing: border-box; padding-top: var(--mn-lift); overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
-    touch-action: pan-x; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-.mn-pager::-webkit-scrollbar { display: none; }
-.mn-slide { flex: 0 0 100%; box-sizing: border-box; padding: 0 10px; scroll-snap-align: center; scroll-snap-stop: always; display: flex; }
-.mn-sl-card { transform-origin: 50% 130%; will-change: transform; flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 26px; background: var(--mn-card); border: 1px solid var(--mn-line); }
+.mn-pager { position: relative; z-index: 1; height: 100%; box-sizing: border-box; overflow: hidden; touch-action: pan-y; }
+.mn-pager.is-drag { user-select: none; cursor: grabbing; }
+/* the cards lie in one pile; the top one is dragged away (see deck.ts); the room above them lets a tilted card pass over the bars */
+.mn-slide { position: absolute; left: 0; right: 0; top: var(--mn-lift); bottom: 12px; box-sizing: border-box; padding: 0 10px; display: flex; transform-origin: 50% 130%; will-change: transform; }
+.mn-slide.is-settle { transition: transform 0.34s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s; }
+.mn-sl-card { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 26px; background: var(--mn-card); border: 1px solid var(--mn-line); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16); }
 .mn-sl-words { flex: 0 1 auto; max-height: 60%; overflow-y: auto; padding: 16px 22px 22px; border-top: 1px solid var(--mn-line); }
 .mn-sl-kn { font-size: 11px; font-weight: 700; letter-spacing: 0.16em; color: var(--mn-accent); font-variant-numeric: tabular-nums; }
 .mn-sl-t { font-family: var(--mn-serif); font-size: 26px; font-weight: 700; letter-spacing: 0.02em; margin: 4px 0 8px; color: var(--mn-text); }
@@ -487,9 +488,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-wmap-ward.is-c { border-color: #ff6fae; box-shadow: 0 0 0 3px rgba(255, 111, 174, 0.25), 0 2px 6px rgba(0, 0, 0, 0.6); }
 .mn-wmap-obj { position: absolute; z-index: 1; transform: translate(-50%, -140%); padding: 3px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; color: #fff; background: rgba(150, 40, 40, 0.85); white-space: nowrap; }
 /* pulling the last card: it shivers once, then follows the finger at a fraction of the distance and reveals the next topic behind it */
-.mn-peek { position: absolute; z-index: 0; top: var(--mn-lift); bottom: 0; left: 10px; right: 10px; display: flex; align-items: center; justify-content: flex-end; padding-right: 18px;
+.mn-peek { position: absolute; z-index: 0; top: var(--mn-lift); bottom: 12px; left: 10px; right: 10px; display: flex; align-items: center; justify-content: flex-end; padding-right: 18px;
     border-radius: 26px; background: var(--mn-card-hi); border: 1px solid var(--mn-line); opacity: 0; transition: opacity 0.15s, background 0.2s; }
-.mn-peek.is-back { transition: opacity 0.35s, background 0.2s; }
 .mn-peek.is-ready { background: color-mix(in srgb, var(--mn-accent) 16%, var(--mn-card-hi)); border-color: var(--mn-accent); }
 .mn-peek-in { flex: none; width: 112px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
 .mn-peek-ic { display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 20px; color: var(--mn-muted); background: var(--mn-card-hi); transition: color 0.2s, background 0.2s, transform 0.2s; }
@@ -500,8 +500,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-peek.is-ready .mn-peek-k { color: var(--mn-accent); }
 .mn-sl-card.is-shiver { animation: mn-shiver 0.28s ease-in-out; }
 @keyframes mn-shiver { 20% { translate: -5px 0; } 45% { translate: 4px 0; } 70% { translate: -2px 0; } 100% { translate: 0 0; } }
-.mn-sl-card.is-back { transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.mn-sl-card.is-gone { transition: transform 0.22s ease-in, opacity 0.22s ease-in; transform: translateX(-110%) rotate(-18deg) !important; opacity: 0; }
 
 /* a loading screen tip between the topic cards: the game's tip centred on a dimmed splash (the picture fades in under the text) */
 .mn-app .mn-trv { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; min-height: 190px; margin: 0 0 18px; padding: 26px 30px; overflow: hidden;
