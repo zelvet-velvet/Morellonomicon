@@ -34,6 +34,8 @@ const GONE = -1.2;     // where a swiped-away card rests, in card widths to the 
 const FAN = [0, 2.6, -2.2, -2.2];   // degrees the cards under the top one lean, so the pile looks laid on a table
 const STEP_Y = 6;      // px each card under the top one sits lower, so their edges show like a stack of cards
 const DECK_WAIT_MS = 800;   // the pile waits this long at most for the first card's pictures
+const NEAR_BEHIND = 1;   // cards already seen that are still painted (the one that comes back on a right swipe)
+const NEAR_AHEAD = 2;    // cards under the top one that are painted (the pile shows two)
 const SETTLE_MS = 280;
 const DECK_BELOW = 10;   // px kept free under the deck (the room for the pile's lower edges is inside the deck, --mn-pile) // how long a card takes to land after a swipe
 
@@ -174,6 +176,13 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
                 settleT = window.setTimeout(() => { sec.forEach((c) => c.removeClass("is-settle")); busy = false; }, SETTLE_MS);
             }
             sec.forEach((c, i) => { pose(c, i < cur ? GONE : i - cur); c.style.zIndex = String(i < cur ? 100 + i : count - i); });
+            // only the cards near the top are painted, and only the ones in view play their clip: a topic with many clips (each with
+            // a blurred copy) otherwise has them all running under the top card, which makes some swipes smooth and others not
+            sec.forEach((c, i) => {
+                c.style.visibility = i >= cur - NEAR_BEHIND && i <= cur + NEAR_AHEAD ? "" : "hidden";
+                const live = i >= cur - 1 && i <= cur + 1;
+                c.querySelectorAll("video").forEach((v) => { if (live) void v.play().catch(() => undefined); else v.pause(); });
+            });
             show();
         };
         layout(false);

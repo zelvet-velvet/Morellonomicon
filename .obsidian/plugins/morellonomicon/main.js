@@ -2416,6 +2416,8 @@ var GONE = -1.2;
 var FAN = [0, 2.6, -2.2, -2.2];
 var STEP_Y = 6;
 var DECK_WAIT_MS = 800;
+var NEAR_BEHIND = 1;
+var NEAR_AHEAD = 2;
 var SETTLE_MS = 280;
 var DECK_BELOW = 10;
 function parseSlides(md) {
@@ -2558,6 +2560,14 @@ function deckPage(ctx, file) {
       sec.forEach((c, i) => {
         pose(c, i < cur ? GONE : i - cur);
         c.style.zIndex = String(i < cur ? 100 + i : count2 - i);
+      });
+      sec.forEach((c, i) => {
+        c.style.visibility = i >= cur - NEAR_BEHIND && i <= cur + NEAR_AHEAD ? "" : "hidden";
+        const live = i >= cur - 1 && i <= cur + 1;
+        c.querySelectorAll("video").forEach((v) => {
+          if (live) void v.play().catch(() => void 0);
+          else v.pause();
+        });
       });
       show();
     };
