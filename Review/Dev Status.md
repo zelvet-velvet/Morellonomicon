@@ -8,7 +8,11 @@ sticker: lucide//activity
 > [!important] For AI assistants
 > Read [[LLM Guide]] before any `CMD_` or status update. This note is kept by `CMD_SYNC` / `CMD_ROLLOVER` / `CMD_NOTES_SYNC`; the day notes in `Review/Log/` by `CMD_JOURNAL`.
 
-## 🚀 Today's Progress (2026-10-27)
+## 🚀 Today's Progress (2026-10-28)
+- **Loading screen tips in the Handbook**: the trivia card shows the game's own loading screen tips in zh_TW, only the ones Zaviel picked from the wiki (2017 Miscellaneous and 2025 Did You Know, all 152 found), over one of ARAM's three loading screen backgrounds (Howling Abyss, Butcher's Bridge, the Ionian bridge); random each visit, no repeats.
+- **Patch job push**: the job puts its commit on top of a newer main before pushing (a push made while it ran used to make it fail).
+
+## 📅 Yesterday's Progress (2026-10-27)
 - **Project start**: Chose an Obsidian vault over a C desktop app (opens on a phone); named it Morellonomicon (黑魔禁書).
 - **Vault setup**: Copied the Minimal theme, 4 CSS snippets and the plugin list from clawd-room; folders for beginner guide, champions, augments and modes.
 - **Fetch script**: `tools/fetch_data.py` writes 173 champion notes (`英雄/`) and 372 item notes (`道具/`) in zh_TW from Data Dragon 16.21.1, with auto archetypes, skill damage types and features; your own notes and `video` / `pinned` / `avoid` / `archetypes_extra` survive a rerun.
@@ -60,14 +64,25 @@ sticker: lucide//activity
 - **Lane data** (2026-10-27): the lane filter is built; `_data/positions.json` is empty until `tools/fetch_builds.py --mode ranked` runs with a Riot key and network. Now filled by `tools/fetch_positions.py` from Meraki Analytics in the patch job (2026-10-27); the ranked count stays as an option.
 - **README** now teaches the Obsidian Git route first (no Python for users); the developer commands are a separate section.
 - **Workflow**: Copied the LLM Guide, Dev Status / Dev Log / Day note from clawd-room, simplified for a solo project (commit to `main`, no PRs) and added a Start Guide.
-
-## 📅 Yesterday's Progress (—)
+- **Header and navigation** (later on 2026-10-27): tab pages pin their big title row (title and its two buttons) while scrolling; sub pages put Back on the title's line, on the text edge; no blink of the bar line when switching pages.
+- **Role, lane and ability filters**: the game's class icons for roles (look-alike until loaded), a lane row (上路 打野 中路 下路 輔助), every other filter in a folding 篩選 panel (技能 by group, 傷害類型 icons, 攻擊距離, 排序 with ↑↓); a hold shows a name bubble; picked filters get a short line, nothing is dimmed.
+- **14 ability tags in five groups**: 傷害 (強化普攻 攻擊特效 斬殺), 控制 (控場 緩速 減益), 移動 (位移 加速 隱身), 生存 (治療 護盾 吸血 免傷), 團隊 (隊友增益); skill cards name the kind (控場 · 擊飛、暈眩).
+- **Ability tags checked against the game text**: `Review/Tag Audit.md` lists the words behind every tag each patch; false hits removed (immunities, enemy dashes, ability haste, 汲取靈感…); 強化普攻 now means next / Nth / 強化 attacks only (on-hit passives are not).
+- **速查 rebuilt for finding fast**: search first; tabs 挑選 (lane icons and every face, tap to add) and 已選 N (the cards); finds names by sound for zh_TW speech to text (雅菲力毆 → 亞菲利歐, several names in one breath) and English by ear (afelios, wukong; `name_en` in every champion note).
+- **Lanes**: from Meraki Analytics in the patch job, 172 of 173 champions (data is from patch 16.3; 洛克 has none).
+- **Augments tab**: sort bar with ↑↓ under the search, rarity filter on the right.
+- **Smoother app**: pages show at once with pictures fading in (no spinner blink); every button bar and the bottom tab bar has a sliding highlight you can drag (haptic tick where the phone allows; Settings → Test haptic).
+- **Handbook redesigned**: full-screen cards with story bars, one card per swipe, the last card opens the next topic by itself; all six topics rewritten for the current app and Riot's official terms (增幅裝置, 銀級 / 金級 / 稜鏡級); glossary 13 → 26 terms.
+- **Item pictures**: the 91 ARAM item copies show their base item's current art.
 
 ---
 
 ## ⏳ Ongoing
 
 ### 📦 Data
+- [ ] **洛克's lane**: newer than Meraki's lane data (16.3); add `positions` to his note by hand. Current lane data needs the ranked count with a Riot key.
+- [ ] **Nicknames**: an `aliases` key per champion for names people say that do not sound like the zh_TW name (機器人, 亞索).
+- [ ] **On-hit list**: `onhit` is only set for 卡特蓮娜; draft it for other champions for review.
 - [x] **Fetch script**: `tools/fetch_data.py` (champions + items, zh_TW, patch in every note).
 - [ ] **Item notes check**: 142 ARAM-only items (`77NNNN`) are linked to their base item; look at a few notes in Obsidian and confirm the ARAM copies are what the Mayhem shop sells.
 - [ ] **Offline images**: optional `tools/cache_images.py` into a gitignored folder.
@@ -106,12 +121,12 @@ sticker: lucide//activity
 - [ ] **More decks**: Rift basics, ward and map reading, ping etiquette; one card each for the trick-of-the-week.
 
 ### 🎬 Videos
-- [>] **Skill demo clips**: played from Riot's ability CDN (`champion-abilities/<key>/ability_<key>_Q1.mp4`); unofficial path, so check on the phone (iOS plays the mp4) and that a missing clip just disappears.
+- [x] **Skill demo clips**: play on the phone from Riot's ability CDN, looping without controls.
 - [ ] **Other forms**: champions that swap forms or upgrade through a mechanic Riot's text does not word as 進化 / 升級 (Viktor, Jayce, Elise, Nidalee, Gnar, Aphelios…) show their base skill only; list them and add hand-written upgrade text.
 - [ ] **Skill combo videos**: optional `video:` (YouTube id) per champion note. OP.GG's channel could not be listed without the YouTube Data API (the page is JavaScript and the RSS feed gave 404); needs a free API key in `.env` (`YOUTUBE_API_KEY`), or hand-picked ids. The plugin shows a `youtube-nocookie` embed when the field exists, else a "search on YouTube" button.
 
 ### 🧩 Plugin (TypeScript, from the ZeLedger skeleton)
-- [>] **Shell**: built and type-checked; needs a look in Obsidian on PC and phone (grid size, tab bar, the mode menu, remote icons loading).
+- [x] **Shell**: in daily use on the phone (iPhone 12 Pro Max).
 - [ ] **Rift slot**: `plugin/src/modes.ts` has Rift (disabled); to open it set `enabled`, give `home.ts` and the champion card's "Build" block real content, and fill the `rift` item flag.
 - [ ] **Mayhem advisor**: augment data first, then the card's "Best augments" block (augments declare which archetypes they suit; champions pin / avoid).
 - [ ] **Sheets and settings panel** when a flow needs them (the skeleton has a bottom sheet to copy).
@@ -126,7 +141,8 @@ sticker: lucide//activity
 - [ ] **Plugins**: `tools/install_plugins.py` downloads the 13 listed plugins; decide which to keep (Dataview, Templater, Style Settings, Minimal Settings, Breadcrumbs are the useful ones here).
 
 ### 📱 Phone
-- [>] **Git clone on the phone**: steps are in the Start Guide; to check on a real phone: the clone finishes, the theme and the Morellonomicon plugin load, icons show.
+- [ ] **Haptic**: check Settings → Test haptic on the phone; remove the haptic code if nothing works in Obsidian.
+- [x] **Git clone on the phone**: works; Zaviel pulls and tests every change on the phone.
 
 ## 💡 Ideas
 - A static website export of the vault for people without Obsidian.
