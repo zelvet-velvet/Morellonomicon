@@ -2503,14 +2503,14 @@ function deckPage(ctx, file) {
       const card = h(section2, "div", "mn-sl-card");
       const face = h(card, "div", "mn-sl-face");
       visual(ctx, h(face, "div", "mn-sl-vis"), s);
-      const words = h(face, "div", "mn-sl-words");
-      h(words, "div", "mn-sl-kn", `${file.basename} \xB7 ${i + 1} / ${slides.length}`);
-      h(words, "h2", "mn-sl-t", s.title);
+      const words2 = h(face, "div", "mn-sl-words");
+      h(words2, "div", "mn-sl-kn", `${file.basename} \xB7 ${i + 1} / ${slides.length}`);
+      h(words2, "h2", "mn-sl-t", s.title);
       const tip2 = /^([\s\S]*?)\*\*([^*\n]{1,8})[:：]\*\*\s*([\s\S]+)$/.exec(s.text);
       const main = tip2 ? tip2[1].trim() : s.text;
-      if (main) void import_obsidian5.MarkdownRenderer.render(ctx.app, main, h(words, "div", "mn-sl-x markdown-rendered"), file.path, ctx.component);
+      if (main) void import_obsidian5.MarkdownRenderer.render(ctx.app, main, h(words2, "div", "mn-sl-x markdown-rendered"), file.path, ctx.component);
       if (tip2) {
-        const box = h(words, "div", "mn-sl-tip");
+        const box = h(words2, "div", "mn-sl-tip");
         h(box, "div", "mn-sl-tip-k", tip2[2]);
         void import_obsidian5.MarkdownRenderer.render(ctx.app, tip2[3].trim(), h(box, "div", "mn-sl-tip-x markdown-rendered"), file.path, ctx.component);
       }
@@ -2578,7 +2578,8 @@ function deckPage(ctx, file) {
     window.addEventListener("resize", onResize);
     ctx.component.register(() => window.removeEventListener("resize", onResize));
     const lastIdx = count2 - 1;
-    let x0 = 0, y0 = 0, t0 = 0, pid = -1, dx = 0, mode = "", armed = false;
+    let x0 = 0, y0 = 0, t0 = 0, pid = -1, dx = 0, lastY = 0, mode = "", armed = false;
+    let words = null;
     const resetPeek = () => {
       peek.style.opacity = "";
       peek.removeClass("is-ready");
@@ -2623,10 +2624,12 @@ function deckPage(ctx, file) {
       }
       x0 = e.clientX;
       y0 = e.clientY;
+      lastY = e.clientY;
       t0 = e.timeStamp;
       pid = e.pointerId;
       mode = "";
       dx = 0;
+      words = e.target.closest(".mn-sl-words");
     });
     pager.addEventListener("pointermove", (e) => {
       if (e.pointerId !== pid) return;
@@ -2635,6 +2638,7 @@ function deckPage(ctx, file) {
       if (!mode) {
         if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
         mode = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+        if (mode === "y") pager.setPointerCapture(pid);
         if (mode === "x") {
           pager.setPointerCapture(pid);
           pager.addClass("is-drag");
@@ -2649,6 +2653,8 @@ function deckPage(ctx, file) {
         }
       }
       if (mode === "x") drag();
+      else if (words) words.scrollTop += lastY - e.clientY;
+      lastY = e.clientY;
     });
     const end = (e) => {
       if (e.pointerId !== pid) return;

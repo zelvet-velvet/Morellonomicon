@@ -190,7 +190,8 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         // on top. The last card resists, shivers once, and shows the next topic under it (fixed panel); let go far enough and that
         // topic opens, otherwise the card springs back.
         const lastIdx = count - 1;
-        let x0 = 0, y0 = 0, t0 = 0, pid = -1, dx = 0, mode: "" | "x" | "y" = "", armed = false;
+        let x0 = 0, y0 = 0, t0 = 0, pid = -1, dx = 0, lastY = 0, mode: "" | "x" | "y" = "", armed = false;
+        let words: HTMLElement | null = null;   // the text area under the finger, scrolled by hand on a vertical move
         const resetPeek = () => { peek.style.opacity = ""; peek.removeClass("is-ready"); armed = false; };
         const drag = () => {
             const w = pager.clientWidth, top = sec[cur];
@@ -222,7 +223,8 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
                 busy = false;
                 layout(false);
             }
-            x0 = e.clientX; y0 = e.clientY; t0 = e.timeStamp; pid = e.pointerId; mode = ""; dx = 0;
+            x0 = e.clientX; y0 = e.clientY; lastY = e.clientY; t0 = e.timeStamp; pid = e.pointerId; mode = ""; dx = 0;
+            words = (e.target as HTMLElement).closest<HTMLElement>(".mn-sl-words");
         });
         pager.addEventListener("pointermove", (e) => {
             if (e.pointerId !== pid) return;
@@ -231,6 +233,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             if (!mode) {
                 if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
                 mode = Math.abs(dx) > Math.abs(dy) ? "x" : "y";   // sideways: ours; vertical: the card's text or the page scrolls
+                if (mode === "y") pager.setPointerCapture(pid);
                 if (mode === "x") {
                     pager.setPointerCapture(pid);
                     pager.addClass("is-drag");
@@ -239,6 +242,8 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
                 }
             }
             if (mode === "x") drag();
+            else if (words) words.scrollTop += lastY - e.clientY;
+            lastY = e.clientY;
         });
         const end = (e: PointerEvent) => {
             if (e.pointerId !== pid) return;
