@@ -127,6 +127,7 @@ sticker: lucide//activity
 - [ ] **Stat codes**: only 0 (AP) and 2 (AD, formula 2 = bonus) are named; other stats show as "+其他加成" (66 rows) until their codes are confirmed.
 
 ### ✍️ Our own strategy
+- [ ] **Builds by play style (decided 2026-10-28, from Zaviel)**: not a hand-written build per champion. Zaviel lists the first three items (in buying order) for each play style, per mode (Mayhem and Rift apart), in `Inbox/玩法出裝收件匣.md`, from OP.GG and similar (their numbers are never copied, only items and a one-line reason with the source). The champion page's Build tab then shows the set of the champion's play style, labelled as recommended for that play style. The play style is read automatically from the champion's skill scaling (AP / AD / on-hit / tank, with the roles) and can be set by hand; wrong ones are fixed by changing a rule or a hand override, not the champion. Mayhem sets are about items only; augment pairings come later (augment `fits`, the Augments tab). Test champions: Katarina, Akali, Talon, Lux, Ahri (the five Zaviel plays best).
 - [>] **Inbox**: Zaviel is tidying the first tricks into `Inbox/技巧收件匣.md`; then "process the inbox".
 - [ ] **Easy way to record it**: tips, builds and combos are frontmatter lists today; add a command / form ("Add tip", "Add build") so they can be written on the phone in a few taps.
 - [ ] **Review**: the Handbook search is the quick way back to a detail; consider a short quiz / saved list if forgetting remains a problem.
