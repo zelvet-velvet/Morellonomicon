@@ -294,7 +294,7 @@ def item_desc(it, limit=140):
     return text if len(text) <= limit else text[: limit - 1] + "…"
 
 
-def item_note(item_id, it, version, names, keep):
+def item_note(item_id, it, version, names, keep, everything=()):
     maps = it.get("maps", {})
     gold = it["gold"]
     base = twin_of(item_id, keep)
@@ -305,10 +305,14 @@ def item_note(item_id, it, version, names, keep):
         "aram": bool(maps.get(ARAM_MAP)) and not has_twin, "rift": bool(maps.get(RIFT_MAP)),
         "icon": f"{DD}/cdn/{version}/img/item/{it['image']['full']}", "patch": version, "generated": True,
     }
+    # an ARAM copy's own picture is often the item's old art: use the normal item's, whenever Riot's data has that item at all
+    plain_id = item_id[len(ARAM_TWIN_PREFIX):] if item_id.startswith(ARAM_TWIN_PREFIX) and len(item_id) == 6 else None
+    if plain_id and (plain_id in keep or plain_id in everything):
+        fm["icon"] = f"{DD}/cdn/{version}/img/item/{plain_id}.png"
     if base:
         fm["aram"] = True
         fm["variant_of"] = names[base]
-        fm["icon"] = f"{DD}/cdn/{version}/img/item/{base}.png"   # the ARAM copy's own picture is often the item's old art
+
     link = lambda ids: [f"[[{names[i]}]]" for i in ids if i in names]
     lines = [f"![{it['name']}|48]({fm['icon']})", ""]
     if base:
@@ -368,7 +372,7 @@ def main():
             return safe_name(it["name"]) + (f" ({i})" if n > 1 else "")
         names = {i: file_name(i, it) for i, it in keep.items()}
         for i, it in keep.items():
-            fm, gen, tail = item_note(i, it, version, names, keep)
+            fm, gen, tail = item_note(i, it, version, names, keep, items)
             changed += write_note(VAULT / "道具" / f"{names[i]}.md", fm, gen, tail)
         print(f"items: {len(keep)} (of {len(items)}; purchasable on Summoner's Rift or ARAM)")
 

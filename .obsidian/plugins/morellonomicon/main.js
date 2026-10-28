@@ -2262,6 +2262,15 @@ function visual(ctx, box, s) {
     if (c) {
       const wrap = h(box, "div", "mn-sl-video");
       demo(wrap, c, { key: args[1] ?? "Q" });
+      const v = wrap.querySelector("video");
+      if (v) {
+        const blur = v.cloneNode(true);
+        blur.className = "mn-sl-vblur";
+        blur.muted = true;
+        blur.setAttribute("aria-hidden", "true");
+        wrap.prepend(blur);
+        void blur.play().catch(() => void 0);
+      }
       return;
     }
   } else if (kind === "img") {
@@ -2297,6 +2306,23 @@ function visual(ctx, box, s) {
       (kind === "roles" ? roleChip : laneChip)(cell, n, { on: false, onTap: () => void 0 });
       h(cell, "span", "mn-sl-icon-l", n);
     }
+    return;
+  } else if (kind === "tabs") {
+    const seg = h(h(box, "div", "mn-sl-tabs"), "div", "mn-seg mn-seg-line");
+    ["Skills", "Build", "Augments", "Tips"].forEach((l, i) => h(seg, "span", "mn-seg-b" + (i === 0 ? " is-on" : ""), l));
+    return;
+  } else if (kind === "damage") {
+    const row2 = h(box, "div", "mn-sl-dmg");
+    for (const k of ["\u7269\u7406", "\u9B54\u6CD5", "\u771F\u5BE6"]) {
+      const d = h(row2, "div", "mn-sl-dmg-k", k);
+      d.style.setProperty("--c", DAMAGE_COLOR[k]);
+    }
+    return;
+  } else if (kind === "map") {
+    const im = h(box, "img", "mn-sl-img");
+    im.src = `https://raw.communitydragon.org/latest/game/assets/ux/loadingscreen/${args[0] ?? "habackground"}.png`;
+    im.alt = "";
+    box.className = "mn-sl-vis is-img";
     return;
   } else if (kind === "radar") {
     const c = champ(args[0]);

@@ -13,6 +13,8 @@ import { demo } from "./skills";
 //   style Ahri          the champion page's 戰鬥風格 chart                    skills Ahri          the skill icons with their damage-colour frames
 //   facts Ahri          the 技能傷害 block (bar and table)                    tags Ahri            the ability tags it has
 //   roles               the six role icons                                   lanes                the five lane icons
+//   tabs                the champion page's four tabs                        damage               the three damage kinds in their colours
+//   map habackground    an ARAM loading screen picture (habackground, arambilgewater, arambloom)
 //   radar Ahri          the older radar chart
 //   role 戰士           champions of that role (a few, changing daily)       champs Ahri Garen    those champions
 //   itemtag Armor       items of that kind (Armor, SpellBlock, Health…)      item 3089            one item and what it is built from
@@ -158,7 +160,21 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
 
     if (kind === "video") {
         const c = champ(args[0]);
-        if (c) { const wrap = h(box, "div", "mn-sl-video"); demo(wrap, c, { key: args[1] ?? "Q" }); return; }
+        if (c) {
+            // the whole clip, never cropped; the space around it is the same clip, blurred (it fills the card without cutting it)
+            const wrap = h(box, "div", "mn-sl-video");
+            demo(wrap, c, { key: args[1] ?? "Q" });
+            const v = wrap.querySelector("video");
+            if (v) {
+                const blur = v.cloneNode(true) as HTMLVideoElement;
+                blur.className = "mn-sl-vblur";
+                blur.muted = true;
+                blur.setAttribute("aria-hidden", "true");
+                wrap.prepend(blur);
+                void blur.play().catch(() => undefined);
+            }
+            return;
+        }
     } else if (kind === "img") {
         const src = args.join(" ");
         const url = /^https?:/.test(src) ? src : ctx.app.vault.adapter.getResourcePath(src);
@@ -180,6 +196,21 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
             (kind === "roles" ? roleChip : laneChip)(cell, n, { on: false, onTap: () => undefined });
             h(cell, "span", "mn-sl-icon-l", n);
         }
+        return;
+    } else if (kind === "tabs") {
+        // the champion page's four tabs, as they look there
+        const seg = h(h(box, "div", "mn-sl-tabs"), "div", "mn-seg mn-seg-line");
+        ["Skills", "Build", "Augments", "Tips"].forEach((l, i) => h(seg, "span", "mn-seg-b" + (i === 0 ? " is-on" : ""), l));
+        return;
+    } else if (kind === "damage") {
+        // the three kinds of damage in the colours the app uses for them
+        const row = h(box, "div", "mn-sl-dmg");
+        for (const k of ["物理", "魔法", "真實"]) { const d = h(row, "div", "mn-sl-dmg-k", k); d.style.setProperty("--c", DAMAGE_COLOR[k]); }
+        return;
+    } else if (kind === "map") {
+        // ARAM's loading screen picture (the game's, shown from CommunityDragon by address)
+        const im = h(box, "img", "mn-sl-img"); im.src = `https://raw.communitydragon.org/latest/game/assets/ux/loadingscreen/${args[0] ?? "habackground"}.png`; im.alt = "";
+        box.className = "mn-sl-vis is-img";
         return;
     } else if (kind === "radar") {
         const c = champ(args[0]);

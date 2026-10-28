@@ -404,17 +404,25 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-sl-vis { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 18px 14px 0; overflow: hidden;
     background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--mn-accent) 10%, var(--mn-card-hi)), var(--mn-card) 75%); }
 .mn-sl-vis.is-video, .mn-sl-vis.is-img { padding: 0; background: #000; }
-.mn-sl-video { width: 100%; height: 100%; }
-.mn-sl-video video { width: 100%; height: 100%; object-fit: cover; display: block; background: #000; }
+.mn-sl-video { position: relative; width: 100%; height: 100%; overflow: hidden; }
+.mn-sl-video video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
+.mn-app .mn-sl-video video.mn-sl-vblur { object-fit: cover; filter: blur(22px) brightness(0.55); transform: scale(1.2); }
 .mn-sl-img { width: 100%; height: 100%; object-fit: cover; }
-.mn-sl-hero { display: flex; align-items: center; justify-content: center; width: min(72%, 100%); aspect-ratio: 1; max-height: 92%; border-radius: 22%; color: var(--mn-accent);
-    background: color-mix(in srgb, var(--mn-accent) 16%, var(--mn-card-hi)); }
-.mn-sl-hero svg { width: 46%; height: 46%; stroke-width: 1.6; }
+.mn-sl-hero { display: flex; align-items: center; justify-content: center; color: var(--mn-accent); }
+.mn-sl-hero svg { width: 120px; height: 120px; stroke-width: 1.4; }
 .mn-sl-radar, .mn-sl-style, .mn-sl-facts, .mn-sl-icons { width: 100%; }
 .mn-sl-radar { max-width: 360px; }
 .mn-sl-style .mn-panel { margin: 0; background: none; border: none; box-shadow: none; padding: 0; }
 .mn-sl-style .mn-sc { max-width: none; }
-.mn-sl-tags { display: flex; justify-content: center; transform: scale(1.35); }
+.mn-sl-tags { width: 100%; }
+.mn-sl-tags .mn-tgs { justify-content: center; gap: 10px; }
+.mn-app .mn-sl-tags .mn-tg { padding: 9px 14px; font-size: 15px; border-radius: 10px; }
+.mn-sl-tags .mn-tg svg { width: 20px; height: 20px; }
+.mn-sl-tabs { width: 100%; }
+.mn-sl-tabs .mn-seg { margin: 0; }
+.mn-sl-tabs .mn-seg-b { display: flex; align-items: center; justify-content: center; flex: 1; }
+.mn-sl-dmg { display: flex; flex-direction: column; gap: 12px; width: 80%; }
+.mn-sl-dmg-k { padding: 14px; border-radius: 14px; text-align: center; font-family: var(--mn-serif); font-size: 22px; font-weight: 700; color: var(--c); background: color-mix(in srgb, var(--c) 14%, var(--mn-card-hi)); border: 1px solid color-mix(in srgb, var(--c) 40%, transparent); }
 .mn-sl-icons .mn-fgrid { margin: 0; row-gap: 10px; }
 .mn-sl-icon { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .mn-sl-icon .mn-chip-ic { transform: scale(1.3); }
