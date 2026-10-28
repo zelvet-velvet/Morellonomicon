@@ -7,11 +7,11 @@ var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
 };
-var __copyProps = (to, from, except, desc) => {
+var __copyProps = (to, from, except, desc2) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
       if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc2 = __getOwnPropDesc(from, key)) || desc2.enumerable });
   }
   return to;
 };
@@ -1068,7 +1068,7 @@ var MnSettingTab = class extends import_obsidian3.PluginSettingTab {
         await save();
       });
     });
-    const folder = (name, desc, key) => new import_obsidian3.Setting(c).setName(name).setDesc(desc).addText((x) => x.setValue(s[key]).onChange(async (v) => {
+    const folder = (name, desc2, key) => new import_obsidian3.Setting(c).setName(name).setDesc(desc2).addText((x) => x.setValue(s[key]).onChange(async (v) => {
       s[key] = v.trim() || DEFAULTS[key];
       await save();
     }));
@@ -1176,7 +1176,7 @@ function augmentsPage(ctx) {
 // src/pages/profile.ts
 var import_obsidian4 = require("obsidian");
 var SKILL_STEPS = [0, 4, 7, 9, 10];
-var count = (c, ...tags) => c.skills.filter((s) => s.key !== "P" && tags.some((t) => s.tags.includes(t))).length;
+var count = (c, ...tags2) => c.skills.filter((s) => s.key !== "P" && tags2.some((t) => s.tags.includes(t))).length;
 var score = (n) => SKILL_STEPS[Math.min(n, SKILL_STEPS.length - 1)];
 function profileAxes(c) {
   return [
@@ -1251,6 +1251,7 @@ var TAG_GROUPS = [
   ["\u5718\u968A", ["\u968A\u53CB\u589E\u76CA"]]
 ];
 var TAG = new Map(TAGS.map((t) => [t.tag, t]));
+var tagInfo = (tag) => TAG.get(tag);
 var TagLegend = class extends import_obsidian4.Modal {
   constructor(app) {
     super(app);
@@ -1261,9 +1262,9 @@ var TagLegend = class extends import_obsidian4.Modal {
     const app = document.querySelector(".mn-app");
     const css = app ? getComputedStyle(app) : null;
     const resolve = (v) => v.replace(/var\((--[\w-]+)\)/, (_m, name) => css?.getPropertyValue(name).trim() || "currentColor");
-    for (const [group2, tags] of TAG_GROUPS) {
+    for (const [group2, tags2] of TAG_GROUPS) {
       h(table, "div", "mn-lg-g", group2);
-      for (const a of TAGS.filter((x) => tags.includes(x.tag))) {
+      for (const a of TAGS.filter((x) => tags2.includes(x.tag))) {
         const color = resolve(a.color);
         const r = h(table, "div", "mn-lg-r");
         const ic = h(r, "span", "mn-lg-ic");
@@ -1296,7 +1297,7 @@ function tagFilter(parent, tag, on, onTap) {
   const t = TAG.get(tag);
   return iconFilter(parent, tag, t?.icon ?? "circle", t?.color ?? "var(--mn-text)", on, onTap);
 }
-var keysOf = (c, ...tags) => c.skills.filter((s) => tags.some((t) => s.tags.includes(t))).map((s) => s.key).join(" \xB7 ");
+var keysOf = (c, ...tags2) => c.skills.filter((s) => tags2.some((t) => s.tags.includes(t))).map((s) => s.key).join(" \xB7 ");
 var hasTag = (c, tag) => c.features.includes(tag);
 var reachOf = (c) => c.archetypes.find((a) => a === "\u8FD1\u6230" || a === "\u4E2D\u7A0B" || a === "\u9060\u7A0B") ?? "";
 function tagChip(parent, c, t) {
@@ -1459,9 +1460,9 @@ function styleChart(parent, c) {
 var OFF_CHART = TAGS.map((x) => x.tag).filter((x) => !["\u63A7\u5834", "\u4F4D\u79FB", "\u6CBB\u7642", "\u8B77\u76FE"].includes(x));
 function styleCard(parent, c, app) {
   const card = h(parent, "div", "mn-panel mn-style");
-  const head = h(card, "div", "mn-style-h");
-  h(head, "span", "mn-style-t", "\u6230\u9B25\u98A8\u683C");
-  const key = h(head, "button", "mn-lg-btn");
+  const head2 = h(card, "div", "mn-style-h");
+  h(head2, "span", "mn-style-t", "\u6230\u9B25\u98A8\u683C");
+  const key = h(head2, "button", "mn-lg-btn");
   key.setAttribute("aria-label", "\u5716\u793A\u8AAA\u660E");
   icon(key, "info");
   if (app) key.addEventListener("click", (e) => {
@@ -1502,26 +1503,26 @@ var pct = (wins, games) => games ? Math.round(wins / games * 100) : 0;
 function buildTab(body, c, ctx) {
   const store = ctx.plugin.store;
   const mode = ctx.plugin.settings.mode;
-  const stats = store.stats?.champions[c.id];
+  const stats2 = store.stats?.champions[c.id];
   const mine = c.builds.filter((b) => b.mode === mode);
   const meta = mine.filter((b) => b.kind === "meta");
   const alt = mine.filter((b) => b.kind === "alt");
   const synergy = mine.filter((b) => b.kind === "synergy");
-  if (stats || meta.length) {
+  if (stats2 || meta.length) {
     section(body, "\u5E38\u7528");
-    if (stats) {
+    if (stats2) {
       const top = h(body, "div", "mn-chips");
-      chip(top, `${stats.games} \u5834`);
-      chip(top, `\u52DD\u7387 ${pct(stats.wins, stats.games)}%`, { color: "var(--color-green)" });
+      chip(top, `${stats2.games} \u5834`);
+      chip(top, `\u52DD\u7387 ${pct(stats2.wins, stats2.games)}%`, { color: "var(--color-green)" });
       if (store.stats?.date) chip(top, store.stats.date);
-      for (const s of stats.sets.slice(0, TOP_SETS)) {
+      for (const s of stats2.sets.slice(0, TOP_SETS)) {
         const card2 = h(body, "div", "mn-set");
         itemRow(card2, c, ctx, s.items);
         h(card2, "div", "mn-set-m", `${s.games} \u5834 \xB7 \u52DD\u7387 ${pct(s.wins, s.games)}%`);
       }
       const card = h(body, "div", "mn-set");
       h(card, "div", "mn-set-t", "\u6700\u5E38\u51FA\u7684\u88DD\u5099");
-      itemRow(card, c, ctx, stats.items.slice(0, TOP_ITEMS).map((i) => i.id), stats.items.slice(0, TOP_ITEMS).map((i) => `${pct(i.games, stats.games)}%`));
+      itemRow(card, c, ctx, stats2.items.slice(0, TOP_ITEMS).map((i) => i.id), stats2.items.slice(0, TOP_ITEMS).map((i) => `${pct(i.games, stats2.games)}%`));
     }
     for (const b of meta) setCard(body, c, ctx, b);
   }
@@ -1533,7 +1534,7 @@ function buildTab(body, c, ctx) {
     section(body, "\u642D\u914D");
     for (const b of synergy) setCard(body, c, ctx, b);
   }
-  if (!stats && !mine.length) empty(body, { icon: "package-open", title: "No builds of ours yet", text: "Our own builds and ideas for this champion will appear here." });
+  if (!stats2 && !mine.length) empty(body, { icon: "package-open", title: "No builds of ours yet", text: "Our own builds and ideas for this champion will appear here." });
   if (mode === "mayhem") liveStats(body, c);
 }
 var OPGG_SLUG = { MonkeyKing: "wukong" };
@@ -1588,9 +1589,9 @@ function itemRow(parent, c, ctx, ids, captions = []) {
       panel.empty();
       panel.toggleClass("is-open", open >= 0);
       if (open < 0) return;
-      const head = h(panel, "div", "mn-ip-head");
-      h(head, "span", "mn-ip-name", item?.name ?? `#${id}`);
-      if (item) h(head, "span", "mn-ip-gold", `${item.goldTotal}`);
+      const head2 = h(panel, "div", "mn-ip-head");
+      h(head2, "span", "mn-ip-name", item?.name ?? `#${id}`);
+      if (item) h(head2, "span", "mn-ip-gold", `${item.goldTotal}`);
       if (item?.desc) h(panel, "p", "mn-sd-desc", item.desc);
     });
   });
@@ -1640,9 +1641,9 @@ function badgeColor(items) {
 function officialBlock(parent, list2) {
   for (const { patch, url, entry } of list2) {
     const sec = h(parent, "div", "mn-off");
-    const head = h(sec, "div", "mn-off-h");
-    h(head, "span", "mn-off-t", `Riot ${patch} \u7248\u672C\u516C\u544A`);
-    const link = h(head, "button", "mn-off-link", "\u5168\u6587 \u2197");
+    const head2 = h(sec, "div", "mn-off-h");
+    h(head2, "span", "mn-off-t", `Riot ${patch} \u7248\u672C\u516C\u544A`);
+    const link = h(head2, "button", "mn-off-link", "\u5168\u6587 \u2197");
     link.addEventListener("click", (e) => {
       e.preventDefault();
       window.open(url);
@@ -1664,10 +1665,10 @@ function changesBlock(parent, c, ctx) {
   const official = store.officialFor("champions", c.name);
   if (!patches.length && !official.length) return null;
   const el = h(parent, "div", "mn-chg");
-  const head = h(el, "button", "mn-chg-head");
-  icon(head, "history", "mn-chg-ic");
-  h(head, "span", "mn-chg-t", `Recent changes \xB7 ${official.length || patches.length} patch${(official.length || patches.length) > 1 ? "es" : ""}`);
-  const caret = icon(head, "chevron-down", "mn-chg-caret");
+  const head2 = h(el, "button", "mn-chg-head");
+  icon(head2, "history", "mn-chg-ic");
+  h(head2, "span", "mn-chg-t", `Recent changes \xB7 ${official.length || patches.length} patch${(official.length || patches.length) > 1 ? "es" : ""}`);
+  const caret = icon(head2, "chevron-down", "mn-chg-caret");
   const body = h(el, "div", "mn-chg-body");
   if (official.length) officialBlock(body, official);
   if (patches.length) h(body, "div", "mn-chg-sub", "\u8CC7\u6599\u6BD4\u5C0D(\u51B7\u537B\u3001\u6D88\u8017\u3001\u5C04\u7A0B\u3001\u5C6C\u6027)");
@@ -1700,7 +1701,7 @@ function changesBlock(parent, c, ctx) {
     el.toggleClass("is-open", open);
     caret.toggleClass("is-up", open);
   };
-  head.addEventListener("click", (e) => {
+  head2.addEventListener("click", (e) => {
     e.preventDefault();
     set(!el.hasClass("is-open"));
   });
@@ -1736,10 +1737,10 @@ function skillStrip(parent, c, changes = []) {
     detail.toggleClass("is-open", i >= 0);
     if (i < 0) return;
     const s = c.skills[i];
-    const head = h(detail, "div", "mn-sd-head");
-    h(head, "span", "mn-sd-key", s.key);
-    h(head, "span", "mn-sd-name", s.name);
-    const types = h(head, "span", "mn-sd-types");
+    const head2 = h(detail, "div", "mn-sd-head");
+    h(head2, "span", "mn-sd-key", s.key);
+    h(head2, "span", "mn-sd-name", s.name);
+    const types = h(head2, "span", "mn-sd-types");
     for (const d of s.damage) chip(types, `${d}\u50B7\u5BB3`, { color: DAMAGE_COLOR[d] });
     if (s.tags.includes("\u653B\u64CA\u7279\u6548")) chip(types, "\u89F8\u767C\u653B\u64CA\u7279\u6548", { color: "var(--mn-onhit)" });
     const text = s.desc + s.upgrade;
@@ -1972,9 +1973,9 @@ function championPicker(parent, ctx) {
     if (!F.open) return;
     const sect = (title, hint = "") => {
       const s = h(panel, "div", "mn-fp-s");
-      const head = h(s, "div", "mn-fp-h");
-      h(head, "span", "mn-fp-t", title);
-      if (hint) h(head, "span", "mn-fp-hint", hint);
+      const head2 = h(s, "div", "mn-fp-h");
+      h(head2, "span", "mn-fp-t", title);
+      if (hint) h(head2, "span", "mn-fp-hint", hint);
       return s;
     };
     const roleSect = sect("\u5B9A\u4F4D");
@@ -1997,10 +1998,10 @@ function championPicker(parent, ctx) {
       redraw();
     } });
     const ab = sect("\u6280\u80FD");
-    for (const [group2, tags] of TAG_GROUPS) {
+    for (const [group2, tags2] of TAG_GROUPS) {
       const line = h(ab, "div", "mn-fcat");
       h(line, "span", "mn-fcat-l", group2);
-      for (const f of tags) {
+      for (const f of tags2) {
         const on = F.feat.get(f) === 1;
         tagFilter(line, f, on, () => {
           if (on) F.feat.delete(f);
@@ -2051,19 +2052,19 @@ function championCard(ctx) {
     empty(el, { icon: "user-x", title: "Champion not found" });
     return { title: "", el };
   }
-  const hero = h(el, "div", "mn-hero");
-  const bg = h(hero, "div", "mn-hero-bg");
+  const hero2 = h(el, "div", "mn-hero");
+  const bg = h(hero2, "div", "mn-hero-bg");
   bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
-  const head = h(hero, "div", "mn-card-head");
-  const im = h(head, "img", "mn-card-img");
+  const head2 = h(hero2, "div", "mn-card-head");
+  const im = h(head2, "img", "mn-card-img");
   im.src = c.icon;
   im.alt = "";
-  const who = h(head, "div", "mn-card-who");
+  const who = h(head2, "div", "mn-card-who");
   h(who, "h1", "mn-title", c.name);
   h(who, "div", "mn-card-sub", c.title);
-  const tags = h(who, "div", "mn-chips");
-  for (const r of c.roles) chip(tags, r);
-  if (c.tier) chip(tags, `\u8A55\u50F9 ${c.tier}`, { color: "var(--color-green)" });
+  const tags2 = h(who, "div", "mn-chips");
+  for (const r of c.roles) chip(tags2, r);
+  if (c.tier) chip(tags2, `\u8A55\u50F9 ${c.tier}`, { color: "var(--color-green)" });
   const now = ctx.plugin.store.currentChanges(c.id);
   const openChanges = () => {
     show("skills");
@@ -2071,10 +2072,10 @@ function championCard(ctx) {
     block?.el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   const official = ctx.plugin.store.officialFor("champions", c.name)[0];
-  if (badgeText(now)) chip(tags, badgeText(now), { color: badgeColor(now), onTap: openChanges });
+  if (badgeText(now)) chip(tags2, badgeText(now), { color: badgeColor(now), onTap: openChanges });
   else if (official) {
     const m = marker(entryDir(official.entry));
-    chip(tags, `${m.mark} ${official.patch}`, { color: m.color, onTap: openChanges });
+    chip(tags2, `${m.mark} ${official.patch}`, { color: m.color, onTap: openChanges });
   }
   championProfile(el, c, ctx.app);
   const mayhem = ctx.plugin.settings.mode === "mayhem";
@@ -2189,9 +2190,9 @@ function handbookPage(ctx) {
       if (!list2.length) return;
       const done = list2.filter((n) => read.has(n.file.path)).length;
       const next = list2.length % 2 ? list2.find((n) => !read.has(n.file.path)) : void 0;
-      const head = h(out, "div", "mn-hb-head");
-      h(head, "span", "mn-hb-k", name);
-      h(head, "span", "mn-hb-n", done >= list2.length ? "\u5168\u90E8\u8B80\u5B8C\u4E86" : `${done} / ${list2.length}`);
+      const head2 = h(out, "div", "mn-hb-head");
+      h(head2, "span", "mn-hb-k", name);
+      h(head2, "span", "mn-hb-n", done >= list2.length ? "\u5168\u90E8\u8B80\u5B8C\u4E86" : `${done} / ${list2.length}`);
       h(h(out, "div", "mn-hb-track"), "div", "mn-hb-fill").style.width = `${done / list2.length * 100}%`;
       const tile2 = (parent, n, big) => {
         const b = h(parent, "button", "mn-hb-tile" + (big ? " is-big" : "") + (read.has(n.file.path) ? " is-read" : ""));
@@ -2406,6 +2407,189 @@ function marked(parent, text, q) {
   if (at < text.length) parent.appendChild(document.createTextNode(text.slice(at)));
 }
 
+// src/pages/cardkit.ts
+var AD_EXAMPLES = [0, 100, 200];
+var AP_EXAMPLES = [0, 150, 300];
+var FORM_ICONS = ["hammer", "crosshair"];
+var DAMAGE_ROW = /^(物理|魔法|真實)傷害|^治療|^護盾/;
+var SCALING = /\+([\d./]+)%\s*(額外物理攻擊|物理攻擊|魔法攻擊)/;
+var kindColor = (s) => DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--mn-muted)";
+var statColor = (stat) => stat.includes("\u9B54\u6CD5") ? DAMAGE_COLOR["\u9B54\u6CD5"] : DAMAGE_COLOR["\u7269\u7406"];
+var lastNum2 = (v) => parseFloat(v.split("/").pop() ?? "") || 0;
+function pill(parent, label, color, ic) {
+  const p = h(parent, "span", "mn-ck-pill");
+  p.style.setProperty("--c", color);
+  if (ic) icon(p, ic);
+  h(p, "span", void 0, label);
+}
+function keyBadge(parent, key, color) {
+  const k = h(parent, "span", "mn-ck-key", key === "P" ? "\u88AB" : key);
+  k.style.setProperty("--c", color);
+  return k;
+}
+var head = (el, { c, s }) => {
+  const color = kindColor(s);
+  const ic = h(el, "div", "mn-ck-ic");
+  ic.style.setProperty("--c", color);
+  const im = h(ic, "img");
+  im.src = s.icon;
+  im.alt = "";
+  keyBadge(ic, s.key, color);
+  const who = h(el, "div", "mn-ck-who");
+  h(who, "div", "mn-ck-kn", `${c.name} \xB7 ${s.key === "P" ? "\u88AB\u52D5" : s.key}`);
+  h(who, "div", "mn-ck-name", s.name);
+};
+var tags = (el, { s }) => {
+  for (const k of s.damage) pill(el, `${k}\u50B7\u5BB3`, DAMAGE_COLOR[k] ?? "var(--mn-muted)", "flame");
+  for (const t of s.tags) {
+    const i = tagInfo(t);
+    pill(el, t, i?.color ?? "var(--mn-muted)", i?.icon);
+  }
+};
+var desc = (el, { s }) => {
+  el.textContent = s.desc;
+};
+var numbers2 = (el, { s }) => {
+  const rows = s.rows.filter((r) => DAMAGE_ROW.test(r.label));
+  if (!rows.length) return;
+  const ranks = Math.max(1, ...rows.map((r) => r.vals.length));
+  el.style.setProperty("--r", String(ranks));
+  if (ranks > 1) {
+    h(el, "div");
+    for (let i = 1; i <= ranks; i++) h(el, "div", "mn-ck-h", `${i} \u7D1A`);
+  }
+  for (const r of rows) {
+    const color = DAMAGE_COLOR[r.label.slice(0, 2)] ?? (r.label.startsWith("\u6CBB\u7642") ? "var(--mn-heal)" : "var(--mn-shield)");
+    const name = h(el, "div", "mn-ck-l", r.label);
+    name.style.color = color;
+    if (r.vals.length === 1) {
+      const v = h(el, "div", "mn-ck-v", r.vals[0]);
+      v.style.gridColumn = `span ${ranks}`;
+      v.style.color = color;
+    } else for (const v of r.vals) h(el, "div", "mn-ck-v", v).style.color = color;
+    if (r.note) {
+      const sc = h(el, "div", "mn-ck-sc");
+      sc.style.gridColumn = "1 / -1";
+      pill(sc, r.note, /魔法/.test(r.note) ? DAMAGE_COLOR["\u9B54\u6CD5"] : DAMAGE_COLOR["\u7269\u7406"], "sparkles");
+    }
+  }
+};
+var stats = (el, { s }) => {
+  const val = (re) => s.rows.find((r) => re.test(r.label))?.vals.join(" / ");
+  const box = (ic, v, label) => {
+    if (!v) return;
+    const b = h(el, "div", "mn-ck-stat");
+    icon(b, ic);
+    h(b, "b", void 0, v);
+    h(b, "span", void 0, label);
+  };
+  box("timer", val(/^冷卻/), "\u51B7\u537B \u79D2");
+  box("droplet", val(/^消耗/), "\u6D88\u8017");
+  box("crosshair", s.range, "\u5C04\u7A0B");
+};
+var media = (el, { c, s, args }) => {
+  const wrap = h(el, "div", "mn-sl-video");
+  demo(wrap, c, { key: args.find((a) => /^[PQWER]\d?$/i.test(a))?.toUpperCase() ?? s.key });
+  const v = wrap.querySelector("video");
+  if (v) {
+    const blur = v.cloneNode(true);
+    blur.className = "mn-sl-vblur";
+    blur.muted = true;
+    blur.setAttribute("aria-hidden", "true");
+    wrap.prepend(blur);
+    void blur.play().catch(() => void 0);
+  }
+  const hud = h(el, "div", "mn-ck-hud");
+  keyBadge(hud, s.key, kindColor(s));
+  h(hud, "span", "mn-ck-hudn", s.name);
+};
+function scaling(s) {
+  const row2 = s.rows.find((r) => /^(物理|魔法|真實)傷害/.test(r.label));
+  if (!row2) return null;
+  const m = SCALING.exec(row2.note);
+  if (!m) return null;
+  return { base: lastNum2(row2.vals[row2.vals.length - 1]), pct: lastNum2(m[1]), stat: m[2], color: statColor(m[2]) };
+}
+var hero = (el, { s }) => {
+  const sc = scaling(s);
+  const color = sc?.color ?? kindColor(s);
+  const ring = h(el, "div", "mn-ck-ring");
+  ring.style.setProperty("--c", color);
+  icon(ring, sc?.stat.includes("\u9B54\u6CD5") ? "sparkles" : "sword");
+  const n = h(el, "div", "mn-ck-big", sc ? String(sc.pct) : "\u2014");
+  n.style.color = color;
+  if (sc) h(n, "small", void 0, "%");
+  h(el, "div", "mn-ck-cap", sc ? `${sc.stat}\u8B8A\u6210\u50B7\u5BB3` : "\u9019\u500B\u6280\u80FD\u6C92\u6709\u6210\u9577\u6578\u503C");
+};
+var bars = (el, { s }) => {
+  const sc = scaling(s);
+  if (!sc) return;
+  const examples = sc.stat.includes("\u9B54\u6CD5") ? AP_EXAMPLES : AD_EXAMPLES;
+  const totals = examples.map((v) => sc.base + sc.pct / 100 * v);
+  const top = Math.max(...totals);
+  examples.forEach((v, i) => {
+    const row2 = h(el, "div", "mn-ck-bar");
+    h(row2, "span", void 0, `${v} \u9EDE`);
+    const tr = h(row2, "div", "mn-ck-track");
+    h(tr, "i", "mn-ck-b1").style.width = `${sc.base / top * 100}%`;
+    const b2 = h(tr, "i", "mn-ck-b2");
+    b2.style.width = `${(totals[i] - sc.base) / top * 100}%`;
+    b2.style.background = sc.color;
+    h(row2, "b", void 0, String(Math.round(totals[i])));
+  });
+  const lg = h(el, "div", "mn-ck-lg");
+  const one = h(lg, "span");
+  h(one, "i").style.background = "#6e7b92";
+  one.append("\u57FA\u672C\u50B7\u5BB3");
+  const two = h(lg, "span");
+  h(two, "i").style.background = sc.color;
+  two.append(`${sc.stat}\u5E36\u4F86`);
+};
+var formsTitle = (el, { c, args }) => {
+  h(el, "span", void 0, `${c.name} \xB7 ${args.filter((a) => !a.startsWith("*")).length || 2} \u7A2E\u578B\u614B`);
+};
+var formCols = (el, { c, args }) => {
+  const names = args.map((a) => a.replace(/^\*/, "")).filter((a) => !/^[PQWER]$/i.test(a));
+  const on = args.find((a) => a.startsWith("*"))?.slice(1);
+  const cut = new RegExp(`(?=(?:${names.join("|")})[^\uFF1A:\uFF0C\u3002\\s]{0,3}\u578B\u614B[\uFF1A:])`);
+  names.forEach((form, i) => {
+    const col = h(el, "div", "mn-ck-form" + (form === on ? " is-on" : ""));
+    const t = h(col, "div", "mn-ck-formh");
+    icon(t, FORM_ICONS[i] ?? "shapes");
+    h(t, "span", void 0, form);
+    for (const key of ["Q", "W", "E"]) {
+      const s = c.skills.find((x) => x.key === key);
+      const part = s?.desc.split(cut).find((p) => p.startsWith(form));
+      if (!part) continue;
+      const line = h(col, "div", "mn-ck-fl");
+      keyBadge(line, key, s ? kindColor(s) : "var(--mn-muted)");
+      h(line, "span", void 0, part.replace(/^[^：:]*[：:]/, "").trim());
+    }
+  });
+};
+var LAYOUTS = {
+  ability: { areas: ["head", "tags", "desc", "numbers", "stats"], rows: "auto auto auto 1fr auto", fill: { head, tags, desc, numbers: numbers2, stats } },
+  clip: { areas: ["media", "tags"], rows: "1fr auto", fill: { media, tags } },
+  number: { areas: ["hero", "bars"], rows: "auto 1fr", fill: { hero, bars } },
+  forms: { areas: ["formsTitle", "formCols"], rows: "auto 1fr", fill: { formsTitle, formCols } }
+};
+function cardKit(box, kind, c, args) {
+  const layout = LAYOUTS[kind];
+  if (!layout || !c) return false;
+  const key = (args.find((a) => /^[PQWER]\d?$/i.test(a)) ?? "Q").toUpperCase();
+  const s = c.skills.find((x) => x.key === key.charAt(0));
+  if (!s && kind !== "forms") return false;
+  const root = h(box, "div", `mn-ck mn-ck-${kind}`);
+  root.style.gridTemplateAreas = layout.areas.map((a) => `"${a}"`).join(" ");
+  root.style.gridTemplateRows = layout.rows;
+  for (const area of layout.areas) {
+    const slot = h(root, "div", `mn-ck-slot mn-ck-${area}`);
+    slot.style.gridArea = area;
+    layout.fill[area](slot, { c, s: s ?? c.skills[0], args });
+  }
+  return true;
+}
+
 // src/pages/deck.ts
 var GLOSSARY2 = "\u540D\u8A5E\u8868";
 var STRIP = 6;
@@ -2474,7 +2658,7 @@ function deckPage(ctx, file) {
       ctx.openNote(glossary.file.path);
     });
   }
-  const bars = h(el, "div", "mn-bars");
+  const bars2 = h(el, "div", "mn-bars");
   const wrap = h(el, "div", "mn-deckwrap");
   const peek = h(wrap, "div", "mn-peek");
   const peekIn = h(peek, "div", "mn-peek-in");
@@ -2493,7 +2677,7 @@ function deckPage(ctx, file) {
     const next = guide[at + 1];
     const sec = [];
     slides.forEach((s, i) => {
-      h(bars, "span", "mn-bar");
+      h(bars2, "span", "mn-bar");
       const section2 = h(pager, "section", "mn-slide");
       const card = h(section2, "div", "mn-sl-card");
       const face = h(card, "div", "mn-sl-face");
@@ -2527,7 +2711,7 @@ function deckPage(ctx, file) {
     const count2 = slides.length;
     let cur = 0;
     const show = () => {
-      Array.from(bars.children).forEach((b, j) => b.toggleClass("is-on", j <= cur));
+      Array.from(bars2.children).forEach((b, j) => b.toggleClass("is-on", j <= cur));
       if (cur >= count2 - 1) void ctx.plugin.markRead(file.path);
     };
     const pose = (el2, u) => {
@@ -2755,6 +2939,8 @@ function visual(ctx, box, s) {
       d.style.setProperty("--c", DAMAGE_COLOR[k]);
     }
     return;
+  } else if (kind === "ability" || kind === "clip" || kind === "number" || kind === "forms") {
+    if (cardKit(box, kind, champ(args[0]), args.slice(1))) return;
   } else if (kind === "skill") {
     const c = champ(args[0]), k = (args[1] ?? "Q").toUpperCase();
     const sk = c?.skills.find((x) => x.key === k);
@@ -3017,14 +3203,14 @@ function augmentPage(ctx) {
     return { title: "", el };
   }
   const history = store.augmentHistory(a.name);
-  const head = h(el, "div", "mn-dhead");
-  augIcon(head, a.icon, a.rarity, "mn-dimg-aug");
-  const who = h(head, "div", "mn-dwho");
+  const head2 = h(el, "div", "mn-dhead");
+  augIcon(head2, a.icon, a.rarity, "mn-dimg-aug");
+  const who = h(head2, "div", "mn-dwho");
   h(who, "h1", "mn-title", a.name);
-  const tags = h(who, "div", "mn-chips");
-  chip(tags, a.rarity, { color: RARITY_COLOR[a.rarity] });
+  const tags2 = h(who, "div", "mn-chips");
+  chip(tags2, a.rarity, { color: RARITY_COLOR[a.rarity] });
   const last = history[0];
-  if (last) chip(tags, `${last.what === "added" ? "\u65B0\u589E\u65BC" : "\u79FB\u9664\u65BC"} ${last.patch}`, { color: last.what === "added" ? "var(--color-blue)" : "var(--color-red)" });
+  if (last) chip(tags2, `${last.what === "added" ? "\u65B0\u589E\u65BC" : "\u79FB\u9664\u65BC"} ${last.patch}`, { color: last.what === "added" ? "var(--color-blue)" : "var(--color-red)" });
   const panel = h(el, "div", "mn-panel mn-dpanel");
   if (a.effect) {
     h(panel, "p", "mn-dtext", a.effect);
@@ -3085,15 +3271,15 @@ function itemPage(ctx) {
     empty(el, { icon: "package-x", title: "Item not found" });
     return { title: "", el };
   }
-  const head = h(el, "div", "mn-dhead");
-  const im = h(head, "img", "mn-dimg");
+  const head2 = h(el, "div", "mn-dhead");
+  const im = h(head2, "img", "mn-dimg");
   im.src = item.icon;
   im.alt = "";
-  const who = h(head, "div", "mn-dwho");
+  const who = h(head2, "div", "mn-dwho");
   h(who, "h1", "mn-title", item.name);
-  const tags = h(who, "div", "mn-chips");
-  chip(tags, `${item.goldTotal} \u91D1`, { color: "var(--color-yellow)" });
-  for (const t of item.tags) if (TAG_ZH[t]) chip(tags, TAG_ZH[t]);
+  const tags2 = h(who, "div", "mn-chips");
+  chip(tags2, `${item.goldTotal} \u91D1`, { color: "var(--color-yellow)" });
+  for (const t of item.tags) if (TAG_ZH[t]) chip(tags2, TAG_ZH[t]);
   if (item.desc) {
     const panel = h(el, "div", "mn-panel mn-dpanel");
     h(panel, "p", "mn-dtext", item.desc);
@@ -3134,10 +3320,10 @@ function patchPage(ctx) {
   const [latest, ...older] = store.riotNotes;
   if (latest) latestCard(el, latest);
   else {
-    const hero = h(el, "div", "mn-patch");
-    h(hero, "div", "mn-patch-k", "Data from patch");
-    h(hero, "div", "mn-patch-v", store.riotPatch() || "\u2014");
-    h(hero, "div", "mn-patch-s", "Run tools/fetch_patch_notes.py to show Riot's patch notes here.");
+    const hero2 = h(el, "div", "mn-patch");
+    h(hero2, "div", "mn-patch-k", "Data from patch");
+    h(hero2, "div", "mn-patch-v", store.riotPatch() || "\u2014");
+    h(hero2, "div", "mn-patch-s", "Run tools/fetch_patch_notes.py to show Riot's patch notes here.");
   }
   if (latest?.champions?.length) {
     h(el, "div", "mn-gh", `Champions \xB7 ${latest.champions.length}`);
@@ -3475,9 +3661,9 @@ function rosterPage(ctx) {
       empty(results, { icon: "users", title: "\u9084\u6C92\u9078\u82F1\u96C4" });
       return;
     }
-    const head = h(results, "div", "mn-rq-head");
-    h(head, "span", "mn-rq-count", `${picks.length} / ${MAX_PICKS}`);
-    const clear = h(head, "button", "mn-clear", "\u5168\u90E8\u6E05\u9664");
+    const head2 = h(results, "div", "mn-rq-head");
+    h(head2, "span", "mn-rq-count", `${picks.length} / ${MAX_PICKS}`);
+    const clear = h(head2, "button", "mn-clear", "\u5168\u90E8\u6E05\u9664");
     clear.addEventListener("click", (e) => {
       e.preventDefault();
       picks = [];

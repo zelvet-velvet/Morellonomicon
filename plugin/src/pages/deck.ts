@@ -4,6 +4,7 @@ import { mapUrl } from "./handbook";
 import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg, whenLoaded, SWIPE } from "../ui";
 import { factsStrip, profileAxes, profileRadar, styleCard, tagRow } from "./profile";
 import type { PageCtx, PageOut } from "./index";
+import { cardKit } from "./cardkit";
 import { demo, rankTable } from "./skills";
 
 // A guide topic as a deck of swipeable cards. In the note every `## ` heading is one card; right under it:
@@ -339,6 +340,8 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
         const row = h(box, "div", "mn-sl-dmg");
         for (const k of ["物理", "魔法", "真實"]) { const d = h(row, "div", "mn-sl-dmg-k", k); d.style.setProperty("--c", DAMAGE_COLOR[k]); }
         return;
+    } else if (kind === "ability" || kind === "clip" || kind === "number" || kind === "forms") {
+        if (cardKit(box, kind, champ(args[0]), args.slice(1))) return;
     } else if (kind === "skill") {
         const c = champ(args[0]), k = (args[1] ?? "Q").toUpperCase();
         const sk = c?.skills.find((x) => x.key === k);

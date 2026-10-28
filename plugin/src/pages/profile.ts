@@ -86,6 +86,7 @@ export const TAG_GROUPS: [string, string[]][] = [
     ["生存", ["治療", "護盾", "吸血", "免傷"]], ["團隊", ["隊友增益"]],
 ];
 const TAG = new Map(TAGS.map((t) => [t.tag, t] as const));
+export const tagInfo = (tag: string): { color: string; icon: string } | undefined => TAG.get(tag);
 
 // The chart of every tag: icon, name, what it means, English name and abbreviation
 class TagLegend extends Modal {
