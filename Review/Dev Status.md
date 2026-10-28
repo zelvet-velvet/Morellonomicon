@@ -131,7 +131,6 @@ sticker: lucide//activity
 - [ ] **Sheets and settings panel** when a flow needs them (the skeleton has a bottom sheet to copy).
 
 ### 📖 Content
-- [x] **Beginner guide**: 初來乍到 covers the champion page, roles and counters, damage types, item logic with recipe trees, and what Mayhem is; 高手必備 has roles beyond the label, dodging, zoning and vision.
 - [ ] **ARAM Mayhem**: augment tiers (silver / gold / prismatic), which champion archetypes fit which augment types, overpowered combos. First version: a few popular champions as examples, then fill in.
 - [ ] **Modes**: item-pick differences for Normal, Ranked and ARAM.
 
@@ -147,6 +146,7 @@ sticker: lucide//activity
 - A "what do I build?" note per champion that changes with the enemy team (armor vs magic resist).
 
 ## 🏁 Last Progress
+- **Content / beginner guide**: 初來乍到 (5 topics) and 高手必備 (4 topics) in the Handbook.
 - **Data / fetch script**: champions and items in zh_TW, the patch in every note.
 - **Data / augments**: names, rarity and icons for all 249.
 - **Data / augment effects**: Riot's own text for 234 of 249.
