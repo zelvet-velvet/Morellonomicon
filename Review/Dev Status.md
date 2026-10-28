@@ -9,6 +9,7 @@ sticker: lucide//activity
 > Read [[LLM Guide]] before any `CMD_` or status update. This note is kept by `CMD_SYNC` / `CMD_ROLLOVER` / `CMD_NOTES_SYNC`; the day notes in `Review/Log/` by `CMD_JOURNAL`.
 
 ## 🚀 Today's Progress (2026-10-28)
+- **速查 overview cards**: one-line overview, big 魔攻 / 物攻 and role tiles, a 靈魂 box, folded 技能白話 and 詳細; text for 8 champions drafted (to check on the phone and to proofread).
 - **Item page**: recipe as the shop's tree above 版本調整; the Build tab links to the item page (to check on the phone).
 - **Icons in one place**: [[Icons]] records which icon means what (from the filter panel) and the code maps they live in; skill cards now use the same damage icons; the 被 badge is readable (to check on the phone).
 - **Scaling colours and %生命傷害 icon**: magic and physical scaling are separate pills in their own colours; the %生命傷害 tag no longer shows % twice (to check on the phone).
@@ -139,6 +140,7 @@ sticker: lucide//activity
 - [ ] **Stat codes**: only 0 (AP) and 2 (AD, formula 2 = bonus) are named; other stats show as "+其他加成" (66 rows) until their codes are confirmed.
 
 ### ✍️ Our own strategy
+- [ ] **速查 text for every champion**: `punch` / `soul` / `plain` written for 8 (待驗證); the other 165 to draft in batches for review.
 - [ ] **Builds by play style (decided 2026-10-28, from Zaviel)**: not a hand-written build per champion. Zaviel lists the first three items (in buying order) for each play style, per mode (Mayhem and Rift apart), in `Inbox/玩法出裝收件匣.md`, from OP.GG and similar (their numbers are never copied, only items and a one-line reason with the source). The champion page's Build tab then shows the set of the champion's play style, labelled as recommended for that play style. The play style is read automatically from the champion's skill scaling (AP / AD / on-hit / tank, with the roles) and can be set by hand; wrong ones are fixed by changing a rule or a hand override, not the champion. Mayhem sets are about items only; augment pairings come later (augment `fits`, the Augments tab). Test champions: Katarina, Akali, Talon, Lux, Ahri (the five Zaviel plays best).
 - [>] **Inbox**: Zaviel is tidying the first tricks into `Inbox/技巧收件匣.md`; then "process the inbox".
 - [ ] **Easy way to record it**: tips, builds and combos are frontmatter lists today; add a command / form ("Add tip", "Add build") so they can be written on the phone in a few taps.

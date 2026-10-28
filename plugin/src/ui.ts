@@ -298,6 +298,16 @@ const iconChip = (parent: HTMLElement, label: string, file: string | undefined, 
     im.src = ROLE_WIKI + file;
     return el;
 };
+// A role's game art on its own (no chip), with the look-alike icon if the file does not load
+export const roleArt = (parent: HTMLElement, role: string): HTMLElement => {
+    const box = h(parent, "span", "mn-role-art");
+    const file = ROLE_FILE[role];
+    if (!file) { icon(box, ROLE_ICON[role] ?? "circle"); return box; }
+    const im = h(box, "img", "mn-role-img"); im.alt = ""; im.draggable = false;
+    im.addEventListener("error", () => { im.remove(); icon(box, ROLE_ICON[role] ?? "circle"); }, { once: true });
+    im.src = ROLE_WIKI + file;
+    return box;
+};
 export const roleChip = (parent: HTMLElement, role: string, o: { on: boolean; onTap: () => void }): HTMLElement => iconChip(parent, role, ROLE_FILE[role], ROLE_ICON[role] ?? "circle", o);
 export const laneChip = (parent: HTMLElement, lane: string, o: { on: boolean; onTap: () => void }): HTMLElement => iconChip(parent, lane, LANE_FILE[lane], LANE_ICON[lane] ?? "circle", o);
 

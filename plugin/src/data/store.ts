@@ -11,6 +11,8 @@ export interface Champion {
     archetypes: string[]; features: string[]; resource: string; attack: number; magic: number; defense: number; difficulty: number;
     range: number; icon: string; skills: Skill[]; patch: string; pinned: string[]; avoid: string[]; video?: string; positions: string[];
     builds: Build[]; tips: Tip[]; path: string;
+    // hand-written for 速查: a one-line character overview, the thing that makes it work, and each ability in plain words (P Q W E R)
+    punch: string; soul: string; plain: Record<string, string>;
 }
 export interface SkillRow { label: string; vals: string[]; note: string }   // one value per rank, or one value for all ranks
 // A hand-written build in a champion note: kind meta (a normal build), alt (fun / other play style) or synergy (with teammates in `with`)
@@ -79,6 +81,9 @@ const skillList = (v: unknown): Skill[] => (Array.isArray(v) ? v.flatMap((x) => 
     const o = x as Record<string, unknown> | null;
     return o && typeof o === "object" ? [{ key: str(o.key), name: str(o.name), damage: list(o.damage), tags: list(o.tags), icon: str(o.icon), desc: str(o.desc), upgrade: str(o.upgrade), range: str(o.range), rows: rowList(o.rows), levels: numList(o.levels) }] : [];
 }) : []);
+// a { key: text } map from the frontmatter (non-text values dropped)
+const textMap = (v: unknown): Record<string, string> =>
+    v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.entries(v).filter((e): e is [string, string] => typeof e[1] === "string")) : {};
 const list = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 
 // Reads come from Obsidian's metadata cache (instant, no Dataview). Parsed lists are kept until a note in the folders changes.
@@ -183,6 +188,7 @@ export class Store {
                 resource: str(fm.resource), attack: num(fm.attack), magic: num(fm.magic), defense: num(fm.defense), difficulty: num(fm.difficulty),
                 range: num(fm.range), icon: str(fm.icon), skills: withOnHit(skillList(fm.skills), list(fm.onhit)), patch: str(fm.patch), pinned: list(fm.pinned), avoid: list(fm.avoid), positions: list(fm.positions),
                 video: typeof fm.video === "string" ? fm.video : undefined, builds: buildList(fm.builds), tips: tipList(fm.tips), path: file.path,
+                punch: str(fm.punch), soul: str(fm.soul), plain: textMap(fm.plain),
             })).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
         }
         return this.champs;

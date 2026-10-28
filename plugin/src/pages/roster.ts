@@ -1,9 +1,10 @@
 import { Notice } from "obsidian";
 import type { Champion } from "../data/store";
 import { findSaid, type Said, type Sounds, soundScore } from "../data/sound";
-import { chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, slideSeg, tip } from "../ui";
+import { DAMAGE_COLOR, DAMAGE_ICON, chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, roleArt, slideSeg, tip } from "../ui";
 import { entryDir, marker } from "./changes";
 import type { PageCtx, PageOut } from "./index";
+import { keyBadge } from "./cardkit";
 import { factsStrip, tagRow } from "./profile";
 
 const MAX_PICKS = 15;   // a Mayhem game can hand you a lot of champions
@@ -201,23 +202,66 @@ export function rosterPage(ctx: PageCtx): PageOut {
         else if (query) drawSuggest();   // its ✓ marks
     };
 
+    // A picked champion: name and a one-line overview, its damage kind and roles big, the thing that makes it work, then its abilities
+    // in plain words and the full facts, each folded away (punch / soul / plain are hand-written in the champion note)
     const card = (c: Champion) => {
         const r = h(results, "div", "mn-rq");
         const top = h(r, "div", "mn-rq-top");
         const im = h(top, "img", "mn-rq-img"); im.src = c.icon; im.alt = "";
         const who = h(top, "div", "mn-rq-who");
         h(who, "div", "mn-rq-name", c.name);
-        h(who, "div", "mn-rq-title", c.title);
+        if (c.punch) h(who, "div", "mn-rq-punch", c.punch);
         const rm = h(top, "button", "mn-rq-x");
         icon(rm, "x");
         rm.setAttribute("aria-label", "移除");
         rm.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); toggle(c.id); });
-        const roles = h(r, "div", "mn-rq-roles");
-        for (const role_ of c.roles) h(roles, "span", "mn-rq-role", role_);
-        const rd = recent.get(c.name);
-        if (rd) { const m = marker(rd); const b = h(roles, "span", "mn-rq-role mn-rq-mark", `${m.mark} 本版調整`); b.style.setProperty("--m", m.color); }
-        factsStrip(r, c);
-        tagRow(r, c, undefined, true);   // only the abilities it has
+        // the two big tiles: what damage it deals (main, and the others) and its roles in the game's art
+        const big = h(r, "div", "mn-rq-big");
+        const main = c.damageType || c.skillDamage[0] || "";
+        if (main) {
+            const t = h(big, "div", "mn-rq-tile");
+            const ic = h(t, "span", "mn-rq-tic"); ic.style.setProperty("--c", DAMAGE_COLOR[main] ?? "var(--mn-muted)");
+            icon(ic, DAMAGE_ICON[main] ?? "flame");
+            const tx = h(t, "div");
+            h(tx, "b", undefined, main === "物理" ? "物攻" : main === "魔法" ? "魔攻" : main);
+            const also = c.skillDamage.filter((k) => k !== main);
+            h(tx, "span", undefined, also.length ? `兼${also.join("、")}` : `${main}傷害`);
+        }
+        if (c.roles.length) {
+            const t = h(big, "div", "mn-rq-tile");
+            const arts = h(t, "span", "mn-rq-arts");
+            for (const role_ of c.roles.slice(0, 2)) roleArt(arts, role_);
+            const tx = h(t, "div");
+            h(tx, "b", undefined, c.roles.join(" · "));
+            const rd = recent.get(c.name);
+            if (rd) { const m = marker(rd); const x = h(tx, "span", "mn-rq-mark", `${m.mark} 本版調整`); x.style.setProperty("--m", m.color); }
+            else h(tx, "span", undefined, "定位");
+        }
+        if (c.soul) { const s = h(r, "div", "mn-rq-soul"); const k = h(s, "div", "mn-rq-soul-k"); icon(k, "flame"); k.append("靈魂"); h(s, "p", undefined, c.soul); }
+        const fold = (title: string, fill: (body: HTMLElement) => void) => {
+            const f = h(r, "div", "mn-rq-fold");
+            const head = h(f, "button", "mn-rq-fh");
+            h(head, "span", undefined, title);
+            icon(head, "chevron-right");
+            const body = h(f, "div", "mn-rq-fb");
+            let filled = false;
+            head.addEventListener("click", (e) => {
+                e.preventDefault(); e.stopPropagation();   // the card itself opens the champion page
+                if (!filled) { fill(body); filled = true; }
+                f.toggleClass("is-open", !f.hasClass("is-open"));
+            });
+        };
+        if (Object.keys(c.plain).length) fold("技能白話", (body) => {
+            const list = h(body, "div", "mn-rq-plain");
+            for (const key of ["P", "Q", "W", "E", "R"]) {
+                const text = c.plain[key];
+                if (!text) continue;
+                const s = c.skills.find((x) => x.key === key);
+                keyBadge(list, key, DAMAGE_COLOR[s?.damage[0] ?? ""] ?? "#6b7183");
+                h(list, "span", undefined, text);
+            }
+        });
+        fold("詳細", (body) => { factsStrip(body, c); tagRow(body, c, undefined, true); });
         r.addEventListener("click", () => ctx.openChampion(c.id));
     };
 

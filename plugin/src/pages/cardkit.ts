@@ -52,7 +52,7 @@ function centreInk(letter: HTMLElement): void {
     const ink = (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
     if (Number.isFinite(ink) && Number.isFinite(box)) letter.style.setProperty("--dy", `${(ink - box).toFixed(2)}px`);
 }
-function keyBadge(parent: HTMLElement, key: string, color: string): HTMLElement {
+export function keyBadge(parent: HTMLElement, key: string, color: string): HTMLElement {
     const k = h(parent, "span", "mn-ck-key" + (key === "P" ? " is-zh" : ""));   // is-zh: a Chinese character, sized to match the capitals
     const letter = h(k, "span", undefined, key === "P" ? "被" : key);
     k.style.setProperty("--c", color);

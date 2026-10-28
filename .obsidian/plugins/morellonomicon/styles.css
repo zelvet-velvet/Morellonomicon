@@ -700,12 +700,33 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-img { width: 52px; height: 52px; border-radius: 14px; flex: none; }
 .mn-rq-who { flex: 1; min-width: 0; }
 .mn-rq-name { font-size: 17px; font-weight: 800; }
-.mn-rq-title { font-size: 12px; color: var(--mn-muted); }
 .mn-app .mn-rq-x { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; color: var(--mn-muted); background: var(--mn-card-hi); }
 .mn-rq-x svg { width: 16px; height: 16px; }
-.mn-rq-roles { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; }
-.mn-rq-role { padding: 3px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; color: var(--mn-muted); background: var(--mn-card-hi); }
-.mn-rq-mark { color: var(--m, var(--mn-muted)); }
+/* 速查 card: a one-line overview under the name, two big tiles (damage kind, roles), the 靈魂 box, then folds */
+.mn-rq-punch { margin-top: 2px; font-size: 14px; font-weight: 700; line-height: 1.4; color: var(--mn-accent); }
+.mn-rq-big { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0 0; }
+.mn-rq-tile { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 8px 10px; border-radius: 14px; background: var(--mn-card-hi); }
+.mn-rq-tile b { display: block; font-size: 15px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mn-rq-tile div { min-width: 0; }
+.mn-rq-tile span:not(.mn-rq-tic):not(.mn-rq-arts):not(.mn-role-art) { display: block; font-size: 11px; color: var(--mn-muted); }
+.mn-rq-tic { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 11px; color: var(--c); background: color-mix(in srgb, var(--c) 18%, transparent); }
+.mn-rq-tic svg { width: 22px; height: 22px; }
+.mn-rq-arts { display: flex; flex: none; }
+.mn-rq-arts .mn-role-art { display: grid; place-items: center; width: 30px; height: 36px; color: #e8c15a; }
+.mn-rq-arts .mn-role-img { width: 30px; height: 30px; object-fit: contain; }
+.mn-rq-arts .mn-role-art + .mn-role-art { margin-left: -6px; }
+.mn-rq-soul { margin-top: 10px; padding: 9px 12px; border-radius: 14px; background: linear-gradient(135deg, color-mix(in srgb, var(--mn-accent) 16%, transparent), color-mix(in srgb, var(--mn-accent) 4%, transparent)); border: 1px solid color-mix(in srgb, var(--mn-accent) 45%, transparent); }
+.mn-rq-soul-k { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 800; letter-spacing: 0.14em; color: var(--mn-accent); }
+.mn-rq-soul-k svg { width: 13px; height: 13px; }
+.mn-rq-soul p { margin: 3px 0 0; font-size: 14.5px; line-height: 1.55; }
+.mn-rq-fold { margin-top: 8px; border-top: 0.5px solid var(--mn-line); }
+.mn-app .mn-rq-fh { display: flex; align-items: center; justify-content: space-between; width: 100%; height: auto; padding: 9px 0 1px; background: none; box-shadow: none; font-size: 13px; font-weight: 700; color: var(--mn-muted); }
+.mn-rq-fh svg { width: 15px; height: 15px; transition: transform 0.18s; }
+.mn-rq-fold.is-open .mn-rq-fh svg { transform: rotate(90deg); }
+.mn-rq-fb { display: none; }
+.mn-rq-fold.is-open .mn-rq-fb { display: block; padding: 6px 0 2px; }
+.mn-rq-plain { display: grid; grid-template-columns: 24px 1fr; gap: 7px 10px; align-items: center; font-size: 14px; line-height: 1.4; }
+.mn-app .mn-rq-tile .mn-rq-mark { color: var(--m, var(--mn-muted)); font-weight: 700; }
 .mn-app .mn-lg-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--mn-muted); }
 .mn-app .mn-lg-btn { justify-content: center; min-width: 36px; min-height: 36px; margin: -8px -8px -8px 0; }   /* a bigger tap area around the icon */
 .mn-lg-btn svg { width: 20px; height: 20px; }
@@ -912,8 +933,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
    own keep that fill. (button + class + state outranks Obsidian's button:not(.clickable-icon):hover.) */
 .mn-app button { -webkit-tap-highlight-color: transparent; }
 .mn-app button:not(.mn-seg-b.is-on):is(:hover, :active, :focus, :focus-visible) { box-shadow: none; outline: none; }   /* a chosen segment keeps its own shadow */
-.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face),
-.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face):is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }
+.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-rq-fh, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face),
+.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-rq-fh, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face):is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }
 .mn-app button:is(.mn-rc, .mn-key, .mn-tg.is-on):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card); }
 .mn-app button:is(.mn-rq-x, .mn-with-b):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card-hi); }
 .mn-app button.mn-hb-tile:is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }   /* its fill is a gradient image, the colour under it stays clear */

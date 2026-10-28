@@ -144,6 +144,7 @@ var skillList = (v) => Array.isArray(v) ? v.flatMap((x) => {
   const o = x;
   return o && typeof o === "object" ? [{ key: str(o.key), name: str(o.name), damage: list(o.damage), tags: list(o.tags), icon: str(o.icon), desc: str(o.desc), upgrade: str(o.upgrade), range: str(o.range), rows: rowList(o.rows), levels: numList(o.levels) }] : [];
 }) : [];
+var textMap = (v) => v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.entries(v).filter((e) => typeof e[1] === "string")) : {};
 var list = (v) => Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
 var LANE_MIN_SHARE = 0.1;
 var LANE_ZH = { TOP: "\u4E0A\u8DEF", JUNGLE: "\u6253\u91CE", MIDDLE: "\u4E2D\u8DEF", BOTTOM: "\u4E0B\u8DEF", UTILITY: "\u8F14\u52A9" };
@@ -295,7 +296,10 @@ var Store = class {
         video: typeof fm.video === "string" ? fm.video : void 0,
         builds: buildList(fm.builds),
         tips: tipList(fm.tips),
-        path: file.path
+        path: file.path,
+        punch: str(fm.punch),
+        soul: str(fm.soul),
+        plain: textMap(fm.plain)
       })).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
     }
     return this.champs;
@@ -780,6 +784,23 @@ var iconChip = (parent, label, file, fallback, o) => {
   }, { once: true });
   im.src = ROLE_WIKI + file;
   return el;
+};
+var roleArt = (parent, role) => {
+  const box = h(parent, "span", "mn-role-art");
+  const file = ROLE_FILE[role];
+  if (!file) {
+    icon(box, ROLE_ICON[role] ?? "circle");
+    return box;
+  }
+  const im = h(box, "img", "mn-role-img");
+  im.alt = "";
+  im.draggable = false;
+  im.addEventListener("error", () => {
+    im.remove();
+    icon(box, ROLE_ICON[role] ?? "circle");
+  }, { once: true });
+  im.src = ROLE_WIKI + file;
+  return box;
 };
 var roleChip = (parent, role, o) => iconChip(parent, role, ROLE_FILE[role], ROLE_ICON[role] ?? "circle", o);
 var laneChip = (parent, lane, o) => iconChip(parent, lane, LANE_FILE[lane], LANE_ICON[lane] ?? "circle", o);
@@ -4067,7 +4088,7 @@ function rosterPage(ctx) {
     im.alt = "";
     const who = h(top, "div", "mn-rq-who");
     h(who, "div", "mn-rq-name", c.name);
-    h(who, "div", "mn-rq-title", c.title);
+    if (c.punch) h(who, "div", "mn-rq-punch", c.punch);
     const rm = h(top, "button", "mn-rq-x");
     icon(rm, "x");
     rm.setAttribute("aria-label", "\u79FB\u9664");
@@ -4076,16 +4097,69 @@ function rosterPage(ctx) {
       e.stopPropagation();
       toggle(c.id);
     });
-    const roles = h(r, "div", "mn-rq-roles");
-    for (const role_ of c.roles) h(roles, "span", "mn-rq-role", role_);
-    const rd = recent.get(c.name);
-    if (rd) {
-      const m = marker(rd);
-      const b = h(roles, "span", "mn-rq-role mn-rq-mark", `${m.mark} \u672C\u7248\u8ABF\u6574`);
-      b.style.setProperty("--m", m.color);
+    const big = h(r, "div", "mn-rq-big");
+    const main = c.damageType || c.skillDamage[0] || "";
+    if (main) {
+      const t = h(big, "div", "mn-rq-tile");
+      const ic = h(t, "span", "mn-rq-tic");
+      ic.style.setProperty("--c", DAMAGE_COLOR[main] ?? "var(--mn-muted)");
+      icon(ic, DAMAGE_ICON[main] ?? "flame");
+      const tx = h(t, "div");
+      h(tx, "b", void 0, main === "\u7269\u7406" ? "\u7269\u653B" : main === "\u9B54\u6CD5" ? "\u9B54\u653B" : main);
+      const also = c.skillDamage.filter((k) => k !== main);
+      h(tx, "span", void 0, also.length ? `\u517C${also.join("\u3001")}` : `${main}\u50B7\u5BB3`);
     }
-    factsStrip(r, c);
-    tagRow(r, c, void 0, true);
+    if (c.roles.length) {
+      const t = h(big, "div", "mn-rq-tile");
+      const arts = h(t, "span", "mn-rq-arts");
+      for (const role_ of c.roles.slice(0, 2)) roleArt(arts, role_);
+      const tx = h(t, "div");
+      h(tx, "b", void 0, c.roles.join(" \xB7 "));
+      const rd = recent.get(c.name);
+      if (rd) {
+        const m = marker(rd);
+        const x = h(tx, "span", "mn-rq-mark", `${m.mark} \u672C\u7248\u8ABF\u6574`);
+        x.style.setProperty("--m", m.color);
+      } else h(tx, "span", void 0, "\u5B9A\u4F4D");
+    }
+    if (c.soul) {
+      const s = h(r, "div", "mn-rq-soul");
+      const k = h(s, "div", "mn-rq-soul-k");
+      icon(k, "flame");
+      k.append("\u9748\u9B42");
+      h(s, "p", void 0, c.soul);
+    }
+    const fold = (title, fill) => {
+      const f = h(r, "div", "mn-rq-fold");
+      const head2 = h(f, "button", "mn-rq-fh");
+      h(head2, "span", void 0, title);
+      icon(head2, "chevron-right");
+      const body = h(f, "div", "mn-rq-fb");
+      let filled = false;
+      head2.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!filled) {
+          fill(body);
+          filled = true;
+        }
+        f.toggleClass("is-open", !f.hasClass("is-open"));
+      });
+    };
+    if (Object.keys(c.plain).length) fold("\u6280\u80FD\u767D\u8A71", (body) => {
+      const list2 = h(body, "div", "mn-rq-plain");
+      for (const key of ["P", "Q", "W", "E", "R"]) {
+        const text = c.plain[key];
+        if (!text) continue;
+        const s = c.skills.find((x) => x.key === key);
+        keyBadge(list2, key, DAMAGE_COLOR[s?.damage[0] ?? ""] ?? "#6b7183");
+        h(list2, "span", void 0, text);
+      }
+    });
+    fold("\u8A73\u7D30", (body) => {
+      factsStrip(body, c);
+      tagRow(body, c, void 0, true);
+    });
     r.addEventListener("click", () => ctx.openChampion(c.id));
   };
   const drawResults = () => {
