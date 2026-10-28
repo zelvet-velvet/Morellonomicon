@@ -241,6 +241,12 @@ export const row = (parent: HTMLElement, r: RowSpec): HTMLElement => {
 };
 
 export const DAMAGE_COLOR: Record<string, string> = { 物理: "var(--mn-phys)", 魔法: "var(--mn-magic)", 真實: "var(--mn-true)", 混合: "var(--mn-mixed)" };
+// A skill row's scaling note ("+25% 魔法攻擊 +10% 額外物理攻擊") split into its parts, each in the colour of its stat
+// (magic blue, physical orange, anything else muted)
+export const scalingParts = (note: string): { text: string; color: string }[] =>
+    (note.match(/\+[^+]+/g) ?? []).map((p) => p.trim()).filter(Boolean).map((text) => ({
+        text, color: text.includes("魔法") ? DAMAGE_COLOR["魔法"] : text.includes("物理") ? DAMAGE_COLOR["物理"] : "var(--mn-muted)",
+    }));
 
 export const chip = (parent: HTMLElement, text: string, o: { color?: string; on?: boolean; onTap?: () => void } = {}): HTMLElement => {
     const el = h(parent, o.onTap ? "button" : "span", "mn-chip" + (o.on ? " is-on" : "") + (o.color ? " has-color" : "") + (o.onTap ? " is-tap" : ""));

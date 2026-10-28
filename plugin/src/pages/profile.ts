@@ -63,7 +63,8 @@ const TAGS: Tag[] = [
     // 傷害
     { tag: "強化普攻", color: "var(--mn-aa)", icon: "sword", en: "Empowered attack", abbr: "AA+", what: "技能讓下一次(或接下來幾次)普攻更強,例如額外傷害" },
     { tag: "攻擊特效", color: "var(--mn-onhit)", icon: "crosshair", en: "On-hit", abbr: "On-hit", what: "技能會觸發攻擊特效,適合出攻擊特效裝備(人工標註)" },
-    { tag: "%生命傷害", color: "var(--color-red)", icon: "percent", en: "% health damage", abbr: "%HP", what: "傷害是目標生命的一個百分比(最大 / 目前 / 已損失),對血厚的敵人也有用(從遊戲內的技能說明讀出,有些技能用的可能是自己的生命)" },
+    { tag: "%生命傷害", color: "var(--color-red)", icon: "heart-crack",   // not "percent": the name already starts with %
+      en: "% health damage", abbr: "%HP", what: "傷害是目標生命的一個百分比(最大 / 目前 / 已損失),對血厚的敵人也有用(從遊戲內的技能說明讀出,有些技能用的可能是自己的生命)" },
     { tag: "斬殺", color: "var(--mn-exec)", icon: "skull", en: "Execute", abbr: "Execute", what: "對生命值低的敵人造成更高傷害或直接擊殺" },
     // 控制
     { tag: "控場", color: "var(--mn-cc)", icon: "lock", en: "Crowd Control", abbr: "CC", what: "暈眩、擊飛、定身、沉默、恐懼、魅惑等,讓敵人動不了或不能放技能" },

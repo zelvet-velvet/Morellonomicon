@@ -1,5 +1,5 @@
 import type { Champion, Skill } from "../data/store";
-import { DAMAGE_COLOR, h, icon } from "../ui";
+import { DAMAGE_COLOR, h, icon, scalingParts } from "../ui";
 import { tagInfo } from "./profile";
 import { demo } from "./skills";
 
@@ -68,7 +68,10 @@ const numbers: Fill = (el, { s }) => {
         name.style.color = color;
         if (r.vals.length === 1) { const v = h(el, "div", "mn-ck-v", r.vals[0]); v.style.gridColumn = `span ${ranks}`; v.style.color = color; }
         else for (const v of r.vals) h(el, "div", "mn-ck-v", v).style.color = color;
-        if (r.note) { const sc = h(el, "div", "mn-ck-sc"); sc.style.gridColumn = "1 / -1"; pill(sc, r.note, /魔法/.test(r.note) ? DAMAGE_COLOR["魔法"] : DAMAGE_COLOR["物理"], "sparkles"); }
+        if (r.note) {   // one pill per stat it scales with, each in that stat's colour
+            const sc = h(el, "div", "mn-ck-sc"); sc.style.gridColumn = "1 / -1";
+            for (const p of scalingParts(r.note)) pill(sc, p.text, p.color, "sparkles");
+        }
     }
 };
 const stats: Fill = (el, { s }) => {

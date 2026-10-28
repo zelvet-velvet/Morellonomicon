@@ -723,6 +723,10 @@ var row = (parent, r) => {
   return el;
 };
 var DAMAGE_COLOR = { \u7269\u7406: "var(--mn-phys)", \u9B54\u6CD5: "var(--mn-magic)", \u771F\u5BE6: "var(--mn-true)", \u6DF7\u5408: "var(--mn-mixed)" };
+var scalingParts = (note) => (note.match(/\+[^+]+/g) ?? []).map((p) => p.trim()).filter(Boolean).map((text) => ({
+  text,
+  color: text.includes("\u9B54\u6CD5") ? DAMAGE_COLOR["\u9B54\u6CD5"] : text.includes("\u7269\u7406") ? DAMAGE_COLOR["\u7269\u7406"] : "var(--mn-muted)"
+}));
 var chip = (parent, text, o = {}) => {
   const el = h(parent, o.onTap ? "button" : "span", "mn-chip" + (o.on ? " is-on" : "") + (o.color ? " has-color" : "") + (o.onTap ? " is-tap" : ""));
   if (o.color && o.onTap && !o.on) h(el, "span", "mn-dot");
@@ -1354,7 +1358,15 @@ var TAGS = [
   // 傷害
   { tag: "\u5F37\u5316\u666E\u653B", color: "var(--mn-aa)", icon: "sword", en: "Empowered attack", abbr: "AA+", what: "\u6280\u80FD\u8B93\u4E0B\u4E00\u6B21(\u6216\u63A5\u4E0B\u4F86\u5E7E\u6B21)\u666E\u653B\u66F4\u5F37,\u4F8B\u5982\u984D\u5916\u50B7\u5BB3" },
   { tag: "\u653B\u64CA\u7279\u6548", color: "var(--mn-onhit)", icon: "crosshair", en: "On-hit", abbr: "On-hit", what: "\u6280\u80FD\u6703\u89F8\u767C\u653B\u64CA\u7279\u6548,\u9069\u5408\u51FA\u653B\u64CA\u7279\u6548\u88DD\u5099(\u4EBA\u5DE5\u6A19\u8A3B)" },
-  { tag: "%\u751F\u547D\u50B7\u5BB3", color: "var(--color-red)", icon: "percent", en: "% health damage", abbr: "%HP", what: "\u50B7\u5BB3\u662F\u76EE\u6A19\u751F\u547D\u7684\u4E00\u500B\u767E\u5206\u6BD4(\u6700\u5927 / \u76EE\u524D / \u5DF2\u640D\u5931),\u5C0D\u8840\u539A\u7684\u6575\u4EBA\u4E5F\u6709\u7528(\u5F9E\u904A\u6232\u5167\u7684\u6280\u80FD\u8AAA\u660E\u8B80\u51FA,\u6709\u4E9B\u6280\u80FD\u7528\u7684\u53EF\u80FD\u662F\u81EA\u5DF1\u7684\u751F\u547D)" },
+  {
+    tag: "%\u751F\u547D\u50B7\u5BB3",
+    color: "var(--color-red)",
+    icon: "heart-crack",
+    // not "percent": the name already starts with %
+    en: "% health damage",
+    abbr: "%HP",
+    what: "\u50B7\u5BB3\u662F\u76EE\u6A19\u751F\u547D\u7684\u4E00\u500B\u767E\u5206\u6BD4(\u6700\u5927 / \u76EE\u524D / \u5DF2\u640D\u5931),\u5C0D\u8840\u539A\u7684\u6575\u4EBA\u4E5F\u6709\u7528(\u5F9E\u904A\u6232\u5167\u7684\u6280\u80FD\u8AAA\u660E\u8B80\u51FA,\u6709\u4E9B\u6280\u80FD\u7528\u7684\u53EF\u80FD\u662F\u81EA\u5DF1\u7684\u751F\u547D)"
+  },
   { tag: "\u65AC\u6BBA", color: "var(--mn-exec)", icon: "skull", en: "Execute", abbr: "Execute", what: "\u5C0D\u751F\u547D\u503C\u4F4E\u7684\u6575\u4EBA\u9020\u6210\u66F4\u9AD8\u50B7\u5BB3\u6216\u76F4\u63A5\u64CA\u6BBA" },
   // 控制
   { tag: "\u63A7\u5834", color: "var(--mn-cc)", icon: "lock", en: "Crowd Control", abbr: "CC", what: "\u6688\u7729\u3001\u64CA\u98DB\u3001\u5B9A\u8EAB\u3001\u6C89\u9ED8\u3001\u6050\u61FC\u3001\u9B45\u60D1\u7B49,\u8B93\u6575\u4EBA\u52D5\u4E0D\u4E86\u6216\u4E0D\u80FD\u653E\u6280\u80FD" },
@@ -2058,7 +2070,10 @@ function rankTable(parent, s, changes) {
     const label = h(name, "span", "mn-rk-name", r.label);
     const color = ROW_COLOR.find(([k]) => r.label.startsWith(k))?.[1];
     if (color) label.style.color = color;
-    if (r.note) h(name, "span", "mn-rk-note", r.note);
+    if (r.note) {
+      const note = h(name, "span", "mn-rk-note");
+      for (const p of scalingParts(r.note)) h(note, "span", void 0, p.text).style.color = p.color;
+    }
     const ch = changes.find((x) => r.label.startsWith(x.field));
     if (ch) h(name, "span", "mn-chg-was", `\u4E0A\u7248 ${ch.old}`);
     const tint = (el) => {
@@ -2749,7 +2764,7 @@ var numbers2 = (el, { s }) => {
     if (r.note) {
       const sc = h(el, "div", "mn-ck-sc");
       sc.style.gridColumn = "1 / -1";
-      pill(sc, r.note, /魔法/.test(r.note) ? DAMAGE_COLOR["\u9B54\u6CD5"] : DAMAGE_COLOR["\u7269\u7406"], "sparkles");
+      for (const p of scalingParts(r.note)) pill(sc, p.text, p.color, "sparkles");
     }
   }
 };

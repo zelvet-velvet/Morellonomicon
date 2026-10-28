@@ -1,7 +1,7 @@
 import { requestUrl } from "obsidian";
 import type { Champion, Change, Skill } from "../data/store";
 import { DIR_COLOR } from "./changes";
-import { DAMAGE_COLOR, blockUntil, chip, h, icon, whenMediaLoaded } from "../ui";
+import { DAMAGE_COLOR, blockUntil, chip, h, icon, scalingParts, whenMediaLoaded } from "../ui";
 
 // Passive + Q W E R as icons; the frame colour is the damage type of the skill (orange physical, blue magic, yellow true).
 // Tap an icon to open its details right below (tap again to close); no new page.
@@ -192,7 +192,10 @@ export function rankTable(parent: HTMLElement, s: Skill, changes: Change[]): voi
         const label = h(name, "span", "mn-rk-name", r.label);
         const color = ROW_COLOR.find(([k]) => r.label.startsWith(k))?.[1];
         if (color) label.style.color = color;
-        if (r.note) h(name, "span", "mn-rk-note", r.note);
+        if (r.note) {   // each stat it scales with in that stat's colour
+            const note = h(name, "span", "mn-rk-note");
+            for (const p of scalingParts(r.note)) h(note, "span", undefined, p.text).style.color = p.color;
+        }
         // changed since the last patch: the numbers take the colour (green = better for the player) and the old value is shown under the name
         const ch = changes.find((x) => r.label.startsWith(x.field));
         if (ch) h(name, "span", "mn-chg-was", `上版 ${ch.old}`);

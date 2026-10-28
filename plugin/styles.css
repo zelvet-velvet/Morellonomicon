@@ -174,7 +174,7 @@ button.mn-skill-box.is-on::after { content: ""; position: absolute; inset: 0; bo
 .mn-rk-h { font-size: 11px; color: var(--mn-faint); text-align: center; padding-bottom: 2px; }
 .mn-rk-l { display: flex; flex-direction: column; padding: 7px 0; border-top: 0.5px solid var(--mn-line); }
 .mn-rk-name { font-size: 13px; font-weight: 700; }
-.mn-rk-note { font-size: 11px; color: var(--mn-muted); line-height: 1.25; }
+.mn-rk-note { display: flex; flex-wrap: wrap; column-gap: 5px; font-size: 11px; color: var(--mn-muted); line-height: 1.25; }
 .mn-rk-v { font-size: 14px; font-weight: 600; text-align: center; padding: 7px 0; border-top: 0.5px solid var(--mn-line); }
 .mn-rk-all { color: var(--mn-text); }
 .mn-sd-up .mn-sd-desc { margin-top: 6px; }
@@ -569,7 +569,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-ck-h { padding-bottom: 3px; font-size: 10.5px; color: var(--mn-faint); text-align: center; }
 .mn-ck-l, .mn-ck-v { padding: 7px 0; border-top: 0.5px solid var(--mn-line); font-size: 12.5px; }
 .mn-ck-v { text-align: center; font-weight: 700; font-size: 15px; }
-.mn-ck-sc { padding: 0 0 7px; }
+.mn-ck-sc { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 0 7px; }
 .mn-ck-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .mn-ck-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 7px 4px; border-radius: 11px; background: rgba(255, 255, 255, 0.07); font-size: 10.5px; color: var(--mn-faint); text-align: center; }
 .mn-ck-stat .mn-ic { color: var(--mn-muted); }

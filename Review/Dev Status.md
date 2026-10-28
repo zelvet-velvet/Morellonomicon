@@ -9,6 +9,7 @@ sticker: lucide//activity
 > Read [[LLM Guide]] before any `CMD_` or status update. This note is kept by `CMD_SYNC` / `CMD_ROLLOVER` / `CMD_NOTES_SYNC`; the day notes in `Review/Log/` by `CMD_JOURNAL`.
 
 ## 🚀 Today's Progress (2026-10-28)
+- **Scaling colours and %生命傷害 icon**: magic and physical scaling are separate pills in their own colours; the %生命傷害 tag no longer shows % twice (to check on the phone).
 - **No press highlight on icons**: no grey blob or shadow around any tapped icon or button (to check on the phone).
 - **Malphite ult by level**: a `levels` card shows each ult level's damage alone and with 300 魔法攻擊; the misleading big-number card is gone (to check on the phone).
 - **Fixed text rows**: kicker, 1-line title, 2-line body and a 小技巧 line (short orange line, label, tip), the same height on every card; long text is cut with … (to check on the phone).
