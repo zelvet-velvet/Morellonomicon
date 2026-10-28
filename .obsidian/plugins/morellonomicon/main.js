@@ -557,6 +557,7 @@ function whenMediaLoaded(roots, ms) {
 }
 var BLOCK_MAX_MS = 8e3;
 var BLOCK_MIN_MS = 500;
+var BLOCK_DELAY_MS = 120;
 var blockState = /* @__PURE__ */ new WeakMap();
 var BAND_MS = 1500;
 var BAND_RUN = 0.8;
@@ -601,7 +602,17 @@ function lift(host, state) {
     endBand(state.veil);
   }, Math.max(0, BLOCK_MIN_MS - (Date.now() - state.since)));
 }
-function blockUntil(host, until) {
+function blockUntil(host, until, delay = 0) {
+  if (delay > 0 && !blockState.get(host)) {
+    let done = false;
+    void until.then(() => {
+      done = true;
+    });
+    window.setTimeout(() => {
+      if (!done) blockUntil(host, until);
+    }, delay);
+    return;
+  }
   host.classList.add("mn-blk");
   let st = blockState.get(host);
   if (!st) {
@@ -626,7 +637,7 @@ function blockLoad(host) {
   blockUntil(host, Promise.all(pending.map((im) => new Promise((done) => {
     im.addEventListener("load", () => done(), { once: true });
     im.addEventListener("error", () => done(), { once: true });
-  }))).then(() => void 0));
+  }))).then(() => void 0), host.classList.contains("mn-blk") ? 0 : BLOCK_DELAY_MS);
 }
 async function warmPictures(urls, batch = 6) {
   for (let i = 0; i < urls.length; i += batch) {
@@ -2289,7 +2300,7 @@ function championCard(ctx) {
       im.addEventListener("load", () => r(), { once: true });
       im.addEventListener("error", () => r(), { once: true });
     }
-  })]).then(() => void 0));
+  })]).then(() => void 0), 200);
   const who = h(head2, "div", "mn-card-who");
   h(who, "h1", "mn-title", c.name);
   h(who, "div", "mn-card-sub", c.title);

@@ -96,7 +96,7 @@ export function whenMediaLoaded(roots: HTMLElement[], ms: number): Promise<void>
 // light sliding over it, and sharpens when they are in (never sooner than half a second after it appeared, so it is no blink). The page
 // itself shows at once. Call it after the block is filled; a block whose pictures are all there gets no veil. `host` must not be
 // emptied by its owner (the veil lives in it), so give a container that is redrawn its own host.
-const BLOCK_MAX_MS = 8000, BLOCK_MIN_MS = 500;
+const BLOCK_MAX_MS = 8000, BLOCK_MIN_MS = 500, BLOCK_DELAY_MS = 120;
 const blockState = new WeakMap<HTMLElement, { veil: HTMLElement; since: number }>();
 // The loading band. Every block that is loading draws its part of ONE slanted line that crosses the screen on one clock, so
 // neighbouring blocks (the lane row and the grid under it) show the same line, not two bands out of step with each other.
@@ -141,7 +141,15 @@ function lift(host: HTMLElement, state: { veil: HTMLElement; since: number }): v
     }, Math.max(0, BLOCK_MIN_MS - (Date.now() - state.since)));
 }
 // The same for a block that waits for something that is not a plain <img> (a CSS background, a promise): veil until `until` settles
-export function blockUntil(host: HTMLElement, until: Promise<void>): void {
+// With `delay`, the veil only appears if `until` has not settled after that many ms (a picture from the cache is there before it, and
+// shows no loading look at all).
+export function blockUntil(host: HTMLElement, until: Promise<void>, delay = 0): void {
+    if (delay > 0 && !blockState.get(host)) {
+        let done = false;
+        void until.then(() => { done = true; });
+        window.setTimeout(() => { if (!done) blockUntil(host, until); }, delay);
+        return;
+    }
     host.classList.add("mn-blk");
     let st = blockState.get(host);
     if (!st) {
@@ -160,7 +168,7 @@ export function blockLoad(host: HTMLElement): void {
     blockUntil(host, Promise.all(pending.map((im) => new Promise<void>((done) => {
         im.addEventListener("load", () => done(), { once: true });
         im.addEventListener("error", () => done(), { once: true });
-    }))).then(() => undefined));
+    }))).then(() => undefined), host.classList.contains("mn-blk") ? 0 : BLOCK_DELAY_MS);
 }
 
 // Fetches pictures into the browser's cache a few at a time, in the background, so a list that shows them later (Champions, Augments)

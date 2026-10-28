@@ -185,7 +185,7 @@ export function championCard(ctx: PageCtx): PageOut {
     const im = h(head, "img", "mn-card-img"); im.src = c.icon; im.alt = "";
     // the banner loads as a block of its own: the splash picture (a CSS background, so it is fetched here) and the icon
     const splash = bg.style.backgroundImage.slice(5, -2);
-    blockUntil(hero, Promise.all([new Promise<void>((r) => { const s = new Image(); s.onload = s.onerror = () => r(); s.src = splash; }), new Promise<void>((r) => { if (im.complete) r(); else { im.addEventListener("load", () => r(), { once: true }); im.addEventListener("error", () => r(), { once: true }); } })]).then(() => undefined));
+    blockUntil(hero, Promise.all([new Promise<void>((r) => { const s = new Image(); s.onload = s.onerror = () => r(); s.src = splash; }), new Promise<void>((r) => { if (im.complete) r(); else { im.addEventListener("load", () => r(), { once: true }); im.addEventListener("error", () => r(), { once: true }); } })]).then(() => undefined), 200);   // (no loading look when the pictures come from the cache)
     const who = h(head, "div", "mn-card-who");
     h(who, "h1", "mn-title", c.name);
     h(who, "div", "mn-card-sub", c.title);
