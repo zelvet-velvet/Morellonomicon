@@ -13,6 +13,7 @@ sticker: lucide//activity
 - **Patch job push**: the job puts its commit on top of a newer main before pushing (a push made while it ran used to make it fail).
 - **Handbook home**: opens with the loading tip on an ARAM map, then two blocks, 初來乍到 (basics) and 高手必備 (advanced), each with its own progress, the next topic as a large picture and the rest two across; the glossary is a row at the end.
 - **Roles and lanes**: 英雄定位 explains how roles map to lanes (下路 pair, 中路 roaming, 打野) and why counters change with lane and time; the last-card next-topic panel is now fixed under the card, and a tilted card passes over the progress bars.
+- **Your mastery**: `tools/fetch_mastery.py` writes a git-ignored `_data/mastery.json`; the Champions grid and a champion's page show your mastery level and points on devices that have it (the phone does not until it is published) (to check).
 - **%生命傷害 tag**: 75 champions that deal a share of the target's health (max / current / missing) can be filtered in the 傷害 group (to check on the phone); a sort by the size of the percent is not built.
 - **Passive numbers**: 44 champions' passives show damage / heal / shield by champion level with scaling (from the passive's own tooltip); percent-of-health amounts are left out (to check on the phone).
 - **Folder names in one place**: `tools/vault_paths.py` and the plugin defaults name the note folders; the rename to English (when calm) is then a `git mv` plus a map of the saved read paths.

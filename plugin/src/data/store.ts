@@ -91,6 +91,9 @@ export class Store {
     private augs: Augment[] | null = null;
     stats: BuildStats | null = null;
     changes: ChangeData | null = null;
+    // your own champion mastery (_data/mastery.json from tools/fetch_mastery.py; git-ignored, so only on the device that has the file)
+    mastery: { fetched: string; total: number; champions: Record<string, { level: number; points: number; last: string }> } | null = null;
+    masteryOf(id: string): { level: number; points: number; last: string } | undefined { return this.mastery?.champions[id]; }
     positions: { patch: string; date: string; matches: number; champions: Record<string, Record<string, number>> } | null = null;   // _data/positions.json
     riotNotes: PatchNote[] = [];
     sounds: Sounds | null = null;   // _data/sounds.json: how characters are said, for finding names from speech to text
@@ -122,6 +125,11 @@ export class Store {
             const path = normalizePath("_data/positions.json");
             this.positions = (await this.app.vault.adapter.exists(path)) ? JSON.parse(await this.app.vault.adapter.read(path)) : null;
         } catch { this.positions = null; }
+        try {
+            const path = normalizePath("_data/mastery.json");
+            const raw = (await this.app.vault.adapter.exists(path)) ? JSON.parse(await this.app.vault.adapter.read(path)) as { fetched?: string; total_points?: number; champions?: Record<string, { level: number; points: number; last: string }> } : null;
+            this.mastery = raw?.champions ? { fetched: raw.fetched ?? "", total: raw.total_points ?? 0, champions: raw.champions } : null;
+        } catch { this.mastery = null; }
         try {
             const path = normalizePath("_data/loading-tips.json");
             this.loadingTips = (await this.app.vault.adapter.exists(path)) ? ((JSON.parse(await this.app.vault.adapter.read(path)) as { tips: { group: string; text: string }[] }).tips ?? []) : [];

@@ -16,3 +16,6 @@ Tags/
 
 # fetched data cache
 .cache/
+
+# your own numbers (tools/fetch_mastery.py): stay on this computer unless you decide to publish them
+_data/mastery.json

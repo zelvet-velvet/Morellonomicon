@@ -155,6 +155,8 @@ var Store = class {
     this.augs = null;
     this.stats = null;
     this.changes = null;
+    // your own champion mastery (_data/mastery.json from tools/fetch_mastery.py; git-ignored, so only on the device that has the file)
+    this.mastery = null;
     this.positions = null;
     // _data/positions.json
     this.riotNotes = [];
@@ -166,6 +168,9 @@ var Store = class {
     // augment id -> the game's own description (tools/fetch_augment_text.py)
     // false until the data files (_data/*.json) have been read once after start-up
     this.ready = false;
+  }
+  masteryOf(id) {
+    return this.mastery?.champions[id];
   }
   get app() {
     return this.plugin.app;
@@ -199,6 +204,13 @@ var Store = class {
       this.positions = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)) : null;
     } catch {
       this.positions = null;
+    }
+    try {
+      const path = (0, import_obsidian.normalizePath)("_data/mastery.json");
+      const raw = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)) : null;
+      this.mastery = raw?.champions ? { fetched: raw.fetched ?? "", total: raw.total_points ?? 0, champions: raw.champions } : null;
+    } catch {
+      this.mastery = null;
     }
     try {
       const path = (0, import_obsidian.normalizePath)("_data/loading-tips.json");
@@ -2149,6 +2161,8 @@ function championPicker(parent, ctx) {
         const b = h(tile2, "span", "mn-tile-b", m.mark);
         b.style.background = m.color;
       }
+      const ms = store.masteryOf(c.id);
+      if (ms && ms.level > 0) h(tile2, "span", "mn-tile-m" + (ms.level >= 10 ? " is-high" : ""), String(ms.level));
       h(tile2, "span", "mn-tile-n", c.name);
       tile2.addEventListener("click", (e) => {
         e.preventDefault();
@@ -2311,6 +2325,8 @@ function championCard(ctx) {
   const tags2 = h(who, "div", "mn-chips");
   for (const r of c.roles) chip(tags2, r);
   if (c.tier) chip(tags2, `\u8A55\u50F9 ${c.tier}`, { color: "var(--color-green)" });
+  const mastery = ctx.plugin.store.masteryOf(c.id);
+  if (mastery && mastery.level > 0) chip(tags2, `\u719F\u7DF4\u5EA6 ${mastery.level} \xB7 ${mastery.points.toLocaleString("en-US")}`, { color: "var(--color-yellow)" });
   const now = ctx.plugin.store.currentChanges(c.id);
   const openChanges = () => {
     show("skills");

@@ -101,6 +101,10 @@ button.mn-chip:active { transform: scale(0.96); }
 .mn-app .mn-face, .mn-app .mn-face:hover, .mn-app .mn-face:active, .mn-app .mn-face:focus, .mn-app .mn-face:focus-visible { background: none; box-shadow: none; outline: none; -webkit-tap-highlight-color: transparent; }
 .mn-app .mn-tile { position: relative; }
 .mn-tile.has-ring img { border: 2px solid var(--ring); }
+/* your mastery level, a small plate on the icon's lower left (gold from level 10) */
+.mn-tile-m { position: absolute; left: 3px; top: 40px; min-width: 20px; padding: 0 5px; border-radius: 7px; text-align: center; font-size: 11px; font-weight: 700; line-height: 16px; font-variant-numeric: tabular-nums;
+    color: #f4efe2; background: rgba(8, 10, 16, 0.78); border: 1px solid rgba(255, 255, 255, 0.25); }
+.mn-tile-m.is-high { color: #f6d98a; border-color: rgba(246, 217, 138, 0.75); }
 .mn-tile-b { position: absolute; top: -4px; right: 2px; min-width: 20px; padding: 0 5px; border-radius: 10px; text-align: center; font-size: 11px; font-weight: 700; line-height: 20px;
     background: var(--mn-accent); color: var(--text-on-accent, #fff); }
 .mn-tile img { width: 60px; height: 60px; border-radius: 18px; background: var(--mn-card); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18); border: 1px solid var(--mn-line); }

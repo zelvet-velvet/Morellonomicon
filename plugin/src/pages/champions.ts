@@ -78,6 +78,8 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
             const im = h(tile, "img"); im.src = c.icon; im.alt = "";
             const rd = recent.get(c.name);
             if (rd) { const m = marker(rd); const b = h(tile, "span", "mn-tile-b", m.mark); b.style.background = m.color; }
+            const ms = store.masteryOf(c.id);
+            if (ms && ms.level > 0) h(tile, "span", "mn-tile-m" + (ms.level >= 10 ? " is-high" : ""), String(ms.level));   // your mastery level on the icon
             h(tile, "span", "mn-tile-n", c.name);
             tile.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); });
         }
@@ -191,7 +193,9 @@ export function championCard(ctx: PageCtx): PageOut {
     h(who, "div", "mn-card-sub", c.title);
     const tags = h(who, "div", "mn-chips");
     for (const r of c.roles) chip(tags, r);
-    if (c.tier) chip(tags, `評價 ${c.tier}`, { color: "var(--color-green)" });   // optional, hand-written `tier` in the champion note
+    if (c.tier) chip(tags, `評價 ${c.tier}`, { color: "var(--color-green)" });
+    const mastery = ctx.plugin.store.masteryOf(c.id);   // your own numbers, when this device has _data/mastery.json
+    if (mastery && mastery.level > 0) chip(tags, `熟練度 ${mastery.level} · ${mastery.points.toLocaleString("en-US")}`, { color: "var(--color-yellow)" });   // optional, hand-written `tier` in the champion note
     const now = ctx.plugin.store.currentChanges(c.id);
     const openChanges = () => { show("skills"); block?.open(); block?.el.scrollIntoView({ behavior: "smooth", block: "start" }); };
     const official = ctx.plugin.store.officialFor("champions", c.name)[0];
