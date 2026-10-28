@@ -398,12 +398,12 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-pager { position: relative; z-index: 1; height: 100%; box-sizing: border-box; overflow: hidden; touch-action: none; }   /* clipped, so cards swiped away never make the page scroll; every touch is ours (a card's long text is scrolled by hand, see deck.ts), so the browser never cancels a drag */
 .mn-pager { transition: filter 0.3s ease-out, opacity 0.3s ease-out; }
 .mn-pager.is-wait { filter: blur(10px) saturate(0.85); pointer-events: none; }
-/* while something loads: soft colour washes across from the bottom right to the left, again and again, over the blurred content */
+/* while something loads: a wide band of light, soft on both sides (no visible edge), slides across at a slant from the bottom right to the left */
 .mn-artload { position: absolute; z-index: 2; top: var(--mn-lift); bottom: var(--mn-pile); left: 10px; right: 10px; overflow: hidden; border-radius: 26px; pointer-events: none; }
-.mn-artload::before, .mn-artload::after { content: ""; position: absolute; border-radius: 50%; opacity: 0; filter: blur(30px); mix-blend-mode: screen; }
-.mn-artload::before { right: -45%; bottom: -30%; width: 140%; height: 95%; background: radial-gradient(closest-side, color-mix(in srgb, var(--mn-accent) 80%, #fff) 0, transparent 100%); animation: mn-wash 2.8s ease-in-out infinite; }
-.mn-artload::after { right: -65%; bottom: -5%; width: 120%; height: 80%; background: radial-gradient(closest-side, color-mix(in srgb, var(--color-purple, #8b6cd6) 85%, #fff) 0, transparent 100%); animation: mn-wash 2.8s ease-in-out 0.7s infinite; }
-@keyframes mn-wash { 0% { transform: translate(40%, 30%) rotate(-14deg) scale(0.7); opacity: 0; } 25% { opacity: 0.75; } 100% { transform: translate(-120%, -25%) rotate(-14deg) scale(1.15); opacity: 0; } }
+.mn-artload::before { content: ""; position: absolute; top: -40%; bottom: -40%; right: 0; width: 66%; transform: translateX(170%) rotate(22deg);
+    background: linear-gradient(90deg, transparent 0, rgba(255, 255, 255, 0.07) 22%, rgba(255, 255, 255, 0.2) 40%, rgba(255, 255, 255, 0.34) 50%, rgba(255, 255, 255, 0.2) 60%, rgba(255, 255, 255, 0.07) 78%, transparent 100%);
+    animation: mn-sheen 2.6s cubic-bezier(0.5, 0, 0.3, 1) infinite; }
+@keyframes mn-sheen { 0% { transform: translateX(170%) rotate(22deg); } 75%, 100% { transform: translateX(-200%) rotate(22deg); } }
 /* a tab or detail page while its pictures arrive: a veil over the screen area (positioned by view.ts) blurs what is behind it */
 .mn-page.mn-loading { pointer-events: none; }
 .mn-artload.is-page { z-index: 6; border-radius: 0; backdrop-filter: blur(9px) saturate(0.9); -webkit-backdrop-filter: blur(9px) saturate(0.9); background: color-mix(in srgb, var(--mn-bg) 28%, transparent); }

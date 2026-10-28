@@ -231,8 +231,8 @@ export class MnView extends ItemView {
         const wait = page.ready !== undefined ? page.ready : whenLoaded(page.el, PAGE_WAIT_MS);
         show();
         if (wait && anim !== "none") {   // the page is there at once, blurred with light rippling over it until its pictures are in
-            // a veil the size of the screen area (blurring the whole tall page instead would make iOS draw nothing), with soft colour
-            // washing across it from the bottom right to the left
+            // a veil the size of the screen area (blurring the whole tall page instead would make iOS draw nothing), with a soft band of
+            // light sliding across it from the bottom right to the left
             page.el.addClass("mn-loading");
             const veil = h(this.appEl, "div", "mn-artload is-page");
             veil.style.top = `${this.scrollEl.offsetTop}px`;
