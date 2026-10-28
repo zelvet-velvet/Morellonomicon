@@ -2773,6 +2773,7 @@ var media = (el, { c, s, args }) => {
     im.src = s.icon;
     im.alt = "";
   });
+  tags(h(wrap, "div", "mn-ck-onclip"), { c, s, args });
   const hud = h(wrap, "div", "mn-ck-hud");
   keyBadge(hud, s.key, kindColor(s));
   h(hud, "span", "mn-ck-hudn", s.name);
@@ -2858,7 +2859,7 @@ var RESULT_ICON = [[/快|速/, "zap"], [/遠|長/, "move-horizontal"], [/痛|傷
 var beforeEquals = (args) => args.includes("=") ? args.slice(0, args.indexOf("=")) : args;
 var comboMedia = (el, { c, args }) => {
   const keys = beforeEquals(args).filter((a) => /^[PQWER]\d?$/i.test(a)).map((a) => a.toUpperCase());
-  const wrap = h(el, "div", "mn-sl-video is-square");
+  const wrap = h(el, "div", "mn-sl-video");
   const reels = keys.map((key) => {
     const box = h(wrap, "div", "mn-ck-reel");
     demo(box, c, { key });
@@ -2940,7 +2941,7 @@ var formCols = (el, { c, args }) => {
 };
 var LAYOUTS = {
   ability: { areas: ["head", "tags", "desc", "numbers", "stats"], rows: "auto auto auto auto auto", fill: { head, tags, desc, numbers: numbers2, stats } },
-  clip: { areas: ["media", "tags"], rows: "auto auto", fill: { media, tags } },
+  clip: { areas: ["media"], rows: "1fr", fill: { media } },
   number: { areas: ["hero", "bars"], rows: "auto auto", fill: { hero, bars } },
   forms: { areas: ["formsTitle", "formCols"], rows: "auto auto", fill: { formsTitle, formCols } },
   combo: { areas: ["comboMedia"], rows: "1fr", fill: { comboMedia } },

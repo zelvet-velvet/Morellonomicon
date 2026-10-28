@@ -8,7 +8,7 @@ import { demo } from "./skills";
 // template lays the components out, so every card of a kind has the same structure, colours and icons.
 //
 //   ability  Champ Key        head · tags · text · numbers per rank with scaling · cooldown / cost / range
-//   clip     Champ Key[2] [a-b]   the ability's clip fills the picture, key + name on top, tags below; a-b = play only seconds a to b
+//   clip     Champ Key[2] [a-b]   the ability's clip fills the picture (cut to where the champion stands), key + name on top, tags on its lower edge; a-b = play only seconds a to b
 //   number   Champ Key        the scaling as one big number, and what it adds up to at a few stat values
 //   forms    Champ A B [*B]   two forms side by side, one line of Q / W / E each; * marks the form to look at
 //   combo    Champ A B *B K1 K2 [= word word]   the clips of K1 then K2 play one after the other, big, with K1 → K2 as pictures and the result chips on the picture's lower edge (A B *B pick the form's art)
@@ -93,6 +93,7 @@ const media: Fill = (el, { c, s, args }) => {
         // the clip cannot play on this device: the skill's picture takes its place
         const im = h(wrap, "img", "mn-ck-failic"); im.src = s.icon; im.alt = "";
     });
+    tags(h(wrap, "div", "mn-ck-onclip"), { c, s, args });   // the tags sit on the picture, just above the words
     const hud = h(wrap, "div", "mn-ck-hud");
     keyBadge(hud, s.key, kindColor(s));
     h(hud, "span", "mn-ck-hudn", s.name);
@@ -174,7 +175,7 @@ const beforeEquals = (args: string[]): string[] => (args.includes("=") ? args.sl
 // champion is; the steps and the result sit on the lower edge of the picture
 const comboMedia: Fill = (el, { c, args }) => {
     const keys = beforeEquals(args).filter((a) => /^[PQWER]\d?$/i.test(a)).map((a) => a.toUpperCase());
-    const wrap = h(el, "div", "mn-sl-video is-square");
+    const wrap = h(el, "div", "mn-sl-video");
     const reels = keys.map((key) => {
         const box = h(wrap, "div", "mn-ck-reel");
         demo(box, c, { key });
@@ -245,7 +246,7 @@ const formCols: Fill = (el, { c, args }) => {
 // ---- the layout templates: grid areas, and which component fills each
 const LAYOUTS: Record<string, Layout> = {
     ability: { areas: ["head", "tags", "desc", "numbers", "stats"], rows: "auto auto auto auto auto", fill: { head, tags, desc, numbers, stats } },
-    clip: { areas: ["media", "tags"], rows: "auto auto", fill: { media, tags } },
+    clip: { areas: ["media"], rows: "1fr", fill: { media } },
     number: { areas: ["hero", "bars"], rows: "auto auto", fill: { hero, bars } },
     forms: { areas: ["formsTitle", "formCols"], rows: "auto auto", fill: { formsTitle, formCols } },
     combo: { areas: ["comboMedia"], rows: "1fr", fill: { comboMedia } },

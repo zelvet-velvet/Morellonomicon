@@ -453,9 +453,11 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-sl-vis { flex: 1 1 auto; min-height: 40%; display: flex; align-items: center; justify-content: center; padding: 22px 14px 40px; overflow: hidden;
     background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--mn-accent) 10%, var(--mn-card-hi)), var(--mn-card) 75%); }
 .mn-sl-vis.is-img { padding: 0; background: #000; }
-.mn-sl-vis.is-video, .mn-sl-vis.is-clip { padding: 0 12px 40px; }   /* a clip sits in the middle on the card's own background */
-.mn-sl-video { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 14px; }
-.mn-sl-video video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.mn-sl-vis.is-video, .mn-sl-vis.is-clip, .mn-sl-vis.is-combo { padding: 0 0 40px; align-items: stretch; }
+/* a clip fills the picture; Riot's clips have the champion about two thirds from the left, so the cut keeps that part, and the lower edge fades into the card */
+.mn-sl-video { position: relative; width: 100%; height: 100%; overflow: hidden; }
+.mn-sl-video video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 66% 50%; display: block;
+    -webkit-mask-image: linear-gradient(180deg, #000 68%, transparent 100%); mask-image: linear-gradient(180deg, #000 68%, transparent 100%); }
 .mn-sl-img { width: 100%; height: 100%; object-fit: cover; }
 .mn-sl-splash { object-position: 70% 20%; }
 .mn-sl-hero { display: flex; align-items: center; justify-content: center; color: var(--mn-accent); }
@@ -562,11 +564,11 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-ck-stat svg { width: 15px; height: 15px; }
 .mn-ck-stat b { font-size: 13px; color: var(--mn-text); }
 /* clip */
-.mn-ck-clip { gap: 10px; }
+.mn-ck-clip { gap: 0; }
+.mn-ck-onclip { position: absolute; z-index: 2; left: 12px; right: 12px; bottom: 40px; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
 .mn-ck-failic { position: absolute; left: 50%; top: 46%; width: 104px; height: 104px; transform: translate(-50%, -50%); border-radius: 24px; border: 3px solid rgba(255, 255, 255, 0.35); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); }
 .mn-ck-hud { position: absolute; z-index: 3; top: 10px; left: 10px; right: 10px; display: flex; align-items: center; gap: 8px; }
 .mn-ck-hudn { padding: 4px 10px; border-radius: 999px; background: rgba(10, 12, 18, 0.65); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); font-family: var(--mn-serif); font-weight: 700; font-size: 13px; color: #fff; }
-.mn-ck-clip .mn-ck-tags { justify-content: center; }
 /* number */
 .mn-ck-hero { display: flex; flex-direction: column; align-items: center; text-align: center; }
 .mn-ck-ring { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 50%; margin-bottom: 6px; color: var(--c); border: 2px solid var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); }
@@ -605,15 +607,11 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-ck-ic.is-sm .mn-ck-key { width: 19px; height: 19px; font-size: 10.5px; right: -6px; bottom: -6px; border-width: 1.5px; border-radius: 6px; }
 .mn-ck-qwe { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; width: 100%; }
 /* combo: big clips cut to the middle, the steps and result chips on the lower edge */
-.mn-sl-vis.is-combo { padding: 0 0 40px; align-items: center; }
 .mn-ck-combo { gap: 0; }
 .mn-ck-combo .mn-ck-comboMedia { height: 100%; }
-.mn-sl-video.is-square { height: 100%; aspect-ratio: auto; border-radius: 0; }   /* fills the whole picture area; the clip is cut to its middle */
 .mn-ck-reel { position: absolute; inset: 0; visibility: hidden; }
 .mn-ck-reel.is-on { visibility: visible; }
-.mn-ck-reel video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.mn-ck-comboFlow { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 34px 12px 38px;
-    background: linear-gradient(180deg, rgba(18, 20, 27, 0), rgba(18, 20, 27, 0.82) 60%); }
+.mn-ck-comboFlow { position: absolute; z-index: 2; left: 0; right: 0; bottom: 40px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 12px; }
 .mn-ck-cell.is-step { width: 76px; }
 .mn-ck-ic.is-huge { width: 56px; height: 56px; border-radius: 16px; }
 .mn-ck-ic.is-huge img { border-radius: 12px; }

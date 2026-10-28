@@ -312,7 +312,7 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
     if (kind === "video") {
         const c = champ(args[0]);
         if (c) {
-            // the whole clip at its own shape, centred on the card's background
+            // the clip fills the picture, cut to where the champion usually stands, its lower edge fading into the card
             demo(h(box, "div", "mn-sl-video"), c, { key: args[1] ?? "Q" });
             return;
         }
