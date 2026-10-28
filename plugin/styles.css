@@ -407,6 +407,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* a tab or detail page while its pictures arrive: a veil over the screen area (positioned by view.ts) blurs what is behind it */
 .mn-page.mn-loading { pointer-events: none; }
 .mn-artload.is-page.is-in { opacity: 1; }
+.mn-artload.is-page.is-instant { transition: none; }   /* start-up: blurred from the first frame, not fading in over a sharp page */
 .mn-artload.is-page { opacity: 0; transition: opacity 0.28s ease-out; z-index: 6; border-radius: 0; backdrop-filter: blur(9px) saturate(0.9); -webkit-backdrop-filter: blur(9px) saturate(0.9); background: color-mix(in srgb, var(--mn-bg) 28%, transparent); }
 .mn-pager.is-drag { user-select: none; cursor: grabbing; }
 /* the cards lie in one pile; the top one is dragged away (see deck.ts); the room above them lets a tilted card pass over the bars */

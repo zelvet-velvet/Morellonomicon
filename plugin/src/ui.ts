@@ -80,18 +80,6 @@ export function releaseVideos(root: HTMLElement): void {
     root.querySelectorAll("video").forEach((v) => { v.pause(); v.removeAttribute("src"); v.replaceChildren(); v.load(); });
 }
 
-// A loading look that never blinks: it is only put on if loading takes longer than `delay`, and once on it stays at least `minShow`.
-// `on` puts the look on and returns the function that takes it off.
-export function loadingLook(until: Promise<void>, on: () => () => void, delay = 250, minShow = 500): void {
-    let off: (() => void) | null = null, shownAt = 0, done = false;
-    const t = window.setTimeout(() => { if (!done) { off = on(); shownAt = Date.now(); } }, delay);
-    void until.then(() => {
-        done = true;
-        window.clearTimeout(t);
-        if (off) window.setTimeout(off, Math.max(0, minShow - (Date.now() - shownAt)));
-    });
-}
-
 // Every picture and clip under the roots has its first frame (or failed, or was removed because no format loaded), or `ms` passed.
 // Checked on a short timer rather than events, because a clip whose sources all fail is removed without any event.
 export function whenMediaLoaded(roots: HTMLElement[], ms: number): Promise<void> {

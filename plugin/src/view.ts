@@ -5,7 +5,7 @@ import { THEMES, themeVars } from "./themes";
 import { PageOut, renderPage } from "./pages";
 import { rememberSub } from "./pages/champions";
 import type { Frame } from "./router";
-import { empty, h, icon, loadingLook, preloadRoleIcons, releaseVideos, slideSeg, whenLoaded } from "./ui";
+import { empty, h, icon, preloadRoleIcons, releaseVideos, slideSeg, whenLoaded } from "./ui";
 
 export const VIEW_TYPE = "morellonomicon";
 
@@ -24,6 +24,8 @@ function fadeIn(im: HTMLImageElement): void {
     im.addEventListener("error", shown, { once: true });
 }
 const STARTUP_WAIT_MS = 6000;   // the start-up loading look lasts this long at most
+const VEIL_DELAY_MS = 250;   // a later page shows the loading look only if loading takes longer than this
+const VEIL_MIN_MS = 500;     // and once shown it stays at least this long
 const PAGE_WAIT_MS = 2500;   // a page shows its loading look this long at most while the pictures at its top arrive
 
 function arrive(page: HTMLElement, anim: "push" | "back" | "tab"): void {
@@ -96,7 +98,8 @@ export class MnView extends ItemView {
 
     private modeBtn!: HTMLElement;
     private firstReadyDrawn = false;
-    private veil: HTMLElement | null = null;   // the loading veil over the page area
+    private veil: HTMLElement | null = null;
+    private veilSince = 0;   // the loading veil over the page area
     private drawId = 0;
     private markScrolled(): void {
         const past = this.appEl.hasClass("is-overlay") ? OVERLAY_SCROLL : 36;
@@ -176,11 +179,37 @@ export class MnView extends ItemView {
         this.draw();
     }
 
+    // The loading veil: a layer the size of the page area that blurs what is under it, with a band of light sliding across
+    private showVeil(immediate: boolean): void {
+        const place = () => {
+            const v = this.veil;
+            if (!v) return;
+            v.style.top = `${this.scrollEl.offsetTop}px`;
+            v.style.left = `${this.scrollEl.offsetLeft}px`;
+            v.style.width = `${this.scrollEl.clientWidth}px`;
+            v.style.height = `${this.scrollEl.clientHeight}px`;
+        };
+        if (!this.veil) {
+            this.veil = h(this.appEl, "div", "mn-artload is-page");
+            this.veilSince = Date.now();
+            place();
+            if (immediate) this.veil.addClass("is-in is-instant"); else requestAnimationFrame(() => this.veil?.addClass("is-in"));
+        }
+        place();
+        requestAnimationFrame(place);   // the app may not have been laid out yet on the very first frame
+    }
+    private hideVeil(): void {
+        const v = this.veil;
+        if (!v) return;
+        this.veil = null;
+        v.removeClass("is-instant");
+        v.removeClass("is-in");
+        window.setTimeout(() => v.remove(), 300);
+    }
+
     // How a new page arrives: slides in from the right (deeper), from the left (back), or rises in (another tab); "none" for a refresh
     draw(anim: "none" | "push" | "back" | "tab" = "none"): void {
         const id = ++this.drawId;
-        this.veil?.remove();
-        this.veil = null;
         if (this.shown) this.scrolls.set(this.shown, this.scrollEl.scrollTop);
         const key = this.key();
         const f = this.router.top();
@@ -239,27 +268,22 @@ export class MnView extends ItemView {
         const first = !starting && !this.firstReadyDrawn;
         if (!starting) this.firstReadyDrawn = true;
         const until = starting ? this.plugin.store.whenReady(STARTUP_WAIT_MS) : wait;
-        if (until && (anim !== "none" || starting || first)) {   // the page is there at once, blurred with a band of light over it until its pictures are in
-            // a veil the size of the screen area (blurring the whole tall page instead would make iOS draw nothing), with a soft band of
-            // light sliding across it from the bottom right to the left
-            // (only when it takes more than a moment, and then not for less than half a second, so it never reads as a blink)
-            loadingLook(until, () => {
-                if (id !== this.drawId) return () => undefined;   // another page was asked for meanwhile
-                page.el.addClass("mn-loading");
-                const veil = h(this.appEl, "div", "mn-artload is-page");
-                veil.style.top = `${this.scrollEl.offsetTop}px`;
-                veil.style.left = `${this.scrollEl.offsetLeft}px`;
-                veil.style.width = `${this.scrollEl.clientWidth}px`;
-                veil.style.height = `${this.scrollEl.clientHeight}px`;
-                requestAnimationFrame(() => veil.addClass("is-in"));
-                this.veil = veil;
-                return () => {
-                    page.el.removeClass("mn-loading");
-                    veil.removeClass("is-in");
-                    window.setTimeout(() => veil.remove(), 280);
-                    if (this.veil === veil) this.veil = null;
-                };
-            }, starting || first ? 0 : undefined);   // at start-up at once (no icons popping in before the look), later pages only if it takes a moment
-        }
+        const needs = !!until && (anim !== "none" || starting || first);
+        if (needs) {
+            // The loading look is one veil over the screen area (blurring the whole tall page instead would make iOS draw nothing), with a
+            // soft band of light sliding across it. At start-up and for the first page after it the veil is there from the first frame and
+            // is kept across the page being rebuilt when the data arrives, so no sharp, half-loaded page shows between; later pages show
+            // it only if loading takes more than a moment. Once shown it stays at least half a second (no blink).
+            const now = starting || first || !!this.veil;
+            page.el.addClass("mn-loading");
+            const timer = now ? 0 : window.setTimeout(() => { if (id === this.drawId) this.showVeil(false); }, VEIL_DELAY_MS);
+            if (now) this.showVeil(true);
+            void until.then(() => {
+                window.clearTimeout(timer);
+                page.el.removeClass("mn-loading");
+                if (id !== this.drawId) return;   // another page was asked for meanwhile; it decides what happens to the veil
+                window.setTimeout(() => { if (id === this.drawId) this.hideVeil(); }, Math.max(0, VEIL_MIN_MS - (Date.now() - this.veilSince)));
+            });
+        } else this.hideVeil();
     }
 }

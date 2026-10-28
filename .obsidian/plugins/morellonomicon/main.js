@@ -552,20 +552,6 @@ function releaseVideos(root) {
     v.load();
   });
 }
-function loadingLook(until, on, delay = 250, minShow = 500) {
-  let off = null, shownAt = 0, done = false;
-  const t = window.setTimeout(() => {
-    if (!done) {
-      off = on();
-      shownAt = Date.now();
-    }
-  }, delay);
-  void until.then(() => {
-    done = true;
-    window.clearTimeout(t);
-    if (off) window.setTimeout(off, Math.max(0, minShow - (Date.now() - shownAt)));
-  });
-}
 function whenMediaLoaded(roots, ms) {
   const media2 = roots.flatMap((r) => Array.from(r.querySelectorAll("img, video")));
   const ready = (m) => !m.isConnected || (m instanceof HTMLVideoElement ? m.readyState >= 2 || !!m.error : m.complete);
@@ -3982,6 +3968,8 @@ function fadeIn(im) {
   im.addEventListener("error", shown, { once: true });
 }
 var STARTUP_WAIT_MS = 6e3;
+var VEIL_DELAY_MS = 250;
+var VEIL_MIN_MS = 500;
 var PAGE_WAIT_MS = 2500;
 function arrive(page2, anim) {
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || !page2.animate) return;
@@ -3996,6 +3984,7 @@ var MnView = class extends import_obsidian9.ItemView {
     this.shown = "";
     this.firstReadyDrawn = false;
     this.veil = null;
+    this.veilSince = 0;
     // the loading veil over the page area
     this.drawId = 0;
     this.themed = [];
@@ -4156,11 +4145,37 @@ var MnView = class extends import_obsidian9.ItemView {
     this.buildTabs();
     this.draw();
   }
+  // The loading veil: a layer the size of the page area that blurs what is under it, with a band of light sliding across
+  showVeil(immediate) {
+    const place = () => {
+      const v = this.veil;
+      if (!v) return;
+      v.style.top = `${this.scrollEl.offsetTop}px`;
+      v.style.left = `${this.scrollEl.offsetLeft}px`;
+      v.style.width = `${this.scrollEl.clientWidth}px`;
+      v.style.height = `${this.scrollEl.clientHeight}px`;
+    };
+    if (!this.veil) {
+      this.veil = h(this.appEl, "div", "mn-artload is-page");
+      this.veilSince = Date.now();
+      place();
+      if (immediate) this.veil.addClass("is-in is-instant");
+      else requestAnimationFrame(() => this.veil?.addClass("is-in"));
+    }
+    place();
+    requestAnimationFrame(place);
+  }
+  hideVeil() {
+    const v = this.veil;
+    if (!v) return;
+    this.veil = null;
+    v.removeClass("is-instant");
+    v.removeClass("is-in");
+    window.setTimeout(() => v.remove(), 300);
+  }
   // How a new page arrives: slides in from the right (deeper), from the left (back), or rises in (another tab); "none" for a refresh
   draw(anim = "none") {
     const id = ++this.drawId;
-    this.veil?.remove();
-    this.veil = null;
     if (this.shown) this.scrolls.set(this.shown, this.scrollEl.scrollTop);
     const key = this.key();
     const f = this.router.top();
@@ -4220,25 +4235,23 @@ var MnView = class extends import_obsidian9.ItemView {
     const first = !starting && !this.firstReadyDrawn;
     if (!starting) this.firstReadyDrawn = true;
     const until = starting ? this.plugin.store.whenReady(STARTUP_WAIT_MS) : wait;
-    if (until && (anim !== "none" || starting || first)) {
-      loadingLook(until, () => {
-        if (id !== this.drawId) return () => void 0;
-        page2.el.addClass("mn-loading");
-        const veil = h(this.appEl, "div", "mn-artload is-page");
-        veil.style.top = `${this.scrollEl.offsetTop}px`;
-        veil.style.left = `${this.scrollEl.offsetLeft}px`;
-        veil.style.width = `${this.scrollEl.clientWidth}px`;
-        veil.style.height = `${this.scrollEl.clientHeight}px`;
-        requestAnimationFrame(() => veil.addClass("is-in"));
-        this.veil = veil;
-        return () => {
-          page2.el.removeClass("mn-loading");
-          veil.removeClass("is-in");
-          window.setTimeout(() => veil.remove(), 280);
-          if (this.veil === veil) this.veil = null;
-        };
-      }, starting || first ? 0 : void 0);
-    }
+    const needs = !!until && (anim !== "none" || starting || first);
+    if (needs) {
+      const now = starting || first || !!this.veil;
+      page2.el.addClass("mn-loading");
+      const timer = now ? 0 : window.setTimeout(() => {
+        if (id === this.drawId) this.showVeil(false);
+      }, VEIL_DELAY_MS);
+      if (now) this.showVeil(true);
+      void until.then(() => {
+        window.clearTimeout(timer);
+        page2.el.removeClass("mn-loading");
+        if (id !== this.drawId) return;
+        window.setTimeout(() => {
+          if (id === this.drawId) this.hideVeil();
+        }, Math.max(0, VEIL_MIN_MS - (Date.now() - this.veilSince)));
+      });
+    } else this.hideVeil();
   }
 };
 

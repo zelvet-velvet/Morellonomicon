@@ -13,6 +13,7 @@ sticker: lucide//activity
 - **Patch job push**: the job puts its commit on top of a newer main before pushing (a push made while it ran used to make it fail).
 - **Handbook home**: opens with the loading tip on an ARAM map, then two blocks, 初來乍到 (basics) and 高手必備 (advanced), each with its own progress, the next topic as a large picture and the rest two across; the glossary is a row at the end.
 - **Roles and lanes**: 英雄定位 explains how roles map to lanes (下路 pair, 中路 roaming, 打野) and why counters change with lane and time; the last-card next-topic panel is now fixed under the card, and a tilted card passes over the progress bars.
+- **Start-up without the glitch**: one blur layer from the first frame, kept across the rebuild, fading out once the first page's icons are in (to check on the phone).
 - **Clips, blink, start-up icons**: clips are released when a page is left and the blur backdrop is a still (no stuck black clips on a second visit); the loading look waits 0.25 s before showing and stays 0.5 s; the first page after start-up waits for its icons (to check on the phone).
 - **Start-up loading look**: the first page shows the blur and light band until the data files are read (to check on the phone).
 - **Glass-sheen loading**: loading shows a soft band of light sliding from the bottom right to the left over a screen-sized blur veil (the blank Champions page came from blurring the whole page) (to check on the phone).
