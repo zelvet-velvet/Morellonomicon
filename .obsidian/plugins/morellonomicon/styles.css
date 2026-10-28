@@ -435,7 +435,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 12px 28px rgba(0, 0, 0, 0.38); }
 /* frame F2 (Review/Card Layout.md): the stage is a layer behind the whole card, the words grow up from the bottom to their content;
    --mn-words-h (set by deck.ts) is the words' height, so the dock, the fade and the templates' room follow it */
-.mn-sl-face { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; --mn-dock: 46px; border-radius: 20px; background: #12141b;
+.mn-sl-face { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; --mn-dock: 46px; --mn-dock-gap: 14px;   /* the dock's height, and the room between it and the kicker */ border-radius: 20px; background: #12141b;
     --mn-bg: #12141b; --mn-card: #1a1d26; --mn-card-hi: #252937; --mn-text: #f4f1e8; --mn-muted: #c9c5b8; --mn-faint: #8f8c83; --mn-line: rgba(255, 255, 255, 0.16); }
 .mn-sl-words { position: relative; z-index: 2; flex: none; padding: 8px 20px 20px;
     background: linear-gradient(180deg, rgba(10, 12, 18, 0), #0a0c12 12px); }   /* the same dark the stage fades into */
@@ -577,7 +577,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-ck-stat b { font-size: 13px; color: var(--mn-text); }
 /* clip */
 .mn-ck-clip { gap: 0; }
-.mn-ck-onclip { position: absolute; z-index: 2; left: 12px; right: 12px; bottom: calc(var(--mn-words-h, 40%) - 4px); min-height: var(--mn-dock); align-items: flex-end; align-content: flex-end; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+.mn-ck-onclip { position: absolute; z-index: 2; left: 12px; right: 12px; bottom: calc(var(--mn-words-h, 40%) + var(--mn-dock-gap)); min-height: var(--mn-dock); align-items: flex-end; align-content: flex-end; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
 .mn-ck-failic { position: absolute; left: 50%; top: 46%; width: 104px; height: 104px; transform: translate(-50%, -50%); border-radius: 24px; border: 3px solid rgba(255, 255, 255, 0.35); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); }
 .mn-ck-hud { position: absolute; z-index: 3; top: 10px; left: 10px; right: 10px; display: flex; align-items: center; gap: 8px; }
 .mn-ck-hudn { padding: 4px 10px; border-radius: 999px; background: rgba(10, 12, 18, 0.65); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); font-family: var(--mn-serif); font-weight: 700; font-size: 13px; color: #fff; }
@@ -623,7 +623,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-ck-combo .mn-ck-comboMedia { height: 100%; }
 .mn-ck-reel { position: absolute; inset: 0; visibility: hidden; }
 .mn-ck-reel.is-on { visibility: visible; }
-.mn-ck-comboFlow { position: absolute; z-index: 2; left: 0; right: 0; bottom: calc(var(--mn-words-h, 40%) - 2px); display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 12px; }
+.mn-ck-comboFlow { position: absolute; z-index: 2; left: 0; right: 0; bottom: calc(var(--mn-words-h, 40%) + var(--mn-dock-gap)); display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 12px; }
 .mn-ck-cell.is-step { width: 76px; }
 .mn-ck-ic.is-huge { width: 56px; height: 56px; border-radius: 16px; }
 .mn-ck-ic.is-huge img { border-radius: 12px; }
