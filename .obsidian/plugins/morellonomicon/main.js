@@ -1770,7 +1770,7 @@ var DEMO_BASE = "https://d28xe8vt774jo5.cloudfront.net/champion-abilities";
 function demo(parent, c, s) {
   if (!c.key) return;
   const key = String(c.key).padStart(4, "0");
-  const url = `${DEMO_BASE}/${key}/ability_${key}_${s.key}1`;
+  const url = `${DEMO_BASE}/${key}/ability_${key}_${/\d$/.test(s.key) ? s.key : `${s.key}1`}`;
   const v = h(parent, "video", "mn-sd-video");
   v.muted = true;
   v.loop = true;
@@ -2769,6 +2769,7 @@ function visual(ctx, box, s) {
       h(who, "div", "mn-sl-skill-k", `${c.name} \xB7 ${k === "P" ? "\u88AB\u52D5" : k}`);
       h(who, "div", "mn-sl-skill-n", sk.name);
       h(wrap, "div", "mn-sl-skill-d", sk.desc);
+      if (args.includes("grid")) rankTable(wrap, sk, []);
       return;
     }
   } else if (kind === "tree") {

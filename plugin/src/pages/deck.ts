@@ -4,19 +4,19 @@ import { mapUrl } from "./handbook";
 import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg, whenLoaded, SWIPE } from "../ui";
 import { factsStrip, profileAxes, profileRadar, styleCard, tagRow } from "./profile";
 import type { PageCtx, PageOut } from "./index";
-import { demo } from "./skills";
+import { demo, rankTable } from "./skills";
 
 // A guide topic as a deck of swipeable cards. In the note every `## ` heading is one card; right under it:
 //   icon: swords                       the big icon when there is no picture (a Lucide name)
 //   visual: <kind> <arguments>         what to show on the card (below)
 // and then one or two short lines. Visuals:
-//   video Ahri Q        Riot's ability clip (champion id + P/Q/W/E/R)       img Assets/hud.png   a picture in the vault, or an https address
+//   video Ahri Q        Riot's ability clip (champion id + P/Q/W/E/R; Q2 = the second clip, e.g. a form)  img Assets/hud.png   a picture in the vault, or an https address
 //   style Ahri          the champion page's 戰鬥風格 chart                    skills Ahri          the skill icons with their damage-colour frames
 //   facts Ahri          the 技能傷害 block (bar and table)                    tags Ahri            the ability tags it has
 //   roles               the six role icons                                   lanes                the five lane icons
 //   tabs                the champion page's four tabs                        damage               the three damage kinds in their colours
 //   map habackground    an ARAM loading screen picture (habackground, arambilgewater, arambloom; no name = one at random)
-//   splash Swain        the champion's splash art                            skill Gwen Q         one ability large: icon, name, Riot's text
+//   splash Swain        the champion's splash art                            skill Gwen Q [grid]  one ability large: icon, name, Riot's text; grid adds the numbers per rank with scaling
 //   tree 3071           an item's recipe drawn like the shop: the item on top, what it is built from below, with prices
 //   counters [刺客 …]   the six role icons in a ring with coloured arrows for who counters whom; named roles light up their arrows
 //   wards lane|dragon|baron|steal   the Summoner's Rift minimap with ward icons where they help in that moment (a sketch, not exact spots)
@@ -351,6 +351,7 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
             h(who, "div", "mn-sl-skill-k", `${c.name} · ${k === "P" ? "被動" : k}`);
             h(who, "div", "mn-sl-skill-n", sk.name);
             h(wrap, "div", "mn-sl-skill-d", sk.desc);
+            if (args.includes("grid")) rankTable(wrap, sk, []);   // damage, heal or shield per rank with its scaling (+90% 魔法攻擊), cooldown, cost, range
             return;
         }
     } else if (kind === "tree") {

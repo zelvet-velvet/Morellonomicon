@@ -66,7 +66,8 @@ const DEMO_BASE = "https://d28xe8vt774jo5.cloudfront.net/champion-abilities";
 export function demo(parent: HTMLElement, c: Champion, s: { key: string }): void {
     if (!c.key) return;
     const key = String(c.key).padStart(4, "0");
-    const url = `${DEMO_BASE}/${key}/ability_${key}_${s.key}1`;
+    // "Q" is the ability's first clip; "Q2" the second one (the other form of Jayce, Nidalee, Elise… where Riot made one)
+    const url = `${DEMO_BASE}/${key}/ability_${key}_${/\d$/.test(s.key) ? s.key : `${s.key}1`}`;
     const v = h(parent, "video", "mn-sd-video");
     // a silent looping clip, no player controls (no play / pause, seek, full screen or picture-in-picture buttons)
     v.muted = true; v.loop = true; v.autoplay = true; v.controls = false; v.preload = "auto";
@@ -91,7 +92,7 @@ const ROW_COLOR: [string, string][] = [["魔法", DAMAGE_COLOR["魔法"]], ["物
 
 // Per-rank numbers as a small grid: one row per damage / heal / shield value, then cooldown and cost.
 // A row with one value is the same on every rank and spans the grid; the scaling (+50% 魔法攻擊) sits under the row's name.
-function rankTable(parent: HTMLElement, s: Skill, changes: Change[]): void {
+export function rankTable(parent: HTMLElement, s: Skill, changes: Change[]): void {
     // range is the last row (one value spans the grid, or one per rank)
     const rows = s.range ? [...s.rows, { label: "射程", vals: s.range.split("/"), note: "" }] : s.rows;
     if (!rows.length) return;
