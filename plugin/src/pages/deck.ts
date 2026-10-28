@@ -187,11 +187,12 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             // a blurred copy) otherwise has them all running under the top card, which makes some swipes smooth and others not
             sec.forEach((c, i) => {
                 c.style.visibility = i >= cur - NEAR_BEHIND && i <= cur + NEAR_AHEAD ? "" : "hidden";
-                const live = i >= cur - 1 && i <= cur + 1;
                 c.querySelectorAll("video").forEach((v) => {
-                    if (live) { void v.play().catch(() => undefined); return; }
+                    // a heavy clip (WebM only, decoded in software) plays only while it is the top card; the others also while they are next to it
+                    const live = () => (v.dataset.heavy === "1" ? i === cur : i >= cur - 1 && i <= cur + 1);
+                    if (live()) { void v.play().catch(() => undefined); return; }
                     // a clip still loading keeps playing (a phone may not fetch a paused one), and is paused once it has its first frame
-                    if (v.readyState >= 2) v.pause(); else v.addEventListener("loadeddata", () => { if (!(i >= cur - 1 && i <= cur + 1)) v.pause(); }, { once: true });
+                    if (v.readyState >= 2) v.pause(); else v.addEventListener("loadeddata", () => { if (!live()) v.pause(); }, { once: true });
                 });
             });
             show();

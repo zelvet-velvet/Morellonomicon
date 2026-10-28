@@ -555,6 +555,15 @@ function whenMediaLoaded(roots, ms) {
     tick();
   });
 }
+async function warmPictures(urls, batch = 6) {
+  for (let i = 0; i < urls.length; i += batch) {
+    await Promise.all(urls.slice(i, i + batch).map((u) => new Promise((done) => {
+      const im = new Image();
+      im.onload = im.onerror = () => done();
+      im.src = u;
+    })));
+  }
+}
 var HOLD_MS = 280;
 var holdTip = (el, text) => {
   let timer = 0, shown = false;
@@ -606,7 +615,6 @@ var augIcon = (parent, src, rarity, cls = "") => {
   if (tinted) {
     const im = h(box, "img");
     im.alt = "";
-    im.loading = "lazy";
     im.src = src;
   } else {
     box.style.setProperty("--glyph", `url("${src}")`);
@@ -620,7 +628,6 @@ var row = (parent, r) => {
   else if (r.image) {
     const im = h(el, "img", "mn-row-img");
     im.src = r.image;
-    im.loading = "lazy";
     im.alt = "";
   } else if (r.icon) icon(el, r.icon, "mn-row-ic");
   const main = h(el, "div", "mn-row-main");
@@ -1816,6 +1823,7 @@ var clipAddress = (c, key) => {
   return `${DEMO_BASE}/${k}/ability_${k}_${/\d$/.test(key) ? key : `${key}1`}`;
 };
 var downloaded = /* @__PURE__ */ new Map();
+var webmOnly = /* @__PURE__ */ new Set();
 var downloading = /* @__PURE__ */ new Map();
 function preloadClip(c, key) {
   if (!c.key) return Promise.resolve();
@@ -1827,6 +1835,7 @@ function preloadClip(c, key) {
       try {
         const r = await (0, import_obsidian5.requestUrl)({ url: `${url}.${ext}`, throw: false });
         if (r.status === 200) {
+          if (ext === "webm") webmOnly.add(url);
           downloaded.set(url, URL.createObjectURL(new Blob([r.arrayBuffer], { type: `video/${ext}` })));
           return;
         }
@@ -1855,6 +1864,7 @@ function demo(parent, c, s, onFail) {
   };
   const playLocal = (local2) => {
     v.replaceChildren();
+    if (webmOnly.has(url)) v.dataset.heavy = "1";
     v.addEventListener("error", fail, { once: true });
     v.src = local2;
     v.load();
@@ -2014,7 +2024,6 @@ function championPicker(parent, ctx) {
       const tile2 = h(grid, "button", "mn-tile");
       const im = h(tile2, "img");
       im.src = c.icon;
-      im.loading = "lazy";
       im.alt = "";
       const rd = recent.get(c.name);
       if (rd) {
@@ -2908,15 +2917,15 @@ function deckPage(ctx, file) {
       });
       sec.forEach((c, i) => {
         c.style.visibility = i >= cur - NEAR_BEHIND && i <= cur + NEAR_AHEAD ? "" : "hidden";
-        const live = i >= cur - 1 && i <= cur + 1;
         c.querySelectorAll("video").forEach((v) => {
-          if (live) {
+          const live = () => v.dataset.heavy === "1" ? i === cur : i >= cur - 1 && i <= cur + 1;
+          if (live()) {
             void v.play().catch(() => void 0);
             return;
           }
           if (v.readyState >= 2) v.pause();
           else v.addEventListener("loadeddata", () => {
-            if (!(i >= cur - 1 && i <= cur + 1)) v.pause();
+            if (!live()) v.pause();
           }, { once: true });
         });
       });
@@ -3548,7 +3557,6 @@ function tile(grid, src, name, onTap, o = {}) {
     const im = h(t, "img");
     im.src = src;
     im.alt = "";
-    im.loading = "lazy";
   }
   if (o.dir) {
     const m = marker(o.dir);
@@ -3893,7 +3901,6 @@ function rosterPage(ctx) {
       const im = h(t, "img");
       im.src = c.icon;
       im.alt = c.name;
-      im.loading = "lazy";
       if (on) icon(h(t, "span", "mn-pick-ok"), "check");
       h(t, "span", "mn-face-n", c.name);
       holdTip(t, c.name);
@@ -4325,6 +4332,7 @@ var MorellonomiconPlugin = class extends import_obsidian10.Plugin {
         this.lastChange = Date.now();
         this.views().forEach((v) => v.refresh());
       });
+      void this.whenBooted().then(() => warmPictures([...this.store.champions().map((c) => c.icon), ...this.store.augments().map((a) => a.icon)]));
       if (this.settings.openOnStartup) void this.activate(true);
       this.updateBody();
     });

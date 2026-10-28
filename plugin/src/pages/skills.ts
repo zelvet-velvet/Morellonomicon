@@ -72,6 +72,7 @@ const clipAddress = (c: Champion, key: string): string => {
 };
 // Clips downloaded ahead of time (see preloadClip): clip address -> a local address of the whole file, which plays at once
 const downloaded = new Map<string, string>();
+const webmOnly = new Set<string>();   // clips Riot has only as WebM: a phone decodes those in software, so only the clip in view should play
 const downloading = new Map<string, Promise<void>>();
 // Downloads a clip into memory with Obsidian's own request (Riot's server allows no cross-site fetch from a page), so the card that
 // uses it later has the whole file already. Does nothing for a clip already fetched; a clip that cannot be fetched is skipped.
@@ -84,7 +85,7 @@ export function preloadClip(c: Champion, key: string): Promise<void> {
         for (const ext of ["mp4", "webm"]) {
             try {
                 const r = await requestUrl({ url: `${url}.${ext}`, throw: false });
-                if (r.status === 200) { downloaded.set(url, URL.createObjectURL(new Blob([r.arrayBuffer], { type: `video/${ext}` }))); return; }
+                if (r.status === 200) { if (ext === "webm") webmOnly.add(url); downloaded.set(url, URL.createObjectURL(new Blob([r.arrayBuffer], { type: `video/${ext}` }))); return; }
             } catch { /* try the next format */ }
         }
     })();
@@ -104,6 +105,7 @@ export function demo(parent: HTMLElement, c: Champion, s: { key: string }, onFai
     // the whole file, played from memory: for a clip already downloaded, and the way out for a clip that does not stream
     const playLocal = (local: string) => {
         v.replaceChildren();
+        if (webmOnly.has(url)) v.dataset.heavy = "1";
         v.addEventListener("error", fail, { once: true });
         v.src = local;
         v.load();

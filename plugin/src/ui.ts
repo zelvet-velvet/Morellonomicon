@@ -92,6 +92,14 @@ export function whenMediaLoaded(roots: HTMLElement[], ms: number): Promise<void>
     });
 }
 
+// Fetches pictures into the browser's cache a few at a time, in the background, so a list that shows them later (Champions, Augments)
+// has them at once instead of each one fading in as it arrives
+export async function warmPictures(urls: string[], batch = 6): Promise<void> {
+    for (let i = 0; i < urls.length; i += batch) {
+        await Promise.all(urls.slice(i, i + batch).map((u) => new Promise<void>((done) => { const im = new Image(); im.onload = im.onerror = () => done(); im.src = u; })));
+    }
+}
+
 // A hold does not count as a tap (the element's tap action stays for a quick tap).
 const HOLD_MS = 280;
 export const holdTip = (el: HTMLElement, text: string | (() => string)): void => {
@@ -147,7 +155,6 @@ export const augIcon = (parent: HTMLElement, src: string, rarity: string, cls = 
     if (tinted) {
         const im = h(box, "img");
         im.alt = "";
-        im.loading = "lazy";
         im.src = src;
     } else {
         box.style.setProperty("--glyph", `url("${src}")`);
@@ -160,7 +167,7 @@ export interface RowSpec { icon?: string; image?: string; rarity?: string; title
 export const row = (parent: HTMLElement, r: RowSpec): HTMLElement => {
     const el = h(parent, "div", "mn-row" + (r.onTap ? " is-tap" : "") + (r.muted ? " is-muted" : ""));
     if (r.image && r.rarity && AUG_CLASS[r.rarity]) augIcon(el, r.image, r.rarity, "mn-row-aug");
-    else if (r.image) { const im = h(el, "img", "mn-row-img"); im.src = r.image; im.loading = "lazy"; im.alt = ""; }
+    else if (r.image) { const im = h(el, "img", "mn-row-img"); im.src = r.image; im.alt = ""; }
     else if (r.icon) icon(el, r.icon, "mn-row-ic");
     const main = h(el, "div", "mn-row-main");
     h(main, "div", "mn-row-t", r.title);

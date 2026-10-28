@@ -73,7 +73,7 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
         count.textContent = `${hits.length} / ${all.length}`;
         for (const c of hits) {
             const tile = h(grid, "button", "mn-tile");
-            const im = h(tile, "img"); im.src = c.icon; im.loading = "lazy"; im.alt = "";
+            const im = h(tile, "img"); im.src = c.icon; im.alt = "";
             const rd = recent.get(c.name);
             if (rd) { const m = marker(rd); const b = h(tile, "span", "mn-tile-b", m.mark); b.style.background = m.color; }
             h(tile, "span", "mn-tile-n", c.name);

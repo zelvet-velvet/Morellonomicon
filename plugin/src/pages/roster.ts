@@ -273,7 +273,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
         for (const c of list) {
             const on = picks.includes(c.id);
             const t = h(grid, "button", "mn-face" + (on ? " is-pick" : ""));
-            const im = h(t, "img"); im.src = c.icon; im.alt = c.name; im.loading = "lazy";
+            const im = h(t, "img"); im.src = c.icon; im.alt = c.name;
             if (on) icon(h(t, "span", "mn-pick-ok"), "check");
             h(t, "span", "mn-face-n", c.name);
             holdTip(t, c.name);

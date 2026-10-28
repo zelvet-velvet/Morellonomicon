@@ -76,7 +76,7 @@ function byDir<T extends NoteEntry>(list: T[]): { e: T; dir: OfficialDir }[] {
 function tile(grid: HTMLElement, src: string, name: string, onTap: () => void, o: { dir?: OfficialDir; rarity?: string } = {}): void {
     const t = h(grid, "button", "mn-tile");
     if (o.rarity && AUG_CLASS[o.rarity]) augIcon(t, src, o.rarity, "mn-tile-aug");
-    else { const im = h(t, "img"); im.src = src; im.alt = ""; im.loading = "lazy"; }
+    else { const im = h(t, "img"); im.src = src; im.alt = ""; }
     if (o.dir) { const m = marker(o.dir); const b = h(t, "span", "mn-tile-b", m.mark); b.style.background = m.color; }
     h(t, "span", "mn-tile-n", name);
     t.addEventListener("click", (e) => { e.preventDefault(); onTap(); });
