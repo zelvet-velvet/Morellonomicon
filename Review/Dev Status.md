@@ -13,6 +13,7 @@ sticker: lucide//activity
 - **Patch job push**: the job puts its commit on top of a newer main before pushing (a push made while it ran used to make it fail).
 - **Handbook home**: opens with the loading tip on an ARAM map, then two blocks, 初來乍到 (basics) and 高手必備 (advanced), each with its own progress, the next topic as a large picture and the rest two across; the glossary is a row at the end.
 - **Roles and lanes**: 英雄定位 explains how roles map to lanes (下路 pair, 中路 roaming, 打野) and why counters change with lane and time; the last-card next-topic panel is now fixed under the card, and a tilted card passes over the progress bars.
+- **No blocking veil, scroll reset**: detail pages show at once (no page-wide veil that blocks taps), the champion banner loads as a block, and a page always starts at the top (to check on the phone).
 - **Handbook blocks**: the tip stack and each group of topic tiles load as blocks; the keyword row keeps its height; the band of light is only inside blocks (to check on the phone).
 - **Blocks that load on their own**: the lane row, champion grid, augment list and Patch grids each show blurred with the light band until their own pictures are in (to check on the phone).
 - **Icons without blink, lighter Pyke**: small icons load at once and are warmed in the background; a WebM-only clip plays only when on top (to check on the phone).

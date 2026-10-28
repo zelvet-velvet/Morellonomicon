@@ -1883,7 +1883,7 @@ function skillStrip(parent, c, changes = []) {
     const clipBox = h(detail, "div", "mn-sd-clipbox");
     demo(clipBox, c, s, () => clipBox.remove());
     const reveal = () => {
-      if (open !== i) return;
+      if (open !== i || !detail.isConnected) return;
       const view = detail.closest(".mn-scroll");
       const tall = view ? detail.offsetHeight > view.clientHeight - 80 : false;
       detail.scrollIntoView({ behavior: "smooth", block: tall ? "start" : "end" });
@@ -2277,6 +2277,18 @@ function championCard(ctx) {
   const im = h(head2, "img", "mn-card-img");
   im.src = c.icon;
   im.alt = "";
+  const splash = bg.style.backgroundImage.slice(5, -2);
+  blockUntil(hero2, Promise.all([new Promise((r) => {
+    const s = new Image();
+    s.onload = s.onerror = () => r();
+    s.src = splash;
+  }), new Promise((r) => {
+    if (im.complete) r();
+    else {
+      im.addEventListener("load", () => r(), { once: true });
+      im.addEventListener("error", () => r(), { once: true });
+    }
+  })]).then(() => void 0));
   const who = h(head2, "div", "mn-card-who");
   h(who, "h1", "mn-title", c.name);
   h(who, "div", "mn-card-sub", c.title);
@@ -2320,7 +2332,7 @@ function championCard(ctx) {
   }
   slideSeg(seg);
   show(lastSub.get(c.id) ?? "skills");
-  return { title: "", el };
+  return { title: "", el, ready: null };
 }
 function skills(body, c, ctx) {
   skillStrip(body, c, ctx.plugin.store.currentChanges(c.id));
@@ -4103,7 +4115,6 @@ function fadeIn(im) {
 var VEIL_DELAY_MS = 250;
 var VEIL_MIN_MS = 500;
 var BOOT_PICTURES_MS = 7e3;
-var PAGE_WAIT_MS = 2500;
 function arrive(page2, anim) {
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || !page2.animate) return;
   const from = anim === "push" ? "translateX(28px)" : anim === "back" ? "translateX(-28px)" : "translateY(10px)";
@@ -4346,8 +4357,7 @@ var MnView = class extends import_obsidian9.ItemView {
       this.shown = key;
       const fresh = anim === "push" || OVERLAY_PAGES.has(f.key);
       if (fresh) this.scrolls.delete(key);
-      this.scrollEl.scrollTop = fresh ? 0 : this.scrolls.get(key) ?? 0;
-      this.scrollEl.scrollLeft = 0;
+      this.scrollEl.scrollTo({ top: fresh ? 0 : this.scrolls.get(key) ?? 0, left: 0, behavior: "instant" });
       this.titleEl.textContent = page2.title;
       const titleRow = this.router.depth() === 0 ? page2.el.querySelector(":scope > .mn-title-row") : null;
       (titleRow ?? this.topEl).appendChild(this.actsEl);
@@ -4361,7 +4371,7 @@ var MnView = class extends import_obsidian9.ItemView {
       if (anim === "none") return;
       arrive(page2.el, anim);
     };
-    const wait = page2.ready !== void 0 ? page2.ready : whenLoaded(page2.el, PAGE_WAIT_MS);
+    const wait = page2.ready ?? null;
     if (!this.plugin.booted) {
       show();
       this.holdVeil(page2, this.plugin.whenBooted().then(() => page2.ready === void 0 ? whenLoaded(page2.el, BOOT_PICTURES_MS) : page2.ready).then(() => void 0), id);

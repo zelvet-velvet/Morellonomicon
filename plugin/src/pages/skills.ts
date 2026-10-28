@@ -56,7 +56,7 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
         demo(clipBox, c, s, () => clipBox.remove());
         // scroll down to the end of the card (its clip included); a card taller than the screen shows from its top instead
         const reveal = () => {
-            if (open !== i) return;   // another skill was opened meanwhile
+            if (open !== i || !detail.isConnected) return;   // another skill was opened meanwhile, or the page was left
             const view = detail.closest<HTMLElement>(".mn-scroll");
             const tall = view ? detail.offsetHeight > view.clientHeight - 80 : false;
             detail.scrollIntoView({ behavior: "smooth", block: tall ? "start" : "end" });

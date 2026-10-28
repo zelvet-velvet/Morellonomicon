@@ -243,8 +243,8 @@ export class MnView extends ItemView {
             // others (a tab, a page you come back to) are where you left them
             const fresh = anim === "push" || OVERLAY_PAGES.has(f.key);
             if (fresh) this.scrolls.delete(key);
-            this.scrollEl.scrollTop = fresh ? 0 : (this.scrolls.get(key) ?? 0);
-            this.scrollEl.scrollLeft = 0;   // never carry a sideways offset from the previous page
+            // "instant": a smooth scroll still running from the page left (a skill card scrolled into view) must not carry on in this one
+            this.scrollEl.scrollTo({ top: fresh ? 0 : (this.scrolls.get(key) ?? 0), left: 0, behavior: "instant" as ScrollBehavior });   // never a sideways offset from the previous page
             this.titleEl.textContent = page.title;
             const titleRow = this.router.depth() === 0 ? page.el.querySelector(":scope > .mn-title-row") : null;
             (titleRow ?? this.topEl).appendChild(this.actsEl);
@@ -259,7 +259,9 @@ export class MnView extends ItemView {
             if (anim === "none") return;
             arrive(page.el, anim);
         };
-        const wait = page.ready !== undefined ? page.ready : whenLoaded(page.el, PAGE_WAIT_MS);
+        // A page no longer waits for its pictures behind a page-wide veil (a tinted layer that blocked taps and, with the band gone from it,
+        // looked like a block of colour): its blocks load on their own. Only a page that says so (`ready`) is waited for.
+        const wait = page.ready ?? null;
         // Start-up: the page shows at once under the loading veil, which stays up (and survives the page being rebuilt as the data
         // arrives) until the data has settled and the first pictures are in; no sharp half-loaded page shows between.
         if (!this.plugin.booted) {

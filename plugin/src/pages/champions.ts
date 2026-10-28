@@ -1,5 +1,5 @@
 import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, blockLoad, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, slideSeg, tip } from "../ui";
+import { DAMAGE_COLOR, blockLoad, blockUntil, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, slideSeg, tip } from "../ui";
 import { TAG_GROUPS, championProfile, iconFilter, tagFilter } from "./profile";
 import { buildTab } from "./build";
 import type { PageCtx, PageOut } from "./index";
@@ -183,6 +183,9 @@ export function championCard(ctx: PageCtx): PageOut {
     bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
     const head = h(hero, "div", "mn-card-head");
     const im = h(head, "img", "mn-card-img"); im.src = c.icon; im.alt = "";
+    // the banner loads as a block of its own: the splash picture (a CSS background, so it is fetched here) and the icon
+    const splash = bg.style.backgroundImage.slice(5, -2);
+    blockUntil(hero, Promise.all([new Promise<void>((r) => { const s = new Image(); s.onload = s.onerror = () => r(); s.src = splash; }), new Promise<void>((r) => { if (im.complete) r(); else { im.addEventListener("load", () => r(), { once: true }); im.addEventListener("error", () => r(), { once: true }); } })]).then(() => undefined));
     const who = h(head, "div", "mn-card-who");
     h(who, "h1", "mn-title", c.name);
     h(who, "div", "mn-card-sub", c.title);
@@ -219,7 +222,7 @@ export function championCard(ctx: PageCtx): PageOut {
     }
     slideSeg(seg);
     show(lastSub.get(c.id) ?? "skills");
-    return { title: "", el };   // the name is in the banner; no second copy in the top bar
+    return { title: "", el, ready: null };   // the name is in the banner; no second copy in the top bar; the page shows at once, its blocks load on their own
 }
 
 function skills(body: HTMLElement, c: Champion, ctx: PageCtx): { el: HTMLElement; open(): void } | null {
