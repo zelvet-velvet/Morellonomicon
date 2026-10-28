@@ -83,11 +83,8 @@ sticker: lucide//activity
 - [ ] **洛克's lane**: newer than Meraki's lane data (16.3); add `positions` to his note by hand. Current lane data needs the ranked count with a Riot key.
 - [ ] **Nicknames**: an `aliases` key per champion for names people say that do not sound like the zh_TW name (機器人, 亞索).
 - [ ] **On-hit list**: `onhit` is only set for 卡特蓮娜; draft it for other champions for review.
-- [x] **Fetch script**: `tools/fetch_data.py` (champions + items, zh_TW, patch in every note).
 - [ ] **Item notes check**: 142 ARAM-only items (`77NNNN`) are linked to their base item; look at a few notes in Obsidian and confirm the ARAM copies are what the Mayhem shop sells.
 - [ ] **Offline images**: optional `tools/cache_images.py` into a gitignored folder.
-- [x] **Augment data**: names, rarity, icons (no effect text exists in CommunityDragon).
-- [x] **Augment effects**: from Riot's game text and patch notes (234 of 249); 15 still have none.
 - [ ] **Augment numbers**: find the game file with the augments' DataValues so the X placeholders can be filled.
 - [ ] **Augment fit**: `fits` (archetypes the augment suits), `tier`, `combos` on the augment notes; then the champion card's "Best augments" block matches them to a champion's archetypes.
 - [ ] **Statistics**: win / pick rates for Mayhem augments need either Match-V5 (developer key, queue for ARAM Mayhem, many matches) or a cited community source. Decide in phase 2.
@@ -106,12 +103,10 @@ sticker: lucide//activity
 - [ ] **Damage diffs**: compare per-rank damage using CommunityDragon's old game data (`raw.communitydragon.org/<patch>/game/data/characters/...`, about 11 MB per patch); most balance patches change damage, so the badge undercounts until this is in.
 - [>] **Mayhem-specific balance**: the official notes list Mayhem champion adjustments under the Mayhem heading (none in 26.21); `mayhem_champions` is read but not shown yet.
 - [ ] **Item and augment changes**: the same diff for items (price, stats, text).
-- [x] **Run it each patch**: automatic (GitHub Actions), or by hand with `python3 -I tools/update_patch.py --commit`.
 - [ ] **Actions versions**: GitHub warns that `checkout@v4`, `setup-python@v5` and `cache@v4` run on a deprecated Node; bump them when newer majors are confirmed.
 - [ ] **Augment effects before 26.19**: only augments introduced in the last 3 patches have Riot's effect text; run `fetch_patch_notes.py --patches 12` to reach further back, or write `effect` by hand.
 
 ### 🧮 Match data
-- [x] **Mayhem match data is not available**: Riot's Match-V5 lists none of the seed account's Mayhem games (checked 2026-10-27; OP.GG shows the same gap). `tools/fetch_builds.py` stays for Summoner's Rift.
 - [ ] ~~First real run~~ (Rift only): needs a Riot key in `.env` (`RIOT_API_KEY=RGAPI-...`) and a seed Riot ID; `python3 tools/fetch_builds.py --seed "Name#TW2" --matches 300`. A development key expires every 24 hours; a personal key does not. Check that the augment ids in the matches match the notes' ids and that final items include the ARAM `77NNNN` ids.
 - [ ] **Hand-written builds and tips**: `builds` (kind meta / alt / synergy, mode, name, items, note, with) and `tips` (title, text, video) in a champion note's frontmatter; none written yet.
 - [ ] **Augments sub-tab**: use the counted augment picks (and `fits`) once there is data.
@@ -121,12 +116,10 @@ sticker: lucide//activity
 - [ ] **More decks**: Rift basics, ward and map reading, ping etiquette; one card each for the trick-of-the-week.
 
 ### 🎬 Videos
-- [x] **Skill demo clips**: play on the phone from Riot's ability CDN, looping without controls.
 - [ ] **Other forms**: champions that swap forms or upgrade through a mechanic Riot's text does not word as 進化 / 升級 (Viktor, Jayce, Elise, Nidalee, Gnar, Aphelios…) show their base skill only; list them and add hand-written upgrade text.
 - [ ] **Skill combo videos**: optional `video:` (YouTube id) per champion note. OP.GG's channel could not be listed without the YouTube Data API (the page is JavaScript and the RSS feed gave 404); needs a free API key in `.env` (`YOUTUBE_API_KEY`), or hand-picked ids. The plugin shows a `youtube-nocookie` embed when the field exists, else a "search on YouTube" button.
 
 ### 🧩 Plugin (TypeScript, from the ZeLedger skeleton)
-- [x] **Shell**: in daily use on the phone (iPhone 12 Pro Max).
 - [ ] **Rift slot**: `plugin/src/modes.ts` has Rift (disabled); to open it set `enabled`, give `home.ts` and the champion card's "Build" block real content, and fill the `rift` item flag.
 - [ ] **Mayhem advisor**: augment data first, then the card's "Best augments" block (augments declare which archetypes they suit; champions pin / avoid).
 - [ ] **Sheets and settings panel** when a flow needs them (the skeleton has a bottom sheet to copy).
@@ -142,11 +135,18 @@ sticker: lucide//activity
 
 ### 📱 Phone
 - [ ] **Haptic**: check Settings → Test haptic on the phone; remove the haptic code if nothing works in Obsidian.
-- [x] **Git clone on the phone**: works; Zaviel pulls and tests every change on the phone.
 
 ## 💡 Ideas
 - A static website export of the vault for people without Obsidian.
 - A "what do I build?" note per champion that changes with the enemy team (armor vs magic resist).
 
 ## 🏁 Last Progress
+- **Data / fetch script**: champions and items in zh_TW, the patch in every note.
+- **Data / augments**: names, rarity and icons for all 249.
+- **Data / augment effects**: Riot's own text for 234 of 249.
+- **Patch / automatic update**: the GitHub job regenerates everything Wed-Fri.
+- **Match data / Mayhem**: Riot publishes no Mayhem matches; builds counting stays for Summoner's Rift.
+- **Videos / skill clips**: play on the phone, looping without controls.
+- **Plugin / app**: in daily use on the phone.
+- **Phone / Git clone**: works; every change is tested on the phone.
 - **Project**: repo created on GitHub (public).
