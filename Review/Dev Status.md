@@ -9,7 +9,7 @@ sticker: lucide//activity
 > Read [[LLM Guide]] before any `CMD_` or status update. This note is kept by `CMD_SYNC` / `CMD_ROLLOVER` / `CMD_NOTES_SYNC`; the day notes in `Review/Log/` by `CMD_JOURNAL`.
 
 ## 🚀 Today's Progress (2026-10-28)
-- **Clip crop and fade**: every clip card fills the picture, cut to where the champion stands (about two thirds from the left), with a faded lower edge and the tags / steps just above the words (to check on the phone).
+- **Clip crop and fade**: every clip card fills the picture, cut to where the champion stands (about three quarters from the left), with an eased fade (no edge line) and the tags / steps just above the words (to check on the phone).
 - **Combo card**: Jayce's cannon page is the demo clip with the ability pictures, an arrow and three result chips instead of text columns; a new `combo` visual; its clip fills the card (cut to the middle) and plays E then Q (to check on the phone).
 - **Clip cards and centring**: clips sit as a rounded 16:9 picture on the card's own background (no black strip, no blur); skill cards are centred vertically; the number card says which rank its bars use (to check on the phone).
 - **Loading screen tips in the Handbook**: the trivia card shows the game's own loading screen tips in zh_TW, only the ones Zaviel picked from the wiki (2017 Miscellaneous and 2025 Did You Know, all 152 found), over one of ARAM's three loading screen backgrounds (Howling Abyss, Butcher's Bridge, the Ionian bridge); random each visit, no repeats.

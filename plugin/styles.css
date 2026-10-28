@@ -453,11 +453,12 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-sl-vis { flex: 1 1 auto; min-height: 40%; display: flex; align-items: center; justify-content: center; padding: 22px 14px 40px; overflow: hidden;
     background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--mn-accent) 10%, var(--mn-card-hi)), var(--mn-card) 75%); }
 .mn-sl-vis.is-img { padding: 0; background: #000; }
-.mn-sl-vis.is-video, .mn-sl-vis.is-clip, .mn-sl-vis.is-combo { padding: 0 0 40px; align-items: stretch; }
-/* a clip fills the picture; Riot's clips have the champion about two thirds from the left, so the cut keeps that part, and the lower edge fades into the card */
+.mn-sl-vis.is-video, .mn-sl-vis.is-clip, .mn-sl-vis.is-combo { padding: 0; align-items: stretch; background: #0a0c12; }   /* the same dark as the words panel, so the fade leaves no line */
+/* a clip fills the picture; Riot's clips have the champion about three quarters from the left, so the cut keeps that part, and the lower edge fades into the card */
 .mn-sl-video { position: relative; width: 100%; height: 100%; overflow: hidden; }
-.mn-sl-video video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 66% 50%; display: block;
-    -webkit-mask-image: linear-gradient(180deg, #000 68%, transparent 100%); mask-image: linear-gradient(180deg, #000 68%, transparent 100%); }
+.mn-sl-video video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 75% 50%; display: block;
+    -webkit-mask-image: var(--mn-fade); mask-image: var(--mn-fade); }
+.mn-sl-video { --mn-fade: linear-gradient(180deg, #000 0, #000 52%, rgba(0, 0, 0, 0.85) 62%, rgba(0, 0, 0, 0.6) 72%, rgba(0, 0, 0, 0.35) 82%, rgba(0, 0, 0, 0.12) 92%, transparent 100%); }   /* eased in steps, a plain two-stop fade shows a line */
 .mn-sl-img { width: 100%; height: 100%; object-fit: cover; }
 .mn-sl-splash { object-position: 70% 20%; }
 .mn-sl-hero { display: flex; align-items: center; justify-content: center; color: var(--mn-accent); }
