@@ -11,6 +11,7 @@ import { demo } from "./skills";
 //   clip     Champ Key[2]     the ability's clip fills the picture, key + name on top, tags below
 //   number   Champ Key        the scaling as one big number, and what it adds up to at a few stat values
 //   forms    Champ A B [*B]   two forms side by side, one line of Q / W / E each; * marks the form to look at
+//   formset  Champ A B        both forms' ability pictures: the R of each big, its Q W E under it (Jayce-style files: <id>q_melee / _ranged)
 export interface CardData { c: Champion; s: Skill; args: string[] }
 type Fill = (el: HTMLElement, d: CardData) => void;
 interface Layout { areas: string[]; rows: string; fill: Record<string, Fill> }
@@ -18,6 +19,7 @@ interface Layout { areas: string[]; rows: string; fill: Record<string, Fill> }
 const AD_EXAMPLES = [0, 100, 200];    // bonus physical attack values a number card works out
 const AP_EXAMPLES = [0, 150, 300];    // magic attack values a number card works out
 const FORM_ICONS = ["hammer", "crosshair"];
+const FORM_ART = "https://raw.communitydragon.org/latest/game/assets/characters";   // <id>/hud/icons2d/<id><key>_melee|ranged.png: the picture of each form's ability
 const DAMAGE_ROW = /^(物理|魔法|真實)傷害|^治療|^護盾/;
 const SCALING = /\+([\d./]+)%\s*(額外物理攻擊|物理攻擊|魔法攻擊)/;
 
@@ -136,7 +138,35 @@ const bars: Fill = (el, { s }) => {
     h(two, "i").style.background = sc.color;
     two.append(`${sc.stat}帶來`);
 };
-const formsTitle: Fill = (el, { c, args }) => { h(el, "span", undefined, `${c.name} · ${args.filter((a) => !a.startsWith("*")).length || 2} 種型態`); };
+const formsTitle: Fill = (el, { c, args }) => {
+    const im = h(el, "img", "mn-ck-sq"); im.src = c.icon; im.alt = "";   // the champion's square picture
+    h(el, "span", undefined, `${c.name} · ${args.filter((a) => !a.startsWith("*")).length || 2} 種型態`);
+};
+// both forms as pictures: each column has its R big, then Q W E under it, every one with its short name
+const formSets: Fill = (el, { c, args }) => {
+    const names = args.map((a) => a.replace(/^\*/, "")).filter((a) => !/^[PQWER]\d?$/i.test(a));
+    const id = c.id.toLowerCase();
+    names.forEach((form, i) => {
+        const col = h(el, "div", "mn-ck-set");
+        const t = h(col, "div", "mn-ck-formh");
+        icon(t, FORM_ICONS[i] ?? "shapes");
+        h(t, "span", undefined, form);
+        const pic = (parent: HTMLElement, key: string, big: boolean) => {
+            const s = c.skills.find((x) => x.key === key);
+            if (!s) return;
+            const cell = h(parent, "div", "mn-ck-cell" + (big ? " is-big" : ""));
+            const ic = h(cell, "div", "mn-ck-ic" + (big ? " is-big" : " is-sm"));
+            ic.style.setProperty("--c", kindColor(s));
+            const im = h(ic, "img"); im.alt = ""; im.src = `${FORM_ART}/${id}/hud/icons2d/${id}${key.toLowerCase()}_${i === 0 ? "melee" : "ranged"}.png`;
+            im.addEventListener("error", () => { if (i === 0) im.src = s.icon; else im.remove(); }, { once: true });
+            keyBadge(ic, key, kindColor(s));
+            h(cell, "span", "mn-ck-cn", s.name.split("／")[i] ?? s.name);
+        };
+        pic(col, "R", true);
+        const row = h(col, "div", "mn-ck-qwe");
+        for (const k of ["Q", "W", "E"]) pic(row, k, false);
+    });
+};
 // one column per form; each of Q W E is the part of its text that follows "<form>型態："
 const formCols: Fill = (el, { c, args }) => {
     const names = args.map((a) => a.replace(/^\*/, "")).filter((a) => !/^[PQWER]$/i.test(a));
@@ -164,6 +194,7 @@ const LAYOUTS: Record<string, Layout> = {
     clip: { areas: ["media", "tags"], rows: "1fr auto", fill: { media, tags } },
     number: { areas: ["hero", "bars"], rows: "auto 1fr", fill: { hero, bars } },
     forms: { areas: ["formsTitle", "formCols"], rows: "auto 1fr", fill: { formsTitle, formCols } },
+    formset: { areas: ["formsTitle", "formSets"], rows: "auto 1fr", fill: { formsTitle, formSets } },
 };
 
 // Lays out a card's picture area from a template; false when the champion or skill is not there (the caller shows nothing special)
@@ -172,7 +203,7 @@ export function cardKit(box: HTMLElement, kind: string, c: Champion | undefined,
     if (!layout || !c) return false;
     const key = (args.find((a) => /^[PQWER]\d?$/i.test(a)) ?? "Q").toUpperCase();
     const s = c.skills.find((x) => x.key === key.charAt(0));
-    if (!s && kind !== "forms") return false;
+    if (!s && kind !== "forms" && kind !== "formset") return false;
     const root = h(box, "div", `mn-ck mn-ck-${kind}`);
     root.style.gridTemplateAreas = layout.areas.map((a) => `"${a}"`).join(" ");
     root.style.gridTemplateRows = layout.rows;

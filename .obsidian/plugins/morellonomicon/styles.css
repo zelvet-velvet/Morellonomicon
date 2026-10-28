@@ -395,6 +395,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-pager { position: relative; z-index: 1; height: 100%; box-sizing: border-box; overflow: hidden; touch-action: none; }   /* clipped, so cards swiped away never make the page scroll; every touch is ours (a card's long text is scrolled by hand, see deck.ts), so the browser never cancels a drag */
 .mn-pager { transition: opacity 0.25s ease-out; }
 .mn-pager.is-wait { opacity: 0; }
+.mn-deck-load { position: absolute; z-index: 0; left: 0; right: 0; top: 45%; text-align: center; font-size: 13px; letter-spacing: 0.14em; color: var(--mn-faint); animation: mn-fade 0.4s ease-out both; }
 .mn-pager.is-drag { user-select: none; cursor: grabbing; }
 /* the cards lie in one pile; the top one is dragged away (see deck.ts); the room above them lets a tilted card pass over the bars */
 .mn-slide { position: absolute; left: 0; right: 0; top: var(--mn-lift); bottom: var(--mn-pile); box-sizing: border-box; padding: 0 10px; display: flex; transform-origin: 50% 130%; will-change: transform; }
@@ -505,7 +506,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-peek.is-ready .mn-peek-ic { color: var(--text-on-accent, #fff); background: var(--mn-accent); transform: scale(1.08); }
 .mn-peek.is-ready .mn-peek-k { color: var(--mn-accent); }
 /* the card kit (cardkit.ts): templates place these components in grid areas; one look for key squares, tag pills, numbers and stats */
-.mn-sl-vis.is-ability, .mn-sl-vis.is-number, .mn-sl-vis.is-forms { align-items: stretch; padding: 16px 14px 40px; }
+.mn-sl-vis.is-ability, .mn-sl-vis.is-number, .mn-sl-vis.is-forms, .mn-sl-vis.is-formset { align-items: stretch; padding: 16px 14px 40px; }
 .mn-sl-vis.is-clip { padding: 0; background: #000; align-items: stretch; }
 .mn-ck { display: grid; width: 100%; height: 100%; min-height: 0; gap: 9px; }
 .mn-ck-slot { min-width: 0; min-height: 0; }
@@ -562,6 +563,19 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-ck-fl { display: grid; grid-template-columns: 22px 1fr; gap: 6px; align-items: start; font-family: var(--mn-serif); font-size: 11.5px; line-height: 1.5; color: var(--mn-muted); }
 .mn-ck-fl .mn-ck-key { width: 20px; height: 20px; border-radius: 6px; font-size: 11px; }
 .mn-ck-fl span:last-child { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; word-break: keep-all; overflow-wrap: anywhere; line-break: strict; }
+.mn-ck-sq { width: 30px; height: 30px; border-radius: 9px; margin-right: 8px; vertical-align: middle; border: 1.5px solid rgba(255, 255, 255, 0.5); }
+.mn-ck-formsTitle { display: flex; align-items: center; }
+.mn-ck-formSets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-content: start; }
+.mn-ck-set { display: flex; flex-direction: column; align-items: center; gap: 9px; padding: 10px 6px 10px; border-radius: 14px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); min-width: 0; }
+.mn-ck-set .mn-ck-formh { align-self: flex-start; padding-left: 4px; }
+.mn-ck-cell { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; text-align: center; }
+.mn-ck-cn { max-width: 100%; font-family: var(--mn-serif); font-size: 11px; line-height: 1.25; color: var(--mn-muted); }
+.mn-ck-cell.is-big .mn-ck-cn { font-size: 13px; font-weight: 700; color: var(--mn-text); }
+.mn-ck-ic.is-big { width: 78px; height: 78px; border-radius: 20px; }
+.mn-ck-ic.is-sm { width: 46px; height: 46px; border-radius: 12px; border-width: 2px; }
+.mn-ck-ic.is-sm img { border-radius: 9px; }
+.mn-ck-ic.is-sm .mn-ck-key { width: 19px; height: 19px; font-size: 10.5px; right: -6px; bottom: -6px; border-width: 1.5px; border-radius: 6px; }
+.mn-ck-qwe { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; width: 100%; }
 .mn-sl-card.is-shiver { animation: mn-shiver 0.28s ease-in-out; }
 @keyframes mn-shiver { 20% { translate: -5px 0; } 45% { translate: 4px 0; } 70% { translate: -2px 0; } 100% { translate: 0 0; } }
 

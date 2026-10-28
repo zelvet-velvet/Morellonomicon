@@ -57,6 +57,18 @@ export function whenLoaded(root: HTMLElement, ms: number, count = FIRST_SCREEN):
     });
 }
 
+// Every picture and clip under `root` has its first frame (or failed, or was removed because no format loaded), or `ms` passed.
+// Checked on a short timer rather than events, because a clip whose sources all fail is removed without any event.
+export function whenMediaLoaded(root: HTMLElement, ms: number): Promise<void> {
+    const media = Array.from(root.querySelectorAll<HTMLImageElement | HTMLVideoElement>("img, video"));
+    const ready = (m: HTMLImageElement | HTMLVideoElement) => !m.isConnected || (m instanceof HTMLVideoElement ? m.readyState >= 2 || !!m.error : m.complete);
+    return new Promise((done) => {
+        const t0 = Date.now();
+        const tick = () => { if (media.every(ready) || Date.now() - t0 > ms) done(); else window.setTimeout(tick, 150); };
+        tick();
+    });
+}
+
 // A hold does not count as a tap (the element's tap action stays for a quick tap).
 const HOLD_MS = 280;
 export const holdTip = (el: HTMLElement, text: string | (() => string)): void => {

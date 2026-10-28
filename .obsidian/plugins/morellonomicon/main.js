@@ -514,6 +514,18 @@ function whenLoaded(root, ms, count2 = FIRST_SCREEN) {
     }
   });
 }
+function whenMediaLoaded(root, ms) {
+  const media2 = Array.from(root.querySelectorAll("img, video"));
+  const ready = (m) => !m.isConnected || (m instanceof HTMLVideoElement ? m.readyState >= 2 || !!m.error : m.complete);
+  return new Promise((done) => {
+    const t0 = Date.now();
+    const tick = () => {
+      if (media2.every(ready) || Date.now() - t0 > ms) done();
+      else window.setTimeout(tick, 150);
+    };
+    tick();
+  });
+}
 var HOLD_MS = 280;
 var holdTip = (el, text) => {
   let timer = 0, shown = false;
@@ -2411,6 +2423,7 @@ function marked(parent, text, q) {
 var AD_EXAMPLES = [0, 100, 200];
 var AP_EXAMPLES = [0, 150, 300];
 var FORM_ICONS = ["hammer", "crosshair"];
+var FORM_ART = "https://raw.communitydragon.org/latest/game/assets/characters";
 var DAMAGE_ROW = /^(物理|魔法|真實)傷害|^治療|^護盾/;
 var SCALING = /\+([\d./]+)%\s*(額外物理攻擊|物理攻擊|魔法攻擊)/;
 var kindColor = (s) => DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--mn-muted)";
@@ -2546,7 +2559,39 @@ var bars = (el, { s }) => {
   two.append(`${sc.stat}\u5E36\u4F86`);
 };
 var formsTitle = (el, { c, args }) => {
+  const im = h(el, "img", "mn-ck-sq");
+  im.src = c.icon;
+  im.alt = "";
   h(el, "span", void 0, `${c.name} \xB7 ${args.filter((a) => !a.startsWith("*")).length || 2} \u7A2E\u578B\u614B`);
+};
+var formSets = (el, { c, args }) => {
+  const names = args.map((a) => a.replace(/^\*/, "")).filter((a) => !/^[PQWER]\d?$/i.test(a));
+  const id = c.id.toLowerCase();
+  names.forEach((form, i) => {
+    const col = h(el, "div", "mn-ck-set");
+    const t = h(col, "div", "mn-ck-formh");
+    icon(t, FORM_ICONS[i] ?? "shapes");
+    h(t, "span", void 0, form);
+    const pic = (parent, key, big) => {
+      const s = c.skills.find((x) => x.key === key);
+      if (!s) return;
+      const cell = h(parent, "div", "mn-ck-cell" + (big ? " is-big" : ""));
+      const ic = h(cell, "div", "mn-ck-ic" + (big ? " is-big" : " is-sm"));
+      ic.style.setProperty("--c", kindColor(s));
+      const im = h(ic, "img");
+      im.alt = "";
+      im.src = `${FORM_ART}/${id}/hud/icons2d/${id}${key.toLowerCase()}_${i === 0 ? "melee" : "ranged"}.png`;
+      im.addEventListener("error", () => {
+        if (i === 0) im.src = s.icon;
+        else im.remove();
+      }, { once: true });
+      keyBadge(ic, key, kindColor(s));
+      h(cell, "span", "mn-ck-cn", s.name.split("\uFF0F")[i] ?? s.name);
+    };
+    pic(col, "R", true);
+    const row2 = h(col, "div", "mn-ck-qwe");
+    for (const k of ["Q", "W", "E"]) pic(row2, k, false);
+  });
 };
 var formCols = (el, { c, args }) => {
   const names = args.map((a) => a.replace(/^\*/, "")).filter((a) => !/^[PQWER]$/i.test(a));
@@ -2571,14 +2616,15 @@ var LAYOUTS = {
   ability: { areas: ["head", "tags", "desc", "numbers", "stats"], rows: "auto auto auto 1fr auto", fill: { head, tags, desc, numbers: numbers2, stats } },
   clip: { areas: ["media", "tags"], rows: "1fr auto", fill: { media, tags } },
   number: { areas: ["hero", "bars"], rows: "auto 1fr", fill: { hero, bars } },
-  forms: { areas: ["formsTitle", "formCols"], rows: "auto 1fr", fill: { formsTitle, formCols } }
+  forms: { areas: ["formsTitle", "formCols"], rows: "auto 1fr", fill: { formsTitle, formCols } },
+  formset: { areas: ["formsTitle", "formSets"], rows: "auto 1fr", fill: { formsTitle, formSets } }
 };
 function cardKit(box, kind, c, args) {
   const layout = LAYOUTS[kind];
   if (!layout || !c) return false;
   const key = (args.find((a) => /^[PQWER]\d?$/i.test(a)) ?? "Q").toUpperCase();
   const s = c.skills.find((x) => x.key === key.charAt(0));
-  if (!s && kind !== "forms") return false;
+  if (!s && kind !== "forms" && kind !== "formset") return false;
   const root = h(box, "div", `mn-ck mn-ck-${kind}`);
   root.style.gridTemplateAreas = layout.areas.map((a) => `"${a}"`).join(" ");
   root.style.gridTemplateRows = layout.rows;
@@ -2599,7 +2645,7 @@ var TILT = 12;
 var GONE = -1.2;
 var FAN = [0, 2.6, -2.2, -2.2];
 var STEP_Y = 6;
-var DECK_WAIT_MS = 800;
+var DECK_WAIT_MS = 8e3;
 var NEAR_BEHIND = 1;
 var NEAR_AHEAD = 2;
 var SETTLE_MS = 280;
@@ -2756,11 +2802,16 @@ function deckPage(ctx, file) {
       show();
     };
     layout(false);
-    const first = whenLoaded(sec[0], DECK_WAIT_MS);
-    if (first) {
-      pager.addClass("is-wait");
-      void first.then(() => pager.removeClass("is-wait"));
-    }
+    const loading = h(wrap, "div", "mn-deck-load", "\u8F09\u5165\u4E2D\u2026");
+    pager.addClass("is-wait");
+    sec.forEach((c) => c.querySelectorAll("video").forEach((v) => {
+      void v.play().catch(() => void 0);
+    }));
+    void whenMediaLoaded(pager, DECK_WAIT_MS).then(() => {
+      pager.removeClass("is-wait");
+      loading.remove();
+      layout(false);
+    });
     const onResize = () => layout(false);
     window.addEventListener("resize", onResize);
     ctx.component.register(() => window.removeEventListener("resize", onResize));
@@ -2939,7 +2990,7 @@ function visual(ctx, box, s) {
       d.style.setProperty("--c", DAMAGE_COLOR[k]);
     }
     return;
-  } else if (kind === "ability" || kind === "clip" || kind === "number" || kind === "forms") {
+  } else if (kind === "ability" || kind === "clip" || kind === "number" || kind === "forms" || kind === "formset") {
     if (cardKit(box, kind, champ(args[0]), args.slice(1))) return;
   } else if (kind === "skill") {
     const c = champ(args[0]), k = (args[1] ?? "Q").toUpperCase();

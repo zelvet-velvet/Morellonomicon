@@ -1,7 +1,7 @@
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { Champion } from "../data/store";
 import { mapUrl } from "./handbook";
-import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg, whenLoaded, SWIPE } from "../ui";
+import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, haptic, icon, laneChip, roleChip, svg, whenMediaLoaded, SWIPE } from "../ui";
 import { factsStrip, profileAxes, profileRadar, styleCard, tagRow } from "./profile";
 import type { PageCtx, PageOut } from "./index";
 import { cardKit } from "./cardkit";
@@ -34,7 +34,7 @@ const TILT = 12;       // degrees a card tilts per card width it is dragged (lik
 const GONE = -1.2;     // where a swiped-away card rests, in card widths to the left of the pile
 const FAN = [0, 2.6, -2.2, -2.2];   // degrees the cards under the top one lean, so the pile looks laid on a table
 const STEP_Y = 6;      // px each card under the top one sits lower, so their edges show like a stack of cards
-const DECK_WAIT_MS = 800;   // the pile waits this long at most for the first card's pictures
+const DECK_WAIT_MS = 8000;   // the pile waits this long at most for the topic's pictures and clips
 const NEAR_BEHIND = 1;   // cards already seen that are still painted (the one that comes back on a right swipe)
 const NEAR_AHEAD = 2;    // cards under the top one that are painted (the pile shows two)
 const SETTLE_MS = 280;
@@ -187,9 +187,12 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             show();
         };
         layout(false);
-        // the pile shows once the top card's pictures have loaded (or after a moment), not with empty frames
-        const first = whenLoaded(sec[0], DECK_WAIT_MS);
-        if (first) { pager.addClass("is-wait"); void first.then(() => pager.removeClass("is-wait")); }
+        // The pile shows once every picture and clip of the topic has its first frame (or after DECK_WAIT_MS), so nothing pops in
+        // while swiping. Clips under the top card are told to play meanwhile: a phone may not fetch a paused clip at all.
+        const loading = h(wrap, "div", "mn-deck-load", "載入中…");
+        pager.addClass("is-wait");
+        sec.forEach((c) => c.querySelectorAll("video").forEach((v) => { void v.play().catch(() => undefined); }));
+        void whenMediaLoaded(pager, DECK_WAIT_MS).then(() => { pager.removeClass("is-wait"); loading.remove(); layout(false); });
         const onResize = () => layout(false);
         window.addEventListener("resize", onResize);
         ctx.component.register(() => window.removeEventListener("resize", onResize));
@@ -340,7 +343,7 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
         const row = h(box, "div", "mn-sl-dmg");
         for (const k of ["物理", "魔法", "真實"]) { const d = h(row, "div", "mn-sl-dmg-k", k); d.style.setProperty("--c", DAMAGE_COLOR[k]); }
         return;
-    } else if (kind === "ability" || kind === "clip" || kind === "number" || kind === "forms") {
+    } else if (kind === "ability" || kind === "clip" || kind === "number" || kind === "forms" || kind === "formset") {
         if (cardKit(box, kind, champ(args[0]), args.slice(1))) return;
     } else if (kind === "skill") {
         const c = champ(args[0]), k = (args[1] ?? "Q").toUpperCase();
