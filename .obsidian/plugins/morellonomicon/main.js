@@ -2506,7 +2506,7 @@ function handbookPage(ctx) {
     const terms = ((await load()).get(g.file.path) ?? []).map((l) => l.split(/[:：]/)[0].trim()).filter((t) => t && t.length <= 8).slice(0, KEYWORDS);
     spacer.remove();
     for (const t of terms) {
-      const b = h(chips, "button", "mn-key", t);
+      const b = h(chips, "button", "mn-key", t.replace("\uFF08", " (").replace("\uFF09", ")").trim());
       b.addEventListener("click", (e) => {
         e.preventDefault();
         search.value = t;

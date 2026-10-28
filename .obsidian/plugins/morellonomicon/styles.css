@@ -334,7 +334,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* handbook start page */
 .mn-keys { display: flex; gap: 8px; margin: 12px -16px 16px; padding: 0 16px; overflow-x: auto; scrollbar-width: none; }
 .mn-keys::-webkit-scrollbar { display: none; }
-.mn-app .mn-key { flex: none; padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--mn-muted); background: var(--mn-card); border: 1px solid var(--mn-line); }
+.mn-app .mn-key { text-spacing-trim: trim-both; flex: none; padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--mn-muted); background: var(--mn-card); border: 1px solid var(--mn-line); }
 /* the topic list: a progress line, then one row per topic */
 .mn-hb-head { display: flex; justify-content: space-between; align-items: baseline; margin: 4px 4px 8px; }
 .mn-hb-grid + .mn-hb-head, .mn-hb-tile + .mn-hb-head { margin-top: 30px; }

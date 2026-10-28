@@ -166,7 +166,7 @@ export function handbookPage(ctx: PageCtx): PageOut {
         const terms = ((await load()).get(g.file.path) ?? []).map((l) => l.split(/[:：]/)[0].trim()).filter((t) => t && t.length <= 8).slice(0, KEYWORDS);
         spacer.remove();
         for (const t of terms) {
-            const b = h(chips, "button", "mn-key", t);
+            const b = h(chips, "button", "mn-key", t.replace("（", " (").replace("）", ")").trim());   // full-width brackets carry blank space on one side and make the text look off-centre
             b.addEventListener("click", (e) => { e.preventDefault(); search.value = t; void results(t.toLowerCase()); });
         }
     };
