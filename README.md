@@ -1,8 +1,8 @@
 # Morellonomicon 黑魔禁書
 
-給英雄聯盟新手的繁體中文攻略 App(Obsidian),重點是**隨機單中 大混戰(ARAM Mayhem)**:查英雄、查強化、看版本更新、用圖卡學基本觀念。手機和電腦都能用,**不需要寫程式、不需要下指令**。
+給英雄聯盟新手的繁體中文攻略 App（Obsidian），涵蓋**召喚峽谷**和**隨機單中：大混戰（ARAM Mayhem）**：查英雄、查道具和強化、看版本更新、用圖卡學基本觀念。大混戰先做好，召喚峽谷陸續補上。手機和電腦都能用,**不需要寫程式、不需要下指令**。
 
-A Traditional Chinese League of Legends beginner guide that runs inside Obsidian (phone and PC), focused on ARAM Mayhem: champions, augments, patch changes and short picture cards. No coding and no commands needed.
+A Traditional Chinese League of Legends beginner guide that runs inside Obsidian (phone and PC), for Summoner's Rift and ARAM Mayhem: champions, items, augments, patch changes and short picture cards. Mayhem is done first; Summoner's Rift is being added. No coding and no commands needed.
 
 ## 開始使用 / Get started (用 Obsidian Git,最簡單)
 

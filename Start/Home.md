@@ -4,7 +4,7 @@ tags:
   - morellonomicon
 sticker: lucide//house
 ---
-**黑魔禁書 (Morellonomicon)** 是給英雄聯盟新手的繁體中文攻略筆記:英雄定位、技能傷害類型、各模式的出裝思路,以及**隨機單中 大混戰(ARAM Mayhem)** 的強化選擇與強力組合。
+**黑魔禁書 (Morellonomicon)** 是給英雄聯盟新手的繁體中文攻略筆記，涵蓋**召喚峽谷**與**隨機單中：大混戰（ARAM Mayhem）**：英雄定位、分路、技能傷害類型、各模式的出裝思路，以及大混戰的強化選擇與強力組合。
 
 > [!tip] Start here
 > 1. [[Start Guide]]: set up, open on phone, the daily loop.

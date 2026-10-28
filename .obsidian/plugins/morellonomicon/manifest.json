@@ -3,7 +3,7 @@
   "name": "Morellonomicon",
   "version": "0.1.0",
   "minAppVersion": "1.8.7",
-  "description": "A League of Legends beginner guide app: ARAM Mayhem advisor, champions and items, read from the vault's notes.",
+  "description": "A League of Legends beginner guide app for Summoner's Rift and ARAM Mayhem: champions, items, augments and patch changes, read from the vault's notes.",
   "author": "Zaviel Chang",
   "isDesktopOnly": false
 }
