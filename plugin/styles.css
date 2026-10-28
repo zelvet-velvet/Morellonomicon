@@ -400,7 +400,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-pager.is-wait { filter: blur(4px) saturate(0.9); pointer-events: none; }
 /* while something loads: a wide band of light, soft on both sides (no visible edge), slides across at a slant from the bottom right to the left */
 .mn-artload { position: absolute; z-index: 2; top: var(--mn-lift); bottom: var(--mn-pile); left: 10px; right: 10px; overflow: hidden; border-radius: 26px; pointer-events: none; }
-.mn-artload::before, .mn-blkveil::before { content: ""; position: absolute; top: -40%; bottom: -40%; right: 0; width: 66%; transform: translateX(170%) rotate(22deg);
+/* the band is a fixed 1400 px tall, centred on its box, so its ends never show and its slope is the same in a short block, a long one and a card */
+.mn-artload::before, .mn-blkveil::before { content: ""; position: absolute; top: 50%; height: 1400px; margin-top: -700px; right: 0; width: 66%; transform: translateX(170%) rotate(22deg);
     background: linear-gradient(90deg, transparent 0, rgba(255, 255, 255, 0.07) 22%, rgba(255, 255, 255, 0.2) 40%, rgba(255, 255, 255, 0.34) 50%, rgba(255, 255, 255, 0.2) 60%, rgba(255, 255, 255, 0.07) 78%, transparent 100%);
     animation: mn-sheen 1.5s cubic-bezier(0.3, 0.1, 0.3, 1) -0.15s infinite; }
 /* a block that loads on its own (blockLoad in ui.ts): the veil covers the top part of it (a long grid would be too tall to blur) */
