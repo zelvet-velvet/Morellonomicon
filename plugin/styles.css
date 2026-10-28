@@ -385,6 +385,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* guide decks: one card per screen, swiped sideways (each swipe stops on the next card); story-style bars on top;
    the picture takes the top of the card, the words sit at the bottom */
 .mn-deckpage .mn-title-row { margin-bottom: 8px; }
+/* a topic's card page never scrolls: the cards are the whole page (long card text scrolls inside its card) */
+.mn-scroll:has(.mn-deckpage) { overflow-y: hidden; overscroll-behavior: none; }
+.mn-deckpage { touch-action: none; }
 .mn-bars { display: flex; gap: 4px; margin: 0 2px 12px; }
 .mn-bar { flex: 1; height: 3px; border-radius: 2px; background: var(--mn-line); transition: background 0.25s; }
 .mn-bar.is-on { background: var(--mn-accent); }
