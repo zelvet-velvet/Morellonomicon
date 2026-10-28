@@ -5,7 +5,7 @@
     python3 tools/fetch_data.py --only Ahri,Garen --no-items
     python3 tools/fetch_data.py --patch 16.21.1
 
-Writes 英雄/<name>.md and 道具/<name>.md in the vault (the repo root).
+Writes <champion folder>/<name>.md and <item folder>/<name>.md in the vault (the repo root; folder names are in vault_paths.py).
 Only the generated frontmatter keys and the block between GEN_START and GEN_END are rewritten;
 HAND_KEYS in the frontmatter and everything after GEN_END (your own advice) are kept.
 Raw downloads are cached in .cache/ (not in git). Standard library only.
@@ -22,6 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # python3 -I does not add the script folder
 import spells  # noqa: E402
+import vault_paths as folders  # noqa: E402  (where the notes live)
 VAULT = ROOT   # the repo root is the Obsidian vault
 CACHE = ROOT / ".cache" / "ddragon"
 DD = "https://ddragon.leagueoflegends.com"
@@ -359,7 +360,7 @@ def main():
             champions = list(pool.map(one, ids))
         for c in champions:
             fm, gen, tail = champion_note(c, version, champion_bin(c['id']), english.get(c["id"], {}).get("name", ""))
-            changed += write_note(VAULT / "英雄" / f"{safe_name(c['name'])}.md", fm, gen, tail)
+            changed += write_note(VAULT / folders.CHAMPIONS / f"{safe_name(c['name'])}.md", fm, gen, tail)
         print(f"champions: {len(champions)}")
 
     if not args.no_items:
@@ -373,7 +374,7 @@ def main():
         names = {i: file_name(i, it) for i, it in keep.items()}
         for i, it in keep.items():
             fm, gen, tail = item_note(i, it, version, names, keep, items)
-            changed += write_note(VAULT / "道具" / f"{names[i]}.md", fm, gen, tail)
+            changed += write_note(VAULT / folders.ITEMS / f"{names[i]}.md", fm, gen, tail)
         print(f"items: {len(keep)} (of {len(items)}; purchasable on Summoner's Rift or ARAM)")
 
     print(f"{changed} notes written or changed")

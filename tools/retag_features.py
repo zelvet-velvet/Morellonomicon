@@ -41,5 +41,5 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--fresh", default="", help="comma-separated tags to read again from the text alone")
     fresh = tuple(t for t in ap.parse_args().fresh.split(",") if t)
-    changed = [p.stem for p in sorted((fetch_data.VAULT / "英雄").glob("*.md")) if retag(p, fresh)]
+    changed = [p.stem for p in sorted((fetch_data.VAULT / fetch_data.folders.CHAMPIONS).glob("*.md")) if retag(p, fresh)]
     print(f"retagged {len(changed)} champion notes")

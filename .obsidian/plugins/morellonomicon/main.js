@@ -1167,6 +1167,7 @@ function themeVars(id, dark) {
 var DEFAULTS = {
   mode: "mayhem",
   theme: "popping",
+  // where the notes live: the only place the plugin names these folders (tools/vault_paths.py does the same for the scripts)
   championFolder: "\u82F1\u96C4",
   itemFolder: "\u9053\u5177",
   guideFolder: "\u65B0\u624B\u5165\u9580",

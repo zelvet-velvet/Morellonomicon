@@ -3,7 +3,7 @@
 
     python3 tools/fetch_augments.py
 
-Writes 強化/<name>.md for every augment in the Mayhem pool ("KIWI" list in augment-lists.json): name, rarity, icon.
+Writes <augment folder>/<name>.md for every augment in the Mayhem pool ("KIWI" list in augment-lists.json): name, rarity, icon.
 CommunityDragon has no effect text for them, so `effect`, `fits`, `tier` and `combos` are hand-written frontmatter keys
 (kept on a rerun, see HAND_KEYS in fetch_data.py). Standard library only.
 """
@@ -111,7 +111,7 @@ def main():
               "icon": icon_url, "mode": "mayhem", "generated": True}
         gen = f"<img src='{icon_url}' width='56'>  **{a['nameTRA']}**({rarity})"
         name = fd.safe_name(a["nameTRA"]) + (f" ({a['id']})" if counts[a["nameTRA"]] > 1 else "")
-        changed += fd.write_note(fd.VAULT / "強化" / f"{name}.md", fm, gen, "\n\n## 效果\n\n\n## 適合的英雄\n\n")
+        changed += fd.write_note(fd.VAULT / fd.folders.AUGMENTS / f"{name}.md", fm, gen, "\n\n## 效果\n\n\n## 適合的英雄\n\n")
     print(f"augments: {len(picked)} of {len(pool)} in the {POOL} pool; {changed} notes written or changed")
     return 0
 

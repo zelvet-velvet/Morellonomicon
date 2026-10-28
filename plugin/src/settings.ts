@@ -20,6 +20,7 @@ export interface MnSettings {
 export const DEFAULTS: MnSettings = {
     mode: "mayhem",
     theme: "popping",
+    // where the notes live: the only place the plugin names these folders (tools/vault_paths.py does the same for the scripts)
     championFolder: "英雄",
     itemFolder: "道具",
     guideFolder: "新手入門",

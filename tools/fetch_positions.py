@@ -16,6 +16,8 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))   # python3 -I does not add the script folder
+import vault_paths as folders  # noqa: E402  (where the notes live)
 OUT = ROOT / "_data" / "positions.json"
 URL = "https://cdn.merakianalytics.com/riot/lol/resources/latest/en-US/championrates.json"
 LANES = ("TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY")
@@ -24,7 +26,7 @@ LANES = ("TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY")
 def champion_ids():
     """Riot's numeric champion key -> id (Katarina), read from the champion notes."""
     out = {}
-    for path in (ROOT / "英雄").glob("*.md"):
+    for path in (ROOT / folders.CHAMPIONS).glob("*.md"):
         text = path.read_text(encoding="utf-8")
         cid, key = re.search(r'^id: "(.*)"$', text, re.M), re.search(r"^key: (\d+)$", text, re.M)
         if cid and key:
