@@ -101,8 +101,8 @@ var import_obsidian = require("obsidian");
 
 // src/modes.ts
 var MODES = {
-  mayhem: { id: "mayhem", label: "Mayhem", icon: "zap", enabled: true, itemFlag: "aram", tabs: ["champions", "augments", "patch", "handbook"] },
-  rift: { id: "rift", label: "Rift", icon: "map", enabled: false, itemFlag: "rift", tabs: ["champions", "patch", "handbook"] }
+  mayhem: { id: "mayhem", label: "Mayhem", icon: "zap", enabled: true, itemFlag: "aram", tabs: ["augments", "patch", "champions", "handbook"] },
+  rift: { id: "rift", label: "Rift", icon: "map", enabled: false, itemFlag: "rift", tabs: ["patch", "champions", "handbook"] }
 };
 var MODE_ORDER = ["mayhem", "rift"];
 var TAB_LABEL = { champions: "Champions", augments: "Augments", patch: "Patch", handbook: "Handbook" };

@@ -13,8 +13,8 @@ export interface ModeDef {
 }
 
 export const MODES: Record<ModeId, ModeDef> = {
-    mayhem: { id: "mayhem", label: "Mayhem", icon: "zap", enabled: true, itemFlag: "aram", tabs: ["champions", "augments", "patch", "handbook"] },
-    rift: { id: "rift", label: "Rift", icon: "map", enabled: false, itemFlag: "rift", tabs: ["champions", "patch", "handbook"] },
+    mayhem: { id: "mayhem", label: "Mayhem", icon: "zap", enabled: true, itemFlag: "aram", tabs: ["augments", "patch", "champions", "handbook"] },
+    rift: { id: "rift", label: "Rift", icon: "map", enabled: false, itemFlag: "rift", tabs: ["patch", "champions", "handbook"] },
 };
 export const MODE_ORDER: ModeId[] = ["mayhem", "rift"];
 
