@@ -9,7 +9,8 @@ import { handbookPage } from "./handbook";
 import { patchPage } from "./patch";
 import { rosterPage } from "./roster";
 
-export interface PageOut { title: string; el: HTMLElement }
+// `ready`: a page that knows better than the default (the first pictures) what it waits for before it shows
+export interface PageOut { title: string; el: HTMLElement; ready?: Promise<void> | null }
 export interface PageCtx {
     app: App;
     plugin: MorellonomiconPlugin;

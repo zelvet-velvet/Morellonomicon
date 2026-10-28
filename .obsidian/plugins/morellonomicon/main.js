@@ -2139,6 +2139,10 @@ var SNIPPET = 46;
 var MAX_PER_NOTE = 2;
 var KEYWORDS = 8;
 var GLOSSARY = "\u540D\u8A5E\u8868";
+var TRIVIA_TILT = 10;
+var TRIVIA_AT = 0.25;
+var TRIVIA_MS = 300;
+var HOME_WAIT_MS = 3e3;
 var coverUrl = (cover) => {
   const [a, b] = cover.trim().split(/\s+/);
   if (!a) return "";
@@ -2172,9 +2176,9 @@ function handbookPage(ctx) {
     out.empty();
     if (!notes.length) {
       empty(out, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." });
-      return;
+      return null;
     }
-    trivia(out);
+    const tipsReady = trivia(out);
     const decks = notes.filter((n) => n.layout === "deck");
     const block = (name, list2) => {
       if (!list2.length) return;
@@ -2213,40 +2217,87 @@ function handbookPage(ctx) {
     };
     block("\u521D\u4F86\u4E4D\u5230", decks.filter((n) => n.level !== "advanced"));
     block("\u9AD8\u624B\u5FC5\u5099", decks.filter((n) => n.level === "advanced"));
+    return tipsReady;
   };
   const trivia = (parent) => {
     const tips2 = store.loadingTips;
-    if (!tips2.length) return;
+    if (!tips2.length) return null;
     const order = tips2.map((_, i) => i);
     for (let i = order.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [order[i], order[j]] = [order[j], order[i]];
     }
-    let n = 0;
-    const art = Math.floor(Math.random() * ARAM_ART.length);
-    const card = h(parent, "button", "mn-trv");
-    const bg = h(card, "div", "mn-trv-bg");
-    const text = h(card, "div", "mn-trv-tip");
-    icon(h(card, "span", "mn-trv-next"), "refresh-cw");
-    const draw = () => {
-      text.textContent = tips2[order[n % order.length]].text;
-      const url = ARAM_ART[art];
-      if (bg.dataset.url === url) return;
-      bg.dataset.url = url;
-      bg.removeClass("is-in");
-      const img = new Image();
-      img.onload = () => {
-        bg.style.backgroundImage = `url("${url}")`;
-        bg.addClass("is-in");
-      };
-      img.src = url;
+    const url = ARAM_ART[Math.floor(Math.random() * ARAM_ART.length)];
+    const stack = h(parent, "div", "mn-trv-stack");
+    const make = (i, z) => {
+      const c = h(stack, "div", "mn-trv");
+      c.style.backgroundImage = `url("${url}")`;
+      c.style.zIndex = String(z);
+      h(c, "div", "mn-trv-tip", tips2[order[i % order.length]].text);
+      h(c, "div", "mn-trv-hint", "\u2190 \u6ED1\u52D5\u63DB\u4E00\u5247 \u2192");
+      return c;
     };
-    card.addEventListener("click", (e) => {
-      e.preventDefault();
-      n += 1;
-      draw();
+    let n = 0, top = make(0, 2), under = make(1, 1);
+    let busy = false, pid = -1, x0 = 0, y0 = 0, t0 = 0, dx = 0, mode = "";
+    for (const ev of ["touchstart", "touchmove"]) stack.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
+    const pose = (x) => {
+      top.style.transform = `translateX(${x.toFixed(1)}px) rotate(${(x / Math.max(1, stack.clientWidth) * TRIVIA_TILT).toFixed(2)}deg)`;
+    };
+    stack.addEventListener("pointerdown", (e) => {
+      if (busy || pid !== -1 || e.pointerType === "mouse" && e.button !== 0) return;
+      pid = e.pointerId;
+      x0 = e.clientX;
+      y0 = e.clientY;
+      t0 = e.timeStamp;
+      dx = 0;
+      mode = "";
     });
-    draw();
+    stack.addEventListener("pointermove", (e) => {
+      if (e.pointerId !== pid) return;
+      dx = e.clientX - x0;
+      const dy = e.clientY - y0;
+      if (!mode) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        mode = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+        if (mode === "x") {
+          stack.setPointerCapture(pid);
+          top.style.transition = "none";
+        }
+      }
+      if (mode === "x") pose(dx);
+    });
+    const end = (e) => {
+      if (e.pointerId !== pid) return;
+      pid = -1;
+      const m = mode;
+      mode = "";
+      if (m !== "x") return;
+      const w = stack.clientWidth, v = dx / Math.max(1, e.timeStamp - t0);
+      const far = e.type !== "pointercancel" && (Math.abs(dx) > TRIVIA_AT * w || Math.abs(v) > 0.5 && Math.abs(dx) > 24);
+      top.style.transition = `transform ${TRIVIA_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity ${TRIVIA_MS}ms`;
+      if (!far) {
+        top.style.transform = "";
+        return;
+      }
+      busy = true;
+      const gone = top, dir = dx < 0 ? -1 : 1;
+      gone.style.transform = `translateX(${dir * w * 1.3}px) rotate(${dir * TRIVIA_TILT * 1.2}deg)`;
+      window.setTimeout(() => {
+        gone.remove();
+        top = under;
+        top.style.zIndex = "2";
+        n += 1;
+        under = make(n + 1, 1);
+        busy = false;
+      }, TRIVIA_MS);
+    };
+    stack.addEventListener("pointerup", end);
+    stack.addEventListener("pointercancel", end);
+    return new Promise((done) => {
+      const im = new Image();
+      im.onload = im.onerror = () => done();
+      im.src = url;
+    });
   };
   const keywords = async () => {
     const g = notes.find((n) => n.title === GLOSSARY);
@@ -2320,12 +2371,14 @@ function handbookPage(ctx) {
   };
   search.addEventListener("input", () => {
     const q = search.value.trim().toLowerCase();
-    if (!q) home();
+    if (!q) void home();
     else void results(q);
   });
-  home();
+  const tipsLoaded = home();
   void keywords();
-  return { title: "Handbook", el };
+  const tilesLoaded = whenLoaded(el, HOME_WAIT_MS, 99);
+  const ready = tilesLoaded || tipsLoaded ? Promise.race([Promise.all([tipsLoaded, tilesLoaded]).then(() => void 0), new Promise((done) => window.setTimeout(done, HOME_WAIT_MS))]) : null;
+  return { title: "Handbook", el, ready };
 }
 var clean = (l) => l.replace(/^\s*(?:[-*]|\d+\.|>)\s*/, "").replace(/[*_`]/g, "").replace(/!?\[\[?([^\]|]*)(?:\|[^\]]*)?\]\]?/g, "$1").trim();
 function snippet(line, q) {
@@ -2352,7 +2405,8 @@ var PULL = 0.6;
 var GO_AT = 130;
 var TILT = 12;
 var GONE = -1.2;
-var FAN = [0, 1.6, -1.3, -1.3];
+var FAN = [0, 2.6, -2.2, -2.2];
+var STEP_Y = 6;
 var SWIPE_AT = 0.25;
 var FLICK = 0.5;
 var DECK_WAIT_MS = 800;
@@ -2468,16 +2522,17 @@ function deckPage(ctx, file) {
     };
     const pose = (el2, u) => {
       const w = pager.clientWidth;
-      let x = 0, deg = 0, op = "";
+      let x = 0, y = 0, deg = 0, op = "";
       if (u < 0) {
         x = u * w;
         deg = u * TILT;
       } else {
         const k = Math.min(FAN.length - 1, Math.floor(u)), a = FAN[k], b = FAN[Math.min(FAN.length - 1, k + 1)];
         deg = a + (b - a) * (u - k);
+        y = Math.min(u, 2) * STEP_Y;
         if (u > 2) op = String(Math.max(0, 3 - u));
       }
-      el2.style.transform = `translateX(${x.toFixed(1)}px) rotate(${deg.toFixed(2)}deg)`;
+      el2.style.transform = `translateX(${x.toFixed(1)}px) translateY(${y.toFixed(1)}px) rotate(${deg.toFixed(2)}deg)`;
       el2.style.opacity = op;
     };
     let busy = false, settleT = 0;
@@ -2518,7 +2573,7 @@ function deckPage(ctx, file) {
       if (dx < 0) {
         if (cur === lastIdx) {
           const move = dx * PULL;
-          top.style.transform = `translateX(${move.toFixed(1)}px) rotate(${(move / GO_AT * TILT).toFixed(2)}deg)`;
+          top.style.transform = `translateX(${move.toFixed(1)}px) translateY(0px) rotate(${(move / GO_AT * TILT).toFixed(2)}deg)`;
           peek.style.opacity = String(Math.min(1, -move / 30));
           const ready = -move >= GO_AT;
           if (ready !== armed) {
@@ -2533,7 +2588,7 @@ function deckPage(ctx, file) {
         for (let i = cur + 1; i < count2; i++) pose(sec[i], i - cur - p);
       } else {
         if (cur === 0) {
-          top.style.transform = `translateX(${(dx * 0.2).toFixed(1)}px) rotate(${(dx * 0.2 / w * TILT).toFixed(2)}deg)`;
+          top.style.transform = `translateX(${(dx * 0.2).toFixed(1)}px) translateY(0px) rotate(${(dx * 0.2 / w * TILT).toFixed(2)}deg)`;
           return;
         }
         resetPeek();
@@ -3758,7 +3813,7 @@ var MnView = class extends import_obsidian8.ItemView {
       if (anim === "none") return;
       arrive(page2.el, anim);
     };
-    const wait = whenLoaded(page2.el, PAGE_WAIT_MS);
+    const wait = page2.ready !== void 0 ? page2.ready : whenLoaded(page2.el, PAGE_WAIT_MS);
     if (wait) void wait.then(show);
     else show();
   }

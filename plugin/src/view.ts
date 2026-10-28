@@ -220,7 +220,7 @@ export class MnView extends ItemView {
             if (anim === "none") return;
             arrive(page.el, anim);
         };
-        const wait = whenLoaded(page.el, PAGE_WAIT_MS);
+        const wait = page.ready !== undefined ? page.ready : whenLoaded(page.el, PAGE_WAIT_MS);
         if (wait) void wait.then(show); else show();
     }
 }

@@ -31,7 +31,8 @@ const PULL = 0.6;      // how far the last card moves per px pulled (it resists 
 const GO_AT = 130;     // px of card movement that opens the next topic when the finger lifts
 const TILT = 12;       // degrees a card tilts per card width it is dragged (like a Tinder card); left swipe tilts left
 const GONE = -1.2;     // where a swiped-away card rests, in card widths to the left of the pile
-const FAN = [0, 1.6, -1.3, -1.3];   // degrees the cards under the top one lean, so the pile looks laid on a table
+const FAN = [0, 2.6, -2.2, -2.2];   // degrees the cards under the top one lean, so the pile looks laid on a table
+const STEP_Y = 6;      // px each card under the top one sits lower, so their edges show like a stack of cards
 const SWIPE_AT = 0.25; // fraction of the width a drag must cover to turn the card
 const FLICK = 0.5;     // px/ms: a quicker, shorter drag turns the card too
 const DECK_WAIT_MS = 800;   // the pile waits this long at most for the first card's pictures
@@ -152,14 +153,15 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         // `u` places a card: 0 = on top, 1 = first under it … , below 0 = dragged to the left by that many card widths.
         const pose = (el: HTMLElement, u: number) => {
             const w = pager.clientWidth;
-            let x = 0, deg = 0, op = "";
+            let x = 0, y = 0, deg = 0, op = "";
             if (u < 0) { x = u * w; deg = u * TILT; }
             else {
                 const k = Math.min(FAN.length - 1, Math.floor(u)), a = FAN[k], b = FAN[Math.min(FAN.length - 1, k + 1)];
                 deg = a + (b - a) * (u - k);
+                y = Math.min(u, 2) * STEP_Y;
                 if (u > 2) op = String(Math.max(0, 3 - u));
             }
-            el.style.transform = `translateX(${x.toFixed(1)}px) rotate(${deg.toFixed(2)}deg)`;
+            el.style.transform = `translateX(${x.toFixed(1)}px) translateY(${y.toFixed(1)}px) rotate(${deg.toFixed(2)}deg)`;
             el.style.opacity = op;
         };
         let busy = false, settleT = 0;
@@ -192,7 +194,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             if (dx < 0) {
                 if (cur === lastIdx) {
                     const move = dx * PULL;
-                    top.style.transform = `translateX(${move.toFixed(1)}px) rotate(${(move / GO_AT * TILT).toFixed(2)}deg)`;
+                    top.style.transform = `translateX(${move.toFixed(1)}px) translateY(0px) rotate(${(move / GO_AT * TILT).toFixed(2)}deg)`;
                     peek.style.opacity = String(Math.min(1, -move / 30));
                     const ready = -move >= GO_AT;
                     if (ready !== armed) { armed = ready; peek.toggleClass("is-ready", ready); if (ready) haptic(); }
@@ -202,7 +204,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
                 const p = Math.min(1, -dx / w / 0.8);
                 for (let i = cur + 1; i < count; i++) pose(sec[i], i - cur - p);
             } else {
-                if (cur === 0) { top.style.transform = `translateX(${(dx * 0.2).toFixed(1)}px) rotate(${(dx * 0.2 / w * TILT).toFixed(2)}deg)`; return; }
+                if (cur === 0) { top.style.transform = `translateX(${(dx * 0.2).toFixed(1)}px) translateY(0px) rotate(${(dx * 0.2 / w * TILT).toFixed(2)}deg)`; return; }
                 resetPeek();
                 pose(sec[cur - 1], Math.min(0, GONE + dx / w));
                 const p = Math.min(1, dx / w / 0.8);

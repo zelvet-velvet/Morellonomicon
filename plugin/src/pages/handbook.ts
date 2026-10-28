@@ -1,10 +1,14 @@
-import { empty, h, icon, page } from "../ui";
+import { empty, h, icon, page, whenLoaded } from "../ui";
 import type { PageCtx, PageOut } from "./index";
 
 const SNIPPET = 46;      // characters of context around a match
 const MAX_PER_NOTE = 2;  // matching lines shown per guide card
 const KEYWORDS = 8;      // quick-search chips taken from the glossary (two full rows of four)
 const GLOSSARY = "名詞表";
+const TRIVIA_TILT = 10;   // degrees the tip card tilts per card width it is dragged
+const TRIVIA_AT = 0.25;   // fraction of the width a drag must cover to send the card away
+const TRIVIA_MS = 300;    // how long the card takes to leave or spring back
+const HOME_WAIT_MS = 3000;   // the Handbook waits this long at most for all its pictures
 // A topic's cover picture from its `cover:` frontmatter: a champion id (its splash art) or `map <name>` (an ARAM loading screen)
 export const coverUrl = (cover: string): string => {
     const [a, b] = cover.trim().split(/\s+/);
@@ -46,10 +50,10 @@ export function handbookPage(ctx: PageCtx): PageOut {
     // The loading screen on top (an ARAM map with a tip on it), then two blocks of topics, 初來乍到 (the basics) and 高手必備 (advanced):
     // in each, an odd number of topics shows the next one to read large and the rest two across, an even number is all two across
     // (✓ when read). The glossary is the i button on a topic's page.
-    const home = () => {
+    const home = (): Promise<void> | null => {
         out.empty();
-        if (!notes.length) { empty(out, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." }); return; }
-        trivia(out);
+        if (!notes.length) { empty(out, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." }); return null; }
+        const tipsReady = trivia(out);
         const decks = notes.filter((n) => n.layout === "deck");
         const block = (name: string, list: typeof decks) => {
             if (!list.length) return;
@@ -76,33 +80,70 @@ export function handbookPage(ctx: PageCtx): PageOut {
         };
         block("初來乍到", decks.filter((n) => n.level !== "advanced"));
         block("高手必備", decks.filter((n) => n.level === "advanced"));
+        return tipsReady;
     };
 
-    // a loading screen tip (the game's own text) in the middle of one of ARAM's three loading screen backgrounds, dimmed: a random
-    // map and tip each visit; a tap shows another tip on the same map, none comes back until all were shown
-    const trivia = (parent: HTMLElement) => {
+    // The "did you know" stack: the game's own loading screen tips, each on one of ARAM's loading screens, dimmed. Two cards lie
+    // on top of each other (the next tip fully covered); swipe the top one away to either side and the next tip is there, and a
+    // new one slips under it. Returns when the picture has loaded, so the page does not show an empty frame.
+    const trivia = (parent: HTMLElement): Promise<void> | null => {
         const tips = store.loadingTips;
-        if (!tips.length) return;
+        if (!tips.length) return null;
         const order = tips.map((_, i) => i);
         for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
-        let n = 0;
-        const art = Math.floor(Math.random() * ARAM_ART.length);
-        const card = h(parent, "button", "mn-trv");
-        const bg = h(card, "div", "mn-trv-bg");
-        const text = h(card, "div", "mn-trv-tip");
-        icon(h(card, "span", "mn-trv-next"), "refresh-cw");
-        const draw = () => {
-            text.textContent = tips[order[n % order.length]].text;
-            const url = ARAM_ART[art];
-            if (bg.dataset.url === url) return;
-            bg.dataset.url = url;
-            bg.removeClass("is-in");
-            const img = new Image();
-            img.onload = () => { bg.style.backgroundImage = `url("${url}")`; bg.addClass("is-in"); };   // the tip shows at once; the picture fades in under it
-            img.src = url;
+        const url = ARAM_ART[Math.floor(Math.random() * ARAM_ART.length)];
+        const stack = h(parent, "div", "mn-trv-stack");
+        const make = (i: number, z: number): HTMLElement => {
+            const c = h(stack, "div", "mn-trv");
+            c.style.backgroundImage = `url("${url}")`;
+            c.style.zIndex = String(z);
+            h(c, "div", "mn-trv-tip", tips[order[i % order.length]].text);
+            h(c, "div", "mn-trv-hint", "← 滑動換一則 →");
+            return c;
         };
-        card.addEventListener("click", (e) => { e.preventDefault(); n += 1; draw(); });
-        draw();
+        let n = 0, top = make(0, 2), under = make(1, 1);
+        let busy = false, pid = -1, x0 = 0, y0 = 0, t0 = 0, dx = 0, mode: "" | "x" | "y" = "";
+        for (const ev of ["touchstart", "touchmove"]) stack.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });   // Obsidian's edge swipes stay out
+        const pose = (x: number) => { top.style.transform = `translateX(${x.toFixed(1)}px) rotate(${(x / Math.max(1, stack.clientWidth) * TRIVIA_TILT).toFixed(2)}deg)`; };
+        stack.addEventListener("pointerdown", (e) => {
+            if (busy || pid !== -1 || (e.pointerType === "mouse" && e.button !== 0)) return;
+            pid = e.pointerId; x0 = e.clientX; y0 = e.clientY; t0 = e.timeStamp; dx = 0; mode = "";
+        });
+        stack.addEventListener("pointermove", (e) => {
+            if (e.pointerId !== pid) return;
+            dx = e.clientX - x0;
+            const dy = e.clientY - y0;
+            if (!mode) {
+                if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+                mode = Math.abs(dx) > Math.abs(dy) ? "x" : "y";   // sideways is ours; vertical scrolls the page
+                if (mode === "x") { stack.setPointerCapture(pid); top.style.transition = "none"; }
+            }
+            if (mode === "x") pose(dx);
+        });
+        const end = (e: PointerEvent) => {
+            if (e.pointerId !== pid) return;
+            pid = -1;
+            const m = mode;
+            mode = "";
+            if (m !== "x") return;
+            const w = stack.clientWidth, v = dx / Math.max(1, e.timeStamp - t0);
+            const far = e.type !== "pointercancel" && (Math.abs(dx) > TRIVIA_AT * w || (Math.abs(v) > 0.5 && Math.abs(dx) > 24));
+            top.style.transition = `transform ${TRIVIA_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity ${TRIVIA_MS}ms`;
+            if (!far) { top.style.transform = ""; return; }
+            busy = true;
+            const gone = top, dir = dx < 0 ? -1 : 1;
+            gone.style.transform = `translateX(${dir * w * 1.3}px) rotate(${dir * TRIVIA_TILT * 1.2}deg)`;
+            window.setTimeout(() => {
+                gone.remove();
+                top = under; top.style.zIndex = "2";
+                n += 1;
+                under = make(n + 1, 1);
+                busy = false;
+            }, TRIVIA_MS);
+        };
+        stack.addEventListener("pointerup", end);
+        stack.addEventListener("pointercancel", end);
+        return new Promise((done) => { const im = new Image(); im.onload = im.onerror = () => done(); im.src = url; });
     };
 
     // quick-search chips: the glossary's terms
@@ -170,11 +211,16 @@ export function handbookPage(ctx: PageCtx): PageOut {
 
     search.addEventListener("input", () => {
         const q = search.value.trim().toLowerCase();
-        if (!q) home(); else void results(q);
+        if (!q) void home(); else void results(q);
     });
-    home();
+    const tipsLoaded = home();
     void keywords();
-    return { title: "Handbook", el };
+    // the home shows once its pictures (tiles and the tip's background) have all loaded, not piece by piece, so nothing grows in from above
+    const tilesLoaded = whenLoaded(el, HOME_WAIT_MS, 99);
+    const ready = tilesLoaded || tipsLoaded
+        ? Promise.race([Promise.all([tipsLoaded, tilesLoaded]).then(() => undefined), new Promise<void>((done) => window.setTimeout(done, HOME_WAIT_MS))])
+        : null;
+    return { title: "Handbook", el, ready };
 }
 
 // Markdown to plain text for a search line
