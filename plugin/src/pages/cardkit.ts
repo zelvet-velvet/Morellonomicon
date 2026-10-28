@@ -3,13 +3,13 @@ import { DAMAGE_COLOR, h, icon } from "../ui";
 import { tagInfo } from "./profile";
 import { demo } from "./skills";
 
-// The card kit: small components (skill head, tag pills, number grid, stat boxes, big number, form columns) and the layout
+// The card kit: small components (skill head, tag pills, number grid, stat boxes, level bars, form columns) and the layout
 // templates that say which component goes in which grid area. A card names a template and a skill (`ability Malphite R`); the
 // template lays the components out, so every card of a kind has the same structure, colours and icons.
 //
 //   ability  Champ Key        head · tags · text · numbers per rank with scaling · cooldown / cost / range
 //   clip     Champ Key[2] [a-b]   the ability's clip fills the picture (cut to where the champion stands), key + name on top, tags on its lower edge; a-b = play only seconds a to b
-//   number   Champ Key        the scaling as one big number, and what it adds up to at a few stat values
+//   levels   Champ Key [n]    per rank (R: Lv 6 / 11 / 16) two bars: the rank's own damage, and with n of the stat it scales with added
 //   forms    Champ A B [*B]   two forms side by side, one line of Q / W / E each; * marks the form to look at
 //   combo    Champ A B *B K1 K2 [= word word]   the clips of K1 then K2 play one after the other, big, with K1 → K2 as pictures and the result chips on the picture's lower edge (A B *B pick the form's art)
 //   formset  Champ A B        both forms' ability pictures: the R of each big, its Q W E under it (Jayce-style files: <id>q_melee / _ranged)
@@ -17,8 +17,8 @@ export interface CardData { c: Champion; s: Skill; args: string[] }
 type Fill = (el: HTMLElement, d: CardData) => void;
 interface Layout { areas: string[]; rows: string; fill: Record<string, Fill> }
 
-const AD_EXAMPLES = [0, 100, 200];    // bonus physical attack values a number card works out
-const AP_EXAMPLES = [0, 150, 300];    // magic attack values a number card works out
+const LEVELS_STAT = { ap: 300, ad: 200 };   // the stat a levels card adds when the note gives none: a built-up AP or AD build
+const ULT_LEVELS = [6, 11, 16];       // the champion levels an ultimate's ranks open at
 const FORM_ICONS = ["hammer", "crosshair"];
 const FORM_ART = "https://raw.communitydragon.org/latest/game/assets/characters";   // <id>/hud/icons2d/<id><key>_melee|ranged.png: the picture of each form's ability
 const DAMAGE_ROW = /^(物理|魔法|真實)傷害|^治療|^護盾/;
@@ -98,45 +98,35 @@ const media: Fill = (el, { c, s, args }) => {
     keyBadge(hud, s.key, kindColor(s));
     h(hud, "span", "mn-ck-hudn", s.name);
 };
-// the skill's first damage line: its base at the top rank, and what it scales with
-function scaling(s: Skill): { base: number; ranks: number; pct: number; stat: string; color: string } | null {
+// per rank two bars on one scale: the rank's own damage (grey), and the same with the stat added (its colour, the added part labelled)
+const levelBars: Fill = (el, { s, args }) => {
     const row = s.rows.find((r) => /^(物理|魔法|真實)傷害/.test(r.label));
-    if (!row) return null;
-    const m = SCALING.exec(row.note);
-    if (!m) return null;
-    return { base: lastNum(row.vals[row.vals.length - 1]), ranks: row.vals.length, pct: lastNum(m[1]), stat: m[2], color: statColor(m[2]) };
-}
-const hero: Fill = (el, { s }) => {
-    const sc = scaling(s);
-    const color = sc?.color ?? kindColor(s);
-    const ring = h(el, "div", "mn-ck-ring"); ring.style.setProperty("--c", color);
-    icon(ring, sc?.stat.includes("魔法") ? "sparkles" : "sword");
-    const n = h(el, "div", "mn-ck-big", sc ? String(sc.pct) : "—");
-    n.style.color = color;
-    if (sc) h(n, "small", undefined, "%");
-    h(el, "div", "mn-ck-cap", sc ? `${sc.stat}變成傷害` : "這個技能沒有成長數值");
-};
-const bars: Fill = (el, { s }) => {
-    const sc = scaling(s);
-    if (!sc) return;
-    const examples = sc.stat.includes("魔法") ? AP_EXAMPLES : AD_EXAMPLES;
-    const totals = examples.map((v) => sc.base + (sc.pct / 100) * v);
-    const top = Math.max(...totals);
-    examples.forEach((v, i) => {
-        const row = h(el, "div", "mn-ck-bar");
-        h(row, "span", undefined, `${v} 點`);
-        const tr = h(row, "div", "mn-ck-track");
-        h(tr, "i", "mn-ck-b1").style.width = `${(sc.base / top) * 100}%`;
-        const b2 = h(tr, "i", "mn-ck-b2"); b2.style.width = `${((totals[i] - sc.base) / top) * 100}%`; b2.style.background = sc.color;
-        h(row, "b", undefined, String(Math.round(totals[i])));
+    const m = row ? SCALING.exec(row.note) : null;
+    if (!row || !m) return;
+    const pct = lastNum(m[1]), stat = m[2], color = statColor(stat);
+    const amount = Number(args.find((a) => /^\d+$/.test(a))) || (stat.includes("魔法") ? LEVELS_STAT.ap : LEVELS_STAT.ad);
+    const bonus = Math.round((pct / 100) * amount);
+    const bases = row.vals.map((v) => lastNum(v));
+    const top = Math.max(...bases) + bonus;
+    bases.forEach((base, i) => {
+        const r = h(el, "div", "mn-ck-lv");
+        const lab = h(r, "div", "mn-ck-lvk");
+        h(lab, "b", undefined, `${i + 1} 級`);
+        if (s.key === "R" && ULT_LEVELS[i]) h(lab, "span", undefined, `Lv ${ULT_LEVELS[i]}`);
+        const pair = h(r, "div", "mn-ck-lvp");
+        const one = (withStat: boolean) => {
+            const line = h(pair, "div", "mn-ck-lvl");
+            const tr = h(line, "div", "mn-ck-track");
+            h(tr, "i", "mn-ck-b1", withStat ? "" : String(base)).style.width = `${(base / top) * 100}%`;
+            if (withStat) { const b2 = h(tr, "i", "mn-ck-b2", `+${bonus}`); b2.style.width = `${(bonus / top) * 100}%`; b2.style.background = color; }
+            h(line, "b", undefined, String(base + (withStat ? bonus : 0)));
+        };
+        one(false);
+        one(true);
     });
     const lg = h(el, "div", "mn-ck-lg");
-    const one = h(lg, "span");
-    h(one, "i").style.background = "#6e7b92";
-    one.append(sc.ranks > 1 ? `基本傷害（${sc.ranks} 級）` : "基本傷害");   // the top rank, so the bars are not mistaken for rank 1
-    const two = h(lg, "span");
-    h(two, "i").style.background = sc.color;
-    two.append(`${sc.stat}帶來`);
+    const a = h(lg, "span"); h(a, "i").style.background = "#6e7b92"; a.append("技能等級給的");   // the same grey as .mn-ck-b1
+    const b = h(lg, "span"); h(b, "i").style.background = color; b.append(`${amount} ${stat.replace("攻擊", "攻")}多給的`);
 };
 const formsTitle: Fill = (el, { c, args }) => {
     const im = h(el, "img", "mn-ck-sq"); im.src = c.icon; im.alt = "";   // the champion's square picture
@@ -247,7 +237,7 @@ const formCols: Fill = (el, { c, args }) => {
 const LAYOUTS: Record<string, Layout> = {
     ability: { areas: ["head", "tags", "desc", "numbers", "stats"], rows: "auto auto auto auto auto", fill: { head, tags, desc, numbers, stats } },
     clip: { areas: ["media"], rows: "1fr", fill: { media } },
-    number: { areas: ["hero", "bars"], rows: "auto auto", fill: { hero, bars } },
+    levels: { areas: ["head", "levelBars"], rows: "auto auto", fill: { head, levelBars } },
     forms: { areas: ["formsTitle", "formCols"], rows: "auto auto", fill: { formsTitle, formCols } },
     combo: { areas: ["comboMedia"], rows: "1fr", fill: { comboMedia } },
     formset: { areas: ["formsTitle", "formSets"], rows: "auto auto", fill: { formsTitle, formSets } },

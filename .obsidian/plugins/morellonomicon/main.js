@@ -2282,15 +2282,15 @@ function championCard(ctx) {
     empty(el, { icon: "user-x", title: "Champion not found" });
     return { title: "", el };
   }
-  const hero2 = h(el, "div", "mn-hero");
-  const bg = h(hero2, "div", "mn-hero-bg");
+  const hero = h(el, "div", "mn-hero");
+  const bg = h(hero, "div", "mn-hero-bg");
   bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
-  const head2 = h(hero2, "div", "mn-card-head");
+  const head2 = h(hero, "div", "mn-card-head");
   const im = h(head2, "img", "mn-card-img");
   im.src = c.icon;
   im.alt = "";
   const splash = bg.style.backgroundImage.slice(5, -2);
-  blockUntil(hero2, Promise.all([new Promise((r) => {
+  blockUntil(hero, Promise.all([new Promise((r) => {
     const s = new Image();
     s.onload = s.onerror = () => r();
     s.src = splash;
@@ -2684,8 +2684,8 @@ function marked(parent, text, q) {
 }
 
 // src/pages/cardkit.ts
-var AD_EXAMPLES = [0, 100, 200];
-var AP_EXAMPLES = [0, 150, 300];
+var LEVELS_STAT = { ap: 300, ad: 200 };
+var ULT_LEVELS = [6, 11, 16];
 var FORM_ICONS = ["hammer", "crosshair"];
 var FORM_ART = "https://raw.communitydragon.org/latest/game/assets/characters";
 var DAMAGE_ROW = /^(物理|魔法|真實)傷害|^治療|^護盾/;
@@ -2778,47 +2778,42 @@ var media = (el, { c, s, args }) => {
   keyBadge(hud, s.key, kindColor(s));
   h(hud, "span", "mn-ck-hudn", s.name);
 };
-function scaling(s) {
+var levelBars = (el, { s, args }) => {
   const row2 = s.rows.find((r) => /^(物理|魔法|真實)傷害/.test(r.label));
-  if (!row2) return null;
-  const m = SCALING.exec(row2.note);
-  if (!m) return null;
-  return { base: lastNum2(row2.vals[row2.vals.length - 1]), ranks: row2.vals.length, pct: lastNum2(m[1]), stat: m[2], color: statColor(m[2]) };
-}
-var hero = (el, { s }) => {
-  const sc = scaling(s);
-  const color = sc?.color ?? kindColor(s);
-  const ring = h(el, "div", "mn-ck-ring");
-  ring.style.setProperty("--c", color);
-  icon(ring, sc?.stat.includes("\u9B54\u6CD5") ? "sparkles" : "sword");
-  const n = h(el, "div", "mn-ck-big", sc ? String(sc.pct) : "\u2014");
-  n.style.color = color;
-  if (sc) h(n, "small", void 0, "%");
-  h(el, "div", "mn-ck-cap", sc ? `${sc.stat}\u8B8A\u6210\u50B7\u5BB3` : "\u9019\u500B\u6280\u80FD\u6C92\u6709\u6210\u9577\u6578\u503C");
-};
-var bars = (el, { s }) => {
-  const sc = scaling(s);
-  if (!sc) return;
-  const examples = sc.stat.includes("\u9B54\u6CD5") ? AP_EXAMPLES : AD_EXAMPLES;
-  const totals = examples.map((v) => sc.base + sc.pct / 100 * v);
-  const top = Math.max(...totals);
-  examples.forEach((v, i) => {
-    const row2 = h(el, "div", "mn-ck-bar");
-    h(row2, "span", void 0, `${v} \u9EDE`);
-    const tr = h(row2, "div", "mn-ck-track");
-    h(tr, "i", "mn-ck-b1").style.width = `${sc.base / top * 100}%`;
-    const b2 = h(tr, "i", "mn-ck-b2");
-    b2.style.width = `${(totals[i] - sc.base) / top * 100}%`;
-    b2.style.background = sc.color;
-    h(row2, "b", void 0, String(Math.round(totals[i])));
+  const m = row2 ? SCALING.exec(row2.note) : null;
+  if (!row2 || !m) return;
+  const pct2 = lastNum2(m[1]), stat = m[2], color = statColor(stat);
+  const amount = Number(args.find((a2) => /^\d+$/.test(a2))) || (stat.includes("\u9B54\u6CD5") ? LEVELS_STAT.ap : LEVELS_STAT.ad);
+  const bonus = Math.round(pct2 / 100 * amount);
+  const bases = row2.vals.map((v) => lastNum2(v));
+  const top = Math.max(...bases) + bonus;
+  bases.forEach((base, i) => {
+    const r = h(el, "div", "mn-ck-lv");
+    const lab = h(r, "div", "mn-ck-lvk");
+    h(lab, "b", void 0, `${i + 1} \u7D1A`);
+    if (s.key === "R" && ULT_LEVELS[i]) h(lab, "span", void 0, `Lv ${ULT_LEVELS[i]}`);
+    const pair = h(r, "div", "mn-ck-lvp");
+    const one = (withStat) => {
+      const line = h(pair, "div", "mn-ck-lvl");
+      const tr = h(line, "div", "mn-ck-track");
+      h(tr, "i", "mn-ck-b1", withStat ? "" : String(base)).style.width = `${base / top * 100}%`;
+      if (withStat) {
+        const b2 = h(tr, "i", "mn-ck-b2", `+${bonus}`);
+        b2.style.width = `${bonus / top * 100}%`;
+        b2.style.background = color;
+      }
+      h(line, "b", void 0, String(base + (withStat ? bonus : 0)));
+    };
+    one(false);
+    one(true);
   });
   const lg = h(el, "div", "mn-ck-lg");
-  const one = h(lg, "span");
-  h(one, "i").style.background = "#6e7b92";
-  one.append(sc.ranks > 1 ? `\u57FA\u672C\u50B7\u5BB3\uFF08${sc.ranks} \u7D1A\uFF09` : "\u57FA\u672C\u50B7\u5BB3");
-  const two = h(lg, "span");
-  h(two, "i").style.background = sc.color;
-  two.append(`${sc.stat}\u5E36\u4F86`);
+  const a = h(lg, "span");
+  h(a, "i").style.background = "#6e7b92";
+  a.append("\u6280\u80FD\u7B49\u7D1A\u7D66\u7684");
+  const b = h(lg, "span");
+  h(b, "i").style.background = color;
+  b.append(`${amount} ${stat.replace("\u653B\u64CA", "\u653B")}\u591A\u7D66\u7684`);
 };
 var formsTitle = (el, { c, args }) => {
   const im = h(el, "img", "mn-ck-sq");
@@ -2942,7 +2937,7 @@ var formCols = (el, { c, args }) => {
 var LAYOUTS = {
   ability: { areas: ["head", "tags", "desc", "numbers", "stats"], rows: "auto auto auto auto auto", fill: { head, tags, desc, numbers: numbers2, stats } },
   clip: { areas: ["media"], rows: "1fr", fill: { media } },
-  number: { areas: ["hero", "bars"], rows: "auto auto", fill: { hero, bars } },
+  levels: { areas: ["head", "levelBars"], rows: "auto auto", fill: { head, levelBars } },
   forms: { areas: ["formsTitle", "formCols"], rows: "auto auto", fill: { formsTitle, formCols } },
   combo: { areas: ["comboMedia"], rows: "1fr", fill: { comboMedia } },
   formset: { areas: ["formsTitle", "formSets"], rows: "auto auto", fill: { formsTitle, formSets } }
@@ -3034,7 +3029,7 @@ function deckPage(ctx, file) {
       ctx.openNote(glossary.file.path);
     });
   }
-  const bars2 = h(el, "div", "mn-bars");
+  const bars = h(el, "div", "mn-bars");
   const wrap = h(el, "div", "mn-deckwrap");
   const peek = h(wrap, "div", "mn-peek");
   const peekIn = h(peek, "div", "mn-peek-in");
@@ -3057,7 +3052,7 @@ function deckPage(ctx, file) {
     const next = guide[at + 1];
     const sec = [];
     slides.forEach((s, i) => {
-      h(bars2, "span", "mn-bar");
+      h(bars, "span", "mn-bar");
       const section2 = h(pager, "section", "mn-slide");
       const card = h(section2, "div", "mn-sl-card");
       const face = h(card, "div", "mn-sl-face");
@@ -3096,7 +3091,7 @@ function deckPage(ctx, file) {
     const count2 = slides.length;
     let cur = 0;
     const show = () => {
-      Array.from(bars2.children).forEach((b, j) => b.toggleClass("is-on", j <= cur));
+      Array.from(bars.children).forEach((b, j) => b.toggleClass("is-on", j <= cur));
       if (cur >= count2 - 1) void ctx.plugin.markRead(file.path);
     };
     const pose = (el2, u) => {
@@ -3326,7 +3321,7 @@ function visual(ctx, box, s) {
       d.style.setProperty("--c", DAMAGE_COLOR[k]);
     }
     return;
-  } else if (kind === "ability" || kind === "clip" || kind === "number" || kind === "forms" || kind === "formset" || kind === "combo") {
+  } else if (kind === "ability" || kind === "clip" || kind === "levels" || kind === "forms" || kind === "formset" || kind === "combo") {
     if (cardKit(box, kind, champ(args[0]), args.slice(1))) return;
   } else if (kind === "skill") {
     const c = champ(args[0]), k = (args[1] ?? "Q").toUpperCase();
@@ -3707,10 +3702,10 @@ function patchPage(ctx) {
   const [latest, ...older] = store.riotNotes;
   if (latest) latestCard(el, latest);
   else {
-    const hero2 = h(el, "div", "mn-patch");
-    h(hero2, "div", "mn-patch-k", "Data from patch");
-    h(hero2, "div", "mn-patch-v", store.riotPatch() || "\u2014");
-    h(hero2, "div", "mn-patch-s", "Run tools/fetch_patch_notes.py to show Riot's patch notes here.");
+    const hero = h(el, "div", "mn-patch");
+    h(hero, "div", "mn-patch-k", "Data from patch");
+    h(hero, "div", "mn-patch-v", store.riotPatch() || "\u2014");
+    h(hero, "div", "mn-patch-s", "Run tools/fetch_patch_notes.py to show Riot's patch notes here.");
   }
   if (latest?.champions?.length) {
     h(el, "div", "mn-gh", `Champions \xB7 ${latest.champions.length}`);

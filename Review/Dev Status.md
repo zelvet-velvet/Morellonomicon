@@ -9,6 +9,7 @@ sticker: lucide//activity
 > Read [[LLM Guide]] before any `CMD_` or status update. This note is kept by `CMD_SYNC` / `CMD_ROLLOVER` / `CMD_NOTES_SYNC`; the day notes in `Review/Log/` by `CMD_JOURNAL`.
 
 ## 🚀 Today's Progress (2026-10-28)
+- **Malphite ult by level**: a `levels` card shows each ult level's damage alone and with 300 魔法攻擊; the misleading big-number card is gone (to check on the phone).
 - **Fixed text rows**: kicker, 1-line title, 2-line body and a 小技巧 line (short orange line, label, tip), the same height on every card; long text is cut with … (to check on the phone).
 - **Clip height and 小技巧**: clips end at the top of the words so the whole height shows; the card tip label is 小技巧 (to check on the phone).
 - **Frame F2 in the app**: the picture fills the card behind the words, the words fit their content, the dock and the clip fade follow the text height (to check on the phone).
@@ -153,7 +154,7 @@ sticker: lucide//activity
 - [ ] **Augments sub-tab**: use the counted augment picks (and `fits`) once there is data.
 
 ### 🖼️ Handbook pictures
-- [ ] **Cards to the layout**: shorten the 35 cards over the [[Card Layout]] limits; build the `levels` template (Malphite R per ult level, tank vs AP) (the frame itself is in the plugin).
+- [ ] **Cards to the layout**: shorten the 35 cards over the [[Card Layout]] limits; the ability card's tags still sit in the stage, not the dock.
 - [ ] **In-game screenshots** (Zaviel): save them in the vault (e.g. `Assets/`) and put `visual: img Assets/name.png` under a card. Wanted: where the skill damage and cooldown show in the HUD; the augment pick screen (silver / gold / prismatic); the item shop with the recipe tree; the scoreboard; the minimap and ward icons.
 - [>] **More decks**: 視野控制 (Rift wards) is in; still to write: Rift basics (lanes, objectives), ping etiquette, one card each for the trick-of-the-week.
 - [ ] **Ward spots**: the 視野控制 cards place wards by eye on the minimap; check them against real games and adjust `WARDS` in `plugin/src/pages/deck.ts`.

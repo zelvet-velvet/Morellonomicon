@@ -549,7 +549,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-peek.is-ready .mn-peek-ic { color: var(--text-on-accent, #fff); background: var(--mn-accent); transform: scale(1.08); }
 .mn-peek.is-ready .mn-peek-k { color: var(--mn-accent); }
 /* the card kit (cardkit.ts): templates place these components in grid areas; one look for key squares, tag pills, numbers and stats */
-.mn-sl-vis.is-ability, .mn-sl-vis.is-number, .mn-sl-vis.is-forms, .mn-sl-vis.is-formset { align-items: stretch; padding: 16px 14px calc(var(--mn-words-h, 40%) + 10px); }
+.mn-sl-vis.is-ability, .mn-sl-vis.is-forms, .mn-sl-vis.is-formset { align-items: stretch; padding: 16px 14px calc(var(--mn-words-h, 40%) + 10px); }
 .mn-ck { display: grid; width: 100%; height: 100%; min-height: 0; gap: 9px; align-content: center; }   /* the parts sit in the vertical middle */
 .mn-ck-slot { min-width: 0; min-height: 0; }
 .mn-ck-head { display: flex; align-items: center; gap: 13px; }
@@ -581,18 +581,22 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-ck-failic { position: absolute; left: 50%; top: 46%; width: 104px; height: 104px; transform: translate(-50%, -50%); border-radius: 24px; border: 3px solid rgba(255, 255, 255, 0.35); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); }
 .mn-ck-hud { position: absolute; z-index: 3; top: 10px; left: 10px; right: 10px; display: flex; align-items: center; gap: 8px; }
 .mn-ck-hudn { padding: 4px 10px; border-radius: 999px; background: rgba(10, 12, 18, 0.65); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); font-family: var(--mn-serif); font-weight: 700; font-size: 13px; color: #fff; }
-/* number */
-.mn-ck-hero { display: flex; flex-direction: column; align-items: center; text-align: center; }
-.mn-ck-ring { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 50%; margin-bottom: 6px; color: var(--c); border: 2px solid var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); }
-.mn-ck-ring svg { width: 26px; height: 26px; }
-.mn-ck-big { font-family: var(--mn-serif); font-size: 74px; line-height: 1; font-weight: 700; letter-spacing: -0.02em; }
-.mn-ck-big small { font-size: 32px; margin-left: 2px; }
-.mn-ck-cap { margin-top: 4px; font-family: var(--mn-serif); font-size: 14px; color: var(--mn-muted); }
-.mn-ck-bars { display: flex; flex-direction: column; justify-content: center; gap: 7px; }
-.mn-ck-bar { display: grid; grid-template-columns: 52px 1fr 40px; gap: 8px; align-items: center; font-size: 11.5px; color: var(--mn-muted); }
-.mn-ck-bar b { text-align: right; color: var(--mn-text); font-variant-numeric: tabular-nums; }
+/* level bars (levels) */
 .mn-ck-track { display: flex; height: 14px; border-radius: 4px; overflow: hidden; background: rgba(255, 255, 255, 0.07); }
 .mn-ck-b1 { background: #6e7b92; }
+/* levels: per rank two bars on one scale, the numbers inside and the total at the end */
+.mn-sl-vis.is-levels { align-items: stretch; padding: 16px 16px calc(var(--mn-words-h, 40%) + 10px); }
+.mn-ck-levels { gap: 14px; }
+.mn-ck-levelBars { display: flex; flex-direction: column; gap: 12px; }
+.mn-ck-lv { display: grid; grid-template-columns: 44px 1fr; gap: 10px; align-items: center; }
+.mn-ck-lvk { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.25; font-size: 11px; color: var(--mn-faint); }
+.mn-ck-lvk b { font-size: 14px; color: var(--mn-text); }
+.mn-ck-lvp { display: flex; flex-direction: column; gap: 4px; }
+.mn-ck-lvl { display: grid; grid-template-columns: 1fr 34px; gap: 6px; align-items: center; }
+.mn-ck-lvl > b { font-size: 12.5px; text-align: right; color: var(--mn-text); font-variant-numeric: tabular-nums; }
+.mn-ck-lvl .mn-ck-track { height: 17px; }
+.mn-ck-lvl .mn-ck-track i { display: flex; align-items: center; justify-content: flex-end; padding-right: 5px; overflow: hidden; white-space: nowrap; font-size: 10.5px; font-style: normal; font-weight: 700; color: #0a0c12; }
+.mn-ck-levelBars .mn-ck-lg { justify-content: center; margin-top: 2px; }
 .mn-ck-lg { display: flex; gap: 12px; margin-top: 4px; font-size: 10.5px; color: var(--mn-faint); }
 .mn-ck-lg i { display: inline-block; width: 9px; height: 9px; margin-right: 4px; border-radius: 2px; vertical-align: -1px; }
 /* forms */
