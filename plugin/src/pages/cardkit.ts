@@ -37,7 +37,7 @@ function pill(parent: HTMLElement, label: string, color: string, ic?: string): v
     h(p, "span", undefined, label);
 }
 function keyBadge(parent: HTMLElement, key: string, color: string): HTMLElement {
-    const k = h(parent, "span", "mn-ck-key", key === "P" ? "被" : key);
+    const k = h(parent, "span", "mn-ck-key" + (key === "P" ? " is-zh" : ""), key === "P" ? "被" : key);   // is-zh: a Chinese character, sized to match the capitals
     k.style.setProperty("--c", color);
     return k;
 }

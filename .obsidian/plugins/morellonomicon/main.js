@@ -2718,7 +2718,7 @@ function pill(parent, label, color, ic) {
   h(p, "span", void 0, label);
 }
 function keyBadge(parent, key, color) {
-  const k = h(parent, "span", "mn-ck-key", key === "P" ? "\u88AB" : key);
+  const k = h(parent, "span", "mn-ck-key" + (key === "P" ? " is-zh" : ""), key === "P" ? "\u88AB" : key);
   k.style.setProperty("--c", color);
   return k;
 }
