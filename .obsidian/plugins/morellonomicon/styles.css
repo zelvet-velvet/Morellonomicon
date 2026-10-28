@@ -437,8 +437,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
    --mn-words-h (set by deck.ts) is the words' height, so the dock, the fade and the templates' room follow it */
 .mn-sl-face { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; --mn-dock: 46px; border-radius: 20px; background: #12141b;
     --mn-bg: #12141b; --mn-card: #1a1d26; --mn-card-hi: #252937; --mn-text: #f4f1e8; --mn-muted: #c9c5b8; --mn-faint: #8f8c83; --mn-line: rgba(255, 255, 255, 0.16); }
-.mn-sl-words { position: relative; z-index: 2; flex: none; padding: 12px 20px 20px;
-    background: linear-gradient(180deg, rgba(8, 10, 16, 0), rgba(8, 10, 16, 0.88) 12px, rgba(8, 10, 16, 0.95)); }
+.mn-sl-words { position: relative; z-index: 2; flex: none; padding: 8px 20px 20px;
+    background: linear-gradient(180deg, rgba(10, 12, 18, 0), #0a0c12 12px); }   /* the same dark the stage fades into */
 /* fixed rows (Card Layout): kicker 1 line, title 1 line, body 2 lines, tip strip 1 line, the same height on every card */
 .mn-sl-kn { height: 16px; font-size: 11px; line-height: 16px; font-weight: 700; letter-spacing: 0.16em; color: var(--mn-accent); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; }
 .mn-sl-t { height: 36px; font-family: var(--mn-serif); font-size: 26px; line-height: 36px; font-weight: 700; letter-spacing: 0.02em; margin: 2px 0 4px; color: var(--mn-text);
@@ -457,7 +457,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 
 /* the picture takes all the room above the words, and what is in it is sized to fill that room */
 .mn-sl-vis { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 22px 14px calc(var(--mn-words-h, 40%) + 12px); overflow: hidden;
-    background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--mn-accent) 10%, var(--mn-card-hi)), var(--mn-card) 75%); }
+    background: linear-gradient(180deg, transparent calc(100% - var(--mn-words-h, 40%) - 110px), #0a0c12 calc(100% - var(--mn-words-h, 40%) + 4px)),   /* fades into the words' dark: no edge line */
+        radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--mn-accent) 10%, var(--mn-card-hi)), var(--mn-card) 75%); }
 .mn-sl-vis.is-img { padding: 0; background: #000; }   /* a picture fills the whole card, under the words too */
 .mn-sl-vis.is-video, .mn-sl-vis.is-clip, .mn-sl-vis.is-combo { padding: 0; align-items: stretch; background: #0a0c12; }   /* the same dark as the words panel, so the fade leaves no line */
 /* a clip fills the picture; Riot's clips have the champion about three quarters from the left, so the cut keeps that part, and the lower edge fades into the card */
@@ -575,7 +576,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-ck-stat b { font-size: 13px; color: var(--mn-text); }
 /* clip */
 .mn-ck-clip { gap: 0; }
-.mn-ck-onclip { position: absolute; z-index: 2; left: 12px; right: 12px; bottom: var(--mn-words-h, 40%); min-height: var(--mn-dock); align-items: center; align-content: center; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+.mn-ck-onclip { position: absolute; z-index: 2; left: 12px; right: 12px; bottom: calc(var(--mn-words-h, 40%) - 4px); min-height: var(--mn-dock); align-items: flex-end; align-content: flex-end; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
 .mn-ck-failic { position: absolute; left: 50%; top: 46%; width: 104px; height: 104px; transform: translate(-50%, -50%); border-radius: 24px; border: 3px solid rgba(255, 255, 255, 0.35); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); }
 .mn-ck-hud { position: absolute; z-index: 3; top: 10px; left: 10px; right: 10px; display: flex; align-items: center; gap: 8px; }
 .mn-ck-hudn { padding: 4px 10px; border-radius: 999px; background: rgba(10, 12, 18, 0.65); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); font-family: var(--mn-serif); font-weight: 700; font-size: 13px; color: #fff; }
@@ -621,7 +622,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-ck-combo .mn-ck-comboMedia { height: 100%; }
 .mn-ck-reel { position: absolute; inset: 0; visibility: hidden; }
 .mn-ck-reel.is-on { visibility: visible; }
-.mn-ck-comboFlow { position: absolute; z-index: 2; left: 0; right: 0; bottom: calc(var(--mn-words-h, 40%) + 4px); display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 12px; }
+.mn-ck-comboFlow { position: absolute; z-index: 2; left: 0; right: 0; bottom: calc(var(--mn-words-h, 40%) - 2px); display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 12px; }
 .mn-ck-cell.is-step { width: 76px; }
 .mn-ck-ic.is-huge { width: 56px; height: 56px; border-radius: 16px; }
 .mn-ck-ic.is-huge img { border-radius: 12px; }
