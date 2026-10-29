@@ -982,8 +982,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-icrow { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 12px; row-gap: 6px; align-items: center; padding: 10px 2px; border-bottom: 1px solid var(--background-modifier-border); }
 .mn-icbig { grid-row: 1 / span 2; display: flex; justify-content: center; align-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--background-secondary); font-weight: 700; }
 .mn-icbig .svg-icon { color: inherit; width: 26px; height: 26px; }
-.mn-iclabel { display: flex; flex-direction: column; align-items: flex-start; gap: 0; min-width: 0; text-align: left; line-height: 1.25; }
-.mn-icvar { display: block; align-self: flex-start; font-size: 14px; color: var(--text-muted); font-family: var(--font-monospace); text-align: left; }
+/* label on the left, the variable name pushed to the right edge */
+.mn-iclabel { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; min-width: 0; line-height: 1.25; }
+.mn-icvar { margin-left: auto; font-size: 16px; color: var(--text-muted); font-family: var(--font-monospace); text-align: right; }
 .mn-icctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .mn-icctl input.mn-icin { height: 32px; font-size: 14px; font-family: var(--font-monospace); width: 190px; max-width: 100%; }
 .mn-icctl input.mn-ichexin { width: 100px; }
