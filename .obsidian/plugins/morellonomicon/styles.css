@@ -990,7 +990,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-icctl input.is-bad { border-color: var(--color-red); color: var(--color-red); }
 .mn-icctl input.mn-icpick { width: 44px; height: 32px; padding: 2px; border-radius: 8px; cursor: pointer; }
 .mn-icctl button.mn-icreset { width: 32px; height: 32px; padding: 0; display: grid; place-items: center; }
-.mn-icctl button.mn-icreset.is-hidden { display: none; }
+.mn-icctl button.mn-icreset.is-off { opacity: 0.3; }
 .mn-icpanel { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 6px; max-height: 260px; overflow-y: auto; padding: 8px; border-radius: 12px; background: var(--background-secondary); border: 1px solid var(--background-modifier-border); overscroll-behavior: contain; }
 .mn-icpanel.is-hidden { display: none; }
 .mn-icpanel button.mn-ictile { display: flex; flex-direction: column; align-items: center; gap: 4px; height: auto; padding: 8px 2px 6px; background: var(--background-primary); border: 1px solid transparent; border-radius: 10px; box-shadow: none; }

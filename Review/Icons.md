@@ -31,8 +31,8 @@ Source: `TAGS` in `plugin/src/pages/profile.ts` (also the groups and the legend 
 傷害 強化普攻 | sword | --mn-aa | #b05279
 傷害 攻擊特效 | crosshair | --mn-onhit | #d5763f
 傷害 %生命傷害 | heart-crack | --color-red | #d04255
-傷害 斬殺 | skull | --mn-exec | #e0605a
-控制 控場 | lock | --mn-cc | #e5b567
+傷害 斬殺 | skull | --mn-exec
+控制 控場 | link | --mn-cc
 控制 緩速 | snowflake | --mn-slow | #6c99bb
 控制 減益 | trending-down | --mn-weak | #b98bd6
 移動 位移 | arrow-big-right-dash | --mn-dash | #73bbb2

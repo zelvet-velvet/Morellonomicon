@@ -19,6 +19,8 @@ const parse = (line: string): Row => {
     for (const x of f.slice(2)) { if (x.startsWith("--")) variable = x; else if (/^#[0-9a-fA-F]{3,8}$/.test(x)) hex = x.toLowerCase(); }
     return { label: f[0] ?? "", name: f[1] ?? "", variable, hex };
 };
+// What each row was when the note was first drawn in this session: the ↺ next to the icon name goes back to it
+const baseline = new Map<string, Row>();
 const serialise = (r: Row): string => [r.label, r.name, r.variable, r.hex].filter((x, i) => i < 2 || x).join(" | ");
 
 function iconsBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext): void {
@@ -48,15 +50,20 @@ function iconsBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLElemen
     source.split("\n").forEach((line, i) => {
         if (!line.trim()) return;
         const r = parse(line);
+        const key = `${ctx.sourcePath}|${r.label}`;
+        if (!baseline.has(key)) baseline.set(key, { ...r });
+        const base = baseline.get(key)!;
         const row = list.createDiv({ cls: "mn-icrow" });
         const pic = row.createSpan({ cls: "mn-icbig" });
         const label = row.createDiv({ cls: "mn-iclabel", text: r.label });
         if (r.variable) label.createSpan({ cls: "mn-icvar", text: r.variable });
         const ctl = row.createDiv({ cls: "mn-icctl" });
         const name = ctl.createEl("input", { cls: "mn-icin", attr: { type: "text", value: r.name, placeholder: "lucide name", spellcheck: "false", autocapitalize: "off", autocomplete: "off" } });
+        const resetName = ctl.createEl("button", { cls: "mn-icreset", attr: { "aria-label": "Back to the first icon" } });
+        setIcon(resetName, "rotate-ccw");
         const pick = ctl.createEl("input", { cls: "mn-icpick", attr: { type: "color" } });
         const hex = ctl.createEl("input", { cls: "mn-icin mn-ichexin", attr: { type: "text", placeholder: "#hex", spellcheck: "false", autocapitalize: "off" } });
-        const reset = ctl.createEl("button", { cls: "mn-icreset", attr: { "aria-label": "Use the app's colour" } });
+        const reset = ctl.createEl("button", { cls: "mn-icreset", attr: { "aria-label": "Back to the app's colour" } });
         setIcon(reset, "rotate-ccw");
         const draw = () => {
             const c = current(r);
@@ -67,7 +74,8 @@ function iconsBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLElemen
             if (HEX.test(c)) pick.value = c;
             hex.value = r.hex;
             hex.placeholder = c || "#hex";
-            reset.toggleClass("is-hidden", !r.hex || !r.variable);
+            reset.toggleClass("is-off", r.variable ? !r.hex : r.hex === base.hex);   // nothing to undo
+            resetName.toggleClass("is-off", r.name === base.name);
         };
         draw();
         // the picker: a scrolling grid of icons under the row, filtered by what is typed; tap one to take it
@@ -103,7 +111,8 @@ function iconsBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLElemen
             const v = hex.value.trim().toLowerCase().replace(/^(?=[0-9a-f]{6}$)/, "#");
             r.hex = HEX.test(v) ? v : ""; draw(); save(i, r);
         });
-        reset.addEventListener("click", (e) => { e.preventDefault(); r.hex = ""; draw(); save(i, r); });
+        reset.addEventListener("click", (e) => { e.preventDefault(); r.hex = r.variable ? "" : base.hex; draw(); save(i, r); });
+        resetName.addEventListener("click", (e) => { e.preventDefault(); r.name = base.name; name.value = base.name; draw(); save(i, r); });
     });
     probe.remove();
 }

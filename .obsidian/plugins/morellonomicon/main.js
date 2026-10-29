@@ -1000,6 +1000,7 @@ var parse = (line) => {
   }
   return { label: f[0] ?? "", name: f[1] ?? "", variable, hex };
 };
+var baseline = /* @__PURE__ */ new Map();
 var serialise = (r) => [r.label, r.name, r.variable, r.hex].filter((x, i) => i < 2 || x).join(" | ");
 function iconsBlock(plugin, source, el, ctx) {
   const ids = (0, import_obsidian3.getIconIds)().map((i) => i.replace(/^lucide-/, ""));
@@ -1026,15 +1027,20 @@ function iconsBlock(plugin, source, el, ctx) {
   source.split("\n").forEach((line, i) => {
     if (!line.trim()) return;
     const r = parse(line);
+    const key = `${ctx.sourcePath}|${r.label}`;
+    if (!baseline.has(key)) baseline.set(key, { ...r });
+    const base = baseline.get(key);
     const row2 = list2.createDiv({ cls: "mn-icrow" });
     const pic = row2.createSpan({ cls: "mn-icbig" });
     const label = row2.createDiv({ cls: "mn-iclabel", text: r.label });
     if (r.variable) label.createSpan({ cls: "mn-icvar", text: r.variable });
     const ctl = row2.createDiv({ cls: "mn-icctl" });
     const name = ctl.createEl("input", { cls: "mn-icin", attr: { type: "text", value: r.name, placeholder: "lucide name", spellcheck: "false", autocapitalize: "off", autocomplete: "off" } });
+    const resetName = ctl.createEl("button", { cls: "mn-icreset", attr: { "aria-label": "Back to the first icon" } });
+    (0, import_obsidian3.setIcon)(resetName, "rotate-ccw");
     const pick = ctl.createEl("input", { cls: "mn-icpick", attr: { type: "color" } });
     const hex = ctl.createEl("input", { cls: "mn-icin mn-ichexin", attr: { type: "text", placeholder: "#hex", spellcheck: "false", autocapitalize: "off" } });
-    const reset = ctl.createEl("button", { cls: "mn-icreset", attr: { "aria-label": "Use the app's colour" } });
+    const reset = ctl.createEl("button", { cls: "mn-icreset", attr: { "aria-label": "Back to the app's colour" } });
     (0, import_obsidian3.setIcon)(reset, "rotate-ccw");
     const draw = () => {
       const c = current(r);
@@ -1046,7 +1052,8 @@ function iconsBlock(plugin, source, el, ctx) {
       if (HEX.test(c)) pick.value = c;
       hex.value = r.hex;
       hex.placeholder = c || "#hex";
-      reset.toggleClass("is-hidden", !r.hex || !r.variable);
+      reset.toggleClass("is-off", r.variable ? !r.hex : r.hex === base.hex);
+      resetName.toggleClass("is-off", r.name === base.name);
     };
     draw();
     const panel = row2.createDiv({ cls: "mn-icpanel is-hidden" });
@@ -1121,7 +1128,14 @@ function iconsBlock(plugin, source, el, ctx) {
     });
     reset.addEventListener("click", (e) => {
       e.preventDefault();
-      r.hex = "";
+      r.hex = r.variable ? "" : base.hex;
+      draw();
+      save(i, r);
+    });
+    resetName.addEventListener("click", (e) => {
+      e.preventDefault();
+      r.name = base.name;
+      name.value = base.name;
       draw();
       save(i, r);
     });
