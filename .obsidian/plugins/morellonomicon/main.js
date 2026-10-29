@@ -988,7 +988,36 @@ var import_obsidian3 = require("obsidian");
 var NOTE = "Review/Icons.md";
 var NAME = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 var COLOUR = /^(?:--[\w-]+|#[0-9a-fA-F]{3,8})$/;
+function iconsBlock(source, el) {
+  const ids = new Set((0, import_obsidian3.getIconIds)());
+  const known = (n) => ids.has(n) || ids.has(`lucide-${n}`);
+  const probe = el.createDiv({ cls: "mn-app mn-icprobe" });
+  const resolve = (c) => {
+    if (!c.startsWith("--")) return c;
+    probe.style.color = `var(${c})`;
+    return getComputedStyle(probe).color;
+  };
+  const list2 = el.createDiv({ cls: "mn-iclist" });
+  for (const line of source.split("\n")) {
+    const [label = "", name = "", colour = ""] = line.split("|").map((s) => s.trim());
+    if (!label && !name) continue;
+    const row2 = list2.createDiv({ cls: "mn-icrow" });
+    const pic = row2.createSpan({ cls: "mn-icbig" });
+    if (known(name)) {
+      if (COLOUR.test(colour)) pic.style.color = resolve(colour);
+      (0, import_obsidian3.setIcon)(pic, name);
+    } else pic.setText("?");
+    row2.createSpan({ cls: "mn-iclabel", text: label });
+    row2.createEl("code", { cls: known(name) ? "mn-icname" : "mn-icname mn-icbad", text: name || "(no icon)" });
+    if (colour) {
+      row2.createSpan({ cls: "mn-icsw", attr: { style: COLOUR.test(colour) ? `background:${resolve(colour)}` : "" } });
+      row2.createEl("code", { cls: "mn-iccol", text: colour });
+    }
+  }
+  probe.remove();
+}
 function registerIconsNote(plugin) {
+  plugin.registerMarkdownCodeBlockProcessor("mn-icons", iconsBlock);
   plugin.registerMarkdownPostProcessor((el, ctx) => {
     if (ctx.sourcePath !== NOTE) return;
     const ids = new Set((0, import_obsidian3.getIconIds)());

@@ -982,3 +982,10 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-icsw { display: inline-block; width: 14px; height: 14px; border-radius: 4px; margin-right: 6px; vertical-align: -2px; border: 1px solid var(--background-modifier-border); }
 .mn-icbad { color: var(--color-red); }
 .mn-icprobe { position: absolute; width: 0; height: 0; overflow: hidden; visibility: hidden; }
+.mn-iclist { display: flex; flex-direction: column; gap: 2px; }
+.mn-icrow { display: flex; align-items: center; gap: 10px; padding: 5px 4px; border-bottom: 1px solid var(--background-modifier-border); }
+.mn-icbig { display: inline-flex; flex: none; width: 30px; justify-content: center; font-weight: 700; }
+.mn-icbig svg { width: 26px; height: 26px; }
+.mn-iclabel { flex: 1; min-width: 0; }
+.mn-icname, .mn-iccol { font-size: 12px; }
+.mn-iccol { opacity: 0.7; }
