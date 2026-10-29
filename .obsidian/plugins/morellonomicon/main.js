@@ -5751,6 +5751,7 @@ function renderPage(tab, ctx) {
 
 // src/view.ts
 var VIEW_TYPE = "morellonomicon";
+var KEYBOARD_SETTLE_MS = 700;
 var OVERLAY_PAGES = /* @__PURE__ */ new Set(["champion"]);
 var IMMERSIVE_PAGES = /* @__PURE__ */ new Set(["rosterswipe"]);
 var OVERLAY_SCROLL = 220;
@@ -5840,6 +5841,14 @@ var MnView = class extends import_obsidian12.ItemView {
       if (!typing(e)) return;
       place();
       app.addClass("is-kb");
+      const keep = this.scrollEl.scrollTop, until = Date.now() + KEYBOARD_SETTLE_MS;
+      const hold = () => {
+        if (this.scrollEl.scrollTop !== keep) this.scrollEl.scrollTop = keep;
+        if (window.scrollY) window.scrollTo(0, 0);
+        place();
+        if (Date.now() < until) requestAnimationFrame(hold);
+      };
+      requestAnimationFrame(hold);
     });
     this.registerDomEvent(app, "focusout", (e) => {
       if (typing(e)) app.removeClass("is-kb");

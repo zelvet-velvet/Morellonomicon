@@ -11,6 +11,7 @@ export const VIEW_TYPE = "morellonomicon";
 
 // The app screen: top bar (back, title, mode switch), page area, tab bar. A page is drawn in one step when a tab, a detail page
 // or the data changes; scroll positions are kept per page so Back returns to where you were.
+const KEYBOARD_SETTLE_MS = 700;   // how long after a tap in a search box iOS's own scroll to it is undone (the keyboard's slide)
 const OVERLAY_PAGES = new Set(["champion"]);
 const IMMERSIVE_PAGES = new Set(["rosterswipe"]);   // full screen: no top bar at all (速查's swipe, like Tinder)
 const OVERLAY_SCROLL = 220;   // px scrolled before the top bar gets its background back over a splash
@@ -86,7 +87,20 @@ export class MnView extends ItemView {
         const vv = window.visualViewport;
         const place = () => { if (vv) app.style.setProperty("--mn-vvbottom", `${Math.round(vv.offsetTop + vv.height)}px`); };
         const typing = (e: FocusEvent) => (e.target as HTMLElement | null)?.closest?.(".mn-rq-dock") != null;
-        this.registerDomEvent(app, "focusin", (e) => { if (!typing(e)) return; place(); app.addClass("is-kb"); });
+        // iOS scrolls the list and pans the page to bring the tapped box into view (the box is about to be pinned above the keyboard
+        // anyway): both are undone for the first moments after the tap, so the list stays where it was
+        this.registerDomEvent(app, "focusin", (e) => {
+            if (!typing(e)) return;
+            place(); app.addClass("is-kb");
+            const keep = this.scrollEl.scrollTop, until = Date.now() + KEYBOARD_SETTLE_MS;
+            const hold = () => {
+                if (this.scrollEl.scrollTop !== keep) this.scrollEl.scrollTop = keep;
+                if (window.scrollY) window.scrollTo(0, 0);
+                place();
+                if (Date.now() < until) requestAnimationFrame(hold);
+            };
+            requestAnimationFrame(hold);
+        });
         this.registerDomEvent(app, "focusout", (e) => { if (typing(e)) app.removeClass("is-kb"); });
         // when the page neither pans nor shrinks, the app's own keyboard event (Obsidian's Capacitor shell) says how tall the keyboard is
         const shown = (e: Event) => {
