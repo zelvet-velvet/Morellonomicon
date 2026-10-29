@@ -13,7 +13,7 @@ const COLOUR = /^(?:--[\w-]+|#[0-9a-fA-F]{3,8})$/;
 function iconsBlock(source: string, el: HTMLElement): void {
     const ids = new Set(getIconIds());
     const known = (n: string) => ids.has(n) || ids.has(`lucide-${n}`);
-    const probe = el.createDiv({ cls: "mn-app mn-icprobe" });
+    const probe = document.body.createDiv({ cls: "mn-app mn-icprobe" });   // attached to the page: a detached element has no computed colour
     const resolve = (c: string): string => { if (!c.startsWith("--")) return c; probe.style.color = `var(${c})`; return getComputedStyle(probe).color; };
     const list = el.createDiv({ cls: "mn-iclist" });
     for (const line of source.split("\n")) {

@@ -991,7 +991,7 @@ var COLOUR = /^(?:--[\w-]+|#[0-9a-fA-F]{3,8})$/;
 function iconsBlock(source, el) {
   const ids = new Set((0, import_obsidian3.getIconIds)());
   const known = (n) => ids.has(n) || ids.has(`lucide-${n}`);
-  const probe = el.createDiv({ cls: "mn-app mn-icprobe" });
+  const probe = document.body.createDiv({ cls: "mn-app mn-icprobe" });
   const resolve = (c) => {
     if (!c.startsWith("--")) return c;
     probe.style.color = `var(${c})`;
