@@ -4261,7 +4261,10 @@ function rosterPage(ctx) {
       const section2 = h(pager, "section", "mn-slide");
       const face = h(h(section2, "div", "mn-sl-card"), "div", "mn-sl-face mn-rq-face");
       card(c, face);
-      stamps.push(h(face, "div", "mn-rq-stamp"));
+      const st = h(section2.firstElementChild, "div", "mn-rq-stamp");
+      icon(st, "heart", "mn-rq-st-like");
+      icon(st, "x", "mn-rq-st-pass");
+      stamps.push(st);
       sec.push(section2);
     }
     const pile = cardPile(pager, sec, {
@@ -4273,9 +4276,10 @@ function rosterPage(ctx) {
       onDrag: (dx, w) => {
         const st = stamps[pile?.cur ?? 0];
         if (!st) return;
-        st.textContent = dx > 0 ? "\u559C\u6B61" : "\u7565\u904E";
+        const k = Math.min(1, Math.abs(dx) / (w * SWIPE.at));
         st.toggleClass("is-like", dx > 0);
-        st.style.opacity = String(Math.min(1, Math.abs(dx) / (w * SWIPE.at)));
+        st.style.opacity = String(k);
+        st.style.setProperty("--k", String(k));
       },
       onJudge: (i, like) => {
         at++;

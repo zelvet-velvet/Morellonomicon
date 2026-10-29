@@ -703,13 +703,21 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app .mn-rq-x { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; color: var(--mn-muted); background: var(--mn-card-hi); }
 .mn-rq-x svg { width: 16px; height: 16px; }
 /* 速查 swipe: the picked champions as the Handbook's card pile (pile.ts), the top card dragged right (like) or left (pass) */
-.mn-deckwrap.mn-rq-deck { margin: -36px -16px 0; }   /* the lift room lets a tilted card pass over the count line, like the Handbook bars */
-.mn-sl-face.mn-rq-face { justify-content: flex-start; overflow-y: auto; overscroll-behavior: contain; padding: 14px 14px 18px; }
+.mn-deckwrap.mn-rq-deck { margin: -36px -16px 0; }
+.mn-rq-deck .mn-sl-card { position: relative; }   /* the ♥ / ✕ stamp sits over it */   /* the lift room lets a tilted card pass over the count line, like the Handbook bars */
+.mn-sl-face.mn-rq-face { justify-content: flex-start; overflow-y: auto; overscroll-behavior: contain; padding: 14px 14px 18px; scrollbar-width: none; }
+.mn-rq-face::-webkit-scrollbar { display: none; }   /* it scrolls by finger; a bar on the card spoils the swipe */
 .mn-rq-face .mn-rq { margin: 0; padding: 0; background: none; border: 0; cursor: default; }
 .mn-rq-face .mn-rq:active { background: none; }
-.mn-rq-stamp { position: absolute; z-index: 3; top: 18px; right: 18px; padding: 3px 12px; border: 3px solid #e06a6a; border-radius: 10px; color: #e06a6a; font-size: 20px; font-weight: 900;
-    transform: rotate(10deg); opacity: 0; pointer-events: none; }
-.mn-rq-stamp.is-like { left: 16px; right: auto; transform: rotate(-10deg); border-color: #6fd28a; color: #6fd28a; }
+/* the big ♥ / ✕ over the middle of a dragged 速查 card (outside the face, so the card's scrolling never moves it) */
+.mn-rq-stamp { position: absolute; z-index: 3; left: 50%; top: 42%; display: grid; place-items: center; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%;
+    background: rgba(10, 12, 18, 0.55); opacity: 0; pointer-events: none; transform: scale(calc(0.6 + var(--k, 0) * 0.4)); }
+.mn-rq-stamp .mn-ic { display: none; }
+.mn-rq-stamp svg { width: 72px; height: 72px; stroke-width: 2.6; }
+.mn-rq-stamp .mn-rq-st-pass { display: block; color: #e06a6a; }
+.mn-rq-stamp.is-like .mn-rq-st-pass { display: none; }
+.mn-rq-stamp.is-like .mn-rq-st-like { display: block; color: #6fd28a; }
+.mn-rq-stamp.is-like .mn-rq-st-like svg { fill: currentColor; }
 .mn-rq-btns { display: flex; justify-content: center; gap: 36px; margin: 6px 0 4px; }
 .mn-app .mn-rq-btns button { display: grid; place-items: center; width: 58px; height: 58px; padding: 0; border-radius: 50%; background: var(--mn-card); border: 2px solid; box-shadow: none; }
 .mn-app .mn-rq-no { color: #e06a6a; border-color: #e06a6a; }
