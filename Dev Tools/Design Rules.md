@@ -31,7 +31,7 @@ How the whole app looks and behaves, so every page feels the same. A shared beha
 
 - **Icons, not words,** for filters (lanes, roles, damage kinds, shop stats); the word shows in a bubble when held (`holdTip`). One idea has one icon everywhere, taken from the maps in [[Icons]].
 - **The chosen one is marked by colour or a short line under it,** never a circle or ring around a Lucide icon.
-- **Single or several.** A lane on Picks and a role tab on Items is one at a time (tap again to clear); filters that narrow together (Champions' lanes and filter sheet, Items' stat rail) can be several, with a clear button.
+- **Single or several.** A lane (Picks, Champions) and a role tab on Items is one at a time (tap again to clear); filters that narrow together (Champions' filter sheet, Items' stat rail) can be several, with a clear button.
 - **Segmented bars** slide their highlight to the new option and can be dragged along (`slideSeg`).
 - **Swipes** read the same everywhere (the `SWIPE` numbers in `ui.ts`): Handbook cards, the tip stack, 速查 cards.
 

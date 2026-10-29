@@ -19,7 +19,7 @@ sticker: lucide//activity
 - **Picks card 玩法 / 技能**: 玩法 in the middle with bigger lines on a dark panel; 技能 rows show the game's ability pictures, spread evenly (to check on the phone).
 - **Liked champions page**: portraits two across, the actions pinned at the bottom (to check on the phone).
 - **Mock layouts**: proposals are light blue pages in [[Layouts]]; new and changed layouts are shown and picked there (rule in the LLM Guide).
-- **Picks lanes**: bigger lane icons, one lane at a time (to check on the phone).
+- **Picks lanes**: bigger lane icons, one lane at a time, and Champions' lanes too (to check on the phone).
 - **Tidy-up**: about 80 unused style rules and a few unused bits of code removed.
 
 ## 📅 Yesterday's Progress (2026-10-28)

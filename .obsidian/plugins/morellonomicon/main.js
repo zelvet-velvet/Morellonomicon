@@ -2977,7 +2977,9 @@ function championPicker(parent, ctx) {
           tip(chipEl, "\u9084\u6C92\u6709\u5206\u8DEF\u8CC7\u6599");
           return;
         }
-        F.lanes.has(l) ? F.lanes.delete(l) : F.lanes.add(l);
+        const was = F.lanes.has(l);
+        F.lanes.clear();
+        if (!was) F.lanes.add(l);
         redraw();
       } });
     }

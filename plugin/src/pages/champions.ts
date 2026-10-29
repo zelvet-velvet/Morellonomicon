@@ -105,7 +105,8 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
         for (const l of LANES) {
             const chipEl = laneChip(row, l, { on: F.lanes.has(l), onTap: () => {
                 if (!known) { tip(chipEl, "還沒有分路資料"); return; }
-                F.lanes.has(l) ? F.lanes.delete(l) : F.lanes.add(l); redraw();
+                // one lane at a time, like Picks: another lane replaces it, the same lane again clears it
+                const was = F.lanes.has(l); F.lanes.clear(); if (!was) F.lanes.add(l); redraw();
             } });
         }
         const n = activeFilters();
