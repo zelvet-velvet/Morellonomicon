@@ -226,11 +226,11 @@ export function itemsPage(ctx: PageCtx): PageOut {
     const search = h(box, "input");
     search.type = "search";
     search.placeholder = "搜尋裝備";
-    const roles = layoutBlock(h(el, "div", "mn-shop-roles"));
+    const roles = layoutBlock(h(el, "div", "mn-shop-roles"), true);   // the three blocks each load on their own
     const sortWrap = h(el, "div", "mn-shop-sortwrap");
     const body = h(el, "div", "mn-shop");
-    const rail = layoutBlock(h(body, "div", "mn-shop-rail"));
-    const host = layoutBlock(h(body, "div", "mn-shop-list"));   // one loading look for the whole list
+    const rail = layoutBlock(h(body, "div", "mn-shop-rail"), true);
+    const host = layoutBlock(h(body, "div", "mn-shop-list"), true);   // one loading look for the whole list
     const drawRoles = () => {
         roles.empty();
         const all = h(roles, "button", "mn-shop-role" + (!itemRole ? " is-on" : ""));

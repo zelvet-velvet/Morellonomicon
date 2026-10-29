@@ -647,27 +647,56 @@ function blockUntil(host, until, delay = 0) {
     if (--state.open <= 0) lift(host, state);
   });
 }
-var bgDone = /* @__PURE__ */ new Set();
+var BG_TRIES = 3;
+var BG_RETRY_MS = 800;
+var bgHeld = /* @__PURE__ */ new Map();
+var bgLoading = /* @__PURE__ */ new Map();
 var URL_IN_STYLE = /url\(["']?([^"')]+)["']?\)/g;
+function loadBackground(src) {
+  const known = bgLoading.get(src);
+  if (known) return known;
+  const p = new Promise((done) => {
+    const im = new Image();
+    let tries = 0;
+    const finish = () => {
+      bgLoading.delete(src);
+      done();
+    };
+    im.onload = () => {
+      void (im.decode ? im.decode() : Promise.resolve()).catch(() => void 0).then(() => {
+        bgHeld.set(src, im);
+        if (tries) document.querySelectorAll(`[style*="${CSS.escape(src)}"]`).forEach((el) => {
+          const b = el.style.backgroundImage;
+          el.style.backgroundImage = "none";
+          void el.offsetWidth;
+          el.style.backgroundImage = b;
+        });
+        finish();
+      });
+    };
+    im.onerror = () => {
+      if (++tries >= BG_TRIES) {
+        finish();
+        return;
+      }
+      window.setTimeout(() => {
+        im.removeAttribute("src");
+        im.src = src;
+      }, BG_RETRY_MS);
+    };
+    im.src = src;
+  });
+  bgLoading.set(src, p);
+  return p;
+}
 function pendingBackgrounds(host) {
   const out = [], asked = /* @__PURE__ */ new Set();
   for (const el of [host, ...Array.from(host.querySelectorAll("[style]"))]) {
     for (const m of (el.getAttribute("style") ?? "").matchAll(URL_IN_STYLE)) {
       const src = m[1];
-      if (bgDone.has(src) || asked.has(src)) continue;
+      if (asked.has(src) || bgHeld.get(src)?.complete) continue;
       asked.add(src);
-      const im = new Image();
-      im.src = src;
-      if (im.complete) {
-        bgDone.add(src);
-        continue;
-      }
-      out.push(new Promise((done) => {
-        im.onload = im.onerror = () => {
-          bgDone.add(src);
-          done();
-        };
-      }));
+      out.push(loadBackground(src));
     }
   }
   return out;
@@ -692,8 +721,9 @@ function blockLoad(host) {
   const delay = hosts.some((one) => one.classList.contains("mn-blk")) ? 0 : BLOCK_DELAY_MS;
   for (const one of hosts) blockUntil(one, all, delay);
 }
-function layoutBlock(el) {
+function layoutBlock(el, own = false) {
   el.classList.add("mn-lb");
+  if (own) el.classList.add("mn-lb-own");
   return el;
 }
 var AUTO_BLOCK = 64;
@@ -704,7 +734,7 @@ function autoLoading(root) {
     const byPage = /* @__PURE__ */ new Map();
     for (const b of blocks) {
       if (!b.isConnected) continue;
-      const pg = b.closest(".mn-page") ?? b;
+      const pg = b.classList.contains("mn-lb-own") ? b : b.closest(".mn-page") ?? b;
       byPage.set(pg, [...byPage.get(pg) ?? [], b]);
     }
     blocks.clear();
@@ -4945,11 +4975,11 @@ function itemsPage(ctx) {
   const search = h(box, "input");
   search.type = "search";
   search.placeholder = "\u641C\u5C0B\u88DD\u5099";
-  const roles = layoutBlock(h(el, "div", "mn-shop-roles"));
+  const roles = layoutBlock(h(el, "div", "mn-shop-roles"), true);
   const sortWrap = h(el, "div", "mn-shop-sortwrap");
   const body = h(el, "div", "mn-shop");
-  const rail = layoutBlock(h(body, "div", "mn-shop-rail"));
-  const host = layoutBlock(h(body, "div", "mn-shop-list"));
+  const rail = layoutBlock(h(body, "div", "mn-shop-rail"), true);
+  const host = layoutBlock(h(body, "div", "mn-shop-list"), true);
   const drawRoles = () => {
     roles.empty();
     const all = h(roles, "button", "mn-shop-role" + (!itemRole ? " is-on" : ""));

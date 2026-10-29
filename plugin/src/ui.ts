@@ -145,20 +145,45 @@ export function blockUntil(host: HTMLElement, until: Promise<void>, delay = 0): 
     const cap = window.setTimeout(() => lift(host, state), BLOCK_MAX_MS);
     void until.then(() => { window.clearTimeout(cap); if (--state.open <= 0) lift(host, state); });
 }
-// Pictures drawn as a CSS background (the shop's sprite, a glyph mask) count too: each address is fetched once to know when it is in
-const bgDone = new Set<string>();
+// Pictures drawn as a CSS background (the shop's sprite, a glyph mask) count too. Each address is fetched once and its picture is
+// kept, so the phone does not drop it from memory and leave a block blank with no loading look; a failed fetch is tried again a few
+// times, and once it is in, the backgrounds that missed it are set again (a failed CSS background never retries by itself)
+const BG_TRIES = 3;
+const BG_RETRY_MS = 800;
+const bgHeld = new Map<string, HTMLImageElement>();   // loaded and decoded
+const bgLoading = new Map<string, Promise<void>>();
 const URL_IN_STYLE = /url\(["']?([^"')]+)["']?\)/g;
+function loadBackground(src: string): Promise<void> {
+    const known = bgLoading.get(src);
+    if (known) return known;
+    const p = new Promise<void>((done) => {
+        const im = new Image();
+        let tries = 0;
+        const finish = () => { bgLoading.delete(src); done(); };
+        im.onload = () => {
+            void (im.decode ? im.decode() : Promise.resolve()).catch(() => undefined).then(() => {
+                bgHeld.set(src, im);
+                if (tries) document.querySelectorAll<HTMLElement>(`[style*="${CSS.escape(src)}"]`).forEach((el) => { const b = el.style.backgroundImage; el.style.backgroundImage = "none"; void el.offsetWidth; el.style.backgroundImage = b; });
+                finish();
+            });
+        };
+        im.onerror = () => {
+            if (++tries >= BG_TRIES) { finish(); return; }
+            window.setTimeout(() => { im.removeAttribute("src"); im.src = src; }, BG_RETRY_MS);
+        };
+        im.src = src;
+    });
+    bgLoading.set(src, p);
+    return p;
+}
 function pendingBackgrounds(host: HTMLElement): Promise<void>[] {
     const out: Promise<void>[] = [], asked = new Set<string>();
     for (const el of [host, ...Array.from(host.querySelectorAll<HTMLElement>("[style]"))]) {
         for (const m of (el.getAttribute("style") ?? "").matchAll(URL_IN_STYLE)) {
             const src = m[1];
-            if (bgDone.has(src) || asked.has(src)) continue;
+            if (asked.has(src) || bgHeld.get(src)?.complete) continue;
             asked.add(src);
-            const im = new Image();
-            im.src = src;
-            if (im.complete) { bgDone.add(src); continue; }
-            out.push(new Promise<void>((done) => { im.onload = im.onerror = () => { bgDone.add(src); done(); }; }));
+            out.push(loadBackground(src));
         }
     }
     return out;
@@ -186,8 +211,10 @@ export function blockLoad(host: HTMLElement | HTMLElement[]): void {
 // A block as the Layouts note defines it (Dev Tools/Layouts.md: the title row, a grid, a shelf, a hero...). Marking its element is
 // all a page does: whenever pictures in it are still loading (drawn, redrawn, a picture added later) the whole block shows the block
 // loading look until they are in, the way the Handbook's tile groups do (LLM Guide, "Loading look").
-export function layoutBlock<T extends HTMLElement>(el: T): T {
+// own: the block loads by itself instead of with the page's other blocks (Items: the role tabs, the stat rail and the list)
+export function layoutBlock<T extends HTMLElement>(el: T, own = false): T {
     el.classList.add("mn-lb");
+    if (own) el.classList.add("mn-lb-own");
     return el;
 }
 
@@ -206,7 +233,7 @@ export function autoLoading(root: HTMLElement): MutationObserver {
         const byPage = new Map<Element, HTMLElement[]>();
         for (const b of blocks) {
             if (!b.isConnected) continue;
-            const pg = b.closest(".mn-page") ?? b;
+            const pg = b.classList.contains("mn-lb-own") ? b : b.closest(".mn-page") ?? b;
             byPage.set(pg, [...(byPage.get(pg) ?? []), b]);
         }
         blocks.clear();
