@@ -975,3 +975,10 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app button:is(.mn-rc, .mn-key, .mn-tg.is-on, .mn-rq-no, .mn-rq-yes):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card); }
 .mn-app button:is(.mn-rq-x, .mn-with-b, .mn-rq-lk):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card-hi); }
 .mn-app button.mn-hb-tile:is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }   /* its fill is a gradient image, the colour under it stays clear */
+
+/* Review/Icons.md: the icon and the colour drawn next to each name (src/iconsnote.ts) */
+.mn-icprev { display: inline-flex; vertical-align: -4px; margin-right: 6px; }
+.mn-icprev svg { width: 20px; height: 20px; }
+.mn-icsw { display: inline-block; width: 14px; height: 14px; border-radius: 4px; margin-right: 6px; vertical-align: -2px; border: 1px solid var(--background-modifier-border); }
+.mn-icbad { color: var(--color-red); }
+.mn-icprobe { position: absolute; width: 0; height: 0; overflow: hidden; visibility: hidden; }

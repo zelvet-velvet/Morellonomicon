@@ -2,6 +2,7 @@ import { Platform, Plugin, TAbstractFile, TFile, View, WorkspaceLeaf, setIcon } 
 import { Store } from "./data/store";
 import { Router } from "./router";
 import { preloadRoleIcons, warmPictures } from "./ui";
+import { registerIconsNote } from "./iconsnote";
 import { DEFAULTS, MnSettingTab, MnSettings } from "./settings";
 import { MnView, VIEW_TYPE } from "./view";
 
@@ -44,6 +45,7 @@ export default class MorellonomiconPlugin extends Plugin {
         this.addRibbonIcon("book-open", "Open Morellonomicon", () => { void this.activate(false); });
         this.addCommand({ id: "open", name: "Open Morellonomicon", callback: () => { void this.activate(false); } });
         this.addSettingTab(new MnSettingTab(this.app, this));
+        registerIconsNote(this);
 
         // A champion / item / guide note changed: redraw once for a burst of changes (e.g. a sync or a fetch_data run)
         const onFile = (file: TAbstractFile, oldPath?: string) => {

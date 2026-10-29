@@ -8,6 +8,8 @@ sticker: lucide//shapes
 ---
 One idea, one icon, everywhere in the app. Settled by the Champions filter panel (Zaviel, 2026-10-28). Icons are [Lucide](https://lucide.dev/icons) names drawn by Obsidian (`setIcon`); a name Obsidian does not have shows a plain circle. Colours are the CSS variables in `plugin/styles.css` (`.mn-app`).
 
+**See and change them:** open this note in **Reading view** (the plugin draws each icon next to its `name`, tinted with the colour written in the same row, and a swatch next to each colour). Edit a Lucide name or a colour (`--css-variable` or `#hex`) in the tables, look again, and tell Claude to apply the note to the code (a name Obsidian does not have turns red). Browse all names at lucide.dev/icons. The note is a proposal until it is applied: the map in the code stays the source of truth.
+
 **Rule for new work:** take the icon from the map in the code (the source of truth), never pick one in a page. A new idea gets its icon added to the map and to this note first.
 
 ---
