@@ -4421,7 +4421,7 @@ function swipePage(ctx) {
     face.addClass("mn-qc");
     const tabs = TABS.map((name) => h(face, "div", `mn-qc-tab is-${["look", "play", "skill", "style"][TABS.indexOf(name)]}`));
     const art = (n) => `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(c.id)}_${n}.jpg`;
-    const others = c.skins.filter((n) => n !== 0).sort(() => Math.random() - 0.5);
+    const others = c.skins.filter((n) => n !== 0).sort((a, b) => b - a);
     tabs.slice(1).forEach((tab, k) => {
       const bg = h(tab, "img", "mn-qc-bg");
       bg.loading = "lazy";

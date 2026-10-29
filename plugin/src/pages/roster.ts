@@ -291,9 +291,9 @@ export function swipePage(ctx: PageCtx): PageOut {
     const quickCard = (c: Champion, face: HTMLElement): void => {
         face.addClass("mn-qc");
         const tabs = TABS.map((name) => h(face, "div", `mn-qc-tab is-${["look", "play", "skill", "style"][TABS.indexOf(name)]}`));
-        // tabs 2 to 4 each show another of the champion's skins (picked at random), darkened behind the content
+        // tabs 2 to 4 show the champion's newest skins, newest first (a higher skin number is a later skin), darkened behind the content
         const art = (n: number) => `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(c.id)}_${n}.jpg`;
-        const others = c.skins.filter((n) => n !== 0).sort(() => Math.random() - 0.5);
+        const others = c.skins.filter((n) => n !== 0).sort((a, b) => b - a);
         tabs.slice(1).forEach((tab, k) => {
             const bg = h(tab, "img", "mn-qc-bg");
             bg.loading = "lazy";   // a hidden tab's picture loads when the tab is opened
