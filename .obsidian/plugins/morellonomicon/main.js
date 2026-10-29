@@ -293,6 +293,7 @@ var Store = class {
         pinned: list(fm.pinned),
         avoid: list(fm.avoid),
         positions: list(fm.positions),
+        aliases: list(fm.aliases),
         video: typeof fm.video === "string" ? fm.video : void 0,
         builds: buildList(fm.builds),
         tips: tipList(fm.tips),
@@ -3952,10 +3953,12 @@ function matchScore(c, raw) {
   const q = raw.trim().toLowerCase();
   if (!q) return 0;
   const name = c.name.toLowerCase(), title = c.title.toLowerCase(), id = c.id.toLowerCase(), en = (c.nameEn ?? "").toLowerCase();
-  if (name === q || id === q || en === q) return 100;
-  if (name.startsWith(q) || id.startsWith(q) || en.startsWith(q)) return 90;
+  const nick = c.aliases.map((a) => a.toLowerCase());
+  if (name === q || id === q || en === q || nick.includes(q)) return 100;
+  if (name.startsWith(q) || id.startsWith(q) || en.startsWith(q) || nick.some((a) => a.startsWith(q))) return 90;
   if (name.includes(q)) return 80;
   if (id.includes(q) || en.includes(q)) return q.length >= 4 ? 80 : 40;
+  if (q.length >= 2 && nick.some((a) => a.includes(q))) return 70;
   if (title.includes(q)) return 60;
   const chars = [...q];
   let at = 0;
@@ -4009,7 +4012,7 @@ function finder(all, sounds) {
   const heard = /* @__PURE__ */ new Map();
   const heardOf = (c) => {
     let x = heard.get(c.id);
-    if (!x && sounds) heard.set(c.id, x = { name: [sounds.said(c.name), sounds.said(c.name, true)], title: [sounds.said(c.title), sounds.said(c.title, true)] });
+    if (!x && sounds) heard.set(c.id, x = { name: [sounds.said(c.name), sounds.said(c.name, true)], title: [sounds.said(c.title), sounds.said(c.title, true)], nick: c.aliases.map((a) => [sounds.said(a), sounds.said(a, true)]) });
     return x;
   };
   const score2 = (c, t) => {
@@ -4020,7 +4023,8 @@ function finder(all, sounds) {
     const x = heardOf(c);
     const byName = Math.max(soundScore(q[0], x.name[0], false), soundScore(q[1], x.name[1], true));
     const byTitle = Math.max(soundScore(q[0], x.title[0], false), soundScore(q[1], x.title[1], true));
-    return Math.max(s, byName, byTitle >= 64 ? byTitle - 20 : 0);
+    const byNick = Math.max(0, ...x.nick.map((n) => Math.max(soundScore(q[0], n[0], false), soundScore(q[1], n[1], true))));
+    return Math.max(s, byName, byNick, byTitle >= 64 ? byTitle - 20 : 0);
   };
   const within = (t) => {
     if (!sounds) return [];

@@ -9,7 +9,7 @@ type FM = Record<string, unknown>;
 export interface Champion {
     id: string; key: number; name: string; nameEn: string; title: string; blurb: string; tier: string; roles: string[]; damageType: string; skillDamage: string[];
     archetypes: string[]; features: string[]; resource: string; attack: number; magic: number; defense: number; difficulty: number;
-    range: number; icon: string; skills: Skill[]; patch: string; pinned: string[]; avoid: string[]; video?: string; positions: string[];
+    range: number; icon: string; skills: Skill[]; patch: string; pinned: string[]; avoid: string[]; video?: string; positions: string[]; aliases: string[];
     builds: Build[]; tips: Tip[]; path: string;
     // hand-written for 速查: a one-line character overview, the thing that makes it work, and each ability in plain words (P Q W E R)
     punch: string; soul: string; plain: Record<string, string>;
@@ -186,7 +186,7 @@ export class Store {
                 id: str(fm.id), key: num(fm.key), name: str(fm.name, file.basename), nameEn: str(fm.name_en, str(fm.id)), title: str(fm.title), blurb: str(fm.blurb), tier: str(fm.tier), roles: list(fm.roles), damageType: str(fm.damage_type),
                 skillDamage: list(fm.skill_damage), archetypes: [...list(fm.archetypes), ...list(fm.archetypes_extra)], features: [...list(fm.features), ...list(fm.features_extra), ...(list(fm.onhit).length ? ["攻擊特效"] : [])],
                 resource: str(fm.resource), attack: num(fm.attack), magic: num(fm.magic), defense: num(fm.defense), difficulty: num(fm.difficulty),
-                range: num(fm.range), icon: str(fm.icon), skills: withOnHit(skillList(fm.skills), list(fm.onhit)), patch: str(fm.patch), pinned: list(fm.pinned), avoid: list(fm.avoid), positions: list(fm.positions),
+                range: num(fm.range), icon: str(fm.icon), skills: withOnHit(skillList(fm.skills), list(fm.onhit)), patch: str(fm.patch), pinned: list(fm.pinned), avoid: list(fm.avoid), positions: list(fm.positions), aliases: list(fm.aliases),
                 video: typeof fm.video === "string" ? fm.video : undefined, builds: buildList(fm.builds), tips: tipList(fm.tips), path: file.path,
                 punch: str(fm.punch), soul: str(fm.soul), plain: textMap(fm.plain),
             })).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));

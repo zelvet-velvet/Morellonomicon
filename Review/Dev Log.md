@@ -1,7 +1,7 @@
 ---
 title: Morellonomicon - Dev Log
 date: 2026-10-27
-updated: 2026-10-28
+updated: 2026-10-29
 tags:
   - dev-log
   - morellonomicon
@@ -12,5 +12,6 @@ What changed and when, in short: **one note per day** in `Log/` (newest first), 
 ## 📆 Days
 
 ### 2026
+- [[2026-10-29]]: 速查 finds nicknames
 - [[2026-10-28]]: loading screen tips, one Handbook card layout ([[Card Layout]]), [[Icons]], Malphite's ult by level, item recipe tree, 速查 overview cards and swipe
 - [[2026-10-27]]: project start, vault setup, workflow copied from clawd-room

@@ -67,7 +67,7 @@ sticker: lucide//activity
 
 ### 📦 Data
 - [ ] **洛克's lane**: newer than Meraki's lane data (16.3); add `positions` to his note by hand. Current lane data needs the ranked count with a Riot key.
-- [ ] **Nicknames**: an `aliases` key per champion for names people say that do not sound like the zh_TW name (機器人, 亞索).
+- [>] **Nicknames**: the `aliases` key works in 速查 (text and sound); 布里茨 (機器人) and 犽宿 (亞索) are in, fill the rest by hand (to check on the phone).
 - [ ] **On-hit list**: `onhit` is only set for 卡特蓮娜; draft it for other champions for review.
 - [ ] **Item notes check**: 142 ARAM-only items (`77NNNN`) are linked to their base item; look at a few notes in Obsidian and confirm the ARAM copies are what the Mayhem shop sells.
 - [ ] **Offline images**: optional `tools/cache_images.py` into a gitignored folder.
