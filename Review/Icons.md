@@ -17,32 +17,32 @@ One idea, one icon, everywhere in the app. Settled by the Champions filter panel
 Source: `DAMAGE_ICON`, `DAMAGE_COLOR` in `plugin/src/ui.ts`. Used for damage type filters, damage pills on skill cards, scaling pills (`+60% 魔法攻擊`).
 
 ```mn-icons
-物理 (AD) | sword | --mn-phys
-魔法 (AP) | sparkles | --mn-magic
-真實 (true) | gem | --mn-true
-混合 (mixed) | blend | --mn-mixed
-other scaling (+其他加成) | plus | --mn-muted
+物理 (AD) | sword | --mn-phys | #d5763f
+魔法 (AP) | sparkles | --mn-magic | #6c99bb
+真實 (true) | gem | --mn-true | #e5b567
+混合 (mixed) | blend | --mn-mixed | #9e86c8
+other scaling (+其他加成) | plus | --mn-muted | #c4beb4
 ```
 
 ## 🏷️ Ability tags
 Source: `TAGS` in `plugin/src/pages/profile.ts` (also the groups and the legend text). Used for the 技能 filter, champion pages, skill cards, 速查.
 
 ```mn-icons
-傷害 強化普攻 | sword | --mn-aa
-傷害 攻擊特效 | crosshair | --mn-onhit
-傷害 %生命傷害 | heart-crack | --color-red
-傷害 斬殺 | skull | --mn-exec
-控制 控場 | lock | --mn-cc
-控制 緩速 | snowflake | --mn-slow
-控制 減益 | trending-down | --mn-weak
-移動 位移 | arrow-big-right-dash | --mn-dash
-移動 加速 | wind | --mn-haste
-移動 隱身 | eye-off | --mn-stealth
-生存 治療 | heart-pulse | --mn-heal
-生存 護盾 | shield-plus | --mn-shield
-生存 吸血 | syringe | --mn-ls
-生存 免傷 | shield-half | --mn-guard
-團隊 隊友增益 | users | --mn-team
+傷害 強化普攻 | sword | --mn-aa | #b05279
+傷害 攻擊特效 | crosshair | --mn-onhit | #d5763f
+傷害 %生命傷害 | heart-crack | --color-red | #d04255
+傷害 斬殺 | skull | --mn-exec | #e0605a
+控制 控場 | lock | --mn-cc | #e5b567
+控制 緩速 | snowflake | --mn-slow | #6c99bb
+控制 減益 | trending-down | --mn-weak | #b98bd6
+移動 位移 | arrow-big-right-dash | --mn-dash | #73bbb2
+移動 加速 | wind | --mn-haste | #5ec2b7
+移動 隱身 | eye-off | --mn-stealth | #9aa3b8
+生存 治療 | heart-pulse | --mn-heal | #a8c373
+生存 護盾 | shield-plus | --mn-shield | #9e86c8
+生存 吸血 | syringe | --mn-ls | #d04255
+生存 免傷 | shield-half | --mn-guard | #d4a95f
+團隊 隊友增益 | users | --mn-team | #7ccf8f
 ```
 
 強化普攻 and 物理 share `sword` (both are about the basic attack / AD); they never stand side by side without their label colour.
