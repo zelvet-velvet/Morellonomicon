@@ -5,7 +5,7 @@ import { THEMES, themeVars } from "./themes";
 import { PageOut, renderPage } from "./pages";
 import { rememberSub } from "./pages/champions";
 import type { Frame } from "./router";
-import { empty, h, icon, preloadRoleIcons, releaseVideos, slideSeg, whenLoaded } from "./ui";
+import { autoLoading, empty, h, icon, preloadRoleIcons, releaseVideos, slideSeg, whenLoaded } from "./ui";
 
 export const VIEW_TYPE = "morellonomicon";
 
@@ -60,6 +60,8 @@ export class MnView extends ItemView {
         c.addClass("mn-host");
         const app = h(c, "div", "mn-app");
         this.appEl = app;
+        const loading = autoLoading(app);   // every picture fades in, big ones with the block loading look (ui.ts)
+        this.register(() => loading.disconnect());
         app.toggleClass("is-full", Platform.isMobile);   // phone: the app covers the display and adds the status-bar space itself
         this.topEl = h(app, "div", "mn-top");
         this.backEl = h(this.topEl, "button", "mn-btn mn-back");

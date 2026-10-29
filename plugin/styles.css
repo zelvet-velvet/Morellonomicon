@@ -963,6 +963,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-tick { position: fixed; left: -100px; top: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; overflow: hidden; }
 /* a picture still loading is clear, then fades in (the page itself shows at once) */
 .mn-app img { transition: opacity 0.25s ease-out; }
+.mn-app img { transition: opacity 0.25s ease-out; }   /* a picture that was loading fades in (autoLoading in ui.ts) */
 .mn-app img.is-loading { opacity: 0; }
 
 /* No native press look on any button: Obsidian gives every button a grey hover / press / focus background and shadow, which on a

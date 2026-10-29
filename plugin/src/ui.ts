@@ -154,6 +154,39 @@ export function blockLoad(host: HTMLElement): void {
     }))).then(() => undefined), host.classList.contains("mn-blk") ? 0 : BLOCK_DELAY_MS);
 }
 
+// Every picture gets the loading look by itself, so no page has to ask for it (LLM Guide, "Loading look"): a picture still loading is
+// hidden and fades in when it arrives, and a big one (its frame AUTO_BLOCK px or more each way: a card, a splash, a wallpaper) puts the
+// block loading look (blur and the band of light) on its frame until then. Pictures inside a block a page already handles (mn-blk),
+// inside a card pile (it has its own) or under .mn-noauto are left alone.
+const AUTO_BLOCK = 64;
+export function autoLoading(root: HTMLElement): MutationObserver {
+    const seen = new WeakSet<HTMLImageElement>();
+    const take = (im: HTMLImageElement) => {
+        if (seen.has(im) || !im.getAttribute("src") || (im.complete && im.naturalWidth) || im.closest(".mn-noauto, .mn-blk, .mn-pager")) return;
+        seen.add(im);
+        im.classList.add("is-loading");
+        const done = () => im.classList.remove("is-loading");
+        im.addEventListener("load", done, { once: true });
+        im.addEventListener("error", done, { once: true });
+        const host = im.parentElement;
+        if (!host) return;
+        const r = host.getBoundingClientRect();
+        if (Math.min(r.width, r.height) >= AUTO_BLOCK) blockLoad(host);
+    };
+    const scan = (n: Node) => {
+        if (n instanceof HTMLImageElement) take(n);
+        else if (n instanceof HTMLElement) n.querySelectorAll("img").forEach(take);
+    };
+    const mo = new MutationObserver((list) => {
+        for (const m of list) {
+            if (m.type === "attributes") { if (m.target instanceof HTMLImageElement) take(m.target); }
+            else m.addedNodes.forEach(scan);
+        }
+    });
+    mo.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["src"] });
+    return mo;
+}
+
 // Fetches pictures into the browser's cache a few at a time, in the background, so a list that shows them later (Champions, Augments)
 // has them at once instead of each one fading in as it arrives
 export async function warmPictures(urls: string[], batch = 6): Promise<void> {

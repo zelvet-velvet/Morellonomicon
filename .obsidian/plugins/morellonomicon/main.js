@@ -646,6 +646,35 @@ function blockLoad(host) {
     im.addEventListener("error", () => done(), { once: true });
   }))).then(() => void 0), host.classList.contains("mn-blk") ? 0 : BLOCK_DELAY_MS);
 }
+var AUTO_BLOCK = 64;
+function autoLoading(root) {
+  const seen = /* @__PURE__ */ new WeakSet();
+  const take = (im) => {
+    if (seen.has(im) || !im.getAttribute("src") || im.complete && im.naturalWidth || im.closest(".mn-noauto, .mn-blk, .mn-pager")) return;
+    seen.add(im);
+    im.classList.add("is-loading");
+    const done = () => im.classList.remove("is-loading");
+    im.addEventListener("load", done, { once: true });
+    im.addEventListener("error", done, { once: true });
+    const host = im.parentElement;
+    if (!host) return;
+    const r = host.getBoundingClientRect();
+    if (Math.min(r.width, r.height) >= AUTO_BLOCK) blockLoad(host);
+  };
+  const scan = (n) => {
+    if (n instanceof HTMLImageElement) take(n);
+    else if (n instanceof HTMLElement) n.querySelectorAll("img").forEach(take);
+  };
+  const mo = new MutationObserver((list2) => {
+    for (const m of list2) {
+      if (m.type === "attributes") {
+        if (m.target instanceof HTMLImageElement) take(m.target);
+      } else m.addedNodes.forEach(scan);
+    }
+  });
+  mo.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["src"] });
+  return mo;
+}
 async function warmPictures(urls, batch = 6) {
   for (let i = 0; i < urls.length; i += batch) {
     await Promise.all(urls.slice(i, i + batch).map((u) => new Promise((done) => {
@@ -5234,6 +5263,8 @@ var MnView = class extends import_obsidian11.ItemView {
     c.addClass("mn-host");
     const app = h(c, "div", "mn-app");
     this.appEl = app;
+    const loading = autoLoading(app);
+    this.register(() => loading.disconnect());
     app.toggleClass("is-full", import_obsidian11.Platform.isMobile);
     this.topEl = h(app, "div", "mn-top");
     this.backEl = h(this.topEl, "button", "mn-btn mn-back");
