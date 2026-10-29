@@ -5313,6 +5313,7 @@ function finder(all, sounds) {
   };
   return { score: score2, within };
 }
+var loading = (id) => `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(id)}_0.jpg`;
 function rosterPage(ctx) {
   const store = ctx.plugin.store;
   const el = page("Picks");
@@ -5364,7 +5365,6 @@ function rosterPage(ctx) {
     e.preventDefault();
     if (picks.length) ctx.push({ key: "rosterswipe", title: "\u901F\u67E5" });
   });
-  const loading = (id) => `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(id)}_0.jpg`;
   const masteryTag = (parent, id, cls) => {
     const ms = store.masteryOf(id);
     if (ms && ms.level >= 5) h(parent, "span", cls + (ms.level >= 10 ? " is-high" : ""), String(ms.level));
@@ -5691,13 +5691,6 @@ function swipePage(ctx) {
     }
     const done = at >= picks.length;
     if (done) {
-      const head2 = h(results, "div", "mn-rq-head");
-      h(head2, "span", "mn-rq-count", `\u559C\u6B61\u7684\u82F1\u96C4 \xB7 ${liked.length}`);
-      const back = h(head2, "button", "mn-clear", "\u91CD\u65B0\u6311\u9078");
-      back.addEventListener("click", (e) => {
-        e.preventDefault();
-        ctx.pop();
-      });
       const box = h(results, "div", "mn-rq-end");
       const fitEnd = () => {
         const scroll = el.closest(".mn-scroll");
@@ -5805,36 +5798,44 @@ function swipePage(ctx) {
       press(true);
     });
   };
-  const likedGrid = (results2) => {
+  const likedGrid = (box) => {
+    const head2 = h(box, "div", "mn-rq-endhead");
+    h(head2, "b", void 0, "\u4F60\u559C\u6B61\u7684\u82F1\u96C4");
+    h(head2, "span", void 0, `${liked.length} / ${picks.length} \u4F4D`);
+    const list2 = h(box, "div", "mn-rq-endlist");
     if (liked.length) {
-      const g = h(results2, "div", "mn-rq-liked");
+      const g = h(list2, "div", "mn-rq-liked");
       for (const id of liked) {
         const c = all.find((x) => x.id === id);
         if (!c) continue;
         const b = h(g, "button", "mn-rq-lk");
         const im = h(b, "img");
-        im.src = c.icon;
+        im.src = loading(c.id);
         im.alt = "";
+        if (c.face) im.style.objectPosition = c.face;
         const who = h(b, "span", "mn-rq-lw");
         h(who, "b", void 0, c.name);
         const main = c.damageType || c.skillDamage[0] || "";
-        h(who, "span", "mn-rq-ls", [c.roles.join(" \xB7 "), main && `${main}\u50B7`, c.range ? c.range >= 550 ? "\u9060\u7A0B" : c.range >= 300 ? "\u4E2D\u7A0B" : "\u8FD1\u6230" : ""].filter(Boolean).join(" \xB7 "));
+        h(who, "span", "mn-rq-ls", [c.roles[0], main && `${main}\u50B7`, c.range ? c.range >= 550 ? "\u9060\u7A0B" : c.range >= 300 ? "\u4E2D\u7A0B" : "\u8FD1\u6230" : ""].filter(Boolean).join(" \xB7 "));
         if (c.punch) h(who, "span", "mn-rq-lp", c.punch);
-        const tags2 = c.features.slice(0, 6);
-        if (tags2.length) h(who, "span", "mn-rq-lt", tags2.join(" \xB7 "));
-        icon(b, "chevron-right", "mn-rq-lgo");
         b.addEventListener("click", (e) => {
           e.preventDefault();
           ctx.openChampion(c.id);
         });
       }
-    } else empty(results2, { icon: "heart-off", title: "\u4E00\u500B\u90FD\u6C92\u559C\u6B61" });
-    const again = h(results2, "button", "mn-rq-again");
+    } else empty(list2, { icon: "heart-off", title: "\u4E00\u500B\u90FD\u6C92\u559C\u6B61" });
+    const foot = h(box, "div", "mn-rq-endfoot");
+    const again = h(foot, "button", "mn-rq-go");
     icon(again, "rotate-ccw");
     again.append("\u518D\u6ED1\u4E00\u6B21");
     again.addEventListener("click", (e) => {
       e.preventDefault();
       restart();
+    });
+    const back = h(foot, "button", "mn-rq-again", "\u91CD\u65B0\u6311\u9078\u82F1\u96C4");
+    back.addEventListener("click", (e) => {
+      e.preventDefault();
+      ctx.pop();
     });
   };
   drawResults();
@@ -5933,8 +5934,8 @@ var MnView = class extends import_obsidian12.ItemView {
     c.addClass("mn-host");
     const app = h(c, "div", "mn-app");
     this.appEl = app;
-    const loading = autoLoading(app);
-    this.register(() => loading.disconnect());
+    const loading2 = autoLoading(app);
+    this.register(() => loading2.disconnect());
     app.toggleClass("is-full", import_obsidian12.Platform.isMobile);
     this.topEl = h(app, "div", "mn-top");
     this.backEl = h(this.topEl, "button", "mn-btn mn-back");

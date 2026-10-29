@@ -680,26 +680,32 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-faces.is-named { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 12px 8px; }
 .mn-faces.is-named .mn-face img { width: 60px; height: 60px; border-radius: 16px; }
 .mn-rq-results { margin-top: 12px; }
-.mn-rq-head { display: flex; align-items: center; justify-content: space-between; margin: 0 4px 6px; }
-.mn-rq-count { font-size: 13px; font-weight: 700; }
 .mn-app .mn-tg, .mn-app .mn-scc, .mn-app .mn-lg-btn { -webkit-tap-highlight-color: transparent; }
 /* 速查 swipe: the picked champions as the Handbook's card pile (pile.ts), the top card dragged right (like) or left (pass) */
 .mn-app .mn-rq-go { flex: none; display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 16px 0 20px; border-radius: 22px; border: 0; background: var(--mn-accent); color: var(--text-on-accent, #fff); font-size: 15px; font-weight: 800; box-shadow: none; }
 .mn-app .mn-rq-go:active { transform: scale(0.96); }
 .mn-rq-go svg { width: 18px; height: 18px; stroke-width: 2.6; }
-.mn-rq-end { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }   /* the page never scrolls; the liked list does */
+.mn-rq-end { display: flex; flex-direction: column; gap: 12px; }   /* the page never scrolls; the liked list does, the actions stay at the bottom */
+.mn-rq-endhead { display: flex; align-items: baseline; justify-content: space-between; padding: 4px 4px 0; }
+.mn-rq-endhead b { font-size: 24px; font-weight: 800; color: var(--mn-text); }
+.mn-rq-endhead span { font-size: 14px; font-weight: 700; color: var(--mn-muted); font-variant-numeric: tabular-nums; }
+.mn-rq-endlist { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.mn-rq-endlist::-webkit-scrollbar { display: none; }
+.mn-rq-endlist > .mn-empty { box-sizing: border-box; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+.mn-rq-endfoot { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.mn-rq-endfoot .mn-rq-go { align-self: stretch; justify-content: center; height: 50px; border-radius: 25px; font-size: 16px; }
 .mn-rq-deck .mn-sl-card { position: relative; }   /* the ♥ / ✕ stamp sits over it */   /* the lift room lets a tilted card pass over the count line, like the Handbook bars */
 /* the big ♥ / ✕ over the middle of a dragged 速查 card (outside the face, so the card's scrolling never moves it) */
 /* after the last card: the liked champions two across */
-.mn-rq-liked { display: flex; flex-direction: column; gap: 8px; }
-.mn-app .mn-rq-lk { display: flex; flex-direction: row; align-items: center; gap: 12px; height: auto; padding: 10px 12px; border-radius: var(--mn-radius); background: var(--mn-card); border: 1px solid var(--mn-line); box-shadow: none; text-align: left; white-space: normal; }
-.mn-rq-lk img { width: 56px; height: 56px; flex: none; object-fit: cover; border-radius: 14px; }
-.mn-rq-lw { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.mn-rq-liked { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mn-app .mn-rq-lk { position: relative; display: block; aspect-ratio: 3 / 5; height: auto; padding: 0; overflow: hidden; border-radius: 18px; background: var(--mn-card); border: 1px solid var(--mn-line); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35); text-align: left; white-space: normal; }
+.mn-app .mn-rq-lk:active { transform: scale(0.97); }
+.mn-rq-lk img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+.mn-rq-lk::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(10, 12, 18, 0.75) 72%, #0a0c12); }   /* the words read at the bottom */
+.mn-rq-lw { position: absolute; z-index: 1; left: 12px; right: 12px; bottom: 12px; display: flex; flex-direction: column; gap: 3px; }
+.mn-rq-lk b { font-size: 19px; font-weight: 800; color: #f3ecdf; }
 .mn-rq-ls { font-size: 12.5px; color: var(--mn-accent); font-weight: 700; }
-.mn-rq-lt { font-size: 12px; color: var(--mn-muted); }
-.mn-rq-lgo { width: 18px; height: 18px; color: var(--mn-muted); flex: none; }
-.mn-rq-lk b { font-size: 15px; color: var(--mn-text); }
-.mn-rq-lp { font-size: 13px; line-height: 1.35; color: var(--mn-text); }
+.mn-rq-lp { font-size: 12.5px; line-height: 1.35; color: rgba(243, 236, 223, 0.85); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .mn-app .mn-rq-again { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 14px auto 4px; height: auto; padding: 8px 16px; background: none; box-shadow: none; font-size: 14px; font-weight: 700; color: var(--mn-accent); }
 .mn-rq-again svg { width: 16px; height: 16px; }
 .mn-app .mn-lg-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--mn-muted); }

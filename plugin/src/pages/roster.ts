@@ -148,6 +148,9 @@ export function finder(all: Champion[], sounds: Sounds | null) {
     return { score, within };
 }
 
+// a champion's loading screen art: a portrait, like the 速查 card
+const loading = (id: string) => `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(id)}_0.jpg`;
+
 // Quick Look: pick the champions the game gave you (up to 15) and see right away what each one is and can do.
 export function rosterPage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
@@ -192,7 +195,6 @@ export function rosterPage(ctx: PageCtx): PageOut {
     h(go, "span", undefined, "配對");
     icon(go, "arrow-right");
     go.addEventListener("click", (e) => { e.preventDefault(); if (picks.length) ctx.push({ key: "rosterswipe", title: "速查" }); });
-    const loading = (id: string) => `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(id)}_0.jpg`;
     const masteryTag = (parent: HTMLElement, id: string, cls: string) => {
         const ms = store.masteryOf(id);
         if (ms && ms.level >= 5) h(parent, "span", cls + (ms.level >= 10 ? " is-high" : ""), String(ms.level));
@@ -478,10 +480,7 @@ export function swipePage(ctx: PageCtx): PageOut {
         if (!picks.length) { empty(results, { icon: "users", title: "還沒選英雄" }); return; }
         const done = at >= picks.length;
         if (done) {
-            const head = h(results, "div", "mn-rq-head");
-            h(head, "span", "mn-rq-count", `喜歡的英雄 · ${liked.length}`);
-            const back = h(head, "button", "mn-clear", "重新挑選");
-            back.addEventListener("click", (e) => { e.preventDefault(); ctx.pop(); });
+            // the liked champions as portraits two across, the count on top and the two actions pinned above the tab bar
             const box = h(results, "div", "mn-rq-end");
             const fitEnd = () => {
                 const scroll = el.closest<HTMLElement>(".mn-scroll");
@@ -565,29 +564,34 @@ export function swipePage(ctx: PageCtx): PageOut {
         yes.addEventListener("click", (e) => { e.preventDefault(); press(true); });
     };
     // after the last card: the liked champions two across (picture, name, overview line), and a way to swipe again
-    const likedGrid = (results: HTMLElement) => {
+    const likedGrid = (box: HTMLElement) => {
+        const head = h(box, "div", "mn-rq-endhead");
+        h(head, "b", undefined, "你喜歡的英雄");
+        h(head, "span", undefined, `${liked.length} / ${picks.length} 位`);
+        const list = h(box, "div", "mn-rq-endlist");   // only this part scrolls
         if (liked.length) {
-            const g = h(results, "div", "mn-rq-liked");
+            const g = h(list, "div", "mn-rq-liked");
             for (const id of liked) {
                 const c = all.find((x) => x.id === id);
                 if (!c) continue;
                 const b = h(g, "button", "mn-rq-lk");
-                const im = h(b, "img"); im.src = c.icon; im.alt = "";
+                const im = h(b, "img"); im.src = loading(c.id); im.alt = "";
+                if (c.face) im.style.objectPosition = c.face;
                 const who = h(b, "span", "mn-rq-lw");
                 h(who, "b", undefined, c.name);
                 const main = c.damageType || c.skillDamage[0] || "";
-                h(who, "span", "mn-rq-ls", [c.roles.join(" · "), main && `${main}傷`, c.range ? (c.range >= 550 ? "遠程" : c.range >= 300 ? "中程" : "近戰") : ""].filter(Boolean).join(" · "));
+                h(who, "span", "mn-rq-ls", [c.roles[0], main && `${main}傷`, c.range ? (c.range >= 550 ? "遠程" : c.range >= 300 ? "中程" : "近戰") : ""].filter(Boolean).join(" · "));
                 if (c.punch) h(who, "span", "mn-rq-lp", c.punch);
-                const tags = c.features.slice(0, 6);
-                if (tags.length) h(who, "span", "mn-rq-lt", tags.join(" · "));
-                icon(b, "chevron-right", "mn-rq-lgo");
                 b.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); });
             }
-        } else empty(results, { icon: "heart-off", title: "一個都沒喜歡" });
-        const again = h(results, "button", "mn-rq-again");
+        } else empty(list, { icon: "heart-off", title: "一個都沒喜歡" });
+        const foot = h(box, "div", "mn-rq-endfoot");
+        const again = h(foot, "button", "mn-rq-go");
         icon(again, "rotate-ccw");
         again.append("再滑一次");
         again.addEventListener("click", (e) => { e.preventDefault(); restart(); });
+        const back = h(foot, "button", "mn-rq-again", "重新挑選英雄");
+        back.addEventListener("click", (e) => { e.preventDefault(); ctx.pop(); });
     };
 
 
