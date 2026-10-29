@@ -986,7 +986,7 @@ function slideSeg(seg, key = "", opt = {}) {
 // src/iconsnote.ts
 var import_obsidian3 = require("obsidian");
 var HEX = /^#[0-9a-fA-F]{6}$/;
-var LIST_ID = "mn-lucide-ids";
+var CHUNK = 90;
 var toHex = (rgb) => {
   const m = rgb.match(/\d+(?:\.\d+)?/g);
   return m && m.length >= 3 ? "#" + m.slice(0, 3).map((n) => Math.round(Number(n)).toString(16).padStart(2, "0")).join("") : "";
@@ -1013,8 +1013,7 @@ function iconsBlock(plugin, source, el, ctx) {
   };
   const info = ctx.getSectionInfo(el);
   const list2 = el.createDiv({ cls: "mn-iclist" });
-  const dl = list2.createEl("datalist", { attr: { id: LIST_ID } });
-  for (const id of ids) dl.createEl("option", { attr: { value: id } });
+  let openPanel = null;
   const save = (i, r) => {
     const file = plugin.app.vault.getAbstractFileByPath(ctx.sourcePath);
     if (!info || !(file instanceof import_obsidian3.TFile)) return;
@@ -1032,7 +1031,7 @@ function iconsBlock(plugin, source, el, ctx) {
     const label = row2.createDiv({ cls: "mn-iclabel", text: r.label });
     if (r.variable) label.createSpan({ cls: "mn-icvar", text: r.variable });
     const ctl = row2.createDiv({ cls: "mn-icctl" });
-    const name = ctl.createEl("input", { cls: "mn-icin", attr: { type: "text", list: LIST_ID, value: r.name, placeholder: "lucide name", spellcheck: "false", autocapitalize: "off", autocomplete: "off" } });
+    const name = ctl.createEl("input", { cls: "mn-icin", attr: { type: "text", value: r.name, placeholder: "lucide name", spellcheck: "false", autocapitalize: "off", autocomplete: "off" } });
     const pick = ctl.createEl("input", { cls: "mn-icpick", attr: { type: "color" } });
     const hex = ctl.createEl("input", { cls: "mn-icin mn-ichexin", attr: { type: "text", placeholder: "#hex", spellcheck: "false", autocapitalize: "off" } });
     const reset = ctl.createEl("button", { cls: "mn-icreset", attr: { "aria-label": "Use the app's colour" } });
@@ -1050,6 +1049,56 @@ function iconsBlock(plugin, source, el, ctx) {
       reset.toggleClass("is-hidden", !r.hex || !r.variable);
     };
     draw();
+    const panel = row2.createDiv({ cls: "mn-icpanel is-hidden" });
+    let shown = 0, matches2 = [];
+    const more = () => {
+      for (const id of matches2.slice(shown, shown + CHUNK)) {
+        const b = panel.createEl("button", { cls: "mn-ictile" });
+        b.createSpan({ cls: "mn-ictile-ic" }).style.color = current(r);
+        (0, import_obsidian3.setIcon)(b.firstElementChild, id);
+        b.createSpan({ cls: "mn-ictile-n", text: id });
+        b.addEventListener("click", (e) => {
+          e.preventDefault();
+          r.name = id;
+          name.value = id;
+          draw();
+          close();
+          save(i, r);
+        });
+      }
+      shown += CHUNK;
+    };
+    const fill = () => {
+      const q = name.value.trim().toLowerCase().replace(/^lucide-/, "");
+      matches2 = q ? ids.filter((x) => x.includes(q)) : ids;
+      panel.empty();
+      shown = 0;
+      panel.scrollTop = 0;
+      if (!matches2.length) panel.createDiv({ cls: "mn-icnone", text: "no icon with that name" });
+      else more();
+    };
+    const close = () => {
+      panel.addClass("is-hidden");
+      if (openPanel === panel) openPanel = null;
+    };
+    panel.addEventListener("scroll", () => {
+      if (shown < matches2.length && panel.scrollTop + panel.clientHeight > panel.scrollHeight - 80) more();
+    });
+    panel.addEventListener("mousedown", (e) => e.preventDefault());
+    name.addEventListener("focus", () => {
+      openPanel?.addClass("is-hidden");
+      openPanel = panel;
+      panel.removeClass("is-hidden");
+      name.select();
+      fill();
+    });
+    name.addEventListener("input", fill);
+    name.addEventListener("blur", () => window.setTimeout(close, 150));
+    name.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        name.blur();
+      }
+    });
     name.addEventListener("change", () => {
       r.name = name.value.trim().toLowerCase().replace(/^lucide-/, "");
       draw();

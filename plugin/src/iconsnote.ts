@@ -5,7 +5,7 @@ import type MorellonomiconPlugin from "./main";
 // optional; a #hex wins over the variable). The block is drawn as rows with a live icon, a box for the Lucide name (with suggestions),
 // a colour picker and a hex box; changing one writes the line back into the note.
 const HEX = /^#[0-9a-fA-F]{6}$/;
-const LIST_ID = "mn-lucide-ids";
+const CHUNK = 90;   // icons added to the picker at a time (there are about 1700; drawing them all at once is slow on a phone)
 
 const toHex = (rgb: string): string => {   // "rgb(224, 137, 74)" -> "#e0894a"
     const m = rgb.match(/\d+(?:\.\d+)?/g);
@@ -34,8 +34,7 @@ function iconsBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLElemen
     };
     const info = ctx.getSectionInfo(el);
     const list = el.createDiv({ cls: "mn-iclist" });
-    const dl = list.createEl("datalist", { attr: { id: LIST_ID } });
-    for (const id of ids) dl.createEl("option", { attr: { value: id } });
+    let openPanel: HTMLElement | null = null;
     // write one line of the block back into the note (the block's lines follow its opening fence)
     const save = (i: number, r: Row) => {
         const file = plugin.app.vault.getAbstractFileByPath(ctx.sourcePath);
@@ -54,7 +53,7 @@ function iconsBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLElemen
         const label = row.createDiv({ cls: "mn-iclabel", text: r.label });
         if (r.variable) label.createSpan({ cls: "mn-icvar", text: r.variable });
         const ctl = row.createDiv({ cls: "mn-icctl" });
-        const name = ctl.createEl("input", { cls: "mn-icin", attr: { type: "text", list: LIST_ID, value: r.name, placeholder: "lucide name", spellcheck: "false", autocapitalize: "off", autocomplete: "off" } });
+        const name = ctl.createEl("input", { cls: "mn-icin", attr: { type: "text", value: r.name, placeholder: "lucide name", spellcheck: "false", autocapitalize: "off", autocomplete: "off" } });
         const pick = ctl.createEl("input", { cls: "mn-icpick", attr: { type: "color" } });
         const hex = ctl.createEl("input", { cls: "mn-icin mn-ichexin", attr: { type: "text", placeholder: "#hex", spellcheck: "false", autocapitalize: "off" } });
         const reset = ctl.createEl("button", { cls: "mn-icreset", attr: { "aria-label": "Use the app's colour" } });
@@ -71,6 +70,32 @@ function iconsBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLElemen
             reset.toggleClass("is-hidden", !r.hex || !r.variable);
         };
         draw();
+        // the picker: a scrolling grid of icons under the row, filtered by what is typed; tap one to take it
+        const panel = row.createDiv({ cls: "mn-icpanel is-hidden" });
+        let shown = 0, matches: string[] = [];
+        const more = () => {
+            for (const id of matches.slice(shown, shown + CHUNK)) {
+                const b = panel.createEl("button", { cls: "mn-ictile" });
+                b.createSpan({ cls: "mn-ictile-ic" }).style.color = current(r);
+                setIcon(b.firstElementChild as HTMLElement, id);
+                b.createSpan({ cls: "mn-ictile-n", text: id });
+                b.addEventListener("click", (e) => { e.preventDefault(); r.name = id; name.value = id; draw(); close(); save(i, r); });
+            }
+            shown += CHUNK;
+        };
+        const fill = () => {
+            const q = name.value.trim().toLowerCase().replace(/^lucide-/, "");
+            matches = q ? ids.filter((x) => x.includes(q)) : ids;
+            panel.empty(); shown = 0; panel.scrollTop = 0;
+            if (!matches.length) panel.createDiv({ cls: "mn-icnone", text: "no icon with that name" }); else more();
+        };
+        const close = () => { panel.addClass("is-hidden"); if (openPanel === panel) openPanel = null; };
+        panel.addEventListener("scroll", () => { if (shown < matches.length && panel.scrollTop + panel.clientHeight > panel.scrollHeight - 80) more(); });
+        panel.addEventListener("mousedown", (e) => e.preventDefault());   // a tap on the grid must not blur the box first
+        name.addEventListener("focus", () => { openPanel?.addClass("is-hidden"); openPanel = panel; panel.removeClass("is-hidden"); name.select(); fill(); });
+        name.addEventListener("input", fill);
+        name.addEventListener("blur", () => window.setTimeout(close, 150));
+        name.addEventListener("keydown", (e) => { if (e.key === "Escape") { name.blur(); } });
         name.addEventListener("change", () => { r.name = name.value.trim().toLowerCase().replace(/^lucide-/, ""); draw(); if (known.has(r.name)) save(i, r); });
         pick.addEventListener("input", () => { r.hex = pick.value.toLowerCase(); draw(); });
         pick.addEventListener("change", () => { r.hex = pick.value.toLowerCase(); draw(); save(i, r); });
