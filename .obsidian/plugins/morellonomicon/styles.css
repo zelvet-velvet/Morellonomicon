@@ -991,4 +991,4 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-icname { justify-self: start; }
 .mn-icname, .mn-iccol { font-size: 12px; }
 .mn-iccol { opacity: 0.7; }
-@media (max-width: 520px) { .mn-icrow { grid-template-columns: 30px minmax(0, 1fr) 16px; } .mn-icname, .mn-iccol { display: none; } }
+@media (max-width: 520px) { .mn-icrow { grid-template-columns: 30px minmax(0, 1fr) auto 16px; } .mn-iccol { display: none; } }
