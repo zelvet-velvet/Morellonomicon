@@ -5,5 +5,6 @@
 Solo project, owner **Zaviel** (GitHub `zelvet-velvet`):
 - Commit straight to `main` and push, small and often; never force-push.
 - Commit with the repo's own git identity (already set; GitHub no-reply address).
+- In a fresh clone (Claude Code in the cloud, a new machine) that identity is not set: before the first commit check `git config user.name` / `user.email`, and if they are not `Zaviel` / `81034608+zelvet-velvet@users.noreply.github.com`, set them with `git config` (repo level, not global).
 - Vault content for readers is Traditional Chinese; workflow notes stay English.
 - Each change gets a Dev Log entry (`CMD_JOURNAL`).
