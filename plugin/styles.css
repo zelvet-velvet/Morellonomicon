@@ -667,8 +667,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* Quick Look */
 /* 速查: search, class icons and faces sit on one even 12px rhythm */
 .mn-rq-sugg:empty { display: none; }
-/* Picks' lanes: one row of icons close together on a line that divides them from the faces, like Champions' lane bar */
-.mn-app .mn-fgrid.mn-rq-lanes { display: flex; gap: 4px; margin: 10px 0; padding-bottom: 4px; border-bottom: 1px solid var(--mn-line); }
+/* Picks' lanes: one row of icons close together at the right, on a line that divides them from the faces, like Champions' lane bar */
+.mn-app .mn-fgrid.mn-rq-lanes { display: flex; justify-content: flex-end; gap: 4px; margin: 10px 0; padding-bottom: 4px; border-bottom: 1px solid var(--mn-line); }
 .mn-app .mn-rq-lanes .mn-chip.mn-chip-ic { width: 52px; height: 48px; }   /* bigger than a filter row's icons */
 .mn-rq-lanes .mn-role-img, .mn-rq-lanes .mn-chip-ic svg { width: 36px; height: 36px; }
 .mn-faces { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 8px 6px; margin: 12px 0 0; }
