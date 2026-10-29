@@ -463,8 +463,8 @@ export function swipePage(ctx: PageCtx): PageOut {
 
         // 4 · 風格
         styleCard(h(tabs[3], "div", "mn-qc-style"), c, ctx.app);
-        return skins;
         show(0);
+        return skins;
     };
 
     const drawResults = () => {

@@ -5673,8 +5673,8 @@ function swipePage(ctx) {
       if (cd) h(nums, "span", void 0, `${cd} \u79D2`);
     }
     styleCard(h(tabs[3], "div", "mn-qc-style"), c, ctx.app);
-    return skins;
     show(0);
+    return skins;
   };
   const drawResults = () => {
     results.empty();
