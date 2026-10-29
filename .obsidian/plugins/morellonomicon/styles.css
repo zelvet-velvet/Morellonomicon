@@ -1316,7 +1316,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay-page.is-changed .mn-lay-phone { border-color: var(--interactive-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--interactive-accent) 30%, transparent); }
 .mn-lay-page.is-changed .mn-lay input.mn-lay-name, .mn-lay-page.is-changed input.mn-lay-name { color: var(--interactive-accent); }
 .mn-lay-synced { font-size: 12px; color: var(--text-faint); }
-/* typing in a search capsule: it sits at the top of the screen (view.ts), its chips and the filter sheet under it */
-.mn-app .mn-rq-dock.is-typing { position: fixed; z-index: 50; top: calc(var(--mn-safe-top, 0px) + 8px); bottom: auto; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px));
-    margin: 0; flex-direction: column-reverse; }
-.mn-rq-dock.is-typing .mn-fsheet { max-height: 45vh; }
+/* typing in a search capsule: it slides up above the keyboard (a transform set by view.ts) */
+.mn-rq-dock { transition: transform 0.22s ease-out; }
+.mn-rq-dock.is-typing { z-index: 50; }
+.mn-kbread { position: fixed; z-index: 99; left: 8px; right: 8px; top: calc(var(--mn-safe-top, 0px) + 4px); padding: 4px 8px; border-radius: 8px; background: rgba(0, 0, 0, 0.75); color: #9fe0b0; font: 11px/1.4 ui-monospace, monospace; pointer-events: none; }
+.mn-kbread.is-hidden { display: none; }

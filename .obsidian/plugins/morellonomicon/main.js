@@ -1818,6 +1818,7 @@ var DEFAULTS = {
   riotId: "",
   riotServer: "TW2",
   riotKey: "",
+  kbDebug: false,
   wallpaper: "",
   read: [],
   roster: []
@@ -1862,6 +1863,10 @@ var MnSettingTab = class extends import_obsidian5.PluginSettingTab {
         await this.plugin.saveData(s);
       });
     });
+    new import_obsidian5.Setting(c).setName("Keyboard readout").setDesc("While typing in a search box, show what the phone reports about the keyboard (for fixing the search bar position).").addToggle((x) => x.setValue(s.kbDebug).onChange(async (v) => {
+      s.kbDebug = v;
+      await this.plugin.saveData(s);
+    }));
     new import_obsidian5.Setting(c).setName("Open on startup").setDesc("Show the app when Obsidian starts (on by default on a phone).").addToggle((x) => x.setValue(s.openOnStartup).onChange(async (v) => {
       s.openOnStartup = v;
       await save();
@@ -5751,6 +5756,8 @@ function renderPage(tab, ctx) {
 
 // src/view.ts
 var VIEW_TYPE = "morellonomicon";
+var KEYBOARD_GAP = 8;
+var DOCK_REST = 10;
 var KEYBOARD_BLUR_MS = 250;
 var KEYBOARD_SETTLE_MS = 700;
 var OVERLAY_PAGES = /* @__PURE__ */ new Set(["champion"]);
@@ -5833,40 +5840,73 @@ var MnView = class extends import_obsidian12.ItemView {
     });
     this.modeBtn = modeBtn;
     this.scrollEl = h(app, "div", "mn-scroll");
-    const dockOf = (n) => n?.closest?.(".mn-rq-dock");
+    const vv = window.visualViewport;
+    let kbEvent = 0;
     let typingDock = null;
-    const lift2 = (d) => {
-      if (typingDock === d) return;
-      typingDock?.removeClass("is-typing");
+    const readout = h(app, "div", "mn-kbread is-hidden");
+    const visibleBottom = () => {
+      const css = parseFloat(getComputedStyle(document.body).getPropertyValue("--keyboard-height")) || 0;
+      const tells = [window.innerHeight];
+      if (vv) tells.push(vv.offsetTop + vv.height);
+      if (kbEvent) tells.push(window.innerHeight - kbEvent);
+      if (css) tells.push(window.innerHeight - css);
+      return { bottom: Math.min(...tells), css };
+    };
+    const place = () => {
+      if (!typingDock) return;
+      const { bottom, css } = visibleBottom();
+      const scrollBottom = this.scrollEl.getBoundingClientRect().bottom;
+      const shift = Math.max(0, Math.round(scrollBottom - bottom + KEYBOARD_GAP - DOCK_REST));
+      typingDock.style.transform = shift ? `translateY(${-shift}px)` : "";
+      if (this.plugin.settings.kbDebug) {
+        readout.removeClass("is-hidden");
+        readout.setText(`inner ${window.innerHeight} \xB7 vv ${vv ? `${Math.round(vv.height)}+${Math.round(vv.offsetTop)}` : "-"} \xB7 event ${kbEvent} \xB7 css ${css} \xB7 scroll\u2193 ${Math.round(scrollBottom)} \xB7 shift ${shift} \xB7 body ${document.body.className.split(" ").filter((c2) => /key|kb/i.test(c2)).join(",") || "-"}`);
+      }
+    };
+    const drop = () => {
+      if (typingDock) {
+        typingDock.style.transform = "";
+        typingDock.removeClass("is-typing");
+      }
+      typingDock = null;
+      readout.addClass("is-hidden");
+    };
+    this.registerDomEvent(app, "focusin", (e) => {
+      const d = e.target?.closest?.(".mn-rq-dock");
+      if (!d || !e.target.matches("input")) return;
       typingDock = d;
       d.addClass("is-typing");
-      app.addClass("is-kb");
       const keep = this.scrollEl.scrollTop, until = Date.now() + KEYBOARD_SETTLE_MS;
       const hold = () => {
+        if (!typingDock) return;
         if (this.scrollEl.scrollTop !== keep) this.scrollEl.scrollTop = keep;
         if (window.scrollY) window.scrollTo(0, 0);
+        place();
         if (Date.now() < until) requestAnimationFrame(hold);
       };
       requestAnimationFrame(hold);
-    };
-    const drop = () => {
-      typingDock?.removeClass("is-typing");
-      typingDock = null;
-      app.removeClass("is-kb");
-    };
-    this.registerDomEvent(app, "pointerdown", (e) => {
-      const d = dockOf(e.target);
-      if (d && e.target.closest("input")) lift2(d);
-    }, { capture: true });
-    this.registerDomEvent(app, "focusin", (e) => {
-      const d = dockOf(e.target);
-      if (d && e.target.matches("input")) lift2(d);
     });
     this.registerDomEvent(app, "focusout", () => {
       window.setTimeout(() => {
         if (typingDock && !typingDock.contains(document.activeElement)) drop();
       }, KEYBOARD_BLUR_MS);
     });
+    const onShow = (e) => {
+      kbEvent = Math.round(e.keyboardHeight ?? 0);
+      place();
+    };
+    const onHide = () => {
+      kbEvent = 0;
+      place();
+    };
+    for (const [n, f] of [["keyboardWillShow", onShow], ["keyboardDidShow", onShow], ["keyboardWillHide", onHide], ["keyboardDidHide", onHide]]) {
+      window.addEventListener(n, f);
+      this.register(() => window.removeEventListener(n, f));
+    }
+    if (vv) for (const n of ["resize", "scroll"]) {
+      vv.addEventListener(n, place);
+      this.register(() => vv.removeEventListener(n, place));
+    }
     this.registerDomEvent(this.scrollEl, "scroll", () => this.markScrolled(), { passive: true });
     const late = new MutationObserver((list2) => {
       for (const m of list2) m.addedNodes.forEach((n) => {
