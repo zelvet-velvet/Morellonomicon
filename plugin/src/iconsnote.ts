@@ -1,5 +1,6 @@
 import { MarkdownPostProcessorContext, TFile, getIconIds, setIcon } from "obsidian";
 import type MorellonomiconPlugin from "./main";
+import { shopIcon } from "./ui";
 
 // Dev Tools/Icons.md is an editor: a ```mn-icons block has one line per idea, `label | lucide-name | --css-variable | #hex` (variable and hex
 // optional; a #hex wins over the variable). The block is drawn as rows with a live icon, a box for the Lucide name (with suggestions),
@@ -26,6 +27,9 @@ const serialise = (r: Row): string => [r.label, r.name, r.variable, r.hex].filte
 function iconsBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext): void {
     const ids = getIconIds().map((i) => i.replace(/^lucide-/, ""));
     const known = new Set(ids);
+    // `shop:N` names one of the game's own item shop icons (row N of its sprite sheet, ui.ts) instead of a Lucide icon
+    const shopRow = (n: string): number => { const m = /^shop:(\d+)$/.exec(n); return m ? Number(m[1]) : -1; };
+    const valid = (n: string) => known.has(n) || shopRow(n) >= 0;
     // CSS variables are defined on .mn-app, so they are read from a hidden one attached to the page (a detached element has no colour)
     const probe = document.body.createDiv({ cls: "mn-app mn-icprobe" });
     const current = (r: Row): string => {
@@ -69,8 +73,8 @@ function iconsBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLElemen
             const c = current(r);
             pic.empty();
             pic.style.color = c || "";
-            if (known.has(r.name)) setIcon(pic, r.name); else pic.setText("?");
-            name.toggleClass("is-bad", !known.has(r.name));
+            if (shopRow(r.name) >= 0) shopIcon(pic, shopRow(r.name), true); else if (known.has(r.name)) setIcon(pic, r.name); else pic.setText("?");
+            name.toggleClass("is-bad", !valid(r.name));
             if (HEX.test(c)) pick.value = c;
             hex.value = r.hex;
             hex.placeholder = c || "#hex";
@@ -104,7 +108,7 @@ function iconsBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLElemen
         name.addEventListener("input", fill);
         name.addEventListener("blur", () => window.setTimeout(close, 150));
         name.addEventListener("keydown", (e) => { if (e.key === "Escape") { name.blur(); } });
-        name.addEventListener("change", () => { r.name = name.value.trim().toLowerCase().replace(/^lucide-/, ""); draw(); if (known.has(r.name)) save(i, r); });
+        name.addEventListener("change", () => { r.name = name.value.trim().toLowerCase().replace(/^lucide-/, ""); draw(); if (valid(r.name)) save(i, r); });
         pick.addEventListener("input", () => { r.hex = pick.value.toLowerCase(); draw(); });
         pick.addEventListener("change", () => { r.hex = pick.value.toLowerCase(); draw(); save(i, r); });
         hex.addEventListener("change", () => {

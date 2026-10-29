@@ -1071,6 +1071,11 @@ var serialise = (r) => [r.label, r.name, r.variable, r.hex].filter((x, i) => i <
 function iconsBlock(plugin, source, el, ctx) {
   const ids = (0, import_obsidian3.getIconIds)().map((i) => i.replace(/^lucide-/, ""));
   const known = new Set(ids);
+  const shopRow = (n) => {
+    const m = /^shop:(\d+)$/.exec(n);
+    return m ? Number(m[1]) : -1;
+  };
+  const valid = (n) => known.has(n) || shopRow(n) >= 0;
   const probe = document.body.createDiv({ cls: "mn-app mn-icprobe" });
   const current = (r) => {
     if (r.hex) return r.hex.length === 7 ? r.hex : "#888888";
@@ -1112,9 +1117,10 @@ function iconsBlock(plugin, source, el, ctx) {
       const c = current(r);
       pic.empty();
       pic.style.color = c || "";
-      if (known.has(r.name)) (0, import_obsidian3.setIcon)(pic, r.name);
+      if (shopRow(r.name) >= 0) shopIcon(pic, shopRow(r.name), true);
+      else if (known.has(r.name)) (0, import_obsidian3.setIcon)(pic, r.name);
       else pic.setText("?");
-      name.toggleClass("is-bad", !known.has(r.name));
+      name.toggleClass("is-bad", !valid(r.name));
       if (HEX.test(c)) pick.value = c;
       hex.value = r.hex;
       hex.placeholder = c || "#hex";
@@ -1175,7 +1181,7 @@ function iconsBlock(plugin, source, el, ctx) {
     name.addEventListener("change", () => {
       r.name = name.value.trim().toLowerCase().replace(/^lucide-/, "");
       draw();
-      if (known.has(r.name)) save(i, r);
+      if (valid(r.name)) save(i, r);
     });
     pick.addEventListener("input", () => {
       r.hex = pick.value.toLowerCase();

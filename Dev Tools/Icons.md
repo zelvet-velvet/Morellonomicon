@@ -30,7 +30,7 @@ Source: `TAGS` in `plugin/src/pages/profile.ts` (also the groups and the legend 
 ```mn-icons
 傷害 強化普攻 | sword | --mn-aa | #b05279
 傷害 攻擊特效 | crosshair | --mn-onhit | #d5763f
-傷害 %生命傷害 | clipboard-edit | --color-red | #d04255
+傷害 %生命傷害 | heart-crack | --color-red | #d04255
 傷害 斬殺 | skull | --mn-exec
 控制 控場 | link | --mn-cc
 控制 緩速 | anchor | --mn-slow | #6c99bb
@@ -48,20 +48,41 @@ Source: `TAGS` in `plugin/src/pages/profile.ts` (also the groups and the legend 
 強化普攻 and 物理 share `sword` (both are about the basic attack / AD); they never stand side by side without their label colour.
 
 ## 📈 Stats to build (速查 玩法)
-Source: `STAT_ICON`, `STAT_COLOR` in `plugin/src/ui.ts` (the `stack` key of a champion note); reach (近戰 / 中程 / 遠程) is `REACH_ICON`.
+Source: `STAT_ICON`, `STAT_COLOR` in `plugin/src/ui.ts` (the `stack` key of a champion note); stats with a `shop:N` icon show the game's shop icon (`SHOP_ROW`), the colour is the chip's; reach (近戰 / 中程 / 遠程) is `REACH_ICON`.
 
 ```mn-icons
-法術強度 | sparkles | --mn-magic
-攻擊力 | sword | --mn-phys
-攻速 | gauge | --mn-true
-技能急速 | timer-reset | --mn-haste
-暴擊 | dice-5 | --mn-exec
-生命 | heart | --mn-heal
-護甲 | shield | --mn-guard
-魔防 | shield-check | --mn-shield
-穿透 | arrow-right-to-line | --mn-aa
-跑速 | footprints | --mn-dash
-攻擊距離 | ruler |
+法術強度 | shop:5 | --mn-magic
+攻擊力 | shop:0 | --mn-phys
+攻速 | shop:2 | --mn-true
+技能急速 | shop:11 | --mn-haste
+暴擊 | shop:1 | --mn-exec
+生命 | shop:8 | --mn-heal
+護甲 | shop:9 | --mn-guard
+魔防 | shop:10 | --mn-shield
+穿透 | shop:4 | --mn-aa
+跑速 | shop:12 | --mn-dash
+攻擊距離 | ruler | 
+```
+
+## 🛍️ Item shop filters (Items page)
+Source: `ITEM_CATS` in `plugin/src/ui.ts`. The rail shows the game's own shop icons, cut by position from its sprite sheet (`SHOP_SPRITE`, CommunityDragon `itemshop_texture_atlas4.png`, shown by address); an icon written `shop:N` is row N of that sheet (the editor draws it; the Lucide fallback stays in the code).
+
+```mn-icons
+全部 | layout-grid
+攻擊力 | shop:0
+暴擊 | shop:1
+攻速 | shop:2
+攻擊特效 | shop:3
+物理穿透 | shop:4
+法術強度 | shop:5
+魔力 | shop:6
+法術穿透 | shop:7
+生命 | shop:8
+護甲 | shop:9
+魔防 | shop:10
+技能急速 | shop:11
+移動 | shop:12
+吸血 | shop:13
 ```
 
 ## 🛡️ Roles and lanes
@@ -85,7 +106,8 @@ Source: `ROLE_FILE` / `ROLE_ICON` and `LANE_FILE` / `LANE_ICON` in `plugin/src/u
 Source: `TAB_ICON` in `plugin/src/modes.ts`.
 
 ```mn-icons
-Champions | users
+Home | house
+Champions (opened from Home) | users
 Picks | clipboard-edit
 Augments | sparkles
 Patch | newspaper
