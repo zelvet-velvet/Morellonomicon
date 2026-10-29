@@ -1,7 +1,7 @@
 import { MarkdownPostProcessorContext, TFile, getIconIds, setIcon } from "obsidian";
 import type MorellonomiconPlugin from "./main";
 
-// Review/Icons.md is an editor: a ```mn-icons block has one line per idea, `label | lucide-name | --css-variable | #hex` (variable and hex
+// Dev Tools/Icons.md is an editor: a ```mn-icons block has one line per idea, `label | lucide-name | --css-variable | #hex` (variable and hex
 // optional; a #hex wins over the variable). The block is drawn as rows with a live icon, a box for the Lucide name (with suggestions),
 // a colour picker and a hex box; changing one writes the line back into the note.
 const HEX = /^#[0-9a-fA-F]{6}$/;

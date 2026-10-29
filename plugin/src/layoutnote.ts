@@ -2,7 +2,7 @@ import { MarkdownPostProcessorContext, Notice, TFile } from "obsidian";
 import type MorellonomiconPlugin from "./main";
 import { icon } from "./ui";
 
-// Review/Layouts.md is a layout editor: a ```mn-layout block holds every page of the app as a phone with colour-coded blocks
+// Dev Tools/Layouts.md is a layout editor: a ```mn-layout block holds every page of the app as a phone with colour-coded blocks
 // (JSON, one page per line, so a change reads well in git). It is drawn as phones side by side; a block can be dragged to move it,
 // its corner dragged to resize it, and tapped to rename it, change its kind, write a note or delete it; pages can be added, renamed and
 // removed. Every change is written back into the note when the finger lifts, so Claude reads the exact layout from the repo.

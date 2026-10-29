@@ -976,7 +976,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app button:is(.mn-rq-x, .mn-with-b, .mn-rq-lk):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card-hi); }
 .mn-app button.mn-hb-tile:is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }   /* its fill is a gradient image, the colour under it stays clear */
 
-/* Review/Icons.md: the icon editor (src/iconsnote.ts) */
+/* Dev Tools/Icons.md: the icon editor (src/iconsnote.ts) */
 .mn-icprobe { position: absolute; width: 0; height: 0; overflow: hidden; visibility: hidden; }
 .mn-iclist { display: flex; flex-direction: column; }
 .mn-icrow { display: grid; grid-template-columns: 40px fit-content(100%); justify-content: start;   /* the second column is as wide as the controls, so the variable name's right edge is the last button's right edge */ column-gap: 12px; row-gap: 6px; align-items: center; padding: 10px 2px; border-bottom: 1px solid var(--background-modifier-border); }
@@ -1279,7 +1279,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lanebar .mn-count { margin: 0 2px 0 auto; font-variant-numeric: tabular-nums; }
 .mn-fgroup:has(.mn-lanebar) { margin: 6px 0 8px; }
 
-/* Review/Layouts.md: the layout editor (src/layoutnote.ts). Phones in the app's dark look, blocks as colour-coded dashed zones */
+/* Dev Tools/Layouts.md: the layout editor (src/layoutnote.ts). Phones in the app's dark look, blocks as colour-coded dashed zones */
 .mn-lay { --lay-phone: #12141b; --lay-text: #f4f1e8; --lay-dim: #9a97a0; --lay-line: rgba(255, 255, 255, 0.14); user-select: none; -webkit-user-select: none; }
 .mn-lay-err { color: var(--color-red); }
 .mn-lay-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 14px; font-size: 12.5px; color: var(--text-muted); }

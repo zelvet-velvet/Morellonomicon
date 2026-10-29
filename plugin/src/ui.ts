@@ -274,7 +274,7 @@ export const row = (parent: HTMLElement, r: RowSpec): HTMLElement => {
 };
 
 // The app's icons for each idea live in a few maps (this one, ROLE_ICON below, TAGS in pages/profile.ts, TAB_ICON in modes.ts);
-// Review/Icons.md lists them. Every page takes its icon from these maps, never its own pick, so one idea has one icon everywhere.
+// Dev Tools/Icons.md lists them. Every page takes its icon from these maps, never its own pick, so one idea has one icon everywhere.
 export const DAMAGE_COLOR: Record<string, string> = { 物理: "var(--mn-phys)", 魔法: "var(--mn-magic)", 真實: "var(--mn-true)", 混合: "var(--mn-mixed)" };
 export const DAMAGE_ICON: Record<string, string> = { 物理: "sword", 魔法: "sparkles", 真實: "gem", 混合: "blend" };
 // The stats a champion builds towards (速查's 玩法 tab, the `stack` key); only these names are shown
