@@ -3996,21 +3996,20 @@ var hashStr = (s) => {
 var day = () => String(Math.floor(Date.now() / 864e5));
 function deckPage(ctx, file) {
   const store = ctx.plugin.store;
-  const el = h(null, "div", "mn-page mn-deckpage");
-  const titleRow = h(el, "div", "mn-title-row");
-  h(titleRow, "h1", "mn-title", file.basename);
-  const glossary = store.guideNotes().find((n) => n.layout !== "deck" && n.title === GLOSSARY2);
-  if (glossary) {
-    const info = h(titleRow, "button", "mn-btn");
-    info.setAttribute("aria-label", GLOSSARY2);
-    icon(info, "info");
-    info.addEventListener("click", (e) => {
-      e.preventDefault();
-      ctx.openNote(glossary.file.path);
-    });
-  }
-  const bars = h(el, "div", "mn-bars");
+  const el = h(null, "div", "mn-page mn-deckpage is-full");
   const wrap = h(el, "div", "mn-deckwrap");
+  const float = (cls, ic, label, act) => {
+    const b = h(wrap, "button", "mn-deck-float " + cls);
+    b.setAttribute("aria-label", label);
+    icon(b, ic);
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      act();
+    });
+  };
+  float("is-back", "chevron-left", "Back", () => ctx.pop());
+  const glossary = store.guideNotes().find((n) => n.layout !== "deck" && n.title === GLOSSARY2);
+  if (glossary) float("is-info", "info", GLOSSARY2, () => ctx.openNote(glossary.file.path));
   const peek = h(wrap, "div", "mn-peek");
   const peekIn = h(peek, "div", "mn-peek-in");
   const pager = h(wrap, "div", "mn-pager");
@@ -4032,7 +4031,6 @@ function deckPage(ctx, file) {
     const next = guide[at + 1];
     const sec = [];
     slides.forEach((s, i) => {
-      h(bars, "span", "mn-bar");
       const section2 = h(pager, "section", "mn-slide");
       const card = h(section2, "div", "mn-sl-card");
       const face = h(card, "div", "mn-sl-face");
@@ -4074,10 +4072,9 @@ function deckPage(ctx, file) {
     };
     const pile = cardPile(pager, sec, {
       scroll: ".mn-sl-words",
-      // the progress bars; only the cards near the top are painted, and only the ones in view play their clip: a topic with
-      // many clips otherwise has them all running under the top card, which makes some swipes smooth and others not
+      // only the cards near the top are painted, and only the ones in view play their clip: a topic with many clips otherwise
+      // has them all running under the top card, which makes some swipes smooth and others not
       onLayout: (cur) => {
-        Array.from(bars.children).forEach((b, j) => b.toggleClass("is-on", j <= cur));
         if (cur >= sec.length - 1) void ctx.plugin.markRead(file.path);
         sec.forEach((c, i) => {
           c.style.visibility = i >= cur - NEAR_BEHIND && i <= cur + NEAR_AHEAD ? "" : "hidden";
@@ -4125,7 +4122,7 @@ function deckPage(ctx, file) {
   });
   window.addEventListener("resize", fit);
   ctx.component.register(() => window.removeEventListener("resize", fit));
-  return { title: "", el };
+  return { title: "", el, immersive: true };
 }
 function itemTree(parent, ctx, id) {
   const store = ctx.plugin.store;
@@ -6279,7 +6276,7 @@ var MnView = class extends import_obsidian12.ItemView {
       this.actsEl.toggleClass("is-hidden", !titleRow);
       this.topEl.toggleClass("has-back", this.router.depth() > 0);
       this.appEl.toggleClass("is-overlay", OVERLAY_PAGES.has(f.key));
-      this.appEl.toggleClass("is-immersive", IMMERSIVE_PAGES.has(f.key));
+      this.appEl.toggleClass("is-immersive", IMMERSIVE_PAGES.has(f.key) || !!page2.immersive);
       this.appEl.toggleClass("is-float", this.router.depth() === 0);
       this.appEl.toggleClass("is-sub", this.router.depth() > 0 && !OVERLAY_PAGES.has(f.key));
       this.markScrolled();

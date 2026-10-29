@@ -76,19 +76,19 @@ const day = () => String(Math.floor(Date.now() / 86_400_000));
 
 export function deckPage(ctx: PageCtx, file: TFile): PageOut {
     const store = ctx.plugin.store;
-    const el = h(null, "div", "mn-page mn-deckpage");
-    const titleRow = h(el, "div", "mn-title-row");
-    h(titleRow, "h1", "mn-title", file.basename);
-    // the glossary is one tap away from every topic: an i button at the right of the title
-    const glossary = store.guideNotes().find((n) => n.layout !== "deck" && n.title === GLOSSARY);
-    if (glossary) {
-        const info = h(titleRow, "button", "mn-btn");
-        info.setAttribute("aria-label", GLOSSARY);
-        icon(info, "info");
-        info.addEventListener("click", (e) => { e.preventDefault(); ctx.openNote(glossary.file.path); });
-    }
-    const bars = h(el, "div", "mn-bars");   // one short bar per card, filled up to the one in view (like stories)
+    // full screen like the Picks swipe card (Layouts note, Handbook · card): no top bar, title or progress bars (the kicker says
+    // n / N); Back floats on the card's upper left, the glossary's i on its upper right
+    const el = h(null, "div", "mn-page mn-deckpage is-full");
     const wrap = h(el, "div", "mn-deckwrap");
+    const float = (cls: string, ic: string, label: string, act: () => void) => {
+        const b = h(wrap, "button", "mn-deck-float " + cls);
+        b.setAttribute("aria-label", label);
+        icon(b, ic);
+        b.addEventListener("click", (e) => { e.preventDefault(); act(); });
+    };
+    float("is-back", "chevron-left", "Back", () => ctx.pop());
+    const glossary = store.guideNotes().find((n) => n.layout !== "deck" && n.title === GLOSSARY);
+    if (glossary) float("is-info", "info", GLOSSARY, () => ctx.openNote(glossary.file.path));
     const peek = h(wrap, "div", "mn-peek");   // behind the cards: what pulling the last card leads to; fills the whole card area, the pulled card uncovers it
     const peekIn = h(peek, "div", "mn-peek-in");   // the text sits at the right side, where the card leaves first
     const pager = h(wrap, "div", "mn-pager");
@@ -115,7 +115,6 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         const sec: HTMLElement[] = [];   // one per card; the pile is made by posing these
 
         slides.forEach((s, i) => {
-            h(bars, "span", "mn-bar");
             const section = h(pager, "section", "mn-slide");
             const card = h(section, "div", "mn-sl-card");   // the white collectible border
             const face = h(card, "div", "mn-sl-face");      // the dark face inside it: picture, text on the lower part
@@ -156,10 +155,9 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         const resetPeek = () => { peek.style.opacity = ""; peek.removeClass("is-ready"); };
         const pile = cardPile(pager, sec, {
             scroll: ".mn-sl-words",
-            // the progress bars; only the cards near the top are painted, and only the ones in view play their clip: a topic with
-            // many clips otherwise has them all running under the top card, which makes some swipes smooth and others not
+            // only the cards near the top are painted, and only the ones in view play their clip: a topic with many clips otherwise
+            // has them all running under the top card, which makes some swipes smooth and others not
             onLayout: (cur) => {
-                Array.from(bars.children).forEach((b, j) => (b as HTMLElement).toggleClass("is-on", j <= cur));
                 if (cur >= sec.length - 1) void ctx.plugin.markRead(file.path);   // reached the last card: counts as read
                 sec.forEach((c, i) => {
                     c.style.visibility = i >= cur - NEAR_BEHIND && i <= cur + NEAR_AHEAD ? "" : "hidden";
@@ -196,7 +194,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
     });
     window.addEventListener("resize", fit);
     ctx.component.register(() => window.removeEventListener("resize", fit));
-    return { title: "", el };
+    return { title: "", el, immersive: true };
 }
 
 // The shop's recipe tree: the item, then the items it is built from on the row below, joined by lines (two levels down, as in the

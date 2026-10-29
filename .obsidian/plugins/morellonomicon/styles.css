@@ -383,16 +383,21 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-dimg-aug { width: 80px; height: 80px; --ring: 5px; border-radius: 20px; }
 .mn-sl-aug { width: 58px; height: 58px; }
 
-/* guide decks: one card per screen, swiped sideways (each swipe stops on the next card); story-style bars on top;
+/* guide decks: one card per screen, swiped sideways (each swipe stops on the next card), full screen;
    the picture takes the top of the card, the words sit at the bottom */
-.mn-deckpage .mn-title-row { margin-bottom: 8px; }
 /* a topic's card page never scrolls: the cards are the whole page (long card text scrolls inside its card) */
 .mn-scroll:has(.mn-deckpage) { overflow-y: hidden; overscroll-behavior: none; }
 .mn-deckpage { touch-action: none; }
-.mn-bars { display: flex; gap: 4px; margin: 0 2px 12px; }
-.mn-bar { flex: 1; height: 3px; border-radius: 2px; background: var(--mn-line); transition: background 0.25s; }
-.mn-bar.is-on { background: var(--mn-accent); }
 .mn-deckwrap { --mn-lift: 44px; --mn-pile: 34px; position: relative; height: 520px; margin: calc(-1 * var(--mn-lift)) -16px 0; }
+/* a topic full screen, the Picks swipe card's size (Layouts: Handbook · card): no pile room above or below; Back and the glossary's i
+   float on the card's upper corners */
+.mn-deckpage.is-full .mn-deckwrap { --mn-lift: 0px; --mn-pile: 0px; margin: 0; }
+.mn-deckpage.is-full .mn-slide { padding: 0 4px; }
+.mn-app .mn-deck-float { position: absolute; z-index: 20; top: 12px; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%;
+    background: rgba(0, 0, 0, 0.38); color: #fff; box-shadow: none; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.mn-deck-float.is-back { left: 16px; }
+.mn-deck-float.is-info { right: 16px; }
+.mn-deck-float svg { width: 22px; height: 22px; }
 .mn-pager { position: relative; z-index: 1; height: 100%; box-sizing: border-box; overflow: hidden; touch-action: none; }   /* clipped, so cards swiped away never make the page scroll; every touch is ours (a card's long text is scrolled by hand, see deck.ts), so the browser never cancels a drag */
 .mn-pager { transition: filter 0.3s ease-out, opacity 0.3s ease-out; }
 .mn-pager.is-wait { filter: blur(4px) saturate(0.9); pointer-events: none; }
