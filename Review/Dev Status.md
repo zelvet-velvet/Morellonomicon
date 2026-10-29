@@ -9,6 +9,14 @@ sticker: lucide//activity
 > Read [[LLM Guide]] before any `CMD_` or status update. This note is kept by `CMD_SYNC` / `CMD_ROLLOVER` / `CMD_NOTES_SYNC`; the day notes in `Review/Log/` by `CMD_JOURNAL`.
 
 ## 🚀 Today's Progress (2026-10-29)
+- **Search capsule on the keyboard**: on Picks and Champions it rises with the keyboard from the tap and goes down the moment it closes, with no jumps (to check on the phone).
+- **Loading look for every block**: each Layouts block with pictures blurs with the band of light until they are in; a page's blocks load together (Home, Picks, Champions, Items) (to check on the phone).
+- **Design Rules note**: [[Design Rules]] holds how every page looks and behaves; the LLM Guide points to it.
+- **Layouts editor**: pages grouped under big titles (Home: not linked, linked…), phones with the notch status bar and tab icons, an orange frame on changed pages; the Card Layout rules live in [[Layouts]].
+- **Handbook topics full screen**: the Picks card's size, Back and the glossary's i floating on the card, no title or progress bars (to check on the phone).
+- **Items like the Layouts note**: role tabs and stat rail on the left edge, bigger role, sort and stat icons (to check on the phone).
+- **Picks lanes**: bigger lane icons, one lane at a time (to check on the phone).
+- **Tidy-up**: about 80 unused style rules and a few unused bits of code removed.
 
 ## 📅 Yesterday's Progress (2026-10-28)
 - **速查 swipe**: picked champions as the Handbook card pile, right = like, left = pass, then the liked ones two across (to check on the phone).
@@ -111,7 +119,7 @@ sticker: lucide//activity
 - [ ] **Skill combo videos**: optional `video:` (YouTube id) per champion note. OP.GG's channel could not be listed without the YouTube Data API (the page is JavaScript and the RSS feed gave 404); needs a free API key in `.env` (`YOUTUBE_API_KEY`), or hand-picked ids. The plugin shows a `youtube-nocookie` embed when the field exists, else a "search on YouTube" button.
 
 ### 🧩 Plugin (TypeScript, from the ZeLedger skeleton)
-- [ ] **Items list**: an item page opens from Patch, the Champions search, Handbook cards and the Build tab (道具頁 ›); there is no list to browse all items yet (where: under Augments, or by the search?).
+- [x] **Items list**: the Items page (from Home) lists every item of the mode like the shop: role tabs, stat rail, tiers or price.
 - [ ] **速查 swipe on the phone**: check the pile height with the ✕ / ♥ buttons, the big ♥ / ✕ while dragging, no scrollbar; liked champions are not kept after leaving the page.
 - [ ] **True damage icon**: `gem` for 真實 was chosen by Claude (see [[Icons]]); `crosshair` and `sword` each mean two things there.
 - [ ] **Rift slot**: `plugin/src/modes.ts` has Rift (disabled); to open it set `enabled`, give `home.ts` and the champion card's "Build" block real content, and fill the `rift` item flag.
