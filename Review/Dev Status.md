@@ -21,6 +21,7 @@ sticker: lucide//activity
 - **Mock layouts**: proposals are light blue pages in [[Layouts]]; new and changed layouts are shown and picked there (rule in the LLM Guide).
 - **Items blocks load on their own**: role tabs, stat rail and list each with their loading look; the rail's sprite retried and kept (to check on the phone).
 - **Sharp shop icons**: the game's stat icons sharpened on the device and painted in the Icons note's colours (to check on the phone).
+- **速查 text for every champion**: one-line overview, 玩法 line and each ability in plain words drafted for the other 165 champions, in the style of the 8 Zaviel wrote (to proofread).
 - **Picks lanes**: bigger lane icons, one lane at a time, and Champions' lanes too (to check on the phone).
 - **Tidy-up**: about 80 unused style rules and a few unused bits of code removed.
 
@@ -94,7 +95,7 @@ sticker: lucide//activity
 - [ ] **Stat codes**: only 0 (AP) and 2 (AD, formula 2 = bonus) are named; other stats show as "+其他加成" (66 rows) until their codes are confirmed.
 
 ### ✍️ Our own strategy
-- [ ] **速查 text for every champion**: `punch` / `soul` / `plain` written for 8 (待驗證); the other 165 to draft in batches for review.
+- [>] **速查 text for every champion**: `punch` / `soul` / `plain` in all 173 notes: 8 by Zaviel, 165 drafted by Claude on 2026-10-29 in the same style from each ability's game text (待驗證: proofread on the phone, fix in the note). `stack` / `focus` still only in `Inbox/速查卡片草稿.md`.
 - [ ] **Builds by play style (decided 2026-10-28, from Zaviel)**: not a hand-written build per champion. Zaviel lists the first three items (in buying order) for each play style, per mode (Mayhem and Rift apart), in `Inbox/玩法出裝收件匣.md`, from OP.GG and similar (their numbers are never copied, only items and a one-line reason with the source). The champion page's Build tab then shows the set of the champion's play style, labelled as recommended for that play style. The play style is read automatically from the champion's skill scaling (AP / AD / on-hit / tank, with the roles) and can be set by hand; wrong ones are fixed by changing a rule or a hand override, not the champion. Mayhem sets are about items only; augment pairings come later (augment `fits`, the Augments tab). Test champions: Katarina, Akali, Talon, Lux, Ahri (the five Zaviel plays best).
 - [>] **Inbox**: Zaviel is tidying the first tricks into `Inbox/技巧收件匣.md`; then "process the inbox".
 - [ ] **Easy way to record it**: tips, builds and combos are frontmatter lists today; add a command / form ("Add tip", "Add build") so they can be written on the phone in a few taps.
