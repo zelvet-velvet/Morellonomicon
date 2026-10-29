@@ -1270,6 +1270,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* a page changed since the last sync: an orange frame */
 .mn-lay-page.is-changed .mn-lay-phone { border-color: #ff9500; box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.3); }
 .mn-lay-page.is-changed .mn-lay input.mn-lay-name, .mn-lay-page.is-changed input.mn-lay-name { color: #ff9500; }
+/* a mock (a proposal by Claude, not built yet): a light blue frame */
+.mn-lay-page.is-mock .mn-lay-phone { border-color: #5ac8fa; box-shadow: 0 0 0 3px rgba(90, 200, 250, 0.3); }
+.mn-lay-page.is-mock input.mn-lay-name, .mn-lay button.mn-lay-btn.is-mock { color: #5ac8fa; }
 .mn-lay-synced { font-size: 12px; color: var(--text-faint); }
 /* typing in a search capsule: it slides up above the keyboard (a transform set by view.ts) */
 .mn-rq-dock.is-typing { z-index: 50; }

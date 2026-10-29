@@ -23,7 +23,7 @@ export const KINDS: Record<string, { color: string; name: string }> = {
 const LAYER: Record<string, number> = { hero: 0, float: 3 };   // the rest are 1
 const SYNCED = "mn-layout-synced";   // the note's copy of the layout as Claude last synced it: changed pages are marked against it
 interface Block { id: string; label: string; kind: string; x: number; y: number; w: number; h: number; note?: string }
-interface Page { id: string; name: string; note?: string; tabbar?: boolean; blocks: Block[] }
+interface Page { id: string; name: string; note?: string; tabbar?: boolean; mock?: boolean; blocks: Block[] }   // mock: a proposal by Claude, not built yet (a light blue frame)
 
 // each page's unsaved state and steps, by note and page id: kept here so a redraw of the note (after a save) does not lose them
 interface Steps { past: string[]; future: string[]; last: string }
@@ -78,7 +78,7 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
         if (now === s.last) return;
         s.past.push(s.last); s.last = now; s.future = [];
     };
-    const goTo = (page: Page, json: string) => { Object.assign(page, JSON.parse(json)); if (!page.note) delete page.note; selected = null; draw(); };
+    const goTo = (page: Page, json: string) => { const v = JSON.parse(json) as Page; Object.assign(page, v); if (!page.note) delete page.note; if (!v.mock) delete page.mock; selected = null; draw(); };
     const dirty = (page: Page) => (steps.get(page.id)?.last ?? JSON.stringify(page)) !== savedJson(page.id);
     // save one page: the note gets this page as it is now, the other pages as they were saved
     const savePage = (page: Page) => {
@@ -132,7 +132,7 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
     };
 
     const drawPage = (parent: HTMLElement, page: Page) => {
-        const fig = parent.createDiv({ cls: "mn-lay-page" + (changedSinceSync(page) ? " is-changed" : "") + (dirty(page) ? " is-dirty" : "") });
+        const fig = parent.createDiv({ cls: "mn-lay-page" + (page.mock ? " is-mock" : changedSinceSync(page) ? " is-changed" : "") + (dirty(page) ? " is-dirty" : "") });
         const head = fig.createDiv({ cls: "mn-lay-head" });
         const name = head.createEl("input", { cls: "mn-lay-name", attr: { value: subOf(page), placeholder: "Main page", spellcheck: "false" } });
         name.addEventListener("change", () => { page.name = named(groupOf(page), name.value.trim()); changed(page); draw(); });
@@ -150,6 +150,11 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
         tool("rotate-ccw", "Reset to the synced layout", !!base && (dirty(page) || changedSinceSync(page)), () => {
             s.past.push(s.last); s.last = base!; s.future = []; goTo(page, s.last); savePage(page);
         });
+        // a mock (light blue) is a proposal; turning it off makes it a real page, to be built at the next sync
+        tool("flask-conical", page.mock ? "Mock: tap to make it a real page" : "Mark as a mock", true, () => {
+            if (page.mock) delete page.mock; else page.mock = true;
+            changed(page); draw();
+        }, page.mock ? " is-mock" : "");
         tool("save", "Save this page into the note", dirty(page), () => savePage(page), dirty(page) ? " is-dirty" : "");
         const addB = head.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": "Add a block" } });
         icon(addB, "square-plus");

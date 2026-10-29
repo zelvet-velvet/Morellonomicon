@@ -1393,8 +1393,10 @@ function layoutBlock2(plugin, source, el, ctx) {
     s.future = [];
   };
   const goTo = (page2, json) => {
-    Object.assign(page2, JSON.parse(json));
+    const v = JSON.parse(json);
+    Object.assign(page2, v);
     if (!page2.note) delete page2.note;
+    if (!v.mock) delete page2.mock;
     selected = null;
     draw();
   };
@@ -1451,7 +1453,7 @@ function layoutBlock2(plugin, source, el, ctx) {
     add.addEventListener("click", () => addPage("New page"));
   };
   const drawPage = (parent, page2) => {
-    const fig = parent.createDiv({ cls: "mn-lay-page" + (changedSinceSync(page2) ? " is-changed" : "") + (dirty(page2) ? " is-dirty" : "") });
+    const fig = parent.createDiv({ cls: "mn-lay-page" + (page2.mock ? " is-mock" : changedSinceSync(page2) ? " is-changed" : "") + (dirty(page2) ? " is-dirty" : "") });
     const head2 = fig.createDiv({ cls: "mn-lay-head" });
     const name = head2.createEl("input", { cls: "mn-lay-name", attr: { value: subOf(page2), placeholder: "Main page", spellcheck: "false" } });
     name.addEventListener("change", () => {
@@ -1485,6 +1487,12 @@ function layoutBlock2(plugin, source, el, ctx) {
       goTo(page2, s.last);
       savePage(page2);
     });
+    tool("flask-conical", page2.mock ? "Mock: tap to make it a real page" : "Mark as a mock", true, () => {
+      if (page2.mock) delete page2.mock;
+      else page2.mock = true;
+      changed(page2);
+      draw();
+    }, page2.mock ? " is-mock" : "");
     tool("save", "Save this page into the note", dirty(page2), () => savePage(page2), dirty(page2) ? " is-dirty" : "");
     const addB = head2.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": "Add a block" } });
     icon(addB, "square-plus");
