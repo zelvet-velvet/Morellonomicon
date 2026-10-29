@@ -676,7 +676,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* Quick Look */
 /* 速查: search, class icons and faces sit on one even 12px rhythm */
 .mn-rq-sugg:empty { display: none; }
-.mn-app .mn-fgrid.mn-rq-lanes { margin: 12px 0; }
+.mn-app .mn-fgrid.mn-rq-lanes { margin: 10px 0; }
+.mn-app .mn-rq-lanes .mn-chip.mn-chip-ic { width: 52px; height: 48px; }   /* Picks' lanes: bigger than a filter row's icons */
+.mn-rq-lanes .mn-role-img, .mn-rq-lanes .mn-chip-ic svg { width: 36px; height: 36px; }
 .mn-faces { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 8px 6px; margin: 12px 0 0; }
 .mn-rq-results.is-hidden, .mn-app div.is-hidden:has(> .mn-faces) { display: none; }
 .mn-app .mn-face { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; height: auto; padding: 0; border: none; background: none; transition: transform 0.12s; }
@@ -1239,7 +1241,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
     border: 1px solid var(--mn-line); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
 .mn-cap-fb .mn-filterbtn-n { position: absolute; top: -4px; right: -4px; }
 /* Items, laid out like the in-game shop: role tabs and the sort button on top, the stat rail on the left, a tight grid of icons with prices */
-.mn-shop-roles { display: flex; align-items: center; gap: 2px; margin: 8px 0 0; padding-bottom: 4px; border-bottom: 1px solid var(--mn-line); }
+/* Items (Layouts: role tabs and the stat rail sit on the screen's left edge, 全部 centred over the rail; the grid keeps the 16 px right margin) */
+.mn-shop-roles { display: flex; align-items: center; gap: 2px; margin: 4px 0 0 -16px; padding: 0 0 4px 9px; border-bottom: 1px solid var(--mn-line); }
 .mn-app .mn-shop-role { flex: none; display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border-radius: 10px; border: 0; background: none; box-shadow: none; color: var(--mn-muted); }
 .mn-app .mn-shop-role { position: relative; }
 .mn-app .mn-shop-role.is-on { color: var(--mn-text); }
@@ -1249,14 +1252,14 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-shop-role img { width: 24px; height: 24px; }
 .mn-shop-role:not(.is-on) img { opacity: 0.55; }
 .mn-app .mn-shop-sortbtn { flex: none; margin-left: auto; display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border-radius: 10px; border: 0; background: none; box-shadow: none; color: var(--mn-accent); }
-.mn-shop-sortbtn svg { width: 18px; height: 18px; }
+.mn-shop-sortbtn svg { width: 24px; height: 24px; }   /* the same size as the role icons beside it */
 .mn-shop-sortwrap { display: none; justify-content: flex-end; gap: 6px; margin: 8px 0 0; }
 .mn-shop-sortwrap.is-open { display: flex; }
 .mn-app .mn-shop-sort { height: 30px; padding: 0 12px; border-radius: 15px; border: 1px solid var(--mn-line); background: var(--mn-card); box-shadow: none; font-size: 12.5px; color: var(--mn-muted); }
 .mn-app .mn-shop-sort.is-on { color: var(--mn-accent); border-color: var(--mn-accent); }
-.mn-shop { display: flex; align-items: stretch; gap: 6px; margin-top: 4px; min-height: 0; }
+.mn-shop { display: flex; align-items: stretch; gap: 4px; margin: 4px 0 0 -16px; min-height: 0; }
 .mn-scroll:has(.mn-shop) { overflow-y: hidden; }   /* the page stays; only the item grid scrolls */
-.mn-shop-rail { flex: none; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; align-items: center; gap: 0; width: 34px; padding: 2px 0; border-right: 1px solid var(--mn-line); }
+.mn-shop-rail { flex: none; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; align-items: center; gap: 0; width: 56px; padding: 2px 0; border-right: 1px solid var(--mn-line); }
 .mn-app .mn-shop-stat { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border-radius: 10px; border: 0; background: none; box-shadow: none; color: var(--mn-muted); }
 .mn-app .mn-shop-stat { position: relative; }
 .mn-shop-sprite { display: block; width: 26px; height: 26px; background-repeat: no-repeat; }

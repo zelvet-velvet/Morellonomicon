@@ -21,7 +21,7 @@ sticker: lucide//activity
 - **Fixed text rows**: kicker, 1-line title, 2-line body and a 小技巧 line (short orange line, label, tip), the same height on every card; long text is cut with … (to check on the phone).
 - **Clip height and 小技巧**: clips end at the top of the words so the whole height shows; the card tip label is 小技巧 (to check on the phone).
 - **Frame F2 in the app**: the picture fills the card behind the words, the words fit their content, the dock and the clip fade follow the text height (to check on the phone).
-- **Card layout rules**: one frame for every Handbook card (F2, whole-card stage, words fit their content, dock on top of the words), text limits and stage templates in [[Card Layout]]; `tools/check_cards.py` finds 35 of 68 cards over the limits.
+- **Card layout rules**: one frame for every Handbook card (F2, whole-card stage, words fit their content, dock on top of the words), text limits and stage templates in the Handbook card section of [[Layouts]]; `tools/check_cards.py` finds 35 of 68 cards over the limits.
 - **Clip crop and fade**: every clip card fills the picture, cut to where the champion stands (about three quarters from the left), with an eased fade (no edge line) and the tags / steps just above the words (to check on the phone).
 - **Combo card**: Jayce's cannon page is the demo clip with the ability pictures, an arrow and three result chips instead of text columns; a new `combo` visual; its clip fills the card (cut to the middle) and plays E then Q (to check on the phone).
 - **Clip cards and centring**: clips sit as a rounded 16:9 picture on the card's own background (no black strip, no blur); skill cards are centred vertically; the number card says which rank its bars use (to check on the phone).
@@ -100,7 +100,7 @@ sticker: lucide//activity
 - [ ] **Augments sub-tab**: use the counted augment picks (and `fits`) once there is data.
 
 ### 🖼️ Handbook pictures
-- [ ] **Cards to the layout**: shorten the 37 cards over the [[Card Layout]] limits (`python3 -I tools/check_cards.py`); the ability card's tags still sit in the stage, not the dock.
+- [ ] **Cards to the layout**: shorten the 37 cards over the Handbook card limits in [[Layouts]] (`python3 -I tools/check_cards.py`); the ability card's tags still sit in the stage, not the dock.
 - [ ] **In-game screenshots** (Zaviel): save them in the vault (e.g. `Assets/`) and put `visual: img Assets/name.png` under a card. Wanted: where the skill damage and cooldown show in the HUD; the augment pick screen (silver / gold / prismatic); the item shop with the recipe tree; the scoreboard; the minimap and ward icons.
 - [>] **More decks**: 視野控制 (Rift wards) is in; still to write: Rift basics (lanes, objectives), ping etiquette, one card each for the trick-of-the-week.
 - [ ] **Ward spots**: the 視野控制 cards place wards by eye on the minimap; check them against real games and adjust `WARDS` in `plugin/src/pages/deck.ts`.

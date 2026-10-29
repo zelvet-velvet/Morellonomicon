@@ -1,4 +1,4 @@
-"""Lists the Handbook cards whose text breaks the limits in Review/Card Layout.md.
+"""Lists the Handbook cards whose text breaks the limits in Dev Tools/Layouts.md (Handbook card).
 
 Each `## ` in a guide note is one card: its title, its body and a closing `**label：** tip` (the same split the plugin makes).
 Full-width characters count 1, ASCII ½. Run from the repo root: python3 -I tools/check_cards.py

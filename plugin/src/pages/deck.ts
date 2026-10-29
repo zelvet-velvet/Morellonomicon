@@ -122,7 +122,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             visual(ctx, h(face, "div", "mn-sl-vis"), s);
             // under the picture: where you are, the title, the line, and a closing "**label：** tip" as a strip on the lower edge
             const words = h(face, "div", "mn-sl-words");
-            // the words' height, for the stage (Card Layout F2): the dock sits on it, the clip fades into it, templates keep above it
+            // the words' height, for the stage (Layouts note, Handbook card F2): the dock sits on it, the clip fades into it, templates keep above it
             const measure = () => face.style.setProperty("--mn-words-h", `${words.offsetHeight}px`);
             const watch = new ResizeObserver(measure);
             watch.observe(words);
@@ -131,7 +131,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             h(words, "h2", "mn-sl-t", s.title);
             const tip = /^([\s\S]*?)\*\*([^*\n]{1,8})[:：]\*\*\s*([\s\S]+)$/.exec(s.text);
             const main = tip ? tip[1].trim() : s.text;
-            // every row is there on every card, empty or not, so the words have the same height everywhere (Card Layout)
+            // every row is there on every card, empty or not, so the words have the same height everywhere (Layouts note, Handbook card)
             const body = h(words, "div", "mn-sl-x markdown-rendered");
             if (main) void MarkdownRenderer.render(ctx.app, main, body, file.path, ctx.component);
             const box = h(words, "div", "mn-sl-tip" + (tip ? "" : " is-empty"));
