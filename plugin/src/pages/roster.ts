@@ -1,7 +1,7 @@
 import { Notice } from "obsidian";
 import type { Champion } from "../data/store";
 import { findSaid, type Said, type Sounds, soundScore } from "../data/sound";
-import { DAMAGE_COLOR, DAMAGE_ICON, REACH_ICON, SHOP_ROW, STAT_COLOR, STAT_ICON, SWIPE, shopIcon, chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, roleArt, slideSeg, tip } from "../ui";
+import { DAMAGE_COLOR, DAMAGE_ICON, REACH_ICON, fixedPage, SHOP_ROW, STAT_COLOR, STAT_ICON, SWIPE, shopIcon, chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, roleArt, slideSeg, tip } from "../ui";
 import { entryDir, marker } from "./changes";
 import type { PageCtx, PageOut } from "./index";
 import { keyBadge } from "./cardkit";
@@ -154,7 +154,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
     const el = page("Picks");   // the Picks tab (速查)
     // the page itself never scrolls: the title, your hand and the lanes stay on top, only the faces scroll, the capsule sits under them
     // (and with nothing to scroll, iOS cannot jump the page when the keyboard opens)
-    el.addClass("mn-rq-fixed");
+    fixedPage(el, ctx.component);
     const all = store.champions();
     let picks = ctx.plugin.settings.roster.filter((id) => all.some((c) => c.id === id)).slice(0, MAX_PICKS);
     let query = "", lane = "";
@@ -176,14 +176,6 @@ export function rosterPage(ctx: PageCtx): PageOut {
     const list = h(el, "div", "mn-rq-list");
     const grid = h(list, "div", "mn-faces");
     const dock = h(el, "div", "mn-rq-dock");
-    const fit = () => {
-        const scroll = el.closest<HTMLElement>(".mn-scroll");
-        if (scroll && el.isConnected) el.style.height = `${scroll.clientHeight}px`;
-    };
-    requestAnimationFrame(fit);
-    const ro = new ResizeObserver(() => requestAnimationFrame(fit));
-    ro.observe(document.body);
-    ctx.component.register(() => ro.disconnect());
     const suggest = h(dock, "div", "mn-chips mn-rq-sugg");
     const cap = h(dock, "div", "mn-rq-cap");
     icon(cap, "search", "mn-rq-cap-ic");

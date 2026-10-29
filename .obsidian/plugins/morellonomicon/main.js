@@ -949,6 +949,17 @@ function haptic() {
 }
 var segLast = /* @__PURE__ */ new Map();
 var slid = /* @__PURE__ */ new WeakMap();
+function fixedPage(el, owner) {
+  el.addClass("mn-rq-fixed");
+  const fit = () => {
+    const scroll = el.closest(".mn-scroll");
+    if (scroll && el.isConnected) el.style.height = `${scroll.clientHeight}px`;
+  };
+  requestAnimationFrame(fit);
+  const ro = new ResizeObserver(() => requestAnimationFrame(fit));
+  ro.observe(document.body);
+  owner.register(() => ro.disconnect());
+}
 var EDGE_ZONE = 28;
 function slideSeg(seg, key = "", opt = {}) {
   const done = slid.get(seg);
@@ -2789,9 +2800,10 @@ function championPicker(parent, ctx) {
   const filtersHost = h(parent, "div");
   const filters = h(filtersHost, "div", "mn-fgroup");
   const count2 = h(parent, "div", "mn-count");
-  const gridHost = h(parent, "div");
+  const list2 = h(parent, "div", "mn-rq-list");
+  const gridHost = h(list2, "div");
   const grid = h(gridHost, "div", "mn-grid");
-  const extra = h(parent, "div");
+  const extra = h(list2, "div");
   const dock = h(parent, "div", "mn-rq-dock");
   const panel = h(dock, "div", "mn-fpanel mn-fsheet");
   const cap = h(dock, "div", "mn-rq-cap");
@@ -2952,6 +2964,7 @@ function championPicker(parent, ctx) {
 function championsPage(ctx) {
   if (ctx.frame.key === "champion") return championCard(ctx);
   const el = page("Champions");
+  fixedPage(el, ctx.component);
   championPicker(el, ctx);
   return { title: "Champions", el, ready: null };
 }
@@ -5213,7 +5226,7 @@ function finder(all, sounds) {
 function rosterPage(ctx) {
   const store = ctx.plugin.store;
   const el = page("Picks");
-  el.addClass("mn-rq-fixed");
+  fixedPage(el, ctx.component);
   const all = store.champions();
   let picks = ctx.plugin.settings.roster.filter((id) => all.some((c) => c.id === id)).slice(0, MAX_PICKS);
   let query = "", lane = "";
@@ -5240,14 +5253,6 @@ function rosterPage(ctx) {
   const list2 = h(el, "div", "mn-rq-list");
   const grid = h(list2, "div", "mn-faces");
   const dock = h(el, "div", "mn-rq-dock");
-  const fit = () => {
-    const scroll = el.closest(".mn-scroll");
-    if (scroll && el.isConnected) el.style.height = `${scroll.clientHeight}px`;
-  };
-  requestAnimationFrame(fit);
-  const ro = new ResizeObserver(() => requestAnimationFrame(fit));
-  ro.observe(document.body);
-  ctx.component.register(() => ro.disconnect());
   const suggest2 = h(dock, "div", "mn-chips mn-rq-sugg");
   const cap = h(dock, "div", "mn-rq-cap");
   icon(cap, "search", "mn-rq-cap-ic");

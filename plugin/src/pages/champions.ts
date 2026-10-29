@@ -1,5 +1,5 @@
 import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, DAMAGE_ICON, blockLoad, blockUntil, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, slideSeg, tip } from "../ui";
+import { DAMAGE_COLOR, DAMAGE_ICON, blockLoad, blockUntil, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, slideSeg, tip, fixedPage } from "../ui";
 import { TAG_GROUPS, championProfile, iconFilter, tagFilter } from "./profile";
 import { buildTab } from "./build";
 import type { PageCtx, PageOut } from "./index";
@@ -48,9 +48,10 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
     const filtersHost = h(parent, "div");   // the lane row loads as a block of its own
     const filters = h(filtersHost, "div", "mn-fgroup");
     const count = h(parent, "div", "mn-count");
-    const gridHost = h(parent, "div");      // so does the grid of champion icons
+    const list = h(parent, "div", "mn-rq-list");   // the part that scrolls
+    const gridHost = h(list, "div");      // so does the grid of champion icons
     const grid = h(gridHost, "div", "mn-grid");
-    const extra = h(parent, "div");
+    const extra = h(list, "div");
     const dock = h(parent, "div", "mn-rq-dock");
     const panel = h(dock, "div", "mn-fpanel mn-fsheet");
     const cap = h(dock, "div", "mn-rq-cap");
@@ -167,6 +168,7 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
 export function championsPage(ctx: PageCtx): PageOut {
     if (ctx.frame.key === "champion") return championCard(ctx);
     const el = page("Champions");
+    fixedPage(el, ctx.component);   // the lane bar stays on top, only the champions scroll, the search capsule under them
     championPicker(el, ctx);
     return { title: "Champions", el, ready: null };   // the page shows at once; its blocks load on their own
 }
