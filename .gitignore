@@ -7,6 +7,9 @@ __pycache__/
 .obsidian/plugins/*
 !.obsidian/plugins/morellonomicon/
 .obsidian/plugins/morellonomicon/data.json
+# Obsidian Git is committed too, so a fresh clone already has it (its settings stay per device)
+!.obsidian/plugins/obsidian-git/
+.obsidian/plugins/obsidian-git/data.json
 .obsidian/workspace.json
 .obsidian/workspaces.json
 **/.makemd/

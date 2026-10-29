@@ -68,7 +68,7 @@ CLAUDE.md              points here
 - **Less text.** The product goal is low friction: glanceable cards, icons and chips, long text folded away. Do not add paragraphs to cards or notes.
 - **Network use.** Only the fetch scripts touch the network, only to the public endpoints above, and only when the user runs them.
 - **Nothing private in the repo.** No keys, personal paths or summoner names/IDs of real players.
-- **Plugins are not in git** (`.obsidian/plugins/` is ignored). `tools/install_plugins.py` downloads them from each plugin's GitHub release; the list is `community-plugins.json`.
+- **Plugins are not in git** (`.obsidian/plugins/` is ignored), except Morellonomicon and **Obsidian Git** (committed so a fresh clone, e.g. on a phone, has it; its `data.json` settings stay per device; update it by replacing its three files with a newer release). `tools/install_plugins.py` downloads the others from each plugin's GitHub release; the list is `community-plugins.json`.
 - **Icons.** One idea has one icon everywhere: take it from the maps listed in [[Icons]] (`DAMAGE_ICON`, `TAGS`, `ROLE_ICON`, `TAB_ICON`…), never pick one in a page; a new idea gets its icon in the map and in [[Icons]] first.
 - **Visual changes** (CSS snippets, theme): show a screenshot or describe the change and let Zaviel pick before building.
 - **Testing needs the user's eyes** for Obsidian on a phone and on PC. Say what could not be tested and what the user must look at.
