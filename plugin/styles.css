@@ -1224,15 +1224,15 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay-tabbar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-around; align-items: center; background: #161922; border-top: 1px solid var(--lay-line); color: var(--lay-dim); font-size: 12px; pointer-events: none; }
 .mn-lay-tabbar > span { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; }
 .mn-lay-tabbar svg { width: 22px; height: 22px; }
-/* the phone's status bar (iPhone with a notch): carrier at the left, signal / 5G / battery at the right, centred on the notch's height */
-.mn-lay-status { position: absolute; z-index: 6; left: 0; right: 0; top: 0; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; padding: 0 22px 13px 30px; color: #f2f2f2; font-size: 15px; font-weight: 600; pointer-events: none; }
+/* the phone's status bar (iPhone with a notch): carrier at the left, signal / 5G / battery at the right, a little below the notch's middle */
+.mn-lay-status { position: absolute; z-index: 6; left: 0; right: 0; top: 0; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; padding: 4px 24px 0 32px; color: #f2f2f2; font-size: 13px; font-weight: 600; pointer-events: none; }
 .mn-lay-notch { position: absolute; left: 50%; top: 0; width: 210px; height: 32px; margin-left: -105px; border-radius: 0 0 20px 20px; background: #4a4e5c; }
 .mn-lay-sig { display: flex; align-items: center; gap: 6px; }
-.mn-lay-bars { display: flex; align-items: flex-end; gap: 2px; height: 12px; }
+.mn-lay-bars { display: flex; align-items: flex-end; gap: 2px; height: 10px; }
 .mn-lay-bars i { width: 3px; border-radius: 1px; background: #f2f2f2; }
-.mn-lay-bars i:nth-child(1) { height: 4px; } .mn-lay-bars i:nth-child(2) { height: 6px; } .mn-lay-bars i:nth-child(3) { height: 9px; } .mn-lay-bars i:nth-child(4) { height: 12px; }
-.mn-lay-batt { position: relative; width: 25px; height: 12px; border: 1px solid rgba(242, 242, 242, 0.5); border-radius: 4px; padding: 1px; box-sizing: border-box; }
-.mn-lay-batt::after { content: ""; position: absolute; right: -4px; top: 3px; width: 2px; height: 4px; border-radius: 0 1px 1px 0; background: rgba(242, 242, 242, 0.5); }
+.mn-lay-bars i:nth-child(1) { height: 3px; } .mn-lay-bars i:nth-child(2) { height: 5px; } .mn-lay-bars i:nth-child(3) { height: 7px; } .mn-lay-bars i:nth-child(4) { height: 10px; }
+.mn-lay-batt { position: relative; width: 22px; height: 11px; border: 1px solid rgba(242, 242, 242, 0.5); border-radius: 4px; padding: 1px; box-sizing: border-box; }
+.mn-lay-batt::after { content: ""; position: absolute; right: -4px; top: 3px; width: 2px; height: 3px; border-radius: 0 1px 1px 0; background: rgba(242, 242, 242, 0.5); }
 .mn-lay-batt i { display: block; width: 70%; height: 100%; border-radius: 2px; background: #f2f2f2; }
 .mn-lay-z { position: absolute; box-sizing: border-box; border: 2px dashed var(--c); border-radius: 14px; background: color-mix(in srgb, var(--c) 10%, transparent); cursor: grab; touch-action: none; }
 .mn-lay-z.is-sel { border-style: solid; background: color-mix(in srgb, var(--c) 22%, transparent); z-index: 2; }
