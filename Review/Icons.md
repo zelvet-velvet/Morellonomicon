@@ -47,6 +47,23 @@ Source: `TAGS` in `plugin/src/pages/profile.ts` (also the groups and the legend 
 
 強化普攻 and 物理 share `sword` (both are about the basic attack / AD); they never stand side by side without their label colour.
 
+## 📈 Stats to build (速查 玩法)
+Source: `STAT_ICON`, `STAT_COLOR` in `plugin/src/ui.ts` (the `stack` key of a champion note); reach (近戰 / 中程 / 遠程) is `REACH_ICON`.
+
+```mn-icons
+法術強度 | sparkles | --mn-magic
+攻擊力 | sword | --mn-phys
+攻速 | gauge | --mn-true
+技能急速 | timer-reset | --mn-haste
+暴擊 | dice-5 | --mn-exec
+生命 | heart | --mn-heal
+護甲 | shield | --mn-guard
+魔防 | shield-check | --mn-shield
+穿透 | arrow-right-to-line | --mn-aa
+跑速 | footprints | --mn-dash
+攻擊距離 | ruler |
+```
+
 ## 🛡️ Roles and lanes
 Source: `ROLE_FILE` / `ROLE_ICON` and `LANE_FILE` / `LANE_ICON` in `plugin/src/ui.ts`. The game's own class and position icons (from the League of Legends Wiki, shown by address); the Lucide name is only the fallback when a file does not load.
 

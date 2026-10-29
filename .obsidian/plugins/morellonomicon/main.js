@@ -300,7 +300,11 @@ var Store = class {
         path: file.path,
         punch: str(fm.punch),
         soul: str(fm.soul),
-        plain: textMap(fm.plain)
+        how: Array.isArray(fm.soul) ? list(fm.soul) : str(fm.soul).split(/\n+/).map((x) => x.trim()).filter(Boolean),
+        plain: textMap(fm.plain),
+        stack: list(fm.stack),
+        focus: str(fm.focus).toUpperCase(),
+        face: str(fm.face)
       })).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
     }
     return this.champs;
@@ -729,6 +733,9 @@ var row = (parent, r) => {
 };
 var DAMAGE_COLOR = { \u7269\u7406: "var(--mn-phys)", \u9B54\u6CD5: "var(--mn-magic)", \u771F\u5BE6: "var(--mn-true)", \u6DF7\u5408: "var(--mn-mixed)" };
 var DAMAGE_ICON = { \u7269\u7406: "sword", \u9B54\u6CD5: "sparkles", \u771F\u5BE6: "gem", \u6DF7\u5408: "blend" };
+var STAT_ICON = { \u6CD5\u8853\u5F37\u5EA6: "sparkles", \u653B\u64CA\u529B: "sword", \u653B\u901F: "gauge", \u6280\u80FD\u6025\u901F: "timer-reset", \u66B4\u64CA: "dice-5", \u751F\u547D: "heart", \u8B77\u7532: "shield", \u9B54\u9632: "shield-check", \u7A7F\u900F: "arrow-right-to-line", \u8DD1\u901F: "footprints" };
+var STAT_COLOR = { \u6CD5\u8853\u5F37\u5EA6: "var(--mn-magic)", \u653B\u64CA\u529B: "var(--mn-phys)", \u653B\u901F: "var(--mn-true)", \u6280\u80FD\u6025\u901F: "var(--mn-haste)", \u66B4\u64CA: "var(--mn-exec)", \u751F\u547D: "var(--mn-heal)", \u8B77\u7532: "var(--mn-guard)", \u9B54\u9632: "var(--mn-shield)", \u7A7F\u900F: "var(--mn-aa)", \u8DD1\u901F: "var(--mn-dash)" };
+var REACH_ICON = "ruler";
 var scalingParts = (note) => (note.match(/\+[^+]+/g) ?? []).map((p) => p.trim()).filter(Boolean).map((text) => {
   const kind = text.includes("\u9B54\u6CD5") ? "\u9B54\u6CD5" : text.includes("\u7269\u7406") ? "\u7269\u7406" : "";
   return { text, color: kind ? DAMAGE_COLOR[kind] : "var(--mn-muted)", icon: kind ? DAMAGE_ICON[kind] : "plus" };
@@ -4395,97 +4402,126 @@ function swipePage(ctx) {
     liked = swipeLiked = [];
     drawResults();
   };
-  const toggle = (id) => {
-    picks = picks.filter((p) => p !== id);
-    void ctx.plugin.setRoster(picks);
-    swipeSig = picks.join(",");
-    restart();
+  const TABS = ["\u6982\u89BD", "\u73A9\u6CD5", "\u6280\u80FD", "\u98A8\u683C"];
+  const cooldown = (s) => {
+    const r = s.rows?.find((x) => x.label.startsWith("\u51B7\u537B"));
+    return r ? r.vals[r.vals.length - 1] ?? "" : "";
   };
-  const card = (c, parent) => {
-    const r = h(parent, "div", "mn-rq");
-    const top = h(r, "div", "mn-rq-top");
-    const im = h(top, "img", "mn-rq-img");
-    im.src = c.icon;
-    im.alt = "";
-    const who = h(top, "div", "mn-rq-who");
-    h(who, "div", "mn-rq-name", c.name);
-    if (c.punch) h(who, "div", "mn-rq-punch", c.punch);
-    const rm = h(top, "button", "mn-rq-x");
-    icon(rm, "x");
-    rm.setAttribute("aria-label", "\u79FB\u9664");
-    rm.addEventListener("click", (e) => {
+  const quickCard = (c, face) => {
+    face.addClass("mn-qc");
+    const tabs = TABS.map((name) => h(face, "div", `mn-qc-tab is-${["look", "play", "skill", "style"][TABS.indexOf(name)]}`));
+    const hud = h(face, "div", "mn-qc-hud");
+    const bars = h(hud, "div", "mn-qc-bars");
+    const marks = TABS.map(() => h(bars, "i"));
+    const hudRow = h(hud, "div", "mn-qc-hudrow");
+    const label = h(hudRow, "span", "mn-qc-label");
+    const open = h(hudRow, "button", "mn-qc-open");
+    icon(open, "arrow-up-right");
+    open.setAttribute("aria-label", "\u82F1\u96C4\u9801");
+    open.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      toggle(c.id);
+      ctx.openChampion(c.id);
     });
-    const big = h(r, "div", "mn-rq-big");
+    let cur = 0;
+    const show = (i) => {
+      cur = Math.max(0, Math.min(TABS.length - 1, i));
+      tabs.forEach((x, k) => x.toggleClass("is-on", k === cur));
+      marks.forEach((x, k) => x.toggleClass("is-on", k === cur));
+      label.textContent = cur ? `${c.name} \xB7 ${TABS[cur]}` : "";
+      face.toggleClass("is-first", cur === 0);
+    };
+    face.addEventListener("click", (e) => {
+      if (e.target.closest("button")) return;
+      const r = face.getBoundingClientRect();
+      show(cur + (e.clientX > r.left + r.width / 2 ? 1 : -1));
+    });
+    const look = tabs[0];
+    const im = h(look, "img", "mn-qc-splash");
+    im.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/centered/${encodeURIComponent(c.id)}_0.jpg`;
+    im.alt = "";
+    if (c.face) im.style.objectPosition = c.face;
+    const tiles = h(look, "div", "mn-qc-tiles");
+    const tile2 = (iconName, color, big, small, art) => {
+      const t = h(tiles, "div", "mn-qc-tile");
+      t.style.setProperty("--c", color);
+      const ic = h(t, "span", "mn-qc-tic");
+      if (art) art(ic);
+      else icon(ic, iconName);
+      h(t, "b", void 0, big);
+      h(t, "span", void 0, small);
+    };
     const main = c.damageType || c.skillDamage[0] || "";
     if (main) {
-      const t = h(big, "div", "mn-rq-tile");
-      const ic = h(t, "span", "mn-rq-tic");
-      ic.style.setProperty("--c", DAMAGE_COLOR[main] ?? "var(--mn-muted)");
-      icon(ic, DAMAGE_ICON[main] ?? "flame");
-      const tx = h(t, "div");
-      h(tx, "b", void 0, main === "\u7269\u7406" ? "\u7269\u653B" : main === "\u9B54\u6CD5" ? "\u9B54\u653B" : main);
       const also = c.skillDamage.filter((k) => k !== main);
-      h(tx, "span", void 0, also.length ? `\u517C${also.join("\u3001")}` : `${main}\u50B7\u5BB3`);
+      tile2(DAMAGE_ICON[main] ?? "flame", DAMAGE_COLOR[main] ?? "var(--mn-muted)", main === "\u7269\u7406" ? "\u7269\u653B" : main === "\u9B54\u6CD5" ? "\u9B54\u653B" : main, also.length ? `\u517C${also.join("\u3001")}` : "\u50B7\u5BB3");
     }
-    if (c.roles.length) {
-      const t = h(big, "div", "mn-rq-tile");
-      const arts = h(t, "span", "mn-rq-arts");
-      for (const role_ of c.roles.slice(0, 2)) roleArt(arts, role_);
-      const tx = h(t, "div");
-      h(tx, "b", void 0, c.roles.join(" \xB7 "));
-      const rd = recent.get(c.name);
-      if (rd) {
-        const m = marker(rd);
-        const x = h(tx, "span", "mn-rq-mark", `${m.mark} \u672C\u7248\u8ABF\u6574`);
-        x.style.setProperty("--m", m.color);
-      } else h(tx, "span", void 0, "\u5B9A\u4F4D");
+    if (c.roles.length) tile2("", "var(--mn-accent)", c.roles[0], c.roles[1] ?? "\u5B9A\u4F4D", (el2) => roleArt(el2, c.roles[0]));
+    const reach = reachOf(c);
+    if (reach) tile2(REACH_ICON, "var(--mn-dash)", reach, c.range ? `\u5C04\u7A0B ${c.range}` : "");
+    const dock = h(look, "div", "mn-qc-dock");
+    const dots = h(dock, "span", "mn-qc-chip");
+    dots.textContent = `\u96E3\u5EA6 ${"\u25CF".repeat(Math.round(c.difficulty / 2))}${"\u25CB".repeat(5 - Math.round(c.difficulty / 2))}`;
+    const rd = recent.get(c.name);
+    if (rd) {
+      const m = marker(rd);
+      const x = h(dock, "span", "mn-qc-chip", `${m.mark} \u672C\u7248\u8ABF\u6574`);
+      x.style.color = m.color;
     }
-    if (c.soul) {
-      const s = h(r, "div", "mn-rq-soul");
-      const k = h(s, "div", "mn-rq-soul-k");
-      icon(k, "flame");
-      k.append("\u9748\u9B42");
-      h(s, "p", void 0, c.soul);
-    }
-    const fold = (title, fill) => {
-      const f = h(r, "div", "mn-rq-fold is-open");
-      const head2 = h(f, "button", "mn-rq-fh");
-      h(head2, "span", void 0, title);
-      icon(head2, "chevron-right");
-      const body = h(f, "div", "mn-rq-fb");
-      fill(body);
-      head2.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        f.toggleClass("is-open", !f.hasClass("is-open"));
-      });
-    };
-    fold("\u6280\u80FD", (body) => {
-      const list2 = h(body, "div", "mn-rq-plain");
-      for (const key of ["P", "Q", "W", "E", "R"]) {
-        const s = c.skills.find((x) => x.key === key);
-        const text = c.plain[key];
-        if (!s && !text) continue;
-        keyBadge(list2, key, DAMAGE_COLOR[s?.damage[0] ?? ""] ?? "#6b7183");
-        const cell = h(list2, "span");
-        if (text) {
-          cell.textContent = text;
-          continue;
-        }
-        h(cell, "b", void 0, s.name);
-        const what = [...s.damage.map((d) => `${d}\u50B7\u5BB3`), ...s.tags].join("\u3001");
-        if (what) h(cell, "small", void 0, what);
+    const lanes = store.lanes(c);
+    if (lanes.length) h(dock, "span", "mn-qc-chip", lanes.slice(0, 2).join(" \xB7 "));
+    const words = h(look, "div", "mn-sl-words mn-qc-words");
+    h(words, "div", "mn-sl-kn", `\u901F\u67E5 \xB7 ${picks.indexOf(c.id) + 1} / ${picks.length}`);
+    h(words, "h2", "mn-sl-t", c.name);
+    h(words, "div", "mn-sl-x", c.punch || c.title);
+    const play = tabs[1];
+    const stats2 = c.stack.filter((s) => STAT_ICON[s]);
+    if (stats2.length) {
+      h(play, "div", "mn-qc-k", "\u5806");
+      const row2 = h(play, "div", "mn-qc-stats");
+      for (const s of stats2) {
+        const x = h(row2, "span", "mn-qc-stat");
+        x.style.setProperty("--c", STAT_COLOR[s]);
+        icon(x, STAT_ICON[s]);
+        x.append(s);
       }
-    });
-    fold("\u8A73\u7D30", (body) => {
-      factsStrip(body, c);
-      tagRow(body, c, void 0, true);
-    });
-    r.addEventListener("click", () => ctx.openChampion(c.id));
-    return r;
+    }
+    if (c.how.length) {
+      h(play, "div", "mn-qc-k", "\u600E\u9EBC\u73A9");
+      for (const line of c.how.slice(0, 3)) h(play, "p", "mn-qc-how", line);
+    }
+    const fs = c.focus ? c.skills.find((s) => s.key === c.focus) : void 0;
+    if (fs) {
+      const f = h(play, "div", "mn-qc-focus");
+      keyBadge(f, fs.key, DAMAGE_COLOR[fs.damage[0] ?? ""] ?? "#6b7183");
+      const tx = h(f, "div");
+      h(tx, "span", "mn-qc-star", "\u2605 \u4E3B\u529B \xB7 \u591A\u7528\u9019\u62DB");
+      h(tx, "b", void 0, fs.name);
+      if (c.plain[fs.key]) h(tx, "span", void 0, c.plain[fs.key]);
+    }
+    if (!stats2.length && !c.how.length && !fs) empty(play, { icon: "pencil", title: "\u9084\u6C92\u5BEB\u73A9\u6CD5", text: "\u5BEB\u5728 Inbox/\u901F\u67E5\u5361\u7247\u8349\u7A3F" });
+    const sk = tabs[2];
+    const dmg = damageLines(c);
+    for (const key of ["P", "Q", "W", "E", "R"]) {
+      const s = c.skills.find((x) => x.key === key);
+      if (!s) continue;
+      const row2 = h(sk, "div", "mn-qc-sk" + (key === c.focus ? " is-focus" : ""));
+      keyBadge(row2, key, DAMAGE_COLOR[s.damage[0] ?? ""] ?? "#6b7183");
+      const tx = h(row2, "div", "mn-qc-skt");
+      h(tx, "b", void 0, s.name);
+      h(tx, "span", void 0, c.plain[key] || [...s.tags, ...s.damage.map((d2) => `${d2}\u50B7\u5BB3`)].join(" \xB7 "));
+      const nums = h(row2, "div", "mn-qc-num");
+      const d = dmg.find((x) => x.key === key);
+      if (d && d.base) h(nums, "b", void 0, String(d.base));
+      if (d && (d.ap || d.ad)) {
+        const x = h(nums, "span", void 0, d.ap ? `+${d.ap}% \u9B54\u653B` : `+${d.ad}% \u7269\u653B`);
+        x.style.color = d.ap ? DAMAGE_COLOR["\u9B54\u6CD5"] : DAMAGE_COLOR["\u7269\u7406"];
+      }
+      const cd = cooldown(s);
+      if (cd) h(nums, "span", void 0, `${cd} \u79D2`);
+    }
+    styleCard(h(tabs[3], "div", "mn-qc-style"), c, ctx.app);
+    show(0);
   };
   const drawResults = () => {
     results.empty();
@@ -4526,8 +4562,8 @@ function swipePage(ctx) {
       const c = all.find((x) => x.id === id);
       if (!c) continue;
       const section2 = h(pager, "section", "mn-slide");
-      const face = h(h(section2, "div", "mn-sl-card"), "div", "mn-sl-face mn-rq-face");
-      card(c, face);
+      const face = h(h(section2, "div", "mn-sl-card"), "div", "mn-sl-face");
+      quickCard(c, face);
       const st = h(section2.firstElementChild, "div", "mn-rq-stamp");
       icon(st, "heart", "mn-rq-st-like");
       icon(st, "x", "mn-rq-st-pass");
@@ -4536,7 +4572,6 @@ function swipePage(ctx) {
     }
     const pile = cardPile(pager, sec, {
       judge: true,
-      scroll: ".mn-rq-face",
       onLayout: (cur) => sec.forEach((c, i) => {
         c.style.visibility = i >= cur - 1 && i <= cur + 2 ? "" : "hidden";
       }),

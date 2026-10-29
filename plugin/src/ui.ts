@@ -244,6 +244,10 @@ export const row = (parent: HTMLElement, r: RowSpec): HTMLElement => {
 // Review/Icons.md lists them. Every page takes its icon from these maps, never its own pick, so one idea has one icon everywhere.
 export const DAMAGE_COLOR: Record<string, string> = { 物理: "var(--mn-phys)", 魔法: "var(--mn-magic)", 真實: "var(--mn-true)", 混合: "var(--mn-mixed)" };
 export const DAMAGE_ICON: Record<string, string> = { 物理: "sword", 魔法: "sparkles", 真實: "gem", 混合: "blend" };
+// The stats a champion builds towards (速查's 玩法 tab, the `stack` key); only these names are shown
+export const STAT_ICON: Record<string, string> = { 法術強度: "sparkles", 攻擊力: "sword", 攻速: "gauge", 技能急速: "timer-reset", 暴擊: "dice-5", 生命: "heart", 護甲: "shield", 魔防: "shield-check", 穿透: "arrow-right-to-line", 跑速: "footprints" };
+export const STAT_COLOR: Record<string, string> = { 法術強度: "var(--mn-magic)", 攻擊力: "var(--mn-phys)", 攻速: "var(--mn-true)", 技能急速: "var(--mn-haste)", 暴擊: "var(--mn-exec)", 生命: "var(--mn-heal)", 護甲: "var(--mn-guard)", 魔防: "var(--mn-shield)", 穿透: "var(--mn-aa)", 跑速: "var(--mn-dash)" };
+export const REACH_ICON = "ruler";   // 近戰 / 中程 / 遠程
 // A skill row's scaling note ("+25% 魔法攻擊 +10% 額外物理攻擊") split into its parts, each in the colour of its stat
 // (magic blue, physical orange, anything else muted)
 export const scalingParts = (note: string): { text: string; color: string; icon: string }[] =>

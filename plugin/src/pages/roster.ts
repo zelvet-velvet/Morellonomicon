@@ -1,13 +1,13 @@
 import { Notice } from "obsidian";
 import type { Champion } from "../data/store";
 import { findSaid, type Said, type Sounds, soundScore } from "../data/sound";
-import { DAMAGE_COLOR, DAMAGE_ICON, SWIPE, chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, roleArt, slideSeg, tip } from "../ui";
+import { DAMAGE_COLOR, DAMAGE_ICON, REACH_ICON, STAT_COLOR, STAT_ICON, SWIPE, chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, roleArt, slideSeg, tip } from "../ui";
 import { entryDir, marker } from "./changes";
 import type { PageCtx, PageOut } from "./index";
 import { keyBadge } from "./cardkit";
 import { DECK_BELOW } from "./deck";
 import { cardPile } from "./pile";
-import { factsStrip, tagRow } from "./profile";
+import { damageLines, reachOf, styleCard } from "./profile";
 
 const MAX_PICKS = 15;   // a Mayhem game can hand you a lot of champions
 const BTN_ROOM = 84;   // px under the 速查 pile kept for the ✕ / ♥ buttons
@@ -279,80 +279,119 @@ export function swipePage(ctx: PageCtx): PageOut {
     h(titleRow, "h1", "mn-title", "速查");
     const results = h(el, "div", "mn-rq-results");
     const restart = () => { at = swipeAt = 0; liked = swipeLiked = []; drawResults(); };
-    // a card's ✕ takes the champion out of the picks
-    const toggle = (id: string) => {
-        picks = picks.filter((p) => p !== id);
-        void ctx.plugin.setRoster(picks);
-        swipeSig = picks.join(",");
-        restart();
-    };
+    // A picked champion as a card of four tabs, switched by tapping the right half (next) or the left half (back), like Tinder's photos;
+    // dragging sideways still likes or passes. 概覽: splash, three big tiles, name and one line. 玩法: what to build and how to play,
+    // and the 主力 ability when one is the point. 技能: the five abilities with damage and cooldown. 風格: the style chart and tags.
+    // (punch / soul / stack / focus / plain are hand-written in the champion note; Review/速查 card layout is the design)
+    const TABS = ["概覽", "玩法", "技能", "風格"];
+    const cooldown = (s: Champion["skills"][number]): string => { const r = s.rows?.find((x) => x.label.startsWith("冷卻")); return r ? (r.vals[r.vals.length - 1] ?? "") : ""; };
+    const quickCard = (c: Champion, face: HTMLElement): void => {
+        face.addClass("mn-qc");
+        const tabs = TABS.map((name) => h(face, "div", `mn-qc-tab is-${["look", "play", "skill", "style"][TABS.indexOf(name)]}`));
+        const hud = h(face, "div", "mn-qc-hud");
+        const bars = h(hud, "div", "mn-qc-bars");
+        const marks = TABS.map(() => h(bars, "i"));
+        const hudRow = h(hud, "div", "mn-qc-hudrow");
+        const label = h(hudRow, "span", "mn-qc-label");
+        const open = h(hudRow, "button", "mn-qc-open");
+        icon(open, "arrow-up-right");
+        open.setAttribute("aria-label", "英雄頁");
+        open.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); ctx.openChampion(c.id); });
+        let cur = 0;
+        const show = (i: number) => {
+            cur = Math.max(0, Math.min(TABS.length - 1, i));
+            tabs.forEach((x, k) => x.toggleClass("is-on", k === cur));
+            marks.forEach((x, k) => x.toggleClass("is-on", k === cur));
+            label.textContent = cur ? `${c.name} · ${TABS[cur]}` : "";
+            face.toggleClass("is-first", cur === 0);
+        };
+        // a tap (no drag: pile.ts only takes moves) on the right half goes on, on the left half goes back
+        face.addEventListener("click", (e) => {
+            if ((e.target as HTMLElement).closest("button")) return;
+            const r = face.getBoundingClientRect();
+            show(cur + (e.clientX > r.left + r.width / 2 ? 1 : -1));
+        });
 
-    // A picked champion: name and a one-line overview, its damage kind and roles big, the thing that makes it work, then its abilities
-    // in plain words and the full facts, each folded away (punch / soul / plain are hand-written in the champion note)
-    const card = (c: Champion, parent: HTMLElement): HTMLElement => {
-        const r = h(parent, "div", "mn-rq");
-        const top = h(r, "div", "mn-rq-top");
-        const im = h(top, "img", "mn-rq-img"); im.src = c.icon; im.alt = "";
-        const who = h(top, "div", "mn-rq-who");
-        h(who, "div", "mn-rq-name", c.name);
-        if (c.punch) h(who, "div", "mn-rq-punch", c.punch);
-        const rm = h(top, "button", "mn-rq-x");
-        icon(rm, "x");
-        rm.setAttribute("aria-label", "移除");
-        rm.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); toggle(c.id); });
-        // the two big tiles: what damage it deals (main, and the others) and its roles in the game's art
-        const big = h(r, "div", "mn-rq-big");
+        // 1 · 概覽
+        const look = tabs[0];
+        const im = h(look, "img", "mn-qc-splash");
+        im.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/centered/${encodeURIComponent(c.id)}_0.jpg`;
+        im.alt = "";
+        if (c.face) im.style.objectPosition = c.face;
+        const tiles = h(look, "div", "mn-qc-tiles");
+        const tile = (iconName: string, color: string, big: string, small: string, art?: (el: HTMLElement) => void) => {
+            const t = h(tiles, "div", "mn-qc-tile");
+            t.style.setProperty("--c", color);
+            const ic = h(t, "span", "mn-qc-tic");
+            if (art) art(ic); else icon(ic, iconName);
+            h(t, "b", undefined, big);
+            h(t, "span", undefined, small);
+        };
         const main = c.damageType || c.skillDamage[0] || "";
         if (main) {
-            const t = h(big, "div", "mn-rq-tile");
-            const ic = h(t, "span", "mn-rq-tic"); ic.style.setProperty("--c", DAMAGE_COLOR[main] ?? "var(--mn-muted)");
-            icon(ic, DAMAGE_ICON[main] ?? "flame");
-            const tx = h(t, "div");
-            h(tx, "b", undefined, main === "物理" ? "物攻" : main === "魔法" ? "魔攻" : main);
             const also = c.skillDamage.filter((k) => k !== main);
-            h(tx, "span", undefined, also.length ? `兼${also.join("、")}` : `${main}傷害`);
+            tile(DAMAGE_ICON[main] ?? "flame", DAMAGE_COLOR[main] ?? "var(--mn-muted)", main === "物理" ? "物攻" : main === "魔法" ? "魔攻" : main, also.length ? `兼${also.join("、")}` : "傷害");
         }
-        if (c.roles.length) {
-            const t = h(big, "div", "mn-rq-tile");
-            const arts = h(t, "span", "mn-rq-arts");
-            for (const role_ of c.roles.slice(0, 2)) roleArt(arts, role_);
-            const tx = h(t, "div");
-            h(tx, "b", undefined, c.roles.join(" · "));
-            const rd = recent.get(c.name);
-            if (rd) { const m = marker(rd); const x = h(tx, "span", "mn-rq-mark", `${m.mark} 本版調整`); x.style.setProperty("--m", m.color); }
-            else h(tx, "span", undefined, "定位");
+        if (c.roles.length) tile("", "var(--mn-accent)", c.roles[0], c.roles[1] ?? "定位", (el) => roleArt(el, c.roles[0]));
+        const reach = reachOf(c);
+        if (reach) tile(REACH_ICON, "var(--mn-dash)", reach, c.range ? `射程 ${c.range}` : "");
+        const dock = h(look, "div", "mn-qc-dock");
+        const dots = h(dock, "span", "mn-qc-chip");
+        dots.textContent = `難度 ${"●".repeat(Math.round(c.difficulty / 2))}${"○".repeat(5 - Math.round(c.difficulty / 2))}`;
+        const rd = recent.get(c.name);
+        if (rd) { const m = marker(rd); const x = h(dock, "span", "mn-qc-chip", `${m.mark} 本版調整`); x.style.color = m.color; }
+        const lanes = store.lanes(c);
+        if (lanes.length) h(dock, "span", "mn-qc-chip", lanes.slice(0, 2).join(" · "));
+        const words = h(look, "div", "mn-sl-words mn-qc-words");
+        h(words, "div", "mn-sl-kn", `速查 · ${picks.indexOf(c.id) + 1} / ${picks.length}`);
+        h(words, "h2", "mn-sl-t", c.name);
+        h(words, "div", "mn-sl-x", c.punch || c.title);
+
+        // 2 · 玩法
+        const play = tabs[1];
+        const stats = c.stack.filter((s) => STAT_ICON[s]);
+        if (stats.length) {
+            h(play, "div", "mn-qc-k", "堆");
+            const row = h(play, "div", "mn-qc-stats");
+            for (const s of stats) { const x = h(row, "span", "mn-qc-stat"); x.style.setProperty("--c", STAT_COLOR[s]); icon(x, STAT_ICON[s]); x.append(s); }
         }
-        if (c.soul) { const s = h(r, "div", "mn-rq-soul"); const k = h(s, "div", "mn-rq-soul-k"); icon(k, "flame"); k.append("靈魂"); h(s, "p", undefined, c.soul); }
-        const fold = (title: string, fill: (body: HTMLElement) => void) => {
-            const f = h(r, "div", "mn-rq-fold is-open");   // open at once: the card has room, and this is what a quick look is for
-            const head = h(f, "button", "mn-rq-fh");
-            h(head, "span", undefined, title);
-            icon(head, "chevron-right");
-            const body = h(f, "div", "mn-rq-fb");
-            fill(body);
-            head.addEventListener("click", (e) => {
-                e.preventDefault(); e.stopPropagation();   // the card itself opens the champion page
-                f.toggleClass("is-open", !f.hasClass("is-open"));
-            });
-        };
-        // each ability in a line: the hand-written plain words when there are some, else its name and what it does (damage kind, tags)
-        fold("技能", (body) => {
-            const list = h(body, "div", "mn-rq-plain");
-            for (const key of ["P", "Q", "W", "E", "R"]) {
-                const s = c.skills.find((x) => x.key === key);
-                const text = c.plain[key];
-                if (!s && !text) continue;
-                keyBadge(list, key, DAMAGE_COLOR[s?.damage[0] ?? ""] ?? "#6b7183");
-                const cell = h(list, "span");
-                if (text) { cell.textContent = text; continue; }
-                h(cell, "b", undefined, s!.name);
-                const what = [...s!.damage.map((d) => `${d}傷害`), ...s!.tags].join("、");
-                if (what) h(cell, "small", undefined, what);
-            }
-        });
-        fold("詳細", (body) => { factsStrip(body, c); tagRow(body, c, undefined, true); });
-        r.addEventListener("click", () => ctx.openChampion(c.id));
-        return r;
+        if (c.how.length) {
+            h(play, "div", "mn-qc-k", "怎麼玩");
+            for (const line of c.how.slice(0, 3)) h(play, "p", "mn-qc-how", line);
+        }
+        const fs = c.focus ? c.skills.find((s) => s.key === c.focus) : undefined;
+        if (fs) {
+            const f = h(play, "div", "mn-qc-focus");
+            keyBadge(f, fs.key, DAMAGE_COLOR[fs.damage[0] ?? ""] ?? "#6b7183");
+            const tx = h(f, "div");
+            h(tx, "span", "mn-qc-star", "★ 主力 · 多用這招");
+            h(tx, "b", undefined, fs.name);
+            if (c.plain[fs.key]) h(tx, "span", undefined, c.plain[fs.key]);
+        }
+        if (!stats.length && !c.how.length && !fs) empty(play, { icon: "pencil", title: "還沒寫玩法", text: "寫在 Inbox/速查卡片草稿" });
+
+        // 3 · 技能, with the numbers
+        const sk = tabs[2];
+        const dmg = damageLines(c);
+        for (const key of ["P", "Q", "W", "E", "R"]) {
+            const s = c.skills.find((x) => x.key === key);
+            if (!s) continue;
+            const row = h(sk, "div", "mn-qc-sk" + (key === c.focus ? " is-focus" : ""));
+            keyBadge(row, key, DAMAGE_COLOR[s.damage[0] ?? ""] ?? "#6b7183");
+            const tx = h(row, "div", "mn-qc-skt");
+            h(tx, "b", undefined, s.name);
+            h(tx, "span", undefined, c.plain[key] || [...s.tags, ...s.damage.map((d) => `${d}傷害`)].join(" · "));
+            const nums = h(row, "div", "mn-qc-num");
+            const d = dmg.find((x) => x.key === key);
+            if (d && d.base) h(nums, "b", undefined, String(d.base));
+            if (d && (d.ap || d.ad)) { const x = h(nums, "span", undefined, d.ap ? `+${d.ap}% 魔攻` : `+${d.ad}% 物攻`); x.style.color = d.ap ? DAMAGE_COLOR["魔法"] : DAMAGE_COLOR["物理"]; }
+            const cd = cooldown(s);
+            if (cd) h(nums, "span", undefined, `${cd} 秒`);
+        }
+
+        // 4 · 風格
+        styleCard(h(tabs[3], "div", "mn-qc-style"), c, ctx.app);
+        show(0);
     };
 
     const drawResults = () => {
@@ -387,8 +426,8 @@ export function swipePage(ctx: PageCtx): PageOut {
             const c = all.find((x) => x.id === id);
             if (!c) continue;
             const section = h(pager, "section", "mn-slide");
-            const face = h(h(section, "div", "mn-sl-card"), "div", "mn-sl-face mn-rq-face");
-            card(c, face);
+            const face = h(h(section, "div", "mn-sl-card"), "div", "mn-sl-face");
+            quickCard(c, face);
             // a big ♥ (like) and ✕ (pass) over the middle of the card; the one for the drag's side grows in as the card is dragged
             const st = h(section.firstElementChild as HTMLElement, "div", "mn-rq-stamp");
             icon(st, "heart", "mn-rq-st-like");
@@ -398,7 +437,6 @@ export function swipePage(ctx: PageCtx): PageOut {
         }
         const pile = cardPile(pager, sec, {
             judge: true,
-            scroll: ".mn-rq-face",
             onLayout: (cur) => sec.forEach((c, i) => { c.style.visibility = i >= cur - 1 && i <= cur + 2 ? "" : "hidden"; }),
             onDrag: (dx, w) => {
                 const st = stamps[pile?.cur ?? 0];

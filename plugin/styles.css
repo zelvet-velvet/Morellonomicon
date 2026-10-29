@@ -999,3 +999,60 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-ictile-ic .svg-icon { width: 24px; height: 24px; color: inherit; }
 .mn-ictile-n { font-size: 10px; color: var(--text-muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mn-icnone { grid-column: 1 / -1; color: var(--text-faint); font-size: 13px; padding: 6px; }
+
+/* 速查 card: four tabs on one face (roster.ts quickCard; design in the 速查 card layout sheet). Tap the right half for the next tab,
+   the left half for the one before; the bars at the top show which. Nothing on a tab scrolls or passes the card's edge. */
+.mn-sl-face.mn-qc { justify-content: flex-start; }
+.mn-qc-tab { position: absolute; inset: 0; display: none; flex-direction: column; gap: 10px; padding: 64px 14px 14px; overflow: hidden; }
+.mn-qc-tab.is-on { display: flex; }
+.mn-qc-hud { position: absolute; z-index: 4; left: 14px; right: 14px; top: 12px; pointer-events: none; }
+.mn-qc-bars { display: flex; gap: 4px; }
+.mn-qc-bars i { flex: 1; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.25); }
+.mn-qc-bars i.is-on { background: var(--mn-accent); }
+.mn-qc-hudrow { display: flex; align-items: center; justify-content: space-between; height: 32px; margin-top: 8px; }
+.mn-qc-label { font-size: 15px; font-weight: 800; color: var(--mn-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mn-app .mn-qc-open { pointer-events: auto; flex: none; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border-radius: 50%; border: 0; box-shadow: none; background: rgba(10, 12, 18, 0.55); color: var(--mn-text); }
+.mn-qc-open svg { width: 18px; height: 18px; }
+/* 1 · 概覽: the splash fills the card, the tiles and the dock sit over its lower part, the words under them (no tip row) */
+.mn-qc-tab.is-look { padding: 0; justify-content: flex-end; gap: 0; }
+.mn-qc-splash { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+.mn-qc-tab.is-look::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(10, 12, 18, 0.35) 0, transparent 90px, transparent 38%, rgba(10, 12, 18, 0.75) 62%, #0a0c12 calc(100% - 120px)); }
+.mn-qc-tiles { position: relative; z-index: 2; display: flex; gap: 8px; padding: 0 14px; }
+.mn-qc-tile { flex: 1; min-width: 0; height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; border-radius: 16px; color: var(--c);
+    background: rgba(10, 12, 18, 0.6); border: 1.5px solid color-mix(in srgb, var(--c) 65%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.mn-qc-tic { display: flex; height: 36px; align-items: center; }
+.mn-qc-tic svg { width: 32px; height: 32px; }
+.mn-qc-tic img { width: 34px; height: 34px; }
+.mn-qc-tile b { font-size: 21px; font-weight: 800; line-height: 1.15; white-space: nowrap; }
+.mn-qc-tile > span:last-child { font-size: 12px; color: var(--mn-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.mn-qc-dock { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 6px; height: 46px; padding: 0 14px; }
+.mn-qc-chip { display: inline-flex; align-items: center; height: 28px; padding: 0 10px; border-radius: 14px; font-size: 12.5px; font-weight: 700; white-space: nowrap; color: var(--mn-text);
+    background: rgba(10, 12, 18, 0.6); border: 1px solid var(--mn-line); }
+.mn-qc-words { padding-bottom: 18px; }
+/* 2 · 玩法 */
+.mn-qc-k { margin-top: 4px; font-size: 12px; font-weight: 800; letter-spacing: 0.14em; color: var(--mn-muted); }
+.mn-qc-stats { display: flex; flex-wrap: wrap; gap: 8px; }
+.mn-qc-stat { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px; border-radius: 19px; font-size: 16px; font-weight: 800; color: var(--c);
+    background: color-mix(in srgb, var(--c) 16%, transparent); border: 1.5px solid color-mix(in srgb, var(--c) 60%, transparent); }
+.mn-qc-stat svg { width: 18px; height: 18px; }
+.mn-qc-how { margin: 0; font-size: 17px; line-height: 1.45; font-weight: 600; color: var(--mn-text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mn-qc-focus { display: flex; align-items: center; gap: 14px; margin-top: 8px; padding: 14px; border-radius: 16px; border: 2px solid var(--mn-accent);
+    background: color-mix(in srgb, var(--mn-accent) 16%, transparent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--mn-accent) 20%, transparent), 0 0 26px color-mix(in srgb, var(--mn-accent) 40%, transparent); }
+.mn-qc-focus > div { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.mn-qc-focus b { font-size: 19px; color: var(--mn-text); }
+.mn-qc-focus span { font-size: 13px; color: var(--mn-muted); }
+.mn-qc-focus .mn-qc-star { font-size: 12px; font-weight: 800; letter-spacing: 0.06em; color: var(--mn-accent); }
+.mn-qc-focus .mn-ck-key { --k: 40px; font-size: 20px; }
+/* 3 · 技能: five rows, the numbers on the right */
+.mn-qc-tab.is-skill { gap: 8px; }
+.mn-qc-sk { flex: 1; min-height: 0; max-height: 76px; display: flex; align-items: center; gap: 10px; padding: 0 12px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--mn-line); }
+.mn-qc-sk.is-focus { border: 2px solid var(--mn-accent); background: color-mix(in srgb, var(--mn-accent) 14%, transparent); box-shadow: 0 0 18px color-mix(in srgb, var(--mn-accent) 35%, transparent); }
+.mn-qc-skt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.mn-qc-skt b { font-size: 15px; color: var(--mn-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mn-qc-skt span { font-size: 12px; color: var(--mn-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mn-qc-num { flex: none; display: flex; flex-direction: column; align-items: flex-end; font-size: 11.5px; line-height: 1.3; color: var(--mn-muted); font-variant-numeric: tabular-nums; }
+.mn-qc-num b { font-size: 15px; color: var(--mn-text); }
+/* 4 · 風格 */
+.mn-qc-style { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+.mn-qc-style .mn-panel { margin: 0; background: none; border: none; box-shadow: none; padding: 0; }
+.mn-qc-style .mn-style-h { display: none; }
