@@ -12,7 +12,8 @@ export const VIEW_TYPE = "morellonomicon";
 // The app screen: top bar (back, title, mode switch), page area, tab bar. A page is drawn in one step when a tab, a detail page
 // or the data changes; scroll positions are kept per page so Back returns to where you were.
 const KEYBOARD_GUESS = 336;      // px: an iPhone keyboard with its word bar, until the real height has been seen once
-const CAPSULE_SLIDE_MS = 450;     // the capsule's slide (styles.css) plus a little: the text cursor stays hidden this long
+const CAPSULE_SLIDE_MS = 450;
+const CAPSULE_CLOSE_MS = 320;    // the capsule's glide down when the keyboard closes (the keyboard's own slide)     // the capsule's slide (styles.css) plus a little: the text cursor stays hidden this long
 const KEYBOARD_GAP = 8;          // px between the search capsule and the keyboard's top edge
 const DOCK_REST = 10;            // px the capsule sits above the scroll area's bottom when nothing covers it (styles.css)
 const KEYBOARD_SETTLE_MS = 700;   // how long after a tap in a search box iOS's own scroll to it is undone (the keyboard's slide)
@@ -127,7 +128,25 @@ export class MnView extends ItemView {
         };
         // iOS draws the text cursor where the box was, not where it is sliding to: the cursor is hidden while the capsule moves
         const moving = (d: HTMLElement) => { d.addClass("is-moving"); window.setTimeout(() => d.removeClass("is-moving"), CAPSULE_SLIDE_MS); };
-        const drop = () => { app.removeClass("is-kbshade"); if (typingDock) { moving(typingDock); typingDock.style.transform = ""; typingDock.removeClass("is-typing"); } typingDock = null; readout.addClass("is-hidden"); };
+        // closing: Obsidian makes the page full height at once while the keyboard is still sliding down, which dropped the capsule under
+        // the keyboard. Instead it glides from where it was on screen to its place at the bottom, at the keyboard's pace (frame by frame)
+        const glideDown = (d: HTMLElement) => {
+            const from = d.getBoundingClientRect().top, t0 = performance.now();
+            d.style.transition = "none";
+            const step = (now: number) => {
+                const p = Math.min(1, (now - t0) / CAPSULE_CLOSE_MS), e = 1 - Math.pow(1 - p, 3);   // fast start, soft stop
+                d.style.transform = "";
+                const natural = d.getBoundingClientRect().top;
+                if (p < 1) { d.style.transform = `translateY(${Math.round(from + (natural - from) * e - natural)}px)`; requestAnimationFrame(step); }
+                else d.style.transition = "";
+            };
+            requestAnimationFrame(step);
+        };
+        const drop = () => {
+            app.removeClass("is-kbshade");
+            if (typingDock) { const d = typingDock; moving(d); d.removeClass("is-typing"); glideDown(d); }
+            typingDock = null; readout.addClass("is-hidden");
+        };
         const start = (d: HTMLElement) => {
             if (typingDock === d) return;
             typingDock = d; d.addClass("is-typing"); moving(d);

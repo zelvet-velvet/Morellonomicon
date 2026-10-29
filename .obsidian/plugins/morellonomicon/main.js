@@ -5766,6 +5766,7 @@ function renderPage(tab, ctx) {
 var VIEW_TYPE = "morellonomicon";
 var KEYBOARD_GUESS = 336;
 var CAPSULE_SLIDE_MS = 450;
+var CAPSULE_CLOSE_MS = 320;
 var KEYBOARD_GAP = 8;
 var DOCK_REST = 10;
 var KEYBOARD_SETTLE_MS = 700;
@@ -5910,12 +5911,27 @@ var MnView = class extends import_obsidian12.ItemView {
       d.addClass("is-moving");
       window.setTimeout(() => d.removeClass("is-moving"), CAPSULE_SLIDE_MS);
     };
+    const glideDown = (d) => {
+      const from = d.getBoundingClientRect().top, t0 = performance.now();
+      d.style.transition = "none";
+      const step = (now) => {
+        const p = Math.min(1, (now - t0) / CAPSULE_CLOSE_MS), e = 1 - Math.pow(1 - p, 3);
+        d.style.transform = "";
+        const natural = d.getBoundingClientRect().top;
+        if (p < 1) {
+          d.style.transform = `translateY(${Math.round(from + (natural - from) * e - natural)}px)`;
+          requestAnimationFrame(step);
+        } else d.style.transition = "";
+      };
+      requestAnimationFrame(step);
+    };
     const drop = () => {
       app.removeClass("is-kbshade");
       if (typingDock) {
-        moving(typingDock);
-        typingDock.style.transform = "";
-        typingDock.removeClass("is-typing");
+        const d = typingDock;
+        moving(d);
+        d.removeClass("is-typing");
+        glideDown(d);
       }
       typingDock = null;
       readout.addClass("is-hidden");
