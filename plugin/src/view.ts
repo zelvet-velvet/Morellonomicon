@@ -98,7 +98,7 @@ export class MnView extends ItemView {
         let lastShift = (() => { try { return Number(localStorage.getItem("mn-kbshift")) || 0; } catch { return 0; } })();
         const readout = h(app, "div", "mn-kbread is-hidden");
         // the iPhone keyboard is see-through while it slides and looks solid once it has stopped (then Obsidian's plain background is
-        // behind it): a plain panel the keyboard's height rises with it, so it looks solid all the way
+        // behind it): a plain panel the keyboard's height rises with it while it slides, so it looks solid all the way
         const shade = h(app, "div", "mn-kbshade");
         let lastKb = (() => { try { return Number(localStorage.getItem("mn-kbh")) || KEYBOARD_GUESS; } catch { return KEYBOARD_GUESS; } })();
         shade.style.height = `${lastKb + KEYBOARD_GAP}px`;
@@ -130,7 +130,11 @@ export class MnView extends ItemView {
         const drop = () => { app.removeClass("is-kbshade"); if (typingDock) { moving(typingDock); typingDock.style.transform = ""; typingDock.removeClass("is-typing"); } typingDock = null; readout.addClass("is-hidden"); };
         const start = (d: HTMLElement) => {
             if (typingDock === d) return;
-            typingDock = d; d.addClass("is-typing"); moving(d); app.addClass("is-kbshade");
+            typingDock = d; d.addClass("is-typing"); moving(d);
+            // the panel is only there while the keyboard slides: once it has stopped, Obsidian shrinks the screen to above it, and a panel
+            // still pinned to the bottom would sit over the list
+            app.addClass("is-kbshade");
+            window.setTimeout(() => app.removeClass("is-kbshade"), CAPSULE_SLIDE_MS);
             settleUntil = Date.now() + KEYBOARD_SETTLE_MS;
             if (lastShift) d.style.transform = `translateY(${-lastShift}px)`;
             const keep = this.scrollEl.scrollTop;

@@ -1333,3 +1333,4 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-kbshade { position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; background: var(--background-primary); transform: translateY(100%); pointer-events: none;
     transition: transform 0.34s cubic-bezier(0.32, 0.72, 0, 1); }
 .mn-app.is-kbshade .mn-kbshade { transform: translateY(0); transition-delay: 0.03s; }
+.mn-app:not(.is-kbshade) .mn-kbshade { transition: none; }   /* gone at once when the keyboard has stopped (not sliding down over the list) */

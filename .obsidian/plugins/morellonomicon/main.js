@@ -5926,6 +5926,7 @@ var MnView = class extends import_obsidian12.ItemView {
       d.addClass("is-typing");
       moving(d);
       app.addClass("is-kbshade");
+      window.setTimeout(() => app.removeClass("is-kbshade"), CAPSULE_SLIDE_MS);
       settleUntil = Date.now() + KEYBOARD_SETTLE_MS;
       if (lastShift) d.style.transform = `translateY(${-lastShift}px)`;
       const keep = this.scrollEl.scrollTop;
