@@ -1,6 +1,7 @@
 import { mapUrl } from "./handbook";
 import type { PageCtx, PageOut } from "./index";
 import { h, icon, page } from "../ui";
+import { MODES } from "../modes";
 import { PROFILE_FRESH, QUEUE, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, type Profile } from "../data/riot";
 
 // The servers a Riot ID can be on (Riot's platform ids), Taiwan first
@@ -119,20 +120,22 @@ export function homePage(ctx: PageCtx): PageOut {
         }
     }
 
-    // the two ways in: Champions (all champions and the filters) and the next Handbook topic
+    // the ways in, 2 x 2 of the same size: Champions, Items, the next Handbook topic and the recent games
     const entries = h(el, "div", "mn-home-entries");
-    const champs = h(entries, "button", "mn-home-entry is-wide");
-    icon(champs, "users");
-    h(champs, "b", undefined, "Champions");
-    h(champs, "span", undefined, `${all.length} 位英雄 · 篩選`);
-    champs.addEventListener("click", (e) => { e.preventDefault(); ctx.push({ key: "championlist", title: "Champions" }); });
+    const entry = (iconName: string, title: string, line: string, tint: string, go: () => void) => {
+        const b = h(entries, "button", "mn-home-entry");
+        b.style.setProperty("--t", tint);
+        icon(b, iconName);
+        h(b, "b", undefined, title);
+        h(b, "span", undefined, line);
+        b.addEventListener("click", (e) => { e.preventDefault(); go(); });
+    };
+    entry("users", "Champions", `${all.length} 位英雄 · 篩選`, "var(--mn-accent)", () => ctx.push({ key: "championlist", title: "Champions" }));
+    entry("shopping-bag", "Items", "裝備 · 價格 · 合成", "var(--color-yellow)", () => ctx.push({ key: "itemlist", title: "Items" }));
     const read = new Set(s.read);
     const next = store.guideNotes().find((n) => n.layout === "deck" && !read.has(n.file.path));
-    const book = h(entries, "button", "mn-home-entry");
-    icon(book, "book-open");
-    h(book, "b", undefined, "Handbook");
-    h(book, "span", undefined, next ? `繼續:${next.title}` : "全部讀完了");
-    book.addEventListener("click", (e) => { e.preventDefault(); if (next) ctx.openNote(next.file.path); else ctx.goTab("handbook"); });
+    entry("book-open", "Handbook", next ? `繼續:${next.title}` : "全部讀完了", "var(--color-cyan)", () => { if (next) ctx.openNote(next.file.path); else ctx.goTab("handbook"); });
+    entry("swords", "最近對戰", prof?.games.length ? `${prof.games.length} 場 · ${prof.games.filter((g) => g.win).length} 勝` : "連結 Riot 後顯示", "var(--color-purple)", () => ctx.push({ key: "games", title: "最近對戰" }));
 
     // your top mastery (from _data/mastery.json on a device that has it)
     if (top.length) {
@@ -187,4 +190,33 @@ export function gamesPage(ctx: PageCtx): PageOut {
     const list = h(el, "div", "mn-home-games");
     for (const g of prof.games) gameRow(ctx, list, g, true);
     return { title: "最近對戰", el };
+}
+
+// Items: every item in the current mode's shop, cheapest first, with a search; a tap opens the item
+export function itemsPage(ctx: PageCtx): PageOut {
+    const store = ctx.plugin.store;
+    const flag = MODES[ctx.plugin.settings.mode].itemFlag;
+    const el = page("Items");
+    const seen = new Set<string>();
+    const items = store.items().filter((i) => i[flag] && i.goldTotal > 0 && !seen.has(i.name) && seen.add(i.name));
+    const box = h(el, "div", "mn-search");
+    icon(box, "search", "mn-search-ic");
+    const search = h(box, "input");
+    search.type = "search";
+    search.placeholder = "搜尋裝備";
+    const grid = h(el, "div", "mn-items");
+    const draw = () => {
+        grid.empty();
+        const q = search.value.trim();
+        for (const it of items.filter((i) => !q || i.name.includes(q))) {
+            const b = h(grid, "button", "mn-item-tile");
+            const im = h(b, "img"); im.src = it.icon; im.alt = "";
+            h(b, "b", undefined, it.name);
+            h(b, "span", undefined, `${it.goldTotal}`);
+            b.addEventListener("click", (e) => { e.preventDefault(); ctx.openItem(it.id); });
+        }
+    };
+    search.addEventListener("input", draw);
+    draw();
+    return { title: "Items", el };
 }

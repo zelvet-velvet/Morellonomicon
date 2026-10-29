@@ -4326,25 +4326,26 @@ function homePage(ctx) {
     }
   }
   const entries = h(el, "div", "mn-home-entries");
-  const champs = h(entries, "button", "mn-home-entry is-wide");
-  icon(champs, "users");
-  h(champs, "b", void 0, "Champions");
-  h(champs, "span", void 0, `${all.length} \u4F4D\u82F1\u96C4 \xB7 \u7BE9\u9078`);
-  champs.addEventListener("click", (e) => {
-    e.preventDefault();
-    ctx.push({ key: "championlist", title: "Champions" });
-  });
+  const entry = (iconName, title, line, tint, go) => {
+    const b = h(entries, "button", "mn-home-entry");
+    b.style.setProperty("--t", tint);
+    icon(b, iconName);
+    h(b, "b", void 0, title);
+    h(b, "span", void 0, line);
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      go();
+    });
+  };
+  entry("users", "Champions", `${all.length} \u4F4D\u82F1\u96C4 \xB7 \u7BE9\u9078`, "var(--mn-accent)", () => ctx.push({ key: "championlist", title: "Champions" }));
+  entry("shopping-bag", "Items", "\u88DD\u5099 \xB7 \u50F9\u683C \xB7 \u5408\u6210", "var(--color-yellow)", () => ctx.push({ key: "itemlist", title: "Items" }));
   const read = new Set(s.read);
   const next = store.guideNotes().find((n) => n.layout === "deck" && !read.has(n.file.path));
-  const book = h(entries, "button", "mn-home-entry");
-  icon(book, "book-open");
-  h(book, "b", void 0, "Handbook");
-  h(book, "span", void 0, next ? `\u7E7C\u7E8C:${next.title}` : "\u5168\u90E8\u8B80\u5B8C\u4E86");
-  book.addEventListener("click", (e) => {
-    e.preventDefault();
+  entry("book-open", "Handbook", next ? `\u7E7C\u7E8C:${next.title}` : "\u5168\u90E8\u8B80\u5B8C\u4E86", "var(--color-cyan)", () => {
     if (next) ctx.openNote(next.file.path);
     else ctx.goTab("handbook");
   });
+  entry("swords", "\u6700\u8FD1\u5C0D\u6230", prof?.games.length ? `${prof.games.length} \u5834 \xB7 ${prof.games.filter((g) => g.win).length} \u52DD` : "\u9023\u7D50 Riot \u5F8C\u986F\u793A", "var(--color-purple)", () => ctx.push({ key: "games", title: "\u6700\u8FD1\u5C0D\u6230" }));
   if (top.length) {
     h(el, "div", "mn-home-lab", "\u719F\u7DF4\u5EA6");
     const row2 = h(el, "div", "mn-home-mast");
@@ -4412,6 +4413,38 @@ function gamesPage(ctx) {
   const list2 = h(el, "div", "mn-home-games");
   for (const g of prof.games) gameRow(ctx, list2, g, true);
   return { title: "\u6700\u8FD1\u5C0D\u6230", el };
+}
+function itemsPage(ctx) {
+  const store = ctx.plugin.store;
+  const flag = MODES[ctx.plugin.settings.mode].itemFlag;
+  const el = page("Items");
+  const seen = /* @__PURE__ */ new Set();
+  const items = store.items().filter((i) => i[flag] && i.goldTotal > 0 && !seen.has(i.name) && seen.add(i.name));
+  const box = h(el, "div", "mn-search");
+  icon(box, "search", "mn-search-ic");
+  const search = h(box, "input");
+  search.type = "search";
+  search.placeholder = "\u641C\u5C0B\u88DD\u5099";
+  const grid = h(el, "div", "mn-items");
+  const draw = () => {
+    grid.empty();
+    const q = search.value.trim();
+    for (const it of items.filter((i) => !q || i.name.includes(q))) {
+      const b = h(grid, "button", "mn-item-tile");
+      const im = h(b, "img");
+      im.src = it.icon;
+      im.alt = "";
+      h(b, "b", void 0, it.name);
+      h(b, "span", void 0, `${it.goldTotal}`);
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        ctx.openItem(it.id);
+      });
+    }
+  };
+  search.addEventListener("input", draw);
+  draw();
+  return { title: "Items", el };
 }
 
 // src/pages/patch.ts
@@ -5201,6 +5234,8 @@ function renderPage(tab, ctx) {
       return championsPage(ctx);
     case "games":
       return gamesPage(ctx);
+    case "itemlist":
+      return itemsPage(ctx);
     // the Champions page, opened from Home
     case "rosterswipe":
       return swipePage(ctx);
