@@ -324,26 +324,30 @@ export function swipePage(ctx: PageCtx): PageOut {
         }
         if (c.soul) { const s = h(r, "div", "mn-rq-soul"); const k = h(s, "div", "mn-rq-soul-k"); icon(k, "flame"); k.append("靈魂"); h(s, "p", undefined, c.soul); }
         const fold = (title: string, fill: (body: HTMLElement) => void) => {
-            const f = h(r, "div", "mn-rq-fold");
+            const f = h(r, "div", "mn-rq-fold is-open");   // open at once: the card has room, and this is what a quick look is for
             const head = h(f, "button", "mn-rq-fh");
             h(head, "span", undefined, title);
             icon(head, "chevron-right");
             const body = h(f, "div", "mn-rq-fb");
-            let filled = false;
+            fill(body);
             head.addEventListener("click", (e) => {
                 e.preventDefault(); e.stopPropagation();   // the card itself opens the champion page
-                if (!filled) { fill(body); filled = true; }
                 f.toggleClass("is-open", !f.hasClass("is-open"));
             });
         };
-        if (Object.keys(c.plain).length) fold("技能白話", (body) => {
+        // each ability in a line: the hand-written plain words when there are some, else its name and what it does (damage kind, tags)
+        fold("技能", (body) => {
             const list = h(body, "div", "mn-rq-plain");
             for (const key of ["P", "Q", "W", "E", "R"]) {
-                const text = c.plain[key];
-                if (!text) continue;
                 const s = c.skills.find((x) => x.key === key);
+                const text = c.plain[key];
+                if (!s && !text) continue;
                 keyBadge(list, key, DAMAGE_COLOR[s?.damage[0] ?? ""] ?? "#6b7183");
-                h(list, "span", undefined, text);
+                const cell = h(list, "span");
+                if (text) { cell.textContent = text; continue; }
+                h(cell, "b", undefined, s!.name);
+                const what = [...s!.damage.map((d) => `${d}傷害`), ...s!.tags].join("、");
+                if (what) h(cell, "small", undefined, what);
             }
         });
         fold("詳細", (body) => { factsStrip(body, c); tagRow(body, c, undefined, true); });
@@ -431,8 +435,14 @@ export function swipePage(ctx: PageCtx): PageOut {
                 if (!c) continue;
                 const b = h(g, "button", "mn-rq-lk");
                 const im = h(b, "img"); im.src = c.icon; im.alt = "";
-                h(b, "b", undefined, c.name);
-                if (c.punch) h(b, "span", undefined, c.punch);
+                const who = h(b, "span", "mn-rq-lw");
+                h(who, "b", undefined, c.name);
+                const main = c.damageType || c.skillDamage[0] || "";
+                h(who, "span", "mn-rq-ls", [c.roles.join(" · "), main && `${main}傷`, c.range ? (c.range >= 550 ? "遠程" : c.range >= 300 ? "中程" : "近戰") : ""].filter(Boolean).join(" · "));
+                if (c.punch) h(who, "span", "mn-rq-lp", c.punch);
+                const tags = c.features.slice(0, 6);
+                if (tags.length) h(who, "span", "mn-rq-lt", tags.join(" · "));
+                icon(b, "chevron-right", "mn-rq-lgo");
                 b.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); });
             }
         } else empty(results, { icon: "heart-off", title: "一個都沒喜歡" });

@@ -4288,30 +4288,33 @@ function swipePage(ctx) {
       h(s, "p", void 0, c.soul);
     }
     const fold = (title, fill) => {
-      const f = h(r, "div", "mn-rq-fold");
+      const f = h(r, "div", "mn-rq-fold is-open");
       const head2 = h(f, "button", "mn-rq-fh");
       h(head2, "span", void 0, title);
       icon(head2, "chevron-right");
       const body = h(f, "div", "mn-rq-fb");
-      let filled = false;
+      fill(body);
       head2.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (!filled) {
-          fill(body);
-          filled = true;
-        }
         f.toggleClass("is-open", !f.hasClass("is-open"));
       });
     };
-    if (Object.keys(c.plain).length) fold("\u6280\u80FD\u767D\u8A71", (body) => {
+    fold("\u6280\u80FD", (body) => {
       const list2 = h(body, "div", "mn-rq-plain");
       for (const key of ["P", "Q", "W", "E", "R"]) {
-        const text = c.plain[key];
-        if (!text) continue;
         const s = c.skills.find((x) => x.key === key);
+        const text = c.plain[key];
+        if (!s && !text) continue;
         keyBadge(list2, key, DAMAGE_COLOR[s?.damage[0] ?? ""] ?? "#6b7183");
-        h(list2, "span", void 0, text);
+        const cell = h(list2, "span");
+        if (text) {
+          cell.textContent = text;
+          continue;
+        }
+        h(cell, "b", void 0, s.name);
+        const what = [...s.damage.map((d) => `${d}\u50B7\u5BB3`), ...s.tags].join("\u3001");
+        if (what) h(cell, "small", void 0, what);
       }
     });
     fold("\u8A73\u7D30", (body) => {
@@ -4423,8 +4426,14 @@ function swipePage(ctx) {
         const im = h(b, "img");
         im.src = c.icon;
         im.alt = "";
-        h(b, "b", void 0, c.name);
-        if (c.punch) h(b, "span", void 0, c.punch);
+        const who = h(b, "span", "mn-rq-lw");
+        h(who, "b", void 0, c.name);
+        const main = c.damageType || c.skillDamage[0] || "";
+        h(who, "span", "mn-rq-ls", [c.roles.join(" \xB7 "), main && `${main}\u50B7`, c.range ? c.range >= 550 ? "\u9060\u7A0B" : c.range >= 300 ? "\u4E2D\u7A0B" : "\u8FD1\u6230" : ""].filter(Boolean).join(" \xB7 "));
+        if (c.punch) h(who, "span", "mn-rq-lp", c.punch);
+        const tags2 = c.features.slice(0, 6);
+        if (tags2.length) h(who, "span", "mn-rq-lt", tags2.join(" \xB7 "));
+        icon(b, "chevron-right", "mn-rq-lgo");
         b.addEventListener("click", (e) => {
           e.preventDefault();
           ctx.openChampion(c.id);

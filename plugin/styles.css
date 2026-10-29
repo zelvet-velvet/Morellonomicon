@@ -727,11 +727,15 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app .mn-rq-yes { color: #6fd28a; border-color: #6fd28a; }
 .mn-rq-btns svg { width: 26px; height: 26px; stroke-width: 2.4; }
 /* after the last card: the liked champions two across */
-.mn-rq-liked { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.mn-app .mn-rq-lk { display: flex; flex-direction: column; align-items: stretch; gap: 3px; height: auto; padding: 8px 8px 10px; border-radius: var(--mn-radius); background: var(--mn-card); border: 1px solid var(--mn-line); box-shadow: none; text-align: left; white-space: normal; }
-.mn-rq-lk img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; margin-bottom: 4px; }
+.mn-rq-liked { display: flex; flex-direction: column; gap: 8px; }
+.mn-app .mn-rq-lk { display: flex; flex-direction: row; align-items: center; gap: 12px; height: auto; padding: 10px 12px; border-radius: var(--mn-radius); background: var(--mn-card); border: 1px solid var(--mn-line); box-shadow: none; text-align: left; white-space: normal; }
+.mn-rq-lk img { width: 56px; height: 56px; flex: none; object-fit: cover; border-radius: 14px; }
+.mn-rq-lw { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.mn-rq-ls { font-size: 12.5px; color: var(--mn-accent); font-weight: 700; }
+.mn-rq-lt { font-size: 12px; color: var(--mn-muted); }
+.mn-rq-lgo { width: 18px; height: 18px; color: var(--mn-muted); flex: none; }
 .mn-rq-lk b { font-size: 15px; color: var(--mn-text); }
-.mn-rq-lk span { font-size: 12px; line-height: 1.35; color: var(--mn-accent); }
+.mn-rq-lp { font-size: 13px; line-height: 1.35; color: var(--mn-text); }
 .mn-app .mn-rq-again { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 14px auto 4px; height: auto; padding: 8px 16px; background: none; box-shadow: none; font-size: 14px; font-weight: 700; color: var(--mn-accent); }
 .mn-rq-again svg { width: 16px; height: 16px; }
 /* 速查 card: a one-line overview under the name, two big tiles (damage kind, roles), the 靈魂 box, then folds */
@@ -757,6 +761,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-fold.is-open .mn-rq-fh svg { transform: rotate(90deg); }
 .mn-rq-fb { display: none; }
 .mn-rq-fold.is-open .mn-rq-fb { display: block; padding: 6px 0 2px; }
+.mn-rq-plain small { display: block; font-size: 12px; color: var(--mn-muted); }
 .mn-rq-plain { display: grid; grid-template-columns: 24px 1fr; gap: 7px 10px; align-items: center; font-size: 14px; line-height: 1.4; }
 .mn-app .mn-rq-tile .mn-rq-mark { color: var(--m, var(--mn-muted)); font-weight: 700; }
 .mn-app .mn-lg-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--mn-muted); }
