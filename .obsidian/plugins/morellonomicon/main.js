@@ -5729,7 +5729,6 @@ function renderPage(tab, ctx) {
 
 // src/view.ts
 var VIEW_TYPE = "morellonomicon";
-var KEYBOARD_MIN = 120;
 var OVERLAY_PAGES = /* @__PURE__ */ new Set(["champion"]);
 var IMMERSIVE_PAGES = /* @__PURE__ */ new Set(["rosterswipe"]);
 var OVERLAY_SCROLL = 220;
@@ -5811,18 +5810,36 @@ var MnView = class extends import_obsidian12.ItemView {
     this.modeBtn = modeBtn;
     this.scrollEl = h(app, "div", "mn-scroll");
     const vv = window.visualViewport;
+    const place = () => {
+      if (vv) app.style.setProperty("--mn-vvbottom", `${Math.round(vv.offsetTop + vv.height)}px`);
+    };
+    const typing = (e) => e.target?.closest?.(".mn-rq-dock") != null;
+    this.registerDomEvent(app, "focusin", (e) => {
+      if (!typing(e)) return;
+      place();
+      app.addClass("is-kb");
+    });
+    this.registerDomEvent(app, "focusout", (e) => {
+      if (typing(e)) app.removeClass("is-kb");
+    });
+    const shown = (e) => {
+      const kh = e.keyboardHeight ?? 0;
+      if (kh > 0 && vv && vv.offsetTop + vv.height >= window.innerHeight - 1) app.style.setProperty("--mn-vvbottom", `${Math.round(window.innerHeight - kh)}px`);
+    };
+    window.addEventListener("keyboardWillShow", shown);
+    window.addEventListener("keyboardDidShow", shown);
+    window.addEventListener("keyboardWillHide", place);
+    this.register(() => {
+      window.removeEventListener("keyboardWillShow", shown);
+      window.removeEventListener("keyboardDidShow", shown);
+      window.removeEventListener("keyboardWillHide", place);
+    });
     if (vv) {
-      const kb = () => {
-        const gap = Math.max(0, Math.round(window.innerHeight - (vv.height + vv.offsetTop)));
-        app.style.setProperty("--mn-kbh", `${gap}px`);
-        app.style.setProperty("--mn-vvtop", `${Math.round(vv.offsetTop)}px`);
-        app.toggleClass("is-kb", gap > KEYBOARD_MIN);
-      };
-      vv.addEventListener("resize", kb);
-      vv.addEventListener("scroll", kb);
+      vv.addEventListener("resize", place);
+      vv.addEventListener("scroll", place);
       this.register(() => {
-        vv.removeEventListener("resize", kb);
-        vv.removeEventListener("scroll", kb);
+        vv.removeEventListener("resize", place);
+        vv.removeEventListener("scroll", place);
       });
     }
     this.registerDomEvent(this.scrollEl, "scroll", () => this.markScrolled(), { passive: true });

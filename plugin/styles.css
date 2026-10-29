@@ -1312,7 +1312,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay button.mn-lay-btn.is-off { opacity: 0.3; cursor: default; }
 .mn-lay button.mn-lay-btn.is-dirty { color: var(--interactive-accent); }
 /* keyboard open (view.ts): the capsule being typed in is pinned just above the keyboard, the way Safari's bar is */
-.mn-app.is-kb .mn-rq-dock:focus-within { position: fixed; z-index: 50; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(var(--mn-kbh, 0px) + 8px); margin: 0; }
+.mn-app.is-kb .mn-rq-dock:focus-within { position: fixed; z-index: 50; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); bottom: auto;
+    top: calc(var(--mn-vvbottom, 100vh) - 8px); transform: translateY(-100%); margin: 0; }   /* its bottom 8 px above the visible part's bottom edge */
 .mn-app.is-kb .mn-tabs { visibility: hidden; }   /* the tab bar is under the keyboard anyway */
 /* Layouts: a page changed since the last sync is outlined in the accent colour (the reset button takes it back) */
 .mn-lay-page.is-changed .mn-lay-phone { border-color: var(--interactive-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--interactive-accent) 30%, transparent); }

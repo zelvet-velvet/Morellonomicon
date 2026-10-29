@@ -11,7 +11,6 @@ export const VIEW_TYPE = "morellonomicon";
 
 // The app screen: top bar (back, title, mode switch), page area, tab bar. A page is drawn in one step when a tab, a detail page
 // or the data changes; scroll positions are kept per page so Back returns to where you were.
-const KEYBOARD_MIN = 120;   // px of the screen covered before it counts as the keyboard being open (not a toolbar)
 const OVERLAY_PAGES = new Set(["champion"]);
 const IMMERSIVE_PAGES = new Set(["rosterswipe"]);   // full screen: no top bar at all (速查's swipe, like Tinder)
 const OVERLAY_SCROLL = 220;   // px scrolled before the top bar gets its background back over a splash
@@ -80,21 +79,28 @@ export class MnView extends ItemView {
         modeBtn.addEventListener("click", (e) => { e.preventDefault(); this.modeMenu(e); });
         this.modeBtn = modeBtn;
         this.scrollEl = h(app, "div", "mn-scroll");
-        // the phone's keyboard: the floating search capsules (Picks, Champions) ride on top of it like Safari's bar. iOS does not shrink
-        // the page for the keyboard (the app is fixed to the large viewport), it pans it; the visible part is window.visualViewport.
-        // --mn-kbh is how far the keyboard reaches up from the bottom of the screen; while it is open (is-kb) the capsule with the focus
-        // is pinned right above it (styles.css)
+        // the phone's keyboard: while a floating search capsule (Picks, Champions) is being typed in, it is pinned to the bottom of
+        // the part of the screen that is still visible, like Safari's bar. The visible part is window.visualViewport: iOS either pans the
+        // page or shrinks Obsidian for the keyboard, and the app itself (fixed to the large viewport) does not change, so the capsule is
+        // placed from the visible part, not from the app. --mn-vvbottom is that part's bottom edge (styles.css: .is-kb)
         const vv = window.visualViewport;
+        const place = () => { if (vv) app.style.setProperty("--mn-vvbottom", `${Math.round(vv.offsetTop + vv.height)}px`); };
+        const typing = (e: FocusEvent) => (e.target as HTMLElement | null)?.closest?.(".mn-rq-dock") != null;
+        this.registerDomEvent(app, "focusin", (e) => { if (!typing(e)) return; place(); app.addClass("is-kb"); });
+        this.registerDomEvent(app, "focusout", (e) => { if (typing(e)) app.removeClass("is-kb"); });
+        // when the page neither pans nor shrinks, the app's own keyboard event (Obsidian's Capacitor shell) says how tall the keyboard is
+        const shown = (e: Event) => {
+            const kh = (e as Event & { keyboardHeight?: number }).keyboardHeight ?? 0;
+            if (kh > 0 && vv && vv.offsetTop + vv.height >= window.innerHeight - 1) app.style.setProperty("--mn-vvbottom", `${Math.round(window.innerHeight - kh)}px`);
+        };
+        window.addEventListener("keyboardWillShow", shown);
+        window.addEventListener("keyboardDidShow", shown);
+        window.addEventListener("keyboardWillHide", place);
+        this.register(() => { window.removeEventListener("keyboardWillShow", shown); window.removeEventListener("keyboardDidShow", shown); window.removeEventListener("keyboardWillHide", place); });
         if (vv) {
-            const kb = () => {
-                const gap = Math.max(0, Math.round(window.innerHeight - (vv.height + vv.offsetTop)));
-                app.style.setProperty("--mn-kbh", `${gap}px`);
-                app.style.setProperty("--mn-vvtop", `${Math.round(vv.offsetTop)}px`);
-                app.toggleClass("is-kb", gap > KEYBOARD_MIN);
-            };
-            vv.addEventListener("resize", kb);
-            vv.addEventListener("scroll", kb);
-            this.register(() => { vv.removeEventListener("resize", kb); vv.removeEventListener("scroll", kb); });
+            vv.addEventListener("resize", place);
+            vv.addEventListener("scroll", place);
+            this.register(() => { vv.removeEventListener("resize", place); vv.removeEventListener("scroll", place); });
         }
         this.registerDomEvent(this.scrollEl, "scroll", () => this.markScrolled(), { passive: true });
         // pictures added to a page after it showed (cards built later, lazy ones) fade in instead of popping in
