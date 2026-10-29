@@ -424,6 +424,18 @@ var Store = class {
 
 // src/router.ts
 var KEY = "morellonomicon-nav";
+var RUN = (() => {
+  try {
+    let r = sessionStorage.getItem("mn-run");
+    if (!r) {
+      r = Math.random().toString(36).slice(2);
+      sessionStorage.setItem("mn-run", r);
+    }
+    return r;
+  } catch {
+    return "";
+  }
+})();
 var STACK_TTL = 30 * 60 * 1e3;
 var Router = class {
   constructor(app) {
@@ -432,7 +444,7 @@ var Router = class {
     this.stacks = {};
     try {
       const s = this.app.loadLocalStorage(KEY);
-      if (s && Date.now() - s.t < STACK_TTL) {
+      if (s && Date.now() - s.t < STACK_TTL && s.run === RUN) {
         this.tab = s.tab;
         this.stacks = s.stacks ?? {};
       }
@@ -482,7 +494,7 @@ var Router = class {
   }
   save() {
     try {
-      this.app.saveLocalStorage(KEY, { tab: this.tab, stacks: this.stacks, t: Date.now() });
+      this.app.saveLocalStorage(KEY, { tab: this.tab, stacks: this.stacks, t: Date.now(), run: RUN });
     } catch {
     }
   }
@@ -937,6 +949,7 @@ function haptic() {
 }
 var segLast = /* @__PURE__ */ new Map();
 var slid = /* @__PURE__ */ new WeakMap();
+var EDGE_ZONE = 28;
 function slideSeg(seg, key = "", opt = {}) {
   const done = slid.get(seg);
   if (done) {
@@ -994,18 +1007,26 @@ function slideSeg(seg, key = "", opt = {}) {
     if (!seg.hasClass("is-drag")) place(on(), true);
   }).observe(seg, { subtree: true, attributes: true, attributeFilter: ["class"] });
   if (typeof ResizeObserver !== "undefined") new ResizeObserver(() => place(on(), false)).observe(seg);
-  let at = null, moved = false, startX = 0, quietUntil = 0;
+  let at = null, moved = false, startX = 0, startY = 0, quietUntil = 0, fromEdge = false;
   const under = (x) => buttons().find((b) => {
     const r = b.getBoundingClientRect();
     return x >= r.left && x < r.right;
   }) ?? null;
   seg.addEventListener("pointerdown", (e) => {
-    at = under(e.clientX);
+    fromEdge = e.pointerType === "touch" && e.clientY > window.innerHeight - EDGE_ZONE;
+    at = fromEdge ? null : under(e.clientX);
     moved = false;
     startX = e.clientX;
+    startY = e.clientY;
   });
   seg.addEventListener("pointermove", (e) => {
-    if (!at || !moved && Math.abs(e.clientX - startX) < 8) return;
+    if (!at) return;
+    if (!moved && Math.abs(e.clientY - startY) > Math.abs(e.clientX - startX) && Math.abs(e.clientY - startY) > 8) {
+      at = null;
+      fromEdge = true;
+      return;
+    }
+    if (!moved && Math.abs(e.clientX - startX) < 8) return;
     if (!moved) {
       moved = true;
       seg.addClass("is-drag");
@@ -1029,8 +1050,8 @@ function slideSeg(seg, key = "", opt = {}) {
     moved = false;
     seg.removeClass("is-drag");
     buttons().forEach((x) => x.removeClass("is-pv"));
-    if (target && !target.hasClass("is-on")) {
-      if (e.type === "pointerup") haptic();
+    if (target && !target.hasClass("is-on") && e.type === "pointerup") {
+      haptic();
       target.click();
     } else place(on(), true);
     quietUntil = Date.now() + 400;
@@ -1042,9 +1063,10 @@ function slideSeg(seg, key = "", opt = {}) {
     if (moved && e.cancelable) e.preventDefault();
   }, { passive: false });
   seg.addEventListener("click", (e) => {
-    if (e.isTrusted && Date.now() < quietUntil) {
+    if (e.isTrusted && (Date.now() < quietUntil || fromEdge)) {
       e.stopPropagation();
       e.preventDefault();
+      fromEdge = false;
     }
   }, { capture: true });
 }

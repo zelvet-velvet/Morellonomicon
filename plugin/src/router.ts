@@ -4,9 +4,11 @@ import type { TabId } from "./modes";
 // One page of a tab's stack. The tab's first page is { key: "root" }.
 export interface Frame { key: string; title: string; params?: Record<string, string | number> }
 
-interface Saved { tab: TabId; stacks: Partial<Record<TabId, Frame[]>>; t: number }
+interface Saved { tab: TabId; stacks: Partial<Record<TabId, Frame[]>>; t: number; run?: string }
 const KEY = "morellonomicon-nav";
-const STACK_TTL = 30 * 60 * 1000;   // reopened within 30 minutes (the phone reloaded Obsidian in the background): the same tab and page; later: a cold start on Home
+// one id per run of Obsidian: sessionStorage is emptied when the app is closed, so a cold open gets a new one
+const RUN = (() => { try { let r = sessionStorage.getItem("mn-run"); if (!r) { r = Math.random().toString(36).slice(2); sessionStorage.setItem("mn-run", r); } return r; } catch { return ""; } })();
+const STACK_TTL = 30 * 60 * 1000;   // a reload of the plugin inside the same run of Obsidian brings the pages back for this long
 
 // Which tab is open and the page stack of every tab. Plain state, no DOM.
 export class Router {
@@ -16,8 +18,9 @@ export class Router {
     constructor(private app: App) {
         try {
             const s = this.app.loadLocalStorage(KEY) as Saved | null;
-            // like any phone app: coming back soon after leaving shows the same tab and page; a cold start opens Home
-            if (s && Date.now() - s.t < STACK_TTL) { this.tab = s.tab; this.stacks = s.stacks ?? {}; }
+            // a fresh start of Obsidian (a cold open) always shows Home; coming back to the app while it is still running keeps the page,
+            // because the router lives on in memory. Only a reload inside the same run (the plugin reloading) brings the pages back.
+            if (s && Date.now() - s.t < STACK_TTL && s.run === RUN) { this.tab = s.tab; this.stacks = s.stacks ?? {}; }
         } catch { /* fresh start */ }
     }
 
@@ -40,6 +43,6 @@ export class Router {
     popToRoot(): boolean { if (!this.depth()) return false; this.stacks[this.tab] = []; this.save(); return true; }
 
     private save(): void {
-        try { this.app.saveLocalStorage(KEY, { tab: this.tab, stacks: this.stacks, t: Date.now() } satisfies Saved); } catch { /* ignore */ }
+        try { this.app.saveLocalStorage(KEY, { tab: this.tab, stacks: this.stacks, t: Date.now(), run: RUN } satisfies Saved); } catch { /* ignore */ }
     }
 }

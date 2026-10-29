@@ -462,6 +462,7 @@ export function haptic(): string {
 // on the same bar (its buttons were rebuilt) only puts the highlight back.
 const segLast = new Map<string, { x: number; y: number; w: number; h: number }>();
 const slid = new WeakMap<HTMLElement, { hl: HTMLElement; place: () => void }>();
+const EDGE_ZONE = 28;   // px at the bottom of the screen where iOS's home-bar swipe begins
 export function slideSeg(seg: HTMLElement, key = "", opt: { item?: string; fit?: string } = {}): void {
     const done = slid.get(seg);
     if (done) { if (!done.hl.isConnected) seg.prepend(done.hl); requestAnimationFrame(done.place); return; }
@@ -501,11 +502,18 @@ export function slideSeg(seg: HTMLElement, key = "", opt: { item?: string; fit?:
     if (typeof ResizeObserver !== "undefined") new ResizeObserver(() => place(on(), false)).observe(seg);
 
     // drag: the button under the finger, previewed until the finger lifts
-    let at: HTMLElement | null = null, moved = false, startX = 0, quietUntil = 0;
+    // iPhone's home-bar swipe (switch or close apps) starts at the bottom edge and runs up or sideways over the tab bar: a touch that
+    // starts in that edge, or that goes up more than across, or that iOS takes over (pointercancel) never changes the tab
+    let at: HTMLElement | null = null, moved = false, startX = 0, startY = 0, quietUntil = 0, fromEdge = false;
     const under = (x: number) => buttons().find((b) => { const r = b.getBoundingClientRect(); return x >= r.left && x < r.right; }) ?? null;
-    seg.addEventListener("pointerdown", (e) => { at = under(e.clientX); moved = false; startX = e.clientX; });
+    seg.addEventListener("pointerdown", (e) => {
+        fromEdge = e.pointerType === "touch" && e.clientY > window.innerHeight - EDGE_ZONE;
+        at = fromEdge ? null : under(e.clientX); moved = false; startX = e.clientX; startY = e.clientY;
+    });
     seg.addEventListener("pointermove", (e) => {
-        if (!at || (!moved && Math.abs(e.clientX - startX) < 8)) return;
+        if (!at) return;
+        if (!moved && Math.abs(e.clientY - startY) > Math.abs(e.clientX - startX) && Math.abs(e.clientY - startY) > 8) { at = null; fromEdge = true; return; }   // a swipe up: not ours
+        if (!moved && Math.abs(e.clientX - startX) < 8) return;
         if (!moved) { moved = true; seg.addClass("is-drag"); try { seg.setPointerCapture(e.pointerId); } catch { /* the pointer is already gone */ } }
         const b = under(e.clientX);
         if (b && b !== at) { at = b; buttons().forEach((x) => x.toggleClass("is-pv", x === b)); place(b, true); haptic(); }
@@ -517,7 +525,7 @@ export function slideSeg(seg: HTMLElement, key = "", opt: { item?: string; fit?:
         moved = false;
         seg.removeClass("is-drag");
         buttons().forEach((x) => x.removeClass("is-pv"));
-        if (target && !target.hasClass("is-on")) { if (e.type === "pointerup") haptic(); target.click(); }   // lifting the finger counts as a tap for iOS's tick
+        if (target && !target.hasClass("is-on") && e.type === "pointerup") { haptic(); target.click(); }   // lifting the finger counts as a tap for iOS's tick; a cancel (iOS took the gesture) changes nothing
         else place(on(), true);
         quietUntil = Date.now() + 400;   // the click a drag may still fire (target.click() above is not a real one, so it passes)
     };
@@ -526,5 +534,5 @@ export function slideSeg(seg: HTMLElement, key = "", opt: { item?: string; fit?:
     // dragging along a bar is ours: Obsidian must not read it as the swipe that opens a sidebar
     for (const ev of ["touchstart", "touchmove"]) seg.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
     seg.addEventListener("touchmove", (e) => { if (moved && e.cancelable) e.preventDefault(); }, { passive: false });
-    seg.addEventListener("click", (e) => { if (e.isTrusted && Date.now() < quietUntil) { e.stopPropagation(); e.preventDefault(); } }, { capture: true });
+    seg.addEventListener("click", (e) => { if (e.isTrusted && (Date.now() < quietUntil || fromEdge)) { e.stopPropagation(); e.preventDefault(); fromEdge = false; } }, { capture: true });
 }
