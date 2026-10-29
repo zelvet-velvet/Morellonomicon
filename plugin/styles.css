@@ -1329,3 +1329,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-fixed > .mn-rq-list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0 -16px; padding: 0 16px 8px; }
 .mn-rq-fixed > .mn-rq-dock { position: relative; bottom: auto; margin-top: 8px; }
 .mn-rq-dock.is-moving input { caret-color: transparent; }   /* no stray text cursor while it slides (view.ts) */
+/* the plain panel that rises with the keyboard so it looks solid while it slides (view.ts); the same timing as the capsule */
+.mn-kbshade { position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; background: var(--background-primary); transform: translateY(100%); pointer-events: none;
+    transition: transform 0.34s cubic-bezier(0.32, 0.72, 0, 1); }
+.mn-app.is-kbshade .mn-kbshade { transform: translateY(0); transition-delay: 0.03s; }

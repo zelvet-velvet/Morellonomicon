@@ -11,6 +11,7 @@ export const VIEW_TYPE = "morellonomicon";
 
 // The app screen: top bar (back, title, mode switch), page area, tab bar. A page is drawn in one step when a tab, a detail page
 // or the data changes; scroll positions are kept per page so Back returns to where you were.
+const KEYBOARD_GUESS = 336;      // px: an iPhone keyboard with its word bar, until the real height has been seen once
 const CAPSULE_SLIDE_MS = 450;     // the capsule's slide (styles.css) plus a little: the text cursor stays hidden this long
 const KEYBOARD_GAP = 8;          // px between the search capsule and the keyboard's top edge
 const DOCK_REST = 10;            // px the capsule sits above the scroll area's bottom when nothing covers it (styles.css)
@@ -96,6 +97,11 @@ export class MnView extends ItemView {
         let settleUntil = 0;
         let lastShift = (() => { try { return Number(localStorage.getItem("mn-kbshift")) || 0; } catch { return 0; } })();
         const readout = h(app, "div", "mn-kbread is-hidden");
+        // the iPhone keyboard is see-through while it slides and looks solid once it has stopped (then Obsidian's plain background is
+        // behind it): a plain panel the keyboard's height rises with it, so it looks solid all the way
+        const shade = h(app, "div", "mn-kbshade");
+        let lastKb = (() => { try { return Number(localStorage.getItem("mn-kbh")) || KEYBOARD_GUESS; } catch { return KEYBOARD_GUESS; } })();
+        shade.style.height = `${lastKb + KEYBOARD_GAP}px`;
         const visibleBottom = () => {
             const css = parseFloat(getComputedStyle(document.body).getPropertyValue("--keyboard-height")) || 0;
             const tells = [window.innerHeight];
@@ -107,6 +113,8 @@ export class MnView extends ItemView {
         const place = () => {
             if (!typingDock) return;
             const { bottom, css } = visibleBottom();
+            const kb = Math.round(window.innerHeight - bottom);
+            if (kb > 100 && kb !== lastKb) { lastKb = kb; shade.style.height = `${kb + KEYBOARD_GAP}px`; try { localStorage.setItem("mn-kbh", String(kb)); } catch { /* fine */ } }
             const scrollBottom = this.scrollEl.getBoundingClientRect().bottom;
             let shift = Math.max(0, Math.round(scrollBottom - bottom + KEYBOARD_GAP - DOCK_REST));
             if (Date.now() < settleUntil) shift = Math.max(shift, lastShift);   // while the keyboard comes up, never drop below the lift given at the tap
@@ -119,10 +127,10 @@ export class MnView extends ItemView {
         };
         // iOS draws the text cursor where the box was, not where it is sliding to: the cursor is hidden while the capsule moves
         const moving = (d: HTMLElement) => { d.addClass("is-moving"); window.setTimeout(() => d.removeClass("is-moving"), CAPSULE_SLIDE_MS); };
-        const drop = () => { if (typingDock) { moving(typingDock); typingDock.style.transform = ""; typingDock.removeClass("is-typing"); } typingDock = null; readout.addClass("is-hidden"); };
+        const drop = () => { app.removeClass("is-kbshade"); if (typingDock) { moving(typingDock); typingDock.style.transform = ""; typingDock.removeClass("is-typing"); } typingDock = null; readout.addClass("is-hidden"); };
         const start = (d: HTMLElement) => {
             if (typingDock === d) return;
-            typingDock = d; d.addClass("is-typing"); moving(d);
+            typingDock = d; d.addClass("is-typing"); moving(d); app.addClass("is-kbshade");
             settleUntil = Date.now() + KEYBOARD_SETTLE_MS;
             if (lastShift) d.style.transform = `translateY(${-lastShift}px)`;
             const keep = this.scrollEl.scrollTop;

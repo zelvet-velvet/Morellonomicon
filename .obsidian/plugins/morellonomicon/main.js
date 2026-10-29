@@ -5764,6 +5764,7 @@ function renderPage(tab, ctx) {
 
 // src/view.ts
 var VIEW_TYPE = "morellonomicon";
+var KEYBOARD_GUESS = 336;
 var CAPSULE_SLIDE_MS = 450;
 var KEYBOARD_GAP = 8;
 var DOCK_REST = 10;
@@ -5860,6 +5861,15 @@ var MnView = class extends import_obsidian12.ItemView {
       }
     })();
     const readout = h(app, "div", "mn-kbread is-hidden");
+    const shade = h(app, "div", "mn-kbshade");
+    let lastKb = (() => {
+      try {
+        return Number(localStorage.getItem("mn-kbh")) || KEYBOARD_GUESS;
+      } catch {
+        return KEYBOARD_GUESS;
+      }
+    })();
+    shade.style.height = `${lastKb + KEYBOARD_GAP}px`;
     const visibleBottom = () => {
       const css = parseFloat(getComputedStyle(document.body).getPropertyValue("--keyboard-height")) || 0;
       const tells = [window.innerHeight];
@@ -5871,6 +5881,15 @@ var MnView = class extends import_obsidian12.ItemView {
     const place = () => {
       if (!typingDock) return;
       const { bottom, css } = visibleBottom();
+      const kb = Math.round(window.innerHeight - bottom);
+      if (kb > 100 && kb !== lastKb) {
+        lastKb = kb;
+        shade.style.height = `${kb + KEYBOARD_GAP}px`;
+        try {
+          localStorage.setItem("mn-kbh", String(kb));
+        } catch {
+        }
+      }
       const scrollBottom = this.scrollEl.getBoundingClientRect().bottom;
       let shift = Math.max(0, Math.round(scrollBottom - bottom + KEYBOARD_GAP - DOCK_REST));
       if (Date.now() < settleUntil) shift = Math.max(shift, lastShift);
@@ -5892,6 +5911,7 @@ var MnView = class extends import_obsidian12.ItemView {
       window.setTimeout(() => d.removeClass("is-moving"), CAPSULE_SLIDE_MS);
     };
     const drop = () => {
+      app.removeClass("is-kbshade");
       if (typingDock) {
         moving(typingDock);
         typingDock.style.transform = "";
@@ -5905,6 +5925,7 @@ var MnView = class extends import_obsidian12.ItemView {
       typingDock = d;
       d.addClass("is-typing");
       moving(d);
+      app.addClass("is-kbshade");
       settleUntil = Date.now() + KEYBOARD_SETTLE_MS;
       if (lastShift) d.style.transform = `translateY(${-lastShift}px)`;
       const keep = this.scrollEl.scrollTop;
