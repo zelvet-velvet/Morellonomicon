@@ -152,6 +152,9 @@ export function finder(all: Champion[], sounds: Sounds | null) {
 export function rosterPage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const el = page("Picks");   // the Picks tab (速查)
+    // the page itself never scrolls: the title, your hand and the lanes stay on top, only the faces scroll, the capsule sits under them
+    // (and with nothing to scroll, iOS cannot jump the page when the keyboard opens)
+    el.addClass("mn-rq-fixed");
     const all = store.champions();
     let picks = ctx.plugin.settings.roster.filter((id) => all.some((c) => c.id === id)).slice(0, MAX_PICKS);
     let query = "", lane = "";
@@ -170,8 +173,17 @@ export function rosterPage(ctx: PageCtx): PageOut {
     h(el, "div", "mn-rq-lab", "加入英雄 · 依分路");
     const lanes = fgrid(el, LANES.length);
     lanes.addClass("mn-rq-lanes");
-    const grid = h(el, "div", "mn-faces");
+    const list = h(el, "div", "mn-rq-list");
+    const grid = h(list, "div", "mn-faces");
     const dock = h(el, "div", "mn-rq-dock");
+    const fit = () => {
+        const scroll = el.closest<HTMLElement>(".mn-scroll");
+        if (scroll && el.isConnected) el.style.height = `${scroll.clientHeight}px`;
+    };
+    requestAnimationFrame(fit);
+    const ro = new ResizeObserver(() => requestAnimationFrame(fit));
+    ro.observe(document.body);
+    ctx.component.register(() => ro.disconnect());
     const suggest = h(dock, "div", "mn-chips mn-rq-sugg");
     const cap = h(dock, "div", "mn-rq-cap");
     icon(cap, "search", "mn-rq-cap-ic");

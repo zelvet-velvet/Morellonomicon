@@ -1321,3 +1321,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-dock.is-typing { z-index: 50; }
 .mn-kbread { position: fixed; z-index: 99; left: 8px; right: 8px; top: calc(var(--mn-safe-top, 0px) + 4px); padding: 4px 8px; border-radius: 8px; background: rgba(0, 0, 0, 0.75); color: #9fe0b0; font: 11px/1.4 ui-monospace, monospace; pointer-events: none; }
 .mn-kbread.is-hidden { display: none; }
+/* Picks: a page that does not scroll; only the faces do (roster.ts) */
+.mn-scroll:has(> .mn-rq-fixed) { overflow-y: hidden; }
+.mn-page.mn-rq-fixed { display: flex; flex-direction: column; box-sizing: border-box; padding-bottom: 10px; }
+.mn-rq-fixed > * { flex: none; }
+.mn-rq-fixed > .mn-rq-list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0 -16px; padding: 0 16px 8px; }
+.mn-rq-fixed > .mn-rq-dock { position: relative; bottom: auto; margin-top: 8px; }

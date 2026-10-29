@@ -5213,6 +5213,7 @@ function finder(all, sounds) {
 function rosterPage(ctx) {
   const store = ctx.plugin.store;
   const el = page("Picks");
+  el.addClass("mn-rq-fixed");
   const all = store.champions();
   let picks = ctx.plugin.settings.roster.filter((id) => all.some((c) => c.id === id)).slice(0, MAX_PICKS);
   let query = "", lane = "";
@@ -5236,8 +5237,17 @@ function rosterPage(ctx) {
   h(el, "div", "mn-rq-lab", "\u52A0\u5165\u82F1\u96C4 \xB7 \u4F9D\u5206\u8DEF");
   const lanes = fgrid(el, LANES.length);
   lanes.addClass("mn-rq-lanes");
-  const grid = h(el, "div", "mn-faces");
+  const list2 = h(el, "div", "mn-rq-list");
+  const grid = h(list2, "div", "mn-faces");
   const dock = h(el, "div", "mn-rq-dock");
+  const fit = () => {
+    const scroll = el.closest(".mn-scroll");
+    if (scroll && el.isConnected) el.style.height = `${scroll.clientHeight}px`;
+  };
+  requestAnimationFrame(fit);
+  const ro = new ResizeObserver(() => requestAnimationFrame(fit));
+  ro.observe(document.body);
+  ctx.component.register(() => ro.disconnect());
   const suggest2 = h(dock, "div", "mn-chips mn-rq-sugg");
   const cap = h(dock, "div", "mn-rq-cap");
   icon(cap, "search", "mn-rq-cap-ic");
@@ -5356,15 +5366,15 @@ function rosterPage(ctx) {
   const drawGrid = () => {
     grid.empty();
     const tokens = query.split(SPLIT).filter(Boolean);
-    let list2 = all.filter((c) => !lane || store.lanes(c).includes(lane));
+    let list3 = all.filter((c) => !lane || store.lanes(c).includes(lane));
     if (tokens.length) {
       const said = new Set(tokens.filter((t) => !all.some((c) => score2(c, t) >= 70)).flatMap((t) => within(t)).map((c) => c.id));
-      const scored = list2.map((c) => ({ c, s: Math.max(said.has(c.id) ? 75 : 0, ...tokens.map((t) => score2(c, t))) })).filter((x) => x.s > 0);
+      const scored = list3.map((c) => ({ c, s: Math.max(said.has(c.id) ? 75 : 0, ...tokens.map((t) => score2(c, t))) })).filter((x) => x.s > 0);
       scored.sort((a, b) => b.s - a.s || a.c.name.localeCompare(b.c.name, "zh-Hant"));
-      list2 = scored.map((x) => x.c);
+      list3 = scored.map((x) => x.c);
     }
     grid.toggleClass("is-rows", tokens.length > 0);
-    for (const c of tokens.length ? list2.slice(0, 30) : list2) {
+    for (const c of tokens.length ? list3.slice(0, 30) : list3) {
       const on = picks.includes(c.id);
       if (tokens.length) {
         const r = h(grid, "button", "mn-rq-res" + (on ? " is-pick" : ""));
@@ -5394,7 +5404,7 @@ function rosterPage(ctx) {
         pickFromSearch(c.id);
       });
     }
-    if (!list2.length) empty(grid, { icon: "search-x", title: "\u627E\u4E0D\u5230\u9019\u500B\u540D\u5B57", text: "\u63DB\u500B\u8AAA\u6CD5\u518D\u8A66,\u6216\u770B\u4E0B\u9762\u7684\u300C\u4F60\u662F\u4E0D\u662F\u5728\u627E\u300D\u3002" });
+    if (!list3.length) empty(grid, { icon: "search-x", title: "\u627E\u4E0D\u5230\u9019\u500B\u540D\u5B57", text: "\u63DB\u500B\u8AAA\u6CD5\u518D\u8A66,\u6216\u770B\u4E0B\u9762\u7684\u300C\u4F60\u662F\u4E0D\u662F\u5728\u627E\u300D\u3002" });
   };
   const drawLanes = () => {
     lanes.empty();
