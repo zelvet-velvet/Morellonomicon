@@ -4442,8 +4442,19 @@ function gamesPage(ctx) {
 }
 var TIERS = ["\u8D77\u59CB", "\u978B\u5B50", "\u57FA\u672C", "\u53F2\u8A69", "\u50B3\u8AAA"];
 var tierOf = (i) => i.tags.includes("Boots") ? "\u978B\u5B50" : !i.from.length && !i.into.length ? "\u8D77\u59CB" : !i.from.length ? "\u57FA\u672C" : i.into.length ? "\u53F2\u8A69" : "\u50B3\u8AAA";
-var itemCat = "";
+var has = (i, ...tags2) => tags2.some((x) => i.tags.includes(x));
+var ITEM_ROLES = [
+  ["\u6230\u58EB", (i) => has(i, "Damage") && has(i, "Health")],
+  ["\u5C04\u624B", (i) => has(i, "CriticalStrike") || has(i, "AttackSpeed") && has(i, "Damage")],
+  ["\u523A\u5BA2", (i) => has(i, "Damage") && has(i, "ArmorPenetration", "NonbootsMovement") && !has(i, "Health")],
+  ["\u6CD5\u5E2B", (i) => has(i, "SpellDamage")],
+  ["\u5766\u514B", (i) => has(i, "Health") && has(i, "Armor", "SpellBlock", "MagicResist") && !has(i, "Damage", "SpellDamage")],
+  ["\u8F14\u52A9", (i) => has(i, "GoldPer", "Aura") || has(i, "Active") && !has(i, "Damage", "SpellDamage")]
+];
+var RAIL_BREAKS = /* @__PURE__ */ new Set(["\u6CD5\u8853\u5F37\u5EA6", "\u751F\u547D", "\u6280\u80FD\u6025\u901F"]);
+var itemRole = "";
 var itemSort = "tier";
+var itemStats = /* @__PURE__ */ new Set();
 function itemsPage(ctx) {
   const store = ctx.plugin.store;
   const flag = MODES[ctx.plugin.settings.mode].itemFlag;
@@ -4455,31 +4466,74 @@ function itemsPage(ctx) {
   const search = h(box, "input");
   search.type = "search";
   search.placeholder = "\u641C\u5C0B\u88DD\u5099";
-  const cats = h(el, "div", "mn-icats");
-  const sorts = h(el, "div", "mn-isorts");
-  const host = h(el, "div");
-  const drawCats = () => {
-    cats.empty();
-    for (const [name, ic] of [["\u5168\u90E8", "layout-grid"], ...ITEM_CATS.map(([n, i]) => [n, i])]) {
-      const b = h(cats, "button", "mn-icat" + ((name === "\u5168\u90E8" ? !itemCat : itemCat === name) ? " is-on" : ""));
-      icon(b, ic);
-      h(b, "span", void 0, name);
+  const roles = h(el, "div", "mn-shop-roles");
+  const sortWrap = h(el, "div", "mn-shop-sortwrap");
+  const body = h(el, "div", "mn-shop");
+  const rail = h(body, "div", "mn-shop-rail");
+  const host = h(body, "div", "mn-shop-list");
+  const drawRoles = () => {
+    roles.empty();
+    const all = h(roles, "button", "mn-shop-role" + (!itemRole ? " is-on" : ""));
+    icon(all, "layout-grid");
+    all.setAttribute("aria-label", "\u5168\u90E8");
+    all.addEventListener("click", (e) => {
+      e.preventDefault();
+      itemRole = "";
+      drawRoles();
+      draw();
+    });
+    for (const [r] of ITEM_ROLES) {
+      const b = h(roles, "button", "mn-shop-role" + (itemRole === r ? " is-on" : ""));
+      roleArt(b, r);
+      holdTip(b, r);
       b.addEventListener("click", (e) => {
         e.preventDefault();
-        itemCat = name === "\u5168\u90E8" ? "" : name;
-        drawCats();
+        itemRole = itemRole === r ? "" : r;
+        drawRoles();
+        draw();
+      });
+    }
+    const sb = h(roles, "button", "mn-shop-sortbtn");
+    icon(sb, "arrow-up-down");
+    sb.setAttribute("aria-label", "\u6392\u5E8F");
+    sb.addEventListener("click", (e) => {
+      e.preventDefault();
+      sortWrap.toggleClass("is-open", !sortWrap.hasClass("is-open"));
+    });
+  };
+  const drawSort = () => {
+    sortWrap.empty();
+    for (const [id, name] of [["tier", "\u4F9D\u968E\u7D1A"], ["up", "\u50F9\u683C \u4F4E \u2192 \u9AD8"], ["down", "\u50F9\u683C \u9AD8 \u2192 \u4F4E"]]) {
+      const b = h(sortWrap, "button", "mn-shop-sort" + (itemSort === id ? " is-on" : ""), name);
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        itemSort = id;
+        sortWrap.removeClass("is-open");
+        drawSort();
         draw();
       });
     }
   };
-  const drawSorts = () => {
-    sorts.empty();
-    for (const [id, name] of [["tier", "\u4F9D\u968E\u7D1A"], ["up", "\u50F9\u683C \u2191"], ["down", "\u50F9\u683C \u2193"]]) {
-      const b = h(sorts, "button", "mn-isort" + (itemSort === id ? " is-on" : ""), name);
+  const drawRail = () => {
+    rail.empty();
+    const clear = h(rail, "button", "mn-shop-stat is-clear" + (itemStats.size ? " is-live" : ""));
+    icon(clear, "list-x");
+    clear.setAttribute("aria-label", "\u6E05\u9664\u7BE9\u9078");
+    clear.addEventListener("click", (e) => {
+      e.preventDefault();
+      itemStats.clear();
+      drawRail();
+      draw();
+    });
+    for (const [name, ic] of ITEM_CATS) {
+      if (RAIL_BREAKS.has(name)) h(rail, "i", "mn-shop-break");
+      const b = h(rail, "button", "mn-shop-stat" + (itemStats.has(name) ? " is-on" : ""));
+      icon(b, ic);
+      holdTip(b, name);
       b.addEventListener("click", (e) => {
         e.preventDefault();
-        itemSort = id;
-        drawSorts();
+        itemStats.has(name) ? itemStats.delete(name) : itemStats.add(name);
+        drawRail();
         draw();
       });
     }
@@ -4488,9 +4542,9 @@ function itemsPage(ctx) {
     const b = h(grid, "button", "mn-item-tile");
     const im = h(b, "img");
     im.src = it.icon;
-    im.alt = "";
-    h(b, "b", void 0, it.name);
+    im.alt = it.name;
     h(b, "span", void 0, `${it.goldTotal}`);
+    holdTip(b, it.name);
     b.addEventListener("click", (e) => {
       e.preventDefault();
       ctx.openItem(it.id);
@@ -4499,8 +4553,9 @@ function itemsPage(ctx) {
   const draw = () => {
     host.empty();
     const q = search.value.trim();
-    const tags2 = ITEM_CATS.find(([n]) => n === itemCat)?.[2] ?? [];
-    let list2 = items.filter((i) => (!q || i.name.includes(q)) && (!tags2.length || i.tags.some((x) => tags2.includes(x))));
+    const role = ITEM_ROLES.find(([r]) => r === itemRole)?.[1];
+    const need = ITEM_CATS.filter(([n]) => itemStats.has(n)).map(([, , tags2]) => tags2);
+    let list2 = items.filter((i) => (!q || i.name.includes(q)) && (!role || role(i)) && need.every((tags2) => i.tags.some((x) => tags2.includes(x))));
     if (!list2.length) {
       h(host, "p", "mn-home-sub", "\u6C92\u6709\u7B26\u5408\u7684\u88DD\u5099");
       return;
@@ -4509,7 +4564,7 @@ function itemsPage(ctx) {
       for (const tier of TIERS) {
         const part = list2.filter((i) => tierOf(i) === tier);
         if (!part.length) continue;
-        h(host, "div", "mn-home-lab", `${tier} \xB7 ${part.length}`);
+        h(host, "div", "mn-shop-tier", tier);
         const grid = h(host, "div", "mn-items");
         for (const it of part) tile2(grid, it);
       }
@@ -4521,8 +4576,9 @@ function itemsPage(ctx) {
     blockLoad(host);
   };
   search.addEventListener("input", draw);
-  drawCats();
-  drawSorts();
+  drawRoles();
+  drawSort();
+  drawRail();
   draw();
   return { title: "Items", el };
 }

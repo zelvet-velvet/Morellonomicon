@@ -1,6 +1,6 @@
 import { mapUrl } from "./handbook";
 import type { PageCtx, PageOut } from "./index";
-import { ITEM_CATS, blockLoad, h, icon, page } from "../ui";
+import { ITEM_CATS, blockLoad, h, holdTip, icon, page, roleArt } from "../ui";
 import { MODES } from "../modes";
 import { PROFILE_FRESH, QUEUE, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, type Profile } from "../data/riot";
 
@@ -199,7 +199,22 @@ export function gamesPage(ctx: PageCtx): PageOut {
 const TIERS = ["起始", "鞋子", "基本", "史詩", "傳說"];
 const tierOf = (i: { tags: string[]; from: number[]; into: number[]; goldTotal: number }): string =>
     i.tags.includes("Boots") ? "鞋子" : !i.from.length && !i.into.length ? "起始" : !i.from.length ? "基本" : i.into.length ? "史詩" : "傳說";
-let itemCat = "", itemSort = "tier";   // kept while the app is open
+// The shop's role tabs: Data Dragon gives items no roles, so each is read from the item's stats (a guess, close to the shop's own)
+type ItemLike = { tags: string[] };
+const has = (i: ItemLike, ...tags: string[]) => tags.some((x) => i.tags.includes(x));
+const ITEM_ROLES: [string, (i: ItemLike) => boolean][] = [
+    ["戰士", (i) => has(i, "Damage") && has(i, "Health")],
+    ["射手", (i) => has(i, "CriticalStrike") || (has(i, "AttackSpeed") && has(i, "Damage"))],
+    ["刺客", (i) => has(i, "Damage") && has(i, "ArmorPenetration", "NonbootsMovement") && !has(i, "Health")],
+    ["法師", (i) => has(i, "SpellDamage")],
+    ["坦克", (i) => has(i, "Health") && has(i, "Armor", "SpellBlock", "MagicResist") && !has(i, "Damage", "SpellDamage")],
+    ["輔助", (i) => has(i, "GoldPer", "Aura") || (has(i, "Active") && !has(i, "Damage", "SpellDamage"))],
+];
+const RAIL_BREAKS = new Set(["法術強度", "生命", "技能急速"]);   // a line before each group of the stat rail, like the shop
+let itemRole = "", itemSort = "tier";   // kept while the app is open
+const itemStats = new Set<string>();
+// Items, laid out like the game's shop: the search, the role tabs with the sort button, the stat filters as a rail on the left
+// (several can be on: an item must have them all), and a tight grid of icons with their price. A tap opens the item.
 export function itemsPage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const flag = MODES[ctx.plugin.settings.mode].itemFlag;
@@ -211,43 +226,69 @@ export function itemsPage(ctx: PageCtx): PageOut {
     const search = h(box, "input");
     search.type = "search";
     search.placeholder = "搜尋裝備";
-    const cats = h(el, "div", "mn-icats");
-    const sorts = h(el, "div", "mn-isorts");
-    const host = h(el, "div");   // one loading look for the whole list
-    const drawCats = () => {
-        cats.empty();
-        for (const [name, ic] of [["全部", "layout-grid"], ...ITEM_CATS.map(([n, i]) => [n, i])] as [string, string][]) {
-            const b = h(cats, "button", "mn-icat" + ((name === "全部" ? !itemCat : itemCat === name) ? " is-on" : ""));
-            icon(b, ic);
-            h(b, "span", undefined, name);
-            b.addEventListener("click", (e) => { e.preventDefault(); itemCat = name === "全部" ? "" : name; drawCats(); draw(); });
+    const roles = h(el, "div", "mn-shop-roles");
+    const sortWrap = h(el, "div", "mn-shop-sortwrap");
+    const body = h(el, "div", "mn-shop");
+    const rail = h(body, "div", "mn-shop-rail");
+    const host = h(body, "div", "mn-shop-list");   // one loading look for the whole list
+    const drawRoles = () => {
+        roles.empty();
+        const all = h(roles, "button", "mn-shop-role" + (!itemRole ? " is-on" : ""));
+        icon(all, "layout-grid");
+        all.setAttribute("aria-label", "全部");
+        all.addEventListener("click", (e) => { e.preventDefault(); itemRole = ""; drawRoles(); draw(); });
+        for (const [r] of ITEM_ROLES) {
+            const b = h(roles, "button", "mn-shop-role" + (itemRole === r ? " is-on" : ""));
+            roleArt(b, r);
+            holdTip(b, r);
+            b.addEventListener("click", (e) => { e.preventDefault(); itemRole = itemRole === r ? "" : r; drawRoles(); draw(); });
+        }
+        // the sort button at the right end; its choices drop down under it
+        const sb = h(roles, "button", "mn-shop-sortbtn");
+        icon(sb, "arrow-up-down");
+        sb.setAttribute("aria-label", "排序");
+        sb.addEventListener("click", (e) => { e.preventDefault(); sortWrap.toggleClass("is-open", !sortWrap.hasClass("is-open")); });
+    };
+    const drawSort = () => {
+        sortWrap.empty();
+        for (const [id, name] of [["tier", "依階級"], ["up", "價格 低 → 高"], ["down", "價格 高 → 低"]]) {
+            const b = h(sortWrap, "button", "mn-shop-sort" + (itemSort === id ? " is-on" : ""), name);
+            b.addEventListener("click", (e) => { e.preventDefault(); itemSort = id; sortWrap.removeClass("is-open"); drawSort(); draw(); });
         }
     };
-    const drawSorts = () => {
-        sorts.empty();
-        for (const [id, name] of [["tier", "依階級"], ["up", "價格 ↑"], ["down", "價格 ↓"]]) {
-            const b = h(sorts, "button", "mn-isort" + (itemSort === id ? " is-on" : ""), name);
-            b.addEventListener("click", (e) => { e.preventDefault(); itemSort = id; drawSorts(); draw(); });
+    const drawRail = () => {
+        rail.empty();
+        const clear = h(rail, "button", "mn-shop-stat is-clear" + (itemStats.size ? " is-live" : ""));
+        icon(clear, "list-x");
+        clear.setAttribute("aria-label", "清除篩選");
+        clear.addEventListener("click", (e) => { e.preventDefault(); itemStats.clear(); drawRail(); draw(); });
+        for (const [name, ic] of ITEM_CATS) {
+            if (RAIL_BREAKS.has(name)) h(rail, "i", "mn-shop-break");
+            const b = h(rail, "button", "mn-shop-stat" + (itemStats.has(name) ? " is-on" : ""));
+            icon(b, ic);
+            holdTip(b, name);
+            b.addEventListener("click", (e) => { e.preventDefault(); itemStats.has(name) ? itemStats.delete(name) : itemStats.add(name); drawRail(); draw(); });
         }
     };
     const tile = (grid: HTMLElement, it: (typeof items)[number]) => {
         const b = h(grid, "button", "mn-item-tile");
-        const im = h(b, "img"); im.src = it.icon; im.alt = "";
-        h(b, "b", undefined, it.name);
+        const im = h(b, "img"); im.src = it.icon; im.alt = it.name;
         h(b, "span", undefined, `${it.goldTotal}`);
+        holdTip(b, it.name);
         b.addEventListener("click", (e) => { e.preventDefault(); ctx.openItem(it.id); });
     };
     const draw = () => {
         host.empty();
         const q = search.value.trim();
-        const tags = ITEM_CATS.find(([n]) => n === itemCat)?.[2] ?? [];
-        let list = items.filter((i) => (!q || i.name.includes(q)) && (!tags.length || i.tags.some((x) => tags.includes(x))));
+        const role = ITEM_ROLES.find(([r]) => r === itemRole)?.[1];
+        const need = ITEM_CATS.filter(([n]) => itemStats.has(n)).map(([, , tags]) => tags);
+        let list = items.filter((i) => (!q || i.name.includes(q)) && (!role || role(i)) && need.every((tags) => i.tags.some((x) => tags.includes(x))));
         if (!list.length) { h(host, "p", "mn-home-sub", "沒有符合的裝備"); return; }
         if (itemSort === "tier") {
             for (const tier of TIERS) {
                 const part = list.filter((i) => tierOf(i) === tier);
                 if (!part.length) continue;
-                h(host, "div", "mn-home-lab", `${tier} · ${part.length}`);
+                h(host, "div", "mn-shop-tier", tier);
                 const grid = h(host, "div", "mn-items");
                 for (const it of part) tile(grid, it);
             }
@@ -259,6 +300,6 @@ export function itemsPage(ctx: PageCtx): PageOut {
         blockLoad(host);
     };
     search.addEventListener("input", draw);
-    drawCats(); drawSorts(); draw();
+    drawRoles(); drawSort(); drawRail(); draw();
     return { title: "Items", el };
 }

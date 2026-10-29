@@ -232,7 +232,6 @@ button.mn-skill-box.is-on::after { content: ""; position: absolute; inset: 0; bo
 .mn-set-t { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
 .mn-set-m { font-size: 12px; color: var(--mn-muted); margin-top: 8px; }
 .mn-set-n { font-size: 13px; color: var(--mn-muted); margin-top: 8px; line-height: 1.5; }
-.mn-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px 4px; margin-top: 6px; }
 .mn-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .mn-item img { width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--mn-line); background: var(--mn-card-hi); }
 .mn-item.is-on img { border-color: var(--mn-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--mn-accent) 30%, transparent); }
@@ -1229,22 +1228,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-game-items img { width: 22px; height: 22px; border-radius: 5px; }
 .mn-game-wl { flex: none; font-size: 13px; font-weight: 800; color: var(--color-blue); }
 .mn-game.is-loss .mn-game-wl { color: var(--color-red); }
-/* Items (opened from Home): the shop's items as tiles, cheapest first */
 .mn-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 10px 8px; margin-top: 12px; }
-.mn-app .mn-item-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; height: auto; padding: 4px 0; border: 0; background: none; box-shadow: none; min-width: 0; }
-.mn-item-tile img { width: 44px; height: 44px; border-radius: 8px; border: 1px solid var(--mn-line); }
-.mn-item-tile b { max-width: 100%; font-size: 11.5px; font-weight: 600; color: var(--mn-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mn-item-tile span { font-size: 11px; color: var(--color-yellow); font-variant-numeric: tabular-nums; }
-/* Items: the shop's stat filters (a row of icons that scrolls sideways) and the sort */
-.mn-icats { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; margin: 10px -16px 0; padding: 0 16px 2px; }
-.mn-icats::-webkit-scrollbar { display: none; }
-.mn-app .mn-icat { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; width: 56px; height: 56px; padding: 6px 0 0; border-radius: 14px; border: 1px solid var(--mn-line); background: var(--mn-card); box-shadow: none; color: var(--mn-muted); }
-.mn-app .mn-icat.is-on { color: var(--mn-accent); border-color: var(--mn-accent); background: color-mix(in srgb, var(--mn-accent) 12%, var(--mn-card)); }
-.mn-icat svg { width: 20px; height: 20px; }
-.mn-icat span { font-size: 10px; white-space: nowrap; }
-.mn-isorts { display: flex; gap: 6px; margin: 10px 0 0; }
-.mn-app .mn-isort { height: 30px; padding: 0 12px; border-radius: 15px; border: 1px solid var(--mn-line); background: none; box-shadow: none; font-size: 12.5px; color: var(--mn-muted); }
-.mn-app .mn-isort.is-on { color: var(--mn-accent); border-color: var(--mn-accent); }
 .mn-home-entry.is-wide { grid-column: 1 / -1; }
 /* Champions: the 篩選 button inside the bottom capsule, the filters as a sheet right above it */
 .mn-cap-fb { flex: none; display: flex; }
@@ -1253,3 +1237,30 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-fpanel.mn-fsheet { margin: 0; max-height: 55vh; overflow-y: auto; overscroll-behavior: contain; border-radius: 22px; background: color-mix(in srgb, var(--mn-card) 92%, transparent);
     border: 1px solid var(--mn-line); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
 .mn-cap-fb .mn-filterbtn-n { position: absolute; top: -4px; right: -4px; }
+/* Items, laid out like the in-game shop: role tabs and the sort button on top, the stat rail on the left, a tight grid of icons with prices */
+.mn-shop-roles { display: flex; align-items: center; gap: 4px; margin: 10px 0 0; padding-bottom: 8px; border-bottom: 1px solid var(--mn-line); }
+.mn-app .mn-shop-role { flex: none; display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border-radius: 10px; border: 0; background: none; box-shadow: none; color: var(--mn-muted); }
+.mn-app .mn-shop-role.is-on { color: var(--mn-accent); background: color-mix(in srgb, var(--mn-accent) 14%, transparent); box-shadow: inset 0 -2px 0 var(--mn-accent); }
+.mn-shop-role svg { width: 20px; height: 20px; }
+.mn-shop-role img { width: 24px; height: 24px; }
+.mn-shop-role:not(.is-on) img { opacity: 0.6; }
+.mn-app .mn-shop-sortbtn { flex: none; margin-left: auto; display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border-radius: 50%; border: 1.5px solid var(--mn-accent); background: none; box-shadow: none; color: var(--mn-accent); }
+.mn-shop-sortbtn svg { width: 18px; height: 18px; }
+.mn-shop-sortwrap { display: none; justify-content: flex-end; gap: 6px; margin: 8px 0 0; }
+.mn-shop-sortwrap.is-open { display: flex; }
+.mn-app .mn-shop-sort { height: 30px; padding: 0 12px; border-radius: 15px; border: 1px solid var(--mn-line); background: var(--mn-card); box-shadow: none; font-size: 12.5px; color: var(--mn-muted); }
+.mn-app .mn-shop-sort.is-on { color: var(--mn-accent); border-color: var(--mn-accent); }
+.mn-shop { display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; }
+.mn-shop-rail { position: sticky; top: 8px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; width: 40px; padding: 4px 0; border-right: 1px solid var(--mn-line); }
+.mn-app .mn-shop-stat { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border-radius: 10px; border: 0; background: none; box-shadow: none; color: var(--mn-muted); }
+.mn-app .mn-shop-stat.is-on { color: var(--mn-accent); background: color-mix(in srgb, var(--mn-accent) 16%, transparent); }
+.mn-app .mn-shop-stat.is-clear { border: 1.5px solid var(--mn-line); border-radius: 50%; margin-bottom: 4px; }
+.mn-app .mn-shop-stat.is-clear.is-live { color: var(--mn-accent); border-color: var(--mn-accent); }
+.mn-shop-stat svg { width: 18px; height: 18px; }
+.mn-shop-break { display: block; width: 22px; height: 1px; margin: 4px 0; background: var(--mn-line); }
+.mn-shop-list { flex: 1; min-width: 0; }
+.mn-shop-tier { margin: 6px 0 4px; font-size: 11px; font-weight: 800; letter-spacing: 0.12em; color: var(--mn-muted); }
+.mn-items { display: grid; grid-template-columns: repeat(auto-fill, 48px); gap: 8px 6px; justify-content: start; }
+.mn-app .mn-item-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 48px; height: auto; padding: 0; border: 0; background: none; box-shadow: none; }
+.mn-item-tile img { width: 46px; height: 46px; border-radius: 4px; border: 1px solid color-mix(in srgb, #d9b15c 45%, transparent); }
+.mn-item-tile span { font-size: 12px; font-weight: 700; color: var(--mn-text); font-variant-numeric: tabular-nums; }
