@@ -979,14 +979,13 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* Review/Icons.md: the icon editor (src/iconsnote.ts) */
 .mn-icprobe { position: absolute; width: 0; height: 0; overflow: hidden; visibility: hidden; }
 .mn-iclist { display: flex; flex-direction: column; }
-.mn-icrow { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 12px; row-gap: 6px; align-items: center; padding: 10px 2px; border-bottom: 1px solid var(--background-modifier-border); }
+.mn-icrow { display: grid; grid-template-columns: 40px fit-content(100%); justify-content: start;   /* the second column is as wide as the controls, so the variable name's right edge is the last button's right edge */ column-gap: 12px; row-gap: 6px; align-items: center; padding: 10px 2px; border-bottom: 1px solid var(--background-modifier-border); }
 .mn-icbig { grid-row: 1 / span 2; display: flex; justify-content: center; align-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--background-secondary); font-weight: 700; }
 .mn-icbig .svg-icon { color: inherit; width: 26px; height: 26px; }
 /* label on the left, the variable name pushed to the right edge */
 .mn-iclabel { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; min-width: 0; line-height: 1.25; }
 .mn-icvar { margin-left: auto; font-size: 16px; color: var(--text-muted); font-family: var(--font-monospace); text-align: right; }
 .mn-icctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.mn-icctl button.mn-icreset:last-child { margin-left: auto; }   /* the app-colour button sits at the right edge, under the last character of the variable name */
 .mn-icctl input.mn-icin { height: 32px; font-size: 14px; font-family: var(--font-monospace); width: 190px; max-width: 100%; }
 .mn-icctl input.mn-ichexin { width: 100px; }
 .mn-icctl input.is-bad { border-color: var(--color-red); color: var(--color-red); }
