@@ -988,6 +988,18 @@ var import_obsidian3 = require("obsidian");
 var NOTE = "Review/Icons.md";
 var NAME = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 var COLOUR = /^(?:--[\w-]+|#[0-9a-fA-F]{3,8})$/;
+var toHex = (rgb) => {
+  const m = rgb.match(/\d+(?:\.\d+)?/g);
+  return m && m.length >= 3 ? "#" + m.slice(0, 3).map((n) => Math.round(Number(n)).toString(16).padStart(2, "0")).join("") : "";
+};
+function colourReader() {
+  const probe = document.body.createDiv({ cls: "mn-app mn-icprobe" });
+  return { read: (c) => {
+    if (!c.startsWith("--")) return c;
+    probe.style.color = `var(${c})`;
+    return getComputedStyle(probe).color;
+  }, done: () => probe.remove() };
+}
 function iconsBlock(source, el) {
   const ids = new Set((0, import_obsidian3.getIconIds)());
   const known = (n) => ids.has(n) || ids.has(`lucide-${n}`);
@@ -1003,7 +1015,8 @@ function iconsBlock(source, el) {
   };
   const list2 = el.createDiv({ cls: "mn-iclist" });
   for (const line of source.split("\n")) {
-    const [label = "", name = "", colour = ""] = line.split("|").map((s) => s.trim());
+    const [label = "", name = "", colour0 = "", fixed = ""] = line.split("|").map((s) => s.trim());
+    const colour = /^#[0-9a-fA-F]{3,8}$/.test(fixed) ? fixed : colour0;
     if (!label && !name) continue;
     const row2 = list2.createDiv({ cls: "mn-icrow" });
     const pic = row2.createSpan({ cls: "mn-icbig" });
@@ -1014,12 +1027,31 @@ function iconsBlock(source, el) {
     row2.createSpan({ cls: "mn-iclabel", text: label });
     row2.createEl("code", { cls: known(name) ? "mn-icname" : "mn-icname mn-icbad", text: name || "(no icon)" });
     row2.createSpan({ cls: "mn-icsw", attr: { style: COLOUR.test(colour) ? `background:${resolve(colour)}` : "visibility:hidden" } });
-    row2.createEl("code", { cls: "mn-iccol", text: colour.startsWith("--") ? colour : "" });
+    row2.createEl("code", { cls: "mn-iccol", text: colour0.startsWith("--") ? colour0 : "" });
     row2.createEl("code", { cls: "mn-ichex", text: COLOUR.test(colour) ? hex(resolve(colour)) : "" });
   }
   probe.remove();
 }
 function registerIconsNote(plugin) {
+  plugin.addCommand({ id: "icons-fill-hex", name: "Icons note: write each colour's hex into the lines", callback: async () => {
+    const file = plugin.app.vault.getAbstractFileByPath(NOTE);
+    if (!(file instanceof import_obsidian3.TFile)) return;
+    const rd = colourReader();
+    let inside = false;
+    const out = (await plugin.app.vault.read(file)).split("\n").map((line) => {
+      if (line.startsWith("```")) {
+        inside = line.startsWith("```mn-icons") ? true : false;
+        return line;
+      }
+      if (!inside) return line;
+      const f = line.split("|").map((s) => s.trim());
+      if (f.length < 3 || !f[2].startsWith("--") || f.length > 3) return line;
+      const hex = toHex(rd.read(f[2]));
+      return hex ? `${f[0]} | ${f[1]} | ${f[2]} | ${hex}` : line;
+    });
+    rd.done();
+    await plugin.app.vault.modify(file, out.join("\n"));
+  } });
   plugin.registerMarkdownCodeBlockProcessor("mn-icons", iconsBlock);
   plugin.registerMarkdownPostProcessor((el, ctx) => {
     if (ctx.sourcePath !== NOTE) return;
