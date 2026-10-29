@@ -429,7 +429,8 @@ export function swipePage(ctx: PageCtx): PageOut {
         }
         if (c.how.length) {
             h(play, "div", "mn-qc-k", "怎麼玩");
-            for (const line of c.how.slice(0, 3)) h(play, "p", "mn-qc-how", line);
+            const box = h(play, "div", "mn-qc-howbox");   // on a dark panel, so the lines read over the skin
+            for (const line of c.how.slice(0, 3)) h(box, "p", "mn-qc-how", line);
         }
         const fs = c.focus ? c.skills.find((s) => s.key === c.focus) : undefined;
         if (fs) {
@@ -449,7 +450,12 @@ export function swipePage(ctx: PageCtx): PageOut {
             const s = c.skills.find((x) => x.key === key);
             if (!s) continue;
             const row = h(sk, "div", "mn-qc-sk" + (key === c.focus ? " is-focus" : ""));
-            keyBadge(row, key, DAMAGE_COLOR[s.damage[0] ?? ""] ?? "#6b7183");
+            // the game's ability picture with the key in its corner, like the Handbook's skill head
+            const color = DAMAGE_COLOR[s.damage[0] ?? ""] ?? "#6b7183";
+            const ic = h(row, "div", "mn-ck-ic is-sm");
+            ic.style.setProperty("--c", color);
+            const im = h(ic, "img"); im.src = s.icon; im.alt = "";
+            keyBadge(ic, key, color);
             const tx = h(row, "div", "mn-qc-skt");
             h(tx, "b", undefined, s.name);
             h(tx, "span", undefined, c.plain[key] || [...s.tags, ...s.damage.map((d) => `${d}傷害`)].join(" · "));

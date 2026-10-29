@@ -16,6 +16,7 @@ sticker: lucide//activity
 - **Handbook topics full screen**: the Picks card's size, Back and the glossary's i floating on the card, no title or progress bars (to check on the phone).
 - **Items like the Layouts note**: role tabs and stat rail on the left edge, bigger role, sort and stat icons (to check on the phone).
 - **Picks card skins ahead**: the top card's and the next card's tab 2 to 4 skins download while you read, so switching tabs shows them at once (to check on the phone).
+- **Picks card 玩法 / 技能**: 玩法 in the middle with bigger lines on a dark panel; 技能 rows show the game's ability pictures, spread evenly (to check on the phone).
 - **Picks lanes**: bigger lane icons, one lane at a time (to check on the phone).
 - **Tidy-up**: about 80 unused style rules and a few unused bits of code removed.
 

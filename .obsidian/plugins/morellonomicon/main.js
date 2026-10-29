@@ -5640,7 +5640,8 @@ function swipePage(ctx) {
     }
     if (c.how.length) {
       h(play, "div", "mn-qc-k", "\u600E\u9EBC\u73A9");
-      for (const line of c.how.slice(0, 3)) h(play, "p", "mn-qc-how", line);
+      const box = h(play, "div", "mn-qc-howbox");
+      for (const line of c.how.slice(0, 3)) h(box, "p", "mn-qc-how", line);
     }
     const fs = c.focus ? c.skills.find((s) => s.key === c.focus) : void 0;
     if (fs) {
@@ -5658,7 +5659,13 @@ function swipePage(ctx) {
       const s = c.skills.find((x) => x.key === key);
       if (!s) continue;
       const row2 = h(sk, "div", "mn-qc-sk" + (key === c.focus ? " is-focus" : ""));
-      keyBadge(row2, key, DAMAGE_COLOR[s.damage[0] ?? ""] ?? "#6b7183");
+      const color = DAMAGE_COLOR[s.damage[0] ?? ""] ?? "#6b7183";
+      const ic = h(row2, "div", "mn-ck-ic is-sm");
+      ic.style.setProperty("--c", color);
+      const im2 = h(ic, "img");
+      im2.src = s.icon;
+      im2.alt = "";
+      keyBadge(ic, key, color);
       const tx = h(row2, "div", "mn-qc-skt");
       h(tx, "b", void 0, s.name);
       h(tx, "span", void 0, c.plain[key] || [...s.tags, ...s.damage.map((d2) => `${d2}\u50B7\u5BB3`)].join(" \xB7 "));
