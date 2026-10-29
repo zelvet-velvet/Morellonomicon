@@ -3,6 +3,7 @@ import { Store } from "./data/store";
 import { Router } from "./router";
 import { preloadRoleIcons, warmPictures } from "./ui";
 import { registerIconsNote } from "./iconsnote";
+import { registerLayoutNote } from "./layoutnote";
 import { DEFAULTS, MnSettingTab, MnSettings } from "./settings";
 import { MnView, VIEW_TYPE } from "./view";
 
@@ -46,6 +47,7 @@ export default class MorellonomiconPlugin extends Plugin {
         this.addCommand({ id: "open", name: "Open Morellonomicon", callback: () => { void this.activate(false); } });
         this.addSettingTab(new MnSettingTab(this.app, this));
         registerIconsNote(this);
+        registerLayoutNote(this);
 
         // A champion / item / guide note changed: redraw once for a burst of changes (e.g. a sync or a fetch_data run)
         const onFile = (file: TAbstractFile, oldPath?: string) => {

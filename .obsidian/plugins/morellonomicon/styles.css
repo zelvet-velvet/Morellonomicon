@@ -1278,3 +1278,32 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lanebar .mn-chip-ic img, .mn-lanebar .mn-chip-ic svg { width: 24px; height: 24px; }
 .mn-lanebar .mn-count { margin: 0 2px 0 auto; font-variant-numeric: tabular-nums; }
 .mn-fgroup:has(.mn-lanebar) { margin: 6px 0 8px; }
+
+/* Review/Layouts.md: the layout editor (src/layoutnote.ts). Phones in the app's dark look, blocks as colour-coded dashed zones */
+.mn-lay { --lay-phone: #12141b; --lay-text: #f4f1e8; --lay-dim: #9a97a0; --lay-line: rgba(255, 255, 255, 0.14); user-select: none; -webkit-user-select: none; }
+.mn-lay-err { color: var(--color-red); }
+.mn-lay-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 14px; font-size: 12.5px; color: var(--text-muted); }
+.mn-lay-legend i { display: inline-block; width: 12px; height: 12px; margin-right: 5px; border: 1.5px dashed; border-radius: 4px; vertical-align: -2px; }
+.mn-lay-pages { display: flex; flex-wrap: wrap; gap: 28px 24px; align-items: flex-start; }
+.mn-lay-page { display: flex; flex-direction: column; gap: 6px; width: min(100%, 320px); }
+.mn-lay-head { display: flex; align-items: center; gap: 4px; }
+.mn-lay input.mn-lay-name { flex: 1; min-width: 0; height: 32px; font-size: 16px; font-weight: 800; border: 0; background: none; padding: 0 2px; }
+.mn-lay button.mn-lay-btn { width: 32px; height: 32px; padding: 0; display: grid; place-items: center; background: none; box-shadow: none; color: var(--text-muted); }
+.mn-lay button.mn-lay-btn.is-armed { color: var(--color-red); }
+.mn-lay textarea.mn-lay-pnote { width: 100%; resize: vertical; font-size: 12.5px; color: var(--text-muted); }
+.mn-lay-phone { position: relative; flex: none; overflow: hidden; border-radius: 28px; border: 5px solid #2a2d38; background: var(--lay-phone); box-sizing: content-box; }
+.mn-lay-screen { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.mn-lay-tabbar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-around; align-items: center; background: #161922; border-top: 1px solid var(--lay-line); color: var(--lay-dim); font-size: 12px; pointer-events: none; }
+.mn-lay-z { position: absolute; box-sizing: border-box; border: 2px dashed var(--c); border-radius: 14px; background: color-mix(in srgb, var(--c) 10%, transparent); cursor: grab; touch-action: none; }
+.mn-lay-z.is-sel { border-style: solid; background: color-mix(in srgb, var(--c) 22%, transparent); z-index: 2; }
+.mn-lay-tag { position: absolute; left: 8px; right: 8px; top: 5px; display: flex; justify-content: space-between; gap: 6px; font-size: 13px; font-weight: 700; color: var(--c); white-space: nowrap; overflow: hidden; pointer-events: none; }
+.mn-lay-tag small { font-weight: 500; opacity: 0.8; font-variant-numeric: tabular-nums; }
+.mn-lay-znote { position: absolute; left: 8px; right: 8px; top: 24px; bottom: 6px; overflow: hidden; font-size: 11.5px; line-height: 1.35; color: var(--lay-text); opacity: 0.8; pointer-events: none; }
+.mn-lay-grip { position: absolute; right: -2px; bottom: -2px; width: 22px; height: 22px; border-radius: 0 0 12px 0; background: linear-gradient(135deg, transparent 50%, var(--c) 50%); cursor: nwse-resize; touch-action: none; }
+.mn-lay-insp { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 12px; background: var(--background-secondary); border: 1px solid var(--background-modifier-border); }
+.mn-lay-row { display: flex; align-items: center; gap: 8px; }
+.mn-lay-row > span { flex: none; width: 52px; font-size: 12px; color: var(--text-muted); }
+.mn-lay-row input, .mn-lay-row select, .mn-lay-row textarea { flex: 1; min-width: 0; }
+.mn-lay input.mn-lay-num { width: 0; }
+.mn-lay-acts { display: flex; gap: 6px; justify-content: flex-end; }
+.mn-lay button.mn-lay-addpage { align-self: center; display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 16px; }

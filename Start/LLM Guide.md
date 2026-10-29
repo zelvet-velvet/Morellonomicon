@@ -72,6 +72,7 @@ CLAUDE.md              points here
 - **Nothing private in the repo.** No keys, personal paths or summoner names/IDs of real players.
 - **Plugins are not in git** (`.obsidian/plugins/` is ignored), except Morellonomicon and **Obsidian Git** (committed so a fresh clone, e.g. on a phone, has it; its `data.json` settings stay per device; update it by replacing its three files with a newer release). `tools/install_plugins.py` downloads the others from each plugin's GitHub release; the list is `community-plugins.json`.
 - **Icons.** One idea has one icon everywhere: take it from the maps listed in [[Icons]] (`DAMAGE_ICON`, `TAGS`, `ROLE_ICON`, `TAB_ICON`…), never pick one in a page; a new idea gets its icon in the map and in [[Icons]] first.
+- **Layouts note.** `Review/Layouts.md` holds every page as a phone with blocks (`mn-layout`, JSON, phone px 390 × 844; editor in `plugin/src/layoutnote.ts`). Zaviel moves, resizes, renames and annotates blocks there; "apply the Layouts note" = read the blocks and their notes, change the pages to match, and update the note when a page changes.
 - **Visual changes** (CSS snippets, theme): show a screenshot or describe the change and let Zaviel pick before building.
 - **Testing needs the user's eyes** for Obsidian on a phone and on PC. Say what could not be tested and what the user must look at.
 
