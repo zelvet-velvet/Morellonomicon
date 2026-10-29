@@ -1314,7 +1314,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* keyboard open (view.ts): the capsule being typed in is pinned just above the keyboard, the way Safari's bar is */
 .mn-app.is-kb .mn-rq-dock:focus-within { position: fixed; z-index: 50; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(var(--mn-kbh, 0px) + 8px); margin: 0; }
 .mn-app.is-kb .mn-tabs { visibility: hidden; }   /* the tab bar is under the keyboard anyway */
-.mn-lay-ord { flex: none; min-width: 44px; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-muted); }
 /* Layouts: a page changed since the last sync is outlined in the accent colour (the reset button takes it back) */
 .mn-lay-page.is-changed .mn-lay-phone { border-color: var(--interactive-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--interactive-accent) 30%, transparent); }
 .mn-lay-page.is-changed .mn-lay input.mn-lay-name, .mn-lay-page.is-changed input.mn-lay-name { color: var(--interactive-accent); }
