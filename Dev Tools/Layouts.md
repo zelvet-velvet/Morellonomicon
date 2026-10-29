@@ -8,9 +8,9 @@ sticker: lucide//layout-dashboard
 Every page of the app as a phone with its blocks, to design and point at problems without screenshots. Open it in **Reading view** (or Live Preview, tapping outside the code). Sizes are in phone px (390 × 844).
 
 - **Move** a block by dragging it, **resize** it by its corner; it snaps to 2 px.
-- **Tap** a block to rename it, change its kind (colour), set exact x / y / w / h, write a note ("too much space here"), duplicate or delete it.
+- **Tap** a block to rename it, change its kind (colour), move it earlier or later in the page's order (reading order; later blocks are drawn on top), set exact x / y / w / h, write a note ("too much space here"), duplicate or delete it.
 - **+ square** on a page adds a block, the bin deletes the page (tap twice), **+ Page** adds one; the page name and its note are editable.
-- Each page has its own **back** and **forward** steps, **reset** (back to what is saved) and **save** (lit when the page has changes). Nothing is written into the note until you save that page; unsaved pages stay while Obsidian is open. Tell Claude "apply the Layouts note" and it reads the saved blocks and notes from here.
+- Each page has its own **back** and **forward** steps, **reset** (back to what is saved) and **save** (lit when the page has changes). Nothing is written into the note until you save that page; unsaved pages stay while Obsidian is open. Drag roughly: when you ask Claude to sync the layout, it tidies the sizes (edges, equal widths, margins, gaps) before applying them, and saves the tidied blocks back here.
 
 ```mn-layout
 [

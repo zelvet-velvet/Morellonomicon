@@ -11,6 +11,7 @@ export const VIEW_TYPE = "morellonomicon";
 
 // The app screen: top bar (back, title, mode switch), page area, tab bar. A page is drawn in one step when a tab, a detail page
 // or the data changes; scroll positions are kept per page so Back returns to where you were.
+const KEYBOARD_MIN = 120;   // px of the screen covered before it counts as the keyboard being open (not a toolbar)
 const OVERLAY_PAGES = new Set(["champion"]);
 const IMMERSIVE_PAGES = new Set(["rosterswipe"]);   // full screen: no top bar at all (速查's swipe, like Tinder)
 const OVERLAY_SCROLL = 220;   // px scrolled before the top bar gets its background back over a splash
@@ -79,13 +80,17 @@ export class MnView extends ItemView {
         modeBtn.addEventListener("click", (e) => { e.preventDefault(); this.modeMenu(e); });
         this.modeBtn = modeBtn;
         this.scrollEl = h(app, "div", "mn-scroll");
-        // the phone's keyboard: how much of the scroll area it covers, as --mn-kb, so the floating search capsules (Picks, Champions) ride
-        // on top of it like Safari's bar (0 when Obsidian resizes the page for the keyboard itself)
+        // the phone's keyboard: the floating search capsules (Picks, Champions) ride on top of it like Safari's bar. iOS does not shrink
+        // the page for the keyboard (the app is fixed to the large viewport), it pans it; the visible part is window.visualViewport.
+        // --mn-kbh is how far the keyboard reaches up from the bottom of the screen; while it is open (is-kb) the capsule with the focus
+        // is pinned right above it (styles.css)
         const vv = window.visualViewport;
         if (vv) {
             const kb = () => {
-                const bottom = this.scrollEl.getBoundingClientRect().bottom;
-                app.style.setProperty("--mn-kb", `${Math.max(0, Math.round(bottom - (vv.height + vv.offsetTop)))}px`);
+                const gap = Math.max(0, Math.round(window.innerHeight - (vv.height + vv.offsetTop)));
+                app.style.setProperty("--mn-kbh", `${gap}px`);
+                app.style.setProperty("--mn-vvtop", `${Math.round(vv.offsetTop)}px`);
+                app.toggleClass("is-kb", gap > KEYBOARD_MIN);
             };
             vv.addEventListener("resize", kb);
             vv.addEventListener("scroll", kb);

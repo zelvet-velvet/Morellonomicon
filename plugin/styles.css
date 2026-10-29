@@ -1147,7 +1147,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-radd svg { width: 18px; height: 18px; }
 .mn-rq-res.is-pick .mn-rq-radd { background: var(--mn-accent); color: var(--text-on-accent, #fff); }
 /* the capsule: floats over the bottom (above the tab bar), "did you mean" chips just above it */
-.mn-rq-dock { position: sticky; bottom: calc(10px + var(--mn-kb, 0px));   /* rides on the keyboard (--mn-kb, view.ts) */ z-index: 5; display: flex; flex-direction: column; gap: 8px; margin: 16px 0 0; }
+.mn-rq-dock { position: sticky; bottom: 10px; z-index: 5; display: flex; flex-direction: column; gap: 8px; margin: 16px 0 0; }
 .mn-rq-dock .mn-rq-sugg { padding: 0 4px; }
 .mn-rq-cap { display: flex; align-items: center; gap: 6px; height: 56px; padding: 0 6px 0 14px; border-radius: 28px; background: color-mix(in srgb, var(--mn-card) 82%, transparent);
     border: 1px solid var(--mn-line); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
@@ -1311,3 +1311,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay button.mn-lay-btn svg { width: 17px; height: 17px; }
 .mn-lay button.mn-lay-btn.is-off { opacity: 0.3; cursor: default; }
 .mn-lay button.mn-lay-btn.is-dirty { color: var(--interactive-accent); }
+/* keyboard open (view.ts): the capsule being typed in is pinned just above the keyboard, the way Safari's bar is */
+.mn-app.is-kb .mn-rq-dock:focus-within { position: fixed; z-index: 50; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(var(--mn-kbh, 0px) + 8px); margin: 0; }
+.mn-app.is-kb .mn-tabs { visibility: hidden; }   /* the tab bar is under the keyboard anyway */
+.mn-lay-ord { flex: none; min-width: 44px; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-muted); }

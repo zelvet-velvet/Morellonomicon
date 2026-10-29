@@ -1478,6 +1478,20 @@ function layoutBlock(plugin, source, el, ctx) {
       changed(page2);
       draw();
     });
+    const ord = row2("Order");
+    const at = page2.blocks.indexOf(b);
+    ord.createSpan({ cls: "mn-lay-ord", text: `${at + 1} / ${page2.blocks.length}` });
+    const move = (to) => {
+      page2.blocks.splice(at, 1);
+      page2.blocks.splice(clamp(to, 0, page2.blocks.length), 0, b);
+      changed(page2);
+      draw();
+    };
+    for (const [ic, label, to] of [["chevrons-up", "First", 0], ["chevron-up", "Earlier", at - 1], ["chevron-down", "Later", at + 1], ["chevrons-down", "Last", page2.blocks.length]]) {
+      const bt = ord.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": label } });
+      icon(bt, ic);
+      bt.addEventListener("click", () => move(to));
+    }
     const nums = row2("x y w h");
     for (const key of ["x", "y", "w", "h"]) {
       const n = nums.createEl("input", { cls: "mn-lay-num", attr: { type: "number", value: String(b[key]), step: String(SNAP) } });
@@ -5713,6 +5727,7 @@ function renderPage(tab, ctx) {
 
 // src/view.ts
 var VIEW_TYPE = "morellonomicon";
+var KEYBOARD_MIN = 120;
 var OVERLAY_PAGES = /* @__PURE__ */ new Set(["champion"]);
 var IMMERSIVE_PAGES = /* @__PURE__ */ new Set(["rosterswipe"]);
 var OVERLAY_SCROLL = 220;
@@ -5796,8 +5811,10 @@ var MnView = class extends import_obsidian12.ItemView {
     const vv = window.visualViewport;
     if (vv) {
       const kb = () => {
-        const bottom = this.scrollEl.getBoundingClientRect().bottom;
-        app.style.setProperty("--mn-kb", `${Math.max(0, Math.round(bottom - (vv.height + vv.offsetTop)))}px`);
+        const gap = Math.max(0, Math.round(window.innerHeight - (vv.height + vv.offsetTop)));
+        app.style.setProperty("--mn-kbh", `${gap}px`);
+        app.style.setProperty("--mn-vvtop", `${Math.round(vv.offsetTop)}px`);
+        app.toggleClass("is-kb", gap > KEYBOARD_MIN);
       };
       vv.addEventListener("resize", kb);
       vv.addEventListener("scroll", kb);

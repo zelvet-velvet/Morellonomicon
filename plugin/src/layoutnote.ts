@@ -183,6 +183,16 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
         for (const [k, v] of Object.entries(KINDS)) kind.createEl("option", { text: v.name, attr: { value: k } });
         kind.value = b.kind;
         kind.addEventListener("change", () => { b.kind = kind.value; changed(page); draw(); });
+        // the block's place in the page's list: its reading order, and later blocks are drawn on top of earlier ones
+        const ord = row("Order");
+        const at = page.blocks.indexOf(b);
+        ord.createSpan({ cls: "mn-lay-ord", text: `${at + 1} / ${page.blocks.length}` });
+        const move = (to: number) => { page.blocks.splice(at, 1); page.blocks.splice(clamp(to, 0, page.blocks.length), 0, b); changed(page); draw(); };
+        for (const [ic, label, to] of [["chevrons-up", "First", 0], ["chevron-up", "Earlier", at - 1], ["chevron-down", "Later", at + 1], ["chevrons-down", "Last", page.blocks.length]] as [string, string, number][]) {
+            const bt = ord.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": label } });
+            icon(bt, ic);
+            bt.addEventListener("click", () => move(to));
+        }
         const nums = row("x y w h");
         for (const key of ["x", "y", "w", "h"] as const) {
             const n = nums.createEl("input", { cls: "mn-lay-num", attr: { type: "number", value: String(b[key]), step: String(SNAP) } });
