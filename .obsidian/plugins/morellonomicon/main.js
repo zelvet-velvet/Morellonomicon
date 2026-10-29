@@ -985,107 +985,102 @@ function slideSeg(seg, key = "", opt = {}) {
 
 // src/iconsnote.ts
 var import_obsidian3 = require("obsidian");
-var NOTE = "Review/Icons.md";
-var NAME = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
-var COLOUR = /^(?:--[\w-]+|#[0-9a-fA-F]{3,8})$/;
+var HEX = /^#[0-9a-fA-F]{6}$/;
+var LIST_ID = "mn-lucide-ids";
 var toHex = (rgb) => {
   const m = rgb.match(/\d+(?:\.\d+)?/g);
   return m && m.length >= 3 ? "#" + m.slice(0, 3).map((n) => Math.round(Number(n)).toString(16).padStart(2, "0")).join("") : "";
 };
-function colourReader() {
+var parse = (line) => {
+  const f = line.split("|").map((s) => s.trim());
+  let variable = "", hex = "";
+  for (const x of f.slice(2)) {
+    if (x.startsWith("--")) variable = x;
+    else if (/^#[0-9a-fA-F]{3,8}$/.test(x)) hex = x.toLowerCase();
+  }
+  return { label: f[0] ?? "", name: f[1] ?? "", variable, hex };
+};
+var serialise = (r) => [r.label, r.name, r.variable, r.hex].filter((x, i) => i < 2 || x).join(" | ");
+function iconsBlock(plugin, source, el, ctx) {
+  const ids = (0, import_obsidian3.getIconIds)().map((i) => i.replace(/^lucide-/, ""));
+  const known = new Set(ids);
   const probe = document.body.createDiv({ cls: "mn-app mn-icprobe" });
-  return { read: (c) => {
-    if (!c.startsWith("--")) return c;
-    probe.style.color = `var(${c})`;
-    return getComputedStyle(probe).color;
-  }, done: () => probe.remove() };
-}
-function iconsBlock(source, el) {
-  const ids = new Set((0, import_obsidian3.getIconIds)());
-  const known = (n) => ids.has(n) || ids.has(`lucide-${n}`);
-  const probe = document.body.createDiv({ cls: "mn-app mn-icprobe" });
-  const resolve = (c) => {
-    if (!c.startsWith("--")) return c;
-    probe.style.color = `var(${c})`;
-    return getComputedStyle(probe).color;
+  const current = (r) => {
+    if (r.hex) return r.hex.length === 7 ? r.hex : "#888888";
+    if (!r.variable) return "";
+    probe.style.color = `var(${r.variable})`;
+    return toHex(getComputedStyle(probe).color);
   };
-  const hex = (rgb) => {
-    const m = rgb.match(/\d+(?:\.\d+)?/g);
-    return m && m.length >= 3 ? "#" + m.slice(0, 3).map((n) => Math.round(Number(n)).toString(16).padStart(2, "0")).join("") : "";
-  };
+  const info = ctx.getSectionInfo(el);
   const list2 = el.createDiv({ cls: "mn-iclist" });
-  for (const line of source.split("\n")) {
-    const [label = "", name = "", colour0 = "", fixed = ""] = line.split("|").map((s) => s.trim());
-    const colour = /^#[0-9a-fA-F]{3,8}$/.test(fixed) ? fixed : colour0;
-    if (!label && !name) continue;
+  const dl = list2.createEl("datalist", { attr: { id: LIST_ID } });
+  for (const id of ids) dl.createEl("option", { attr: { value: id } });
+  const save = (i, r) => {
+    const file = plugin.app.vault.getAbstractFileByPath(ctx.sourcePath);
+    if (!info || !(file instanceof import_obsidian3.TFile)) return;
+    void plugin.app.vault.process(file, (data) => {
+      const lines = data.split("\n");
+      lines[info.lineStart + 1 + i] = serialise(r);
+      return lines.join("\n");
+    });
+  };
+  source.split("\n").forEach((line, i) => {
+    if (!line.trim()) return;
+    const r = parse(line);
     const row2 = list2.createDiv({ cls: "mn-icrow" });
     const pic = row2.createSpan({ cls: "mn-icbig" });
-    if (known(name)) {
-      if (COLOUR.test(colour)) pic.style.color = resolve(colour);
-      (0, import_obsidian3.setIcon)(pic, name);
-    } else pic.setText("?");
-    row2.createSpan({ cls: "mn-iclabel", text: label });
-    row2.createEl("code", { cls: known(name) ? "mn-icname" : "mn-icname mn-icbad", text: name || "(no icon)" });
-    row2.createSpan({ cls: "mn-icsw", attr: { style: COLOUR.test(colour) ? `background:${resolve(colour)}` : "visibility:hidden" } });
-    row2.createEl("code", { cls: "mn-iccol", text: colour0.startsWith("--") ? colour0 : "" });
-    row2.createEl("code", { cls: "mn-ichex", text: COLOUR.test(colour) ? hex(resolve(colour)) : "" });
-  }
+    const label = row2.createDiv({ cls: "mn-iclabel", text: r.label });
+    if (r.variable) label.createSpan({ cls: "mn-icvar", text: r.variable });
+    const ctl = row2.createDiv({ cls: "mn-icctl" });
+    const name = ctl.createEl("input", { cls: "mn-icin", attr: { type: "text", list: LIST_ID, value: r.name, placeholder: "lucide name", spellcheck: "false", autocapitalize: "off", autocomplete: "off" } });
+    const pick = ctl.createEl("input", { cls: "mn-icpick", attr: { type: "color" } });
+    const hex = ctl.createEl("input", { cls: "mn-icin mn-ichexin", attr: { type: "text", placeholder: "#hex", spellcheck: "false", autocapitalize: "off" } });
+    const reset = ctl.createEl("button", { cls: "mn-icreset", attr: { "aria-label": "Use the app's colour" } });
+    (0, import_obsidian3.setIcon)(reset, "rotate-ccw");
+    const draw = () => {
+      const c = current(r);
+      pic.empty();
+      pic.style.color = c || "";
+      if (known.has(r.name)) (0, import_obsidian3.setIcon)(pic, r.name);
+      else pic.setText("?");
+      name.toggleClass("is-bad", !known.has(r.name));
+      if (HEX.test(c)) pick.value = c;
+      hex.value = r.hex;
+      hex.placeholder = c || "#hex";
+      reset.toggleClass("is-hidden", !r.hex || !r.variable);
+    };
+    draw();
+    name.addEventListener("change", () => {
+      r.name = name.value.trim().toLowerCase().replace(/^lucide-/, "");
+      draw();
+      if (known.has(r.name)) save(i, r);
+    });
+    pick.addEventListener("input", () => {
+      r.hex = pick.value.toLowerCase();
+      draw();
+    });
+    pick.addEventListener("change", () => {
+      r.hex = pick.value.toLowerCase();
+      draw();
+      save(i, r);
+    });
+    hex.addEventListener("change", () => {
+      const v = hex.value.trim().toLowerCase().replace(/^(?=[0-9a-f]{6}$)/, "#");
+      r.hex = HEX.test(v) ? v : "";
+      draw();
+      save(i, r);
+    });
+    reset.addEventListener("click", (e) => {
+      e.preventDefault();
+      r.hex = "";
+      draw();
+      save(i, r);
+    });
+  });
   probe.remove();
 }
 function registerIconsNote(plugin) {
-  plugin.addCommand({ id: "icons-fill-hex", name: "Icons note: write each colour's hex into the lines", callback: async () => {
-    const file = plugin.app.vault.getAbstractFileByPath(NOTE);
-    if (!(file instanceof import_obsidian3.TFile)) return;
-    const rd = colourReader();
-    let inside = false;
-    const out = (await plugin.app.vault.read(file)).split("\n").map((line) => {
-      if (line.startsWith("```")) {
-        inside = line.startsWith("```mn-icons") ? true : false;
-        return line;
-      }
-      if (!inside) return line;
-      const f = line.split("|").map((s) => s.trim());
-      if (f.length < 3 || !f[2].startsWith("--") || f.length > 3) return line;
-      const hex = toHex(rd.read(f[2]));
-      return hex ? `${f[0]} | ${f[1]} | ${f[2]} | ${hex}` : line;
-    });
-    rd.done();
-    await plugin.app.vault.modify(file, out.join("\n"));
-  } });
-  plugin.registerMarkdownCodeBlockProcessor("mn-icons", iconsBlock);
-  plugin.registerMarkdownPostProcessor((el, ctx) => {
-    if (ctx.sourcePath !== NOTE) return;
-    const ids = new Set((0, import_obsidian3.getIconIds)());
-    const known = (n) => ids.has(n) || ids.has(`lucide-${n}`);
-    const probe = document.body.createDiv({ cls: "mn-app mn-icprobe" });
-    const resolve = (c) => {
-      if (!c.startsWith("--")) return c;
-      probe.style.color = `var(${c})`;
-      return getComputedStyle(probe).color;
-    };
-    try {
-      for (const code of Array.from(el.querySelectorAll("code"))) {
-        if (code.closest(".mn-iclist")) continue;
-        const text = (code.textContent ?? "").trim();
-        if (COLOUR.test(text)) {
-          code.parentElement?.insertBefore(createSpan({ cls: "mn-icsw", attr: { style: `background:${resolve(text)}` } }), code);
-        } else if (NAME.test(text) && !text.includes("--")) {
-          const row2 = code.closest("tr");
-          const colour = Array.from(row2?.querySelectorAll("code") ?? []).map((c) => (c.textContent ?? "").trim()).find((t) => COLOUR.test(t));
-          if (!known(text)) {
-            if (row2) code.addClass("mn-icbad");
-            continue;
-          }
-          const span = createSpan({ cls: "mn-icprev" });
-          if (colour) span.style.color = resolve(colour);
-          (0, import_obsidian3.setIcon)(span, text);
-          code.parentElement?.insertBefore(span, code);
-        }
-      }
-    } finally {
-      probe.remove();
-    }
-  });
+  plugin.registerMarkdownCodeBlockProcessor("mn-icons", (source, el, ctx) => iconsBlock(plugin, source, el, ctx));
 }
 
 // src/settings.ts

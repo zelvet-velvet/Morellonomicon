@@ -976,21 +976,18 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app button:is(.mn-rq-x, .mn-with-b, .mn-rq-lk):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card-hi); }
 .mn-app button.mn-hb-tile:is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }   /* its fill is a gradient image, the colour under it stays clear */
 
-/* Review/Icons.md: the icon and the colour drawn next to each name (src/iconsnote.ts) */
-.mn-icprev { display: inline-flex; vertical-align: -4px; margin-right: 6px; }
-.mn-icprev svg { width: 20px; height: 20px; }
-.mn-icsw { display: inline-block; width: 14px; height: 14px; border-radius: 4px; margin-right: 6px; vertical-align: -2px; border: 1px solid var(--background-modifier-border); }
-.mn-icbad { color: var(--color-red); }
+/* Review/Icons.md: the icon editor (src/iconsnote.ts) */
 .mn-icprobe { position: absolute; width: 0; height: 0; overflow: hidden; visibility: hidden; }
-.mn-iclist { display: flex; flex-direction: column; gap: 2px; }
-.mn-icrow { display: grid; grid-template-columns: 34px minmax(0, 1fr) 160px 16px 124px 72px; align-items: center; gap: 10px; padding: 5px 4px; border-bottom: 1px solid var(--background-modifier-border); }
-.mn-icbig { display: inline-flex; justify-content: center; font-weight: 700; }
-.mn-icbig .svg-icon { color: inherit; }   /* Obsidian colours .svg-icon itself; the row's colour must win */
-.mn-icbig svg { width: 26px; height: 26px; }
-.mn-iclabel { min-width: 0; }
-.mn-icname { justify-self: start; }
-.mn-icrow code { font-size: 12px !important; line-height: 1.5; padding: 1px 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; justify-self: start; max-width: 100%; }
-.mn-ichex { font-weight: 700; }
-.mn-iccol:empty, .mn-ichex:empty { background: none; }
-.mn-iccol { opacity: 0.7; }
-@media (max-width: 520px) { .mn-icrow { grid-template-columns: 30px minmax(0, 1fr) auto 16px auto; } .mn-iccol { display: none; } }
+.mn-iclist { display: flex; flex-direction: column; }
+.mn-icrow { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 12px; row-gap: 6px; align-items: center; padding: 10px 2px; border-bottom: 1px solid var(--background-modifier-border); }
+.mn-icbig { grid-row: 1 / span 2; display: flex; justify-content: center; align-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--background-secondary); font-weight: 700; }
+.mn-icbig .svg-icon { color: inherit; width: 26px; height: 26px; }
+.mn-iclabel { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; min-width: 0; }
+.mn-icvar { font-size: 11px; color: var(--text-faint); font-family: var(--font-monospace); }
+.mn-icctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.mn-icctl input.mn-icin { height: 32px; font-size: 14px; font-family: var(--font-monospace); width: 190px; max-width: 100%; }
+.mn-icctl input.mn-ichexin { width: 100px; }
+.mn-icctl input.is-bad { border-color: var(--color-red); color: var(--color-red); }
+.mn-icctl input.mn-icpick { width: 44px; height: 32px; padding: 2px; border-radius: 8px; cursor: pointer; }
+.mn-icctl button.mn-icreset { width: 32px; height: 32px; padding: 0; display: grid; place-items: center; }
+.mn-icctl button.mn-icreset.is-hidden { display: none; }
