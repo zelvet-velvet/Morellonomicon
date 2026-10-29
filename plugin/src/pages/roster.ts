@@ -566,7 +566,7 @@ export function swipePage(ctx: PageCtx): PageOut {
     // after the last card: the liked champions two across (picture, name, overview line), and a way to swipe again
     const likedGrid = (box: HTMLElement) => {
         const head = h(box, "div", "mn-rq-endhead");
-        h(head, "b", undefined, "你喜歡的英雄");
+        h(head, "b", undefined, "Pick Me Up!");
         h(head, "span", undefined, `${liked.length} / ${picks.length} 位`);
         const list = h(box, "div", "mn-rq-endlist");   // only this part scrolls
         if (liked.length) {
@@ -585,13 +585,14 @@ export function swipePage(ctx: PageCtx): PageOut {
                 b.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); });
             }
         } else empty(list, { icon: "heart-off", title: "一個都沒喜歡" });
+        // the two actions float over the portraits in one row (no panel behind them)
         const foot = h(box, "div", "mn-rq-endfoot");
+        const back = h(foot, "button", "mn-rq-back", "重新挑選");
+        back.addEventListener("click", (e) => { e.preventDefault(); ctx.pop(); });
         const again = h(foot, "button", "mn-rq-go");
         icon(again, "rotate-ccw");
         again.append("再滑一次");
         again.addEventListener("click", (e) => { e.preventDefault(); restart(); });
-        const back = h(foot, "button", "mn-rq-again", "重新挑選英雄");
-        back.addEventListener("click", (e) => { e.preventDefault(); ctx.pop(); });
     };
 
 

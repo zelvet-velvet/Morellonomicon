@@ -5808,7 +5808,7 @@ function swipePage(ctx) {
   };
   const likedGrid = (box) => {
     const head2 = h(box, "div", "mn-rq-endhead");
-    h(head2, "b", void 0, "\u4F60\u559C\u6B61\u7684\u82F1\u96C4");
+    h(head2, "b", void 0, "Pick Me Up!");
     h(head2, "span", void 0, `${liked.length} / ${picks.length} \u4F4D`);
     const list2 = h(box, "div", "mn-rq-endlist");
     if (liked.length) {
@@ -5833,17 +5833,17 @@ function swipePage(ctx) {
       }
     } else empty(list2, { icon: "heart-off", title: "\u4E00\u500B\u90FD\u6C92\u559C\u6B61" });
     const foot = h(box, "div", "mn-rq-endfoot");
+    const back = h(foot, "button", "mn-rq-back", "\u91CD\u65B0\u6311\u9078");
+    back.addEventListener("click", (e) => {
+      e.preventDefault();
+      ctx.pop();
+    });
     const again = h(foot, "button", "mn-rq-go");
     icon(again, "rotate-ccw");
     again.append("\u518D\u6ED1\u4E00\u6B21");
     again.addEventListener("click", (e) => {
       e.preventDefault();
       restart();
-    });
-    const back = h(foot, "button", "mn-rq-again", "\u91CD\u65B0\u6311\u9078\u82F1\u96C4");
-    back.addEventListener("click", (e) => {
-      e.preventDefault();
-      ctx.pop();
     });
   };
   drawResults();
