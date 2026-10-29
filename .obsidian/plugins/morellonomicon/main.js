@@ -2984,7 +2984,7 @@ function championPicker(parent, ctx) {
       } });
     }
     const n = activeFilters();
-    row2.append(count2);
+    row2.prepend(count2);
     fbHost.empty();
     const fb = h(fbHost, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
     fb.setAttribute("aria-label", "\u7BE9\u9078");

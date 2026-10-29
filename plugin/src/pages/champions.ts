@@ -99,7 +99,7 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
     // always in view: the five lanes and the 篩選 button; everything else is in the folding panel
     const drawFilters = () => {
         filters.empty();
-        // one slim bar like the Items page's role tabs: the five lanes, then how many champions show, at the right
+        // one slim bar like the Items page's role tabs: how many champions show at the left, the five lanes at the right (like Picks)
         const row = h(filters, "div", "mn-lanebar");
         const known = store.hasLanes();
         for (const l of LANES) {
@@ -110,7 +110,7 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
             } });
         }
         const n = activeFilters();
-        row.append(count);
+        row.prepend(count);
         fbHost.empty();
         const fb = h(fbHost, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
         fb.setAttribute("aria-label", "篩選");

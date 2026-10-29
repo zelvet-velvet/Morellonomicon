@@ -1220,7 +1220,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* the chosen lane: an underline as wide as the icon, lying on the bar's line (Picks and Champions) */
 .mn-app :is(.mn-rq-lanes, .mn-lanebar) .mn-chip.mn-chip-ic.is-on::after { bottom: -6px; left: 4px; right: 4px; width: auto; height: 3px; margin: 0; border-radius: 2px; background: var(--mn-text); }
 .mn-lanebar .mn-chip-ic img, .mn-lanebar .mn-chip-ic svg { width: 24px; height: 24px; }
-.mn-lanebar .mn-count { margin: 0 2px 0 auto; font-variant-numeric: tabular-nums; }
+.mn-lanebar .mn-count { margin: 0 auto 0 2px; font-variant-numeric: tabular-nums; }
 .mn-fgroup:has(.mn-lanebar) { margin: 6px 0 8px; }
 
 /* Dev Tools/Layouts.md: the layout editor (src/layoutnote.ts). Phones in the app's dark look, blocks as colour-coded dashed zones */
