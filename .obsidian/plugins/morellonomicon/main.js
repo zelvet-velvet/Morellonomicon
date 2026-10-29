@@ -5764,7 +5764,7 @@ function renderPage(tab, ctx) {
 
 // src/view.ts
 var VIEW_TYPE = "morellonomicon";
-var CAPSULE_MS = 300;
+var CAPSULE_TAU = 65;
 var KEYBOARD_GAP = 8;
 var OVERLAY_PAGES = /* @__PURE__ */ new Set(["champion"]);
 var IMMERSIVE_PAGES = /* @__PURE__ */ new Set(["rosterswipe"]);
@@ -5849,8 +5849,10 @@ var MnView = class extends import_obsidian12.ItemView {
     const vv = window.visualViewport;
     let kbEvent = 0;
     let dock = null;
+    let typing = false;
     let shown = 0;
-    let anim = 0;
+    let at = null;
+    let raf = 0, last = 0;
     const readout = h(app, "div", "mn-kbread is-hidden");
     const visibleBottom = () => {
       const tells = [window.innerHeight];
@@ -5858,52 +5860,80 @@ var MnView = class extends import_obsidian12.ItemView {
       if (kbEvent) tells.push(window.innerHeight - kbEvent);
       return Math.min(...tells);
     };
-    const wanted = (d, typing2) => {
-      if (!typing2) return 0;
-      const r = d.getBoundingClientRect(), naturalBottom = r.bottom - shown;
-      return Math.min(0, Math.round(visibleBottom() - KEYBOARD_GAP - naturalBottom));
+    const put = (d, natural2) => {
+      shown = Math.round((at ?? natural2) - natural2);
+      d.style.transform = shown ? `translateY(${shown}px)` : "";
+      if (this.plugin.settings.kbDebug) {
+        readout.removeClass("is-hidden");
+        readout.setText(`inner ${window.innerHeight} \xB7 vv ${vv ? `${Math.round(vv.height)}+${Math.round(vv.offsetTop)}` : "-"} \xB7 event ${kbEvent} \xB7 offset ${shown}`);
+      }
     };
-    const glide = (d, typing2) => {
-      cancelAnimationFrame(anim);
-      const startTop = d.getBoundingClientRect().top, t0 = performance.now();
-      d.addClass("is-moving");
-      d.style.transition = "none";
-      const step = (now) => {
-        const p = Math.min(1, (now - t0) / CAPSULE_MS), e = 1 - Math.pow(1 - p, 3);
+    const natural = (d) => d.getBoundingClientRect().top - shown;
+    const hold = () => {
+      if (dock && at !== null) put(dock, natural(dock));
+    };
+    const done = (d) => {
+      raf = 0;
+      at = null;
+      d.removeClass("is-moving");
+      if (!typing) {
+        d.removeClass("is-typing");
         d.style.transform = "";
-        const natural = d.getBoundingClientRect().top;
-        const target = natural + wanted(d, typing2);
-        shown = Math.round(startTop + (target - startTop) * e - natural);
-        d.style.transform = shown ? `translateY(${shown}px)` : "";
-        if (this.plugin.settings.kbDebug) {
-          readout.removeClass("is-hidden");
-          readout.setText(`inner ${window.innerHeight} \xB7 vv ${vv ? `${Math.round(vv.height)}+${Math.round(vv.offsetTop)}` : "-"} \xB7 event ${kbEvent} \xB7 offset ${shown}`);
-        }
-        if (p < 1) {
-          anim = requestAnimationFrame(step);
-          return;
-        }
-        d.removeClass("is-moving");
-        if (!typing2) {
-          d.style.transition = "";
-          d.removeClass("is-typing");
-          if (dock === d) dock = null;
-          readout.addClass("is-hidden");
-        }
-      };
-      anim = requestAnimationFrame(step);
+        shown = 0;
+        if (dock === d) dock = null;
+        readout.addClass("is-hidden");
+      }
     };
-    let typing = false;
+    const step = (now) => {
+      const d = dock;
+      if (!d || !d.isConnected) {
+        raf = 0;
+        at = null;
+        shown = 0;
+        dock = null;
+        return;
+      }
+      const dt = Math.min(48, now - last);
+      last = now;
+      const nat = natural(d), r = d.getBoundingClientRect();
+      const lift2 = typing ? Math.min(0, visibleBottom() - KEYBOARD_GAP - (r.bottom - shown)) : 0;
+      const goal = nat + lift2;
+      at = at ?? r.top;
+      at += (goal - at) * (1 - Math.exp(-dt / CAPSULE_TAU));
+      if (Math.abs(goal - at) < 0.5) at = goal;
+      put(d, nat);
+      if (at === goal) {
+        done(d);
+        return;
+      }
+      raf = requestAnimationFrame(step);
+    };
     const changed = () => {
-      if (dock) glide(dock, typing);
+      const d = dock;
+      if (!d) return;
+      if (at === null) at = d.getBoundingClientRect().top;
+      d.addClass("is-moving");
+      if (!raf) {
+        last = performance.now();
+        raf = requestAnimationFrame(step);
+      }
     };
-    this.registerDomEvent(app, "focusin", (e) => {
-      const d = e.target?.closest?.(".mn-rq-dock");
-      if (!d || !e.target.matches("input")) return;
+    const dockOf = (t) => t instanceof HTMLInputElement && app.contains(t) ? t.closest(".mn-rq-dock") : null;
+    const startTyping = (d) => {
+      if (dock && dock !== d) {
+        dock.style.transform = "";
+        dock.removeClass("is-typing", "is-moving");
+        at = null;
+        shown = 0;
+      }
       dock = d;
       typing = true;
       d.addClass("is-typing");
       changed();
+    };
+    this.registerDomEvent(app, "focusin", (e) => {
+      const d = dockOf(e.target);
+      if (d) startTyping(d);
     });
     this.registerDomEvent(app, "focusout", (e) => {
       const to = e.relatedTarget;
@@ -5914,11 +5944,14 @@ var MnView = class extends import_obsidian12.ItemView {
     });
     const onShow = (e) => {
       kbEvent = Math.round(e.keyboardHeight ?? 0);
-      changed();
+      const d = dockOf(document.activeElement);
+      if (d && (!typing || dock !== d)) startTyping(d);
+      else changed();
     };
     const onHide = () => {
       kbEvent = 0;
       typing = false;
+      if (dockOf(document.activeElement)) document.activeElement.blur();
       changed();
     };
     for (const [n, f] of [["keyboardWillShow", onShow], ["keyboardWillHide", onHide]]) {
@@ -5930,6 +5963,16 @@ var MnView = class extends import_obsidian12.ItemView {
       vv.addEventListener("resize", changed);
       this.register(() => vv.removeEventListener("resize", changed));
     }
+    const sized = new ResizeObserver(() => {
+      hold();
+      changed();
+    });
+    sized.observe(app);
+    sized.observe(this.scrollEl);
+    this.register(() => {
+      sized.disconnect();
+      cancelAnimationFrame(raf);
+    });
     this.registerDomEvent(this.scrollEl, "scroll", () => this.markScrolled(), { passive: true });
     const late = new MutationObserver((list2) => {
       for (const m of list2) m.addedNodes.forEach((n) => {
