@@ -10,7 +10,6 @@ import { cardPile } from "./pile";
 import { damageLines, reachOf, styleCard } from "./profile";
 
 const MAX_PICKS = 15;   // a Mayhem game can hand you a lot of champions
-const BTN_ROOM = 84;   // px under the 速查 pile kept for the ✕ / ♥ buttons
 const SPLIT = /[\s,，、;；和跟與及]+/;
 // the swipe through the picked champions (in its own full-screen page): where it is and which were liked; both start over when the picks change
 let swipeAt = 0, swipeLiked: string[] = [], swipeSig = "";
@@ -172,11 +171,16 @@ export function rosterPage(ctx: PageCtx): PageOut {
     const lanes = fgrid(el, LANES.length);
     lanes.addClass("mn-rq-lanes");
     const grid = h(el, "div", "mn-faces");
-    const go = h(el, "button", "mn-rq-go");
+    const bar = h(el, "div", "mn-rq-gobar");
+    const go = h(bar, "button", "mn-rq-go");
     icon(go, "layers");
     const goText = h(go, "span");
     go.addEventListener("click", (e) => { e.preventDefault(); ctx.push({ key: "rosterswipe", title: "速查" }); });
-    const drawCount = () => { go.toggleClass("is-hidden", !picks.length); goText.textContent = `選好了 · ${picks.length} 位,開始滑`; };
+    const clearAll = h(bar, "button", "mn-rq-clear");
+    icon(clearAll, "trash-2");
+    clearAll.setAttribute("aria-label", "全部清除");
+    clearAll.addEventListener("click", (e) => { e.preventDefault(); picks = []; save(); drawCount(); drawGrid(); if (query) drawSuggest(); });
+    const drawCount = () => { bar.toggleClass("is-hidden", !picks.length); goText.textContent = `選好了 · ${picks.length} 位,開始滑`; };
 
     const toggle = (id: string) => {
         if (picks.includes(id)) picks = picks.filter((p) => p !== id);
@@ -275,8 +279,7 @@ export function swipePage(ctx: PageCtx): PageOut {
     const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)] as const));
     if (swipeSig !== picks.join(",")) { swipeSig = picks.join(","); swipeAt = 0; swipeLiked = []; }
     let at = swipeAt, liked = swipeLiked;
-    const titleRow = h(el, "div", "mn-title-row");
-    h(titleRow, "h1", "mn-title", "速查");
+    // full screen like Tinder: no title or Back (the Champions tab button goes back), the card reaches the tab bar
     const results = h(el, "div", "mn-rq-results");
     const restart = () => { at = swipeAt = 0; liked = swipeLiked = []; drawResults(); };
     // A picked champion as a card of four tabs, switched by tapping the right half (next) or the left half (back), like Tinder's photos;
@@ -315,7 +318,7 @@ export function swipePage(ctx: PageCtx): PageOut {
         // 1 · 概覽
         const look = tabs[0];
         const im = h(look, "img", "mn-qc-splash");
-        im.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/centered/${encodeURIComponent(c.id)}_0.jpg`;
+        im.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(c.id)}_0.jpg`;   // the loading screen art: portrait, like the card
         im.alt = "";
         if (c.face) im.style.objectPosition = c.face;
         const tiles = h(look, "div", "mn-qc-tiles");
@@ -397,13 +400,12 @@ export function swipePage(ctx: PageCtx): PageOut {
     const drawResults = () => {
         results.empty();
         if (!picks.length) { empty(results, { icon: "users", title: "還沒選英雄" }); return; }
-        const head = h(results, "div", "mn-rq-head");
         const done = at >= picks.length;
-        const progress = () => (at >= picks.length ? `喜歡的英雄 · ${liked.length}` : `${at + 1} / ${picks.length} · 喜歡 ${liked.length}`);
-        const count = h(head, "span", "mn-rq-count", progress());
-        const clear = h(head, "button", "mn-clear", "全部清除");
-        clear.addEventListener("click", (e) => { e.preventDefault(); picks = []; void ctx.plugin.setRoster(picks); swipeSig = ""; ctx.pop(); });
         if (done) {
+            const head = h(results, "div", "mn-rq-head");
+            h(head, "span", "mn-rq-count", `喜歡的英雄 · ${liked.length}`);
+            const back = h(head, "button", "mn-clear", "重新挑選");
+            back.addEventListener("click", (e) => { e.preventDefault(); ctx.pop(); });
             const box = h(results, "div", "mn-rq-end");
             const fitEnd = () => {
                 const scroll = el.closest<HTMLElement>(".mn-scroll");
@@ -416,7 +418,7 @@ export function swipePage(ctx: PageCtx): PageOut {
         }
         // the picked champions as the Handbook's pile of cards (pile.ts, judge mode): swipe the top one right (or ♥) to like it,
         // left (or ✕) to pass; a 喜歡 / 略過 stamp shows on it while dragged
-        const wrap = h(results, "div", "mn-deckwrap mn-rq-deck");
+        const wrap = h(results, "div", "mn-deckwrap mn-rq-deck");   // the ✕ / ♥ buttons float on the card's lower edge (inside wrap)
         const pager = h(wrap, "div", "mn-pager");
         for (const ev of ["touchstart", "touchmove"]) pager.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });   // not Obsidian's edge swipes
         const ids = picks.slice(at);
@@ -431,22 +433,27 @@ export function swipePage(ctx: PageCtx): PageOut {
             // a big ♥ (like) and ✕ (pass) over the middle of the card; the one for the drag's side grows in as the card is dragged
             const st = h(section.firstElementChild as HTMLElement, "div", "mn-rq-stamp");
             icon(st, "heart", "mn-rq-st-like");
-            icon(st, "x", "mn-rq-st-pass");
+            icon(st, "x", "mn-rq-st-pass");   // both huge; the one for the drag's side shows, and bounces once the swipe is far enough
             stamps.push(st);
             sec.push(section);
         }
+        let armed = false;
         const pile = cardPile(pager, sec, {
             judge: true,
+            flat: true,
             onLayout: (cur) => sec.forEach((c, i) => { c.style.visibility = i >= cur - 1 && i <= cur + 2 ? "" : "hidden"; }),
             onDrag: (dx, w) => {
                 const st = stamps[pile?.cur ?? 0];
                 if (!st) return;
                 const k = Math.min(1, Math.abs(dx) / (w * SWIPE.at));
                 st.toggleClass("is-like", dx > 0);
-                st.style.opacity = String(k);
+                st.style.opacity = String(Math.min(1, k * 1.4));
                 st.style.setProperty("--k", String(k));
+                if (k >= 1 && !armed) { st.removeClass("is-pop"); void st.offsetWidth; st.addClass("is-pop"); }   // far enough: it bounces
+                armed = k >= 1;
+                if (!dx) st.removeClass("is-pop");
             },
-            onJudge: (i, like) => { at = ++swipeAt; if (like) swipeLiked = liked = [...liked, ids[i]]; count.textContent = progress(); },
+            onJudge: (i, like) => { at = ++swipeAt; armed = false; if (like) swipeLiked = liked = [...liked, ids[i]]; },
             onEnd: () => drawResults(),
         });
         pile.layout(false);
@@ -455,14 +462,20 @@ export function swipePage(ctx: PageCtx): PageOut {
             const scroll = el.closest<HTMLElement>(".mn-scroll");
             if (!scroll || !wrap.isConnected) return;
             const top = wrap.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
-            wrap.style.height = `${Math.max(380, scroll.clientHeight - top - DECK_BELOW - BTN_ROOM)}px`;
+            wrap.style.height = `${Math.max(380, scroll.clientHeight - top - DECK_BELOW)}px`;
         };
         requestAnimationFrame(fit);
-        const btns = h(results, "div", "mn-rq-btns");
+        const btns = h(wrap, "div", "mn-rq-btns");
         const no = h(btns, "button", "mn-rq-no"); icon(no, "x"); no.setAttribute("aria-label", "略過");
         const yes = h(btns, "button", "mn-rq-yes"); icon(yes, "heart"); yes.setAttribute("aria-label", "喜歡");
-        no.addEventListener("click", (e) => { e.preventDefault(); pile.decide(false); });
-        yes.addEventListener("click", (e) => { e.preventDefault(); pile.decide(true); });
+        // a button shows its stamp with the bounce first, then the card goes
+        const press = (like: boolean) => {
+            const st = stamps[pile.cur];
+            if (st) { st.toggleClass("is-like", like); st.style.opacity = "1"; st.style.setProperty("--k", "1"); st.removeClass("is-pop"); void st.offsetWidth; st.addClass("is-pop"); }
+            window.setTimeout(() => pile.decide(like), 160);
+        };
+        no.addEventListener("click", (e) => { e.preventDefault(); press(false); });
+        yes.addEventListener("click", (e) => { e.preventDefault(); press(true); });
     };
     // after the last card: the liked champions two across (picture, name, overview line), and a way to swipe again
     const likedGrid = (results: HTMLElement) => {

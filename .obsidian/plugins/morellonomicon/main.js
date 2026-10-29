@@ -2921,8 +2921,8 @@ function cardPile(pager, sec, o) {
       deg = s * u * TILT;
     } else {
       const k = Math.min(FAN.length - 1, Math.floor(u)), a = FAN[k], b = FAN[Math.min(FAN.length - 1, k + 1)];
-      deg = a + (b - a) * (u - k);
-      y = Math.min(u, 2) * STEP_Y;
+      deg = o.flat ? 0 : a + (b - a) * (u - k);
+      y = o.flat ? 0 : Math.min(u, 2) * STEP_Y;
       if (u > 2) op = String(Math.max(0, 3 - u));
     }
     el.style.transform = `translateX(${x.toFixed(1)}px) translateY(${y.toFixed(1)}px) rotate(${deg.toFixed(2)}deg)`;
@@ -4116,7 +4116,6 @@ function mayhemSection(el, ctx, n) {
 // src/pages/roster.ts
 var import_obsidian9 = require("obsidian");
 var MAX_PICKS = 15;
-var BTN_ROOM = 84;
 var SPLIT = /[\s,，、;；和跟與及]+/;
 var swipeAt = 0;
 var swipeLiked = [];
@@ -4265,15 +4264,27 @@ function rosterPage(ctx) {
   const lanes = fgrid(el, LANES.length);
   lanes.addClass("mn-rq-lanes");
   const grid = h(el, "div", "mn-faces");
-  const go = h(el, "button", "mn-rq-go");
+  const bar = h(el, "div", "mn-rq-gobar");
+  const go = h(bar, "button", "mn-rq-go");
   icon(go, "layers");
   const goText = h(go, "span");
   go.addEventListener("click", (e) => {
     e.preventDefault();
     ctx.push({ key: "rosterswipe", title: "\u901F\u67E5" });
   });
+  const clearAll = h(bar, "button", "mn-rq-clear");
+  icon(clearAll, "trash-2");
+  clearAll.setAttribute("aria-label", "\u5168\u90E8\u6E05\u9664");
+  clearAll.addEventListener("click", (e) => {
+    e.preventDefault();
+    picks = [];
+    save();
+    drawCount();
+    drawGrid();
+    if (query) drawSuggest();
+  });
   const drawCount = () => {
-    go.toggleClass("is-hidden", !picks.length);
+    bar.toggleClass("is-hidden", !picks.length);
     goText.textContent = `\u9078\u597D\u4E86 \xB7 ${picks.length} \u4F4D,\u958B\u59CB\u6ED1`;
   };
   const toggle = (id) => {
@@ -4394,8 +4405,6 @@ function swipePage(ctx) {
     swipeLiked = [];
   }
   let at = swipeAt, liked = swipeLiked;
-  const titleRow = h(el, "div", "mn-title-row");
-  h(titleRow, "h1", "mn-title", "\u901F\u67E5");
   const results = h(el, "div", "mn-rq-results");
   const restart = () => {
     at = swipeAt = 0;
@@ -4438,7 +4447,7 @@ function swipePage(ctx) {
     });
     const look = tabs[0];
     const im = h(look, "img", "mn-qc-splash");
-    im.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/centered/${encodeURIComponent(c.id)}_0.jpg`;
+    im.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(c.id)}_0.jpg`;
     im.alt = "";
     if (c.face) im.style.objectPosition = c.face;
     const tiles = h(look, "div", "mn-qc-tiles");
@@ -4529,19 +4538,15 @@ function swipePage(ctx) {
       empty(results, { icon: "users", title: "\u9084\u6C92\u9078\u82F1\u96C4" });
       return;
     }
-    const head2 = h(results, "div", "mn-rq-head");
     const done = at >= picks.length;
-    const progress = () => at >= picks.length ? `\u559C\u6B61\u7684\u82F1\u96C4 \xB7 ${liked.length}` : `${at + 1} / ${picks.length} \xB7 \u559C\u6B61 ${liked.length}`;
-    const count2 = h(head2, "span", "mn-rq-count", progress());
-    const clear = h(head2, "button", "mn-clear", "\u5168\u90E8\u6E05\u9664");
-    clear.addEventListener("click", (e) => {
-      e.preventDefault();
-      picks = [];
-      void ctx.plugin.setRoster(picks);
-      swipeSig = "";
-      ctx.pop();
-    });
     if (done) {
+      const head2 = h(results, "div", "mn-rq-head");
+      h(head2, "span", "mn-rq-count", `\u559C\u6B61\u7684\u82F1\u96C4 \xB7 ${liked.length}`);
+      const back = h(head2, "button", "mn-clear", "\u91CD\u65B0\u6311\u9078");
+      back.addEventListener("click", (e) => {
+        e.preventDefault();
+        ctx.pop();
+      });
       const box = h(results, "div", "mn-rq-end");
       const fitEnd = () => {
         const scroll = el.closest(".mn-scroll");
@@ -4570,8 +4575,10 @@ function swipePage(ctx) {
       stamps.push(st);
       sec.push(section2);
     }
+    let armed = false;
     const pile = cardPile(pager, sec, {
       judge: true,
+      flat: true,
       onLayout: (cur) => sec.forEach((c, i) => {
         c.style.visibility = i >= cur - 1 && i <= cur + 2 ? "" : "hidden";
       }),
@@ -4580,13 +4587,20 @@ function swipePage(ctx) {
         if (!st) return;
         const k = Math.min(1, Math.abs(dx) / (w * SWIPE.at));
         st.toggleClass("is-like", dx > 0);
-        st.style.opacity = String(k);
+        st.style.opacity = String(Math.min(1, k * 1.4));
         st.style.setProperty("--k", String(k));
+        if (k >= 1 && !armed) {
+          st.removeClass("is-pop");
+          void st.offsetWidth;
+          st.addClass("is-pop");
+        }
+        armed = k >= 1;
+        if (!dx) st.removeClass("is-pop");
       },
       onJudge: (i, like) => {
         at = ++swipeAt;
+        armed = false;
         if (like) swipeLiked = liked = [...liked, ids[i]];
-        count2.textContent = progress();
       },
       onEnd: () => drawResults()
     });
@@ -4595,23 +4609,35 @@ function swipePage(ctx) {
       const scroll = el.closest(".mn-scroll");
       if (!scroll || !wrap.isConnected) return;
       const top = wrap.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
-      wrap.style.height = `${Math.max(380, scroll.clientHeight - top - DECK_BELOW - BTN_ROOM)}px`;
+      wrap.style.height = `${Math.max(380, scroll.clientHeight - top - DECK_BELOW)}px`;
     };
     requestAnimationFrame(fit);
-    const btns = h(results, "div", "mn-rq-btns");
+    const btns = h(wrap, "div", "mn-rq-btns");
     const no = h(btns, "button", "mn-rq-no");
     icon(no, "x");
     no.setAttribute("aria-label", "\u7565\u904E");
     const yes = h(btns, "button", "mn-rq-yes");
     icon(yes, "heart");
     yes.setAttribute("aria-label", "\u559C\u6B61");
+    const press = (like) => {
+      const st = stamps[pile.cur];
+      if (st) {
+        st.toggleClass("is-like", like);
+        st.style.opacity = "1";
+        st.style.setProperty("--k", "1");
+        st.removeClass("is-pop");
+        void st.offsetWidth;
+        st.addClass("is-pop");
+      }
+      window.setTimeout(() => pile.decide(like), 160);
+    };
     no.addEventListener("click", (e) => {
       e.preventDefault();
-      pile.decide(false);
+      press(false);
     });
     yes.addEventListener("click", (e) => {
       e.preventDefault();
-      pile.decide(true);
+      press(true);
     });
   };
   const likedGrid = (results2) => {
@@ -4679,6 +4705,7 @@ function renderPage(tab, ctx) {
 // src/view.ts
 var VIEW_TYPE = "morellonomicon";
 var OVERLAY_PAGES = /* @__PURE__ */ new Set(["champion"]);
+var IMMERSIVE_PAGES = /* @__PURE__ */ new Set(["rosterswipe"]);
 var OVERLAY_SCROLL = 220;
 var ARRIVE_MS = 240;
 function fadeIn(im) {
@@ -4940,6 +4967,7 @@ var MnView = class extends import_obsidian10.ItemView {
       this.actsEl.toggleClass("is-hidden", !titleRow);
       this.topEl.toggleClass("has-back", this.router.depth() > 0);
       this.appEl.toggleClass("is-overlay", OVERLAY_PAGES.has(f.key));
+      this.appEl.toggleClass("is-immersive", IMMERSIVE_PAGES.has(f.key));
       this.appEl.toggleClass("is-float", this.router.depth() === 0);
       this.appEl.toggleClass("is-sub", this.router.depth() > 0 && !OVERLAY_PAGES.has(f.key));
       this.markScrolled();

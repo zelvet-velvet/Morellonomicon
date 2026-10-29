@@ -14,6 +14,7 @@ const SETTLE_MS = 280; // how long a card takes to land after a swipe
 
 export interface PileHooks {
     judge?: boolean;
+    flat?: boolean;                               // the cards under the top one lie straight under it (速查), not fanned out
     onLayout?: (cur: number) => void;             // after the cards are posed: progress bars, which clips play
     onDrag?: (dx: number, width: number) => void; // while the top card is dragged (judge: a 喜歡 / 略過 stamp); 0 when it is let go
     onJudge?: (index: number, like: boolean) => void;
@@ -34,8 +35,8 @@ export function cardPile(pager: HTMLElement, sec: HTMLElement[], o: PileHooks): 
         if (u < 0) { const s = toRight ? -1 : 1; x = s * u * w; deg = s * u * TILT; }
         else {
             const k = Math.min(FAN.length - 1, Math.floor(u)), a = FAN[k], b = FAN[Math.min(FAN.length - 1, k + 1)];
-            deg = a + (b - a) * (u - k);
-            y = Math.min(u, 2) * STEP_Y;
+            deg = o.flat ? 0 : a + (b - a) * (u - k);
+            y = o.flat ? 0 : Math.min(u, 2) * STEP_Y;
             if (u > 2) op = String(Math.max(0, 3 - u));
         }
         el.style.transform = `translateX(${x.toFixed(1)}px) translateY(${y.toFixed(1)}px) rotate(${deg.toFixed(2)}deg)`;

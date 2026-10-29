@@ -12,6 +12,7 @@ export const VIEW_TYPE = "morellonomicon";
 // The app screen: top bar (back, title, mode switch), page area, tab bar. A page is drawn in one step when a tab, a detail page
 // or the data changes; scroll positions are kept per page so Back returns to where you were.
 const OVERLAY_PAGES = new Set(["champion"]);
+const IMMERSIVE_PAGES = new Set(["rosterswipe"]);   // full screen: no top bar at all (速查's swipe, like Tinder)
 const OVERLAY_SCROLL = 220;   // px scrolled before the top bar gets its background back over a splash
 const ARRIVE_MS = 240;
 
@@ -252,6 +253,7 @@ export class MnView extends ItemView {
             this.topEl.toggleClass("has-back", this.router.depth() > 0);
             // a champion page puts its splash under the top bar (Back floats on the picture) until it scrolls past it
             this.appEl.toggleClass("is-overlay", OVERLAY_PAGES.has(f.key));
+            this.appEl.toggleClass("is-immersive", IMMERSIVE_PAGES.has(f.key));
             this.appEl.toggleClass("is-float", this.router.depth() === 0);
             this.appEl.toggleClass("is-sub", this.router.depth() > 0 && !OVERLAY_PAGES.has(f.key));   // Back sits on the title's line   // a tab's first page: no empty strip above its big title
             this.markScrolled();

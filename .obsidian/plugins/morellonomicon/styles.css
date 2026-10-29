@@ -703,9 +703,12 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-x svg { width: 16px; height: 16px; }
 /* 速查 swipe: the picked champions as the Handbook's card pile (pile.ts), the top card dragged right (like) or left (pass) */
 /* the pill that floats at the bottom of 速查 once something is picked: opens the swipe page */
-.mn-app .mn-rq-go { position: sticky; bottom: 12px; z-index: 5; display: flex; align-items: center; justify-content: center; gap: 8px; width: calc(100% - 24px); max-width: 360px; height: 46px; margin: 14px auto 0; padding: 0 18px; border-radius: 23px; background: var(--mn-accent); color: var(--text-on-accent, #fff); border: 0; font-size: 15px; font-weight: 800; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28); }
+.mn-app .mn-rq-go { display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1; max-width: 320px; height: 46px; margin: 0; padding: 0 18px; border-radius: 23px; background: var(--mn-accent); color: var(--text-on-accent, #fff); border: 0; font-size: 15px; font-weight: 800; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28); }
 .mn-rq-go svg { width: 18px; height: 18px; }
-.mn-rq-go.is-hidden { display: none; }
+.mn-rq-gobar { position: sticky; bottom: 12px; z-index: 5; display: flex; justify-content: center; gap: 10px; margin: 14px 12px 0; }
+.mn-rq-gobar.is-hidden { display: none; }
+.mn-app .mn-rq-clear { flex: none; display: grid; place-items: center; width: 46px; height: 46px; padding: 0; border-radius: 50%; border: 1px solid var(--mn-line); background: var(--mn-card); color: var(--color-red); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28); }
+.mn-rq-clear svg { width: 18px; height: 18px; }
 .mn-rq-end { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }   /* the page never scrolls; the liked list does */
 .mn-rq-deck .mn-sl-card { position: relative; }   /* the ♥ / ✕ stamp sits over it */   /* the lift room lets a tilted card pass over the count line, like the Handbook bars */
 .mn-sl-face.mn-rq-face { justify-content: flex-start; overflow-y: auto; overscroll-behavior: contain; padding: 14px 14px 18px; scrollbar-width: none; }
@@ -713,19 +716,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-face .mn-rq { margin: 0; padding: 0; background: none; border: 0; cursor: default; }
 .mn-rq-face .mn-rq:active { background: none; }
 /* the big ♥ / ✕ over the middle of a dragged 速查 card (outside the face, so the card's scrolling never moves it) */
-.mn-rq-stamp { position: absolute; z-index: 3; left: 50%; top: 42%; display: grid; place-items: center; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%;
-    background: rgba(10, 12, 18, 0.55); opacity: 0; pointer-events: none; transform: scale(calc(0.6 + var(--k, 0) * 0.4)); }
-.mn-rq-stamp .mn-ic { display: none; }
-.mn-rq-stamp svg { width: 72px; height: 72px; stroke-width: 2.6; }
-.mn-rq-stamp .mn-rq-st-pass { display: block; color: #e06a6a; }
-.mn-rq-stamp.is-like .mn-rq-st-pass { display: none; }
-.mn-rq-stamp.is-like .mn-rq-st-like { display: block; color: #6fd28a; }
-.mn-rq-stamp.is-like .mn-rq-st-like svg { fill: currentColor; }
-.mn-rq-btns { display: flex; justify-content: center; gap: 36px; margin: 6px 0 4px; }
-.mn-app .mn-rq-btns button { display: grid; place-items: center; width: 58px; height: 58px; padding: 0; border-radius: 50%; background: var(--mn-card); border: 2px solid; box-shadow: none; }
-.mn-app .mn-rq-no { color: #e06a6a; border-color: #e06a6a; }
-.mn-app .mn-rq-yes { color: #6fd28a; border-color: #6fd28a; }
-.mn-rq-btns svg { width: 26px; height: 26px; stroke-width: 2.4; }
 /* after the last card: the liked champions two across */
 .mn-rq-liked { display: flex; flex-direction: column; gap: 8px; }
 .mn-app .mn-rq-lk { display: flex; flex-direction: row; align-items: center; gap: 12px; height: auto; padding: 10px 12px; border-radius: var(--mn-radius); background: var(--mn-card); border: 1px solid var(--mn-line); box-shadow: none; text-align: left; white-space: normal; }
@@ -1056,3 +1046,41 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-qc-style { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
 .mn-qc-style .mn-panel { margin: 0; background: none; border: none; box-shadow: none; padding: 0; }
 .mn-qc-style .mn-style-h { display: none; }
+
+/* 速查 swipe, like Tinder: no top bar, the card reaches the tab bar, no collectible border, the ✕ / ♥ float on its lower edge */
+.mn-app.is-immersive .mn-top { display: none; }
+.mn-app.is-immersive .mn-scroll > .mn-page { max-width: none; padding: calc(var(--mn-safe-top) + 6px) 4px 0; }
+.mn-deckwrap.mn-rq-deck { --mn-lift: 0px; --mn-pile: 0px; margin: 0; }
+.mn-rq-deck .mn-slide { padding: 0 4px; }
+.mn-rq-deck .mn-sl-card { padding: 0; border-radius: 22px; background: #0a0c12; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); }
+.mn-rq-deck .mn-sl-face { border-radius: 22px; }
+.mn-rq-deck .mn-qc-tab { padding-bottom: 104px; }
+.mn-rq-deck .mn-qc-tab.is-look { padding-bottom: 0; }
+.mn-rq-deck .mn-qc-words { padding-bottom: 104px; }
+/* the splash is the portrait loading art; it fades to the dark from the middle down, where the words are */
+.mn-qc-splash { object-position: 50% 15%; }
+.mn-rq-deck .mn-qc-tab.is-look::before { background: linear-gradient(180deg, rgba(10, 12, 18, 0.4) 0, transparent 80px, transparent 42%, rgba(10, 12, 18, 0.55) 56%, rgba(10, 12, 18, 0.92) 70%, #0a0c12 80%); }
+.mn-rq-btns { position: absolute; z-index: 6; left: 0; right: 0; bottom: 22px; display: flex; justify-content: center; gap: 72px; pointer-events: none; }
+.mn-app .mn-rq-btns button { pointer-events: auto; display: grid; place-items: center; width: 66px; height: 66px; padding: 0; border-radius: 50%; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    background: rgba(10, 12, 18, 0.55); border: 1px solid rgba(255, 255, 255, 0.2); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); transition: transform 0.12s; }
+.mn-app .mn-rq-btns button:active { transform: scale(0.9); }
+.mn-rq-btns svg { width: 30px; height: 30px; stroke-width: 3; }
+.mn-app .mn-rq-no { color: #fff; }
+.mn-app .mn-rq-yes { color: #ff4458; }
+.mn-rq-yes svg { fill: currentColor; }
+/* the huge ✕ / ♥ while a card is dragged: grows with the drag, bounces once the swipe is far enough */
+.mn-rq-stamp { position: absolute; z-index: 5; left: 50%; top: 30%; width: 220px; height: 220px; margin: -110px 0 0 -110px; display: grid; place-items: center; opacity: 0; pointer-events: none;
+    transform: scale(calc(0.45 + var(--k, 0) * 0.55)) rotate(-12deg); }
+.mn-rq-stamp.is-like { transform: scale(calc(0.45 + var(--k, 0) * 0.55)) rotate(12deg); }
+.mn-rq-stamp .mn-ic { display: none; }
+.mn-rq-stamp svg { width: 200px; height: 200px; filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45)); }
+.mn-rq-stamp .mn-rq-st-pass { display: block; color: #fff; }
+.mn-rq-stamp .mn-rq-st-pass svg { stroke-width: 3.4; }
+.mn-rq-stamp.is-like .mn-rq-st-pass { display: none; }
+.mn-rq-stamp.is-like .mn-rq-st-like { display: block; color: #ff4458; }
+.mn-rq-stamp.is-like .mn-rq-st-like svg { fill: currentColor; stroke-width: 0; }
+.mn-rq-stamp.is-pop { animation: mn-stamp-pop 0.42s cubic-bezier(0.3, 1.6, 0.5, 1); }
+.mn-rq-stamp.is-like.is-pop { animation-name: mn-stamp-pop-like; }
+@keyframes mn-stamp-pop { 0% { transform: scale(0.8) rotate(-12deg); } 45% { transform: scale(1.25) rotate(-12deg); } 100% { transform: scale(1) rotate(-12deg); } }
+@keyframes mn-stamp-pop-like { 0% { transform: scale(0.8) rotate(12deg); } 45% { transform: scale(1.25) rotate(12deg); } 100% { transform: scale(1) rotate(12deg); } }
+@media (prefers-reduced-motion: reduce) { .mn-rq-stamp.is-pop { animation: none; } }
