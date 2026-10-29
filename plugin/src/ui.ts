@@ -281,6 +281,13 @@ export const DAMAGE_ICON: Record<string, string> = { 物理: "sword", 魔法: "s
 export const STAT_ICON: Record<string, string> = { 法術強度: "sparkles", 攻擊力: "sword", 攻速: "gauge", 技能急速: "timer-reset", 暴擊: "dice-5", 生命: "heart", 護甲: "shield", 魔防: "shield-check", 穿透: "arrow-right-to-line", 跑速: "footprints" };
 export const STAT_COLOR: Record<string, string> = { 法術強度: "var(--mn-magic)", 攻擊力: "var(--mn-phys)", 攻速: "var(--mn-true)", 技能急速: "var(--mn-haste)", 暴擊: "var(--mn-exec)", 生命: "var(--mn-heal)", 護甲: "var(--mn-guard)", 魔防: "var(--mn-shield)", 穿透: "var(--mn-aa)", 跑速: "var(--mn-dash)" };
 export const REACH_ICON = "ruler";   // 近戰 / 中程 / 遠程
+// The item shop's stat filters, in the shop's order: name, icon, and the Data Dragon tags that count (Items page)
+export const ITEM_CATS: [string, string, string[]][] = [
+    ["攻擊力", "sword", ["Damage"]], ["暴擊", "dice-5", ["CriticalStrike"]], ["攻速", "gauge", ["AttackSpeed"]], ["攻擊特效", "crosshair", ["OnHit"]],
+    ["物理穿透", "arrow-right-to-line", ["ArmorPenetration"]], ["法術強度", "sparkles", ["SpellDamage"]], ["魔力", "droplet", ["Mana", "ManaRegen"]],
+    ["法術穿透", "wand-sparkles", ["MagicPenetration"]], ["生命", "heart", ["Health", "HealthRegen"]], ["護甲", "shield", ["Armor"]], ["魔防", "shield-check", ["SpellBlock", "MagicResist"]],
+    ["技能急速", "timer-reset", ["AbilityHaste", "CooldownReduction"]], ["移動", "footprints", ["Boots", "NonbootsMovement"]], ["吸血", "syringe", ["LifeSteal", "SpellVamp"]],
+];
 // A skill row's scaling note ("+25% 魔法攻擊 +10% 額外物理攻擊") split into its parts, each in the colour of its stat
 // (magic blue, physical orange, anything else muted)
 export const scalingParts = (note: string): { text: string; color: string; icon: string }[] =>

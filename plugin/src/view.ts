@@ -79,6 +79,18 @@ export class MnView extends ItemView {
         modeBtn.addEventListener("click", (e) => { e.preventDefault(); this.modeMenu(e); });
         this.modeBtn = modeBtn;
         this.scrollEl = h(app, "div", "mn-scroll");
+        // the phone's keyboard: how much of the scroll area it covers, as --mn-kb, so the floating search capsules (Picks, Champions) ride
+        // on top of it like Safari's bar (0 when Obsidian resizes the page for the keyboard itself)
+        const vv = window.visualViewport;
+        if (vv) {
+            const kb = () => {
+                const bottom = this.scrollEl.getBoundingClientRect().bottom;
+                app.style.setProperty("--mn-kb", `${Math.max(0, Math.round(bottom - (vv.height + vv.offsetTop)))}px`);
+            };
+            vv.addEventListener("resize", kb);
+            vv.addEventListener("scroll", kb);
+            this.register(() => { vv.removeEventListener("resize", kb); vv.removeEventListener("scroll", kb); });
+        }
         this.registerDomEvent(this.scrollEl, "scroll", () => this.markScrolled(), { passive: true });
         // pictures added to a page after it showed (cards built later, lazy ones) fade in instead of popping in
         const late = new MutationObserver((list) => {

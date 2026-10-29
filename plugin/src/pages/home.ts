@@ -1,6 +1,6 @@
 import { mapUrl } from "./handbook";
 import type { PageCtx, PageOut } from "./index";
-import { h, icon, page } from "../ui";
+import { ITEM_CATS, blockLoad, h, icon, page } from "../ui";
 import { MODES } from "../modes";
 import { PROFILE_FRESH, QUEUE, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, type Profile } from "../data/riot";
 
@@ -135,7 +135,9 @@ export function homePage(ctx: PageCtx): PageOut {
     const read = new Set(s.read);
     const next = store.guideNotes().find((n) => n.layout === "deck" && !read.has(n.file.path));
     entry("book-open", "Handbook", next ? `繼續:${next.title}` : "全部讀完了", "var(--color-cyan)", () => { if (next) ctx.openNote(next.file.path); else ctx.goTab("handbook"); });
-    entry("swords", "最近對戰", prof?.games.length ? `${prof.games.length} 場 · ${prof.games.filter((g) => g.win).length} 勝` : "連結 Riot 後顯示", "var(--color-purple)", () => ctx.push({ key: "games", title: "最近對戰" }));
+    // the recent games only once a Riot ID is linked (signed out, Handbook takes the whole row)
+    if (!s.riotId) entries.lastElementChild?.addClass("is-wide");
+    else entry("swords", "最近對戰", prof?.games.length ? `${prof.games.length} 場 · ${prof.games.filter((g) => g.win).length} 勝` : "連結 Riot 後顯示", "var(--color-purple)", () => ctx.push({ key: "games", title: "最近對戰" }));
 
     // your top mastery (from _data/mastery.json on a device that has it)
     if (top.length) {
@@ -192,7 +194,12 @@ export function gamesPage(ctx: PageCtx): PageOut {
     return { title: "最近對戰", el };
 }
 
-// Items: every item in the current mode's shop, cheapest first, with a search; a tap opens the item
+// Items: the current mode's shop like the game's: the stat filters as a row of icons, then the items by tier (起始, 鞋子, 基本, 史詩,
+// 傳說), or by price; a search on top. A tap opens the item.
+const TIERS = ["起始", "鞋子", "基本", "史詩", "傳說"];
+const tierOf = (i: { tags: string[]; from: number[]; into: number[]; goldTotal: number }): string =>
+    i.tags.includes("Boots") ? "鞋子" : !i.from.length && !i.into.length ? "起始" : !i.from.length ? "基本" : i.into.length ? "史詩" : "傳說";
+let itemCat = "", itemSort = "tier";   // kept while the app is open
 export function itemsPage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const flag = MODES[ctx.plugin.settings.mode].itemFlag;
@@ -204,19 +211,54 @@ export function itemsPage(ctx: PageCtx): PageOut {
     const search = h(box, "input");
     search.type = "search";
     search.placeholder = "搜尋裝備";
-    const grid = h(el, "div", "mn-items");
-    const draw = () => {
-        grid.empty();
-        const q = search.value.trim();
-        for (const it of items.filter((i) => !q || i.name.includes(q))) {
-            const b = h(grid, "button", "mn-item-tile");
-            const im = h(b, "img"); im.src = it.icon; im.alt = "";
-            h(b, "b", undefined, it.name);
-            h(b, "span", undefined, `${it.goldTotal}`);
-            b.addEventListener("click", (e) => { e.preventDefault(); ctx.openItem(it.id); });
+    const cats = h(el, "div", "mn-icats");
+    const sorts = h(el, "div", "mn-isorts");
+    const host = h(el, "div");   // one loading look for the whole list
+    const drawCats = () => {
+        cats.empty();
+        for (const [name, ic] of [["全部", "layout-grid"], ...ITEM_CATS.map(([n, i]) => [n, i])] as [string, string][]) {
+            const b = h(cats, "button", "mn-icat" + ((name === "全部" ? !itemCat : itemCat === name) ? " is-on" : ""));
+            icon(b, ic);
+            h(b, "span", undefined, name);
+            b.addEventListener("click", (e) => { e.preventDefault(); itemCat = name === "全部" ? "" : name; drawCats(); draw(); });
         }
     };
+    const drawSorts = () => {
+        sorts.empty();
+        for (const [id, name] of [["tier", "依階級"], ["up", "價格 ↑"], ["down", "價格 ↓"]]) {
+            const b = h(sorts, "button", "mn-isort" + (itemSort === id ? " is-on" : ""), name);
+            b.addEventListener("click", (e) => { e.preventDefault(); itemSort = id; drawSorts(); draw(); });
+        }
+    };
+    const tile = (grid: HTMLElement, it: (typeof items)[number]) => {
+        const b = h(grid, "button", "mn-item-tile");
+        const im = h(b, "img"); im.src = it.icon; im.alt = "";
+        h(b, "b", undefined, it.name);
+        h(b, "span", undefined, `${it.goldTotal}`);
+        b.addEventListener("click", (e) => { e.preventDefault(); ctx.openItem(it.id); });
+    };
+    const draw = () => {
+        host.empty();
+        const q = search.value.trim();
+        const tags = ITEM_CATS.find(([n]) => n === itemCat)?.[2] ?? [];
+        let list = items.filter((i) => (!q || i.name.includes(q)) && (!tags.length || i.tags.some((x) => tags.includes(x))));
+        if (!list.length) { h(host, "p", "mn-home-sub", "沒有符合的裝備"); return; }
+        if (itemSort === "tier") {
+            for (const tier of TIERS) {
+                const part = list.filter((i) => tierOf(i) === tier);
+                if (!part.length) continue;
+                h(host, "div", "mn-home-lab", `${tier} · ${part.length}`);
+                const grid = h(host, "div", "mn-items");
+                for (const it of part) tile(grid, it);
+            }
+        } else {
+            list = [...list].sort((x, y) => (itemSort === "up" ? 1 : -1) * (x.goldTotal - y.goldTotal));
+            const grid = h(host, "div", "mn-items");
+            for (const it of list) tile(grid, it);
+        }
+        blockLoad(host);
+    };
     search.addEventListener("input", draw);
-    draw();
+    drawCats(); drawSorts(); draw();
     return { title: "Items", el };
 }

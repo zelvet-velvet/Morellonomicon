@@ -43,21 +43,27 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
     let query = "";
     // champions changed in the latest patch notes get a ▲ / ▼ / ◆ / ● mark on their icon
     const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)] as const));
-    // the search box, with the Quick Look button beside it (the tool for the moment the game hands you champions you do not know)
-    const searchRow = h(parent, "div", "mn-search-row");
-    const box = h(searchRow, "div", "mn-search");
-    icon(box, "search", "mn-search-ic");
-    const search = h(box, "input");
-    search.type = "search";
-    search.placeholder = "Search champions, augments, items";
-    search.setAttribute("enterkeyhint", "search");
+    // the lane row on top, the grid, and at the bottom (where the thumb is, like Picks) one floating capsule: search, a mic and the
+    // 篩選 button; the filters open as a sheet right above the capsule
     const filtersHost = h(parent, "div");   // the lane row loads as a block of its own
     const filters = h(filtersHost, "div", "mn-fgroup");
-    const panel = h(parent, "div", "mn-fpanel");
     const count = h(parent, "div", "mn-count");
     const gridHost = h(parent, "div");      // so does the grid of champion icons
     const grid = h(gridHost, "div", "mn-grid");
     const extra = h(parent, "div");
+    const dock = h(parent, "div", "mn-rq-dock");
+    const panel = h(dock, "div", "mn-fpanel mn-fsheet");
+    const cap = h(dock, "div", "mn-rq-cap");
+    icon(cap, "search", "mn-rq-cap-ic");
+    const search = h(cap, "input");
+    search.type = "search";
+    search.placeholder = "搜尋英雄、強化、裝備";
+    search.setAttribute("enterkeyhint", "search");
+    const mic = h(cap, "button", "mn-rq-mic");   // opens the keyboard on the box; its own mic key listens
+    icon(mic, "mic");
+    mic.setAttribute("aria-label", "用鍵盤的麥克風說");
+    mic.addEventListener("click", (e) => { e.preventDefault(); search.focus(); });
+    const fbHost = h(cap, "div", "mn-cap-fb");
 
     const draw = () => {
         grid.empty();
@@ -93,7 +99,7 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
     // always in view: the five lanes and the 篩選 button; everything else is in the folding panel
     const drawFilters = () => {
         filters.empty();
-        const row = fgrid(filters, LANES.length + 1);
+        const row = fgrid(filters, LANES.length);
         const known = store.hasLanes();
         for (const l of LANES) {
             const chipEl = laneChip(row, l, { on: F.lanes.has(l), onTap: () => {
@@ -102,7 +108,8 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
             } });
         }
         const n = activeFilters();
-        const fb = h(row, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
+        fbHost.empty();
+        const fb = h(fbHost, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
         fb.setAttribute("aria-label", "篩選");
         icon(fb, "sliders-horizontal", "mn-filterbtn-ic");
         if (n) h(fb, "span", "mn-filterbtn-n", String(n));

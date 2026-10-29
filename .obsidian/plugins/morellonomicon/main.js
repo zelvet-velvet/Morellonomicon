@@ -769,6 +769,22 @@ var DAMAGE_ICON = { \u7269\u7406: "sword", \u9B54\u6CD5: "sparkles", \u771F\u5BE
 var STAT_ICON = { \u6CD5\u8853\u5F37\u5EA6: "sparkles", \u653B\u64CA\u529B: "sword", \u653B\u901F: "gauge", \u6280\u80FD\u6025\u901F: "timer-reset", \u66B4\u64CA: "dice-5", \u751F\u547D: "heart", \u8B77\u7532: "shield", \u9B54\u9632: "shield-check", \u7A7F\u900F: "arrow-right-to-line", \u8DD1\u901F: "footprints" };
 var STAT_COLOR = { \u6CD5\u8853\u5F37\u5EA6: "var(--mn-magic)", \u653B\u64CA\u529B: "var(--mn-phys)", \u653B\u901F: "var(--mn-true)", \u6280\u80FD\u6025\u901F: "var(--mn-haste)", \u66B4\u64CA: "var(--mn-exec)", \u751F\u547D: "var(--mn-heal)", \u8B77\u7532: "var(--mn-guard)", \u9B54\u9632: "var(--mn-shield)", \u7A7F\u900F: "var(--mn-aa)", \u8DD1\u901F: "var(--mn-dash)" };
 var REACH_ICON = "ruler";
+var ITEM_CATS = [
+  ["\u653B\u64CA\u529B", "sword", ["Damage"]],
+  ["\u66B4\u64CA", "dice-5", ["CriticalStrike"]],
+  ["\u653B\u901F", "gauge", ["AttackSpeed"]],
+  ["\u653B\u64CA\u7279\u6548", "crosshair", ["OnHit"]],
+  ["\u7269\u7406\u7A7F\u900F", "arrow-right-to-line", ["ArmorPenetration"]],
+  ["\u6CD5\u8853\u5F37\u5EA6", "sparkles", ["SpellDamage"]],
+  ["\u9B54\u529B", "droplet", ["Mana", "ManaRegen"]],
+  ["\u6CD5\u8853\u7A7F\u900F", "wand-sparkles", ["MagicPenetration"]],
+  ["\u751F\u547D", "heart", ["Health", "HealthRegen"]],
+  ["\u8B77\u7532", "shield", ["Armor"]],
+  ["\u9B54\u9632", "shield-check", ["SpellBlock", "MagicResist"]],
+  ["\u6280\u80FD\u6025\u901F", "timer-reset", ["AbilityHaste", "CooldownReduction"]],
+  ["\u79FB\u52D5", "footprints", ["Boots", "NonbootsMovement"]],
+  ["\u5438\u8840", "syringe", ["LifeSteal", "SpellVamp"]]
+];
 var scalingParts = (note) => (note.match(/\+[^+]+/g) ?? []).map((p) => p.trim()).filter(Boolean).map((text) => {
   const kind = text.includes("\u9B54\u6CD5") ? "\u9B54\u6CD5" : text.includes("\u7269\u7406") ? "\u7269\u7406" : "";
   return { text, color: kind ? DAMAGE_COLOR[kind] : "var(--mn-muted)", icon: kind ? DAMAGE_ICON[kind] : "plus" };
@@ -2406,20 +2422,28 @@ function championPicker(parent, ctx) {
   }
   let query = "";
   const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)]));
-  const searchRow = h(parent, "div", "mn-search-row");
-  const box = h(searchRow, "div", "mn-search");
-  icon(box, "search", "mn-search-ic");
-  const search = h(box, "input");
-  search.type = "search";
-  search.placeholder = "Search champions, augments, items";
-  search.setAttribute("enterkeyhint", "search");
   const filtersHost = h(parent, "div");
   const filters = h(filtersHost, "div", "mn-fgroup");
-  const panel = h(parent, "div", "mn-fpanel");
   const count2 = h(parent, "div", "mn-count");
   const gridHost = h(parent, "div");
   const grid = h(gridHost, "div", "mn-grid");
   const extra = h(parent, "div");
+  const dock = h(parent, "div", "mn-rq-dock");
+  const panel = h(dock, "div", "mn-fpanel mn-fsheet");
+  const cap = h(dock, "div", "mn-rq-cap");
+  icon(cap, "search", "mn-rq-cap-ic");
+  const search = h(cap, "input");
+  search.type = "search";
+  search.placeholder = "\u641C\u5C0B\u82F1\u96C4\u3001\u5F37\u5316\u3001\u88DD\u5099";
+  search.setAttribute("enterkeyhint", "search");
+  const mic = h(cap, "button", "mn-rq-mic");
+  icon(mic, "mic");
+  mic.setAttribute("aria-label", "\u7528\u9375\u76E4\u7684\u9EA5\u514B\u98A8\u8AAA");
+  mic.addEventListener("click", (e) => {
+    e.preventDefault();
+    search.focus();
+  });
+  const fbHost = h(cap, "div", "mn-cap-fb");
   const draw = () => {
     grid.empty();
     extra.empty();
@@ -2466,7 +2490,7 @@ function championPicker(parent, ctx) {
   };
   const drawFilters = () => {
     filters.empty();
-    const row2 = fgrid(filters, LANES.length + 1);
+    const row2 = fgrid(filters, LANES.length);
     const known = store.hasLanes();
     for (const l of LANES) {
       const chipEl = laneChip(row2, l, { on: F.lanes.has(l), onTap: () => {
@@ -2479,7 +2503,8 @@ function championPicker(parent, ctx) {
       } });
     }
     const n = activeFilters();
-    const fb = h(row2, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
+    fbHost.empty();
+    const fb = h(fbHost, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
     fb.setAttribute("aria-label", "\u7BE9\u9078");
     icon(fb, "sliders-horizontal", "mn-filterbtn-ic");
     if (n) h(fb, "span", "mn-filterbtn-n", String(n));
@@ -4345,7 +4370,8 @@ function homePage(ctx) {
     if (next) ctx.openNote(next.file.path);
     else ctx.goTab("handbook");
   });
-  entry("swords", "\u6700\u8FD1\u5C0D\u6230", prof?.games.length ? `${prof.games.length} \u5834 \xB7 ${prof.games.filter((g) => g.win).length} \u52DD` : "\u9023\u7D50 Riot \u5F8C\u986F\u793A", "var(--color-purple)", () => ctx.push({ key: "games", title: "\u6700\u8FD1\u5C0D\u6230" }));
+  if (!s.riotId) entries.lastElementChild?.addClass("is-wide");
+  else entry("swords", "\u6700\u8FD1\u5C0D\u6230", prof?.games.length ? `${prof.games.length} \u5834 \xB7 ${prof.games.filter((g) => g.win).length} \u52DD` : "\u9023\u7D50 Riot \u5F8C\u986F\u793A", "var(--color-purple)", () => ctx.push({ key: "games", title: "\u6700\u8FD1\u5C0D\u6230" }));
   if (top.length) {
     h(el, "div", "mn-home-lab", "\u719F\u7DF4\u5EA6");
     const row2 = h(el, "div", "mn-home-mast");
@@ -4414,6 +4440,10 @@ function gamesPage(ctx) {
   for (const g of prof.games) gameRow(ctx, list2, g, true);
   return { title: "\u6700\u8FD1\u5C0D\u6230", el };
 }
+var TIERS = ["\u8D77\u59CB", "\u978B\u5B50", "\u57FA\u672C", "\u53F2\u8A69", "\u50B3\u8AAA"];
+var tierOf = (i) => i.tags.includes("Boots") ? "\u978B\u5B50" : !i.from.length && !i.into.length ? "\u8D77\u59CB" : !i.from.length ? "\u57FA\u672C" : i.into.length ? "\u53F2\u8A69" : "\u50B3\u8AAA";
+var itemCat = "";
+var itemSort = "tier";
 function itemsPage(ctx) {
   const store = ctx.plugin.store;
   const flag = MODES[ctx.plugin.settings.mode].itemFlag;
@@ -4425,24 +4455,74 @@ function itemsPage(ctx) {
   const search = h(box, "input");
   search.type = "search";
   search.placeholder = "\u641C\u5C0B\u88DD\u5099";
-  const grid = h(el, "div", "mn-items");
-  const draw = () => {
-    grid.empty();
-    const q = search.value.trim();
-    for (const it of items.filter((i) => !q || i.name.includes(q))) {
-      const b = h(grid, "button", "mn-item-tile");
-      const im = h(b, "img");
-      im.src = it.icon;
-      im.alt = "";
-      h(b, "b", void 0, it.name);
-      h(b, "span", void 0, `${it.goldTotal}`);
+  const cats = h(el, "div", "mn-icats");
+  const sorts = h(el, "div", "mn-isorts");
+  const host = h(el, "div");
+  const drawCats = () => {
+    cats.empty();
+    for (const [name, ic] of [["\u5168\u90E8", "layout-grid"], ...ITEM_CATS.map(([n, i]) => [n, i])]) {
+      const b = h(cats, "button", "mn-icat" + ((name === "\u5168\u90E8" ? !itemCat : itemCat === name) ? " is-on" : ""));
+      icon(b, ic);
+      h(b, "span", void 0, name);
       b.addEventListener("click", (e) => {
         e.preventDefault();
-        ctx.openItem(it.id);
+        itemCat = name === "\u5168\u90E8" ? "" : name;
+        drawCats();
+        draw();
       });
     }
   };
+  const drawSorts = () => {
+    sorts.empty();
+    for (const [id, name] of [["tier", "\u4F9D\u968E\u7D1A"], ["up", "\u50F9\u683C \u2191"], ["down", "\u50F9\u683C \u2193"]]) {
+      const b = h(sorts, "button", "mn-isort" + (itemSort === id ? " is-on" : ""), name);
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        itemSort = id;
+        drawSorts();
+        draw();
+      });
+    }
+  };
+  const tile2 = (grid, it) => {
+    const b = h(grid, "button", "mn-item-tile");
+    const im = h(b, "img");
+    im.src = it.icon;
+    im.alt = "";
+    h(b, "b", void 0, it.name);
+    h(b, "span", void 0, `${it.goldTotal}`);
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      ctx.openItem(it.id);
+    });
+  };
+  const draw = () => {
+    host.empty();
+    const q = search.value.trim();
+    const tags2 = ITEM_CATS.find(([n]) => n === itemCat)?.[2] ?? [];
+    let list2 = items.filter((i) => (!q || i.name.includes(q)) && (!tags2.length || i.tags.some((x) => tags2.includes(x))));
+    if (!list2.length) {
+      h(host, "p", "mn-home-sub", "\u6C92\u6709\u7B26\u5408\u7684\u88DD\u5099");
+      return;
+    }
+    if (itemSort === "tier") {
+      for (const tier of TIERS) {
+        const part = list2.filter((i) => tierOf(i) === tier);
+        if (!part.length) continue;
+        h(host, "div", "mn-home-lab", `${tier} \xB7 ${part.length}`);
+        const grid = h(host, "div", "mn-items");
+        for (const it of part) tile2(grid, it);
+      }
+    } else {
+      list2 = [...list2].sort((x, y) => (itemSort === "up" ? 1 : -1) * (x.goldTotal - y.goldTotal));
+      const grid = h(host, "div", "mn-items");
+      for (const it of list2) tile2(grid, it);
+    }
+    blockLoad(host);
+  };
   search.addEventListener("input", draw);
+  drawCats();
+  drawSorts();
   draw();
   return { title: "Items", el };
 }
@@ -5326,6 +5406,19 @@ var MnView = class extends import_obsidian11.ItemView {
     });
     this.modeBtn = modeBtn;
     this.scrollEl = h(app, "div", "mn-scroll");
+    const vv = window.visualViewport;
+    if (vv) {
+      const kb = () => {
+        const bottom = this.scrollEl.getBoundingClientRect().bottom;
+        app.style.setProperty("--mn-kb", `${Math.max(0, Math.round(bottom - (vv.height + vv.offsetTop)))}px`);
+      };
+      vv.addEventListener("resize", kb);
+      vv.addEventListener("scroll", kb);
+      this.register(() => {
+        vv.removeEventListener("resize", kb);
+        vv.removeEventListener("scroll", kb);
+      });
+    }
     this.registerDomEvent(this.scrollEl, "scroll", () => this.markScrolled(), { passive: true });
     const late = new MutationObserver((list2) => {
       for (const m of list2) m.addedNodes.forEach((n) => {
