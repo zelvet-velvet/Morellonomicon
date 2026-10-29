@@ -1009,10 +1009,8 @@ function iconsBlock(source, el) {
     } else pic.setText("?");
     row2.createSpan({ cls: "mn-iclabel", text: label });
     row2.createEl("code", { cls: known(name) ? "mn-icname" : "mn-icname mn-icbad", text: name || "(no icon)" });
-    if (colour) {
-      row2.createSpan({ cls: "mn-icsw", attr: { style: COLOUR.test(colour) ? `background:${resolve(colour)}` : "" } });
-      row2.createEl("code", { cls: "mn-iccol", text: colour });
-    }
+    row2.createSpan({ cls: "mn-icsw", attr: { style: COLOUR.test(colour) ? `background:${resolve(colour)}` : "visibility:hidden" } });
+    row2.createEl("code", { cls: "mn-iccol", text: colour });
   }
   probe.remove();
 }
@@ -1030,6 +1028,7 @@ function registerIconsNote(plugin) {
     };
     try {
       for (const code of Array.from(el.querySelectorAll("code"))) {
+        if (code.closest(".mn-iclist")) continue;
         const text = (code.textContent ?? "").trim();
         if (COLOUR.test(text)) {
           code.parentElement?.insertBefore(createSpan({ cls: "mn-icsw", attr: { style: `background:${resolve(text)}` } }), code);

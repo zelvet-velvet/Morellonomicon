@@ -25,10 +25,8 @@ function iconsBlock(source: string, el: HTMLElement): void {
         else pic.setText("?");
         row.createSpan({ cls: "mn-iclabel", text: label });
         row.createEl("code", { cls: known(name) ? "mn-icname" : "mn-icname mn-icbad", text: name || "(no icon)" });
-        if (colour) {
-            row.createSpan({ cls: "mn-icsw", attr: { style: COLOUR.test(colour) ? `background:${resolve(colour)}` : "" } });
-            row.createEl("code", { cls: "mn-iccol", text: colour });
-        }
+        row.createSpan({ cls: "mn-icsw", attr: { style: COLOUR.test(colour) ? `background:${resolve(colour)}` : "visibility:hidden" } });
+        row.createEl("code", { cls: "mn-iccol", text: colour });
     }
     probe.remove();
 }
@@ -48,6 +46,7 @@ export function registerIconsNote(plugin: MorellonomiconPlugin): void {
         };
         try {
             for (const code of Array.from(el.querySelectorAll("code"))) {
+                if (code.closest(".mn-iclist")) continue;   // the list block already draws its own
                 const text = (code.textContent ?? "").trim();
                 if (COLOUR.test(text)) {
                     code.parentElement?.insertBefore(createSpan({ cls: "mn-icsw", attr: { style: `background:${resolve(text)}` } }), code);

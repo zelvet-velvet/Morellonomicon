@@ -983,9 +983,12 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-icbad { color: var(--color-red); }
 .mn-icprobe { position: absolute; width: 0; height: 0; overflow: hidden; visibility: hidden; }
 .mn-iclist { display: flex; flex-direction: column; gap: 2px; }
-.mn-icrow { display: flex; align-items: center; gap: 10px; padding: 5px 4px; border-bottom: 1px solid var(--background-modifier-border); }
-.mn-icbig { display: inline-flex; flex: none; width: 30px; justify-content: center; font-weight: 700; }
+.mn-icrow { display: grid; grid-template-columns: 34px minmax(0, 1fr) 150px 16px 110px; align-items: center; gap: 10px; padding: 5px 4px; border-bottom: 1px solid var(--background-modifier-border); }
+.mn-icbig { display: inline-flex; justify-content: center; font-weight: 700; }
+.mn-icbig .svg-icon { color: inherit; }   /* Obsidian colours .svg-icon itself; the row's colour must win */
 .mn-icbig svg { width: 26px; height: 26px; }
-.mn-iclabel { flex: 1; min-width: 0; }
+.mn-iclabel { min-width: 0; }
+.mn-icname { justify-self: start; }
 .mn-icname, .mn-iccol { font-size: 12px; }
 .mn-iccol { opacity: 0.7; }
+@media (max-width: 520px) { .mn-icrow { grid-template-columns: 30px minmax(0, 1fr) 16px; } .mn-icname, .mn-iccol { display: none; } }
