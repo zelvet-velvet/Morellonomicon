@@ -951,14 +951,7 @@ var segLast = /* @__PURE__ */ new Map();
 var slid = /* @__PURE__ */ new WeakMap();
 function fixedPage(el, owner) {
   el.addClass("mn-rq-fixed");
-  const fit = () => {
-    const scroll = el.closest(".mn-scroll");
-    if (scroll && el.isConnected) el.style.height = `${scroll.clientHeight}px`;
-  };
-  requestAnimationFrame(fit);
-  const ro = new ResizeObserver(() => requestAnimationFrame(fit));
-  ro.observe(document.body);
-  owner.register(() => ro.disconnect());
+  void owner;
 }
 var EDGE_ZONE = 28;
 function slideSeg(seg, key = "", opt = {}) {
@@ -5268,7 +5261,7 @@ function rosterPage(ctx) {
     search.focus();
   });
   const go = h(cap, "button", "mn-rq-go");
-  h(go, "span", void 0, "\u958B\u59CB\u6ED1");
+  h(go, "span", void 0, "\u914D\u5C0D");
   icon(go, "arrow-right");
   go.addEventListener("click", (e) => {
     e.preventDefault();
@@ -5771,6 +5764,7 @@ function renderPage(tab, ctx) {
 
 // src/view.ts
 var VIEW_TYPE = "morellonomicon";
+var CAPSULE_SLIDE_MS = 450;
 var KEYBOARD_GAP = 8;
 var DOCK_REST = 10;
 var KEYBOARD_SETTLE_MS = 700;
@@ -5893,8 +5887,13 @@ var MnView = class extends import_obsidian12.ItemView {
         readout.setText(`inner ${window.innerHeight} \xB7 vv ${vv ? `${Math.round(vv.height)}+${Math.round(vv.offsetTop)}` : "-"} \xB7 event ${kbEvent} \xB7 css ${css} \xB7 scroll\u2193 ${Math.round(scrollBottom)} \xB7 shift ${shift} \xB7 body ${document.body.className.split(" ").filter((c2) => /key|kb/i.test(c2)).join(",") || "-"}`);
       }
     };
+    const moving = (d) => {
+      d.addClass("is-moving");
+      window.setTimeout(() => d.removeClass("is-moving"), CAPSULE_SLIDE_MS);
+    };
     const drop = () => {
       if (typingDock) {
+        moving(typingDock);
         typingDock.style.transform = "";
         typingDock.removeClass("is-typing");
       }
@@ -5905,6 +5904,7 @@ var MnView = class extends import_obsidian12.ItemView {
       if (typingDock === d) return;
       typingDock = d;
       d.addClass("is-typing");
+      moving(d);
       settleUntil = Date.now() + KEYBOARD_SETTLE_MS;
       if (lastShift) d.style.transform = `translateY(${-lastShift}px)`;
       const keep = this.scrollEl.scrollTop;

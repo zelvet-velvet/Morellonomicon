@@ -11,6 +11,7 @@ export const VIEW_TYPE = "morellonomicon";
 
 // The app screen: top bar (back, title, mode switch), page area, tab bar. A page is drawn in one step when a tab, a detail page
 // or the data changes; scroll positions are kept per page so Back returns to where you were.
+const CAPSULE_SLIDE_MS = 450;     // the capsule's slide (styles.css) plus a little: the text cursor stays hidden this long
 const KEYBOARD_GAP = 8;          // px between the search capsule and the keyboard's top edge
 const DOCK_REST = 10;            // px the capsule sits above the scroll area's bottom when nothing covers it (styles.css)
 const KEYBOARD_SETTLE_MS = 700;   // how long after a tap in a search box iOS's own scroll to it is undone (the keyboard's slide)
@@ -116,10 +117,12 @@ export class MnView extends ItemView {
                 readout.setText(`inner ${window.innerHeight} · vv ${vv ? `${Math.round(vv.height)}+${Math.round(vv.offsetTop)}` : "-"} · event ${kbEvent} · css ${css} · scroll↓ ${Math.round(scrollBottom)} · shift ${shift} · body ${document.body.className.split(" ").filter((c) => /key|kb/i.test(c)).join(",") || "-"}`);
             }
         };
-        const drop = () => { if (typingDock) { typingDock.style.transform = ""; typingDock.removeClass("is-typing"); } typingDock = null; readout.addClass("is-hidden"); };
+        // iOS draws the text cursor where the box was, not where it is sliding to: the cursor is hidden while the capsule moves
+        const moving = (d: HTMLElement) => { d.addClass("is-moving"); window.setTimeout(() => d.removeClass("is-moving"), CAPSULE_SLIDE_MS); };
+        const drop = () => { if (typingDock) { moving(typingDock); typingDock.style.transform = ""; typingDock.removeClass("is-typing"); } typingDock = null; readout.addClass("is-hidden"); };
         const start = (d: HTMLElement) => {
             if (typingDock === d) return;
-            typingDock = d; d.addClass("is-typing");
+            typingDock = d; d.addClass("is-typing"); moving(d);
             settleUntil = Date.now() + KEYBOARD_SETTLE_MS;
             if (lastShift) d.style.transform = `translateY(${-lastShift}px)`;
             const keep = this.scrollEl.scrollTop;

@@ -465,15 +465,8 @@ const slid = new WeakMap<HTMLElement, { hl: HTMLElement; place: () => void }>();
 // A page that does not scroll itself (Picks, Champions): it is as tall as the scroll area, its own list part scrolls (.mn-rq-list), and
 // with nothing to scroll iOS cannot jump the page when the keyboard opens for its search capsule (styles.css: .mn-rq-fixed)
 export function fixedPage(el: HTMLElement, owner: { register(cb: () => void): void }): void {
-    el.addClass("mn-rq-fixed");
-    const fit = () => {
-        const scroll = el.closest<HTMLElement>(".mn-scroll");
-        if (scroll && el.isConnected) el.style.height = `${scroll.clientHeight}px`;
-    };
-    requestAnimationFrame(fit);
-    const ro = new ResizeObserver(() => requestAnimationFrame(fit));
-    ro.observe(document.body);
-    owner.register(() => ro.disconnect());
+    el.addClass("mn-rq-fixed");   // its height follows the scroll area in CSS at once (a measured height lagged when the keyboard closed)
+    void owner;
 }
 const EDGE_ZONE = 28;   // px at the bottom of the screen where iOS's home-bar swipe begins
 export function slideSeg(seg: HTMLElement, key = "", opt: { item?: string; fit?: string } = {}): void {

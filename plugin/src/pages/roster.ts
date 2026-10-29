@@ -163,7 +163,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
     const { score, within } = finder(all, store.sounds);
 
     // B+ (Review: Picks page ideas): your hand of picked champions as a shelf of small art cards on top, then the lane icons and every
-    // face (your mastery on each), and at the bottom, where the thumb is, one floating capsule: search with a mic, and 開始滑.
+    // face (your mastery on each), and at the bottom, where the thumb is, one floating capsule: search with a mic, and 配對.
     // While something is typed the faces turn into result rows.
     const head = h(el, "div", "mn-rq-hhead");
     const handN = h(head, "span", "mn-rq-hn");
@@ -189,7 +189,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
     mic.setAttribute("aria-label", "用鍵盤的麥克風說");
     mic.addEventListener("click", (e) => { e.preventDefault(); search.focus(); });
     const go = h(cap, "button", "mn-rq-go");
-    h(go, "span", undefined, "開始滑");
+    h(go, "span", undefined, "配對");
     icon(go, "arrow-right");
     go.addEventListener("click", (e) => { e.preventDefault(); if (picks.length) ctx.push({ key: "rosterswipe", title: "速查" }); });
     const loading = (id: string) => `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(id)}_0.jpg`;
