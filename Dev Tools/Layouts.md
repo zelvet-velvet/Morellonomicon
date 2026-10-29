@@ -15,23 +15,7 @@ Every page of the app as a phone with its blocks, to design and point at problem
 
 ---
 ## 🃏 Handbook card
-The one layout every Handbook card (`新手入門/`, one `## ` per card) follows. Chosen by Zaviel on 2026-10-28: frame **F2 with a whole-card stage**. A new card picks one stage template below and keeps to the text limits; `python3 -I tools/check_cards.py` lists the cards that do not.
-
-### 🧱 The frame (F2, whole-card stage)
-
-```
-┌──────────────────────────┐
-│ stage (background layer) │  a picture fills the whole card; a clip ends at the top of the words, its lower edge faded
-│   template content       │  templates (levels, ability…) sit in the room above the words
-│                          │
-│ ┌──────── dock ────────┐ │  46 px, centred, 4 px above the words (`--mn-dock-gap`): tags, steps, legend
-├──────────────────────────┤
-│ kicker                   │  <topic> · n / N (made by the app), 1 line
-│ title                    │  1 line
-│ body                     │  room for 2 lines, always (optional text)
-│ ▎小技巧  tip              │  1 line, always: a short accent line, the label, the tip (empty room when there is no tip)
-└──────────────────────────┘
-```
+The one layout every Handbook card (`新手入門/`, one `## ` per card) follows. Chosen by Zaviel on 2026-10-28: frame **F2 with a whole-card stage**. A new card picks one stage template below and keeps to the text limits; `python3 -I tools/check_cards.py` lists the cards that do not. The frame is the **Handbook · card** page in the editor below.
 
 - **Words** have fixed rows (kicker, title, two body lines, the tip line), so they are the same height on every card and the kicker, dock and clip sit in the same place everywhere (updated 2026-10-28, Zaviel). Text longer than its row is cut with …; keep to the limits below. No scrolling.
 - **Dock** is always the 46 px band 4 px above the words, so tags and steps sit at the same distance from the text on every card.
@@ -59,8 +43,6 @@ Counted with full-width characters as 1 and ASCII as ½. Full-width punctuation 
 | gallery | `champs …`, `items …`, `augs …` | icons in 2–3 columns, centred | optional |
 
 Other picture kinds (`img`, `splash`, `map`, `tree`, `counters`, `wards`, `style`, `radar`…) fill the stage the same way and leave the dock empty. A new template is added here first, then in `plugin/src/pages/cardkit.ts`.
-
-The **Handbook · card** page in the editor below draws the same frame as blocks.
 
 ```mn-layout
 [

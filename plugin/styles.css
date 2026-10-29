@@ -86,8 +86,6 @@ body.is-mobile:not(.mn-on) .mn-home svg { width: 24px; height: 24px; }
 button.mn-chip:active { transform: scale(0.96); }
 .mn-app .mn-filterbtn { display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 12px; font-size: 13px; font-weight: 700; color: var(--mn-text); background: var(--mn-card); border: 1.5px solid var(--mn-text); }
 .mn-app .mn-filterbtn.is-open, .mn-app .mn-filterbtn.has-n { border-color: var(--mn-accent); background: var(--mn-card-hi); }
-.mn-fp-top { display: flex; align-items: center; justify-content: flex-end; padding: 8px 0 2px; }
-.mn-fp-count { font-size: 12px; font-weight: 700; color: var(--mn-muted); }
 .mn-filterbtn-ic svg { width: 16px; height: 16px; }
 .mn-filterbtn-n { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--mn-accent); color: var(--text-on-accent, #fff); font-size: 11px; line-height: 18px; text-align: center; }
 .mn-app .mn-clear { padding: 7px 6px; font-size: 13px; font-weight: 600; color: var(--color-red); }
@@ -153,10 +151,6 @@ button.mn-skill-box.is-on::after { content: ""; position: absolute; inset: 0; bo
 .mn-sd-name { font-size: 17px; font-weight: 700; }
 .mn-sd-types { display: inline-flex; gap: 6px; flex-wrap: wrap; }
 .mn-app .mn-sd-types .mn-chip { padding: 2px 10px; font-size: 12px; }
-.mn-sd-meta { display: flex; gap: 8px; margin: 12px 0 4px; }
-.mn-sd-cell { flex: 0 0 auto; min-width: 92px; display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 12px; background: var(--mn-card-hi); }
-.mn-sd-k { font-size: 11px; color: var(--mn-muted); }
-.mn-sd-v { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; word-break: break-all; }
 .mn-skill-up { position: absolute; left: 3px; top: 3px; display: flex; width: 16px; height: 16px; border-radius: 8px; align-items: center; justify-content: center; background: var(--color-green); color: #fff; }
 .mn-skill-up svg { width: 11px; height: 11px; }
 .mn-sd-video { display: block; width: 100%; max-width: none; height: auto; border-radius: 12px; margin: 12px 0 2px; background: none; }
@@ -329,16 +323,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-off-t { font-size: 12px; font-weight: 700; color: var(--color-blue); }
 .mn-app .mn-off-link { font-size: 12px; color: var(--mn-accent); padding: 2px 4px; }
 .mn-chg-sub { font-size: 12px; font-weight: 700; color: var(--mn-muted); margin: 14px 0 2px; }
-.mn-ent { background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: var(--mn-radius); padding: 14px 16px; margin: 10px 0; }
-.mn-ent.is-tap { cursor: pointer; }
-.mn-ent.is-tap:active { background: var(--mn-card-hi); }
-.mn-ent-head { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
-.mn-ent-head img { width: 44px; height: 44px; border-radius: 12px; flex: none; }
-.mn-ent-n { flex: 1; font-size: 17px; font-weight: 700; }
 .mn-ent-ch { padding: 10px 0 2px; border-top: 0.5px solid var(--mn-line); margin-top: 10px; }
 .mn-ent-l { font-size: 12px; font-weight: 600; color: var(--mn-muted); margin-bottom: 4px; }
 .mn-ent-v { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; font-size: 14px; line-height: 1.5; }
-.mn-ent-t { font-size: 14px; line-height: 1.6; color: var(--mn-text); margin-top: 4px; }
 .mn-note { font-size: 15px; line-height: 1.7; -webkit-user-select: text; user-select: text; }
 .mn-note h1, .mn-note h2, .mn-note h3 { margin-top: 1.2em; }
 
@@ -668,7 +655,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rd-shape { stroke: var(--rd); stroke-width: 2.5; stroke-linejoin: round; }
 .mn-lg { display: grid; gap: 10px; }
 .mn-lg-r { display: grid; grid-template-columns: 36px 1fr 108px; gap: 10px; align-items: center; }
-.mn-lg-h { font-size: 11px; color: var(--mn-faint); }
 .mn-lg-n { font-weight: 700; }
 .mn-lg-w { font-size: 12px; font-weight: 400; color: var(--text-muted); line-height: 1.35; }
 .mn-lg-e { font-size: 12px; color: var(--text-muted); }
@@ -686,46 +672,18 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-face img { width: 52px; height: 52px; border-radius: 14px; background: var(--mn-card); border: 1px solid var(--mn-line); }
 .mn-face.is-pick img { box-shadow: 0 0 0 2px var(--mn-accent); }
 .mn-face .mn-pick-ok { top: -4px; right: -2px; }
-.mn-face-n { display: none; font-size: 11px; color: var(--mn-muted); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mn-faces.is-named .mn-face-n { display: block; }
 .mn-faces.is-named { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 12px 8px; }
 .mn-faces.is-named .mn-face img { width: 60px; height: 60px; border-radius: 16px; }
 .mn-rq-results { margin-top: 12px; }
 .mn-rq-head { display: flex; align-items: center; justify-content: space-between; margin: 0 4px 6px; }
 .mn-rq-count { font-size: 13px; font-weight: 700; }
-.mn-rq { position: relative; background: var(--mn-card); border: 1px solid var(--mn-line); border-radius: var(--mn-radius); padding: 12px 14px; margin: 0 0 10px; cursor: pointer; }
-.mn-rq:active:not(:has(.mn-tg:active, .mn-rq-x:active)) { background: var(--mn-card-hi); }
-.mn-app .mn-tg, .mn-app .mn-scc, .mn-app .mn-rq-x, .mn-app .mn-lg-btn { -webkit-tap-highlight-color: transparent; }
-.mn-rq-top { display: flex; align-items: center; gap: 12px; }
-.mn-rq-img { width: 52px; height: 52px; border-radius: 14px; flex: none; }
-.mn-rq-who { flex: 1; min-width: 0; }
-.mn-rq-name { font-size: 17px; font-weight: 800; }
-.mn-app .mn-rq-x { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; color: var(--mn-muted); background: var(--mn-card-hi); }
-.mn-rq-x svg { width: 16px; height: 16px; }
+.mn-app .mn-tg, .mn-app .mn-scc, .mn-app .mn-lg-btn { -webkit-tap-highlight-color: transparent; }
 /* 速查 swipe: the picked champions as the Handbook's card pile (pile.ts), the top card dragged right (like) or left (pass) */
-/* the pill that floats at the bottom of 速查 once something is picked: opens the swipe page */
-.mn-rq-gobar { position: sticky; bottom: 12px; z-index: 5; display: flex; align-items: center; gap: 10px; max-width: 460px; height: 60px; margin: 16px auto 0; padding: 0 8px 0 10px;
-    border-radius: 30px; background: color-mix(in srgb, var(--mn-card) 80%, transparent); border: 1px solid var(--mn-line); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
-.mn-rq-gobar.is-hidden { display: none; }
-.mn-rq-stack { display: flex; align-items: center; flex: none; padding-left: 6px; }
-.mn-rq-stack img, .mn-rq-more { width: 34px; height: 34px; margin-left: -8px; border-radius: 50%; border: 2px solid var(--mn-card); box-sizing: border-box; object-fit: cover; }
-.mn-rq-more { display: grid; place-items: center; font-size: 11px; font-weight: 800; color: var(--mn-text); background: var(--mn-card-hi); }
-.mn-rq-n { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 4px; white-space: nowrap; }
-.mn-rq-n b { font-size: 20px; font-weight: 800; color: var(--mn-text); font-variant-numeric: tabular-nums; }
-.mn-rq-n span { font-size: 13px; color: var(--mn-muted); }
-.mn-app .mn-rq-clear { flex: none; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 0; box-shadow: none; background: none; color: var(--mn-muted); }
-.mn-app .mn-rq-clear:active { color: var(--color-red); background: var(--mn-card-hi); }
-.mn-rq-clear svg { width: 18px; height: 18px; }
 .mn-app .mn-rq-go { flex: none; display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 16px 0 20px; border-radius: 22px; border: 0; background: var(--mn-accent); color: var(--text-on-accent, #fff); font-size: 15px; font-weight: 800; box-shadow: none; }
 .mn-app .mn-rq-go:active { transform: scale(0.96); }
 .mn-rq-go svg { width: 18px; height: 18px; stroke-width: 2.6; }
 .mn-rq-end { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }   /* the page never scrolls; the liked list does */
 .mn-rq-deck .mn-sl-card { position: relative; }   /* the ♥ / ✕ stamp sits over it */   /* the lift room lets a tilted card pass over the count line, like the Handbook bars */
-.mn-sl-face.mn-rq-face { justify-content: flex-start; overflow-y: auto; overscroll-behavior: contain; padding: 14px 14px 18px; scrollbar-width: none; }
-.mn-rq-face::-webkit-scrollbar { display: none; }   /* it scrolls by finger; a bar on the card spoils the swipe */
-.mn-rq-face .mn-rq { margin: 0; padding: 0; background: none; border: 0; cursor: default; }
-.mn-rq-face .mn-rq:active { background: none; }
 /* the big ♥ / ✕ over the middle of a dragged 速查 card (outside the face, so the card's scrolling never moves it) */
 /* after the last card: the liked champions two across */
 .mn-rq-liked { display: flex; flex-direction: column; gap: 8px; }
@@ -739,32 +697,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-lp { font-size: 13px; line-height: 1.35; color: var(--mn-text); }
 .mn-app .mn-rq-again { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 14px auto 4px; height: auto; padding: 8px 16px; background: none; box-shadow: none; font-size: 14px; font-weight: 700; color: var(--mn-accent); }
 .mn-rq-again svg { width: 16px; height: 16px; }
-/* 速查 card: a one-line overview under the name, two big tiles (damage kind, roles), the 靈魂 box, then folds */
-.mn-rq-punch { margin-top: 2px; font-size: 14px; font-weight: 700; line-height: 1.4; color: var(--mn-accent); }
-.mn-rq-big { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0 0; }
-.mn-rq-tile { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 8px 10px; border-radius: 14px; background: var(--mn-card-hi); }
-.mn-rq-tile b { display: block; font-size: 15px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mn-rq-tile div { min-width: 0; }
-.mn-rq-tile span:not(.mn-rq-tic):not(.mn-rq-arts):not(.mn-role-art) { display: block; font-size: 11px; color: var(--mn-muted); }
-.mn-rq-tic { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 11px; color: var(--c); background: color-mix(in srgb, var(--c) 18%, transparent); }
-.mn-rq-tic svg { width: 22px; height: 22px; }
-.mn-rq-arts { display: flex; flex: none; }
-.mn-rq-arts .mn-role-art { display: grid; place-items: center; width: 30px; height: 36px; color: #e8c15a; }
-.mn-rq-arts .mn-role-img { width: 30px; height: 30px; object-fit: contain; }
-.mn-rq-arts .mn-role-art + .mn-role-art { margin-left: -6px; }
-.mn-rq-soul { margin-top: 10px; padding: 9px 12px; border-radius: 14px; background: linear-gradient(135deg, color-mix(in srgb, var(--mn-accent) 16%, transparent), color-mix(in srgb, var(--mn-accent) 4%, transparent)); border: 1px solid color-mix(in srgb, var(--mn-accent) 45%, transparent); }
-.mn-rq-soul-k { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 800; letter-spacing: 0.14em; color: var(--mn-accent); }
-.mn-rq-soul-k svg { width: 13px; height: 13px; }
-.mn-rq-soul p { margin: 3px 0 0; font-size: 14.5px; line-height: 1.55; }
-.mn-rq-fold { margin-top: 8px; border-top: 0.5px solid var(--mn-line); }
-.mn-app .mn-rq-fh { display: flex; align-items: center; justify-content: space-between; width: 100%; height: auto; padding: 9px 0 1px; background: none; box-shadow: none; font-size: 13px; font-weight: 700; color: var(--mn-muted); }
-.mn-rq-fh svg { width: 15px; height: 15px; transition: transform 0.18s; }
-.mn-rq-fold.is-open .mn-rq-fh svg { transform: rotate(90deg); }
-.mn-rq-fb { display: none; }
-.mn-rq-fold.is-open .mn-rq-fb { display: block; padding: 6px 0 2px; }
-.mn-rq-plain small { display: block; font-size: 12px; color: var(--mn-muted); }
-.mn-rq-plain { display: grid; grid-template-columns: 24px 1fr; gap: 7px 10px; align-items: center; font-size: 14px; line-height: 1.4; }
-.mn-app .mn-rq-tile .mn-rq-mark { color: var(--m, var(--mn-muted)); font-weight: 700; }
 .mn-app .mn-lg-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--mn-muted); }
 .mn-app .mn-lg-btn { justify-content: center; min-width: 36px; min-height: 36px; margin: -8px -8px -8px 0; }   /* a bigger tap area around the icon */
 .mn-lg-btn svg { width: 20px; height: 20px; }
@@ -809,7 +741,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-fs-r { text-align: right; align-self: center; }   /* values centred in the cell height, so 近戰 and 8 / 10 share a middle line */
 .mn-fs-v { font-family: var(--mn-serif); font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; color: var(--mn-text); }
 .mn-fs-of { font-family: var(--text-font, sans-serif); font-size: 11px; font-weight: 500; color: var(--mn-muted); }
-.mn-fs-s { font-size: 11px; color: var(--mn-muted); font-variant-numeric: tabular-nums; }
 
 /* 戰鬥風格 card: hexagon chart with coloured corner chips, then the other tags */
 .mn-app .mn-style { padding: 12px 0 14px; border-radius: 10px; }
@@ -846,8 +777,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-tg-k { font-size: 10px; font-weight: 400; color: var(--mn-muted); }
 .mn-lg-ic { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--p); color: var(--p); }
 .mn-lg-ic svg { width: 18px; height: 18px; }
-.mn-rq .mn-fs { margin-top: 12px; }
-.mn-rq .mn-tgs { margin-top: 10px; }
 
 /* line tabs (design 4c): serif labels, the chosen one gets a thin accent underline; no filled block */
 .mn-app .mn-seg.mn-seg-line { gap: 0; padding: 0; margin: 14px 0 8px; border: none; border-bottom: 1px solid var(--mn-line); border-radius: 0; background: none; }
@@ -869,13 +798,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-sd-video::-webkit-media-controls, .mn-sd-video::-webkit-media-controls-panel, .mn-sd-video::-webkit-media-controls-start-playback-button,
 .mn-sd-video::-webkit-media-controls-overlay-play-button { display: none !important; -webkit-appearance: none; }
 
-/* the search row on the Champions tab: search box, then the 速查 button (count of picked champions) */
-.mn-search-row { display: flex; gap: 8px; align-items: center; }
-.mn-search-row .mn-search { flex: 1; min-width: 0; }
-.mn-app .mn-qk-btn { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--mn-accent); background: var(--mn-card); color: var(--mn-accent); font-size: 14px; font-weight: 700; -webkit-tap-highlight-color: transparent; }
-.mn-qk-btn .mn-ic { display: flex; }
-.mn-qk-btn svg { width: 18px; height: 18px; }
-.mn-qk-n { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--mn-accent); color: var(--text-on-accent, #fff); font-size: 11px; line-height: 18px; text-align: center; }
 
 /* a tab's first page: no top bar; the big title row (title and its two buttons) sticks to the top while the page scrolls */
 .mn-app.is-float .mn-top { display: none; }
@@ -972,10 +894,10 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
    own keep that fill. (button + class + state outranks Obsidian's button:not(.clickable-icon):hover.) */
 .mn-app button { -webkit-tap-highlight-color: transparent; }
 .mn-app button:not(.mn-seg-b.is-on):is(:hover, :active, :focus, :focus-visible) { box-shadow: none; outline: none; }   /* a chosen segment keeps its own shadow */
-.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-rq-fh, .mn-rq-again, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face),
-.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-rq-fh, .mn-rq-again, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face):is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }
+.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-rq-again, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face),
+.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-rq-again, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face):is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }
 .mn-app button:is(.mn-rc, .mn-key, .mn-tg.is-on, .mn-rq-no, .mn-rq-yes):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card); }
-.mn-app button:is(.mn-rq-x, .mn-with-b, .mn-rq-lk):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card-hi); }
+.mn-app button:is(.mn-with-b, .mn-rq-lk):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card-hi); }
 .mn-app button.mn-hb-tile:is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }   /* its fill is a gradient image, the colour under it stays clear */
 
 /* Dev Tools/Icons.md: the icon editor (src/iconsnote.ts) */

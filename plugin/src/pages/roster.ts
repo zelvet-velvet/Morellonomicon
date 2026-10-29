@@ -1,7 +1,7 @@
 import { Notice } from "obsidian";
 import type { Champion } from "../data/store";
 import { findSaid, type Said, type Sounds, soundScore } from "../data/sound";
-import { DAMAGE_COLOR, DAMAGE_ICON, REACH_ICON, fixedPage, layoutBlock, SHOP_ROW, STAT_COLOR, STAT_ICON, SWIPE, shopIcon, chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, roleArt, slideSeg, tip } from "../ui";
+import { DAMAGE_COLOR, DAMAGE_ICON, REACH_ICON, fixedPage, layoutBlock, SHOP_ROW, STAT_COLOR, STAT_ICON, SWIPE, shopIcon, chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, roleArt, tip } from "../ui";
 import { entryDir, marker } from "./changes";
 import type { PageCtx, PageOut } from "./index";
 import { keyBadge } from "./cardkit";
@@ -158,7 +158,6 @@ export function rosterPage(ctx: PageCtx): PageOut {
     const all = store.champions();
     let picks = ctx.plugin.settings.roster.filter((id) => all.some((c) => c.id === id)).slice(0, MAX_PICKS);
     let query = "", lane = "";
-    const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)] as const));
     const save = () => { void ctx.plugin.setRoster(picks); };
     const { score, within } = finder(all, store.sounds);
 

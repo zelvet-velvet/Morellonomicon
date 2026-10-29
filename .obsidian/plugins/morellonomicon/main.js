@@ -5283,7 +5283,6 @@ function rosterPage(ctx) {
   const all = store.champions();
   let picks = ctx.plugin.settings.roster.filter((id) => all.some((c) => c.id === id)).slice(0, MAX_PICKS);
   let query = "", lane = "";
-  const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)]));
   const save = () => {
     void ctx.plugin.setRoster(picks);
   };

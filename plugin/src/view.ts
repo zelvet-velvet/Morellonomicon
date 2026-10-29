@@ -29,7 +29,6 @@ function fadeIn(im: HTMLImageElement): void {
 const VEIL_DELAY_MS = 250;   // a later page waits this long for its pictures before it shows under the loading veil
 const VEIL_MIN_MS = 500;     // and once shown it stays at least this long
 const BOOT_PICTURES_MS = 7000;   // at start-up the first page may wait this long for its icons (the first time they come over the network)
-const PAGE_WAIT_MS = 2500;   // a page shows its loading look this long at most while the pictures at its top arrive
 
 function arrive(page: HTMLElement, anim: "push" | "back" | "tab"): void {
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || !page.animate) return;
