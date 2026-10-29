@@ -878,7 +878,7 @@ var SHOP_SPRITE = "https://raw.communitydragon.org/latest/game/assets/ux/itemsho
 var SHOP_ICON_Y = [11.5, 37.5, 63.5, 91.5, 118.5, 147.5, 176.5, 203.5, 231.5, 259.5, 286.5, 314.5, 341.5, 370.5];
 var SHOP_ICON_X = [12, 38, 64, 92.5, 120.5];
 var SHOP_SHARP = { scale: 6, edge: 0.42, steep: 5 };
-var SHOP_SHAPE_COL = 3;
+var SHOP_SHAPE_COL = 0;
 var shopSheet = null;
 var shopMasks = /* @__PURE__ */ new Map();
 var loadShopSheet = () => shopSheet ?? (shopSheet = new Promise((done) => {
