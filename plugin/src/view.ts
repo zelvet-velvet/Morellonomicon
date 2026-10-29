@@ -91,6 +91,10 @@ export class MnView extends ItemView {
         const vv = window.visualViewport;
         let kbEvent = 0;   // the keyboard height from Obsidian's app shell, while the keyboard is up
         let typingDock: HTMLElement | null = null;
+        // how far the capsule went up last time: on the next tap it is lifted that far before the box takes the focus, so the box is
+        // already above the keyboard and iOS has no reason to scroll the list to it (the cause of the list jumping up and back)
+        let settleUntil = 0;
+        let lastShift = (() => { try { return Number(localStorage.getItem("mn-kbshift")) || 0; } catch { return 0; } })();
         const readout = h(app, "div", "mn-kbread is-hidden");
         const visibleBottom = () => {
             const css = parseFloat(getComputedStyle(document.body).getPropertyValue("--keyboard-height")) || 0;
@@ -104,27 +108,41 @@ export class MnView extends ItemView {
             if (!typingDock) return;
             const { bottom, css } = visibleBottom();
             const scrollBottom = this.scrollEl.getBoundingClientRect().bottom;
-            const shift = Math.max(0, Math.round(scrollBottom - bottom + KEYBOARD_GAP - DOCK_REST));
+            let shift = Math.max(0, Math.round(scrollBottom - bottom + KEYBOARD_GAP - DOCK_REST));
+            if (Date.now() < settleUntil) shift = Math.max(shift, lastShift);   // while the keyboard comes up, never drop below the lift given at the tap
             typingDock.style.transform = shift ? `translateY(${-shift}px)` : "";
+            if (shift > KEYBOARD_GAP * 4) { lastShift = shift; try { localStorage.setItem("mn-kbshift", String(shift)); } catch { /* fine */ } }
             if (this.plugin.settings.kbDebug) {
                 readout.removeClass("is-hidden");
                 readout.setText(`inner ${window.innerHeight} · vv ${vv ? `${Math.round(vv.height)}+${Math.round(vv.offsetTop)}` : "-"} · event ${kbEvent} · css ${css} · scroll↓ ${Math.round(scrollBottom)} · shift ${shift} · body ${document.body.className.split(" ").filter((c) => /key|kb/i.test(c)).join(",") || "-"}`);
             }
         };
         const drop = () => { if (typingDock) { typingDock.style.transform = ""; typingDock.removeClass("is-typing"); } typingDock = null; readout.addClass("is-hidden"); };
+        const start = (d: HTMLElement) => {
+            if (typingDock === d) return;
+            typingDock = d; d.addClass("is-typing");
+            settleUntil = Date.now() + KEYBOARD_SETTLE_MS;
+            if (lastShift) d.style.transform = `translateY(${-lastShift}px)`;
+            const keep = this.scrollEl.scrollTop;
+            // one correction once the keyboard is up (no tug of war while it slides, which made the list flicker)
+            window.setTimeout(() => {
+                if (!typingDock) return;
+                if (window.scrollY) window.scrollTo(0, 0);
+                if (Math.abs(this.scrollEl.scrollTop - keep) > 2) this.scrollEl.scrollTo({ top: keep, behavior: "instant" as ScrollBehavior });
+                place();
+            }, KEYBOARD_SETTLE_MS);
+        };
+        // a touch on the box: lift the capsule first, then give the box the focus without the browser scrolling to it
+        this.registerDomEvent(app, "touchend", (e) => {
+            const input = (e.target as HTMLElement | null)?.closest?.(".mn-rq-dock input") as HTMLInputElement | null;
+            if (!input || document.activeElement === input) return;
+            e.preventDefault();
+            start(input.closest(".mn-rq-dock") as HTMLElement);
+            input.focus({ preventScroll: true });
+        }, { passive: false });
         this.registerDomEvent(app, "focusin", (e) => {
             const d = (e.target as HTMLElement | null)?.closest?.(".mn-rq-dock") as HTMLElement | null;
-            if (!d || !(e.target as HTMLElement).matches("input")) return;
-            typingDock = d; d.addClass("is-typing");
-            const keep = this.scrollEl.scrollTop, until = Date.now() + KEYBOARD_SETTLE_MS;
-            const hold = () => {
-                if (!typingDock) return;
-                if (this.scrollEl.scrollTop !== keep) this.scrollEl.scrollTop = keep;
-                if (window.scrollY) window.scrollTo(0, 0);
-                place();
-                if (Date.now() < until) requestAnimationFrame(hold);
-            };
-            requestAnimationFrame(hold);
+            if (d && (e.target as HTMLElement).matches("input")) { start(d); place(); }
         });
         this.registerDomEvent(app, "focusout", () => {
             window.setTimeout(() => { if (typingDock && !typingDock.contains(document.activeElement)) drop(); }, KEYBOARD_BLUR_MS);

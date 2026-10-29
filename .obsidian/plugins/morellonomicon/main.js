@@ -5843,6 +5843,14 @@ var MnView = class extends import_obsidian12.ItemView {
     const vv = window.visualViewport;
     let kbEvent = 0;
     let typingDock = null;
+    let settleUntil = 0;
+    let lastShift = (() => {
+      try {
+        return Number(localStorage.getItem("mn-kbshift")) || 0;
+      } catch {
+        return 0;
+      }
+    })();
     const readout = h(app, "div", "mn-kbread is-hidden");
     const visibleBottom = () => {
       const css = parseFloat(getComputedStyle(document.body).getPropertyValue("--keyboard-height")) || 0;
@@ -5856,8 +5864,16 @@ var MnView = class extends import_obsidian12.ItemView {
       if (!typingDock) return;
       const { bottom, css } = visibleBottom();
       const scrollBottom = this.scrollEl.getBoundingClientRect().bottom;
-      const shift = Math.max(0, Math.round(scrollBottom - bottom + KEYBOARD_GAP - DOCK_REST));
+      let shift = Math.max(0, Math.round(scrollBottom - bottom + KEYBOARD_GAP - DOCK_REST));
+      if (Date.now() < settleUntil) shift = Math.max(shift, lastShift);
       typingDock.style.transform = shift ? `translateY(${-shift}px)` : "";
+      if (shift > KEYBOARD_GAP * 4) {
+        lastShift = shift;
+        try {
+          localStorage.setItem("mn-kbshift", String(shift));
+        } catch {
+        }
+      }
       if (this.plugin.settings.kbDebug) {
         readout.removeClass("is-hidden");
         readout.setText(`inner ${window.innerHeight} \xB7 vv ${vv ? `${Math.round(vv.height)}+${Math.round(vv.offsetTop)}` : "-"} \xB7 event ${kbEvent} \xB7 css ${css} \xB7 scroll\u2193 ${Math.round(scrollBottom)} \xB7 shift ${shift} \xB7 body ${document.body.className.split(" ").filter((c2) => /key|kb/i.test(c2)).join(",") || "-"}`);
@@ -5871,20 +5887,33 @@ var MnView = class extends import_obsidian12.ItemView {
       typingDock = null;
       readout.addClass("is-hidden");
     };
-    this.registerDomEvent(app, "focusin", (e) => {
-      const d = e.target?.closest?.(".mn-rq-dock");
-      if (!d || !e.target.matches("input")) return;
+    const start = (d) => {
+      if (typingDock === d) return;
       typingDock = d;
       d.addClass("is-typing");
-      const keep = this.scrollEl.scrollTop, until = Date.now() + KEYBOARD_SETTLE_MS;
-      const hold = () => {
+      settleUntil = Date.now() + KEYBOARD_SETTLE_MS;
+      if (lastShift) d.style.transform = `translateY(${-lastShift}px)`;
+      const keep = this.scrollEl.scrollTop;
+      window.setTimeout(() => {
         if (!typingDock) return;
-        if (this.scrollEl.scrollTop !== keep) this.scrollEl.scrollTop = keep;
         if (window.scrollY) window.scrollTo(0, 0);
+        if (Math.abs(this.scrollEl.scrollTop - keep) > 2) this.scrollEl.scrollTo({ top: keep, behavior: "instant" });
         place();
-        if (Date.now() < until) requestAnimationFrame(hold);
-      };
-      requestAnimationFrame(hold);
+      }, KEYBOARD_SETTLE_MS);
+    };
+    this.registerDomEvent(app, "touchend", (e) => {
+      const input = e.target?.closest?.(".mn-rq-dock input");
+      if (!input || document.activeElement === input) return;
+      e.preventDefault();
+      start(input.closest(".mn-rq-dock"));
+      input.focus({ preventScroll: true });
+    }, { passive: false });
+    this.registerDomEvent(app, "focusin", (e) => {
+      const d = e.target?.closest?.(".mn-rq-dock");
+      if (d && e.target.matches("input")) {
+        start(d);
+        place();
+      }
     });
     this.registerDomEvent(app, "focusout", () => {
       window.setTimeout(() => {
