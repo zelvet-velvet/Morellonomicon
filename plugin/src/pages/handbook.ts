@@ -174,7 +174,7 @@ export function handbookPage(ctx: PageCtx): PageOut {
         // a hidden chip holds the row's height until the real ones are read, so the page below does not jump when they arrive
         const spacer = h(chips, "button", "mn-key", "AD");
         spacer.style.visibility = "hidden";
-        const terms = ((await load()).get(g.file.path) ?? []).map((l) => l.split(/[:：]/)[0].trim()).filter((t) => t && t.length <= 8).slice(0, KEYWORDS);
+        const terms = ((await load()).get(g.file.path) ?? []).filter((l) => /[:：]/.test(l)).map((l) => l.split(/[:：]/)[0].trim()).filter((t) => t && t.length <= 8).slice(0, KEYWORDS);
         spacer.remove();
         for (const t of terms) {
             const b = h(chips, "button", "mn-key", t.replace("（", " (").replace("）", ")").trim());   // full-width brackets carry blank space on one side and make the text look off-centre

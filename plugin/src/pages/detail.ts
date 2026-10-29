@@ -1,9 +1,10 @@
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { Champion, Item } from "../data/store";
-import { augIcon, chip, empty, group, h, icon, row } from "../ui";
+import { ITEM_CAT_COLOR, ITEM_CATS, augIcon, chip, empty, group, h, icon, row, shopIcon } from "../ui";
 import { RARITY_COLOR } from "./augments";
 import { officialBlock } from "./changes";
 import { deckPage, itemTree } from "./deck";
+import { glossaryPage } from "./glossary";
 import type { PageCtx, PageOut } from "./index";
 
 const TAG_ZH: Record<string, string> = {
@@ -11,7 +12,8 @@ const TAG_ZH: Record<string, string> = {
     CriticalStrike: "暴擊", AttackSpeed: "攻速", LifeSteal: "生命偷取", SpellVamp: "法術吸血", AbilityHaste: "技能加速", CooldownReduction: "冷卻縮減",
     MagicPenetration: "魔法穿透", ArmorPenetration: "護甲穿透", NonbootsMovement: "移速", Boots: "鞋子", OnHit: "攻擊特效", Active: "主動", Tenacity: "韌性",
 };
-const SUGGESTED = 12;   // champions shown under "適合的英雄"
+const SUGGESTED = 12;
+const GLOSSARY = "名詞表";   // champions shown under "適合的英雄"
 
 // ---- a note, drawn inside the app (Handbook cards, our patch notes)
 export function notePage(ctx: PageCtx): PageOut {
@@ -21,6 +23,7 @@ export function notePage(ctx: PageCtx): PageOut {
     if (!(file instanceof TFile)) { empty(el, { icon: "file-x", title: "Note not found" }); return { title: "", el }; }
     // a guide topic written as cards (`## ` sections) is a swipeable deck; others (the glossary) are read as a note
     if (ctx.plugin.store.guideNotes().some((n) => n.file.path === path && n.layout === "deck")) return deckPage(ctx, file);
+    if (file.basename === GLOSSARY) return glossaryPage(ctx, file);   // the glossary: a grouped list with search
     h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
     const body = h(el, "div", "mn-note markdown-rendered");
     void ctx.app.vault.cachedRead(file).then((text) => MarkdownRenderer.render(ctx.app, text.replace(/^---[\s\S]*?---\n/, ""), body, path, ctx.component));
@@ -132,22 +135,69 @@ export function augmentPage(ctx: PageCtx): PageOut {
     return { title: "", el };   // the name is already the big heading
 }
 
-// ---- an item: effect, its recipe tree, what it builds into, and what Riot changed in it
+// An item's text, split for its page: the stats ("120 魔法攻擊"), then each passive or active with its name and text. Riot's text is one
+// line with " / " between the parts; a part "名：text" is one effect, a short part with no full stop is a name whose text follows.
+const STAT_CAT: Record<string, string> = {
+    生命: "生命", 基礎生命回復: "生命", 物理攻擊: "攻擊力", 魔法攻擊: "法術強度", 技能加速: "技能急速", 冷卻時間減免: "技能急速", 物理防禦: "護甲",
+    魔法防禦: "魔防", 跑速: "移動", 攻擊速度: "攻速", 暴擊率: "暴擊", 暴擊傷害: "暴擊", 魔力: "魔力", 基礎魔力回復: "魔力", 物理致命: "物理穿透",
+    物理穿透: "物理穿透", 魔法穿透: "法術穿透", 普攻吸血: "吸血", 全能吸血: "吸血",
+};
+const STAT_NAME = 8;   // a stat's name is short; a longer "number + words" part is effect text
+const FX_NAME = 16;    // an effect's name, without its cooldown in brackets, is short and has no full stop or comma
+const bareName = (part: string) => { const b = part.replace(/\s*[（(][^)）]*[)）]/g, "").trim(); return b.length > 0 && b.length <= FX_NAME && !/[。，、]/.test(b); };
+function splitItemText(desc: string): { stats: { value: string; name: string }[]; effects: { name: string; text: string; active: boolean }[] } {
+    const stats: { value: string; name: string }[] = [];
+    const effects: { name: string; text: string; active: boolean }[] = [];
+    for (const raw of desc.split(" / ")) {
+        const part = raw.trim();
+        if (!part) continue;
+        const st = /^([+\-]?\d+(?:\.\d+)?%?)\s*([^\d：。，]+)$/.exec(part);
+        if (st && !effects.length && st[2].trim().length <= STAT_NAME) { stats.push({ value: st[1], name: st[2].trim() }); continue; }
+        const named = /^([^：。，]{1,16})：(.+)$/.exec(part);
+        const last = effects[effects.length - 1];
+        if (named) effects.push({ name: named[1].trim(), text: named[2].trim(), active: /^主動/.test(named[1]) });
+        else if (bareName(part)) effects.push({ name: part, text: "", active: /^主動/.test(part) });   // a name (perhaps with its cooldown); its text follows
+        else if (last) last.text = last.text ? `${last.text}${part}` : part;
+        else effects.push({ name: "", text: part, active: false });
+    }
+    return { stats, effects };
+}
+
+// ---- an item (layout "道具卡", Dev Tools/Layouts.md): a banner with the item's picture blurred behind its icon, name, price and ARAM tag;
+// the stats as chips with the shop's icons; each passive / active in its own card; then its recipe tree, what it builds into, Riot's changes
 export function itemPage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const item = store.item(Number(ctx.frame.params?.id));
-    const el = h(null, "div", "mn-page");
+    const el = h(null, "div", "mn-page mn-itpage");
     if (!item) { empty(el, { icon: "package-x", title: "Item not found" }); return { title: "", el }; }
-    const head = h(el, "div", "mn-dhead");
-    const im = h(head, "img", "mn-dimg"); im.src = item.icon; im.alt = "";
-    const who = h(head, "div", "mn-dwho");
-    h(who, "h1", "mn-title", item.name);
-    const tags = h(who, "div", "mn-chips");
-    chip(tags, `${item.goldTotal} 金`, { color: "var(--color-yellow)" });
-    for (const t of item.tags) if (TAG_ZH[t]) chip(tags, TAG_ZH[t]);
-
-    if (item.desc) { const panel = h(el, "div", "mn-panel mn-dpanel"); h(panel, "p", "mn-dtext", item.desc); }
-    if (item.variantOf) h(el, "div", "mn-gf", "這是 ARAM 專用版本,價格與數值和一般版本不同。");
+    const hero = h(el, "div", "mn-it-hero");
+    const bg = h(hero, "img", "mn-it-bg"); bg.src = item.icon; bg.alt = "";
+    const im = h(hero, "img", "mn-it-ic"); im.src = item.icon; im.alt = "";
+    const who = h(hero, "div", "mn-it-who");
+    h(who, "h1", "mn-it-name", item.name);
+    const tags = h(who, "div", "mn-it-tags");
+    h(tags, "span", "mn-it-gold", `${item.goldTotal} 金`);
+    if (item.variantOf) h(tags, "span", "mn-it-aram", "ARAM 版本");
+    const { stats, effects } = splitItemText(item.desc);
+    if (stats.length) {
+        const row = h(el, "div", "mn-it-stats");
+        for (const s of stats) {
+            const cat = STAT_CAT[s.name];
+            const k = cat ? ITEM_CATS.findIndex(([n]) => n === cat) : -1;
+            const x = h(row, "span", "mn-it-stat");
+            if (cat) x.style.setProperty("--c", ITEM_CAT_COLOR[cat] ?? "var(--mn-muted)");
+            if (k >= 0) shopIcon(x, k, true);
+            h(x, "b", undefined, s.value);
+            x.append(s.name);
+        }
+    }
+    for (const fx of effects) {
+        const card = h(el, "div", "mn-it-fx" + (fx.active ? " is-active" : ""));
+        if (fx.active) h(card, "span", "mn-it-fxk", "主動");   // Riot's text marks an active only sometimes, so a card without it has no label
+        if (fx.name) h(card, "b", "mn-it-fxn", fx.name.replace(/^主動\s*[─-]\s*/, ""));
+        if (fx.text) h(card, "p", "mn-it-fxt", fx.text);
+    }
+    if (item.variantOf) h(el, "div", "mn-gf", "價格與數值和一般版本不同。");
     // what it is made of, drawn like the shop's tree; then what it builds into; Riot's changes last
     if (item.from.length) { h(el, "div", "mn-gh", "合成材料"); itemTree(h(el, "div", "mn-panel mn-itree"), ctx, item.id); }
     recipe(el, ctx, "可合成", item.into.map((id) => store.item(id)).filter((i): i is Item => !!i));

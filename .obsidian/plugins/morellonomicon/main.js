@@ -3553,7 +3553,7 @@ function handbookPage(ctx) {
     if (!g) return;
     const spacer = h(chips, "button", "mn-key", "AD");
     spacer.style.visibility = "hidden";
-    const terms = ((await load()).get(g.file.path) ?? []).map((l) => l.split(/[:：]/)[0].trim()).filter((t) => t && t.length <= 8).slice(0, KEYWORDS);
+    const terms = ((await load()).get(g.file.path) ?? []).filter((l) => /[:：]/.test(l)).map((l) => l.split(/[:：]/)[0].trim()).filter((t) => t && t.length <= 8).slice(0, KEYWORDS);
     spacer.remove();
     for (const t of terms) {
       const b = h(chips, "button", "mn-key", t.replace("\uFF08", " (").replace("\uFF09", ")").trim());
@@ -4555,31 +4555,98 @@ function strip(box, items) {
   }
 }
 
-// src/pages/detail.ts
-var TAG_ZH = {
-  Damage: "\u7269\u7406\u653B\u64CA",
-  SpellDamage: "\u9B54\u6CD5\u653B\u64CA",
-  Armor: "\u8B77\u7532",
-  SpellBlock: "\u9B54\u6297",
-  Health: "\u751F\u547D",
-  HealthRegen: "\u751F\u547D\u56DE\u5FA9",
-  Mana: "\u9B54\u529B",
-  ManaRegen: "\u9B54\u529B\u56DE\u5FA9",
-  CriticalStrike: "\u66B4\u64CA",
-  AttackSpeed: "\u653B\u901F",
-  LifeSteal: "\u751F\u547D\u5077\u53D6",
-  SpellVamp: "\u6CD5\u8853\u5438\u8840",
-  AbilityHaste: "\u6280\u80FD\u52A0\u901F",
-  CooldownReduction: "\u51B7\u537B\u7E2E\u6E1B",
-  MagicPenetration: "\u9B54\u6CD5\u7A7F\u900F",
-  ArmorPenetration: "\u8B77\u7532\u7A7F\u900F",
-  NonbootsMovement: "\u79FB\u901F",
-  Boots: "\u978B\u5B50",
-  OnHit: "\u653B\u64CA\u7279\u6548",
-  Active: "\u4E3B\u52D5",
-  Tenacity: "\u97CC\u6027"
+// src/pages/glossary.ts
+var OWN = {
+  AD: [DAMAGE_ICON["\u7269\u7406"], DAMAGE_COLOR["\u7269\u7406"]],
+  AP: [DAMAGE_ICON["\u9B54\u6CD5"], DAMAGE_COLOR["\u9B54\u6CD5"]],
+  \u8B77\u7532: [STAT_ICON["\u8B77\u7532"], STAT_COLOR["\u8B77\u7532"]],
+  \u9B54\u6297: [STAT_ICON["\u9B54\u9632"], STAT_COLOR["\u9B54\u9632"]],
+  \u51B7\u537B: [STAT_ICON["\u6280\u80FD\u6025\u901F"], STAT_COLOR["\u6280\u80FD\u6025\u901F"]],
+  \u6D88\u8017: ["droplet", ITEM_CAT_COLOR["\u9B54\u529B"]],
+  \u666E\u653B: ["mouse-pointer-click", "var(--mn-text)"],
+  \u7206\u767C: ["zap", "var(--mn-exec)"],
+  \u524D\u6392: ["brick-wall", "var(--mn-guard)"],
+  \u5F8C\u6392: ["telescope", "var(--mn-phys)"],
+  \u958B\u5718: ["flag", "var(--mn-accent)"],
+  \u98A8\u7B8F: ["rewind", "var(--mn-dash)"],
+  \u589E\u5E45\u88DD\u7F6E: ["sparkles", "var(--mn-accent)"],
+  \u56DE\u8840\u5305: ["package-plus", "var(--mn-heal)"]
 };
+var termArt = (term) => {
+  const key = term.split(/[（(]/)[0].trim();
+  const tag = tagInfo(key);
+  return OWN[key] ?? (tag ? [tag.icon, tag.color] : ["book-a", "var(--mn-muted)"]);
+};
+var plain = (s) => s.replace(/[*_`]/g, "").replace(/!?\[\[([^\]|]*)(?:\|([^\]]*))?\]\]/g, (_m, a, b) => b ?? a).trim();
+function parse3(text) {
+  const out = [];
+  for (const line of text.replace(/^---[\s\S]*?---\n/, "").split("\n")) {
+    const g = /^##\s+(.+)/.exec(line);
+    if (g) {
+      out.push({ group: g[1].trim(), terms: [] });
+      continue;
+    }
+    const t = /^\s*[-*]\s+\*\*(.+?)\*\*\s*[:：]\s*(.+)$/.exec(line);
+    if (!t) continue;
+    if (!out.length) out.push({ group: "", terms: [] });
+    out[out.length - 1].terms.push({ term: plain(t[1]), text: plain(t[2]) });
+  }
+  return out.filter((g) => g.terms.length);
+}
+function glossaryPage(ctx, file) {
+  const el = h(null, "div", "mn-page mn-glpage");
+  fixedPage(el, ctx.component);
+  h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
+  const list2 = h(el, "div", "mn-rq-list mn-gl");
+  const dock = h(el, "div", "mn-rq-dock");
+  const cap = h(dock, "div", "mn-rq-cap");
+  icon(cap, "search", "mn-rq-cap-ic");
+  const search = h(cap, "input");
+  search.type = "search";
+  search.placeholder = "\u627E\u4E00\u500B\u8A5E";
+  search.setAttribute("enterkeyhint", "search");
+  const mic = h(cap, "button", "mn-rq-mic");
+  icon(mic, "mic");
+  mic.setAttribute("aria-label", "\u7528\u9375\u76E4\u7684\u9EA5\u514B\u98A8\u8AAA");
+  mic.addEventListener("click", (e) => {
+    e.preventDefault();
+    search.focus();
+  });
+  let groups = [];
+  const draw = () => {
+    list2.empty();
+    const q = search.value.trim().toLowerCase();
+    let shown = 0;
+    for (const g of groups) {
+      const hits = g.terms.filter((t) => !q || t.term.toLowerCase().includes(q) || t.text.toLowerCase().includes(q));
+      if (!hits.length) continue;
+      const sec = h(list2, "section", "mn-gl-sec");
+      if (g.group) h(sec, "div", "mn-gl-head", g.group);
+      for (const t of hits) {
+        const r = h(sec, "div", "mn-gl-row");
+        const [ic, color] = termArt(t.term);
+        const tile2 = h(r, "span", "mn-gl-ic");
+        tile2.style.setProperty("--c", color);
+        icon(tile2, ic);
+        const words = h(r, "div", "mn-gl-words");
+        h(words, "b", void 0, t.term);
+        h(words, "span", void 0, t.text);
+        shown++;
+      }
+    }
+    if (!shown) empty(list2, { icon: "search-x", title: "\u627E\u4E0D\u5230\u9019\u500B\u8A5E" });
+  };
+  search.addEventListener("input", draw);
+  void ctx.app.vault.cachedRead(file).then((text) => {
+    groups = parse3(text);
+    draw();
+  });
+  return { title: "", el };
+}
+
+// src/pages/detail.ts
 var SUGGESTED = 12;
+var GLOSSARY3 = "\u540D\u8A5E\u8868";
 function notePage(ctx) {
   const path = String(ctx.frame.params?.path ?? "");
   const file = ctx.app.vault.getAbstractFileByPath(path);
@@ -4589,6 +4656,7 @@ function notePage(ctx) {
     return { title: "", el };
   }
   if (ctx.plugin.store.guideNotes().some((n) => n.file.path === path && n.layout === "deck")) return deckPage(ctx, file);
+  if (file.basename === GLOSSARY3) return glossaryPage(ctx, file);
   h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
   const body = h(el, "div", "mn-note markdown-rendered");
   void ctx.app.vault.cachedRead(file).then((text) => import_obsidian9.MarkdownRenderer.render(ctx.app, text.replace(/^---[\s\S]*?---\n/, ""), body, path, ctx.component));
@@ -4699,28 +4767,93 @@ function augmentPage(ctx) {
   }
   return { title: "", el };
 }
+var STAT_CAT = {
+  \u751F\u547D: "\u751F\u547D",
+  \u57FA\u790E\u751F\u547D\u56DE\u5FA9: "\u751F\u547D",
+  \u7269\u7406\u653B\u64CA: "\u653B\u64CA\u529B",
+  \u9B54\u6CD5\u653B\u64CA: "\u6CD5\u8853\u5F37\u5EA6",
+  \u6280\u80FD\u52A0\u901F: "\u6280\u80FD\u6025\u901F",
+  \u51B7\u537B\u6642\u9593\u6E1B\u514D: "\u6280\u80FD\u6025\u901F",
+  \u7269\u7406\u9632\u79A6: "\u8B77\u7532",
+  \u9B54\u6CD5\u9632\u79A6: "\u9B54\u9632",
+  \u8DD1\u901F: "\u79FB\u52D5",
+  \u653B\u64CA\u901F\u5EA6: "\u653B\u901F",
+  \u66B4\u64CA\u7387: "\u66B4\u64CA",
+  \u66B4\u64CA\u50B7\u5BB3: "\u66B4\u64CA",
+  \u9B54\u529B: "\u9B54\u529B",
+  \u57FA\u790E\u9B54\u529B\u56DE\u5FA9: "\u9B54\u529B",
+  \u7269\u7406\u81F4\u547D: "\u7269\u7406\u7A7F\u900F",
+  \u7269\u7406\u7A7F\u900F: "\u7269\u7406\u7A7F\u900F",
+  \u9B54\u6CD5\u7A7F\u900F: "\u6CD5\u8853\u7A7F\u900F",
+  \u666E\u653B\u5438\u8840: "\u5438\u8840",
+  \u5168\u80FD\u5438\u8840: "\u5438\u8840"
+};
+var STAT_NAME = 8;
+var FX_NAME = 16;
+var bareName = (part) => {
+  const b = part.replace(/\s*[（(][^)）]*[)）]/g, "").trim();
+  return b.length > 0 && b.length <= FX_NAME && !/[。，、]/.test(b);
+};
+function splitItemText(desc2) {
+  const stats2 = [];
+  const effects = [];
+  for (const raw of desc2.split(" / ")) {
+    const part = raw.trim();
+    if (!part) continue;
+    const st = /^([+\-]?\d+(?:\.\d+)?%?)\s*([^\d：。，]+)$/.exec(part);
+    if (st && !effects.length && st[2].trim().length <= STAT_NAME) {
+      stats2.push({ value: st[1], name: st[2].trim() });
+      continue;
+    }
+    const named = /^([^：。，]{1,16})：(.+)$/.exec(part);
+    const last = effects[effects.length - 1];
+    if (named) effects.push({ name: named[1].trim(), text: named[2].trim(), active: /^主動/.test(named[1]) });
+    else if (bareName(part)) effects.push({ name: part, text: "", active: /^主動/.test(part) });
+    else if (last) last.text = last.text ? `${last.text}${part}` : part;
+    else effects.push({ name: "", text: part, active: false });
+  }
+  return { stats: stats2, effects };
+}
 function itemPage(ctx) {
   const store = ctx.plugin.store;
   const item = store.item(Number(ctx.frame.params?.id));
-  const el = h(null, "div", "mn-page");
+  const el = h(null, "div", "mn-page mn-itpage");
   if (!item) {
     empty(el, { icon: "package-x", title: "Item not found" });
     return { title: "", el };
   }
-  const head2 = h(el, "div", "mn-dhead");
-  const im = h(head2, "img", "mn-dimg");
+  const hero = h(el, "div", "mn-it-hero");
+  const bg = h(hero, "img", "mn-it-bg");
+  bg.src = item.icon;
+  bg.alt = "";
+  const im = h(hero, "img", "mn-it-ic");
   im.src = item.icon;
   im.alt = "";
-  const who = h(head2, "div", "mn-dwho");
-  h(who, "h1", "mn-title", item.name);
-  const tags2 = h(who, "div", "mn-chips");
-  chip(tags2, `${item.goldTotal} \u91D1`, { color: "var(--color-yellow)" });
-  for (const t of item.tags) if (TAG_ZH[t]) chip(tags2, TAG_ZH[t]);
-  if (item.desc) {
-    const panel = h(el, "div", "mn-panel mn-dpanel");
-    h(panel, "p", "mn-dtext", item.desc);
+  const who = h(hero, "div", "mn-it-who");
+  h(who, "h1", "mn-it-name", item.name);
+  const tags2 = h(who, "div", "mn-it-tags");
+  h(tags2, "span", "mn-it-gold", `${item.goldTotal} \u91D1`);
+  if (item.variantOf) h(tags2, "span", "mn-it-aram", "ARAM \u7248\u672C");
+  const { stats: stats2, effects } = splitItemText(item.desc);
+  if (stats2.length) {
+    const row2 = h(el, "div", "mn-it-stats");
+    for (const s of stats2) {
+      const cat = STAT_CAT[s.name];
+      const k = cat ? ITEM_CATS.findIndex(([n]) => n === cat) : -1;
+      const x = h(row2, "span", "mn-it-stat");
+      if (cat) x.style.setProperty("--c", ITEM_CAT_COLOR[cat] ?? "var(--mn-muted)");
+      if (k >= 0) shopIcon(x, k, true);
+      h(x, "b", void 0, s.value);
+      x.append(s.name);
+    }
   }
-  if (item.variantOf) h(el, "div", "mn-gf", "\u9019\u662F ARAM \u5C08\u7528\u7248\u672C,\u50F9\u683C\u8207\u6578\u503C\u548C\u4E00\u822C\u7248\u672C\u4E0D\u540C\u3002");
+  for (const fx of effects) {
+    const card = h(el, "div", "mn-it-fx" + (fx.active ? " is-active" : ""));
+    if (fx.active) h(card, "span", "mn-it-fxk", "\u4E3B\u52D5");
+    if (fx.name) h(card, "b", "mn-it-fxn", fx.name.replace(/^主動\s*[─-]\s*/, ""));
+    if (fx.text) h(card, "p", "mn-it-fxt", fx.text);
+  }
+  if (item.variantOf) h(el, "div", "mn-gf", "\u50F9\u683C\u8207\u6578\u503C\u548C\u4E00\u822C\u7248\u672C\u4E0D\u540C\u3002");
   if (item.from.length) {
     h(el, "div", "mn-gh", "\u5408\u6210\u6750\u6599");
     itemTree(h(el, "div", "mn-panel mn-itree"), ctx, item.id);

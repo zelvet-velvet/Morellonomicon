@@ -85,6 +85,20 @@ Source: `ITEM_CATS` and `ITEM_CAT_COLOR` in `plugin/src/ui.ts`. Colours: grey wh
 吸血 | shop:13 | --mn-ls
 ```
 
+## 📖 名詞表 (glossary)
+Source: `OWN` in `plugin/src/pages/glossary.ts`. A term that is also a damage kind, a stat or an ability tag keeps that icon and colour (AD = 物理, 護甲, 控場…); only the terms below are the glossary's own (chosen by Claude, 2026-10-29).
+
+```mn-icons
+普攻 | mouse-pointer-click | --mn-text
+爆發 | zap | --mn-exec
+前排 | brick-wall | --mn-guard
+後排 | telescope | --mn-phys
+開團 | flag | --mn-accent
+風箏 | rewind | --mn-dash
+增幅裝置 | sparkles | --mn-accent
+回血包 | package-plus | --mn-heal
+```
+
 ## 🛡️ Roles and lanes
 Source: `ROLE_FILE` / `ROLE_ICON` and `LANE_FILE` / `LANE_ICON` in `plugin/src/ui.ts`. The game's own class and position icons (from the League of Legends Wiki, shown by address); the Lucide name is only the fallback when a file does not load.
 
