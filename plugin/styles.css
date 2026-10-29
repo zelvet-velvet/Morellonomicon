@@ -1161,7 +1161,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* Home (pages/home.ts): the hero (profile or the Riot ID box), the two ways in, your top mastery */
 .mn-home-hero { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 230px; margin: 0 -16px; padding: 70px 16px 18px; overflow: hidden; text-align: center; }
 .mn-home-wall { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; z-index: 0;
-    -webkit-mask-image: linear-gradient(180deg, #000 30%, transparent 100%); mask-image: linear-gradient(180deg, #000 30%, transparent 100%); opacity: 0.85; }
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 64px, #000 45%, transparent 100%); mask-image: linear-gradient(180deg, transparent 0, #000 64px, #000 45%, transparent 100%); opacity: 0.85; }
 .mn-home-hero > :not(.mn-home-wall) { position: relative; z-index: 1; }
 .mn-app .mn-home-av { display: grid; place-items: center; width: 92px; height: 92px; padding: 0; border-radius: 50%; overflow: hidden; border: 0; background: var(--mn-card-hi);
     box-shadow: 0 0 0 4px var(--mn-bg), 0 0 0 7px #d9b15c, 0 0 0 10px rgba(217, 177, 92, 0.3); font-size: 34px; font-weight: 800; color: var(--mn-text); }
@@ -1232,13 +1232,14 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-home-entry.is-wide { grid-column: 1 / -1; }
 /* Champions: the 篩選 button inside the bottom capsule, the filters as a sheet right above it */
 .mn-cap-fb { flex: none; display: flex; }
-.mn-app .mn-cap-fb .mn-filterbtn { position: relative; width: 44px; height: 44px; padding: 0; border-radius: 50%; display: grid; place-items: center; }
+.mn-app .mn-cap-fb .mn-filterbtn { position: relative; width: 44px; height: 44px; padding: 0; border-radius: 50%; display: grid; place-items: center; border: 0; background: var(--mn-card-hi); }
+.mn-app .mn-cap-fb .mn-filterbtn.is-open, .mn-app .mn-cap-fb .mn-filterbtn.has-n { color: var(--mn-accent); }
 .mn-fsheet:not(.is-open) { display: none; }
 .mn-fpanel.mn-fsheet { margin: 0; max-height: 55vh; overflow-y: auto; overscroll-behavior: contain; border-radius: 22px; background: color-mix(in srgb, var(--mn-card) 92%, transparent);
     border: 1px solid var(--mn-line); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
 .mn-cap-fb .mn-filterbtn-n { position: absolute; top: -4px; right: -4px; }
 /* Items, laid out like the in-game shop: role tabs and the sort button on top, the stat rail on the left, a tight grid of icons with prices */
-.mn-shop-roles { display: flex; align-items: center; gap: 4px; margin: 10px 0 0; padding-bottom: 8px; border-bottom: 1px solid var(--mn-line); }
+.mn-shop-roles { display: flex; align-items: center; gap: 2px; margin: 8px 0 0; padding-bottom: 4px; border-bottom: 1px solid var(--mn-line); }
 .mn-app .mn-shop-role { flex: none; display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border-radius: 10px; border: 0; background: none; box-shadow: none; color: var(--mn-muted); }
 .mn-app .mn-shop-role { position: relative; }
 .mn-app .mn-shop-role.is-on { color: var(--mn-text); }
@@ -1247,27 +1248,33 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-shop-role svg { width: 20px; height: 20px; }
 .mn-shop-role img { width: 24px; height: 24px; }
 .mn-shop-role:not(.is-on) img { opacity: 0.55; }
-.mn-app .mn-shop-sortbtn { flex: none; margin-left: auto; display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border-radius: 50%; border: 1.5px solid var(--mn-accent); background: none; box-shadow: none; color: var(--mn-accent); }
+.mn-app .mn-shop-sortbtn { flex: none; margin-left: auto; display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border-radius: 10px; border: 0; background: none; box-shadow: none; color: var(--mn-accent); }
 .mn-shop-sortbtn svg { width: 18px; height: 18px; }
 .mn-shop-sortwrap { display: none; justify-content: flex-end; gap: 6px; margin: 8px 0 0; }
 .mn-shop-sortwrap.is-open { display: flex; }
 .mn-app .mn-shop-sort { height: 30px; padding: 0 12px; border-radius: 15px; border: 1px solid var(--mn-line); background: var(--mn-card); box-shadow: none; font-size: 12.5px; color: var(--mn-muted); }
 .mn-app .mn-shop-sort.is-on { color: var(--mn-accent); border-color: var(--mn-accent); }
-.mn-shop { display: flex; align-items: stretch; gap: 8px; margin-top: 8px; min-height: 0; }
+.mn-shop { display: flex; align-items: stretch; gap: 6px; margin-top: 4px; min-height: 0; }
 .mn-scroll:has(.mn-shop) { overflow-y: hidden; }   /* the page stays; only the item grid scrolls */
-.mn-shop-rail { flex: none; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; align-items: center; gap: 2px; width: 40px; padding: 4px 0; border-right: 1px solid var(--mn-line); }
+.mn-shop-rail { flex: none; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; align-items: center; gap: 0; width: 34px; padding: 2px 0; border-right: 1px solid var(--mn-line); }
 .mn-app .mn-shop-stat { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border-radius: 10px; border: 0; background: none; box-shadow: none; color: var(--mn-muted); }
 .mn-app .mn-shop-stat { position: relative; }
 .mn-shop-sprite { display: block; width: 26px; height: 26px; background-repeat: no-repeat; }
-.mn-app .mn-shop-stat.is-clear { border: 1.5px solid var(--mn-line); border-radius: 50%; margin-bottom: 4px; }
-.mn-app .mn-shop-stat.is-clear.is-live { color: var(--mn-accent); border-color: var(--mn-accent); }
+.mn-app .mn-shop-stat.is-clear { margin-bottom: 2px; }
+.mn-app .mn-shop-stat.is-clear.is-live { color: var(--mn-accent); }
 .mn-shop-stat svg { width: 18px; height: 18px; }
 .mn-shop-break { display: block; width: 22px; height: 1px; margin: 4px 0; background: var(--mn-line); }
 .mn-shop-list { flex: 1; min-width: 0; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 16px; }
-.mn-shop-tier { margin: 6px 0 4px; font-size: 11px; font-weight: 800; letter-spacing: 0.12em; color: var(--mn-muted); }
-.mn-items { display: grid; grid-template-columns: repeat(auto-fill, 48px); gap: 8px 6px; justify-content: start; }
-.mn-app .mn-item-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 48px; height: auto; padding: 0; border: 0; background: none; box-shadow: none; }
-.mn-item-tile img { width: 46px; height: 46px; border-radius: 4px; border: 1px solid color-mix(in srgb, #d9b15c 45%, transparent); }
-.mn-item-tile span { font-size: 12px; font-weight: 700; color: var(--mn-text); font-variant-numeric: tabular-nums; }
+.mn-shop-tier { margin: 2px 0 4px; font-size: 11px; font-weight: 800; letter-spacing: 0.12em; color: var(--mn-muted); }
+.mn-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px 4px; }   /* the icons grow to fill the row: no empty band at the right */
+.mn-app .mn-item-tile { display: flex; flex-direction: column; align-items: stretch; gap: 1px; width: auto; min-width: 0; height: auto; padding: 0; border: 0; background: none; box-shadow: none; }
+.mn-item-tile img { width: 100%; height: auto; aspect-ratio: 1; border-radius: 4px; border: 1px solid color-mix(in srgb, #d9b15c 45%, transparent); }
+.mn-item-tile span { text-align: center; font-size: 11.5px; font-weight: 700; color: var(--mn-text); font-variant-numeric: tabular-nums; }
 .mn-shopic { display: inline-block; flex: none; width: 26px; height: 26px; background-repeat: no-repeat; }   /* a game shop icon (shopIcon in ui.ts) */
 .mn-qc-stat .mn-shopic { margin-left: -4px; }
+/* Champions: lanes and the count in one slim bar */
+.mn-lanebar { display: flex; align-items: center; gap: 2px; padding-bottom: 4px; border-bottom: 1px solid var(--mn-line); }
+.mn-app .mn-lanebar .mn-chip.mn-chip-ic { width: 40px; height: 38px; }
+.mn-lanebar .mn-chip-ic img, .mn-lanebar .mn-chip-ic svg { width: 24px; height: 24px; }
+.mn-lanebar .mn-count { margin: 0 2px 0 auto; font-variant-numeric: tabular-nums; }
+.mn-fgroup:has(.mn-lanebar) { margin: 6px 0 8px; }

@@ -2501,7 +2501,7 @@ function championPicker(parent, ctx) {
   };
   const drawFilters = () => {
     filters.empty();
-    const row2 = fgrid(filters, LANES.length);
+    const row2 = h(filters, "div", "mn-lanebar");
     const known = store.hasLanes();
     for (const l of LANES) {
       const chipEl = laneChip(row2, l, { on: F.lanes.has(l), onTap: () => {
@@ -2514,6 +2514,7 @@ function championPicker(parent, ctx) {
       } });
     }
     const n = activeFilters();
+    row2.append(count2);
     fbHost.empty();
     const fb = h(fbHost, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
     fb.setAttribute("aria-label", "\u7BE9\u9078");
