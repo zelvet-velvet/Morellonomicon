@@ -23,6 +23,7 @@ sticker: lucide//activity
 - **Sharp shop icons**: the game's stat icons sharpened on the device and painted in the Icons note's colours (to check on the phone).
 - **速查 text for every champion**: one-line overview, 玩法 line and each ability in plain words drafted for the other 165 champions, in the style of the 8 Zaviel wrote (to proofread).
 - **Loading blocks stay put**: the blur stays over the visible part while scrolling, blocks taps and scrolling, and does not come back on a redraw (to check on the phone).
+- **No more blinking pictures**: cached pictures show at once on redraws, slow small ones show a placeholder, clips fade in instead of a black box (to check on the phone).
 - **Picks lanes**: bigger lane icons, one lane at a time, and Champions' lanes too (to check on the phone).
 - **Tidy-up**: about 80 unused style rules and a few unused bits of code removed.
 

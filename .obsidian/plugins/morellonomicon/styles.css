@@ -901,10 +901,17 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app .mn-tabs.is-drag .mn-tab.is-pv { color: var(--mn-accent); }
 /* the hidden switch whose toggle gives iOS its tick (haptic in ui.ts) */
 .mn-tick { position: fixed; left: -100px; top: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; overflow: hidden; }
-/* a picture still loading is clear, then fades in (the page itself shows at once) */
+/* Pictures and clips while they load (autoLoading in ui.ts; one only arriving after a short grace time): a big picture stays clear
+   (its frame gets the block look), a small one shows a soft placeholder in its own shape, a clip stays clear over its card; then
+   each fades up. Small icons drawn on their own background (role and lane icons, the shop's stat icons) just stay clear. */
 .mn-app img { transition: opacity 0.25s ease-out; }
-.mn-app img { transition: opacity 0.25s ease-out; }   /* a picture that was loading fades in (autoLoading in ui.ts) */
 .mn-app img.is-loading { opacity: 0; }
+.mn-app img.is-loading.is-ph { opacity: 1; background-color: color-mix(in srgb, var(--mn-text) 8%, transparent); }
+.mn-app :is(.mn-role-img, .mn-shopic > img, .mn-shop-sprite > img).is-loading { opacity: 0; background: none; }
+.mn-app img.is-arrived { animation: mn-pic-in 0.22s ease-out; }
+@keyframes mn-pic-in { from { opacity: 0.25; } }
+.mn-app video { transition: opacity 0.3s ease-out; }
+.mn-app video.is-loading { opacity: 0; }
 
 /* No native press look on any button: Obsidian gives every button a grey hover / press / focus background and shadow, which on a
    phone sticks after a tap (a grey blob around an icon). Picture buttons stay clear in every state; buttons with a fill of their

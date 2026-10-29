@@ -209,7 +209,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
             const c = all.find((x) => x.id === id);
             if (!c) continue;
             const card = h(shelf, "div", "mn-rq-mini");
-            const im = h(card, "img"); im.src = loading(c.id); im.alt = ""; im.loading = "lazy";
+            const im = h(card, "img"); im.src = loading(c.id); im.alt = "";   // not lazy: the hand is redrawn on every pick, and a lazy picture blinks even from the cache
             const ms = store.masteryOf(c.id);
             if (ms && ms.level >= 5) h(card, "span", "mn-rq-mtag" + (ms.level >= 10 ? " is-high" : ""), `熟練 ${ms.level}`);
             h(card, "b", undefined, c.name);

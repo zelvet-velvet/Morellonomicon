@@ -2,6 +2,7 @@ import { requestUrl } from "obsidian";
 import type { Champion, Change, Skill } from "../data/store";
 import { DIR_COLOR } from "./changes";
 import { DAMAGE_COLOR, blockUntil, chip, h, icon, scalingParts, whenMediaLoaded } from "../ui";
+const CLIP_FADE_MS = 350;   // a clip fades in over 0.3 s (styles.css, .mn-app video); its stand-in stays under it that long
 
 // Passive + Q W E R as icons; the frame colour is the damage type of the skill (orange physical, blue magic, yellow true).
 // Tap an icon to open its details right below (tap again to close); no new page.
@@ -59,7 +60,8 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
         ph.style.backgroundImage = `url("${s.icon}")`;
         demo(clipBox, c, s, () => clipBox.remove());
         // once the clip shows a frame the blurred stand-in goes (left under the clip, its blur showed at the edges)
-        clipBox.querySelector("video")?.addEventListener("loadeddata", () => ph.remove(), { once: true });
+        // (after the clip's own fade-in, so nothing shows through while it fades up)
+        clipBox.querySelector("video")?.addEventListener("loadeddata", () => window.setTimeout(() => ph.remove(), CLIP_FADE_MS), { once: true });
         // scroll down to the end of the card (its clip included); a card taller than the screen shows from its top instead
         const reveal = () => {
             if (open !== i || !detail.isConnected) return;   // another skill was opened meanwhile, or the page was left

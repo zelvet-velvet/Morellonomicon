@@ -95,7 +95,7 @@ export function homePage(ctx: PageCtx): PageOut {
         };
         for (const c of pool) {
             const b = h(champsRow, "button", "mn-home-pc");
-            const im = h(b, "img"); im.src = c.icon; im.alt = c.name; im.loading = "lazy";
+            const im = h(b, "img"); im.src = c.icon; im.alt = c.name;   // icons are warmed at start-up: no need to load lazily
             b.addEventListener("click", (e) => { e.preventDefault(); champsRow.querySelectorAll(".is-on").forEach((x) => x.removeClass("is-on")); b.addClass("is-on"); showSkins(c.id); });
         }
         if (s.wallpaper) {

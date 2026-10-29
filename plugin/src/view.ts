@@ -19,13 +19,6 @@ const OVERLAY_SCROLL = 220;   // px scrolled before the top bar gets its backgro
 const ARRIVE_MS = 240;
 
 // A picture that arrives after its page is on screen (a card built later, a lazy one) stays clear, then fades in
-function fadeIn(im: HTMLImageElement): void {
-    if (!im.src || im.complete) return;
-    im.addClass("is-loading");
-    const shown = () => im.removeClass("is-loading");
-    im.addEventListener("load", shown, { once: true });
-    im.addEventListener("error", shown, { once: true });
-}
 const VEIL_DELAY_MS = 250;   // a later page waits this long for its pictures before it shows under the loading veil
 const VEIL_MIN_MS = 500;     // and once shown it stays at least this long
 const BOOT_PICTURES_MS = 7000;   // at start-up the first page may wait this long for its icons (the first time they come over the network)
@@ -187,15 +180,6 @@ export class MnView extends ItemView {
         sized.observe(this.scrollEl);
         this.register(() => { sized.disconnect(); cancelAnimationFrame(raf); });
         this.registerDomEvent(this.scrollEl, "scroll", () => this.markScrolled(), { passive: true });
-        // pictures added to a page after it showed (cards built later, lazy ones) fade in instead of popping in
-        const late = new MutationObserver((list) => {
-            for (const m of list) m.addedNodes.forEach((n) => {
-                if (n instanceof HTMLImageElement) fadeIn(n);
-                else if (n instanceof HTMLElement) n.querySelectorAll("img").forEach(fadeIn);
-            });
-        });
-        late.observe(this.scrollEl, { childList: true, subtree: true });
-        this.register(() => late.disconnect());
         this.tabsEl = h(app, "div", "mn-tabs");
         this.applyTheme();
         this.registerEvent(this.app.workspace.on("css-change", () => this.applyTheme()));   // Obsidian switched light / dark

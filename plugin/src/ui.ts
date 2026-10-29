@@ -269,8 +269,13 @@ export function layoutBlock<T extends HTMLElement>(el: T, own = false): T {
 // that look instead. Pictures inside a block a page already handles (mn-blk), inside a card pile (it has its own) or under .mn-noauto
 // are left alone.
 const AUTO_BLOCK = 64;
+// A picture that arrives within PIC_GRACE_MS (from the cache, or a quick one) shows straight away: only a slower one is hidden and
+// fades in, so a redraw never blinks. While it loads, a small picture (an icon, a face: PIC_PH px or less each way) shows a soft
+// placeholder in its own shape instead of a hole; a big one stays clear (it would paint half-drawn) and its frame gets the block look.
+const PIC_GRACE_MS = 90;
+const PIC_PH = 96;
 export function autoLoading(root: HTMLElement): MutationObserver {
-    const seen = new WeakSet<HTMLImageElement>();
+    const seen = new WeakMap<HTMLImageElement, string>();   // the address each picture was looked at for: a new address is looked at again
     // the Layouts blocks that something was added to: checked once after this round of changes
     const blocks = new Set<HTMLElement>();
     // the blocks of one page that changed in the same round load together (a page that just opened: all of its blocks)
@@ -295,22 +300,54 @@ export function autoLoading(root: HTMLElement): MutationObserver {
         if (b) queue(b);
         n.querySelectorAll<HTMLElement>(".mn-lb").forEach(queue);
     };
+    // pictures still loading after the grace time, handled together: every size is read first, then the classes are set
+    const waiting = new Set<HTMLImageElement>();
+    let graceTimer = 0;
+    const settle = () => {
+        graceTimer = 0;
+        const list = [...waiting].filter((im) => im.isConnected && !im.complete);
+        waiting.clear();
+        const sizes = list.map((im) => ({ im: im.getBoundingClientRect(), host: im.parentElement?.getBoundingClientRect() }));
+        list.forEach((im, k) => {
+            const r = sizes[k].im, hr = sizes[k].host;
+            const small = r.width > 0 && r.height > 0 && Math.max(r.width, r.height) <= PIC_PH;
+            im.classList.add("is-loading");
+            if (small) im.classList.add("is-ph");
+            const done = () => {
+                if (!im.classList.contains("is-loading")) return;
+                im.classList.remove("is-loading", "is-ph");
+                im.classList.add("is-arrived");   // a short fade up (styles.css), then gone
+                window.setTimeout(() => im.classList.remove("is-arrived"), 400);
+            };
+            im.addEventListener("load", done, { once: true });
+            im.addEventListener("error", done, { once: true });
+            if (im.complete) done();
+            const host = im.parentElement;
+            if (!small && host && hr && !im.closest(".mn-lb") && Math.min(hr.width, hr.height) >= AUTO_BLOCK) blockLoad(host);   // a big picture's frame
+        });
+    };
     const take = (im: HTMLImageElement) => {
-        if (seen.has(im) || !im.getAttribute("src") || (im.complete && im.naturalWidth) || im.closest(".mn-noauto, .mn-blk, .mn-pager")) return;
-        seen.add(im);
-        im.classList.add("is-loading");
-        const done = () => im.classList.remove("is-loading");
-        im.addEventListener("load", done, { once: true });
-        im.addEventListener("error", done, { once: true });
-        const host = im.parentElement;
-        if (!host || im.closest(".mn-lb")) return;   // a Layouts block shows the look for all of it
-        const r = host.getBoundingClientRect();
-        if (Math.min(r.width, r.height) >= AUTO_BLOCK) blockLoad(host);
+        const src = im.getAttribute("src");
+        if (!src || seen.get(im) === src || im.closest(".mn-noauto, .mn-blk.is-loading, .mn-pager")) return;   // a loading block: its veil covers it
+        seen.set(im, src);
+        if (im.complete && im.naturalWidth) return;
+        waiting.add(im);
+        if (!graceTimer) graceTimer = window.setTimeout(settle, PIC_GRACE_MS);
+    };
+    // a clip shows nothing (a black box) until its first frame: it stays clear over its card and fades in then
+    const takeVideo = (v: HTMLVideoElement) => {
+        if (v.readyState >= 2 || v.closest(".mn-noauto") || v.classList.contains("is-loading")) return;
+        v.classList.add("is-loading");
+        const done = () => v.classList.remove("is-loading");
+        v.addEventListener("loadeddata", done, { once: true });
+        v.addEventListener("error", done, { once: true });
     };
     const scan = (n: Node) => {
-        if (n instanceof HTMLElement) inBlock(n);
+        if (!(n instanceof HTMLElement)) return;
+        inBlock(n);
         if (n instanceof HTMLImageElement) take(n);
-        else if (n instanceof HTMLElement) n.querySelectorAll("img").forEach(take);
+        else if (n instanceof HTMLVideoElement) takeVideo(n);
+        else { n.querySelectorAll("img").forEach(take); n.querySelectorAll("video").forEach(takeVideo); }
     };
     const mo = new MutationObserver((list) => {
         for (const m of list) {

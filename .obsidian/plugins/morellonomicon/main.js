@@ -774,8 +774,10 @@ function layoutBlock(el, own = false) {
   return el;
 }
 var AUTO_BLOCK = 64;
+var PIC_GRACE_MS = 90;
+var PIC_PH = 96;
 function autoLoading(root) {
-  const seen = /* @__PURE__ */ new WeakSet();
+  const seen = /* @__PURE__ */ new WeakMap();
   const blocks = /* @__PURE__ */ new Set();
   const flush = () => {
     const byPage = /* @__PURE__ */ new Map();
@@ -797,22 +799,55 @@ function autoLoading(root) {
     if (b) queue(b);
     n.querySelectorAll(".mn-lb").forEach(queue);
   };
+  const waiting = /* @__PURE__ */ new Set();
+  let graceTimer = 0;
+  const settle = () => {
+    graceTimer = 0;
+    const list2 = [...waiting].filter((im) => im.isConnected && !im.complete);
+    waiting.clear();
+    const sizes = list2.map((im) => ({ im: im.getBoundingClientRect(), host: im.parentElement?.getBoundingClientRect() }));
+    list2.forEach((im, k) => {
+      const r = sizes[k].im, hr = sizes[k].host;
+      const small = r.width > 0 && r.height > 0 && Math.max(r.width, r.height) <= PIC_PH;
+      im.classList.add("is-loading");
+      if (small) im.classList.add("is-ph");
+      const done = () => {
+        if (!im.classList.contains("is-loading")) return;
+        im.classList.remove("is-loading", "is-ph");
+        im.classList.add("is-arrived");
+        window.setTimeout(() => im.classList.remove("is-arrived"), 400);
+      };
+      im.addEventListener("load", done, { once: true });
+      im.addEventListener("error", done, { once: true });
+      if (im.complete) done();
+      const host = im.parentElement;
+      if (!small && host && hr && !im.closest(".mn-lb") && Math.min(hr.width, hr.height) >= AUTO_BLOCK) blockLoad(host);
+    });
+  };
   const take = (im) => {
-    if (seen.has(im) || !im.getAttribute("src") || im.complete && im.naturalWidth || im.closest(".mn-noauto, .mn-blk, .mn-pager")) return;
-    seen.add(im);
-    im.classList.add("is-loading");
-    const done = () => im.classList.remove("is-loading");
-    im.addEventListener("load", done, { once: true });
-    im.addEventListener("error", done, { once: true });
-    const host = im.parentElement;
-    if (!host || im.closest(".mn-lb")) return;
-    const r = host.getBoundingClientRect();
-    if (Math.min(r.width, r.height) >= AUTO_BLOCK) blockLoad(host);
+    const src = im.getAttribute("src");
+    if (!src || seen.get(im) === src || im.closest(".mn-noauto, .mn-blk.is-loading, .mn-pager")) return;
+    seen.set(im, src);
+    if (im.complete && im.naturalWidth) return;
+    waiting.add(im);
+    if (!graceTimer) graceTimer = window.setTimeout(settle, PIC_GRACE_MS);
+  };
+  const takeVideo = (v) => {
+    if (v.readyState >= 2 || v.closest(".mn-noauto") || v.classList.contains("is-loading")) return;
+    v.classList.add("is-loading");
+    const done = () => v.classList.remove("is-loading");
+    v.addEventListener("loadeddata", done, { once: true });
+    v.addEventListener("error", done, { once: true });
   };
   const scan = (n) => {
-    if (n instanceof HTMLElement) inBlock(n);
+    if (!(n instanceof HTMLElement)) return;
+    inBlock(n);
     if (n instanceof HTMLImageElement) take(n);
-    else if (n instanceof HTMLElement) n.querySelectorAll("img").forEach(take);
+    else if (n instanceof HTMLVideoElement) takeVideo(n);
+    else {
+      n.querySelectorAll("img").forEach(take);
+      n.querySelectorAll("video").forEach(takeVideo);
+    }
   };
   const mo = new MutationObserver((list2) => {
     for (const m of list2) {
@@ -2778,6 +2813,7 @@ function changesBlock(parent, c, ctx) {
 
 // src/pages/skills.ts
 var import_obsidian7 = require("obsidian");
+var CLIP_FADE_MS = 350;
 function skillStrip(parent, c, changes = []) {
   if (!c.skills.length) return;
   const strip2 = h(parent, "div", "mn-skills");
@@ -2830,7 +2866,7 @@ function skillStrip(parent, c, changes = []) {
     const ph = h(clipBox, "div", "mn-sd-clipph");
     ph.style.backgroundImage = `url("${s.icon}")`;
     demo(clipBox, c, s, () => clipBox.remove());
-    clipBox.querySelector("video")?.addEventListener("loadeddata", () => ph.remove(), { once: true });
+    clipBox.querySelector("video")?.addEventListener("loadeddata", () => window.setTimeout(() => ph.remove(), CLIP_FADE_MS), { once: true });
     const reveal = () => {
       if (open !== i || !detail.isConnected) return;
       const view = detail.closest(".mn-scroll");
@@ -4932,7 +4968,6 @@ function homePage(ctx) {
       const im = h(b, "img");
       im.src = c.icon;
       im.alt = c.name;
-      im.loading = "lazy";
       b.addEventListener("click", (e) => {
         e.preventDefault();
         champsRow.querySelectorAll(".is-on").forEach((x) => x.removeClass("is-on"));
@@ -5539,7 +5574,6 @@ function rosterPage(ctx) {
       const im = h(card, "img");
       im.src = loading(c.id);
       im.alt = "";
-      im.loading = "lazy";
       const ms = store.masteryOf(c.id);
       if (ms && ms.level >= 5) h(card, "span", "mn-rq-mtag" + (ms.level >= 10 ? " is-high" : ""), `\u719F\u7DF4 ${ms.level}`);
       h(card, "b", void 0, c.name);
@@ -6043,13 +6077,6 @@ var OVERLAY_PAGES = /* @__PURE__ */ new Set(["champion"]);
 var IMMERSIVE_PAGES = /* @__PURE__ */ new Set(["rosterswipe"]);
 var OVERLAY_SCROLL = 220;
 var ARRIVE_MS = 240;
-function fadeIn(im) {
-  if (!im.src || im.complete) return;
-  im.addClass("is-loading");
-  const shown = () => im.removeClass("is-loading");
-  im.addEventListener("load", shown, { once: true });
-  im.addEventListener("error", shown, { once: true });
-}
 var VEIL_DELAY_MS = 250;
 var VEIL_MIN_MS = 500;
 var BOOT_PICTURES_MS = 7e3;
@@ -6268,14 +6295,6 @@ var MnView = class extends import_obsidian12.ItemView {
       cancelAnimationFrame(raf);
     });
     this.registerDomEvent(this.scrollEl, "scroll", () => this.markScrolled(), { passive: true });
-    const late = new MutationObserver((list2) => {
-      for (const m of list2) m.addedNodes.forEach((n) => {
-        if (n instanceof HTMLImageElement) fadeIn(n);
-        else if (n instanceof HTMLElement) n.querySelectorAll("img").forEach(fadeIn);
-      });
-    });
-    late.observe(this.scrollEl, { childList: true, subtree: true });
-    this.register(() => late.disconnect());
     this.tabsEl = h(app, "div", "mn-tabs");
     this.applyTheme();
     this.registerEvent(this.app.workspace.on("css-change", () => this.applyTheme()));
