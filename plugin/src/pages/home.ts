@@ -27,7 +27,7 @@ export function homePage(ctx: PageCtx): PageOut {
 
     const hero = layoutBlock(h(el, "div", "mn-home-hero"));
     if (!s.riotId) {
-        // signed out: an ARAM map behind, one line on why, the Riot ID and the server
+        // not linked: an ARAM map behind, one line on why, the Riot ID and the server
         hero.addClass("is-out");
         const bg = h(hero, "img", "mn-home-wall"); bg.src = mapUrl("habackground"); bg.alt = "";
         const box = h(hero, "div", "mn-home-cta");
@@ -48,7 +48,7 @@ export function homePage(ctx: PageCtx): PageOut {
             void ctx.plugin.saveData(s).then(() => ctx.goTab("home"));
         });
     } else {
-        // signed in: your best champion's art as the wallpaper, the avatar ring with your name; a tap on it changes or removes the ID
+        // linked: your best champion's art as the wallpaper, the avatar ring with your name; a tap on it changes or removes the ID
         const [name, tag] = s.riotId.split("#");
         const best = top[0] ? byId.get(top[0][0]) : undefined;
         // the wallpaper: the one you picked, else your top mastery champion's newest skin
@@ -135,7 +135,7 @@ export function homePage(ctx: PageCtx): PageOut {
     const read = new Set(s.read);
     const next = store.guideNotes().find((n) => n.layout === "deck" && !read.has(n.file.path));
     entry("book-open", "Handbook", next ? `繼續:${next.title}` : "全部讀完了", "var(--color-cyan)", () => { if (next) ctx.openNote(next.file.path); else ctx.goTab("handbook"); });
-    // the recent games only once a Riot ID is linked (signed out, Handbook takes the whole row)
+    // the recent games only once a Riot ID is linked (not linked, Handbook takes the whole row)
     if (!s.riotId) entries.lastElementChild?.addClass("is-wide");
     else entry("swords", "最近對戰", prof?.games.length ? `${prof.games.length} 場 · ${prof.games.filter((g) => g.win).length} 勝` : "連結 Riot 後顯示", "var(--color-purple)", () => ctx.push({ key: "games", title: "最近對戰" }));
 

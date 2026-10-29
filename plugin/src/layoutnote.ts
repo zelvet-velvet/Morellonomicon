@@ -10,7 +10,8 @@ import { icon } from "./ui";
 const W = 390, H = 844;          // the phone, in CSS px (an iPhone 14)
 const SCALE = 0.78;              // drawn at this size
 const SNAP = 2;                  // px the blocks snap to
-const TABBAR = 64;               // the app's tab bar at the bottom of every page (drawn, not a block)
+const TABBAR = 64;
+const SEP = " · ";               // a page's group and its own name (Home · linked)               // the app's tab bar at the bottom of every page (drawn, not a block)
 export const KINDS: Record<string, { color: string; name: string }> = {
     hero: { color: "#8fb4ee", name: "hero / picture" }, nav: { color: "#9aa3b8", name: "title / nav" }, entry: { color: "#7fd9ad", name: "entries / buttons" },
     list: { color: "#f0cd7a", name: "list / grid" }, info: { color: "#cba8f5", name: "info / stats" }, action: { color: "#f08ab8", name: "input / action" },
@@ -87,23 +88,51 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
 
     const legend = root.createDiv({ cls: "mn-lay-legend" });
     for (const v of Object.values(KINDS)) { const s = legend.createSpan(); s.createEl("i").style.borderColor = v.color; s.append(v.name); }
-    const wall = root.createDiv({ cls: "mn-lay-pages" });
+    const wall = root.createDiv({ cls: "mn-lay-groups" });
     let selected: { page: Page; block: Block } | null = null;
 
+    // pages are grouped by the part of their name before " · ": the group is a big title (Home), its pages sit under it by the rest
+    // of their name (not linked, linked); a page named just "Picks" is the group's main page
+    const groupOf = (p: Page) => p.name.split(SEP)[0];
+    const subOf = (p: Page) => p.name.split(SEP).slice(1).join(SEP);
+    const named = (group: string, sub: string) => (sub ? group + SEP + sub : group);
+    const addPage = (name: string, after?: Page) => {
+        const p: Page = { id: uid(), name, tabbar: true, blocks: [] };
+        pages.splice(after ? pages.indexOf(after) + 1 : pages.length, 0, p);
+        stepsOf(p); draw();
+    };
     const draw = () => {
         wall.empty();
-        for (const page of pages) drawPage(page);
+        const groups = new Map<string, Page[]>();
+        for (const p of pages) groups.set(groupOf(p), [...(groups.get(groupOf(p)) ?? []), p]);
+        for (const [group, list] of groups) {
+            const sec = wall.createDiv({ cls: "mn-lay-group" });
+            const gh = sec.createDiv({ cls: "mn-lay-ghead" });
+            // renaming the group renames all of its pages (each saved with its own save button)
+            const gname = gh.createEl("input", { cls: "mn-lay-gname", attr: { value: group, spellcheck: "false" } });
+            gname.addEventListener("change", () => {
+                const g = gname.value.trim();
+                if (!g || g === group) return;
+                for (const p of list) { p.name = named(g, subOf(p)); changed(p); }
+                draw();
+            });
+            const sub = gh.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": "Add a page to this group" } });
+            icon(sub, "plus");
+            sub.addEventListener("click", () => addPage(named(group, "New page"), list[list.length - 1]));
+            const row = sec.createDiv({ cls: "mn-lay-pages" });
+            for (const page of list) drawPage(row, page);
+        }
         const add = wall.createEl("button", { cls: "mn-lay-addpage" });
         icon(add, "plus");
         add.append("Page");
-        add.addEventListener("click", () => { const p: Page = { id: uid(), name: "New page", tabbar: true, blocks: [] }; pages.push(p); stepsOf(p); draw(); });
+        add.addEventListener("click", () => addPage("New page"));
     };
 
-    const drawPage = (page: Page) => {
-        const fig = wall.createDiv({ cls: "mn-lay-page" + (changedSinceSync(page) ? " is-changed" : "") + (dirty(page) ? " is-dirty" : "") });
+    const drawPage = (parent: HTMLElement, page: Page) => {
+        const fig = parent.createDiv({ cls: "mn-lay-page" + (changedSinceSync(page) ? " is-changed" : "") + (dirty(page) ? " is-dirty" : "") });
         const head = fig.createDiv({ cls: "mn-lay-head" });
-        const name = head.createEl("input", { cls: "mn-lay-name", attr: { value: page.name, spellcheck: "false" } });
-        name.addEventListener("change", () => { page.name = name.value.trim() || page.name; changed(page); draw(); });
+        const name = head.createEl("input", { cls: "mn-lay-name", attr: { value: subOf(page), placeholder: "Main page", spellcheck: "false" } });
+        name.addEventListener("change", () => { page.name = named(groupOf(page), name.value.trim()); changed(page); draw(); });
         // the page's own steps: back, forward, reset to what is saved, save
         const s = stepsOf(page);
         const tool = (ic: string, label: string, on: boolean, act: () => void, cls = "") => {

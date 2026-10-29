@@ -1095,7 +1095,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-home-sub { font-size: 12.5px; color: var(--mn-muted); }
 .mn-home-menu.is-hidden { display: none; }
 .mn-app .mn-home-menu button { height: 34px; padding: 0 14px; border-radius: 17px; font-size: 13px; }
-.mn-home-hero.is-out { justify-content: center; min-height: 52vh; padding: 24px 16px; }   /* signed out: the map fills the top half, the Riot ID box in its middle */
+.mn-home-hero.is-out { justify-content: center; min-height: 52vh; padding: 24px 16px; }   /* not linked: the map fills the top half, the Riot ID box in its middle */
 .mn-home-cta { display: flex; flex-direction: column; align-items: stretch; gap: 10px; width: 100%; max-width: 340px; }
 .mn-home-cta b { font-size: 20px; color: var(--mn-text); }
 .mn-home-cta > span { font-size: 13px; color: var(--mn-muted); }
@@ -1209,6 +1209,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay-err { color: var(--color-red); }
 .mn-lay-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 14px; font-size: 12.5px; color: var(--text-muted); }
 .mn-lay-legend i { display: inline-block; width: 12px; height: 12px; margin-right: 5px; border: 1.5px dashed; border-radius: 4px; vertical-align: -2px; }
+.mn-lay-groups { display: flex; flex-direction: column; gap: 36px; }
+.mn-lay-ghead { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; border-bottom: 1px solid var(--background-modifier-border); }
+.mn-lay input.mn-lay-gname { flex: 1; min-width: 0; height: 44px; font-size: 26px; font-weight: 800; border: 0; background: none; box-shadow: none; padding: 0 2px; }
 .mn-lay-pages { display: flex; flex-wrap: wrap; gap: 28px 24px; align-items: flex-start; }
 .mn-lay-page { display: flex; flex-direction: column; gap: 6px; width: min(100%, 320px); }
 .mn-lay-head { display: flex; align-items: center; gap: 4px; }
@@ -1231,7 +1234,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay-row input, .mn-lay-row select, .mn-lay-row textarea { flex: 1; min-width: 0; }
 .mn-lay input.mn-lay-num { width: 0; }
 .mn-lay-acts { display: flex; gap: 6px; justify-content: flex-end; }
-.mn-lay button.mn-lay-addpage { align-self: center; display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 16px; }
+.mn-lay button.mn-lay-addpage { align-self: flex-start; display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 16px; }
 .mn-lay button.mn-lay-btn { width: 28px; height: 30px; flex: none; }
 .mn-lay button.mn-lay-btn svg { width: 17px; height: 17px; }
 .mn-lay button.mn-lay-btn.is-off { opacity: 0.3; cursor: default; }

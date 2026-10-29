@@ -1314,6 +1314,7 @@ var H = 844;
 var SCALE = 0.78;
 var SNAP = 2;
 var TABBAR = 64;
+var SEP = " \xB7 ";
 var KINDS = {
   hero: { color: "#8fb4ee", name: "hero / picture" },
   nav: { color: "#9aa3b8", name: "title / nav" },
@@ -1408,27 +1409,51 @@ function layoutBlock2(plugin, source, el, ctx) {
     s.createEl("i").style.borderColor = v.color;
     s.append(v.name);
   }
-  const wall = root.createDiv({ cls: "mn-lay-pages" });
+  const wall = root.createDiv({ cls: "mn-lay-groups" });
   let selected = null;
+  const groupOf = (p) => p.name.split(SEP)[0];
+  const subOf = (p) => p.name.split(SEP).slice(1).join(SEP);
+  const named = (group2, sub) => sub ? group2 + SEP + sub : group2;
+  const addPage = (name, after) => {
+    const p = { id: uid(), name, tabbar: true, blocks: [] };
+    pages.splice(after ? pages.indexOf(after) + 1 : pages.length, 0, p);
+    stepsOf(p);
+    draw();
+  };
   const draw = () => {
     wall.empty();
-    for (const page2 of pages) drawPage(page2);
+    const groups = /* @__PURE__ */ new Map();
+    for (const p of pages) groups.set(groupOf(p), [...groups.get(groupOf(p)) ?? [], p]);
+    for (const [group2, list2] of groups) {
+      const sec = wall.createDiv({ cls: "mn-lay-group" });
+      const gh = sec.createDiv({ cls: "mn-lay-ghead" });
+      const gname = gh.createEl("input", { cls: "mn-lay-gname", attr: { value: group2, spellcheck: "false" } });
+      gname.addEventListener("change", () => {
+        const g = gname.value.trim();
+        if (!g || g === group2) return;
+        for (const p of list2) {
+          p.name = named(g, subOf(p));
+          changed(p);
+        }
+        draw();
+      });
+      const sub = gh.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": "Add a page to this group" } });
+      icon(sub, "plus");
+      sub.addEventListener("click", () => addPage(named(group2, "New page"), list2[list2.length - 1]));
+      const row2 = sec.createDiv({ cls: "mn-lay-pages" });
+      for (const page2 of list2) drawPage(row2, page2);
+    }
     const add = wall.createEl("button", { cls: "mn-lay-addpage" });
     icon(add, "plus");
     add.append("Page");
-    add.addEventListener("click", () => {
-      const p = { id: uid(), name: "New page", tabbar: true, blocks: [] };
-      pages.push(p);
-      stepsOf(p);
-      draw();
-    });
+    add.addEventListener("click", () => addPage("New page"));
   };
-  const drawPage = (page2) => {
-    const fig = wall.createDiv({ cls: "mn-lay-page" + (changedSinceSync(page2) ? " is-changed" : "") + (dirty(page2) ? " is-dirty" : "") });
+  const drawPage = (parent, page2) => {
+    const fig = parent.createDiv({ cls: "mn-lay-page" + (changedSinceSync(page2) ? " is-changed" : "") + (dirty(page2) ? " is-dirty" : "") });
     const head2 = fig.createDiv({ cls: "mn-lay-head" });
-    const name = head2.createEl("input", { cls: "mn-lay-name", attr: { value: page2.name, spellcheck: "false" } });
+    const name = head2.createEl("input", { cls: "mn-lay-name", attr: { value: subOf(page2), placeholder: "Main page", spellcheck: "false" } });
     name.addEventListener("change", () => {
-      page2.name = name.value.trim() || page2.name;
+      page2.name = named(groupOf(page2), name.value.trim());
       changed(page2);
       draw();
     });
