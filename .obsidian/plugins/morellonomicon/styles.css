@@ -668,7 +668,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* 速查: search, class icons and faces sit on one even 12px rhythm */
 .mn-rq-sugg:empty { display: none; }
 /* Picks' lanes: one row of icons close together at the right, on a line that divides them from the faces, like Champions' lane bar */
-.mn-app .mn-fgrid.mn-rq-lanes { display: flex; justify-content: flex-end; gap: 4px; margin: 0 0 10px; padding-bottom: 4px; border-bottom: 1px solid var(--mn-line); }
+.mn-app .mn-fgrid.mn-rq-lanes { display: flex; justify-content: flex-end; gap: 4px; margin: 0; padding-bottom: 4px; border-bottom: 1px solid var(--mn-line); }
 .mn-app .mn-rq-lanes .mn-chip.mn-chip-ic { width: 52px; height: 48px; }   /* bigger than a filter row's icons */
 .mn-rq-lanes .mn-role-img, .mn-rq-lanes .mn-chip-ic svg { width: 36px; height: 36px; }
 .mn-faces { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 8px 6px; margin: 12px 0 0; }
@@ -1053,7 +1053,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* Picks (B+): the hand of picked champions on top, faces with your mastery, one floating capsule at the bottom */
 .mn-rq-hhead { display: flex; align-items: baseline; justify-content: space-between; margin: 4px 2px 8px; }
 .mn-rq-hn, .mn-rq-lab { font-size: 12px; font-weight: 800; letter-spacing: 0.12em; color: var(--mn-muted); }
-.mn-rq-lab { margin: 16px 2px 0; }
+.mn-rq-lab { margin: 8px 2px 0; }
 .mn-app .mn-rq-hclear { height: auto; padding: 2px 4px; border: 0; background: none; box-shadow: none; font-size: 13px; font-weight: 700; color: var(--mn-muted); }
 .mn-rq-hclear.is-hidden { visibility: hidden; }
 .mn-rq-shelf { display: flex; gap: 10px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; margin: 0 -16px; padding: 2px 16px 6px; }
@@ -1292,4 +1292,5 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-page.mn-rq-fixed { position: relative; }
 .mn-rq-fixed > .mn-rq-dock { position: absolute; z-index: 5; left: 12px; right: 12px; bottom: 10px; margin: 0; }
 .mn-rq-fixed > .mn-rq-list { padding-bottom: 84px; }
+.mn-rq-list > .mn-faces { margin-top: 10px; }   /* close under the lane line, room for a picked face's ✓ */
 .mn-rq-dock.is-moving input { caret-color: transparent; }   /* no stray text cursor while it slides (view.ts) */
