@@ -81,6 +81,44 @@ export function whenMediaLoaded(roots: HTMLElement[], ms: number): Promise<void>
 // emptied by its owner (the veil lives in it), so give a container that is redrawn its own host.
 const BLOCK_MAX_MS = 8000, BLOCK_MIN_MS = 500, BLOCK_DELAY_MS = 120;
 const blockState = new WeakMap<HTMLElement, { veil: HTMLElement; since: number; open: number }>();
+// blocks whose pictures have all come in once: a later redraw (a champion picked, a filter changed) does not veil them again, its new
+// pictures only fade in one by one
+const settledBlocks = new WeakSet<HTMLElement>();
+// The part of a block that is on the screen, in the block's own coordinates: a veil covers only that and stays over it while the page
+// or the list under it scrolls (a block that scrolls itself: its visible window)
+const scrollerOf = new WeakMap<HTMLElement, HTMLElement | null>();
+function clipOf(host: HTMLElement): HTMLElement | null {
+    if (scrollerOf.has(host)) return scrollerOf.get(host) ?? null;
+    let el = host.parentElement;
+    while (el && !/(auto|scroll)/.test(getComputedStyle(el).overflowY)) el = el.parentElement;
+    scrollerOf.set(host, el);
+    return el;
+}
+const scrollsItself = (el: HTMLElement): boolean => { const s = getComputedStyle(el); return /(auto|scroll)/.test(s.overflowY + s.overflowX); };
+function placeVeil(veil: HTMLElement): void {
+    const host = veil.parentElement;
+    if (!host) return;
+    if (host.classList.contains("is-held") || scrollsItself(host)) {   // the block scrolls itself (the hand shelf, Items' list): the veil covers its window
+        veil.style.top = `${host.scrollTop}px`;
+        veil.style.height = `${host.clientHeight}px`;
+        veil.style.left = `${host.scrollLeft}px`;
+        veil.style.width = `${host.clientWidth}px`;
+        veil.style.right = "auto";
+        return;
+    }
+    const r = host.getBoundingClientRect(), sc = clipOf(host);
+    const c = sc ? sc.getBoundingClientRect() : { top: 0, bottom: window.innerHeight };
+    const top = Math.max(0, Math.max(c.top, 0) - r.top), bottom = Math.min(r.height, Math.min(c.bottom, window.innerHeight) - r.top);
+    veil.style.top = `${top}px`;
+    veil.style.height = `${Math.max(0, bottom - top)}px`;
+}
+// While a block loads it takes no taps and does not scroll: the veil catches them
+function holdBlock(veil: HTMLElement): void {
+    const stop = (e: Event) => { e.preventDefault(); e.stopPropagation(); };
+    for (const ev of ["touchmove", "wheel"]) veil.addEventListener(ev, stop, { passive: false });
+    for (const ev of ["click", "pointerdown", "touchstart", "mousedown"]) veil.addEventListener(ev, (e) => e.stopPropagation());
+    veil.addEventListener("click", (e) => e.preventDefault());
+}
 // The loading band. Every block that is loading draws its part of ONE slanted line that crosses the screen on one clock, so
 // neighbouring blocks (the lane row and the grid under it) show the same line, not two bands out of step with each other.
 // trackBand puts a veil on that clock; a frame loop sets --bx (where the band's middle is inside the veil) and --bw (its width).
@@ -97,6 +135,7 @@ function bandStep(): void {
     const lineX = start + (end - start) * e;   // where the line crosses the middle of the screen
     for (const el of bandVeils) {
         if (!el.isConnected) { bandVeils.delete(el); continue; }
+        if (el.classList.contains("mn-blkveil")) placeVeil(el);   // over the visible part of its block
         const r = el.getBoundingClientRect();
         const x = lineX - (r.top + r.height / 2 - hh / 2) * BAND_TILT;   // the same line, at the middle of this veil
         el.style.setProperty("--bx", `${(x - r.left - bw / 2).toFixed(1)}px`);
@@ -119,6 +158,8 @@ function lift(host: HTMLElement, state: { veil: HTMLElement; since: number; open
     window.setTimeout(() => {
         if (blockState.get(host) !== state) return;
         blockState.delete(host);
+        settledBlocks.add(host);
+        host.classList.remove("is-loading", "is-held");
         state.veil.classList.remove("is-in");   // the blur fades out, the band finishes its pass
         endBand(state.veil);
     }, Math.max(0, BLOCK_MIN_MS - (Date.now() - state.since)));
@@ -137,6 +178,10 @@ export function blockUntil(host: HTMLElement, until: Promise<void>, delay = 0): 
     let st = blockState.get(host);
     if (!st) {
         st = { veil: h(host, "div", "mn-blkveil is-in"), since: Date.now(), open: 0 };
+        host.classList.add("is-loading");
+        if (scrollsItself(host)) host.classList.add("is-held");   // its own scrolling stops while it loads
+        holdBlock(st.veil);
+        placeVeil(st.veil);
         trackBand(st.veil);
         blockState.set(host, st);
     }
@@ -200,7 +245,7 @@ export function blockLoad(host: HTMLElement | HTMLElement[]): void {
         ...pendingBackgrounds(one),
     ]);
     if (!waits.length) {   // redrawn with every picture already there
-        for (const one of hosts) { const st = blockState.get(one); if (st && st.open <= 0) lift(one, st); }
+        for (const one of hosts) { settledBlocks.add(one); const st = blockState.get(one); if (st && st.open <= 0) lift(one, st); }
         return;
     }
     const all = Promise.all(waits).then(() => undefined);
@@ -240,7 +285,7 @@ export function autoLoading(root: HTMLElement): MutationObserver {
         for (const group of byPage.values()) blockLoad(group);
     };
     const queue = (b: HTMLElement) => {
-        if (b.closest(".mn-noauto, .mn-pager")) return;
+        if (settledBlocks.has(b) || b.closest(".mn-noauto, .mn-pager")) return;   // loaded once: a redraw only fades its new pictures in
         if (!blocks.size) window.setTimeout(flush, 0);
         blocks.add(b);
     };

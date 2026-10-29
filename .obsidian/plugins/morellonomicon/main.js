@@ -578,6 +578,45 @@ var BLOCK_MAX_MS = 8e3;
 var BLOCK_MIN_MS = 500;
 var BLOCK_DELAY_MS = 120;
 var blockState = /* @__PURE__ */ new WeakMap();
+var settledBlocks = /* @__PURE__ */ new WeakSet();
+var scrollerOf = /* @__PURE__ */ new WeakMap();
+function clipOf(host) {
+  if (scrollerOf.has(host)) return scrollerOf.get(host) ?? null;
+  let el = host.parentElement;
+  while (el && !/(auto|scroll)/.test(getComputedStyle(el).overflowY)) el = el.parentElement;
+  scrollerOf.set(host, el);
+  return el;
+}
+var scrollsItself = (el) => {
+  const s = getComputedStyle(el);
+  return /(auto|scroll)/.test(s.overflowY + s.overflowX);
+};
+function placeVeil(veil) {
+  const host = veil.parentElement;
+  if (!host) return;
+  if (host.classList.contains("is-held") || scrollsItself(host)) {
+    veil.style.top = `${host.scrollTop}px`;
+    veil.style.height = `${host.clientHeight}px`;
+    veil.style.left = `${host.scrollLeft}px`;
+    veil.style.width = `${host.clientWidth}px`;
+    veil.style.right = "auto";
+    return;
+  }
+  const r = host.getBoundingClientRect(), sc = clipOf(host);
+  const c = sc ? sc.getBoundingClientRect() : { top: 0, bottom: window.innerHeight };
+  const top = Math.max(0, Math.max(c.top, 0) - r.top), bottom = Math.min(r.height, Math.min(c.bottom, window.innerHeight) - r.top);
+  veil.style.top = `${top}px`;
+  veil.style.height = `${Math.max(0, bottom - top)}px`;
+}
+function holdBlock(veil) {
+  const stop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  for (const ev of ["touchmove", "wheel"]) veil.addEventListener(ev, stop, { passive: false });
+  for (const ev of ["click", "pointerdown", "touchstart", "mousedown"]) veil.addEventListener(ev, (e) => e.stopPropagation());
+  veil.addEventListener("click", (e) => e.preventDefault());
+}
 var BAND_MS = 1500;
 var BAND_RUN = 0.8;
 var BAND_TILT = Math.tan(22 * Math.PI / 180);
@@ -594,6 +633,7 @@ function bandStep() {
       bandVeils.delete(el);
       continue;
     }
+    if (el.classList.contains("mn-blkveil")) placeVeil(el);
     const r = el.getBoundingClientRect();
     const x = lineX - (r.top + r.height / 2 - hh / 2) * BAND_TILT;
     el.style.setProperty("--bx", `${(x - r.left - bw / 2).toFixed(1)}px`);
@@ -617,6 +657,8 @@ function lift(host, state) {
   window.setTimeout(() => {
     if (blockState.get(host) !== state) return;
     blockState.delete(host);
+    settledBlocks.add(host);
+    host.classList.remove("is-loading", "is-held");
     state.veil.classList.remove("is-in");
     endBand(state.veil);
   }, Math.max(0, BLOCK_MIN_MS - (Date.now() - state.since)));
@@ -636,6 +678,10 @@ function blockUntil(host, until, delay = 0) {
   let st = blockState.get(host);
   if (!st) {
     st = { veil: h(host, "div", "mn-blkveil is-in"), since: Date.now(), open: 0 };
+    host.classList.add("is-loading");
+    if (scrollsItself(host)) host.classList.add("is-held");
+    holdBlock(st.veil);
+    placeVeil(st.veil);
     trackBand(st.veil);
     blockState.set(host, st);
   }
@@ -712,6 +758,7 @@ function blockLoad(host) {
   ]);
   if (!waits.length) {
     for (const one of hosts) {
+      settledBlocks.add(one);
       const st = blockState.get(one);
       if (st && st.open <= 0) lift(one, st);
     }
@@ -741,7 +788,7 @@ function autoLoading(root) {
     for (const group2 of byPage.values()) blockLoad(group2);
   };
   const queue = (b) => {
-    if (b.closest(".mn-noauto, .mn-pager")) return;
+    if (settledBlocks.has(b) || b.closest(".mn-noauto, .mn-pager")) return;
     if (!blocks.size) window.setTimeout(flush, 0);
     blocks.add(b);
   };
