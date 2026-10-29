@@ -183,12 +183,12 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
         for (const [k, v] of Object.entries(KINDS)) kind.createEl("option", { text: v.name, attr: { value: k } });
         kind.value = b.kind;
         kind.addEventListener("change", () => { b.kind = kind.value; changed(page); draw(); });
-        // the block's place in the page's list: its reading order, and later blocks are drawn on top of earlier ones
-        const ord = row("Order");
+        // the block's layer: blocks later in the page's list are drawn in front of earlier ones
+        const ord = row("Layer");
         const at = page.blocks.indexOf(b);
         ord.createSpan({ cls: "mn-lay-ord", text: `${at + 1} / ${page.blocks.length}` });
         const move = (to: number) => { page.blocks.splice(at, 1); page.blocks.splice(clamp(to, 0, page.blocks.length), 0, b); changed(page); draw(); };
-        for (const [ic, label, to] of [["chevrons-up", "First", 0], ["chevron-up", "Earlier", at - 1], ["chevron-down", "Later", at + 1], ["chevrons-down", "Last", page.blocks.length]] as [string, string, number][]) {
+        for (const [ic, label, to] of [["send-to-back", "Send to back", 0], ["arrow-down", "Backward", at - 1], ["arrow-up", "Forward", at + 1], ["bring-to-front", "Bring to front", page.blocks.length]] as [string, string, number][]) {
             const bt = ord.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": label } });
             icon(bt, ic);
             bt.addEventListener("click", () => move(to));

@@ -1478,7 +1478,7 @@ function layoutBlock(plugin, source, el, ctx) {
       changed(page2);
       draw();
     });
-    const ord = row2("Order");
+    const ord = row2("Layer");
     const at = page2.blocks.indexOf(b);
     ord.createSpan({ cls: "mn-lay-ord", text: `${at + 1} / ${page2.blocks.length}` });
     const move = (to) => {
@@ -1487,7 +1487,7 @@ function layoutBlock(plugin, source, el, ctx) {
       changed(page2);
       draw();
     };
-    for (const [ic, label, to] of [["chevrons-up", "First", 0], ["chevron-up", "Earlier", at - 1], ["chevron-down", "Later", at + 1], ["chevrons-down", "Last", page2.blocks.length]]) {
+    for (const [ic, label, to] of [["send-to-back", "Send to back", 0], ["arrow-down", "Backward", at - 1], ["arrow-up", "Forward", at + 1], ["bring-to-front", "Bring to front", page2.blocks.length]]) {
       const bt = ord.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": label } });
       icon(bt, ic);
       bt.addEventListener("click", () => move(to));
