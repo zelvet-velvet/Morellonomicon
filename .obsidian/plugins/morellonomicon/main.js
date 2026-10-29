@@ -5554,11 +5554,12 @@ function swipePage(ctx) {
     const tabs = TABS.map((name) => h(face, "div", `mn-qc-tab is-${["look", "play", "skill", "style"][TABS.indexOf(name)]}`));
     const art = (n) => `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(c.id)}_${n}.jpg`;
     const others = c.skins.filter((n) => n !== 0).sort((a, b) => b - a);
-    tabs.slice(1).forEach((tab, k) => {
+    const skins = tabs.slice(1).map((tab, k) => {
       const bg = h(tab, "img", "mn-qc-bg");
       bg.loading = "lazy";
       bg.src = art(others.length ? others[k % others.length] : 0);
       bg.alt = "";
+      return bg.src;
     });
     const hud = h(face, "div", "mn-qc-hud");
     const bars = h(hud, "div", "mn-qc-bars");
@@ -5672,6 +5673,7 @@ function swipePage(ctx) {
       if (cd) h(nums, "span", void 0, `${cd} \u79D2`);
     }
     styleCard(h(tabs[3], "div", "mn-qc-style"), c, ctx.app);
+    return skins;
     show(0);
   };
   const drawResults = () => {
@@ -5705,12 +5707,18 @@ function swipePage(ctx) {
     const ids = picks.slice(at);
     const sec = [];
     const stamps = [];
+    const skins = [];
+    const warmed = /* @__PURE__ */ new Set();
+    const warmSkins = (cur) => {
+      const urls = [cur, cur + 1].filter((i) => skins[i] && !warmed.has(i)).flatMap((i) => (warmed.add(i), skins[i]));
+      if (urls.length) void warmPictures(urls);
+    };
     for (const id of ids) {
       const c = all.find((x) => x.id === id);
       if (!c) continue;
       const section2 = h(pager, "section", "mn-slide");
       const face = h(h(section2, "div", "mn-sl-card"), "div", "mn-sl-face");
-      quickCard(c, face);
+      skins.push(quickCard(c, face));
       const st = h(section2.firstElementChild, "div", "mn-rq-stamp");
       icon(st, "heart", "mn-rq-st-like");
       icon(st, "x", "mn-rq-st-pass");
@@ -5722,9 +5730,12 @@ function swipePage(ctx) {
     const pile = cardPile(pager, sec, {
       judge: true,
       flat: true,
-      onLayout: (cur) => sec.forEach((c, i) => {
-        c.style.visibility = i >= cur - 1 && i <= cur + 2 ? "" : "hidden";
-      }),
+      onLayout: (cur) => {
+        sec.forEach((c, i) => {
+          c.style.visibility = i >= cur - 1 && i <= cur + 2 ? "" : "hidden";
+        });
+        warmSkins(cur);
+      },
       onDrag: (dx, w) => {
         const st = stamps[pile?.cur ?? 0];
         if (!st) return;

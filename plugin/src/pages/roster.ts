@@ -1,7 +1,7 @@
 import { Notice } from "obsidian";
 import type { Champion } from "../data/store";
 import { findSaid, type Said, type Sounds, soundScore } from "../data/sound";
-import { DAMAGE_COLOR, DAMAGE_ICON, REACH_ICON, fixedPage, layoutBlock, SHOP_ROW, STAT_COLOR, STAT_ICON, SWIPE, shopIcon, chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, roleArt, tip } from "../ui";
+import { DAMAGE_COLOR, DAMAGE_ICON, REACH_ICON, fixedPage, layoutBlock, SHOP_ROW, STAT_COLOR, STAT_ICON, SWIPE, shopIcon, chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, roleArt, tip, warmPictures } from "../ui";
 import { entryDir, marker } from "./changes";
 import type { PageCtx, PageOut } from "./index";
 import { keyBadge } from "./cardkit";
@@ -342,17 +342,18 @@ export function swipePage(ctx: PageCtx): PageOut {
     // (punch / soul / stack / focus / plain are hand-written in the champion note; Review/速查 card layout is the design)
     const TABS = ["概覽", "玩法", "技能", "風格"];
     const cooldown = (s: Champion["skills"][number]): string => { const r = s.rows?.find((x) => x.label.startsWith("冷卻")); return r ? (r.vals[r.vals.length - 1] ?? "") : ""; };
-    const quickCard = (c: Champion, face: HTMLElement): void => {
+    const quickCard = (c: Champion, face: HTMLElement): string[] => {
         face.addClass("mn-qc");
         const tabs = TABS.map((name) => h(face, "div", `mn-qc-tab is-${["look", "play", "skill", "style"][TABS.indexOf(name)]}`));
         // tabs 2 to 4 show the champion's newest skins, newest first (a higher skin number is a later skin), darkened behind the content
         const art = (n: number) => `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(c.id)}_${n}.jpg`;
         const others = c.skins.filter((n) => n !== 0).sort((a, b) => b - a);
-        tabs.slice(1).forEach((tab, k) => {
+        const skins = tabs.slice(1).map((tab, k) => {
             const bg = h(tab, "img", "mn-qc-bg");
-            bg.loading = "lazy";   // a hidden tab's picture loads when the tab is opened
+            bg.loading = "lazy";   // a hidden tab's picture loads when the tab is opened, or earlier once the card is near the top (warmSkins)
             bg.src = art(others.length ? others[k % others.length] : 0);
             bg.alt = "";
+            return bg.src;
         });
         const hud = h(face, "div", "mn-qc-hud");
         const bars = h(hud, "div", "mn-qc-bars");
@@ -462,6 +463,7 @@ export function swipePage(ctx: PageCtx): PageOut {
 
         // 4 · 風格
         styleCard(h(tabs[3], "div", "mn-qc-style"), c, ctx.app);
+        return skins;
         show(0);
     };
 
@@ -492,12 +494,19 @@ export function swipePage(ctx: PageCtx): PageOut {
         const ids = picks.slice(at);
         const sec: HTMLElement[] = [];
         const stamps: HTMLElement[] = [];
+        const skins: string[][] = [];
+        // the top card's and the next card's tab 2 to 4 skins are fetched while it is read, so tapping through the tabs shows them at once
+        const warmed = new Set<number>();
+        const warmSkins = (cur: number) => {
+            const urls = [cur, cur + 1].filter((i) => skins[i] && !warmed.has(i)).flatMap((i) => (warmed.add(i), skins[i]));
+            if (urls.length) void warmPictures(urls);
+        };
         for (const id of ids) {
             const c = all.find((x) => x.id === id);
             if (!c) continue;
             const section = h(pager, "section", "mn-slide");
             const face = h(h(section, "div", "mn-sl-card"), "div", "mn-sl-face");
-            quickCard(c, face);
+            skins.push(quickCard(c, face));
             // a big ♥ (like) and ✕ (pass) over the middle of the card; the one for the drag's side grows in as the card is dragged
             const st = h(section.firstElementChild as HTMLElement, "div", "mn-rq-stamp");
             icon(st, "heart", "mn-rq-st-like");
@@ -510,7 +519,7 @@ export function swipePage(ctx: PageCtx): PageOut {
         const pile = cardPile(pager, sec, {
             judge: true,
             flat: true,
-            onLayout: (cur) => sec.forEach((c, i) => { c.style.visibility = i >= cur - 1 && i <= cur + 2 ? "" : "hidden"; }),
+            onLayout: (cur) => { sec.forEach((c, i) => { c.style.visibility = i >= cur - 1 && i <= cur + 2 ? "" : "hidden"; }); warmSkins(cur); },
             onDrag: (dx, w) => {
                 const st = stamps[pile?.cur ?? 0];
                 if (!st) return;
