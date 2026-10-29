@@ -33,12 +33,12 @@ Source: `TAGS` in `plugin/src/pages/profile.ts` (also the groups and the legend 
 傷害 %生命傷害 | heart-crack | --color-red | #d04255
 傷害 斬殺 | skull | --mn-exec
 控制 控場 | link | --mn-cc
-控制 緩速 | snowflake | --mn-slow | #6c99bb
+控制 緩速 | anchor | --mn-slow | #6c99bb
 控制 減益 | trending-down | --mn-weak | #b98bd6
-移動 位移 | arrow-big-right-dash | --mn-dash | #73bbb2
+移動 位移 | move | --mn-dash | #73bbb2
 移動 加速 | wind | --mn-haste | #5ec2b7
-移動 隱身 | eye-off | --mn-stealth | #9aa3b8
-生存 治療 | heart-pulse | --mn-heal | #a8c373
+移動 隱身 | ghost | --mn-stealth | #9aa3b8
+生存 治療 | heart-plus | --mn-heal | #a8c373
 生存 護盾 | shield-plus | --mn-shield | #9e86c8
 生存 吸血 | syringe | --mn-ls | #d04255
 生存 免傷 | shield-half | --mn-guard | #d4a95f
