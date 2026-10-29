@@ -12,7 +12,6 @@ export const VIEW_TYPE = "morellonomicon";
 // The app screen: top bar (back, title, mode switch), page area, tab bar. A page is drawn in one step when a tab, a detail page
 // or the data changes; scroll positions are kept per page so Back returns to where you were.
 const CAPSULE_TAU = 65;          // ms; the capsule covers most of the way to its new place in about 4× this (the keyboard's own slide)
-const CAPSULE_TAU_DOWN = 28;     // ms; going back down after the keyboard closed: the keyboard is already gone, so quicker
 const KEYBOARD_GAP = 8;          // px between the search capsule and the keyboard's top edge
 const OVERLAY_PAGES = new Set(["champion"]);
 const IMMERSIVE_PAGES = new Set(["rosterswipe"]);   // full screen: no top bar at all (速查's swipe, like Tinder)
@@ -85,8 +84,8 @@ export class MnView extends ItemView {
         // the phone's keyboard and the floating search capsule (Picks, Champions). Obsidian (iOS) shrinks its page only once the keyboard
         // has finished opening and grows it only once it has closed, and sends no keyboard event we can catch (screen recording,
         // 2026-10-29), so waiting for the page leaves the capsule under the sliding keyboard and then makes it jump. Instead a tap starts
-        // lifting it at once to where the keyboard will end (its height remembered from the last time the page shrank), and when the page
-        // does change size the capsule keeps its spot on screen (a ResizeObserver, before the frame is drawn). It moves one step each
+        // lifting it at once to where the keyboard will end (its height remembered from the last time the page shrank), and closing starts
+        // it down at once to its place on the full page (cut off at the short page's edge until the page grows). When the page does change size the capsule keeps its spot on screen (a ResizeObserver, before the frame is drawn). It moves one step each
         // frame, a share of the way that is left; several reports of one keyboard move only change the goal, the motion never starts
         // over. Settings → Keyboard readout shows the numbers.
         const vv = window.visualViewport;
@@ -129,7 +128,7 @@ export class MnView extends ItemView {
         const done = (d: HTMLElement) => {
             raf = 0; at = null;
             d.removeClass("is-moving");
-            // closed, and the page is its full height again (until then it may still grow under the capsule, which then eases down)
+            // closed, and the page is its full height again (until then it may still grow under the capsule, which keeps its spot)
             if (!typing && window.innerHeight > full - 80) { d.removeClass("is-typing"); d.style.transform = ""; shown = 0; lastTop = null; if (dock === d) dock = null; readout.addClass("is-hidden"); }
         };
         const step = (now: number) => {
@@ -137,10 +136,11 @@ export class MnView extends ItemView {
             if (!d || !d.isConnected) { raf = 0; at = null; shown = 0; lastTop = null; dock = null; return; }
             const dt = Math.min(48, now - last); last = now;
             const nat = natural(d), r = d.getBoundingClientRect();
-            const lift = typing ? Math.min(0, visibleBottom() - KEYBOARD_GAP - (r.bottom - shown)) : 0;
+            // typing: up enough to clear the keyboard; closing: down at once to its place on the full page, while the page is still short
+            const lift = typing ? Math.min(0, visibleBottom() - KEYBOARD_GAP - (r.bottom - shown)) : Math.max(0, full - window.innerHeight);
             const goal = nat + lift;
             at = at ?? r.top;
-            at += (goal - at) * (1 - Math.exp(-dt / (typing ? CAPSULE_TAU : CAPSULE_TAU_DOWN)));
+            at += (goal - at) * (1 - Math.exp(-dt / CAPSULE_TAU));
             if (Math.abs(goal - at) < 1.5) at = goal;
             put(d, nat);
             if (at === goal) { done(d); return; }

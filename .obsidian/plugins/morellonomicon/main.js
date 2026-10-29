@@ -5765,7 +5765,6 @@ function renderPage(tab, ctx) {
 // src/view.ts
 var VIEW_TYPE = "morellonomicon";
 var CAPSULE_TAU = 65;
-var CAPSULE_TAU_DOWN = 28;
 var KEYBOARD_GAP = 8;
 var OVERLAY_PAGES = /* @__PURE__ */ new Set(["champion"]);
 var IMMERSIVE_PAGES = /* @__PURE__ */ new Set(["rosterswipe"]);
@@ -5917,10 +5916,10 @@ var MnView = class extends import_obsidian12.ItemView {
       const dt = Math.min(48, now - last);
       last = now;
       const nat = natural(d), r = d.getBoundingClientRect();
-      const lift2 = typing ? Math.min(0, visibleBottom() - KEYBOARD_GAP - (r.bottom - shown)) : 0;
+      const lift2 = typing ? Math.min(0, visibleBottom() - KEYBOARD_GAP - (r.bottom - shown)) : Math.max(0, full - window.innerHeight);
       const goal = nat + lift2;
       at = at ?? r.top;
-      at += (goal - at) * (1 - Math.exp(-dt / (typing ? CAPSULE_TAU : CAPSULE_TAU_DOWN)));
+      at += (goal - at) * (1 - Math.exp(-dt / CAPSULE_TAU));
       if (Math.abs(goal - at) < 1.5) at = goal;
       put(d, nat);
       if (at === goal) {
