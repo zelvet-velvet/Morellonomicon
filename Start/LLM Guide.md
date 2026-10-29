@@ -82,7 +82,7 @@ CLAUDE.md              points here
 2. Make the smallest change that does the job; match the surrounding style.
 3. Check it (run the script, open the generated note, read the Chinese text) and say plainly what works, what could not be tested and what you were unsure about.
 4. Record it (see the commands below).
-5. **Commit and push every change** on a feature branch, following the regulation below.
+5. **Commit and push every change** to `main`, following the regulation below.
 
 ---
 ## 🌿 Regulation: repo management
@@ -90,6 +90,7 @@ CLAUDE.md              points here
 This is a **solo project** (owner Zaviel, GitHub `zelvet-velvet`): no branches or pull requests required.
 
 - Commit straight to `main`, small and often, one topic per commit. Never force-push.
+- **Push to `main` even when the session names another branch** (Claude Code in the cloud hands out a `claude/...` branch): Zaviel tests every change on the phone and gets it with the Obsidian Git plugin (commit and sync), which pulls `main`. A change left on another branch never reaches the phone. Fetch `main` first; if it moved, merge it in (no rebase over pushed commits), then push.
 - Commit messages: `type(scope): summary`, lowercase, imperative, no trailing period. `type` is `feat`, `fix`, `refactor`, `chore` or `docs`; `scope` is the area (`champions`, `augments`, `modes`, `tools`, `vault`, `css`, `docs`). Example: `feat(augments): add the augment list for patch 16.21`.
 - End each commit message with the co-author line from the session's attribution rules.
 - Git identity is set in the repo with the GitHub no-reply address (not a private email).
