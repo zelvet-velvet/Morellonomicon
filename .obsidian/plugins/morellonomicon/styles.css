@@ -1307,3 +1307,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay input.mn-lay-num { width: 0; }
 .mn-lay-acts { display: flex; gap: 6px; justify-content: flex-end; }
 .mn-lay button.mn-lay-addpage { align-self: center; display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 16px; }
+.mn-lay button.mn-lay-btn { width: 28px; height: 30px; flex: none; }
+.mn-lay button.mn-lay-btn svg { width: 17px; height: 17px; }
+.mn-lay button.mn-lay-btn.is-off { opacity: 0.3; cursor: default; }
+.mn-lay button.mn-lay-btn.is-dirty { color: var(--interactive-accent); }

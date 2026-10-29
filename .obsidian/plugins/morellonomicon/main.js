@@ -1234,6 +1234,7 @@ var KINDS = {
   action: { color: "#f08ab8", name: "input / action" },
   float: { color: "#73bbb2", name: "floating" }
 };
+var memory = /* @__PURE__ */ new Map();
 var uid = () => Math.random().toString(36).slice(2, 8);
 var snap = (v) => Math.round(v / SNAP) * SNAP;
 var clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -1247,14 +1248,18 @@ function parse2(source) {
 }
 var serialise2 = (pages) => "[\n" + pages.map((p) => "  " + JSON.stringify(p)).join(",\n") + "\n]";
 function layoutBlock(plugin, source, el, ctx) {
-  const pages = parse2(source);
+  const saved = parse2(source);
+  const steps = memory.get(ctx.sourcePath) ?? /* @__PURE__ */ new Map();
+  memory.set(ctx.sourcePath, steps);
+  const pages = saved.map((p) => steps.has(p.id) ? JSON.parse(steps.get(p.id).last) : p);
+  for (const [id, s] of steps) if (!saved.some((p) => p.id === id)) pages.push(JSON.parse(s.last));
   const info = ctx.getSectionInfo(el);
   const root = el.createDiv({ cls: "mn-lay" });
-  if (source.trim() && !pages.length) {
+  if (source.trim() && !saved.length) {
     root.createDiv({ cls: "mn-lay-err", text: "The layout data could not be read (JSON). Fix it in the source view." });
     return;
   }
-  const save = () => {
+  const write = (list2) => {
     const file = plugin.app.vault.getAbstractFileByPath(ctx.sourcePath);
     if (!info || !(file instanceof import_obsidian4.TFile)) {
       new import_obsidian4.Notice("Could not save the layout");
@@ -1262,9 +1267,40 @@ function layoutBlock(plugin, source, el, ctx) {
     }
     void plugin.app.vault.process(file, (data) => {
       const lines = data.split("\n");
-      lines.splice(info.lineStart + 1, info.lineEnd - info.lineStart - 1, ...serialise2(pages).split("\n"));
+      lines.splice(info.lineStart + 1, info.lineEnd - info.lineStart - 1, ...serialise2(list2).split("\n"));
       return lines.join("\n");
     });
+  };
+  const savedJson = (id) => {
+    const p = saved.find((x) => x.id === id);
+    return p ? JSON.stringify(p) : "";
+  };
+  const stepsOf = (page2) => {
+    let s = steps.get(page2.id);
+    if (!s) {
+      s = { past: [], future: [], last: savedJson(page2.id) || JSON.stringify(page2) };
+      steps.set(page2.id, s);
+    }
+    return s;
+  };
+  const changed = (page2) => {
+    const s = stepsOf(page2), now = JSON.stringify(page2);
+    if (now === s.last) return;
+    s.past.push(s.last);
+    s.last = now;
+    s.future = [];
+  };
+  const goTo = (page2, json) => {
+    Object.assign(page2, JSON.parse(json));
+    if (!page2.note) delete page2.note;
+    selected = null;
+    draw();
+  };
+  const dirty = (page2) => (steps.get(page2.id)?.last ?? JSON.stringify(page2)) !== savedJson(page2.id);
+  const savePage = (page2) => {
+    const list2 = saved.map((p) => p.id === page2.id ? page2 : p);
+    if (!saved.some((p) => p.id === page2.id)) list2.push(page2);
+    write(list2);
   };
   for (const ev of ["pointerdown", "mousedown", "click", "touchstart"]) root.addEventListener(ev, (e) => e.stopPropagation());
   const legend = root.createDiv({ cls: "mn-lay-legend" });
@@ -1282,8 +1318,9 @@ function layoutBlock(plugin, source, el, ctx) {
     icon(add, "plus");
     add.append("Page");
     add.addEventListener("click", () => {
-      pages.push({ id: uid(), name: "New page", tabbar: true, blocks: [] });
-      save();
+      const p = { id: uid(), name: "New page", tabbar: true, blocks: [] };
+      pages.push(p);
+      stepsOf(p);
       draw();
     });
   };
@@ -1293,15 +1330,41 @@ function layoutBlock(plugin, source, el, ctx) {
     const name = head2.createEl("input", { cls: "mn-lay-name", attr: { value: page2.name, spellcheck: "false" } });
     name.addEventListener("change", () => {
       page2.name = name.value.trim() || page2.name;
-      save();
+      changed(page2);
+      draw();
     });
+    const s = stepsOf(page2);
+    const tool = (ic, label, on, act, cls = "") => {
+      const b = head2.createEl("button", { cls: "mn-lay-btn" + cls + (on ? "" : " is-off"), attr: { "aria-label": label } });
+      icon(b, ic);
+      b.addEventListener("click", () => {
+        if (on) act();
+      });
+    };
+    tool("undo-2", "Back a step", s.past.length > 0, () => {
+      s.future.push(s.last);
+      s.last = s.past.pop();
+      goTo(page2, s.last);
+    });
+    tool("redo-2", "Forward a step", s.future.length > 0, () => {
+      s.past.push(s.last);
+      s.last = s.future.pop();
+      goTo(page2, s.last);
+    });
+    tool("rotate-ccw", "Reset to what is saved", dirty(page2) && !!savedJson(page2.id), () => {
+      s.past.push(s.last);
+      s.last = savedJson(page2.id);
+      s.future = [];
+      goTo(page2, s.last);
+    });
+    tool("save", "Save this page into the note", dirty(page2), () => savePage(page2), dirty(page2) ? " is-dirty" : "");
     const addB = head2.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": "Add a block" } });
     icon(addB, "square-plus");
     addB.addEventListener("click", () => {
       const b = { id: uid(), label: "New block", kind: "list", x: 16, y: 120, w: W - 32, h: 80 };
       page2.blocks.push(b);
       selected = { page: page2, block: b };
-      save();
+      changed(page2);
       draw();
     });
     const delP = head2.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": "Delete the page (tap twice)" } });
@@ -1312,15 +1375,19 @@ function layoutBlock(plugin, source, el, ctx) {
         window.setTimeout(() => delP.removeClass("is-armed"), 2500);
         return;
       }
-      pages.splice(pages.indexOf(page2), 1);
-      save();
-      draw();
+      steps.delete(page2.id);
+      if (saved.some((p) => p.id === page2.id)) write(saved.filter((p) => p.id !== page2.id));
+      else {
+        pages.splice(pages.indexOf(page2), 1);
+        draw();
+      }
     });
     const note = fig.createEl("textarea", { cls: "mn-lay-pnote", attr: { rows: "2", placeholder: "What this page is for" } });
     note.value = page2.note ?? "";
     note.addEventListener("change", () => {
       page2.note = note.value.trim() || void 0;
-      save();
+      changed(page2);
+      draw();
     });
     const phone = fig.createDiv({ cls: "mn-lay-phone" });
     phone.style.width = `${W * SCALE}px`;
@@ -1373,8 +1440,10 @@ function layoutBlock(plugin, source, el, ctx) {
           z.removeEventListener("pointermove", move);
           z.removeEventListener("pointerup", up);
           z.removeEventListener("pointercancel", up);
-          if (moved) save();
-          else {
+          if (moved) {
+            changed(page2);
+            draw();
+          } else {
             selected = selected?.block === b ? null : { page: page2, block: b };
             draw();
           }
@@ -1398,7 +1467,7 @@ function layoutBlock(plugin, source, el, ctx) {
     const lab = row2("Name").createEl("input", { attr: { value: b.label } });
     lab.addEventListener("change", () => {
       b.label = lab.value.trim() || b.label;
-      save();
+      changed(page2);
       draw();
     });
     const kind = row2("Kind").createEl("select");
@@ -1406,7 +1475,7 @@ function layoutBlock(plugin, source, el, ctx) {
     kind.value = b.kind;
     kind.addEventListener("change", () => {
       b.kind = kind.value;
-      save();
+      changed(page2);
       draw();
     });
     const nums = row2("x y w h");
@@ -1414,7 +1483,7 @@ function layoutBlock(plugin, source, el, ctx) {
       const n = nums.createEl("input", { cls: "mn-lay-num", attr: { type: "number", value: String(b[key]), step: String(SNAP) } });
       n.addEventListener("change", () => {
         b[key] = Math.max(0, Number(n.value) || 0);
-        save();
+        changed(page2);
         draw();
       });
     }
@@ -1422,7 +1491,7 @@ function layoutBlock(plugin, source, el, ctx) {
     note.value = b.note ?? "";
     note.addEventListener("change", () => {
       b.note = note.value.trim() || void 0;
-      save();
+      changed(page2);
       draw();
     });
     const acts = box.createDiv({ cls: "mn-lay-acts" });
@@ -1431,14 +1500,14 @@ function layoutBlock(plugin, source, el, ctx) {
       const c = { ...b, id: uid(), y: clamp(b.y + 12, 0, H - b.h) };
       page2.blocks.push(c);
       selected = { page: page2, block: c };
-      save();
+      changed(page2);
       draw();
     });
     const del = acts.createEl("button", { cls: "mod-warning", text: "Delete" });
     del.addEventListener("click", () => {
       page2.blocks.splice(page2.blocks.indexOf(b), 1);
       selected = null;
-      save();
+      changed(page2);
       draw();
     });
     const done = acts.createEl("button", { text: "Done" });
