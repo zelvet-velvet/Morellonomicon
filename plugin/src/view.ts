@@ -13,7 +13,6 @@ export const VIEW_TYPE = "morellonomicon";
 // or the data changes; scroll positions are kept per page so Back returns to where you were.
 const KEYBOARD_GAP = 8;          // px between the search capsule and the keyboard's top edge
 const DOCK_REST = 10;            // px the capsule sits above the scroll area's bottom when nothing covers it (styles.css)
-const KEYBOARD_BLUR_MS = 250;     // after the box loses the focus: time for a tap on the capsule's chips to land first
 const KEYBOARD_SETTLE_MS = 700;   // how long after a tap in a search box iOS's own scroll to it is undone (the keyboard's slide)
 const OVERLAY_PAGES = new Set(["champion"]);
 const IMMERSIVE_PAGES = new Set(["rosterswipe"]);   // full screen: no top bar at all (速查's swipe, like Tinder)
@@ -144,11 +143,13 @@ export class MnView extends ItemView {
             const d = (e.target as HTMLElement | null)?.closest?.(".mn-rq-dock") as HTMLElement | null;
             if (d && (e.target as HTMLElement).matches("input")) { start(d); place(); }
         });
-        this.registerDomEvent(app, "focusout", () => {
-            window.setTimeout(() => { if (typingDock && !typingDock.contains(document.activeElement)) drop(); }, KEYBOARD_BLUR_MS);
+        // the box loses the focus: the capsule goes down at once with the keyboard (not if the focus only moved inside the capsule)
+        this.registerDomEvent(app, "focusout", (e) => {
+            const to = e.relatedTarget as Node | null;
+            if (typingDock && !(to && typingDock.contains(to))) drop();
         });
         const onShow = (e: Event) => { kbEvent = Math.round((e as Event & { keyboardHeight?: number }).keyboardHeight ?? 0); place(); };
-        const onHide = () => { kbEvent = 0; place(); };
+        const onHide = () => { kbEvent = 0; drop(); };   // the keyboard is going: no waiting
         for (const [n, f] of [["keyboardWillShow", onShow], ["keyboardDidShow", onShow], ["keyboardWillHide", onHide], ["keyboardDidHide", onHide]] as [string, (e: Event) => void][]) {
             window.addEventListener(n, f);
             this.register(() => window.removeEventListener(n, f));

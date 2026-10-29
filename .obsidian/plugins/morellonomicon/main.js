@@ -5773,7 +5773,6 @@ function renderPage(tab, ctx) {
 var VIEW_TYPE = "morellonomicon";
 var KEYBOARD_GAP = 8;
 var DOCK_REST = 10;
-var KEYBOARD_BLUR_MS = 250;
 var KEYBOARD_SETTLE_MS = 700;
 var OVERLAY_PAGES = /* @__PURE__ */ new Set(["champion"]);
 var IMMERSIVE_PAGES = /* @__PURE__ */ new Set(["rosterswipe"]);
@@ -5930,10 +5929,9 @@ var MnView = class extends import_obsidian12.ItemView {
         place();
       }
     });
-    this.registerDomEvent(app, "focusout", () => {
-      window.setTimeout(() => {
-        if (typingDock && !typingDock.contains(document.activeElement)) drop();
-      }, KEYBOARD_BLUR_MS);
+    this.registerDomEvent(app, "focusout", (e) => {
+      const to = e.relatedTarget;
+      if (typingDock && !(to && typingDock.contains(to))) drop();
     });
     const onShow = (e) => {
       kbEvent = Math.round(e.keyboardHeight ?? 0);
@@ -5941,7 +5939,7 @@ var MnView = class extends import_obsidian12.ItemView {
     };
     const onHide = () => {
       kbEvent = 0;
-      place();
+      drop();
     };
     for (const [n, f] of [["keyboardWillShow", onShow], ["keyboardDidShow", onShow], ["keyboardWillHide", onHide], ["keyboardDidHide", onHide]]) {
       window.addEventListener(n, f);
