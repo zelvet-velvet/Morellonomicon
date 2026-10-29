@@ -1,6 +1,6 @@
 import { mapUrl } from "./handbook";
 import type { PageCtx, PageOut } from "./index";
-import { ITEM_CATS, SHOP_ICON_X, SHOP_ICON_Y, SHOP_SPRITE, blockLoad, h, holdTip, icon, page, roleArt } from "../ui";
+import { ITEM_CATS, blockLoad, shopIcon, h, holdTip, icon, page, roleArt } from "../ui";
 import { MODES } from "../modes";
 import { PROFILE_FRESH, QUEUE, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, type Profile } from "../data/riot";
 
@@ -210,7 +210,6 @@ const ITEM_ROLES: [string, (i: ItemLike) => boolean][] = [
     ["坦克", (i) => has(i, "Health") && has(i, "Armor", "SpellBlock", "MagicResist") && !has(i, "Damage", "SpellDamage")],
     ["輔助", (i) => has(i, "GoldPer", "Aura") || (has(i, "Active") && !has(i, "Damage", "SpellDamage"))],
 ];
-const SPRITE_HALF = 13;   // half the 26 px window each shop icon is shown in
 const RAIL_BREAKS = new Set(["法術強度", "生命", "技能急速"]);   // a line before each group of the stat rail, like the shop
 let itemRole = "", itemSort = "tier";   // kept while the app is open
 const itemStats = new Set<string>();
@@ -266,11 +265,7 @@ export function itemsPage(ctx: PageCtx): PageOut {
         ITEM_CATS.forEach(([name], k) => {
             if (RAIL_BREAKS.has(name)) h(rail, "i", "mn-shop-break");
             const b = h(rail, "button", "mn-shop-stat" + (itemStats.has(name) ? " is-on" : ""));
-            // the shop's own icon, cut from its sprite sheet: plain, or lit when on
-            const ic = h(b, "span", "mn-shop-sprite");
-            const at = (col: number) => `${-(SHOP_ICON_X[col] - SPRITE_HALF)}px ${-(SHOP_ICON_Y[k] - SPRITE_HALF)}px`;
-            ic.style.backgroundImage = `url("${SHOP_SPRITE}")`;
-            ic.style.backgroundPosition = at(itemStats.has(name) ? 2 : 0);
+            shopIcon(b, k, itemStats.has(name), "mn-shop-sprite");   // the shop's own icon: plain, or lit when on
             holdTip(b, name);
             b.addEventListener("click", (e) => { e.preventDefault(); itemStats.has(name) ? itemStats.delete(name) : itemStats.add(name); drawRail(); draw(); });
         });

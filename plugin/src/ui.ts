@@ -287,6 +287,15 @@ export const REACH_ICON = "ruler";   // 近戰 / 中程 / 遠程
 export const SHOP_SPRITE = "https://raw.communitydragon.org/latest/game/assets/ux/itemshop/itemshop_texture_atlas4.png";
 export const SHOP_ICON_Y = [11.5, 37.5, 63.5, 91.5, 118.5, 147.5, 176.5, 203.5, 231.5, 259.5, 286.5, 314.5, 341.5, 370.5];
 export const SHOP_ICON_X = [12, 38, 64, 92.5, 120.5];
+// One of the shop's icons from that sheet (row: the ITEM_CATS index), plain grey or lit in its colour, in a `size` px square
+export const shopIcon = (parent: HTMLElement, row: number, lit: boolean, cls = "mn-shopic"): HTMLElement => {
+    const el = h(parent, "span", cls);
+    el.style.backgroundImage = `url("${SHOP_SPRITE}")`;
+    el.style.backgroundPosition = `${-(SHOP_ICON_X[lit ? 2 : 0] - 13)}px ${-(SHOP_ICON_Y[row] - 13)}px`;
+    return el;
+};
+// The stats and damage kinds that have a shop icon: the row in the sheet (others keep their Lucide icon)
+export const SHOP_ROW: Record<string, number> = { 攻擊力: 0, 物理: 0, 暴擊: 1, 攻速: 2, 穿透: 4, 法術強度: 5, 魔法: 5, 生命: 8, 護甲: 9, 魔防: 10, 技能急速: 11, 跑速: 12 };
 export const ITEM_CATS: [string, string, string[]][] = [
     ["攻擊力", "sword", ["Damage"]], ["暴擊", "dice-5", ["CriticalStrike"]], ["攻速", "gauge", ["AttackSpeed"]], ["攻擊特效", "crosshair", ["OnHit"]],
     ["物理穿透", "arrow-right-to-line", ["ArmorPenetration"]], ["法術強度", "sparkles", ["SpellDamage"]], ["魔力", "droplet", ["Mana", "ManaRegen"]],

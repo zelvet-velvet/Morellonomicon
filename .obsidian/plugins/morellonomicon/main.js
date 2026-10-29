@@ -772,6 +772,13 @@ var REACH_ICON = "ruler";
 var SHOP_SPRITE = "https://raw.communitydragon.org/latest/game/assets/ux/itemshop/itemshop_texture_atlas4.png";
 var SHOP_ICON_Y = [11.5, 37.5, 63.5, 91.5, 118.5, 147.5, 176.5, 203.5, 231.5, 259.5, 286.5, 314.5, 341.5, 370.5];
 var SHOP_ICON_X = [12, 38, 64, 92.5, 120.5];
+var shopIcon = (parent, row2, lit, cls = "mn-shopic") => {
+  const el = h(parent, "span", cls);
+  el.style.backgroundImage = `url("${SHOP_SPRITE}")`;
+  el.style.backgroundPosition = `${-(SHOP_ICON_X[lit ? 2 : 0] - 13)}px ${-(SHOP_ICON_Y[row2] - 13)}px`;
+  return el;
+};
+var SHOP_ROW = { \u653B\u64CA\u529B: 0, \u7269\u7406: 0, \u66B4\u64CA: 1, \u653B\u901F: 2, \u7A7F\u900F: 4, \u6CD5\u8853\u5F37\u5EA6: 5, \u9B54\u6CD5: 5, \u751F\u547D: 8, \u8B77\u7532: 9, \u9B54\u9632: 10, \u6280\u80FD\u6025\u901F: 11, \u8DD1\u901F: 12 };
 var ITEM_CATS = [
   ["\u653B\u64CA\u529B", "sword", ["Damage"]],
   ["\u66B4\u64CA", "dice-5", ["CriticalStrike"]],
@@ -1725,7 +1732,8 @@ function iconFilter(parent, label, iconName, color, on, onTap) {
   const el = h(parent, "button", "mn-ftg" + (on ? " is-yes" : ""));
   el.setAttribute("aria-label", label);
   el.style.setProperty("--p", color);
-  icon(el, iconName);
+  if (SHOP_ROW[label] !== void 0) shopIcon(el, SHOP_ROW[label], on);
+  else icon(el, iconName);
   holdTip(el, label);
   el.addEventListener("click", (e) => {
     e.preventDefault();
@@ -4454,7 +4462,6 @@ var ITEM_ROLES = [
   ["\u5766\u514B", (i) => has(i, "Health") && has(i, "Armor", "SpellBlock", "MagicResist") && !has(i, "Damage", "SpellDamage")],
   ["\u8F14\u52A9", (i) => has(i, "GoldPer", "Aura") || has(i, "Active") && !has(i, "Damage", "SpellDamage")]
 ];
-var SPRITE_HALF = 13;
 var RAIL_BREAKS = /* @__PURE__ */ new Set(["\u6CD5\u8853\u5F37\u5EA6", "\u751F\u547D", "\u6280\u80FD\u6025\u901F"]);
 var itemRole = "";
 var itemSort = "tier";
@@ -4532,10 +4539,7 @@ function itemsPage(ctx) {
     ITEM_CATS.forEach(([name], k) => {
       if (RAIL_BREAKS.has(name)) h(rail, "i", "mn-shop-break");
       const b = h(rail, "button", "mn-shop-stat" + (itemStats.has(name) ? " is-on" : ""));
-      const ic = h(b, "span", "mn-shop-sprite");
-      const at = (col) => `${-(SHOP_ICON_X[col] - SPRITE_HALF)}px ${-(SHOP_ICON_Y[k] - SPRITE_HALF)}px`;
-      ic.style.backgroundImage = `url("${SHOP_SPRITE}")`;
-      ic.style.backgroundPosition = at(itemStats.has(name) ? 2 : 0);
+      shopIcon(b, k, itemStats.has(name), "mn-shop-sprite");
       holdTip(b, name);
       b.addEventListener("click", (e) => {
         e.preventDefault();
@@ -5169,7 +5173,8 @@ function swipePage(ctx) {
       for (const s of stats2) {
         const x = h(row2, "span", "mn-qc-stat");
         x.style.setProperty("--c", STAT_COLOR[s]);
-        icon(x, STAT_ICON[s]);
+        if (SHOP_ROW[s] !== void 0) shopIcon(x, SHOP_ROW[s], true);
+        else icon(x, STAT_ICON[s]);
         x.append(s);
       }
     }

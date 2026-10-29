@@ -1,7 +1,7 @@
 import { Notice } from "obsidian";
 import type { Champion } from "../data/store";
 import { findSaid, type Said, type Sounds, soundScore } from "../data/sound";
-import { DAMAGE_COLOR, DAMAGE_ICON, REACH_ICON, STAT_COLOR, STAT_ICON, SWIPE, chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, roleArt, slideSeg, tip } from "../ui";
+import { DAMAGE_COLOR, DAMAGE_ICON, REACH_ICON, SHOP_ROW, STAT_COLOR, STAT_ICON, SWIPE, shopIcon, chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, roleArt, slideSeg, tip } from "../ui";
 import { entryDir, marker } from "./changes";
 import type { PageCtx, PageOut } from "./index";
 import { keyBadge } from "./cardkit";
@@ -415,7 +415,12 @@ export function swipePage(ctx: PageCtx): PageOut {
         if (stats.length) {
             h(play, "div", "mn-qc-k", "堆");
             const row = h(play, "div", "mn-qc-stats");
-            for (const s of stats) { const x = h(row, "span", "mn-qc-stat"); x.style.setProperty("--c", STAT_COLOR[s]); icon(x, STAT_ICON[s]); x.append(s); }
+            for (const s of stats) {
+                const x = h(row, "span", "mn-qc-stat");
+                x.style.setProperty("--c", STAT_COLOR[s]);
+                if (SHOP_ROW[s] !== undefined) shopIcon(x, SHOP_ROW[s], true); else icon(x, STAT_ICON[s]);   // the game's shop icon where there is one
+                x.append(s);
+            }
         }
         if (c.how.length) {
             h(play, "div", "mn-qc-k", "怎麼玩");

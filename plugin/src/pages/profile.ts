@@ -1,7 +1,7 @@
 import { Modal } from "obsidian";
 import type { App } from "obsidian";
 import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, h, holdTip, icon, svg } from "../ui";
+import { DAMAGE_COLOR, h, holdTip, icon, svg, SHOP_ROW, shopIcon } from "../ui";
 
 // A champion at a glance: what it can do, drawn as a profile chart, plus the abilities it has. Every axis comes from data we have:
 //   輸出 = its stronger damage rating (Riot, 1-10)        坦度 = Riot's defence rating
@@ -123,7 +123,8 @@ export function iconFilter(parent: HTMLElement, label: string, iconName: string,
     const el = h(parent, "button", "mn-ftg" + (on ? " is-yes" : ""));
     el.setAttribute("aria-label", label);
     el.style.setProperty("--p", color);
-    icon(el, iconName);
+    if (SHOP_ROW[label] !== undefined) shopIcon(el, SHOP_ROW[label], on);   // 物理 / 魔法: the game's own shop icon
+    else icon(el, iconName);
     holdTip(el, label);
     el.addEventListener("click", (e) => { e.preventDefault(); onTap(); });
     return el;
