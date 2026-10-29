@@ -11,11 +11,8 @@ export const VIEW_TYPE = "morellonomicon";
 
 // The app screen: top bar (back, title, mode switch), page area, tab bar. A page is drawn in one step when a tab, a detail page
 // or the data changes; scroll positions are kept per page so Back returns to where you were.
-const CAPSULE_SLIDE_MS = 450;
-const CAPSULE_CLOSE_MS = 300;
+const CAPSULE_MS = 300;          // the capsule's ease to its new place (about the keyboard's own slide)
 const KEYBOARD_GAP = 8;          // px between the search capsule and the keyboard's top edge
-const DOCK_REST = 10;            // px the capsule sits above the scroll area's bottom when nothing covers it (styles.css)
-const KEYBOARD_SETTLE_MS = 700;   // how long after a tap in a search box iOS's own scroll to it is undone (the keyboard's slide)
 const OVERLAY_PAGES = new Set(["champion"]);
 const IMMERSIVE_PAGES = new Set(["rosterswipe"]);   // full screen: no top bar at all (速查's swipe, like Tinder)
 const OVERLAY_SCROLL = 220;   // px scrolled before the top bar gets its background back over a splash
@@ -84,101 +81,71 @@ export class MnView extends ItemView {
         modeBtn.addEventListener("click", (e) => { e.preventDefault(); this.modeMenu(e); });
         this.modeBtn = modeBtn;
         this.scrollEl = h(app, "div", "mn-scroll");
-        // the phone's keyboard: while a floating search capsule (Picks, Champions) is typed in, it slides up to sit KEYBOARD_GAP px above the
-        // keyboard's top edge, like Safari's bar, and slides back when the keyboard goes. It is moved with a transform (it stays in the
-        // page), by how far the visible part of the screen ends above the scroll area's bottom. The visible bottom is the lowest of what the
-        // phone tells: the visual viewport, Obsidian's keyboard event (keyboardHeight), the --keyboard-height variable. iOS's own scroll to
-        // the box is undone while the keyboard slides. Settings → Keyboard readout shows these numbers on screen.
+        // the phone's keyboard and the floating search capsule (Picks, Champions). Obsidian shrinks its page at once when the keyboard starts
+        // to open (and grows it at once when it starts to close), so the capsule's place jumps; instead of jumping it eases from where it
+        // is on screen to where it belongs, frame by frame, whenever that place changes. Where it belongs: its place in the page, raised
+        // above the keyboard if the page did not shrink (the visible part of the screen ends higher). Settings → Keyboard readout shows the
+        // numbers.
         const vv = window.visualViewport;
         let kbEvent = 0;   // the keyboard height from Obsidian's app shell, while the keyboard is up
-        let typingDock: HTMLElement | null = null;
-        let restTop = 0;
-        // how far the capsule went up last time: on the next tap it is lifted that far before the box takes the focus, so the box is
-        // already above the keyboard and iOS has no reason to scroll the list to it (the cause of the list jumping up and back)
-        let settleUntil = 0;
-        let lastShift = (() => { try { return Number(localStorage.getItem("mn-kbshift")) || 0; } catch { return 0; } })();
+        let dock: HTMLElement | null = null;   // the capsule being typed in (or still easing back down)
+        let shown = 0;     // its current offset from its place in the page (px, negative = up)
+        let anim = 0;
         const readout = h(app, "div", "mn-kbread is-hidden");
         const visibleBottom = () => {
-            const css = parseFloat(getComputedStyle(document.body).getPropertyValue("--keyboard-height")) || 0;
             const tells = [window.innerHeight];
             if (vv) tells.push(vv.offsetTop + vv.height);
             if (kbEvent) tells.push(window.innerHeight - kbEvent);
-            if (css) tells.push(window.innerHeight - css);
-            return { bottom: Math.min(...tells), css };
+            return Math.min(...tells);
         };
-        const place = () => {
-            if (!typingDock) return;
-            const { bottom, css } = visibleBottom();
-            const scrollBottom = this.scrollEl.getBoundingClientRect().bottom;
-            let shift = Math.max(0, Math.round(scrollBottom - bottom + KEYBOARD_GAP - DOCK_REST));
-            if (Date.now() < settleUntil) shift = Math.max(shift, lastShift);   // while the keyboard comes up, never drop below the lift given at the tap
-            typingDock.style.transform = shift ? `translateY(${-shift}px)` : "";
-            if (shift > KEYBOARD_GAP * 4) { lastShift = shift; try { localStorage.setItem("mn-kbshift", String(shift)); } catch { /* fine */ } }
-            if (this.plugin.settings.kbDebug) {
-                readout.removeClass("is-hidden");
-                readout.setText(`inner ${window.innerHeight} · vv ${vv ? `${Math.round(vv.height)}+${Math.round(vv.offsetTop)}` : "-"} · event ${kbEvent} · css ${css} · scroll↓ ${Math.round(scrollBottom)} · shift ${shift} · body ${document.body.className.split(" ").filter((c) => /key|kb/i.test(c)).join(",") || "-"}`);
-            }
+        // the offset it should have: none, or enough to clear the keyboard when typing
+        const wanted = (d: HTMLElement, typing: boolean): number => {
+            if (!typing) return 0;
+            const r = d.getBoundingClientRect(), naturalBottom = r.bottom - shown;
+            return Math.min(0, Math.round(visibleBottom() - KEYBOARD_GAP - naturalBottom));
         };
-        // iOS draws the text cursor where the box was, not where it is sliding to: the cursor is hidden while the capsule moves
-        const moving = (d: HTMLElement) => { d.addClass("is-moving"); window.setTimeout(() => d.removeClass("is-moving"), CAPSULE_SLIDE_MS); };
-        // closing: it heads for its resting place on screen at once, with the keyboard, whether or not Obsidian has made the page full
-        // height yet (before, it waited for that, then dropped). Obsidian makes the page full height at once while the keyboard is still sliding down, which dropped the capsule under
-        // the keyboard. Instead it glides from where it was on screen to its place at the bottom, at the keyboard's pace (frame by frame)
-        const glideDown = (d: HTMLElement) => {
-            const from = d.getBoundingClientRect().top, to = restTop || from, t0 = performance.now();
+        // ease the capsule's screen position from where it is now to its place plus `wanted`, re-reading its place each frame (the page may
+        // still be changing size under it)
+        const glide = (d: HTMLElement, typing: boolean) => {
+            cancelAnimationFrame(anim);
+            const startTop = d.getBoundingClientRect().top, t0 = performance.now();
+            d.addClass("is-moving");   // iOS draws the text cursor where the box was: hidden while it moves
             d.style.transition = "none";
             const step = (now: number) => {
-                const p = Math.min(1, (now - t0) / CAPSULE_CLOSE_MS), e = 1 - Math.pow(1 - p, 3);   // fast start, soft stop
+                const p = Math.min(1, (now - t0) / CAPSULE_MS), e = 1 - Math.pow(1 - p, 3);   // fast start, soft stop
                 d.style.transform = "";
-                const natural = d.getBoundingClientRect().top;   // where the page has it now (the page may still be short)
-                if (p < 1) { d.style.transform = `translateY(${Math.round(from + (to - from) * e - natural)}px)`; requestAnimationFrame(step); }
-                else d.style.transition = "";
+                const natural = d.getBoundingClientRect().top;
+                const target = natural + wanted(d, typing);
+                shown = Math.round(startTop + (target - startTop) * e - natural);
+                d.style.transform = shown ? `translateY(${shown}px)` : "";
+                if (this.plugin.settings.kbDebug) { readout.removeClass("is-hidden"); readout.setText(`inner ${window.innerHeight} · vv ${vv ? `${Math.round(vv.height)}+${Math.round(vv.offsetTop)}` : "-"} · event ${kbEvent} · offset ${shown}`); }
+                if (p < 1) { anim = requestAnimationFrame(step); return; }
+                d.removeClass("is-moving");
+                if (!typing) { d.style.transition = ""; d.removeClass("is-typing"); if (dock === d) dock = null; readout.addClass("is-hidden"); }
             };
-            requestAnimationFrame(step);
+            anim = requestAnimationFrame(step);
         };
-        const drop = () => {
-            if (typingDock) { const d = typingDock; moving(d); d.removeClass("is-typing"); glideDown(d); }
-            typingDock = null; readout.addClass("is-hidden");
-        };
-        const start = (d: HTMLElement) => {
-            if (typingDock === d) return;
-            restTop = d.getBoundingClientRect().top;   // where it sits with no keyboard: where it glides back to
-            typingDock = d; d.addClass("is-typing"); moving(d);
-            settleUntil = Date.now() + KEYBOARD_SETTLE_MS;
-            if (lastShift) d.style.transform = `translateY(${-lastShift}px)`;
-            const keep = this.scrollEl.scrollTop;
-            // one correction once the keyboard is up (no tug of war while it slides, which made the list flicker)
-            window.setTimeout(() => {
-                if (!typingDock) return;
-                if (window.scrollY) window.scrollTo(0, 0);
-                if (Math.abs(this.scrollEl.scrollTop - keep) > 2) this.scrollEl.scrollTo({ top: keep, behavior: "instant" as ScrollBehavior });
-                place();
-            }, KEYBOARD_SETTLE_MS);
-        };
-        // a touch on the box: lift the capsule first, then give the box the focus without the browser scrolling to it
-        this.registerDomEvent(app, "touchend", (e) => {
-            const input = (e.target as HTMLElement | null)?.closest?.(".mn-rq-dock input") as HTMLInputElement | null;
-            if (!input || document.activeElement === input) return;
-            e.preventDefault();
-            start(input.closest(".mn-rq-dock") as HTMLElement);
-            input.focus({ preventScroll: true });
-        }, { passive: false });
+        let typing = false;
+        const changed = () => { if (dock) glide(dock, typing); };
         this.registerDomEvent(app, "focusin", (e) => {
             const d = (e.target as HTMLElement | null)?.closest?.(".mn-rq-dock") as HTMLElement | null;
-            if (d && (e.target as HTMLElement).matches("input")) { start(d); place(); }
+            if (!d || !(e.target as HTMLElement).matches("input")) return;
+            dock = d; typing = true; d.addClass("is-typing");
+            changed();
         });
-        // the box loses the focus: the capsule goes down at once with the keyboard (not if the focus only moved inside the capsule)
         this.registerDomEvent(app, "focusout", (e) => {
             const to = e.relatedTarget as Node | null;
-            if (typingDock && !(to && typingDock.contains(to))) drop();
+            if (dock && !(to && dock.contains(to))) { typing = false; changed(); }
         });
-        const onShow = (e: Event) => { kbEvent = Math.round((e as Event & { keyboardHeight?: number }).keyboardHeight ?? 0); place(); };
-        const onHide = () => { kbEvent = 0; drop(); };   // the keyboard is going: no waiting
-        for (const [n, f] of [["keyboardWillShow", onShow], ["keyboardDidShow", onShow], ["keyboardWillHide", onHide], ["keyboardDidHide", onHide]] as [string, (e: Event) => void][]) {
+        // whenever the screen or the keyboard changes: ease to the new place
+        const onShow = (e: Event) => { kbEvent = Math.round((e as Event & { keyboardHeight?: number }).keyboardHeight ?? 0); changed(); };
+        const onHide = () => { kbEvent = 0; typing = false; changed(); };
+        for (const [n, f] of [["keyboardWillShow", onShow], ["keyboardWillHide", onHide]] as [string, (e: Event) => void][]) {
             window.addEventListener(n, f);
             this.register(() => window.removeEventListener(n, f));
         }
-        if (vv) for (const n of ["resize", "scroll"]) { vv.addEventListener(n, place); this.register(() => vv.removeEventListener(n, place)); }
+        this.registerDomEvent(window, "resize", changed);
+        if (vv) { vv.addEventListener("resize", changed); this.register(() => vv.removeEventListener("resize", changed)); }
         this.registerDomEvent(this.scrollEl, "scroll", () => this.markScrolled(), { passive: true });
         // pictures added to a page after it showed (cards built later, lazy ones) fade in instead of popping in
         const late = new MutationObserver((list) => {
