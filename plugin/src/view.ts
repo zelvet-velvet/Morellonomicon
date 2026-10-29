@@ -81,43 +81,59 @@ export class MnView extends ItemView {
         modeBtn.addEventListener("click", (e) => { e.preventDefault(); this.modeMenu(e); });
         this.modeBtn = modeBtn;
         this.scrollEl = h(app, "div", "mn-scroll");
-        // the phone's keyboard and the floating search capsule (Picks, Champions). Obsidian shrinks its page at once when the keyboard starts
-        // to open (and grows it at once when it starts to close), so the capsule's place jumps. Instead the capsule keeps its spot on screen
-        // when the page changes size (a ResizeObserver, before the frame is drawn) and then follows its new place smoothly, one step each
-        // frame, a share of the way that is left. Several reports of one keyboard move (focus, keyboard event, resizes) only move the goal;
-        // the motion never starts over. Where it belongs: its place in the page, raised above the keyboard if the page did not shrink.
-        // Settings → Keyboard readout shows the numbers.
+        // the phone's keyboard and the floating search capsule (Picks, Champions). Obsidian (iOS) shrinks its page only once the keyboard
+        // has finished opening and grows it only once it has closed, and sends no keyboard event we can catch (screen recording,
+        // 2026-10-29), so waiting for the page leaves the capsule under the sliding keyboard and then makes it jump. Instead a tap starts
+        // lifting it at once to where the keyboard will end (its height remembered from the last time the page shrank), and when the page
+        // does change size the capsule keeps its spot on screen (a ResizeObserver, before the frame is drawn). It moves one step each
+        // frame, a share of the way that is left; several reports of one keyboard move only change the goal, the motion never starts
+        // over. Settings → Keyboard readout shows the numbers.
         const vv = window.visualViewport;
-        let kbEvent = 0;   // the keyboard height from Obsidian's app shell, while the keyboard is up
+        let kbEvent = 0;   // the keyboard height from Obsidian's app shell, while the keyboard is up (if it ever tells)
+        let full = window.innerHeight;   // the page height with no keyboard
+        let kbGuess = Math.round(screen.height * 0.4);   // the keyboard height last seen (it is the same each time on one phone)
+        try { kbGuess = Number(localStorage.getItem("mn-kb-height")) || kbGuess; } catch { /* no storage: the rough guess */ }
         let dock: HTMLElement | null = null;   // the capsule being typed in (or still easing back down)
         let typing = false;
         let shown = 0;     // its current offset from its place in the page (px, negative = up)
         let at: number | null = null;   // its top on screen while it is moved by hand
+        let lastTop: number | null = null;   // its top on screen as last drawn
         let raf = 0, last = 0;
         const readout = h(app, "div", "mn-kbread is-hidden");
         const visibleBottom = () => {
             const tells = [window.innerHeight];
             if (vv) tells.push(vv.offsetTop + vv.height);
-            if (kbEvent) tells.push(window.innerHeight - kbEvent);
+            if (typing) tells.push(full - (kbEvent || kbGuess));   // where the keyboard's top will be, before the page knows
             return Math.min(...tells);
         };
         const put = (d: HTMLElement, natural: number) => {
             shown = Math.round((at ?? natural) - natural);
             d.style.transform = shown ? `translateY(${shown}px)` : "";
-            if (this.plugin.settings.kbDebug) { readout.removeClass("is-hidden"); readout.setText(`inner ${window.innerHeight} · vv ${vv ? `${Math.round(vv.height)}+${Math.round(vv.offsetTop)}` : "-"} · event ${kbEvent} · offset ${shown}`); }
+            lastTop = natural + shown;
+            if (this.plugin.settings.kbDebug) { readout.removeClass("is-hidden"); readout.setText(`inner ${window.innerHeight} · full ${full} · kb ${kbEvent || kbGuess}${kbEvent ? "" : "?"} · vv ${vv ? `${Math.round(vv.height)}+${Math.round(vv.offsetTop)}` : "-"} · offset ${shown}`); }
         };
         // its place in the page (top), read without undoing the offset
         const natural = (d: HTMLElement) => d.getBoundingClientRect().top - shown;
-        // the page changed size under it: stay put on screen this frame
-        const hold = () => { if (dock && at !== null) put(dock, natural(dock)); };
+        // the page changed size under it: stay put on screen this frame; a page shorter than `full` while typing tells the keyboard's height
+        const hold = () => {
+            if (!typing && window.innerHeight > full - 80) full = window.innerHeight;
+            else if (typing && full - window.innerHeight > 120 && full - window.innerHeight !== kbGuess) {
+                kbGuess = full - window.innerHeight;
+                try { localStorage.setItem("mn-kb-height", String(kbGuess)); } catch { /* not kept: guessed again next time */ }
+            }
+            if (!dock) return;
+            at = at ?? lastTop ?? dock.getBoundingClientRect().top;
+            put(dock, natural(dock));
+        };
         const done = (d: HTMLElement) => {
             raf = 0; at = null;
             d.removeClass("is-moving");
-            if (!typing) { d.removeClass("is-typing"); d.style.transform = ""; shown = 0; if (dock === d) dock = null; readout.addClass("is-hidden"); }
+            // closed, and the page is its full height again (until then it may still grow under the capsule, which then eases down)
+            if (!typing && window.innerHeight > full - 80) { d.removeClass("is-typing"); d.style.transform = ""; shown = 0; lastTop = null; if (dock === d) dock = null; readout.addClass("is-hidden"); }
         };
         const step = (now: number) => {
             const d = dock;
-            if (!d || !d.isConnected) { raf = 0; at = null; shown = 0; dock = null; return; }
+            if (!d || !d.isConnected) { raf = 0; at = null; shown = 0; lastTop = null; dock = null; return; }
             const dt = Math.min(48, now - last); last = now;
             const nat = natural(d), r = d.getBoundingClientRect();
             const lift = typing ? Math.min(0, visibleBottom() - KEYBOARD_GAP - (r.bottom - shown)) : 0;
@@ -133,13 +149,13 @@ export class MnView extends ItemView {
         const changed = () => {
             const d = dock;
             if (!d) return;
-            if (at === null) at = d.getBoundingClientRect().top;
+            if (at === null) at = lastTop ?? d.getBoundingClientRect().top;   // where it was drawn (the page may have changed since)
             d.addClass("is-moving");   // iOS draws the text cursor where the box was: hidden while it moves
             if (!raf) { last = performance.now(); raf = requestAnimationFrame(step); }
         };
         const dockOf = (t: EventTarget | null) => t instanceof HTMLInputElement && app.contains(t) ? t.closest<HTMLElement>(".mn-rq-dock") : null;
         const startTyping = (d: HTMLElement) => {
-            if (dock && dock !== d) { dock.style.transform = ""; dock.removeClass("is-typing", "is-moving"); at = null; shown = 0; }
+            if (dock && dock !== d) { dock.style.transform = ""; dock.removeClass("is-typing", "is-moving"); at = null; shown = 0; lastTop = null; }
             dock = d; typing = true; d.addClass("is-typing");
             changed();
         };

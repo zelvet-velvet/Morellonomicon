@@ -1430,17 +1430,17 @@ function layoutBlock(plugin, source, el, ctx) {
     const phone = fig.createDiv({ cls: "mn-lay-phone" });
     phone.style.width = `${W * SCALE}px`;
     phone.style.height = `${H * SCALE}px`;
-    const screen = phone.createDiv({ cls: "mn-lay-screen" });
-    screen.style.transform = `scale(${SCALE})`;
-    screen.style.width = `${W}px`;
-    screen.style.height = `${H}px`;
+    const screen2 = phone.createDiv({ cls: "mn-lay-screen" });
+    screen2.style.transform = `scale(${SCALE})`;
+    screen2.style.width = `${W}px`;
+    screen2.style.height = `${H}px`;
     if (page2.tabbar !== false) {
-      const tb = screen.createDiv({ cls: "mn-lay-tabbar" });
+      const tb = screen2.createDiv({ cls: "mn-lay-tabbar" });
       tb.style.height = `${TABBAR}px`;
       for (const t of ["Augments", "Patch", "Home", "Picks", "Handbook"]) tb.createSpan({ text: t });
     }
     for (const b of page2.blocks) {
-      const z = screen.createDiv({ cls: "mn-lay-z" + (selected?.block === b ? " is-sel" : "") });
+      const z = screen2.createDiv({ cls: "mn-lay-z" + (selected?.block === b ? " is-sel" : "") });
       const pos = () => {
         z.style.left = `${b.x}px`;
         z.style.top = `${b.y}px`;
@@ -5848,38 +5848,57 @@ var MnView = class extends import_obsidian12.ItemView {
     this.scrollEl = h(app, "div", "mn-scroll");
     const vv = window.visualViewport;
     let kbEvent = 0;
+    let full = window.innerHeight;
+    let kbGuess = Math.round(screen.height * 0.4);
+    try {
+      kbGuess = Number(localStorage.getItem("mn-kb-height")) || kbGuess;
+    } catch {
+    }
     let dock = null;
     let typing = false;
     let shown = 0;
     let at = null;
+    let lastTop = null;
     let raf = 0, last = 0;
     const readout = h(app, "div", "mn-kbread is-hidden");
     const visibleBottom = () => {
       const tells = [window.innerHeight];
       if (vv) tells.push(vv.offsetTop + vv.height);
-      if (kbEvent) tells.push(window.innerHeight - kbEvent);
+      if (typing) tells.push(full - (kbEvent || kbGuess));
       return Math.min(...tells);
     };
     const put = (d, natural2) => {
       shown = Math.round((at ?? natural2) - natural2);
       d.style.transform = shown ? `translateY(${shown}px)` : "";
+      lastTop = natural2 + shown;
       if (this.plugin.settings.kbDebug) {
         readout.removeClass("is-hidden");
-        readout.setText(`inner ${window.innerHeight} \xB7 vv ${vv ? `${Math.round(vv.height)}+${Math.round(vv.offsetTop)}` : "-"} \xB7 event ${kbEvent} \xB7 offset ${shown}`);
+        readout.setText(`inner ${window.innerHeight} \xB7 full ${full} \xB7 kb ${kbEvent || kbGuess}${kbEvent ? "" : "?"} \xB7 vv ${vv ? `${Math.round(vv.height)}+${Math.round(vv.offsetTop)}` : "-"} \xB7 offset ${shown}`);
       }
     };
     const natural = (d) => d.getBoundingClientRect().top - shown;
     const hold = () => {
-      if (dock && at !== null) put(dock, natural(dock));
+      if (!typing && window.innerHeight > full - 80) full = window.innerHeight;
+      else if (typing && full - window.innerHeight > 120 && full - window.innerHeight !== kbGuess) {
+        kbGuess = full - window.innerHeight;
+        try {
+          localStorage.setItem("mn-kb-height", String(kbGuess));
+        } catch {
+        }
+      }
+      if (!dock) return;
+      at = at ?? lastTop ?? dock.getBoundingClientRect().top;
+      put(dock, natural(dock));
     };
     const done = (d) => {
       raf = 0;
       at = null;
       d.removeClass("is-moving");
-      if (!typing) {
+      if (!typing && window.innerHeight > full - 80) {
         d.removeClass("is-typing");
         d.style.transform = "";
         shown = 0;
+        lastTop = null;
         if (dock === d) dock = null;
         readout.addClass("is-hidden");
       }
@@ -5890,6 +5909,7 @@ var MnView = class extends import_obsidian12.ItemView {
         raf = 0;
         at = null;
         shown = 0;
+        lastTop = null;
         dock = null;
         return;
       }
@@ -5911,7 +5931,7 @@ var MnView = class extends import_obsidian12.ItemView {
     const changed = () => {
       const d = dock;
       if (!d) return;
-      if (at === null) at = d.getBoundingClientRect().top;
+      if (at === null) at = lastTop ?? d.getBoundingClientRect().top;
       d.addClass("is-moving");
       if (!raf) {
         last = performance.now();
@@ -5925,6 +5945,7 @@ var MnView = class extends import_obsidian12.ItemView {
         dock.removeClass("is-typing", "is-moving");
         at = null;
         shown = 0;
+        lastTop = null;
       }
       dock = d;
       typing = true;
