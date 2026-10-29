@@ -12,6 +12,7 @@ export const VIEW_TYPE = "morellonomicon";
 // The app screen: top bar (back, title, mode switch), page area, tab bar. A page is drawn in one step when a tab, a detail page
 // or the data changes; scroll positions are kept per page so Back returns to where you were.
 const CAPSULE_TAU = 65;          // ms; the capsule covers most of the way to its new place in about 4× this (the keyboard's own slide)
+const CAPSULE_TAU_DOWN = 28;     // ms; going back down after the keyboard closed: the keyboard is already gone, so quicker
 const KEYBOARD_GAP = 8;          // px between the search capsule and the keyboard's top edge
 const OVERLAY_PAGES = new Set(["champion"]);
 const IMMERSIVE_PAGES = new Set(["rosterswipe"]);   // full screen: no top bar at all (速查's swipe, like Tinder)
@@ -139,8 +140,8 @@ export class MnView extends ItemView {
             const lift = typing ? Math.min(0, visibleBottom() - KEYBOARD_GAP - (r.bottom - shown)) : 0;
             const goal = nat + lift;
             at = at ?? r.top;
-            at += (goal - at) * (1 - Math.exp(-dt / CAPSULE_TAU));
-            if (Math.abs(goal - at) < 0.5) at = goal;
+            at += (goal - at) * (1 - Math.exp(-dt / (typing ? CAPSULE_TAU : CAPSULE_TAU_DOWN)));
+            if (Math.abs(goal - at) < 1.5) at = goal;
             put(d, nat);
             if (at === goal) { done(d); return; }
             raf = requestAnimationFrame(step);
