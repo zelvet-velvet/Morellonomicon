@@ -51,13 +51,6 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
     search.type = "search";
     search.placeholder = "Search champions, augments, items";
     search.setAttribute("enterkeyhint", "search");
-    const picked = ctx.plugin.settings.roster.filter((id) => store.champion(id)).length;
-    const qk = h(searchRow, "button", "mn-qk-btn");
-    qk.setAttribute("aria-label", "大混戰速查");
-    icon(qk, "scan-search");
-    h(qk, "span", "", "速查");
-    if (picked) h(qk, "span", "mn-qk-n", String(picked));
-    qk.addEventListener("click", (e) => { e.preventDefault(); ctx.push({ key: "roster", title: "速查" }); });
     const filtersHost = h(parent, "div");   // the lane row loads as a block of its own
     const filters = h(filtersHost, "div", "mn-fgroup");
     const panel = h(parent, "div", "mn-fpanel");

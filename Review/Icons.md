@@ -30,7 +30,7 @@ Source: `TAGS` in `plugin/src/pages/profile.ts` (also the groups and the legend 
 ```mn-icons
 傷害 強化普攻 | sword | --mn-aa | #b05279
 傷害 攻擊特效 | crosshair | --mn-onhit | #d5763f
-傷害 %生命傷害 | heart-crack | --color-red | #d04255
+傷害 %生命傷害 | clipboard-edit | --color-red | #d04255
 傷害 斬殺 | skull | --mn-exec
 控制 控場 | link | --mn-cc
 控制 緩速 | anchor | --mn-slow | #6c99bb
@@ -86,6 +86,7 @@ Source: `TAB_ICON` in `plugin/src/modes.ts`.
 
 ```mn-icons
 Champions | users
+Picks | clipboard-edit
 Augments | sparkles
 Patch | newspaper
 Handbook | book-open

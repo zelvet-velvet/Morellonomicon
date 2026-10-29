@@ -703,12 +703,22 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-x svg { width: 16px; height: 16px; }
 /* 速查 swipe: the picked champions as the Handbook's card pile (pile.ts), the top card dragged right (like) or left (pass) */
 /* the pill that floats at the bottom of 速查 once something is picked: opens the swipe page */
-.mn-app .mn-rq-go { display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1; max-width: 320px; height: 46px; margin: 0; padding: 0 18px; border-radius: 23px; background: var(--mn-accent); color: var(--text-on-accent, #fff); border: 0; font-size: 15px; font-weight: 800; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28); }
-.mn-rq-go svg { width: 18px; height: 18px; }
-.mn-rq-gobar { position: sticky; bottom: 12px; z-index: 5; display: flex; justify-content: center; gap: 10px; margin: 14px 12px 0; }
+.mn-rq-gobar { position: sticky; bottom: 12px; z-index: 5; display: flex; align-items: center; gap: 10px; max-width: 460px; height: 60px; margin: 16px auto 0; padding: 0 8px 0 10px;
+    border-radius: 30px; background: color-mix(in srgb, var(--mn-card) 80%, transparent); border: 1px solid var(--mn-line); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
 .mn-rq-gobar.is-hidden { display: none; }
-.mn-app .mn-rq-clear { flex: none; display: grid; place-items: center; width: 46px; height: 46px; padding: 0; border-radius: 50%; border: 1px solid var(--mn-line); background: var(--mn-card); color: var(--color-red); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28); }
+.mn-rq-stack { display: flex; align-items: center; flex: none; padding-left: 6px; }
+.mn-rq-stack img, .mn-rq-more { width: 34px; height: 34px; margin-left: -8px; border-radius: 50%; border: 2px solid var(--mn-card); box-sizing: border-box; object-fit: cover; }
+.mn-rq-more { display: grid; place-items: center; font-size: 11px; font-weight: 800; color: var(--mn-text); background: var(--mn-card-hi); }
+.mn-rq-n { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 4px; white-space: nowrap; }
+.mn-rq-n b { font-size: 20px; font-weight: 800; color: var(--mn-text); font-variant-numeric: tabular-nums; }
+.mn-rq-n span { font-size: 13px; color: var(--mn-muted); }
+.mn-app .mn-rq-clear { flex: none; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 0; box-shadow: none; background: none; color: var(--mn-muted); }
+.mn-app .mn-rq-clear:active { color: var(--color-red); background: var(--mn-card-hi); }
 .mn-rq-clear svg { width: 18px; height: 18px; }
+.mn-app .mn-rq-go { flex: none; display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 16px 0 20px; border-radius: 22px; border: 0; background: var(--mn-accent); color: var(--text-on-accent, #fff); font-size: 15px; font-weight: 800; box-shadow: none; }
+.mn-app .mn-rq-go:active { transform: scale(0.96); }
+.mn-rq-go svg { width: 18px; height: 18px; stroke-width: 2.6; }
 .mn-rq-end { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }   /* the page never scrolls; the liked list does */
 .mn-rq-deck .mn-sl-card { position: relative; }   /* the ♥ / ✕ stamp sits over it */   /* the lift room lets a tilted card pass over the count line, like the Handbook bars */
 .mn-sl-face.mn-rq-face { justify-content: flex-start; overflow-y: auto; overscroll-behavior: contain; padding: 14px 14px 18px; scrollbar-width: none; }

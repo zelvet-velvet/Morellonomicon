@@ -30,6 +30,7 @@ export type PageRender = (ctx: PageCtx) => PageOut;
 // One renderer per tab (its first page).
 export const PAGES: Record<TabId, PageRender> = {
     champions: championsPage,
+    picks: rosterPage,   // 速查: pick the champions the game gave you, then swipe through them
     augments: augmentsPage,
     patch: patchPage,
     handbook: handbookPage,

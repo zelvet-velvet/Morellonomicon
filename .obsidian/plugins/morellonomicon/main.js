@@ -101,12 +101,12 @@ var import_obsidian = require("obsidian");
 
 // src/modes.ts
 var MODES = {
-  mayhem: { id: "mayhem", label: "Mayhem", icon: "zap", enabled: true, itemFlag: "aram", tabs: ["augments", "patch", "champions", "handbook"] },
+  mayhem: { id: "mayhem", label: "Mayhem", icon: "zap", enabled: true, itemFlag: "aram", tabs: ["augments", "patch", "champions", "picks", "handbook"] },
   rift: { id: "rift", label: "Rift", icon: "map", enabled: false, itemFlag: "rift", tabs: ["patch", "champions", "handbook"] }
 };
 var MODE_ORDER = ["mayhem", "rift"];
-var TAB_LABEL = { champions: "Champions", augments: "Augments", patch: "Patch", handbook: "Handbook" };
-var TAB_ICON = { champions: "users", augments: "sparkles", patch: "newspaper", handbook: "book-open" };
+var TAB_LABEL = { champions: "Champions", picks: "Picks", augments: "Augments", patch: "Patch", handbook: "Handbook" };
+var TAB_ICON = { champions: "users", picks: "clipboard-edit", augments: "sparkles", patch: "newspaper", handbook: "book-open" };
 
 // src/data/store.ts
 function withOnHit(skills2, keys) {
@@ -2327,16 +2327,6 @@ function championPicker(parent, ctx) {
   search.type = "search";
   search.placeholder = "Search champions, augments, items";
   search.setAttribute("enterkeyhint", "search");
-  const picked = ctx.plugin.settings.roster.filter((id) => store.champion(id)).length;
-  const qk = h(searchRow, "button", "mn-qk-btn");
-  qk.setAttribute("aria-label", "\u5927\u6DF7\u6230\u901F\u67E5");
-  icon(qk, "scan-search");
-  h(qk, "span", "", "\u901F\u67E5");
-  if (picked) h(qk, "span", "mn-qk-n", String(picked));
-  qk.addEventListener("click", (e) => {
-    e.preventDefault();
-    ctx.push({ key: "roster", title: "\u901F\u67E5" });
-  });
   const filtersHost = h(parent, "div");
   const filters = h(filtersHost, "div", "mn-fgroup");
   const panel = h(parent, "div", "mn-fpanel");
@@ -4246,7 +4236,7 @@ function finder(all, sounds) {
 }
 function rosterPage(ctx) {
   const store = ctx.plugin.store;
-  const el = page("\u901F\u67E5");
+  const el = page("Picks");
   const all = store.champions();
   let picks = ctx.plugin.settings.roster.filter((id) => all.some((c) => c.id === id)).slice(0, MAX_PICKS);
   let query = "", lane = "";
@@ -4266,13 +4256,8 @@ function rosterPage(ctx) {
   lanes.addClass("mn-rq-lanes");
   const grid = h(el, "div", "mn-faces");
   const bar = h(el, "div", "mn-rq-gobar");
-  const go = h(bar, "button", "mn-rq-go");
-  icon(go, "layers");
-  const goText = h(go, "span");
-  go.addEventListener("click", (e) => {
-    e.preventDefault();
-    ctx.push({ key: "rosterswipe", title: "\u901F\u67E5" });
-  });
+  const faces = h(bar, "div", "mn-rq-stack");
+  const n = h(bar, "div", "mn-rq-n");
   const clearAll = h(bar, "button", "mn-rq-clear");
   icon(clearAll, "trash-2");
   clearAll.setAttribute("aria-label", "\u5168\u90E8\u6E05\u9664");
@@ -4284,9 +4269,29 @@ function rosterPage(ctx) {
     drawGrid();
     if (query) drawSuggest();
   });
+  const go = h(bar, "button", "mn-rq-go");
+  h(go, "span", void 0, "\u958B\u59CB\u6ED1");
+  icon(go, "arrow-right");
+  go.addEventListener("click", (e) => {
+    e.preventDefault();
+    ctx.push({ key: "rosterswipe", title: "\u901F\u67E5" });
+  });
+  const STACK = 4;
   const drawCount = () => {
     bar.toggleClass("is-hidden", !picks.length);
-    goText.textContent = `\u9078\u597D\u4E86 \xB7 ${picks.length} \u4F4D,\u958B\u59CB\u6ED1`;
+    faces.empty();
+    for (const id of picks.slice(0, STACK)) {
+      const c = all.find((x) => x.id === id);
+      if (c) {
+        const im = h(faces, "img");
+        im.src = c.icon;
+        im.alt = "";
+      }
+    }
+    if (picks.length > STACK) h(faces, "span", "mn-rq-more", `+${picks.length - STACK}`);
+    n.empty();
+    h(n, "b", void 0, String(picks.length));
+    h(n, "span", void 0, "\u4F4D\u5DF2\u9078");
   };
   const toggle = (id) => {
     if (picks.includes(id)) picks = picks.filter((p) => p !== id);
@@ -4302,7 +4307,7 @@ function rosterPage(ctx) {
   const pickFromSearch = (id) => {
     const adding = !picks.includes(id);
     toggle(id);
-    if (adding && query && named.every((n) => picks.includes(n))) {
+    if (adding && query && named.every((n2) => picks.includes(n2))) {
       search.value = "";
       query = "";
       drawSuggest();
@@ -4693,6 +4698,8 @@ function swipePage(ctx) {
 // src/pages/index.ts
 var PAGES = {
   champions: championsPage,
+  picks: rosterPage,
+  // 速查: pick the champions the game gave you, then swipe through them
   augments: augmentsPage,
   patch: patchPage,
   handbook: handbookPage

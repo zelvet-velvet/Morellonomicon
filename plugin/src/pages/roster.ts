@@ -151,7 +151,7 @@ export function finder(all: Champion[], sounds: Sounds | null) {
 // Quick Look: pick the champions the game gave you (up to 15) and see right away what each one is and can do.
 export function rosterPage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
-    const el = page("速查");
+    const el = page("Picks");   // the Picks tab (速查)
     const all = store.champions();
     let picks = ctx.plugin.settings.roster.filter((id) => all.some((c) => c.id === id)).slice(0, MAX_PICKS);
     let query = "", lane = "";
@@ -171,16 +171,29 @@ export function rosterPage(ctx: PageCtx): PageOut {
     const lanes = fgrid(el, LANES.length);
     lanes.addClass("mn-rq-lanes");
     const grid = h(el, "div", "mn-faces");
+    // the bar floating over the bottom once something is picked: the picked faces stacked with their count, a quiet clear button
+    // and the start button
     const bar = h(el, "div", "mn-rq-gobar");
-    const go = h(bar, "button", "mn-rq-go");
-    icon(go, "layers");
-    const goText = h(go, "span");
-    go.addEventListener("click", (e) => { e.preventDefault(); ctx.push({ key: "rosterswipe", title: "速查" }); });
+    const faces = h(bar, "div", "mn-rq-stack");
+    const n = h(bar, "div", "mn-rq-n");
     const clearAll = h(bar, "button", "mn-rq-clear");
     icon(clearAll, "trash-2");
     clearAll.setAttribute("aria-label", "全部清除");
     clearAll.addEventListener("click", (e) => { e.preventDefault(); picks = []; save(); drawCount(); drawGrid(); if (query) drawSuggest(); });
-    const drawCount = () => { bar.toggleClass("is-hidden", !picks.length); goText.textContent = `選好了 · ${picks.length} 位,開始滑`; };
+    const go = h(bar, "button", "mn-rq-go");
+    h(go, "span", undefined, "開始滑");
+    icon(go, "arrow-right");
+    go.addEventListener("click", (e) => { e.preventDefault(); ctx.push({ key: "rosterswipe", title: "速查" }); });
+    const STACK = 4;   // faces shown in the bar; the rest are a +N
+    const drawCount = () => {
+        bar.toggleClass("is-hidden", !picks.length);
+        faces.empty();
+        for (const id of picks.slice(0, STACK)) { const c = all.find((x) => x.id === id); if (c) { const im = h(faces, "img"); im.src = c.icon; im.alt = ""; } }
+        if (picks.length > STACK) h(faces, "span", "mn-rq-more", `+${picks.length - STACK}`);
+        n.empty();
+        h(n, "b", undefined, String(picks.length));
+        h(n, "span", undefined, "位已選");
+    };
 
     const toggle = (id: string) => {
         if (picks.includes(id)) picks = picks.filter((p) => p !== id);
