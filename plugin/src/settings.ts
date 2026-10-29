@@ -17,6 +17,7 @@ export interface MnSettings {
     roster: string[];          // the champions picked in Quick Look (ids), at most 15
     riotId: string;            // your Riot ID (Name#TAG) for Home; kept in this device's settings only (data.json is git-ignored)
     riotServer: string;        // the platform, e.g. TW2
+    wallpaper: string;         // Home's background, "<champion id>_<skin number>"; empty: your top mastery champion's newest skin
 }
 
 export const DEFAULTS: MnSettings = {
@@ -31,6 +32,7 @@ export const DEFAULTS: MnSettings = {
     openOnStartup: Platform.isMobile,
     riotId: "",
     riotServer: "TW2",
+    wallpaper: "",
     read: [],
     roster: [],
 };

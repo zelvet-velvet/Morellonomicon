@@ -1414,6 +1414,7 @@ var DEFAULTS = {
   openOnStartup: import_obsidian4.Platform.isMobile,
   riotId: "",
   riotServer: "TW2",
+  wallpaper: "",
   read: [],
   roster: []
 };
@@ -4074,9 +4075,11 @@ function homePage(ctx) {
   } else {
     const [name, tag] = s.riotId.split("#");
     const best = top[0] ? byId.get(top[0][0]) : void 0;
-    if (best) {
+    const splash = (id, n) => `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(id)}_${n}.jpg`;
+    const [wid, wn] = s.wallpaper ? s.wallpaper.split("_") : [best?.id ?? "", String(Math.max(0, ...best?.skins ?? [0]))];
+    if (wid) {
       const bg = h(hero, "img", "mn-home-wall");
-      bg.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(best.id)}_0.jpg`;
+      bg.src = splash(wid, Number(wn) || 0);
       bg.alt = "";
     }
     const av = h(hero, "button", "mn-home-av");
@@ -4089,7 +4092,56 @@ function homePage(ctx) {
     h(hero, "div", "mn-home-name").append(name ?? "", h(null, "small", void 0, `#${tag ?? ""}`));
     h(hero, "div", "mn-home-sub", `${SERVERS.find((x) => x[0] === s.riotServer)?.[1] ?? s.riotServer} \xB7 \u982D\u50CF\u3001\u7B49\u7D1A\u3001\u724C\u4F4D\u5F85\u63A5\u4E0A Riot`);
     const menu = h(hero, "div", "mn-home-menu is-hidden");
+    const wallBtn = h(menu, "button", void 0, "\u63DB\u80CC\u666F");
     const out = h(menu, "button", void 0, "\u66F4\u63DB / \u767B\u51FA");
+    const picker = h(el, "div", "mn-home-pick is-hidden");
+    wallBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      picker.toggleClass("is-hidden", !picker.hasClass("is-hidden"));
+    });
+    const champsRow = h(picker, "div", "mn-home-prow");
+    const skinsRow = h(picker, "div", "mn-home-prow is-skins");
+    const mine = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).map(([id]) => byId.get(id));
+    const pool = mine.length ? mine.slice(0, 24) : all;
+    const showSkins = (cid) => {
+      skinsRow.empty();
+      const c = byId.get(cid);
+      if (!c) return;
+      for (const n of [...c.skins].sort((a, b) => b - a)) {
+        const b = h(skinsRow, "button", "mn-home-skin" + (s.wallpaper === `${cid}_${n}` ? " is-on" : ""));
+        const im = h(b, "img");
+        im.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(cid)}_${n}.jpg`;
+        im.alt = "";
+        im.loading = "lazy";
+        b.addEventListener("click", (e) => {
+          e.preventDefault();
+          s.wallpaper = `${cid}_${n}`;
+          void ctx.plugin.saveData(s).then(() => ctx.goTab("home"));
+        });
+      }
+    };
+    for (const c of pool) {
+      const b = h(champsRow, "button", "mn-home-pc");
+      const im = h(b, "img");
+      im.src = c.icon;
+      im.alt = c.name;
+      im.loading = "lazy";
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        champsRow.querySelectorAll(".is-on").forEach((x) => x.removeClass("is-on"));
+        b.addClass("is-on");
+        showSkins(c.id);
+      });
+    }
+    if (s.wallpaper) {
+      const reset = h(picker, "button", "mn-home-preset", "\u7528\u9810\u8A2D(\u6700\u719F\u7DF4\u82F1\u96C4\u7684\u6700\u65B0\u9020\u578B)");
+      reset.addEventListener("click", (e) => {
+        e.preventDefault();
+        s.wallpaper = "";
+        void ctx.plugin.saveData(s).then(() => ctx.goTab("home"));
+      });
+    }
+    showSkins(wid || pool[0]?.id || "");
     out.addEventListener("click", (e) => {
       e.preventDefault();
       s.riotId = "";

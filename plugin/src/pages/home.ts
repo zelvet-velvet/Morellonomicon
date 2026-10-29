@@ -43,14 +43,45 @@ export function homePage(ctx: PageCtx): PageOut {
         // signed in: your best champion's art as the wallpaper, the avatar ring with your name; a tap on it changes or removes the ID
         const [name, tag] = s.riotId.split("#");
         const best = top[0] ? byId.get(top[0][0]) : undefined;
-        if (best) { const bg = h(hero, "img", "mn-home-wall"); bg.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(best.id)}_0.jpg`; bg.alt = ""; }
+        // the wallpaper: the one you picked, else your top mastery champion's newest skin
+        const splash = (id: string, n: number) => `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(id)}_${n}.jpg`;
+        const [wid, wn] = s.wallpaper ? s.wallpaper.split("_") : [best?.id ?? "", String(Math.max(0, ...(best?.skins ?? [0])))];
+        if (wid) { const bg = h(hero, "img", "mn-home-wall"); bg.src = splash(wid, Number(wn) || 0); bg.alt = ""; }
         const av = h(hero, "button", "mn-home-av");
         if (best) { const im = h(av, "img"); im.src = best.icon; im.alt = ""; } else h(av, "span", undefined, (name ?? "?").slice(0, 1));
         av.setAttribute("aria-label", "更換 Riot ID");
         h(hero, "div", "mn-home-name").append(name ?? "", h(null, "small", undefined, `#${tag ?? ""}`));
         h(hero, "div", "mn-home-sub", `${SERVERS.find((x) => x[0] === s.riotServer)?.[1] ?? s.riotServer} · 頭像、等級、牌位待接上 Riot`);
         const menu = h(hero, "div", "mn-home-menu is-hidden");
+        const wallBtn = h(menu, "button", undefined, "換背景");
         const out = h(menu, "button", undefined, "更換 / 登出");
+        // the wallpaper picker: your champions (top mastery first, else all), then the chosen one's skins, newest first
+        const picker = h(el, "div", "mn-home-pick is-hidden");
+        wallBtn.addEventListener("click", (e) => { e.preventDefault(); picker.toggleClass("is-hidden", !picker.hasClass("is-hidden")); });
+        const champsRow = h(picker, "div", "mn-home-prow");
+        const skinsRow = h(picker, "div", "mn-home-prow is-skins");
+        const mine = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).map(([id]) => byId.get(id)!);
+        const pool = mine.length ? mine.slice(0, 24) : all;
+        const showSkins = (cid: string) => {
+            skinsRow.empty();
+            const c = byId.get(cid);
+            if (!c) return;
+            for (const n of [...c.skins].sort((a, b) => b - a)) {
+                const b = h(skinsRow, "button", "mn-home-skin" + (s.wallpaper === `${cid}_${n}` ? " is-on" : ""));
+                const im = h(b, "img"); im.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(cid)}_${n}.jpg`; im.alt = ""; im.loading = "lazy";
+                b.addEventListener("click", (e) => { e.preventDefault(); s.wallpaper = `${cid}_${n}`; void ctx.plugin.saveData(s).then(() => ctx.goTab("home")); });
+            }
+        };
+        for (const c of pool) {
+            const b = h(champsRow, "button", "mn-home-pc");
+            const im = h(b, "img"); im.src = c.icon; im.alt = c.name; im.loading = "lazy";
+            b.addEventListener("click", (e) => { e.preventDefault(); champsRow.querySelectorAll(".is-on").forEach((x) => x.removeClass("is-on")); b.addClass("is-on"); showSkins(c.id); });
+        }
+        if (s.wallpaper) {
+            const reset = h(picker, "button", "mn-home-preset", "用預設(最熟練英雄的最新造型)");
+            reset.addEventListener("click", (e) => { e.preventDefault(); s.wallpaper = ""; void ctx.plugin.saveData(s).then(() => ctx.goTab("home")); });
+        }
+        showSkins(wid || pool[0]?.id || "");
         out.addEventListener("click", (e) => { e.preventDefault(); s.riotId = ""; void ctx.plugin.saveData(s).then(() => ctx.goTab("home")); });
         av.addEventListener("click", (e) => { e.preventDefault(); menu.toggleClass("is-hidden", !menu.hasClass("is-hidden")); });
     }
