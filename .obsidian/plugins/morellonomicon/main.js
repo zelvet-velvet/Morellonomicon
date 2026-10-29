@@ -1234,6 +1234,8 @@ var KINDS = {
   action: { color: "#f08ab8", name: "input / action" },
   float: { color: "#73bbb2", name: "floating" }
 };
+var LAYER = { hero: 0, float: 3 };
+var SYNCED = "mn-layout-synced";
 var memory = /* @__PURE__ */ new Map();
 var uid = () => Math.random().toString(36).slice(2, 8);
 var snap = (v) => Math.round(v / SNAP) * SNAP;
@@ -1271,6 +1273,14 @@ function layoutBlock(plugin, source, el, ctx) {
       return lines.join("\n");
     });
   };
+  let synced = /* @__PURE__ */ new Map();
+  const file0 = plugin.app.vault.getAbstractFileByPath(ctx.sourcePath);
+  if (file0 instanceof import_obsidian4.TFile) void plugin.app.vault.cachedRead(file0).then((text) => {
+    const m = new RegExp("```" + SYNCED + "\\n([\\s\\S]*?)\\n```").exec(text);
+    synced = new Map(parse2(m?.[1] ?? "").map((p) => [p.id, JSON.stringify(p)]));
+    draw();
+  });
+  const changedSinceSync = (page2) => synced.size > 0 && synced.get(page2.id) !== savedJson(page2.id);
   const savedJson = (id) => {
     const p = saved.find((x) => x.id === id);
     return p ? JSON.stringify(p) : "";
@@ -1325,7 +1335,7 @@ function layoutBlock(plugin, source, el, ctx) {
     });
   };
   const drawPage = (page2) => {
-    const fig = wall.createDiv({ cls: "mn-lay-page" });
+    const fig = wall.createDiv({ cls: "mn-lay-page" + (changedSinceSync(page2) ? " is-changed" : "") + (dirty(page2) ? " is-dirty" : "") });
     const head2 = fig.createDiv({ cls: "mn-lay-head" });
     const name = head2.createEl("input", { cls: "mn-lay-name", attr: { value: page2.name, spellcheck: "false" } });
     name.addEventListener("change", () => {
@@ -1351,11 +1361,13 @@ function layoutBlock(plugin, source, el, ctx) {
       s.last = s.future.pop();
       goTo(page2, s.last);
     });
-    tool("rotate-ccw", "Reset to what is saved", dirty(page2) && !!savedJson(page2.id), () => {
+    const base = synced.get(page2.id);
+    tool("rotate-ccw", "Reset to the synced layout", !!base && (dirty(page2) || changedSinceSync(page2)), () => {
       s.past.push(s.last);
-      s.last = savedJson(page2.id);
+      s.last = base;
       s.future = [];
       goTo(page2, s.last);
+      savePage(page2);
     });
     tool("save", "Save this page into the note", dirty(page2), () => savePage(page2), dirty(page2) ? " is-dirty" : "");
     const addB = head2.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": "Add a block" } });
@@ -1412,6 +1424,7 @@ function layoutBlock(plugin, source, el, ctx) {
       };
       const col = KINDS[b.kind]?.color ?? "#9aa3b8";
       z.style.setProperty("--c", col);
+      z.style.zIndex = String(LAYER[b.kind] ?? 1);
       const tag = z.createDiv({ cls: "mn-lay-tag" });
       tag.createSpan({ text: b.label });
       const size = tag.createEl("small");
@@ -1478,20 +1491,6 @@ function layoutBlock(plugin, source, el, ctx) {
       changed(page2);
       draw();
     });
-    const ord = row2("Layer");
-    const at = page2.blocks.indexOf(b);
-    ord.createSpan({ cls: "mn-lay-ord", text: `${at + 1} / ${page2.blocks.length}` });
-    const move = (to) => {
-      page2.blocks.splice(at, 1);
-      page2.blocks.splice(clamp(to, 0, page2.blocks.length), 0, b);
-      changed(page2);
-      draw();
-    };
-    for (const [ic, label, to] of [["send-to-back", "Send to back", 0], ["arrow-down", "Backward", at - 1], ["arrow-up", "Forward", at + 1], ["bring-to-front", "Bring to front", page2.blocks.length]]) {
-      const bt = ord.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": label } });
-      icon(bt, ic);
-      bt.addEventListener("click", () => move(to));
-    }
     const nums = row2("x y w h");
     for (const key of ["x", "y", "w", "h"]) {
       const n = nums.createEl("input", { cls: "mn-lay-num", attr: { type: "number", value: String(b[key]), step: String(SNAP) } });
@@ -1534,6 +1533,9 @@ function layoutBlock(plugin, source, el, ctx) {
 }
 function registerLayoutNote(plugin) {
   plugin.registerMarkdownCodeBlockProcessor("mn-layout", (source, el, ctx) => layoutBlock(plugin, source, el, ctx));
+  plugin.registerMarkdownCodeBlockProcessor(SYNCED, (_source, el) => {
+    el.createDiv({ cls: "mn-lay-synced", text: "Last synced layout (kept by Claude; changed pages are marked against it)" });
+  });
 }
 
 // src/settings.ts

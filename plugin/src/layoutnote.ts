@@ -16,6 +16,8 @@ export const KINDS: Record<string, { color: string; name: string }> = {
     list: { color: "#f0cd7a", name: "list / grid" }, info: { color: "#cba8f5", name: "info / stats" }, action: { color: "#f08ab8", name: "input / action" },
     float: { color: "#73bbb2", name: "floating" },
 };
+const LAYER: Record<string, number> = { hero: 0, float: 3 };   // the rest are 1
+const SYNCED = "mn-layout-synced";   // the note's copy of the layout as Claude last synced it: changed pages are marked against it
 interface Block { id: string; label: string; kind: string; x: number; y: number; w: number; h: number; note?: string }
 interface Page { id: string; name: string; note?: string; tabbar?: boolean; blocks: Block[] }
 
@@ -51,6 +53,15 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
             return lines.join("\n");
         });
     };
+    // the layout as last synced, from the note's mn-layout-synced block: a page that differs is marked as changed
+    let synced = new Map<string, string>();
+    const file0 = plugin.app.vault.getAbstractFileByPath(ctx.sourcePath);
+    if (file0 instanceof TFile) void plugin.app.vault.cachedRead(file0).then((text) => {
+        const m = new RegExp("```" + SYNCED + "\\n([\\s\\S]*?)\\n```").exec(text);
+        synced = new Map(parse(m?.[1] ?? "").map((p) => [p.id, JSON.stringify(p)]));
+        draw();
+    });
+    const changedSinceSync = (page: Page) => synced.size > 0 && synced.get(page.id) !== savedJson(page.id);
     const savedJson = (id: string) => { const p = saved.find((x) => x.id === id); return p ? JSON.stringify(p) : ""; };
     const stepsOf = (page: Page): Steps => {
         let s = steps.get(page.id);
@@ -89,7 +100,7 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
     };
 
     const drawPage = (page: Page) => {
-        const fig = wall.createDiv({ cls: "mn-lay-page" });
+        const fig = wall.createDiv({ cls: "mn-lay-page" + (changedSinceSync(page) ? " is-changed" : "") + (dirty(page) ? " is-dirty" : "") });
         const head = fig.createDiv({ cls: "mn-lay-head" });
         const name = head.createEl("input", { cls: "mn-lay-name", attr: { value: page.name, spellcheck: "false" } });
         name.addEventListener("change", () => { page.name = name.value.trim() || page.name; changed(page); draw(); });
@@ -102,7 +113,11 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
         };
         tool("undo-2", "Back a step", s.past.length > 0, () => { s.future.push(s.last); s.last = s.past.pop()!; goTo(page, s.last); });
         tool("redo-2", "Forward a step", s.future.length > 0, () => { s.past.push(s.last); s.last = s.future.pop()!; goTo(page, s.last); });
-        tool("rotate-ccw", "Reset to what is saved", dirty(page) && !!savedJson(page.id), () => { s.past.push(s.last); s.last = savedJson(page.id); s.future = []; goTo(page, s.last); });
+        // reset: back to the layout as last synced, written into the note at once (back still undoes it); a page added since has none
+        const base = synced.get(page.id);
+        tool("rotate-ccw", "Reset to the synced layout", !!base && (dirty(page) || changedSinceSync(page)), () => {
+            s.past.push(s.last); s.last = base!; s.future = []; goTo(page, s.last); savePage(page);
+        });
         tool("save", "Save this page into the note", dirty(page), () => savePage(page), dirty(page) ? " is-dirty" : "");
         const addB = head.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": "Add a block" } });
         icon(addB, "square-plus");
@@ -137,6 +152,7 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
             const pos = () => { z.style.left = `${b.x}px`; z.style.top = `${b.y}px`; z.style.width = `${b.w}px`; z.style.height = `${b.h}px`; size.textContent = `${b.w}×${b.h}`; };
             const col = KINDS[b.kind]?.color ?? "#9aa3b8";
             z.style.setProperty("--c", col);
+            z.style.zIndex = String(LAYER[b.kind] ?? 1);   // pictures at the back, floating parts in front: no layer setting needed
             const tag = z.createDiv({ cls: "mn-lay-tag" });
             tag.createSpan({ text: b.label });
             const size = tag.createEl("small");
@@ -183,16 +199,6 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
         for (const [k, v] of Object.entries(KINDS)) kind.createEl("option", { text: v.name, attr: { value: k } });
         kind.value = b.kind;
         kind.addEventListener("change", () => { b.kind = kind.value; changed(page); draw(); });
-        // the block's layer: blocks later in the page's list are drawn in front of earlier ones
-        const ord = row("Layer");
-        const at = page.blocks.indexOf(b);
-        ord.createSpan({ cls: "mn-lay-ord", text: `${at + 1} / ${page.blocks.length}` });
-        const move = (to: number) => { page.blocks.splice(at, 1); page.blocks.splice(clamp(to, 0, page.blocks.length), 0, b); changed(page); draw(); };
-        for (const [ic, label, to] of [["send-to-back", "Send to back", 0], ["arrow-down", "Backward", at - 1], ["arrow-up", "Forward", at + 1], ["bring-to-front", "Bring to front", page.blocks.length]] as [string, string, number][]) {
-            const bt = ord.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": label } });
-            icon(bt, ic);
-            bt.addEventListener("click", () => move(to));
-        }
         const nums = row("x y w h");
         for (const key of ["x", "y", "w", "h"] as const) {
             const n = nums.createEl("input", { cls: "mn-lay-num", attr: { type: "number", value: String(b[key]), step: String(SNAP) } });
@@ -215,4 +221,6 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
 
 export function registerLayoutNote(plugin: MorellonomiconPlugin): void {
     plugin.registerMarkdownCodeBlockProcessor("mn-layout", (source, el, ctx) => layoutBlock(plugin, source, el, ctx));
+    // the synced copy is for the editor only: shown as one quiet line
+    plugin.registerMarkdownCodeBlockProcessor(SYNCED, (_source, el) => { el.createDiv({ cls: "mn-lay-synced", text: "Last synced layout (kept by Claude; changed pages are marked against it)" }); });
 }
