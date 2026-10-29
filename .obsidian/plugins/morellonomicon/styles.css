@@ -1317,7 +1317,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay-page.is-changed .mn-lay input.mn-lay-name, .mn-lay-page.is-changed input.mn-lay-name { color: var(--interactive-accent); }
 .mn-lay-synced { font-size: 12px; color: var(--text-faint); }
 /* typing in a search capsule: it slides up above the keyboard (a transform set by view.ts) */
-.mn-rq-dock { transition: transform 0.22s ease-out; }
+.mn-rq-dock { transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1); }   /* close to the iPhone keyboard's own slide (about 0.3 s, fast start, soft stop) */
 .mn-rq-dock.is-typing { z-index: 50; }
 .mn-kbread { position: fixed; z-index: 99; left: 8px; right: 8px; top: calc(var(--mn-safe-top, 0px) + 4px); padding: 4px 8px; border-radius: 8px; background: rgba(0, 0, 0, 0.75); color: #9fe0b0; font: 11px/1.4 ui-monospace, monospace; pointer-events: none; }
 .mn-kbread.is-hidden { display: none; }
