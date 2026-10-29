@@ -299,6 +299,7 @@ def champion_note(c, version, bin_data, name_en=""):
         "features": None, "resource": c["partype"],
         "attack": info["attack"], "magic": info["magic"], "defense": info["defense"], "difficulty": info["difficulty"],
         "range": st["attackrange"], "icon": f"{DD}/cdn/{version}/img/champion/{c['image']['full']}",
+        "skins": [s["num"] for s in c.get("skins", []) if s.get("parentSkin") is None],   # skin numbers (not chromas): 速查 shows a random one's loading art on the tabs after the first
         "skills": skills_fm(c, version, bin_data),
         "patch": version, "generated": True,
     }

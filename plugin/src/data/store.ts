@@ -14,6 +14,7 @@ export interface Champion {
     // hand-written for 速查: a one-line character overview, how to play it (a line or several), each ability in plain words (P Q W E R),
     // the stats to build towards (names from STAT_ICON), the one ability that is the point (optional) and where the face is in the splash
     punch: string; soul: string; how: string[]; plain: Record<string, string>; stack: string[]; focus: string; face: string;
+    skins: number[];   // skin numbers with loading art (not chromas); 速查 shows random ones on the tabs after the first
 }
 export interface SkillRow { label: string; vals: string[]; note: string }   // one value per rank, or one value for all ranks
 // A hand-written build in a champion note: kind meta (a normal build), alt (fun / other play style) or synergy (with teammates in `with`)
@@ -190,7 +191,7 @@ export class Store {
                 range: num(fm.range), icon: str(fm.icon), skills: withOnHit(skillList(fm.skills), list(fm.onhit)), patch: str(fm.patch), pinned: list(fm.pinned), avoid: list(fm.avoid), positions: list(fm.positions), aliases: list(fm.aliases),
                 video: typeof fm.video === "string" ? fm.video : undefined, builds: buildList(fm.builds), tips: tipList(fm.tips), path: file.path,
                 punch: str(fm.punch), soul: str(fm.soul), how: Array.isArray(fm.soul) ? list(fm.soul) : str(fm.soul).split(/\n+/).map((x) => x.trim()).filter(Boolean),
-                plain: textMap(fm.plain), stack: list(fm.stack), focus: str(fm.focus).toUpperCase(), face: str(fm.face),
+                plain: textMap(fm.plain), stack: list(fm.stack), focus: str(fm.focus).toUpperCase(), face: str(fm.face), skins: Array.isArray(fm.skins) ? fm.skins.map(Number).filter((n) => Number.isFinite(n)) : [0],
             })).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
         }
         return this.champs;

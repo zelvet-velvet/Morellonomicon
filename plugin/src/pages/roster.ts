@@ -291,6 +291,15 @@ export function swipePage(ctx: PageCtx): PageOut {
     const quickCard = (c: Champion, face: HTMLElement): void => {
         face.addClass("mn-qc");
         const tabs = TABS.map((name) => h(face, "div", `mn-qc-tab is-${["look", "play", "skill", "style"][TABS.indexOf(name)]}`));
+        // tabs 2 to 4 each show another of the champion's skins (picked at random), darkened behind the content
+        const art = (n: number) => `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(c.id)}_${n}.jpg`;
+        const others = c.skins.filter((n) => n !== 0).sort(() => Math.random() - 0.5);
+        tabs.slice(1).forEach((tab, k) => {
+            const bg = h(tab, "img", "mn-qc-bg");
+            bg.loading = "lazy";   // a hidden tab's picture loads when the tab is opened
+            bg.src = art(others.length ? others[k % others.length] : 0);
+            bg.alt = "";
+        });
         const hud = h(face, "div", "mn-qc-hud");
         const bars = h(hud, "div", "mn-qc-bars");
         const marks = TABS.map(() => h(bars, "i"));
@@ -438,6 +447,7 @@ export function swipePage(ctx: PageCtx): PageOut {
             sec.push(section);
         }
         let armed = false;
+        const btns = h(wrap, "div", "mn-rq-btns");
         const pile = cardPile(pager, sec, {
             judge: true,
             flat: true,
@@ -452,8 +462,11 @@ export function swipePage(ctx: PageCtx): PageOut {
                 if (k >= 1 && !armed) { st.removeClass("is-pop"); void st.offsetWidth; st.addClass("is-pop"); }   // far enough: it bounces
                 armed = k >= 1;
                 if (!dx) st.removeClass("is-pop");
+                // like Tinder: only the button for the drag's side stays, lit up
+                btns.toggleClass("is-left", dx < 0);
+                btns.toggleClass("is-right", dx > 0);
             },
-            onJudge: (i, like) => { at = ++swipeAt; armed = false; if (like) swipeLiked = liked = [...liked, ids[i]]; },
+            onJudge: (i, like) => { at = ++swipeAt; armed = false; btns.removeClass("is-left", "is-right"); if (like) swipeLiked = liked = [...liked, ids[i]]; },
             onEnd: () => drawResults(),
         });
         pile.layout(false);
@@ -465,13 +478,13 @@ export function swipePage(ctx: PageCtx): PageOut {
             wrap.style.height = `${Math.max(380, scroll.clientHeight - top - DECK_BELOW)}px`;
         };
         requestAnimationFrame(fit);
-        const btns = h(wrap, "div", "mn-rq-btns");
         const no = h(btns, "button", "mn-rq-no"); icon(no, "x"); no.setAttribute("aria-label", "略過");
         const yes = h(btns, "button", "mn-rq-yes"); icon(yes, "heart"); yes.setAttribute("aria-label", "喜歡");
         // a button shows its stamp with the bounce first, then the card goes
         const press = (like: boolean) => {
             const st = stamps[pile.cur];
             if (st) { st.toggleClass("is-like", like); st.style.opacity = "1"; st.style.setProperty("--k", "1"); st.removeClass("is-pop"); void st.offsetWidth; st.addClass("is-pop"); }
+            btns.toggleClass("is-left", !like); btns.toggleClass("is-right", like);
             window.setTimeout(() => pile.decide(like), 160);
         };
         no.addEventListener("click", (e) => { e.preventDefault(); press(false); });

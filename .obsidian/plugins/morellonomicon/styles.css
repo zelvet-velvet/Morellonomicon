@@ -1056,10 +1056,13 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-deck .mn-sl-face { border-radius: 22px; }
 .mn-rq-deck .mn-qc-tab { padding-bottom: 104px; }
 .mn-rq-deck .mn-qc-tab.is-look { padding-bottom: 0; }
-.mn-rq-deck .mn-qc-words { padding-bottom: 104px; }
+.mn-rq-deck .mn-qc-words { padding: 4px 20px 100px; background: none; }   /* over the picture, Tinder style; the buttons sit under it */
+.mn-rq-deck .mn-qc-words .mn-sl-t { text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6); }
+.mn-rq-deck .mn-qc-words .mn-sl-x { height: auto; max-height: 56px; color: #e8e2d2; }
+.mn-rq-deck .mn-qc-dock { justify-content: flex-start; padding: 0 20px; height: 40px; }
 /* the splash is the portrait loading art; it fades to the dark from the middle down, where the words are */
 .mn-qc-splash { object-position: 50% 15%; }
-.mn-rq-deck .mn-qc-tab.is-look::before { background: linear-gradient(180deg, rgba(10, 12, 18, 0.4) 0, transparent 80px, transparent 42%, rgba(10, 12, 18, 0.55) 56%, rgba(10, 12, 18, 0.92) 70%, #0a0c12 80%); }
+.mn-rq-deck .mn-qc-tab.is-look::before { background: linear-gradient(180deg, rgba(10, 12, 18, 0.4) 0, transparent 80px, transparent 46%, rgba(10, 12, 18, 0.5) 62%, rgba(10, 12, 18, 0.85) 80%, #0a0c12 calc(100% - 40px)); }   /* the picture runs down to the buttons, fading as it goes */
 .mn-rq-btns { position: absolute; z-index: 6; left: 0; right: 0; bottom: 22px; display: flex; justify-content: center; gap: 72px; pointer-events: none; }
 .mn-app .mn-rq-btns button { pointer-events: auto; display: grid; place-items: center; width: 66px; height: 66px; padding: 0; border-radius: 50%; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
     background: rgba(10, 12, 18, 0.55); border: 1px solid rgba(255, 255, 255, 0.2); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); transition: transform 0.12s; }
@@ -1069,10 +1072,10 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app .mn-rq-yes { color: #ff4458; }
 .mn-rq-yes svg { fill: currentColor; }
 /* the huge ✕ / ♥ while a card is dragged: grows with the drag, bounces once the swipe is far enough */
-.mn-rq-stamp { position: absolute; z-index: 5; left: 50%; top: 30%; width: 220px; height: 220px; margin: -110px 0 0 -110px; display: grid; place-items: center; opacity: 0; pointer-events: none;
+.mn-rq-stamp { position: absolute; z-index: 5; left: 50%; top: 33%; width: 220px; height: 220px; margin: -110px 0 0 -110px; display: grid; place-items: center; opacity: 0; pointer-events: none;
     transform: scale(calc(0.45 + var(--k, 0) * 0.55)) rotate(-12deg); }
 .mn-rq-stamp.is-like { transform: scale(calc(0.45 + var(--k, 0) * 0.55)) rotate(12deg); }
-.mn-rq-stamp .mn-ic { display: none; }
+.mn-rq-stamp .mn-ic, .mn-rq-stamp .mn-rq-st-like { display: none; }   /* only the one for the drag's side shows */
 .mn-rq-stamp svg { width: 200px; height: 200px; filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45)); }
 .mn-rq-stamp .mn-rq-st-pass { display: block; color: #fff; }
 .mn-rq-stamp .mn-rq-st-pass svg { stroke-width: 3.4; }
@@ -1084,3 +1087,13 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 @keyframes mn-stamp-pop { 0% { transform: scale(0.8) rotate(-12deg); } 45% { transform: scale(1.25) rotate(-12deg); } 100% { transform: scale(1) rotate(-12deg); } }
 @keyframes mn-stamp-pop-like { 0% { transform: scale(0.8) rotate(12deg); } 45% { transform: scale(1.25) rotate(12deg); } 100% { transform: scale(1) rotate(12deg); } }
 @media (prefers-reduced-motion: reduce) { .mn-rq-stamp.is-pop { animation: none; } }
+
+/* tabs 2 to 4: another skin of the champion behind the content, darkened so the words read */
+.mn-qc-bg { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; filter: blur(2px) brightness(0.45) saturate(0.9); transform: scale(1.04); }
+.mn-qc-tab:not(.is-look)::before { content: ""; position: absolute; inset: 0; z-index: 0; background: linear-gradient(180deg, rgba(10, 12, 18, 0.55), rgba(10, 12, 18, 0.35) 40%, rgba(10, 12, 18, 0.85) 85%); }
+.mn-qc-tab:not(.is-look) > :not(.mn-qc-bg) { position: relative; z-index: 1; }
+/* while a card is dragged only the button for that side stays, lit like Tinder's */
+.mn-rq-btns button { transition: transform 0.15s, opacity 0.15s, background-color 0.15s, color 0.15s; }
+.mn-rq-btns.is-left .mn-rq-yes, .mn-rq-btns.is-right .mn-rq-no { opacity: 0; transform: scale(0.6); }
+.mn-app .mn-rq-btns.is-left .mn-rq-no { transform: scale(1.15); background: #fff; color: #111; }
+.mn-app .mn-rq-btns.is-right .mn-rq-yes { transform: scale(1.15); background: #ff4458; color: #fff; }

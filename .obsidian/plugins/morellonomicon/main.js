@@ -304,7 +304,8 @@ var Store = class {
         plain: textMap(fm.plain),
         stack: list(fm.stack),
         focus: str(fm.focus).toUpperCase(),
-        face: str(fm.face)
+        face: str(fm.face),
+        skins: Array.isArray(fm.skins) ? fm.skins.map(Number).filter((n) => Number.isFinite(n)) : [0]
       })).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
     }
     return this.champs;
@@ -4419,6 +4420,14 @@ function swipePage(ctx) {
   const quickCard = (c, face) => {
     face.addClass("mn-qc");
     const tabs = TABS.map((name) => h(face, "div", `mn-qc-tab is-${["look", "play", "skill", "style"][TABS.indexOf(name)]}`));
+    const art = (n) => `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(c.id)}_${n}.jpg`;
+    const others = c.skins.filter((n) => n !== 0).sort(() => Math.random() - 0.5);
+    tabs.slice(1).forEach((tab, k) => {
+      const bg = h(tab, "img", "mn-qc-bg");
+      bg.loading = "lazy";
+      bg.src = art(others.length ? others[k % others.length] : 0);
+      bg.alt = "";
+    });
     const hud = h(face, "div", "mn-qc-hud");
     const bars = h(hud, "div", "mn-qc-bars");
     const marks = TABS.map(() => h(bars, "i"));
@@ -4451,11 +4460,11 @@ function swipePage(ctx) {
     im.alt = "";
     if (c.face) im.style.objectPosition = c.face;
     const tiles = h(look, "div", "mn-qc-tiles");
-    const tile2 = (iconName, color, big, small, art) => {
+    const tile2 = (iconName, color, big, small, art2) => {
       const t = h(tiles, "div", "mn-qc-tile");
       t.style.setProperty("--c", color);
       const ic = h(t, "span", "mn-qc-tic");
-      if (art) art(ic);
+      if (art2) art2(ic);
       else icon(ic, iconName);
       h(t, "b", void 0, big);
       h(t, "span", void 0, small);
@@ -4576,6 +4585,7 @@ function swipePage(ctx) {
       sec.push(section2);
     }
     let armed = false;
+    const btns = h(wrap, "div", "mn-rq-btns");
     const pile = cardPile(pager, sec, {
       judge: true,
       flat: true,
@@ -4596,10 +4606,13 @@ function swipePage(ctx) {
         }
         armed = k >= 1;
         if (!dx) st.removeClass("is-pop");
+        btns.toggleClass("is-left", dx < 0);
+        btns.toggleClass("is-right", dx > 0);
       },
       onJudge: (i, like) => {
         at = ++swipeAt;
         armed = false;
+        btns.removeClass("is-left", "is-right");
         if (like) swipeLiked = liked = [...liked, ids[i]];
       },
       onEnd: () => drawResults()
@@ -4612,7 +4625,6 @@ function swipePage(ctx) {
       wrap.style.height = `${Math.max(380, scroll.clientHeight - top - DECK_BELOW)}px`;
     };
     requestAnimationFrame(fit);
-    const btns = h(wrap, "div", "mn-rq-btns");
     const no = h(btns, "button", "mn-rq-no");
     icon(no, "x");
     no.setAttribute("aria-label", "\u7565\u904E");
@@ -4629,6 +4641,8 @@ function swipePage(ctx) {
         void st.offsetWidth;
         st.addClass("is-pop");
       }
+      btns.toggleClass("is-left", !like);
+      btns.toggleClass("is-right", like);
       window.setTimeout(() => pile.decide(like), 160);
     };
     no.addEventListener("click", (e) => {
