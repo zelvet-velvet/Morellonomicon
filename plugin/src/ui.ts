@@ -281,7 +281,12 @@ export const DAMAGE_ICON: Record<string, string> = { 物理: "sword", 魔法: "s
 export const STAT_ICON: Record<string, string> = { 法術強度: "sparkles", 攻擊力: "sword", 攻速: "gauge", 技能急速: "timer-reset", 暴擊: "dice-5", 生命: "heart", 護甲: "shield", 魔防: "shield-check", 穿透: "arrow-right-to-line", 跑速: "footprints" };
 export const STAT_COLOR: Record<string, string> = { 法術強度: "var(--mn-magic)", 攻擊力: "var(--mn-phys)", 攻速: "var(--mn-true)", 技能急速: "var(--mn-haste)", 暴擊: "var(--mn-exec)", 生命: "var(--mn-heal)", 護甲: "var(--mn-guard)", 魔防: "var(--mn-shield)", 穿透: "var(--mn-aa)", 跑速: "var(--mn-dash)" };
 export const REACH_ICON = "ruler";   // 近戰 / 中程 / 遠程
-// The item shop's stat filters, in the shop's order: name, icon, and the Data Dragon tags that count (Items page)
+// The item shop's stat filters, in the shop's order: name, Lucide fallback icon, and the Data Dragon tags that count (Items page).
+// The game's own icons are one sprite sheet (CommunityDragon, shown by address): one row per filter in this order, five states across
+// (column 0 plain, column 2 lit); SHOP_ICON_Y / SHOP_ICON_X are the middles of each row / column, measured from the sheet.
+export const SHOP_SPRITE = "https://raw.communitydragon.org/latest/game/assets/ux/itemshop/itemshop_texture_atlas4.png";
+export const SHOP_ICON_Y = [11.5, 37.5, 63.5, 91.5, 118.5, 147.5, 176.5, 203.5, 231.5, 259.5, 286.5, 314.5, 341.5, 370.5];
+export const SHOP_ICON_X = [12, 38, 64, 92.5, 120.5];
 export const ITEM_CATS: [string, string, string[]][] = [
     ["攻擊力", "sword", ["Damage"]], ["暴擊", "dice-5", ["CriticalStrike"]], ["攻速", "gauge", ["AttackSpeed"]], ["攻擊特效", "crosshair", ["OnHit"]],
     ["物理穿透", "arrow-right-to-line", ["ArmorPenetration"]], ["法術強度", "sparkles", ["SpellDamage"]], ["魔力", "droplet", ["Mana", "ManaRegen"]],
