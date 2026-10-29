@@ -685,6 +685,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app .mn-rq-go { flex: none; display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 16px 0 20px; border-radius: 22px; border: 0; background: var(--mn-accent); color: var(--text-on-accent, #fff); font-size: 15px; font-weight: 800; box-shadow: none; }
 .mn-app .mn-rq-go:active { transform: scale(0.96); }
 .mn-rq-go svg { width: 18px; height: 18px; stroke-width: 2.6; }
+.mn-app .mn-rq-go { line-height: 1; }
+.mn-rq-go .mn-ic { display: flex; }   /* the icon box is just the icon, so it centres on the text instead of riding its line box */
 .mn-rq-end { position: relative; display: flex; flex-direction: column; gap: 12px; }   /* the page never scrolls; the liked list does, the actions float at the bottom */
 .mn-rq-endhead { display: flex; align-items: baseline; justify-content: space-between; padding: 4px 4px 0; }
 .mn-rq-endhead b { font-size: 24px; font-weight: 800; color: var(--mn-text); }
