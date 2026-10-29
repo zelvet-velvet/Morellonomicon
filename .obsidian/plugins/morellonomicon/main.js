@@ -635,32 +635,78 @@ function blockUntil(host, until, delay = 0) {
   host.classList.add("mn-blk");
   let st = blockState.get(host);
   if (!st) {
-    st = { veil: h(host, "div", "mn-blkveil is-in"), since: Date.now() };
+    st = { veil: h(host, "div", "mn-blkveil is-in"), since: Date.now(), open: 0 };
     trackBand(st.veil);
     blockState.set(host, st);
   }
   const state = st;
+  state.open++;
   const cap = window.setTimeout(() => lift(host, state), BLOCK_MAX_MS);
   void until.then(() => {
     window.clearTimeout(cap);
-    lift(host, state);
+    if (--state.open <= 0) lift(host, state);
   });
+}
+var bgDone = /* @__PURE__ */ new Set();
+var URL_IN_STYLE = /url\(["']?([^"')]+)["']?\)/g;
+function pendingBackgrounds(host) {
+  const out = [], asked = /* @__PURE__ */ new Set();
+  for (const el of [host, ...Array.from(host.querySelectorAll("[style]"))]) {
+    for (const m of (el.getAttribute("style") ?? "").matchAll(URL_IN_STYLE)) {
+      const src = m[1];
+      if (bgDone.has(src) || asked.has(src)) continue;
+      asked.add(src);
+      const im = new Image();
+      im.src = src;
+      if (im.complete) {
+        bgDone.add(src);
+        continue;
+      }
+      out.push(new Promise((done) => {
+        im.onload = im.onerror = () => {
+          bgDone.add(src);
+          done();
+        };
+      }));
+    }
+  }
+  return out;
 }
 function blockLoad(host) {
   const pending = Array.from(host.querySelectorAll("img")).filter((im) => im.src && !im.complete);
-  const st = blockState.get(host);
-  if (!pending.length) {
-    if (st) lift(host, st);
-    return;
-  }
-  blockUntil(host, Promise.all(pending.map((im) => new Promise((done) => {
+  const waits = [...pending.map((im) => new Promise((done) => {
     im.addEventListener("load", () => done(), { once: true });
     im.addEventListener("error", () => done(), { once: true });
-  }))).then(() => void 0), host.classList.contains("mn-blk") ? 0 : BLOCK_DELAY_MS);
+  })), ...pendingBackgrounds(host)];
+  const st = blockState.get(host);
+  if (!waits.length) {
+    if (st && st.open <= 0) lift(host, st);
+    return;
+  }
+  blockUntil(host, Promise.all(waits).then(() => void 0), host.classList.contains("mn-blk") ? 0 : BLOCK_DELAY_MS);
+}
+function layoutBlock(el) {
+  el.classList.add("mn-lb");
+  return el;
 }
 var AUTO_BLOCK = 64;
 function autoLoading(root) {
   const seen = /* @__PURE__ */ new WeakSet();
+  const blocks = /* @__PURE__ */ new Set();
+  const flush = () => {
+    for (const b of blocks) if (b.isConnected) blockLoad(b);
+    blocks.clear();
+  };
+  const queue = (b) => {
+    if (b.closest(".mn-noauto, .mn-pager")) return;
+    if (!blocks.size) window.setTimeout(flush, 0);
+    blocks.add(b);
+  };
+  const inBlock = (n) => {
+    const b = n.closest(".mn-lb");
+    if (b) queue(b);
+    n.querySelectorAll(".mn-lb").forEach(queue);
+  };
   const take = (im) => {
     if (seen.has(im) || !im.getAttribute("src") || im.complete && im.naturalWidth || im.closest(".mn-noauto, .mn-blk, .mn-pager")) return;
     seen.add(im);
@@ -669,18 +715,22 @@ function autoLoading(root) {
     im.addEventListener("load", done, { once: true });
     im.addEventListener("error", done, { once: true });
     const host = im.parentElement;
-    if (!host) return;
+    if (!host || im.closest(".mn-lb")) return;
     const r = host.getBoundingClientRect();
     if (Math.min(r.width, r.height) >= AUTO_BLOCK) blockLoad(host);
   };
   const scan = (n) => {
+    if (n instanceof HTMLElement) inBlock(n);
     if (n instanceof HTMLImageElement) take(n);
     else if (n instanceof HTMLElement) n.querySelectorAll("img").forEach(take);
   };
   const mo = new MutationObserver((list2) => {
     for (const m of list2) {
       if (m.type === "attributes") {
-        if (m.target instanceof HTMLImageElement) take(m.target);
+        if (m.target instanceof HTMLImageElement) {
+          inBlock(m.target);
+          take(m.target);
+        }
       } else m.addedNodes.forEach(scan);
     }
   });
@@ -1275,7 +1325,7 @@ function parse2(source) {
   }
 }
 var serialise2 = (pages) => "[\n" + pages.map((p) => "  " + JSON.stringify(p)).join(",\n") + "\n]";
-function layoutBlock(plugin, source, el, ctx) {
+function layoutBlock2(plugin, source, el, ctx) {
   const saved = parse2(source);
   const steps = memory.get(ctx.sourcePath) ?? /* @__PURE__ */ new Map();
   memory.set(ctx.sourcePath, steps);
@@ -1558,7 +1608,7 @@ function layoutBlock(plugin, source, el, ctx) {
   draw();
 }
 function registerLayoutNote(plugin) {
-  plugin.registerMarkdownCodeBlockProcessor("mn-layout", (source, el, ctx) => layoutBlock(plugin, source, el, ctx));
+  plugin.registerMarkdownCodeBlockProcessor("mn-layout", (source, el, ctx) => layoutBlock2(plugin, source, el, ctx));
   plugin.registerMarkdownCodeBlockProcessor(SYNCED, (_source, el) => {
     el.createDiv({ cls: "mn-lay-synced", text: "Last synced layout (kept by Claude; changed pages are marked against it)" });
   });
@@ -2790,13 +2840,13 @@ function championPicker(parent, ctx) {
   }
   let query = "";
   const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)]));
-  const filtersHost = h(parent, "div");
+  const filtersHost = layoutBlock(h(parent, "div"));
   const filters = h(filtersHost, "div", "mn-fgroup");
   const count2 = h(parent, "div", "mn-count");
   const list2 = h(parent, "div", "mn-rq-list");
-  const gridHost = h(list2, "div");
+  const gridHost = layoutBlock(h(list2, "div"));
   const grid = h(gridHost, "div", "mn-grid");
-  const extra = h(list2, "div");
+  const extra = layoutBlock(h(list2, "div"));
   const dock = h(parent, "div", "mn-rq-dock");
   const panel = h(dock, "div", "mn-fpanel mn-fsheet");
   const cap = h(dock, "div", "mn-rq-cap");
@@ -2838,7 +2888,6 @@ function championPicker(parent, ctx) {
         ctx.openChampion(c.id);
       });
     }
-    blockLoad(gridHost);
     if (!q) return;
     if (!hits.length) empty(grid, { icon: "search-x", title: "No champion" });
     const augs = ctx.plugin.settings.mode === "mayhem" ? store.augments().filter((a) => a.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA) : [];
@@ -2884,7 +2933,6 @@ function championPicker(parent, ctx) {
       drawFilters();
       drawPanel();
     });
-    blockLoad(filtersHost);
   };
   const drawPanel = () => {
     panel.empty();
@@ -4572,7 +4620,7 @@ function homePage(ctx) {
   if (prof?.mastery.length) top = prof.mastery.filter((m) => byKey.has(m.championKey)).map((m) => [byKey.get(m.championKey).id, { level: m.level, points: m.points, last: "" }]);
   const patch = all[0]?.patch ?? "";
   const dd = (path) => `https://ddragon.leagueoflegends.com/cdn/${patch}/img/${path}`;
-  const hero = h(el, "div", "mn-home-hero");
+  const hero = layoutBlock(h(el, "div", "mn-home-hero"));
   if (!s.riotId) {
     hero.addClass("is-out");
     const bg = h(hero, "img", "mn-home-wall");
@@ -4653,8 +4701,8 @@ function homePage(ctx) {
       e.preventDefault();
       picker.toggleClass("is-hidden", !picker.hasClass("is-hidden"));
     });
-    const champsRow = h(picker, "div", "mn-home-prow");
-    const skinsRow = h(picker, "div", "mn-home-prow is-skins");
+    const champsRow = layoutBlock(h(picker, "div", "mn-home-prow"));
+    const skinsRow = layoutBlock(h(picker, "div", "mn-home-prow is-skins"));
     const mine = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).map(([id]) => byId.get(id));
     const pool = mine.length ? mine.slice(0, 24) : all;
     const showSkins = (cid) => {
@@ -4707,7 +4755,7 @@ function homePage(ctx) {
     });
   }
   if (prof?.ranks.length) {
-    const ranks = h(el, "div", "mn-home-ranks");
+    const ranks = layoutBlock(h(el, "div", "mn-home-ranks"));
     for (const q of ["RANKED_SOLO_5x5", "RANKED_FLEX_SR"]) {
       const r = prof.ranks.find((x) => x.queue === q);
       const t = h(ranks, "div", "mn-home-rank");
@@ -4721,7 +4769,7 @@ function homePage(ctx) {
       h(tx, "span", void 0, `${q === "RANKED_SOLO_5x5" ? "\u55AE/\u96D9\u6392" : "\u5F48\u6027"}${r ? ` \xB7 ${r.wins} \u52DD ${r.losses} \u6557` : ""}`);
     }
   }
-  const entries = h(el, "div", "mn-home-entries");
+  const entries = layoutBlock(h(el, "div", "mn-home-entries"));
   const entry = (iconName, title, line, tint, go) => {
     const b = h(entries, "button", "mn-home-entry");
     b.style.setProperty("--t", tint);
@@ -4745,7 +4793,7 @@ function homePage(ctx) {
   else entry("swords", "\u6700\u8FD1\u5C0D\u6230", prof?.games.length ? `${prof.games.length} \u5834 \xB7 ${prof.games.filter((g) => g.win).length} \u52DD` : "\u9023\u7D50 Riot \u5F8C\u986F\u793A", "var(--color-purple)", () => ctx.push({ key: "games", title: "\u6700\u8FD1\u5C0D\u6230" }));
   if (top.length) {
     h(el, "div", "mn-home-lab", "\u719F\u7DF4\u5EA6");
-    const row2 = h(el, "div", "mn-home-mast");
+    const row2 = layoutBlock(h(el, "div", "mn-home-mast"));
     for (const [id, m] of top) {
       const c = byId.get(id);
       const card = h(row2, "button", "mn-home-mc");
@@ -4768,7 +4816,7 @@ function homePage(ctx) {
       e.preventDefault();
       ctx.push({ key: "games", title: "\u6700\u8FD1\u5C0D\u6230" });
     });
-    const list2 = h(el, "div", "mn-home-games");
+    const list2 = layoutBlock(h(el, "div", "mn-home-games"));
     for (const g of prof.games.slice(0, HOME_GAMES)) gameRow(ctx, list2, g, false);
   }
   return { title: "Home", el };
@@ -4807,7 +4855,7 @@ function gamesPage(ctx) {
   }
   const wins = prof.games.filter((g) => g.win).length;
   h(el, "div", "mn-home-sub", `\u6700\u8FD1 ${prof.games.length} \u5834 \xB7 ${wins} \u52DD ${prof.games.length - wins} \u6557 \xB7 ${ago(prof.fetched)}\u66F4\u65B0`);
-  const list2 = h(el, "div", "mn-home-games");
+  const list2 = layoutBlock(h(el, "div", "mn-home-games"));
   for (const g of prof.games) gameRow(ctx, list2, g, true);
   return { title: "\u6700\u8FD1\u5C0D\u6230", el };
 }
@@ -4837,11 +4885,11 @@ function itemsPage(ctx) {
   const search = h(box, "input");
   search.type = "search";
   search.placeholder = "\u641C\u5C0B\u88DD\u5099";
-  const roles = h(el, "div", "mn-shop-roles");
+  const roles = layoutBlock(h(el, "div", "mn-shop-roles"));
   const sortWrap = h(el, "div", "mn-shop-sortwrap");
   const body = h(el, "div", "mn-shop");
-  const rail = h(body, "div", "mn-shop-rail");
-  const host = h(body, "div", "mn-shop-list");
+  const rail = layoutBlock(h(body, "div", "mn-shop-rail"));
+  const host = layoutBlock(h(body, "div", "mn-shop-list"));
   const drawRoles = () => {
     roles.empty();
     const all = h(roles, "button", "mn-shop-role" + (!itemRole ? " is-on" : ""));
@@ -4944,7 +4992,6 @@ function itemsPage(ctx) {
       const grid = h(host, "div", "mn-items");
       for (const it of list2) tile2(grid, it);
     }
-    blockLoad(host);
   };
   search.addEventListener("input", draw);
   drawRoles();
@@ -5239,12 +5286,13 @@ function rosterPage(ctx) {
     drawGrid();
     if (query) drawSuggest();
   });
-  const shelf = h(el, "div", "mn-rq-shelf");
+  const shelf = layoutBlock(h(el, "div", "mn-rq-shelf"));
   h(el, "div", "mn-rq-lab", "\u52A0\u5165\u82F1\u96C4 \xB7 \u4F9D\u5206\u8DEF");
   const lanes = fgrid(el, LANES.length);
   lanes.addClass("mn-rq-lanes");
+  layoutBlock(lanes);
   const list2 = h(el, "div", "mn-rq-list");
-  const grid = h(list2, "div", "mn-faces");
+  const grid = layoutBlock(h(list2, "div", "mn-faces"));
   const dock = h(el, "div", "mn-rq-dock");
   const suggest2 = h(dock, "div", "mn-chips mn-rq-sugg");
   const cap = h(dock, "div", "mn-rq-cap");

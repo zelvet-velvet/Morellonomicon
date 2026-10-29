@@ -1,6 +1,6 @@
 import { mapUrl } from "./handbook";
 import type { PageCtx, PageOut } from "./index";
-import { ITEM_CATS, blockLoad, shopIcon, h, holdTip, icon, page, roleArt } from "../ui";
+import { ITEM_CATS, layoutBlock, shopIcon, h, holdTip, icon, page, roleArt } from "../ui";
 import { MODES } from "../modes";
 import { PROFILE_FRESH, QUEUE, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, type Profile } from "../data/riot";
 
@@ -25,7 +25,7 @@ export function homePage(ctx: PageCtx): PageOut {
     const patch = all[0]?.patch ?? "";
     const dd = (path: string) => `https://ddragon.leagueoflegends.com/cdn/${patch}/img/${path}`;
 
-    const hero = h(el, "div", "mn-home-hero");
+    const hero = layoutBlock(h(el, "div", "mn-home-hero"));
     if (!s.riotId) {
         // signed out: an ARAM map behind, one line on why, the Riot ID and the server
         hero.addClass("is-out");
@@ -79,8 +79,8 @@ export function homePage(ctx: PageCtx): PageOut {
         // the wallpaper picker: your champions (top mastery first, else all), then the chosen one's skins, newest first
         const picker = h(el, "div", "mn-home-pick is-hidden");
         wallBtn.addEventListener("click", (e) => { e.preventDefault(); picker.toggleClass("is-hidden", !picker.hasClass("is-hidden")); });
-        const champsRow = h(picker, "div", "mn-home-prow");
-        const skinsRow = h(picker, "div", "mn-home-prow is-skins");
+        const champsRow = layoutBlock(h(picker, "div", "mn-home-prow"));
+        const skinsRow = layoutBlock(h(picker, "div", "mn-home-prow is-skins"));
         const mine = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).map(([id]) => byId.get(id)!);
         const pool = mine.length ? mine.slice(0, 24) : all;
         const showSkins = (cid: string) => {
@@ -109,7 +109,7 @@ export function homePage(ctx: PageCtx): PageOut {
 
     // rank: solo / duo and flex
     if (prof?.ranks.length) {
-        const ranks = h(el, "div", "mn-home-ranks");
+        const ranks = layoutBlock(h(el, "div", "mn-home-ranks"));
         for (const q of ["RANKED_SOLO_5x5", "RANKED_FLEX_SR"]) {
             const r = prof.ranks.find((x) => x.queue === q);
             const t = h(ranks, "div", "mn-home-rank");
@@ -121,7 +121,7 @@ export function homePage(ctx: PageCtx): PageOut {
     }
 
     // the ways in, 2 x 2 of the same size: Champions, Items, the next Handbook topic and the recent games
-    const entries = h(el, "div", "mn-home-entries");
+    const entries = layoutBlock(h(el, "div", "mn-home-entries"));
     const entry = (iconName: string, title: string, line: string, tint: string, go: () => void) => {
         const b = h(entries, "button", "mn-home-entry");
         b.style.setProperty("--t", tint);
@@ -142,7 +142,7 @@ export function homePage(ctx: PageCtx): PageOut {
     // your top mastery (from _data/mastery.json on a device that has it)
     if (top.length) {
         h(el, "div", "mn-home-lab", "熟練度");
-        const row = h(el, "div", "mn-home-mast");
+        const row = layoutBlock(h(el, "div", "mn-home-mast"));
         for (const [id, m] of top) {
             const c = byId.get(id)!;
             const card = h(row, "button", "mn-home-mc");
@@ -158,7 +158,7 @@ export function homePage(ctx: PageCtx): PageOut {
         h(lab, "span", undefined, "最近對戰");
         const more = h(lab, "button", "mn-home-more", "更多");
         more.addEventListener("click", (e) => { e.preventDefault(); ctx.push({ key: "games", title: "最近對戰" }); });
-        const list = h(el, "div", "mn-home-games");
+        const list = layoutBlock(h(el, "div", "mn-home-games"));
         for (const g of prof.games.slice(0, HOME_GAMES)) gameRow(ctx, list, g, false);
     }
     return { title: "Home", el };
@@ -189,7 +189,7 @@ export function gamesPage(ctx: PageCtx): PageOut {
     if (!prof?.games.length) { h(el, "p", "mn-home-sub", "還沒有對戰資料:在 Home 連結 Riot ID 並設定金鑰。"); return { title: "最近對戰", el }; }
     const wins = prof.games.filter((g) => g.win).length;
     h(el, "div", "mn-home-sub", `最近 ${prof.games.length} 場 · ${wins} 勝 ${prof.games.length - wins} 敗 · ${ago(prof.fetched)}更新`);
-    const list = h(el, "div", "mn-home-games");
+    const list = layoutBlock(h(el, "div", "mn-home-games"));
     for (const g of prof.games) gameRow(ctx, list, g, true);
     return { title: "最近對戰", el };
 }
@@ -226,11 +226,11 @@ export function itemsPage(ctx: PageCtx): PageOut {
     const search = h(box, "input");
     search.type = "search";
     search.placeholder = "搜尋裝備";
-    const roles = h(el, "div", "mn-shop-roles");
+    const roles = layoutBlock(h(el, "div", "mn-shop-roles"));
     const sortWrap = h(el, "div", "mn-shop-sortwrap");
     const body = h(el, "div", "mn-shop");
-    const rail = h(body, "div", "mn-shop-rail");
-    const host = h(body, "div", "mn-shop-list");   // one loading look for the whole list
+    const rail = layoutBlock(h(body, "div", "mn-shop-rail"));
+    const host = layoutBlock(h(body, "div", "mn-shop-list"));   // one loading look for the whole list
     const drawRoles = () => {
         roles.empty();
         const all = h(roles, "button", "mn-shop-role" + (!itemRole ? " is-on" : ""));
@@ -297,7 +297,6 @@ export function itemsPage(ctx: PageCtx): PageOut {
             const grid = h(host, "div", "mn-items");
             for (const it of list) tile(grid, it);
         }
-        blockLoad(host);
     };
     search.addEventListener("input", draw);
     drawRoles(); drawSort(); drawRail(); draw();

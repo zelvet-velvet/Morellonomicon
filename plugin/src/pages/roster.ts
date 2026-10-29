@@ -1,7 +1,7 @@
 import { Notice } from "obsidian";
 import type { Champion } from "../data/store";
 import { findSaid, type Said, type Sounds, soundScore } from "../data/sound";
-import { DAMAGE_COLOR, DAMAGE_ICON, REACH_ICON, fixedPage, SHOP_ROW, STAT_COLOR, STAT_ICON, SWIPE, shopIcon, chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, roleArt, slideSeg, tip } from "../ui";
+import { DAMAGE_COLOR, DAMAGE_ICON, REACH_ICON, fixedPage, layoutBlock, SHOP_ROW, STAT_COLOR, STAT_ICON, SWIPE, shopIcon, chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, roleArt, slideSeg, tip } from "../ui";
 import { entryDir, marker } from "./changes";
 import type { PageCtx, PageOut } from "./index";
 import { keyBadge } from "./cardkit";
@@ -169,12 +169,13 @@ export function rosterPage(ctx: PageCtx): PageOut {
     const handN = h(head, "span", "mn-rq-hn");
     const clearAll = h(head, "button", "mn-rq-hclear", "清除");
     clearAll.addEventListener("click", (e) => { e.preventDefault(); picks = []; save(); drawCount(); drawGrid(); if (query) drawSuggest(); });
-    const shelf = h(el, "div", "mn-rq-shelf");
+    const shelf = layoutBlock(h(el, "div", "mn-rq-shelf"));
     h(el, "div", "mn-rq-lab", "加入英雄 · 依分路");
     const lanes = fgrid(el, LANES.length);
     lanes.addClass("mn-rq-lanes");
+    layoutBlock(lanes);
     const list = h(el, "div", "mn-rq-list");
-    const grid = h(list, "div", "mn-faces");
+    const grid = layoutBlock(h(list, "div", "mn-faces"));
     const dock = h(el, "div", "mn-rq-dock");
     const suggest = h(dock, "div", "mn-chips mn-rq-sugg");
     const cap = h(dock, "div", "mn-rq-cap");

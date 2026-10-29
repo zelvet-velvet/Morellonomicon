@@ -1,5 +1,5 @@
 import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, DAMAGE_ICON, blockLoad, blockUntil, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, slideSeg, tip, fixedPage } from "../ui";
+import { DAMAGE_COLOR, DAMAGE_ICON, blockUntil, layoutBlock, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, slideSeg, tip, fixedPage } from "../ui";
 import { TAG_GROUPS, championProfile, iconFilter, tagFilter } from "./profile";
 import { buildTab } from "./build";
 import type { PageCtx, PageOut } from "./index";
@@ -45,13 +45,13 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
     const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)] as const));
     // the lane row on top, the grid, and at the bottom (where the thumb is, like Picks) one floating capsule: search, a mic and the
     // 篩選 button; the filters open as a sheet right above the capsule
-    const filtersHost = h(parent, "div");   // the lane row loads as a block of its own
+    const filtersHost = layoutBlock(h(parent, "div"));   // the lane row loads as a block of its own
     const filters = h(filtersHost, "div", "mn-fgroup");
     const count = h(parent, "div", "mn-count");
     const list = h(parent, "div", "mn-rq-list");   // the part that scrolls
-    const gridHost = h(list, "div");      // so does the grid of champion icons
+    const gridHost = layoutBlock(h(list, "div"));      // so does the grid of champion icons
     const grid = h(gridHost, "div", "mn-grid");
-    const extra = h(list, "div");
+    const extra = layoutBlock(h(list, "div"));   // and the augment / item results while searching
     const dock = h(parent, "div", "mn-rq-dock");
     const panel = h(dock, "div", "mn-fpanel mn-fsheet");
     const cap = h(dock, "div", "mn-rq-cap");
@@ -82,7 +82,6 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
             h(tile, "span", "mn-tile-n", c.name);
             tile.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); });
         }
-        blockLoad(gridHost);
         if (!q) return;
         if (!hits.length) empty(grid, { icon: "search-x", title: "No champion" });
         const augs = ctx.plugin.settings.mode === "mayhem" ? store.augments().filter((a) => a.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA) : [];
@@ -117,7 +116,6 @@ function championPicker(parent: HTMLElement, ctx: PageCtx): void {
         icon(fb, "sliders-horizontal", "mn-filterbtn-ic");
         if (n) h(fb, "span", "mn-filterbtn-n", String(n));
         fb.addEventListener("click", (e) => { e.preventDefault(); F.open = !F.open; drawFilters(); drawPanel(); });
-        blockLoad(filtersHost);
     };
     const drawPanel = () => {
         panel.empty();

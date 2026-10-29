@@ -80,7 +80,7 @@ export function whenMediaLoaded(roots: HTMLElement[], ms: number): Promise<void>
 // itself shows at once. Call it after the block is filled; a block whose pictures are all there gets no veil. `host` must not be
 // emptied by its owner (the veil lives in it), so give a container that is redrawn its own host.
 const BLOCK_MAX_MS = 8000, BLOCK_MIN_MS = 500, BLOCK_DELAY_MS = 120;
-const blockState = new WeakMap<HTMLElement, { veil: HTMLElement; since: number }>();
+const blockState = new WeakMap<HTMLElement, { veil: HTMLElement; since: number; open: number }>();
 // The loading band. Every block that is loading draws its part of ONE slanted line that crosses the screen on one clock, so
 // neighbouring blocks (the lane row and the grid under it) show the same line, not two bands out of step with each other.
 // trackBand puts a veil on that clock; a frame loop sets --bx (where the band's middle is inside the veil) and --bw (its width).
@@ -115,7 +115,7 @@ export function endBand(el: HTMLElement): void {
     const wait = (p < BAND_RUN ? BAND_RUN - p : 1 - p + BAND_RUN) * BAND_MS;
     window.setTimeout(() => { bandVeils.delete(el); el.remove(); }, wait);
 }
-function lift(host: HTMLElement, state: { veil: HTMLElement; since: number }): void {
+function lift(host: HTMLElement, state: { veil: HTMLElement; since: number; open: number }): void {
     window.setTimeout(() => {
         if (blockState.get(host) !== state) return;
         blockState.delete(host);
@@ -136,31 +136,74 @@ export function blockUntil(host: HTMLElement, until: Promise<void>, delay = 0): 
     host.classList.add("mn-blk");
     let st = blockState.get(host);
     if (!st) {
-        st = { veil: h(host, "div", "mn-blkveil is-in"), since: Date.now() };
+        st = { veil: h(host, "div", "mn-blkveil is-in"), since: Date.now(), open: 0 };
         trackBand(st.veil);
         blockState.set(host, st);
     }
     const state = st;
+    state.open++;   // the veil stays until everything the block waits for has settled (it may be asked again while loading)
     const cap = window.setTimeout(() => lift(host, state), BLOCK_MAX_MS);
-    void until.then(() => { window.clearTimeout(cap); lift(host, state); });
+    void until.then(() => { window.clearTimeout(cap); if (--state.open <= 0) lift(host, state); });
+}
+// Pictures drawn as a CSS background (the shop's sprite, a glyph mask) count too: each address is fetched once to know when it is in
+const bgDone = new Set<string>();
+const URL_IN_STYLE = /url\(["']?([^"')]+)["']?\)/g;
+function pendingBackgrounds(host: HTMLElement): Promise<void>[] {
+    const out: Promise<void>[] = [], asked = new Set<string>();
+    for (const el of [host, ...Array.from(host.querySelectorAll<HTMLElement>("[style]"))]) {
+        for (const m of (el.getAttribute("style") ?? "").matchAll(URL_IN_STYLE)) {
+            const src = m[1];
+            if (bgDone.has(src) || asked.has(src)) continue;
+            asked.add(src);
+            const im = new Image();
+            im.src = src;
+            if (im.complete) { bgDone.add(src); continue; }
+            out.push(new Promise<void>((done) => { im.onload = im.onerror = () => { bgDone.add(src); done(); }; }));
+        }
+    }
+    return out;
 }
 export function blockLoad(host: HTMLElement): void {
     const pending = Array.from(host.querySelectorAll<HTMLImageElement>("img")).filter((im) => im.src && !im.complete);
-    const st = blockState.get(host);
-    if (!pending.length) { if (st) lift(host, st); return; }   // redrawn with every picture already there
-    blockUntil(host, Promise.all(pending.map((im) => new Promise<void>((done) => {
+    const waits = [...pending.map((im) => new Promise<void>((done) => {
         im.addEventListener("load", () => done(), { once: true });
         im.addEventListener("error", () => done(), { once: true });
-    }))).then(() => undefined), host.classList.contains("mn-blk") ? 0 : BLOCK_DELAY_MS);
+    })), ...pendingBackgrounds(host)];
+    const st = blockState.get(host);
+    if (!waits.length) { if (st && st.open <= 0) lift(host, st); return; }   // redrawn with every picture already there
+    blockUntil(host, Promise.all(waits).then(() => undefined), host.classList.contains("mn-blk") ? 0 : BLOCK_DELAY_MS);
+}
+
+// A block as the Layouts note defines it (Dev Tools/Layouts.md: the title row, a grid, a shelf, a hero...). Marking its element is
+// all a page does: whenever pictures in it are still loading (drawn, redrawn, a picture added later) the whole block shows the block
+// loading look until they are in, the way the Handbook's tile groups do (LLM Guide, "Loading look").
+export function layoutBlock<T extends HTMLElement>(el: T): T {
+    el.classList.add("mn-lb");
+    return el;
 }
 
 // Every picture gets the loading look by itself, so no page has to ask for it (LLM Guide, "Loading look"): a picture still loading is
 // hidden and fades in when it arrives, and a big one (its frame AUTO_BLOCK px or more each way: a card, a splash, a wallpaper) puts the
-// block loading look (blur and the band of light) on its frame until then. Pictures inside a block a page already handles (mn-blk),
-// inside a card pile (it has its own) or under .mn-noauto are left alone.
+// block loading look (blur and the band of light) on its frame until then. Inside a Layouts block (layoutBlock) the whole block gets
+// that look instead. Pictures inside a block a page already handles (mn-blk), inside a card pile (it has its own) or under .mn-noauto
+// are left alone.
 const AUTO_BLOCK = 64;
 export function autoLoading(root: HTMLElement): MutationObserver {
     const seen = new WeakSet<HTMLImageElement>();
+    // the Layouts blocks that something was added to: checked once after this round of changes
+    const blocks = new Set<HTMLElement>();
+    const flush = () => { for (const b of blocks) if (b.isConnected) blockLoad(b); blocks.clear(); };
+    const queue = (b: HTMLElement) => {
+        if (b.closest(".mn-noauto, .mn-pager")) return;
+        if (!blocks.size) window.setTimeout(flush, 0);
+        blocks.add(b);
+    };
+    // the block a node went into, and the blocks it brings along (a whole page added at once)
+    const inBlock = (n: Element) => {
+        const b = n.closest<HTMLElement>(".mn-lb");
+        if (b) queue(b);
+        n.querySelectorAll<HTMLElement>(".mn-lb").forEach(queue);
+    };
     const take = (im: HTMLImageElement) => {
         if (seen.has(im) || !im.getAttribute("src") || (im.complete && im.naturalWidth) || im.closest(".mn-noauto, .mn-blk, .mn-pager")) return;
         seen.add(im);
@@ -169,17 +212,18 @@ export function autoLoading(root: HTMLElement): MutationObserver {
         im.addEventListener("load", done, { once: true });
         im.addEventListener("error", done, { once: true });
         const host = im.parentElement;
-        if (!host) return;
+        if (!host || im.closest(".mn-lb")) return;   // a Layouts block shows the look for all of it
         const r = host.getBoundingClientRect();
         if (Math.min(r.width, r.height) >= AUTO_BLOCK) blockLoad(host);
     };
     const scan = (n: Node) => {
+        if (n instanceof HTMLElement) inBlock(n);
         if (n instanceof HTMLImageElement) take(n);
         else if (n instanceof HTMLElement) n.querySelectorAll("img").forEach(take);
     };
     const mo = new MutationObserver((list) => {
         for (const m of list) {
-            if (m.type === "attributes") { if (m.target instanceof HTMLImageElement) take(m.target); }
+            if (m.type === "attributes") { if (m.target instanceof HTMLImageElement) { inBlock(m.target); take(m.target); } }
             else m.addedNodes.forEach(scan);
         }
     });
