@@ -439,19 +439,19 @@ var Router = class {
     this.stacks = {};
     this.save();
   }
-  stack(tab2 = this.tab) {
+  stack(tab = this.tab) {
     var _a;
-    return (_a = this.stacks)[tab2] ?? (_a[tab2] = []);
+    return (_a = this.stacks)[tab] ?? (_a[tab] = []);
   }
-  top(tab2 = this.tab) {
-    const s = this.stack(tab2);
+  top(tab = this.tab) {
+    const s = this.stack(tab);
     return s[s.length - 1] ?? { key: "root", title: "" };
   }
-  depth(tab2 = this.tab) {
-    return this.stack(tab2).length;
+  depth(tab = this.tab) {
+    return this.stack(tab).length;
   }
-  setTab(tab2) {
-    this.tab = tab2;
+  setTab(tab) {
+    this.tab = tab;
     this.save();
   }
   push(f) {
@@ -3948,7 +3948,9 @@ var import_obsidian8 = require("obsidian");
 var MAX_PICKS = 15;
 var BTN_ROOM = 84;
 var SPLIT = /[\s,，、;；和跟與及]+/;
-var tab = "pick";
+var swipeAt = 0;
+var swipeLiked = [];
+var swipeSig = "";
 function matchScore(c, raw) {
   const q = raw.trim().toLowerCase();
   if (!q) return 0;
@@ -4082,13 +4084,6 @@ function rosterPage(ctx) {
   const save = () => {
     void ctx.plugin.setRoster(picks);
   };
-  let at = 0;
-  let liked = [];
-  const restart = () => {
-    at = 0;
-    liked = [];
-    drawResults();
-  };
   const { score: score2, within } = finder(all, store.sounds);
   const box = h(el, "div", "mn-search");
   icon(box, "search", "mn-search-ic");
@@ -4097,32 +4092,19 @@ function rosterPage(ctx) {
   search.placeholder = "\u8F38\u5165\u82F1\u96C4\u540D\u5B57,\u6216\u6309\u9375\u76E4\u4E0A\u7684 \u{1F3A4} \u8AAA\u51FA\u4F86";
   search.setAttribute("enterkeyhint", "search");
   const suggest2 = h(el, "div", "mn-chips mn-rq-sugg");
-  const tabs = h(el, "div", "mn-seg mn-seg-line mn-rq-tabs");
-  const pickTab = h(tabs, "button", "mn-seg-b", "\u6311\u9078");
-  const listTab = h(tabs, "button", "mn-seg-b");
-  const pane = h(el, "div");
-  const lanes = fgrid(pane, LANES.length);
+  const lanes = fgrid(el, LANES.length);
   lanes.addClass("mn-rq-lanes");
-  const grid = h(pane, "div", "mn-faces");
-  const results = h(el, "div", "mn-rq-results");
-  const show = (t_) => {
-    tab = t_;
-    pickTab.toggleClass("is-on", tab === "pick");
-    listTab.toggleClass("is-on", tab === "list");
-    pane.toggleClass("is-hidden", tab !== "pick");
-    results.toggleClass("is-hidden", tab !== "list");
-  };
-  pickTab.addEventListener("click", (e) => {
+  const grid = h(el, "div", "mn-faces");
+  const go = h(el, "button", "mn-rq-go");
+  icon(go, "layers");
+  const goText = h(go, "span");
+  go.addEventListener("click", (e) => {
     e.preventDefault();
-    show("pick");
+    ctx.push({ key: "rosterswipe", title: "\u901F\u67E5" });
   });
-  listTab.addEventListener("click", (e) => {
-    e.preventDefault();
-    show("list");
-  });
-  slideSeg(tabs, "roster-tabs");
   const drawCount = () => {
-    listTab.textContent = picks.length ? `\u5DF2\u9078 ${picks.length}` : "\u5DF2\u9078";
+    go.toggleClass("is-hidden", !picks.length);
+    goText.textContent = `\u9078\u597D\u4E86 \xB7 ${picks.length} \u4F4D,\u958B\u59CB\u6ED1`;
   };
   const toggle = (id) => {
     if (picks.includes(id)) picks = picks.filter((p) => p !== id);
@@ -4132,7 +4114,6 @@ function rosterPage(ctx) {
     } else picks = [...picks, id];
     save();
     drawCount();
-    restart();
     drawGrid();
   };
   let named = [];
@@ -4146,6 +4127,116 @@ function rosterPage(ctx) {
       drawGrid();
       search.focus();
     } else if (query) drawSuggest();
+  };
+  const drawSuggest = () => {
+    suggest2.empty();
+    named = [];
+    const tokens = query.split(SPLIT).filter(Boolean);
+    if (!tokens.length) return;
+    const best = (t) => {
+      const ranked = all.map((c) => ({ c, s: score2(c, t) })).sort((a, b) => b.s - a.s);
+      if (ranked[0] && ranked[0].s >= 70) return { list: [ranked[0].c], exact: true };
+      const many = within(t);
+      if (many.length >= 2) return { list: many, exact: true };
+      if (ranked[0] && ranked[0].s >= 50) return { list: [ranked[0].c], exact: true };
+      const near = ranked.filter((x) => x.s > 0).slice(0, 3).map((x) => x.c);
+      return { list: near.length ? near : closest(all, t, 3), exact: false };
+    };
+    const found = tokens.map(best);
+    const unique = [...new Map(found.flatMap((f) => f.list).map((c) => [c.id, c])).values()];
+    named = found.every((f) => f.exact) ? unique.map((c) => c.id) : [];
+    if (!unique.length) return;
+    const guessed = found.some((f) => !f.exact && f.list.length);
+    if (unique.length === 1 && !guessed) return;
+    if (guessed) h(suggest2, "span", "mn-dym", "\u4F60\u662F\u4E0D\u662F\u5728\u627E:");
+    for (const c of unique) chip(suggest2, `${picks.includes(c.id) ? "\u2713 " : "+ "}${c.name}`, { color: "var(--color-green)", onTap: () => pickFromSearch(c.id) });
+    if (unique.length > 1) chip(suggest2, "\u5168\u90E8\u52A0\u5165", { on: true, onTap: () => {
+      for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) picks = [...picks, c.id];
+      save();
+      search.value = "";
+      query = "";
+      drawCount();
+      drawSuggest();
+      drawGrid();
+    } });
+  };
+  const drawGrid = () => {
+    grid.empty();
+    const tokens = query.split(SPLIT).filter(Boolean);
+    let list2 = all.filter((c) => !lane || store.lanes(c).includes(lane));
+    if (tokens.length) {
+      const said = new Set(tokens.filter((t) => !all.some((c) => score2(c, t) >= 70)).flatMap((t) => within(t)).map((c) => c.id));
+      const scored = list2.map((c) => ({ c, s: Math.max(said.has(c.id) ? 75 : 0, ...tokens.map((t) => score2(c, t))) })).filter((x) => x.s > 0);
+      scored.sort((a, b) => b.s - a.s || a.c.name.localeCompare(b.c.name, "zh-Hant"));
+      list2 = scored.map((x) => x.c);
+    }
+    grid.toggleClass("is-named", tokens.length > 0);
+    for (const c of list2) {
+      const on = picks.includes(c.id);
+      const t = h(grid, "button", "mn-face" + (on ? " is-pick" : ""));
+      const im = h(t, "img");
+      im.src = c.icon;
+      im.alt = c.name;
+      if (on) icon(h(t, "span", "mn-pick-ok"), "check");
+      h(t, "span", "mn-face-n", c.name);
+      holdTip(t, c.name);
+      t.addEventListener("click", (e) => {
+        e.preventDefault();
+        pickFromSearch(c.id);
+      });
+    }
+    if (!list2.length) empty(grid, { icon: "search-x", title: "\u627E\u4E0D\u5230\u9019\u500B\u540D\u5B57", text: "\u63DB\u500B\u8AAA\u6CD5\u518D\u8A66,\u6216\u770B\u4E0A\u9762\u7684\u300C\u4F60\u662F\u4E0D\u662F\u5728\u627E\u300D\u3002" });
+  };
+  const drawLanes = () => {
+    lanes.empty();
+    const known = store.hasLanes();
+    for (const l of LANES) {
+      const chipEl = laneChip(lanes, l, { on: lane === l, onTap: () => {
+        if (!known) {
+          tip(chipEl, "\u9084\u6C92\u6709\u5206\u8DEF\u8CC7\u6599");
+          return;
+        }
+        lane = lane === l ? "" : l;
+        drawLanes();
+        drawGrid();
+      } });
+    }
+  };
+  search.addEventListener("input", () => {
+    query = search.value;
+    drawSuggest();
+    drawGrid();
+  });
+  drawCount();
+  drawLanes();
+  drawGrid();
+  return { title: "\u901F\u67E5", el };
+}
+function swipePage(ctx) {
+  const store = ctx.plugin.store;
+  const el = h(null, "div", "mn-page mn-deckpage");
+  const all = store.champions();
+  let picks = ctx.plugin.settings.roster.filter((id) => all.some((c) => c.id === id)).slice(0, MAX_PICKS);
+  const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)]));
+  if (swipeSig !== picks.join(",")) {
+    swipeSig = picks.join(",");
+    swipeAt = 0;
+    swipeLiked = [];
+  }
+  let at = swipeAt, liked = swipeLiked;
+  const titleRow = h(el, "div", "mn-title-row");
+  h(titleRow, "h1", "mn-title", "\u901F\u67E5");
+  const results = h(el, "div", "mn-rq-results");
+  const restart = () => {
+    at = swipeAt = 0;
+    liked = swipeLiked = [];
+    drawResults();
+  };
+  const toggle = (id) => {
+    picks = picks.filter((p) => p !== id);
+    void ctx.plugin.setRoster(picks);
+    swipeSig = picks.join(",");
+    restart();
   };
   const card = (c, parent) => {
     const r = h(parent, "div", "mn-rq");
@@ -4244,13 +4335,19 @@ function rosterPage(ctx) {
     clear.addEventListener("click", (e) => {
       e.preventDefault();
       picks = [];
-      save();
-      drawCount();
-      restart();
-      drawGrid();
+      void ctx.plugin.setRoster(picks);
+      swipeSig = "";
+      ctx.pop();
     });
     if (done) {
-      likedGrid();
+      const box = h(results, "div", "mn-rq-end");
+      const fitEnd = () => {
+        const scroll = el.closest(".mn-scroll");
+        if (!scroll || !box.isConnected) return;
+        box.style.height = `${Math.max(240, scroll.clientHeight - (box.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop) - DECK_BELOW)}px`;
+      };
+      likedGrid(box);
+      requestAnimationFrame(fitEnd);
       return;
     }
     const wrap = h(results, "div", "mn-deckwrap mn-rq-deck");
@@ -4286,8 +4383,8 @@ function rosterPage(ctx) {
         st.style.setProperty("--k", String(k));
       },
       onJudge: (i, like) => {
-        at++;
-        if (like) liked = [...liked, ids[i]];
+        at = ++swipeAt;
+        if (like) swipeLiked = liked = [...liked, ids[i]];
         count2.textContent = progress();
       },
       onEnd: () => drawResults()
@@ -4316,9 +4413,9 @@ function rosterPage(ctx) {
       pile.decide(true);
     });
   };
-  const likedGrid = () => {
+  const likedGrid = (results2) => {
     if (liked.length) {
-      const g = h(results, "div", "mn-rq-liked");
+      const g = h(results2, "div", "mn-rq-liked");
       for (const id of liked) {
         const c = all.find((x) => x.id === id);
         if (!c) continue;
@@ -4333,8 +4430,8 @@ function rosterPage(ctx) {
           ctx.openChampion(c.id);
         });
       }
-    } else empty(results, { icon: "heart-off", title: "\u4E00\u500B\u90FD\u6C92\u559C\u6B61" });
-    const again = h(results, "button", "mn-rq-again");
+    } else empty(results2, { icon: "heart-off", title: "\u4E00\u500B\u90FD\u6C92\u559C\u6B61" });
+    const again = h(results2, "button", "mn-rq-again");
     icon(again, "rotate-ccw");
     again.append("\u518D\u6ED1\u4E00\u6B21");
     again.addEventListener("click", (e) => {
@@ -4342,92 +4439,7 @@ function rosterPage(ctx) {
       restart();
     });
   };
-  const drawSuggest = () => {
-    suggest2.empty();
-    named = [];
-    const tokens = query.split(SPLIT).filter(Boolean);
-    if (!tokens.length) return;
-    const best = (t) => {
-      const ranked = all.map((c) => ({ c, s: score2(c, t) })).sort((a, b) => b.s - a.s);
-      if (ranked[0] && ranked[0].s >= 70) return { list: [ranked[0].c], exact: true };
-      const many = within(t);
-      if (many.length >= 2) return { list: many, exact: true };
-      if (ranked[0] && ranked[0].s >= 50) return { list: [ranked[0].c], exact: true };
-      const near = ranked.filter((x) => x.s > 0).slice(0, 3).map((x) => x.c);
-      return { list: near.length ? near : closest(all, t, 3), exact: false };
-    };
-    const found = tokens.map(best);
-    const unique = [...new Map(found.flatMap((f) => f.list).map((c) => [c.id, c])).values()];
-    named = found.every((f) => f.exact) ? unique.map((c) => c.id) : [];
-    if (!unique.length) return;
-    const guessed = found.some((f) => !f.exact && f.list.length);
-    if (unique.length === 1 && !guessed) return;
-    if (guessed) h(suggest2, "span", "mn-dym", "\u4F60\u662F\u4E0D\u662F\u5728\u627E:");
-    for (const c of unique) chip(suggest2, `${picks.includes(c.id) ? "\u2713 " : "+ "}${c.name}`, { color: "var(--color-green)", onTap: () => pickFromSearch(c.id) });
-    if (unique.length > 1) chip(suggest2, "\u5168\u90E8\u52A0\u5165", { on: true, onTap: () => {
-      for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) picks = [...picks, c.id];
-      save();
-      search.value = "";
-      query = "";
-      drawCount();
-      drawSuggest();
-      restart();
-      drawGrid();
-    } });
-  };
-  const drawGrid = () => {
-    grid.empty();
-    const tokens = query.split(SPLIT).filter(Boolean);
-    let list2 = all.filter((c) => !lane || store.lanes(c).includes(lane));
-    if (tokens.length) {
-      const said = new Set(tokens.filter((t) => !all.some((c) => score2(c, t) >= 70)).flatMap((t) => within(t)).map((c) => c.id));
-      const scored = list2.map((c) => ({ c, s: Math.max(said.has(c.id) ? 75 : 0, ...tokens.map((t) => score2(c, t))) })).filter((x) => x.s > 0);
-      scored.sort((a, b) => b.s - a.s || a.c.name.localeCompare(b.c.name, "zh-Hant"));
-      list2 = scored.map((x) => x.c);
-    }
-    grid.toggleClass("is-named", tokens.length > 0);
-    for (const c of list2) {
-      const on = picks.includes(c.id);
-      const t = h(grid, "button", "mn-face" + (on ? " is-pick" : ""));
-      const im = h(t, "img");
-      im.src = c.icon;
-      im.alt = c.name;
-      if (on) icon(h(t, "span", "mn-pick-ok"), "check");
-      h(t, "span", "mn-face-n", c.name);
-      holdTip(t, c.name);
-      t.addEventListener("click", (e) => {
-        e.preventDefault();
-        pickFromSearch(c.id);
-      });
-    }
-    if (!list2.length) empty(grid, { icon: "search-x", title: "\u627E\u4E0D\u5230\u9019\u500B\u540D\u5B57", text: "\u63DB\u500B\u8AAA\u6CD5\u518D\u8A66,\u6216\u770B\u4E0A\u9762\u7684\u300C\u4F60\u662F\u4E0D\u662F\u5728\u627E\u300D\u3002" });
-  };
-  const drawLanes = () => {
-    lanes.empty();
-    const known = store.hasLanes();
-    for (const l of LANES) {
-      const chipEl = laneChip(lanes, l, { on: lane === l, onTap: () => {
-        if (!known) {
-          tip(chipEl, "\u9084\u6C92\u6709\u5206\u8DEF\u8CC7\u6599");
-          return;
-        }
-        lane = lane === l ? "" : l;
-        drawLanes();
-        drawGrid();
-      } });
-    }
-  };
-  search.addEventListener("input", () => {
-    query = search.value;
-    if (query) show("pick");
-    drawSuggest();
-    drawGrid();
-  });
-  drawCount();
   drawResults();
-  drawLanes();
-  drawGrid();
-  show(picks.length ? tab : "pick");
   return { title: "\u901F\u67E5", el };
 }
 
@@ -4438,7 +4450,7 @@ var PAGES = {
   patch: patchPage,
   handbook: handbookPage
 };
-function renderPage(tab2, ctx) {
+function renderPage(tab, ctx) {
   switch (ctx.frame.key) {
     case "champion":
       return championCard(ctx);
@@ -4450,8 +4462,10 @@ function renderPage(tab2, ctx) {
       return notePage(ctx);
     case "roster":
       return rosterPage(ctx);
+    case "rosterswipe":
+      return swipePage(ctx);
     default:
-      return PAGES[tab2](ctx);
+      return PAGES[tab](ctx);
   }
 }
 

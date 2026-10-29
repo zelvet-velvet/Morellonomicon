@@ -12,7 +12,8 @@ import { factsStrip, tagRow } from "./profile";
 const MAX_PICKS = 15;   // a Mayhem game can hand you a lot of champions
 const BTN_ROOM = 84;   // px under the 速查 pile kept for the ✕ / ♥ buttons
 const SPLIT = /[\s,，、;；和跟與及]+/;
-let tab: "pick" | "list" = "pick";   // 挑選 or 已選, kept while the app is open   // several names said or typed in one go
+// the swipe through the picked champions (in its own full-screen page): where it is and which were liked; both start over when the picks change
+let swipeAt = 0, swipeLiked: string[] = [], swipeSig = "";
 
 // How well a champion matches what was typed or dictated. Forgiving on purpose: a name, part of it, the title, the English id, or most of
 // the characters (speech to text often gets one wrong). 0 = no match.
@@ -157,15 +158,10 @@ export function rosterPage(ctx: PageCtx): PageOut {
     let query = "", lane = "";
     const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)] as const));
     const save = () => { void ctx.plugin.setRoster(picks); };
-    // the swipe through the picked champions: where it is, and which were liked (both start over when the picks change)
-    let at = 0;
-    let liked: string[] = [];
-    const restart = () => { at = 0; liked = []; drawResults(); };
-
     const { score, within } = finder(all, store.sounds);
 
-    // the search box on top; under it two tabs: 挑選 (lane icons and every face, tap to add or remove) and 已選 N (the
-    // picked champions' cards). Picking never leaves the grid; typing always goes back to it.
+    // the search box on top, then the lane icons and every face (tap to add or remove). Once something is picked a pill floats at the
+    // bottom: it opens the swipe through the picks as a full-screen page of its own.
     const box = h(el, "div", "mn-search");
     icon(box, "search", "mn-search-ic");
     const search = h(box, "input");
@@ -173,25 +169,14 @@ export function rosterPage(ctx: PageCtx): PageOut {
     search.placeholder = "輸入英雄名字,或按鍵盤上的 🎤 說出來";
     search.setAttribute("enterkeyhint", "search");
     const suggest = h(el, "div", "mn-chips mn-rq-sugg");
-    const tabs = h(el, "div", "mn-seg mn-seg-line mn-rq-tabs");
-    const pickTab = h(tabs, "button", "mn-seg-b", "挑選");
-    const listTab = h(tabs, "button", "mn-seg-b");
-    const pane = h(el, "div");
-    const lanes = fgrid(pane, LANES.length);
+    const lanes = fgrid(el, LANES.length);
     lanes.addClass("mn-rq-lanes");
-    const grid = h(pane, "div", "mn-faces");
-    const results = h(el, "div", "mn-rq-results");
-    const show = (t_: "pick" | "list") => {
-        tab = t_;
-        pickTab.toggleClass("is-on", tab === "pick");
-        listTab.toggleClass("is-on", tab === "list");
-        pane.toggleClass("is-hidden", tab !== "pick");
-        results.toggleClass("is-hidden", tab !== "list");
-    };
-    pickTab.addEventListener("click", (e) => { e.preventDefault(); show("pick"); });
-    listTab.addEventListener("click", (e) => { e.preventDefault(); show("list"); });
-    slideSeg(tabs, "roster-tabs");
-    const drawCount = () => { listTab.textContent = picks.length ? `已選 ${picks.length}` : "已選"; };
+    const grid = h(el, "div", "mn-faces");
+    const go = h(el, "button", "mn-rq-go");
+    icon(go, "layers");
+    const goText = h(go, "span");
+    go.addEventListener("click", (e) => { e.preventDefault(); ctx.push({ key: "rosterswipe", title: "速查" }); });
+    const drawCount = () => { go.toggleClass("is-hidden", !picks.length); goText.textContent = `選好了 · ${picks.length} 位,開始滑`; };
 
     const toggle = (id: string) => {
         if (picks.includes(id)) picks = picks.filter((p) => p !== id);
@@ -199,7 +184,6 @@ export function rosterPage(ctx: PageCtx): PageOut {
         else picks = [...picks, id];
         save();
         drawCount();
-        restart();
         drawGrid();
     };
     // a face tapped while searching: add it; once every name that was said is picked, empty the box and keep the keyboard up
@@ -210,6 +194,97 @@ export function rosterPage(ctx: PageCtx): PageOut {
         toggle(id);
         if (adding && query && named.every((n) => picks.includes(n))) { search.value = ""; query = ""; drawSuggest(); drawGrid(); search.focus(); }
         else if (query) drawSuggest();   // its ✓ marks
+    };
+
+    // several names typed or said together: a button per name that matched, and one to add them all
+    // For each word: the best name that matches well; when none does, the nearest names ("did you mean"). Several words add up.
+    const drawSuggest = () => {
+        suggest.empty();
+        named = [];
+        const tokens = query.split(SPLIT).filter(Boolean);
+        if (!tokens.length) return;
+        const best = (t: string): { list: Champion[]; exact: boolean } => {
+            const ranked = all.map((c) => ({ c, s: score(c, t) })).sort((a, b) => b.s - a.s);
+            if (ranked[0] && ranked[0].s >= 70) return { list: [ranked[0].c], exact: true };
+            const many = within(t);
+            if (many.length >= 2) return { list: many, exact: true };
+            if (ranked[0] && ranked[0].s >= 50) return { list: [ranked[0].c], exact: true };
+            const near = ranked.filter((x) => x.s > 0).slice(0, 3).map((x) => x.c);
+            return { list: near.length ? near : closest(all, t, 3), exact: false };
+        };
+        const found = tokens.map(best);
+        const unique = [...new Map(found.flatMap((f) => f.list).map((c) => [c.id, c])).values()];
+        named = found.every((f) => f.exact) ? unique.map((c) => c.id) : [];
+        if (!unique.length) return;
+        const guessed = found.some((f) => !f.exact && f.list.length);
+        // a single word that already matches well needs no suggestion row: the grid shows it
+        if (unique.length === 1 && !guessed) return;
+        if (guessed) h(suggest, "span", "mn-dym", "你是不是在找:");
+        for (const c of unique) chip(suggest, `${picks.includes(c.id) ? "✓ " : "+ "}${c.name}`, { color: "var(--color-green)", onTap: () => pickFromSearch(c.id) });
+        if (unique.length > 1) chip(suggest, "全部加入", { on: true, onTap: () => { for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) picks = [...picks, c.id]; save(); search.value = ""; query = ""; drawCount(); drawSuggest(); drawGrid(); } });
+    };
+
+    const drawGrid = () => {
+        grid.empty();
+        const tokens = query.split(SPLIT).filter(Boolean);
+        let list = all.filter((c) => !lane || store.lanes(c).includes(lane));
+        if (tokens.length) {
+            const said = new Set(tokens.filter((t) => !all.some((c) => score(c, t) >= 70)).flatMap((t) => within(t)).map((c) => c.id));
+            const scored = list.map((c) => ({ c, s: Math.max(said.has(c.id) ? 75 : 0, ...tokens.map((t) => score(c, t))) })).filter((x) => x.s > 0);
+            scored.sort((a, b) => b.s - a.s || a.c.name.localeCompare(b.c.name, "zh-Hant"));
+            list = scored.map((x) => x.c);
+        }
+        grid.toggleClass("is-named", tokens.length > 0);   // a few matches: names under the faces; the whole roster: faces only
+        for (const c of list) {
+            const on = picks.includes(c.id);
+            const t = h(grid, "button", "mn-face" + (on ? " is-pick" : ""));
+            const im = h(t, "img"); im.src = c.icon; im.alt = c.name;
+            if (on) icon(h(t, "span", "mn-pick-ok"), "check");
+            h(t, "span", "mn-face-n", c.name);
+            holdTip(t, c.name);
+            t.addEventListener("click", (e) => { e.preventDefault(); pickFromSearch(c.id); });
+        }
+        if (!list.length) empty(grid, { icon: "search-x", title: "找不到這個名字", text: "換個說法再試,或看上面的「你是不是在找」。" });
+    };
+
+    const drawLanes = () => {
+        lanes.empty();
+        const known = store.hasLanes();
+        for (const l of LANES) {
+            const chipEl = laneChip(lanes, l, { on: lane === l, onTap: () => {
+                if (!known) { tip(chipEl, "還沒有分路資料"); return; }
+                lane = lane === l ? "" : l; drawLanes(); drawGrid();
+            } });
+        }
+    };
+
+    search.addEventListener("input", () => { query = search.value; drawSuggest(); drawGrid(); });
+    drawCount();
+    drawLanes();
+    drawGrid();
+    return { title: "速查", el };
+}
+
+// The swipe through the picked champions, as a page that fills the screen like a Handbook topic: the top card is dragged right
+// (like) or left (pass), or the ♥ / ✕ buttons are tapped; after the last card the liked champions are listed.
+export function swipePage(ctx: PageCtx): PageOut {
+    const store = ctx.plugin.store;
+    const el = h(null, "div", "mn-page mn-deckpage");
+    const all = store.champions();
+    let picks = ctx.plugin.settings.roster.filter((id) => all.some((c) => c.id === id)).slice(0, MAX_PICKS);
+    const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)] as const));
+    if (swipeSig !== picks.join(",")) { swipeSig = picks.join(","); swipeAt = 0; swipeLiked = []; }
+    let at = swipeAt, liked = swipeLiked;
+    const titleRow = h(el, "div", "mn-title-row");
+    h(titleRow, "h1", "mn-title", "速查");
+    const results = h(el, "div", "mn-rq-results");
+    const restart = () => { at = swipeAt = 0; liked = swipeLiked = []; drawResults(); };
+    // a card's ✕ takes the champion out of the picks
+    const toggle = (id: string) => {
+        picks = picks.filter((p) => p !== id);
+        void ctx.plugin.setRoster(picks);
+        swipeSig = picks.join(",");
+        restart();
     };
 
     // A picked champion: name and a one-line overview, its damage kind and roles big, the thing that makes it work, then its abilities
@@ -284,8 +359,18 @@ export function rosterPage(ctx: PageCtx): PageOut {
         const progress = () => (at >= picks.length ? `喜歡的英雄 · ${liked.length}` : `${at + 1} / ${picks.length} · 喜歡 ${liked.length}`);
         const count = h(head, "span", "mn-rq-count", progress());
         const clear = h(head, "button", "mn-clear", "全部清除");
-        clear.addEventListener("click", (e) => { e.preventDefault(); picks = []; save(); drawCount(); restart(); drawGrid(); });
-        if (done) { likedGrid(); return; }
+        clear.addEventListener("click", (e) => { e.preventDefault(); picks = []; void ctx.plugin.setRoster(picks); swipeSig = ""; ctx.pop(); });
+        if (done) {
+            const box = h(results, "div", "mn-rq-end");
+            const fitEnd = () => {
+                const scroll = el.closest<HTMLElement>(".mn-scroll");
+                if (!scroll || !box.isConnected) return;
+                box.style.height = `${Math.max(240, scroll.clientHeight - (box.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop) - DECK_BELOW)}px`;
+            };
+            likedGrid(box);
+            requestAnimationFrame(fitEnd);
+            return;
+        }
         // the picked champions as the Handbook's pile of cards (pile.ts, judge mode): swipe the top one right (or ♥) to like it,
         // left (or ✕) to pass; a 喜歡 / 略過 stamp shows on it while dragged
         const wrap = h(results, "div", "mn-deckwrap mn-rq-deck");
@@ -319,7 +404,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
                 st.style.opacity = String(k);
                 st.style.setProperty("--k", String(k));
             },
-            onJudge: (i, like) => { at++; if (like) liked = [...liked, ids[i]]; count.textContent = progress(); },
+            onJudge: (i, like) => { at = ++swipeAt; if (like) swipeLiked = liked = [...liked, ids[i]]; count.textContent = progress(); },
             onEnd: () => drawResults(),
         });
         pile.layout(false);
@@ -338,7 +423,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
         yes.addEventListener("click", (e) => { e.preventDefault(); pile.decide(true); });
     };
     // after the last card: the liked champions two across (picture, name, overview line), and a way to swipe again
-    const likedGrid = () => {
+    const likedGrid = (results: HTMLElement) => {
         if (liked.length) {
             const g = h(results, "div", "mn-rq-liked");
             for (const id of liked) {
@@ -357,73 +442,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
         again.addEventListener("click", (e) => { e.preventDefault(); restart(); });
     };
 
-    // several names typed or said together: a button per name that matched, and one to add them all
-    // For each word: the best name that matches well; when none does, the nearest names ("did you mean"). Several words add up.
-    const drawSuggest = () => {
-        suggest.empty();
-        named = [];
-        const tokens = query.split(SPLIT).filter(Boolean);
-        if (!tokens.length) return;
-        const best = (t: string): { list: Champion[]; exact: boolean } => {
-            const ranked = all.map((c) => ({ c, s: score(c, t) })).sort((a, b) => b.s - a.s);
-            if (ranked[0] && ranked[0].s >= 70) return { list: [ranked[0].c], exact: true };
-            const many = within(t);
-            if (many.length >= 2) return { list: many, exact: true };
-            if (ranked[0] && ranked[0].s >= 50) return { list: [ranked[0].c], exact: true };
-            const near = ranked.filter((x) => x.s > 0).slice(0, 3).map((x) => x.c);
-            return { list: near.length ? near : closest(all, t, 3), exact: false };
-        };
-        const found = tokens.map(best);
-        const unique = [...new Map(found.flatMap((f) => f.list).map((c) => [c.id, c])).values()];
-        named = found.every((f) => f.exact) ? unique.map((c) => c.id) : [];
-        if (!unique.length) return;
-        const guessed = found.some((f) => !f.exact && f.list.length);
-        // a single word that already matches well needs no suggestion row: the grid shows it
-        if (unique.length === 1 && !guessed) return;
-        if (guessed) h(suggest, "span", "mn-dym", "你是不是在找:");
-        for (const c of unique) chip(suggest, `${picks.includes(c.id) ? "✓ " : "+ "}${c.name}`, { color: "var(--color-green)", onTap: () => pickFromSearch(c.id) });
-        if (unique.length > 1) chip(suggest, "全部加入", { on: true, onTap: () => { for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) picks = [...picks, c.id]; save(); search.value = ""; query = ""; drawCount(); drawSuggest(); restart(); drawGrid(); } });
-    };
 
-    const drawGrid = () => {
-        grid.empty();
-        const tokens = query.split(SPLIT).filter(Boolean);
-        let list = all.filter((c) => !lane || store.lanes(c).includes(lane));
-        if (tokens.length) {
-            const said = new Set(tokens.filter((t) => !all.some((c) => score(c, t) >= 70)).flatMap((t) => within(t)).map((c) => c.id));
-            const scored = list.map((c) => ({ c, s: Math.max(said.has(c.id) ? 75 : 0, ...tokens.map((t) => score(c, t))) })).filter((x) => x.s > 0);
-            scored.sort((a, b) => b.s - a.s || a.c.name.localeCompare(b.c.name, "zh-Hant"));
-            list = scored.map((x) => x.c);
-        }
-        grid.toggleClass("is-named", tokens.length > 0);   // a few matches: names under the faces; the whole roster: faces only
-        for (const c of list) {
-            const on = picks.includes(c.id);
-            const t = h(grid, "button", "mn-face" + (on ? " is-pick" : ""));
-            const im = h(t, "img"); im.src = c.icon; im.alt = c.name;
-            if (on) icon(h(t, "span", "mn-pick-ok"), "check");
-            h(t, "span", "mn-face-n", c.name);
-            holdTip(t, c.name);
-            t.addEventListener("click", (e) => { e.preventDefault(); pickFromSearch(c.id); });
-        }
-        if (!list.length) empty(grid, { icon: "search-x", title: "找不到這個名字", text: "換個說法再試,或看上面的「你是不是在找」。" });
-    };
-
-    const drawLanes = () => {
-        lanes.empty();
-        const known = store.hasLanes();
-        for (const l of LANES) {
-            const chipEl = laneChip(lanes, l, { on: lane === l, onTap: () => {
-                if (!known) { tip(chipEl, "還沒有分路資料"); return; }
-                lane = lane === l ? "" : l; drawLanes(); drawGrid();
-            } });
-        }
-    };
-
-    search.addEventListener("input", () => { query = search.value; if (query) show("pick"); drawSuggest(); drawGrid(); });
-    drawCount();
     drawResults();
-    drawLanes();
-    drawGrid();
-    show(picks.length ? tab : "pick");
     return { title: "速查", el };
 }

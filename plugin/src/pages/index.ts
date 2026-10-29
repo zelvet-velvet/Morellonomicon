@@ -7,7 +7,7 @@ import { championCard, championsPage, type SubTab } from "./champions";
 import { augmentPage, itemPage, notePage } from "./detail";
 import { handbookPage } from "./handbook";
 import { patchPage } from "./patch";
-import { rosterPage } from "./roster";
+import { rosterPage, swipePage } from "./roster";
 
 // `ready`: a page that knows better than the default (the first pictures) what it waits for before it shows
 export interface PageOut { title: string; el: HTMLElement; ready?: Promise<void> | null }
@@ -43,6 +43,7 @@ export function renderPage(tab: TabId, ctx: PageCtx): PageOut {
         case "item": return itemPage(ctx);
         case "note": return notePage(ctx);
         case "roster": return rosterPage(ctx);
+        case "rosterswipe": return swipePage(ctx);
         default: return PAGES[tab](ctx);
     }
 }

@@ -677,7 +677,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* Quick Look */
 /* 速查: search, class icons and faces sit on one even 12px rhythm */
 .mn-rq-sugg:empty { display: none; }
-.mn-app .mn-seg.mn-rq-tabs { margin: 12px 0 0; }
 .mn-app .mn-fgrid.mn-rq-lanes { margin: 12px 0; }
 .mn-faces { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 8px 6px; margin: 12px 0 0; }
 .mn-rq-results.is-hidden, .mn-app div.is-hidden:has(> .mn-faces) { display: none; }
@@ -703,8 +702,11 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app .mn-rq-x { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; color: var(--mn-muted); background: var(--mn-card-hi); }
 .mn-rq-x svg { width: 16px; height: 16px; }
 /* 速查 swipe: the picked champions as the Handbook's card pile (pile.ts), the top card dragged right (like) or left (pass) */
-.mn-deckwrap.mn-rq-deck { margin: -36px -16px 0; }
-.mn-scroll:has(.mn-rq-deck) { overflow-y: hidden; overscroll-behavior: none; }   /* the pile is sized to the screen, so the page itself never scrolls (the liked grid after it still does) */
+/* the pill that floats at the bottom of 速查 once something is picked: opens the swipe page */
+.mn-app .mn-rq-go { position: sticky; bottom: 12px; z-index: 5; display: flex; align-items: center; justify-content: center; gap: 8px; width: calc(100% - 24px); max-width: 360px; height: 46px; margin: 14px auto 0; padding: 0 18px; border-radius: 23px; background: var(--mn-accent); color: var(--text-on-accent, #fff); border: 0; font-size: 15px; font-weight: 800; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28); }
+.mn-rq-go svg { width: 18px; height: 18px; }
+.mn-rq-go.is-hidden { display: none; }
+.mn-rq-end { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }   /* the page never scrolls; the liked list does */
 .mn-rq-deck .mn-sl-card { position: relative; }   /* the ♥ / ✕ stamp sits over it */   /* the lift room lets a tilted card pass over the count line, like the Handbook bars */
 .mn-sl-face.mn-rq-face { justify-content: flex-start; overflow-y: auto; overscroll-behavior: contain; padding: 14px 14px 18px; scrollbar-width: none; }
 .mn-rq-face::-webkit-scrollbar { display: none; }   /* it scrolls by finger; a bar on the card spoils the swipe */
