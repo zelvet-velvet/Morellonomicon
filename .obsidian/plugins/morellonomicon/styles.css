@@ -1108,3 +1108,52 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-btns.is-left .mn-rq-yes, .mn-rq-btns.is-right .mn-rq-no { opacity: 0; transform: scale(0.6); }
 .mn-app .mn-rq-btns.is-left .mn-rq-no { transform: scale(1.15); background: #fff; color: #111; }
 .mn-app .mn-rq-btns.is-right .mn-rq-yes { transform: scale(1.15); background: #ff4458; color: #fff; }
+
+/* Picks (B+): the hand of picked champions on top, faces with your mastery, one floating capsule at the bottom */
+.mn-rq-hhead { display: flex; align-items: baseline; justify-content: space-between; margin: 4px 2px 8px; }
+.mn-rq-hn, .mn-rq-lab { font-size: 12px; font-weight: 800; letter-spacing: 0.12em; color: var(--mn-muted); }
+.mn-rq-lab { margin: 16px 2px 0; }
+.mn-app .mn-rq-hclear { height: auto; padding: 2px 4px; border: 0; background: none; box-shadow: none; font-size: 13px; font-weight: 700; color: var(--mn-muted); }
+.mn-rq-hclear.is-hidden { visibility: hidden; }
+.mn-rq-shelf { display: flex; gap: 10px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; margin: 0 -16px; padding: 2px 16px 6px; }
+.mn-rq-shelf::-webkit-scrollbar { display: none; }
+.mn-rq-mini { position: relative; flex: none; width: 96px; height: 132px; border-radius: 14px; overflow: hidden; background: var(--mn-card); border: 1px solid var(--mn-line); }
+.mn-rq-mini img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+.mn-rq-mini::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(10, 12, 18, 0.9)); pointer-events: none; }
+.mn-rq-mini b { position: absolute; z-index: 1; left: 8px; right: 8px; bottom: 7px; font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mn-rq-mtag { position: absolute; z-index: 1; left: 6px; top: 6px; padding: 1px 6px; border-radius: 8px; font-size: 10px; font-weight: 800; color: #eee; background: rgba(10, 12, 18, 0.7); }
+.mn-rq-mtag.is-high { background: #d9b15c; color: #1a1408; }
+.mn-app .mn-rq-mx { position: absolute; z-index: 2; right: 5px; top: 5px; display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border-radius: 50%; border: 0; box-shadow: none; background: rgba(10, 12, 18, 0.6); color: #fff; }
+.mn-rq-mx svg { width: 14px; height: 14px; }
+.mn-app .mn-rq-mini.is-add { display: grid; place-items: center; height: 132px; padding: 0; background: none; border: 1.5px dashed var(--mn-line); box-shadow: none; color: var(--mn-muted); }
+.mn-rq-mini.is-add::after { content: none; }
+.mn-rq-mini.is-add svg { width: 26px; height: 26px; }
+/* mastery on the faces: a level tag from 5, gold ring and tag from 10 */
+.mn-face-m { position: absolute; right: -4px; bottom: -3px; min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; border-radius: 9px; font-size: 10.5px; font-weight: 800; line-height: 16px; text-align: center;
+    color: var(--mn-text); background: var(--mn-card-hi); border: 1px solid var(--mn-line); }
+.mn-face-m.is-high { background: #d9b15c; color: #1a1408; border-color: #d9b15c; }
+.mn-face.is-m10 img { box-shadow: 0 0 0 2px #d9b15c; }
+.mn-face.is-m10.is-pick img { box-shadow: 0 0 0 2px var(--mn-accent), 0 0 0 4px #d9b15c; }
+/* result rows while typing */
+.mn-faces.is-rows { display: flex; flex-direction: column; gap: 6px; }
+.mn-app .mn-rq-res { display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 12px 0 8px; border-radius: 14px; border: 1px solid var(--mn-line); background: var(--mn-card); box-shadow: none; text-align: left; }
+.mn-rq-res > img { width: 40px; height: 40px; border-radius: 10px; flex: none; }
+.mn-rq-rw { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.mn-rq-rw b { font-size: 15px; color: var(--mn-text); }
+.mn-rq-rw span { font-size: 12px; color: var(--mn-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mn-rq-rm { flex: none; padding: 1px 7px; border-radius: 9px; font-size: 11px; font-weight: 800; background: var(--mn-card-hi); color: var(--mn-text); }
+.mn-rq-rm.is-high { background: #d9b15c; color: #1a1408; }
+.mn-rq-radd { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--mn-card-hi); color: var(--mn-accent); }
+.mn-rq-radd svg { width: 18px; height: 18px; }
+.mn-rq-res.is-pick .mn-rq-radd { background: var(--mn-accent); color: var(--text-on-accent, #fff); }
+/* the capsule: floats over the bottom (above the tab bar), "did you mean" chips just above it */
+.mn-rq-dock { position: sticky; bottom: 10px; z-index: 5; display: flex; flex-direction: column; gap: 8px; margin: 16px 0 0; }
+.mn-rq-dock .mn-rq-sugg { padding: 0 4px; }
+.mn-rq-cap { display: flex; align-items: center; gap: 6px; height: 56px; padding: 0 6px 0 14px; border-radius: 28px; background: color-mix(in srgb, var(--mn-card) 82%, transparent);
+    border: 1px solid var(--mn-line); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.mn-rq-cap-ic svg { width: 18px; height: 18px; color: var(--mn-muted); }
+.mn-app .mn-rq-cap input { flex: 1; min-width: 0; height: 40px; border: 0; background: none; box-shadow: none; padding: 0 4px; font-size: 16px; color: var(--mn-text); }
+.mn-app .mn-rq-mic { flex: none; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 0; box-shadow: none; background: var(--mn-card-hi); color: var(--mn-text); }
+.mn-rq-mic svg { width: 18px; height: 18px; }
+.mn-rq-cap .mn-rq-go { height: 44px; }
+.mn-rq-go.is-off { opacity: 0.4; pointer-events: none; }

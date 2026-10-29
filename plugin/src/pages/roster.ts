@@ -159,40 +159,65 @@ export function rosterPage(ctx: PageCtx): PageOut {
     const save = () => { void ctx.plugin.setRoster(picks); };
     const { score, within } = finder(all, store.sounds);
 
-    // the search box on top, then the lane icons and every face (tap to add or remove). Once something is picked a pill floats at the
-    // bottom: it opens the swipe through the picks as a full-screen page of its own.
-    const box = h(el, "div", "mn-search");
-    icon(box, "search", "mn-search-ic");
-    const search = h(box, "input");
-    search.type = "search";
-    search.placeholder = "輸入英雄名字,或按鍵盤上的 🎤 說出來";
-    search.setAttribute("enterkeyhint", "search");
-    const suggest = h(el, "div", "mn-chips mn-rq-sugg");
+    // B+ (Review: Picks page ideas): your hand of picked champions as a shelf of small art cards on top, then the lane icons and every
+    // face (your mastery on each), and at the bottom, where the thumb is, one floating capsule: search with a mic, and 開始滑.
+    // While something is typed the faces turn into result rows.
+    const head = h(el, "div", "mn-rq-hhead");
+    const handN = h(head, "span", "mn-rq-hn");
+    const clearAll = h(head, "button", "mn-rq-hclear", "清除");
+    clearAll.addEventListener("click", (e) => { e.preventDefault(); picks = []; save(); drawCount(); drawGrid(); if (query) drawSuggest(); });
+    const shelf = h(el, "div", "mn-rq-shelf");
+    h(el, "div", "mn-rq-lab", "加入英雄 · 依分路");
     const lanes = fgrid(el, LANES.length);
     lanes.addClass("mn-rq-lanes");
     const grid = h(el, "div", "mn-faces");
-    // the bar floating over the bottom once something is picked: the picked faces stacked with their count, a quiet clear button
-    // and the start button
-    const bar = h(el, "div", "mn-rq-gobar");
-    const faces = h(bar, "div", "mn-rq-stack");
-    const n = h(bar, "div", "mn-rq-n");
-    const clearAll = h(bar, "button", "mn-rq-clear");
-    icon(clearAll, "trash-2");
-    clearAll.setAttribute("aria-label", "全部清除");
-    clearAll.addEventListener("click", (e) => { e.preventDefault(); picks = []; save(); drawCount(); drawGrid(); if (query) drawSuggest(); });
-    const go = h(bar, "button", "mn-rq-go");
+    const dock = h(el, "div", "mn-rq-dock");
+    const suggest = h(dock, "div", "mn-chips mn-rq-sugg");
+    const cap = h(dock, "div", "mn-rq-cap");
+    icon(cap, "search", "mn-rq-cap-ic");
+    const search = h(cap, "input");
+    search.type = "search";
+    search.placeholder = "說或打英雄名字";
+    search.setAttribute("enterkeyhint", "search");
+    // a page cannot start the phone's speech input: the mic opens the keyboard on the box, whose own mic key listens
+    const mic = h(cap, "button", "mn-rq-mic");
+    icon(mic, "mic");
+    mic.setAttribute("aria-label", "用鍵盤的麥克風說");
+    mic.addEventListener("click", (e) => { e.preventDefault(); search.focus(); });
+    const go = h(cap, "button", "mn-rq-go");
     h(go, "span", undefined, "開始滑");
     icon(go, "arrow-right");
-    go.addEventListener("click", (e) => { e.preventDefault(); ctx.push({ key: "rosterswipe", title: "速查" }); });
-    const STACK = 4;   // faces shown in the bar; the rest are a +N
+    go.addEventListener("click", (e) => { e.preventDefault(); if (picks.length) ctx.push({ key: "rosterswipe", title: "速查" }); });
+    const loading = (id: string) => `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(id)}_0.jpg`;
+    const masteryTag = (parent: HTMLElement, id: string, cls: string) => {
+        const ms = store.masteryOf(id);
+        if (ms && ms.level >= 5) h(parent, "span", cls + (ms.level >= 10 ? " is-high" : ""), String(ms.level));
+        return ms?.level ?? 0;
+    };
     const drawCount = () => {
-        bar.toggleClass("is-hidden", !picks.length);
-        faces.empty();
-        for (const id of picks.slice(0, STACK)) { const c = all.find((x) => x.id === id); if (c) { const im = h(faces, "img"); im.src = c.icon; im.alt = ""; } }
-        if (picks.length > STACK) h(faces, "span", "mn-rq-more", `+${picks.length - STACK}`);
-        n.empty();
-        h(n, "b", undefined, String(picks.length));
-        h(n, "span", undefined, "位已選");
+        handN.textContent = `你的牌 · ${picks.length} / ${MAX_PICKS}`;
+        clearAll.toggleClass("is-hidden", !picks.length);
+        go.toggleClass("is-off", !picks.length);
+        shelf.empty();
+        for (const id of picks) {
+            const c = all.find((x) => x.id === id);
+            if (!c) continue;
+            const card = h(shelf, "div", "mn-rq-mini");
+            const im = h(card, "img"); im.src = loading(c.id); im.alt = ""; im.loading = "lazy";
+            const ms = store.masteryOf(c.id);
+            if (ms && ms.level >= 5) h(card, "span", "mn-rq-mtag" + (ms.level >= 10 ? " is-high" : ""), `熟練 ${ms.level}`);
+            h(card, "b", undefined, c.name);
+            const x = h(card, "button", "mn-rq-mx");
+            icon(x, "x");
+            x.setAttribute("aria-label", "移除");
+            x.addEventListener("click", (e) => { e.preventDefault(); toggle(c.id); if (query) drawSuggest(); });
+        }
+        // the empty card at the end: tap to type the next name
+        if (picks.length < MAX_PICKS) {
+            const add = h(shelf, "button", "mn-rq-mini is-add");
+            icon(add, "plus");
+            add.addEventListener("click", (e) => { e.preventDefault(); search.focus(); });
+        }
     };
 
     const toggle = (id: string) => {
@@ -251,17 +276,29 @@ export function rosterPage(ctx: PageCtx): PageOut {
             scored.sort((a, b) => b.s - a.s || a.c.name.localeCompare(b.c.name, "zh-Hant"));
             list = scored.map((x) => x.c);
         }
-        grid.toggleClass("is-named", tokens.length > 0);   // a few matches: names under the faces; the whole roster: faces only
-        for (const c of list) {
+        // typing: result rows (face, name, roles and lanes, + or ✓); otherwise every face, with your mastery on it
+        grid.toggleClass("is-rows", tokens.length > 0);
+        for (const c of tokens.length ? list.slice(0, 30) : list) {
             const on = picks.includes(c.id);
+            if (tokens.length) {
+                const r = h(grid, "button", "mn-rq-res" + (on ? " is-pick" : ""));
+                const im = h(r, "img"); im.src = c.icon; im.alt = "";
+                const who = h(r, "span", "mn-rq-rw");
+                h(who, "b", undefined, c.name);
+                h(who, "span", undefined, [c.roles.join(" · "), store.lanes(c).slice(0, 2).join(" · ")].filter(Boolean).join(" ｜ "));
+                masteryTag(r, c.id, "mn-rq-rm");
+                icon(r, on ? "check" : "plus", "mn-rq-radd");
+                r.addEventListener("click", (e) => { e.preventDefault(); pickFromSearch(c.id); });
+                continue;
+            }
             const t = h(grid, "button", "mn-face" + (on ? " is-pick" : ""));
             const im = h(t, "img"); im.src = c.icon; im.alt = c.name;
             if (on) icon(h(t, "span", "mn-pick-ok"), "check");
-            h(t, "span", "mn-face-n", c.name);
+            if (masteryTag(t, c.id, "mn-face-m") >= 10) t.addClass("is-m10");
             holdTip(t, c.name);
             t.addEventListener("click", (e) => { e.preventDefault(); pickFromSearch(c.id); });
         }
-        if (!list.length) empty(grid, { icon: "search-x", title: "找不到這個名字", text: "換個說法再試,或看上面的「你是不是在找」。" });
+        if (!list.length) empty(grid, { icon: "search-x", title: "找不到這個名字", text: "換個說法再試,或看下面的「你是不是在找」。" });
     };
 
     const drawLanes = () => {

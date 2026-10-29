@@ -4245,22 +4245,9 @@ function rosterPage(ctx) {
     void ctx.plugin.setRoster(picks);
   };
   const { score: score2, within } = finder(all, store.sounds);
-  const box = h(el, "div", "mn-search");
-  icon(box, "search", "mn-search-ic");
-  const search = h(box, "input");
-  search.type = "search";
-  search.placeholder = "\u8F38\u5165\u82F1\u96C4\u540D\u5B57,\u6216\u6309\u9375\u76E4\u4E0A\u7684 \u{1F3A4} \u8AAA\u51FA\u4F86";
-  search.setAttribute("enterkeyhint", "search");
-  const suggest2 = h(el, "div", "mn-chips mn-rq-sugg");
-  const lanes = fgrid(el, LANES.length);
-  lanes.addClass("mn-rq-lanes");
-  const grid = h(el, "div", "mn-faces");
-  const bar = h(el, "div", "mn-rq-gobar");
-  const faces = h(bar, "div", "mn-rq-stack");
-  const n = h(bar, "div", "mn-rq-n");
-  const clearAll = h(bar, "button", "mn-rq-clear");
-  icon(clearAll, "trash-2");
-  clearAll.setAttribute("aria-label", "\u5168\u90E8\u6E05\u9664");
+  const head2 = h(el, "div", "mn-rq-hhead");
+  const handN = h(head2, "span", "mn-rq-hn");
+  const clearAll = h(head2, "button", "mn-rq-hclear", "\u6E05\u9664");
   clearAll.addEventListener("click", (e) => {
     e.preventDefault();
     picks = [];
@@ -4269,29 +4256,72 @@ function rosterPage(ctx) {
     drawGrid();
     if (query) drawSuggest();
   });
-  const go = h(bar, "button", "mn-rq-go");
+  const shelf = h(el, "div", "mn-rq-shelf");
+  h(el, "div", "mn-rq-lab", "\u52A0\u5165\u82F1\u96C4 \xB7 \u4F9D\u5206\u8DEF");
+  const lanes = fgrid(el, LANES.length);
+  lanes.addClass("mn-rq-lanes");
+  const grid = h(el, "div", "mn-faces");
+  const dock = h(el, "div", "mn-rq-dock");
+  const suggest2 = h(dock, "div", "mn-chips mn-rq-sugg");
+  const cap = h(dock, "div", "mn-rq-cap");
+  icon(cap, "search", "mn-rq-cap-ic");
+  const search = h(cap, "input");
+  search.type = "search";
+  search.placeholder = "\u8AAA\u6216\u6253\u82F1\u96C4\u540D\u5B57";
+  search.setAttribute("enterkeyhint", "search");
+  const mic = h(cap, "button", "mn-rq-mic");
+  icon(mic, "mic");
+  mic.setAttribute("aria-label", "\u7528\u9375\u76E4\u7684\u9EA5\u514B\u98A8\u8AAA");
+  mic.addEventListener("click", (e) => {
+    e.preventDefault();
+    search.focus();
+  });
+  const go = h(cap, "button", "mn-rq-go");
   h(go, "span", void 0, "\u958B\u59CB\u6ED1");
   icon(go, "arrow-right");
   go.addEventListener("click", (e) => {
     e.preventDefault();
-    ctx.push({ key: "rosterswipe", title: "\u901F\u67E5" });
+    if (picks.length) ctx.push({ key: "rosterswipe", title: "\u901F\u67E5" });
   });
-  const STACK = 4;
+  const loading = (id) => `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(id)}_0.jpg`;
+  const masteryTag = (parent, id, cls) => {
+    const ms = store.masteryOf(id);
+    if (ms && ms.level >= 5) h(parent, "span", cls + (ms.level >= 10 ? " is-high" : ""), String(ms.level));
+    return ms?.level ?? 0;
+  };
   const drawCount = () => {
-    bar.toggleClass("is-hidden", !picks.length);
-    faces.empty();
-    for (const id of picks.slice(0, STACK)) {
-      const c = all.find((x) => x.id === id);
-      if (c) {
-        const im = h(faces, "img");
-        im.src = c.icon;
-        im.alt = "";
-      }
+    handN.textContent = `\u4F60\u7684\u724C \xB7 ${picks.length} / ${MAX_PICKS}`;
+    clearAll.toggleClass("is-hidden", !picks.length);
+    go.toggleClass("is-off", !picks.length);
+    shelf.empty();
+    for (const id of picks) {
+      const c = all.find((x2) => x2.id === id);
+      if (!c) continue;
+      const card = h(shelf, "div", "mn-rq-mini");
+      const im = h(card, "img");
+      im.src = loading(c.id);
+      im.alt = "";
+      im.loading = "lazy";
+      const ms = store.masteryOf(c.id);
+      if (ms && ms.level >= 5) h(card, "span", "mn-rq-mtag" + (ms.level >= 10 ? " is-high" : ""), `\u719F\u7DF4 ${ms.level}`);
+      h(card, "b", void 0, c.name);
+      const x = h(card, "button", "mn-rq-mx");
+      icon(x, "x");
+      x.setAttribute("aria-label", "\u79FB\u9664");
+      x.addEventListener("click", (e) => {
+        e.preventDefault();
+        toggle(c.id);
+        if (query) drawSuggest();
+      });
     }
-    if (picks.length > STACK) h(faces, "span", "mn-rq-more", `+${picks.length - STACK}`);
-    n.empty();
-    h(n, "b", void 0, String(picks.length));
-    h(n, "span", void 0, "\u4F4D\u5DF2\u9078");
+    if (picks.length < MAX_PICKS) {
+      const add = h(shelf, "button", "mn-rq-mini is-add");
+      icon(add, "plus");
+      add.addEventListener("click", (e) => {
+        e.preventDefault();
+        search.focus();
+      });
+    }
   };
   const toggle = (id) => {
     if (picks.includes(id)) picks = picks.filter((p) => p !== id);
@@ -4307,7 +4337,7 @@ function rosterPage(ctx) {
   const pickFromSearch = (id) => {
     const adding = !picks.includes(id);
     toggle(id);
-    if (adding && query && named.every((n2) => picks.includes(n2))) {
+    if (adding && query && named.every((n) => picks.includes(n))) {
       search.value = "";
       query = "";
       drawSuggest();
@@ -4357,22 +4387,38 @@ function rosterPage(ctx) {
       scored.sort((a, b) => b.s - a.s || a.c.name.localeCompare(b.c.name, "zh-Hant"));
       list2 = scored.map((x) => x.c);
     }
-    grid.toggleClass("is-named", tokens.length > 0);
-    for (const c of list2) {
+    grid.toggleClass("is-rows", tokens.length > 0);
+    for (const c of tokens.length ? list2.slice(0, 30) : list2) {
       const on = picks.includes(c.id);
+      if (tokens.length) {
+        const r = h(grid, "button", "mn-rq-res" + (on ? " is-pick" : ""));
+        const im2 = h(r, "img");
+        im2.src = c.icon;
+        im2.alt = "";
+        const who = h(r, "span", "mn-rq-rw");
+        h(who, "b", void 0, c.name);
+        h(who, "span", void 0, [c.roles.join(" \xB7 "), store.lanes(c).slice(0, 2).join(" \xB7 ")].filter(Boolean).join(" \uFF5C "));
+        masteryTag(r, c.id, "mn-rq-rm");
+        icon(r, on ? "check" : "plus", "mn-rq-radd");
+        r.addEventListener("click", (e) => {
+          e.preventDefault();
+          pickFromSearch(c.id);
+        });
+        continue;
+      }
       const t = h(grid, "button", "mn-face" + (on ? " is-pick" : ""));
       const im = h(t, "img");
       im.src = c.icon;
       im.alt = c.name;
       if (on) icon(h(t, "span", "mn-pick-ok"), "check");
-      h(t, "span", "mn-face-n", c.name);
+      if (masteryTag(t, c.id, "mn-face-m") >= 10) t.addClass("is-m10");
       holdTip(t, c.name);
       t.addEventListener("click", (e) => {
         e.preventDefault();
         pickFromSearch(c.id);
       });
     }
-    if (!list2.length) empty(grid, { icon: "search-x", title: "\u627E\u4E0D\u5230\u9019\u500B\u540D\u5B57", text: "\u63DB\u500B\u8AAA\u6CD5\u518D\u8A66,\u6216\u770B\u4E0A\u9762\u7684\u300C\u4F60\u662F\u4E0D\u662F\u5728\u627E\u300D\u3002" });
+    if (!list2.length) empty(grid, { icon: "search-x", title: "\u627E\u4E0D\u5230\u9019\u500B\u540D\u5B57", text: "\u63DB\u500B\u8AAA\u6CD5\u518D\u8A66,\u6216\u770B\u4E0B\u9762\u7684\u300C\u4F60\u662F\u4E0D\u662F\u5728\u627E\u300D\u3002" });
   };
   const drawLanes = () => {
     lanes.empty();
