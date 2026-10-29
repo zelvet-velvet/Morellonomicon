@@ -20,6 +20,14 @@ export const THEMES: Theme[] = [
             accent: "#B5470A", positive: "#3F7A1E", negative: "#B8322A", warning: "#915600", info: "#2D6C8C", orange: "#D9741A", purple: "#8A5DB5", pink: "#C2587A", cyan: "#3F9A8A", line: "rgba(60,48,20,0.13)" },
     },
     {
+        // the dark of the Picks page sketches: blue-black cards, warm cream text and an amber accent
+        id: "draft", name: "Draft Night",
+        dark: { bg: "#12141B", surface: "#1A1D26", surface2: "#252937", text: "#F4F1E8", text2: "#C9C5B8", text3: "#9A97A0", onAccent: "#FFFFFF",
+            accent: "#E38B3A", positive: "#A8C373", negative: "#E06A6A", warning: "#E5B567", info: "#6C99BB", orange: "#E0894A", purple: "#9E86C8", pink: "#B05279", cyan: "#73BBB2", line: "rgba(255,255,255,0.14)" },
+        light: { bg: "#F2F3F6", surface: "#FFFFFF", surface2: "#E6E8EE", text: "#1D2230", text2: "#4A5164", text3: "#5F667A", onAccent: "#FFFFFF",
+            accent: "#B4601C", positive: "#4C7A1E", negative: "#B83A3A", warning: "#8A6100", info: "#2F6588", orange: "#C46A24", purple: "#6E55A8", pink: "#A2406A", cyan: "#2E8A80", line: "rgba(29,34,48,0.14)" },
+    },
+    {
         id: "ocean", name: "Ocean",
         dark: { bg: "#101820", surface: "#1A2530", surface2: "#243241", text: "#EAF1F7", text2: "#A9B8C6", text3: "#7F90A0", onAccent: "#0B1218",
             accent: "#4DB6AC", positive: "#6FCF97", negative: "#EB5757", warning: "#F2C94C", info: "#56CCF2", orange: "#F2994A", purple: "#BB86FC", pink: "#FF7AA8", cyan: "#4DB6AC", line: "rgba(234,241,247,0.11)" },

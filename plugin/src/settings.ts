@@ -15,6 +15,8 @@ export interface MnSettings {
     openOnStartup: boolean;
     read: string[];            // guide cards you have opened (their note paths)
     roster: string[];          // the champions picked in Quick Look (ids), at most 15
+    riotId: string;            // your Riot ID (Name#TAG) for Home; kept in this device's settings only (data.json is git-ignored)
+    riotServer: string;        // the platform, e.g. TW2
 }
 
 export const DEFAULTS: MnSettings = {
@@ -27,6 +29,8 @@ export const DEFAULTS: MnSettings = {
     augmentFolder: "強化",
     patchFolder: "版本更新",
     openOnStartup: Platform.isMobile,
+    riotId: "",
+    riotServer: "TW2",
     read: [],
     roster: [],
 };

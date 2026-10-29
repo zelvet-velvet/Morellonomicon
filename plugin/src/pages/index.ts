@@ -6,6 +6,7 @@ import { augmentsPage } from "./augments";
 import { championCard, championsPage, type SubTab } from "./champions";
 import { augmentPage, itemPage, notePage } from "./detail";
 import { handbookPage } from "./handbook";
+import { homePage } from "./home";
 import { patchPage } from "./patch";
 import { rosterPage, swipePage } from "./roster";
 
@@ -29,6 +30,7 @@ export type PageRender = (ctx: PageCtx) => PageOut;
 
 // One renderer per tab (its first page).
 export const PAGES: Record<TabId, PageRender> = {
+    home: homePage,
     champions: championsPage,
     picks: rosterPage,   // 速查: pick the champions the game gave you, then swipe through them
     augments: augmentsPage,
@@ -44,6 +46,7 @@ export function renderPage(tab: TabId, ctx: PageCtx): PageOut {
         case "item": return itemPage(ctx);
         case "note": return notePage(ctx);
         case "roster": return rosterPage(ctx);
+        case "championlist": return championsPage(ctx);   // the Champions page, opened from Home
         case "rosterswipe": return swipePage(ctx);
         default: return PAGES[tab](ctx);
     }

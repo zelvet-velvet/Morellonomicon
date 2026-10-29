@@ -1157,3 +1157,39 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-mic svg { width: 18px; height: 18px; }
 .mn-rq-cap .mn-rq-go { height: 44px; }
 .mn-rq-go.is-off { opacity: 0.4; pointer-events: none; }
+
+/* Home (pages/home.ts): the hero (profile or the Riot ID box), the two ways in, your top mastery */
+.mn-home-hero { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 230px; margin: 0 -16px; padding: 70px 16px 18px; overflow: hidden; text-align: center; }
+.mn-home-wall { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; z-index: 0;
+    -webkit-mask-image: linear-gradient(180deg, #000 30%, transparent 100%); mask-image: linear-gradient(180deg, #000 30%, transparent 100%); opacity: 0.85; }
+.mn-home-hero > :not(.mn-home-wall) { position: relative; z-index: 1; }
+.mn-app .mn-home-av { display: grid; place-items: center; width: 92px; height: 92px; padding: 0; border-radius: 50%; overflow: hidden; border: 0; background: var(--mn-card-hi);
+    box-shadow: 0 0 0 4px var(--mn-bg), 0 0 0 7px #d9b15c, 0 0 0 10px rgba(217, 177, 92, 0.3); font-size: 34px; font-weight: 800; color: var(--mn-text); }
+.mn-home-av img { width: 100%; height: 100%; object-fit: cover; }
+.mn-home-name { margin-top: 10px; font-size: 22px; font-weight: 800; color: var(--mn-text); text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); }
+.mn-home-name small { margin-left: 4px; font-size: 14px; font-weight: 600; color: var(--mn-muted); }
+.mn-home-sub { font-size: 12.5px; color: var(--mn-muted); }
+.mn-home-menu.is-hidden { display: none; }
+.mn-app .mn-home-menu button { height: 34px; padding: 0 14px; border-radius: 17px; font-size: 13px; }
+.mn-home-hero.is-out { padding-top: 40px; }
+.mn-home-cta { display: flex; flex-direction: column; align-items: stretch; gap: 10px; width: 100%; max-width: 340px; }
+.mn-home-cta b { font-size: 20px; color: var(--mn-text); }
+.mn-home-cta > span { font-size: 13px; color: var(--mn-muted); }
+.mn-app .mn-home-in { height: 44px; border-radius: 12px; font-size: 15px; background: color-mix(in srgb, var(--mn-card) 88%, transparent); border: 1px solid var(--mn-line); color: var(--mn-text); padding: 0 12px; }
+.mn-home-err { min-height: 16px; font-size: 12px; color: var(--color-red); }
+.mn-app .mn-home-go { height: 46px; border-radius: 23px; border: 0; background: var(--mn-accent); color: var(--text-on-accent, #fff); font-size: 16px; font-weight: 800; box-shadow: none; }
+.mn-home-entries { display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; margin: 14px 0 0; }
+.mn-app .mn-home-entry { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: 2px; height: 96px; padding: 12px 14px; border-radius: 18px; text-align: left; white-space: normal;
+    border: 1px solid var(--mn-line); box-shadow: none; background: linear-gradient(135deg, color-mix(in srgb, var(--mn-accent) 22%, var(--mn-card)), var(--mn-card)); }
+.mn-app .mn-home-entry:not(.is-wide) { background: linear-gradient(135deg, color-mix(in srgb, var(--color-cyan) 18%, var(--mn-card)), var(--mn-card)); }
+.mn-home-entry svg { width: 22px; height: 22px; color: var(--mn-text); margin-bottom: auto; }
+.mn-home-entry b { font-size: 17px; color: var(--mn-text); }
+.mn-home-entry span { font-size: 12px; color: var(--mn-muted); }
+.mn-home-lab { margin: 18px 2px 8px; font-size: 12px; font-weight: 800; letter-spacing: 0.12em; color: var(--mn-muted); }
+.mn-home-mast { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.mn-app .mn-home-mc { position: relative; height: 150px; padding: 0; border-radius: 16px; overflow: hidden; border: 1px solid var(--mn-line); box-shadow: none; background: var(--mn-card); }
+.mn-home-mc img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+.mn-home-mc::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(10, 12, 18, 0.9)); }
+.mn-home-mc em { position: absolute; z-index: 1; left: 6px; top: 6px; padding: 1px 7px; border-radius: 9px; font-style: normal; font-size: 11px; font-weight: 800; background: rgba(10, 12, 18, 0.7); color: #eee; }
+.mn-home-mc em.is-high { background: #d9b15c; color: #1a1408; }
+.mn-home-mc b { position: absolute; z-index: 1; left: 8px; bottom: 8px; font-size: 14px; color: #fff; }

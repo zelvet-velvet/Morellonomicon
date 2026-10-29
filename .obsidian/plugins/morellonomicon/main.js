@@ -101,12 +101,12 @@ var import_obsidian = require("obsidian");
 
 // src/modes.ts
 var MODES = {
-  mayhem: { id: "mayhem", label: "Mayhem", icon: "zap", enabled: true, itemFlag: "aram", tabs: ["augments", "patch", "champions", "picks", "handbook"] },
-  rift: { id: "rift", label: "Rift", icon: "map", enabled: false, itemFlag: "rift", tabs: ["patch", "champions", "handbook"] }
+  mayhem: { id: "mayhem", label: "Mayhem", icon: "zap", enabled: true, itemFlag: "aram", tabs: ["augments", "patch", "home", "picks", "handbook"] },
+  rift: { id: "rift", label: "Rift", icon: "map", enabled: false, itemFlag: "rift", tabs: ["patch", "home", "handbook"] }
 };
 var MODE_ORDER = ["mayhem", "rift"];
-var TAB_LABEL = { champions: "Champions", picks: "Picks", augments: "Augments", patch: "Patch", handbook: "Handbook" };
-var TAB_ICON = { champions: "users", picks: "clipboard-edit", augments: "sparkles", patch: "newspaper", handbook: "book-open" };
+var TAB_LABEL = { home: "Home", champions: "Champions", picks: "Picks", augments: "Augments", patch: "Patch", handbook: "Handbook" };
+var TAB_ICON = { home: "house", champions: "users", picks: "clipboard-edit", augments: "sparkles", patch: "newspaper", handbook: "book-open" };
 
 // src/data/store.ts
 function withOnHit(skills2, keys) {
@@ -428,17 +428,20 @@ var STACK_TTL = 30 * 60 * 1e3;
 var Router = class {
   constructor(app) {
     this.app = app;
-    this.tab = "champions";
+    this.tab = "home";
     this.stacks = {};
     try {
       const s = this.app.loadLocalStorage(KEY);
-      if (s && Date.now() - s.t < STACK_TTL && s.stacks?.[this.tab]) this.stacks = { [this.tab]: s.stacks[this.tab] };
+      if (s && Date.now() - s.t < STACK_TTL) {
+        this.tab = s.tab;
+        this.stacks = s.stacks ?? {};
+      }
     } catch {
     }
   }
   // the open tab must exist in the current mode
   fix(tabs) {
-    if (!tabs.includes(this.tab)) this.tab = tabs[0] ?? "champions";
+    if (!tabs.includes(this.tab)) this.tab = tabs.includes("home") ? "home" : tabs[0] ?? "home";
   }
   reset() {
     this.stacks = {};
@@ -1203,6 +1206,49 @@ var THEMES = [
     }
   },
   {
+    // the dark of the Picks page sketches: blue-black cards, warm cream text and an amber accent
+    id: "draft",
+    name: "Draft Night",
+    dark: {
+      bg: "#12141B",
+      surface: "#1A1D26",
+      surface2: "#252937",
+      text: "#F4F1E8",
+      text2: "#C9C5B8",
+      text3: "#9A97A0",
+      onAccent: "#FFFFFF",
+      accent: "#E38B3A",
+      positive: "#A8C373",
+      negative: "#E06A6A",
+      warning: "#E5B567",
+      info: "#6C99BB",
+      orange: "#E0894A",
+      purple: "#9E86C8",
+      pink: "#B05279",
+      cyan: "#73BBB2",
+      line: "rgba(255,255,255,0.14)"
+    },
+    light: {
+      bg: "#F2F3F6",
+      surface: "#FFFFFF",
+      surface2: "#E6E8EE",
+      text: "#1D2230",
+      text2: "#4A5164",
+      text3: "#5F667A",
+      onAccent: "#FFFFFF",
+      accent: "#B4601C",
+      positive: "#4C7A1E",
+      negative: "#B83A3A",
+      warning: "#8A6100",
+      info: "#2F6588",
+      orange: "#C46A24",
+      purple: "#6E55A8",
+      pink: "#A2406A",
+      cyan: "#2E8A80",
+      line: "rgba(29,34,48,0.14)"
+    }
+  },
+  {
     id: "ocean",
     name: "Ocean",
     dark: {
@@ -1366,6 +1412,8 @@ var DEFAULTS = {
   augmentFolder: "\u5F37\u5316",
   patchFolder: "\u7248\u672C\u66F4\u65B0",
   openOnStartup: import_obsidian4.Platform.isMobile,
+  riotId: "",
+  riotServer: "TW2",
   read: [],
   roster: []
 };
@@ -3980,6 +4028,118 @@ function recipe(el, ctx, title, items) {
   }
 }
 
+// src/pages/home.ts
+var SERVERS = [["TW2", "\u53F0\u7063"], ["JP1", "\u65E5\u672C"], ["KR", "\u97D3\u570B"], ["SG2", "\u65B0\u52A0\u5761"], ["VN2", "\u8D8A\u5357"], ["NA1", "\u5317\u7F8E"], ["EUW1", "\u897F\u6B50"], ["EUN1", "\u5317\u6B50\u6771\u6B50"], ["OC1", "\u5927\u6D0B\u6D32"]];
+var TOP = 3;
+function homePage(ctx) {
+  const store = ctx.plugin.store;
+  const s = ctx.plugin.settings;
+  const el = page("Home");
+  const all = store.champions();
+  const byId = new Map(all.map((c) => [c.id, c]));
+  const top = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).slice(0, TOP);
+  const hero = h(el, "div", "mn-home-hero");
+  if (!s.riotId) {
+    hero.addClass("is-out");
+    const bg = h(hero, "img", "mn-home-wall");
+    bg.src = mapUrl("habackground");
+    bg.alt = "";
+    const box = h(hero, "div", "mn-home-cta");
+    h(box, "b", void 0, "\u9023\u7D50\u4F60\u7684\u53EC\u559A\u5E2B");
+    h(box, "span", void 0, "\u8F38\u5165 Riot ID,\u770B\u4F60\u7684\u982D\u50CF\u3001\u7B49\u7D1A\u3001\u724C\u4F4D\u548C\u6700\u8FD1\u5C0D\u6230");
+    const id = h(box, "input", "mn-home-in");
+    id.type = "text";
+    id.placeholder = "\u904A\u6232\u540D\u7A31#\u6A19\u7C64";
+    id.autocapitalize = "off";
+    id.spellcheck = false;
+    const server = h(box, "select", "mn-home-in");
+    for (const [v, name] of SERVERS) {
+      const o = h(server, "option", void 0, `${name} ${v}`);
+      o.value = v;
+    }
+    server.value = s.riotServer || "TW2";
+    const err = h(box, "span", "mn-home-err");
+    const go = h(box, "button", "mn-home-go", "\u9023\u7D50");
+    go.addEventListener("click", (e) => {
+      e.preventDefault();
+      const v = id.value.trim().replace(/＃/g, "#");
+      if (!/^[^#]{3,16}#[^#]{2,5}$/.test(v)) {
+        err.textContent = "\u683C\u5F0F\u662F \u540D\u7A31#\u6A19\u7C64,\u4F8B\u5982 Zaviel#TW2";
+        return;
+      }
+      s.riotId = v;
+      s.riotServer = server.value;
+      void ctx.plugin.saveData(s).then(() => ctx.goTab("home"));
+    });
+  } else {
+    const [name, tag] = s.riotId.split("#");
+    const best = top[0] ? byId.get(top[0][0]) : void 0;
+    if (best) {
+      const bg = h(hero, "img", "mn-home-wall");
+      bg.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(best.id)}_0.jpg`;
+      bg.alt = "";
+    }
+    const av = h(hero, "button", "mn-home-av");
+    if (best) {
+      const im = h(av, "img");
+      im.src = best.icon;
+      im.alt = "";
+    } else h(av, "span", void 0, (name ?? "?").slice(0, 1));
+    av.setAttribute("aria-label", "\u66F4\u63DB Riot ID");
+    h(hero, "div", "mn-home-name").append(name ?? "", h(null, "small", void 0, `#${tag ?? ""}`));
+    h(hero, "div", "mn-home-sub", `${SERVERS.find((x) => x[0] === s.riotServer)?.[1] ?? s.riotServer} \xB7 \u982D\u50CF\u3001\u7B49\u7D1A\u3001\u724C\u4F4D\u5F85\u63A5\u4E0A Riot`);
+    const menu = h(hero, "div", "mn-home-menu is-hidden");
+    const out = h(menu, "button", void 0, "\u66F4\u63DB / \u767B\u51FA");
+    out.addEventListener("click", (e) => {
+      e.preventDefault();
+      s.riotId = "";
+      void ctx.plugin.saveData(s).then(() => ctx.goTab("home"));
+    });
+    av.addEventListener("click", (e) => {
+      e.preventDefault();
+      menu.toggleClass("is-hidden", !menu.hasClass("is-hidden"));
+    });
+  }
+  const entries = h(el, "div", "mn-home-entries");
+  const champs = h(entries, "button", "mn-home-entry is-wide");
+  icon(champs, "users");
+  h(champs, "b", void 0, "Champions");
+  h(champs, "span", void 0, `${all.length} \u4F4D\u82F1\u96C4 \xB7 \u7BE9\u9078`);
+  champs.addEventListener("click", (e) => {
+    e.preventDefault();
+    ctx.push({ key: "championlist", title: "Champions" });
+  });
+  const read = new Set(s.read);
+  const next = store.guideNotes().find((n) => n.layout === "deck" && !read.has(n.file.path));
+  const book = h(entries, "button", "mn-home-entry");
+  icon(book, "book-open");
+  h(book, "b", void 0, "Handbook");
+  h(book, "span", void 0, next ? `\u7E7C\u7E8C:${next.title}` : "\u5168\u90E8\u8B80\u5B8C\u4E86");
+  book.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (next) ctx.openNote(next.file.path);
+    else ctx.goTab("handbook");
+  });
+  if (top.length) {
+    h(el, "div", "mn-home-lab", "\u719F\u7DF4\u5EA6");
+    const row2 = h(el, "div", "mn-home-mast");
+    for (const [id, m] of top) {
+      const c = byId.get(id);
+      const card = h(row2, "button", "mn-home-mc");
+      const im = h(card, "img");
+      im.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(id)}_0.jpg`;
+      im.alt = "";
+      h(card, "em", m.level >= 10 ? "is-high" : void 0, `M${m.level}`);
+      h(card, "b", void 0, c.name);
+      card.addEventListener("click", (e) => {
+        e.preventDefault();
+        ctx.openChampion(id);
+      });
+    }
+  }
+  return { title: "Home", el };
+}
+
 // src/pages/patch.ts
 var LEGEND = "\u25B2 \u589E\u5F37 \xB7 \u25BC \u524A\u5F31 \xB7 \u25C6 \u6709\u589E\u6709\u6E1B \xB7 \u25CF \u8ABF\u6574\u3002\u65B9\u5411\u662F\u4F9D\u6578\u5B57\u8B8A\u5316\u63A8\u6E2C\u7684,\u4E0D\u662F\u5B98\u65B9\u6A19\u793A\u3002";
 function patchPage(ctx) {
@@ -4743,6 +4903,7 @@ function swipePage(ctx) {
 
 // src/pages/index.ts
 var PAGES = {
+  home: homePage,
   champions: championsPage,
   picks: rosterPage,
   // 速查: pick the champions the game gave you, then swipe through them
@@ -4762,6 +4923,9 @@ function renderPage(tab, ctx) {
       return notePage(ctx);
     case "roster":
       return rosterPage(ctx);
+    case "championlist":
+      return championsPage(ctx);
+    // the Champions page, opened from Home
     case "rosterswipe":
       return swipePage(ctx);
     default:

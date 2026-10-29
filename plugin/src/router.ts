@@ -6,24 +6,23 @@ export interface Frame { key: string; title: string; params?: Record<string, str
 
 interface Saved { tab: TabId; stacks: Partial<Record<TabId, Frame[]>>; t: number }
 const KEY = "morellonomicon-nav";
-const STACK_TTL = 30 * 60 * 1000;   // detail pages are restored for 30 minutes after a restart; the app always starts on Champions
+const STACK_TTL = 30 * 60 * 1000;   // reopened within 30 minutes (the phone reloaded Obsidian in the background): the same tab and page; later: a cold start on Home
 
 // Which tab is open and the page stack of every tab. Plain state, no DOM.
 export class Router {
-    tab: TabId = "champions";
+    tab: TabId = "home";
     private stacks: Partial<Record<TabId, Frame[]>> = {};
 
     constructor(private app: App) {
         try {
             const s = this.app.loadLocalStorage(KEY) as Saved | null;
-            // the app always starts on the Champions tab; only the detail pages opened before are brought back
-            // only the pages opened on the tab the app starts on come back (a topic left open on another tab starts at its home)
-            if (s && Date.now() - s.t < STACK_TTL && s.stacks?.[this.tab]) this.stacks = { [this.tab]: s.stacks[this.tab] };
+            // like any phone app: coming back soon after leaving shows the same tab and page; a cold start opens Home
+            if (s && Date.now() - s.t < STACK_TTL) { this.tab = s.tab; this.stacks = s.stacks ?? {}; }
         } catch { /* fresh start */ }
     }
 
     // the open tab must exist in the current mode
-    fix(tabs: TabId[]): void { if (!tabs.includes(this.tab)) this.tab = tabs[0] ?? "champions"; }
+    fix(tabs: TabId[]): void { if (!tabs.includes(this.tab)) this.tab = tabs.includes("home") ? "home" : (tabs[0] ?? "home"); }
 
     reset(): void { this.stacks = {}; this.save(); }
     stack(tab: TabId = this.tab): Frame[] { return (this.stacks[tab] ??= []); }

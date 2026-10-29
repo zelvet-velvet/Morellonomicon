@@ -1,7 +1,7 @@
 // A game mode is the one switch that changes what the app shows. Mayhem is built first; Rift has its slot so that
 // adding it later means filling in `enabled`, the item filter and the per-mode sections, not restructuring the app.
 export type ModeId = "mayhem" | "rift";
-export type TabId = "champions" | "picks" | "augments" | "patch" | "handbook";
+export type TabId = "home" | "champions" | "picks" | "augments" | "patch" | "handbook";   // champions: no longer in the bar (Home opens it), kept for saved state
 
 export interface ModeDef {
     id: ModeId;
@@ -13,10 +13,10 @@ export interface ModeDef {
 }
 
 export const MODES: Record<ModeId, ModeDef> = {
-    mayhem: { id: "mayhem", label: "Mayhem", icon: "zap", enabled: true, itemFlag: "aram", tabs: ["augments", "patch", "champions", "picks", "handbook"] },
-    rift: { id: "rift", label: "Rift", icon: "map", enabled: false, itemFlag: "rift", tabs: ["patch", "champions", "handbook"] },
+    mayhem: { id: "mayhem", label: "Mayhem", icon: "zap", enabled: true, itemFlag: "aram", tabs: ["augments", "patch", "home", "picks", "handbook"] },
+    rift: { id: "rift", label: "Rift", icon: "map", enabled: false, itemFlag: "rift", tabs: ["patch", "home", "handbook"] },
 };
 export const MODE_ORDER: ModeId[] = ["mayhem", "rift"];
 
-export const TAB_LABEL: Record<TabId, string> = { champions: "Champions", picks: "Picks", augments: "Augments", patch: "Patch", handbook: "Handbook" };
-export const TAB_ICON: Record<TabId, string> = { champions: "users", picks: "clipboard-edit", augments: "sparkles", patch: "newspaper", handbook: "book-open" };
+export const TAB_LABEL: Record<TabId, string> = { home: "Home", champions: "Champions", picks: "Picks", augments: "Augments", patch: "Patch", handbook: "Handbook" };
+export const TAB_ICON: Record<TabId, string> = { home: "house", champions: "users", picks: "clipboard-edit", augments: "sparkles", patch: "newspaper", handbook: "book-open" };
