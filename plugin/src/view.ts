@@ -11,6 +11,7 @@ export const VIEW_TYPE = "morellonomicon";
 
 // The app screen: top bar (back, title, mode switch), page area, tab bar. A page is drawn in one step when a tab, a detail page
 // or the data changes; scroll positions are kept per page so Back returns to where you were.
+const KEYBOARD_BLUR_MS = 250;     // after the box loses the focus: time for a tap on the capsule's chips to land first
 const KEYBOARD_SETTLE_MS = 700;   // how long after a tap in a search box iOS's own scroll to it is undone (the keyboard's slide)
 const OVERLAY_PAGES = new Set(["champion"]);
 const IMMERSIVE_PAGES = new Set(["rosterswipe"]);   // full screen: no top bar at all (速查's swipe, like Tinder)
@@ -80,42 +81,33 @@ export class MnView extends ItemView {
         modeBtn.addEventListener("click", (e) => { e.preventDefault(); this.modeMenu(e); });
         this.modeBtn = modeBtn;
         this.scrollEl = h(app, "div", "mn-scroll");
-        // the phone's keyboard: while a floating search capsule (Picks, Champions) is being typed in, it is pinned to the bottom of
-        // the part of the screen that is still visible, like Safari's bar. The visible part is window.visualViewport: iOS either pans the
-        // page or shrinks Obsidian for the keyboard, and the app itself (fixed to the large viewport) does not change, so the capsule is
-        // placed from the visible part, not from the app. --mn-vvbottom is that part's bottom edge (styles.css: .is-kb)
-        const vv = window.visualViewport;
-        const place = () => { if (vv) app.style.setProperty("--mn-vvbottom", `${Math.round(vv.offsetTop + vv.height)}px`); };
-        const typing = (e: FocusEvent) => (e.target as HTMLElement | null)?.closest?.(".mn-rq-dock") != null;
-        // iOS scrolls the list and pans the page to bring the tapped box into view (the box is about to be pinned above the keyboard
-        // anyway): both are undone for the first moments after the tap, so the list stays where it was
-        this.registerDomEvent(app, "focusin", (e) => {
-            if (!typing(e)) return;
-            place(); app.addClass("is-kb");
+        // the phone's keyboard: a floating search capsule (Picks, Champions) moves to the top of the screen while it is typed in, where the
+        // keyboard never covers it (iOS inside Obsidian does not say reliably where the keyboard is). It moves on the first touch, before
+        // the box gets the focus, so iOS has no reason to scroll the list to show the box; the list's place is also kept while the keyboard
+        // slides up. It goes back when the focus leaves the capsule (a tap on its chips or filter sheet keeps it up).
+        const dockOf = (n: EventTarget | null) => (n as HTMLElement | null)?.closest?.(".mn-rq-dock") as HTMLElement | null;
+        let typingDock: HTMLElement | null = null;
+        const lift = (d: HTMLElement) => {
+            if (typingDock === d) return;
+            typingDock?.removeClass("is-typing");
+            typingDock = d; d.addClass("is-typing"); app.addClass("is-kb");
             const keep = this.scrollEl.scrollTop, until = Date.now() + KEYBOARD_SETTLE_MS;
             const hold = () => {
                 if (this.scrollEl.scrollTop !== keep) this.scrollEl.scrollTop = keep;
                 if (window.scrollY) window.scrollTo(0, 0);
-                place();
                 if (Date.now() < until) requestAnimationFrame(hold);
             };
             requestAnimationFrame(hold);
-        });
-        this.registerDomEvent(app, "focusout", (e) => { if (typing(e)) app.removeClass("is-kb"); });
-        // when the page neither pans nor shrinks, the app's own keyboard event (Obsidian's Capacitor shell) says how tall the keyboard is
-        const shown = (e: Event) => {
-            const kh = (e as Event & { keyboardHeight?: number }).keyboardHeight ?? 0;
-            if (kh > 0 && vv && vv.offsetTop + vv.height >= window.innerHeight - 1) app.style.setProperty("--mn-vvbottom", `${Math.round(window.innerHeight - kh)}px`);
         };
-        window.addEventListener("keyboardWillShow", shown);
-        window.addEventListener("keyboardDidShow", shown);
-        window.addEventListener("keyboardWillHide", place);
-        this.register(() => { window.removeEventListener("keyboardWillShow", shown); window.removeEventListener("keyboardDidShow", shown); window.removeEventListener("keyboardWillHide", place); });
-        if (vv) {
-            vv.addEventListener("resize", place);
-            vv.addEventListener("scroll", place);
-            this.register(() => { vv.removeEventListener("resize", place); vv.removeEventListener("scroll", place); });
-        }
+        const drop = () => { typingDock?.removeClass("is-typing"); typingDock = null; app.removeClass("is-kb"); };
+        this.registerDomEvent(app, "pointerdown", (e) => {
+            const d = dockOf(e.target);
+            if (d && (e.target as HTMLElement).closest("input")) lift(d);
+        }, { capture: true });
+        this.registerDomEvent(app, "focusin", (e) => { const d = dockOf(e.target); if (d && (e.target as HTMLElement).matches("input")) lift(d); });
+        this.registerDomEvent(app, "focusout", () => {
+            window.setTimeout(() => { if (typingDock && !typingDock.contains(document.activeElement)) drop(); }, KEYBOARD_BLUR_MS);
+        });
         this.registerDomEvent(this.scrollEl, "scroll", () => this.markScrolled(), { passive: true });
         // pictures added to a page after it showed (cards built later, lazy ones) fade in instead of popping in
         const late = new MutationObserver((list) => {
