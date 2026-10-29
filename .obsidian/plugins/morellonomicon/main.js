@@ -997,6 +997,10 @@ function iconsBlock(source, el) {
     probe.style.color = `var(${c})`;
     return getComputedStyle(probe).color;
   };
+  const hex = (rgb) => {
+    const m = rgb.match(/\d+(?:\.\d+)?/g);
+    return m && m.length >= 3 ? "#" + m.slice(0, 3).map((n) => Math.round(Number(n)).toString(16).padStart(2, "0")).join("") : "";
+  };
   const list2 = el.createDiv({ cls: "mn-iclist" });
   for (const line of source.split("\n")) {
     const [label = "", name = "", colour = ""] = line.split("|").map((s) => s.trim());
@@ -1010,7 +1014,8 @@ function iconsBlock(source, el) {
     row2.createSpan({ cls: "mn-iclabel", text: label });
     row2.createEl("code", { cls: known(name) ? "mn-icname" : "mn-icname mn-icbad", text: name || "(no icon)" });
     row2.createSpan({ cls: "mn-icsw", attr: { style: COLOUR.test(colour) ? `background:${resolve(colour)}` : "visibility:hidden" } });
-    row2.createEl("code", { cls: "mn-iccol", text: colour });
+    row2.createEl("code", { cls: "mn-iccol", text: colour.startsWith("--") ? colour : "" });
+    row2.createEl("code", { cls: "mn-ichex", text: COLOUR.test(colour) ? hex(resolve(colour)) : "" });
   }
   probe.remove();
 }

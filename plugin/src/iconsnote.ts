@@ -15,6 +15,10 @@ function iconsBlock(source: string, el: HTMLElement): void {
     const known = (n: string) => ids.has(n) || ids.has(`lucide-${n}`);
     const probe = document.body.createDiv({ cls: "mn-app mn-icprobe" });   // attached to the page: a detached element has no computed colour
     const resolve = (c: string): string => { if (!c.startsWith("--")) return c; probe.style.color = `var(${c})`; return getComputedStyle(probe).color; };
+    const hex = (rgb: string): string => {   // "rgb(224, 137, 74)" -> "#e0894a"
+        const m = rgb.match(/\d+(?:\.\d+)?/g);
+        return m && m.length >= 3 ? "#" + m.slice(0, 3).map((n) => Math.round(Number(n)).toString(16).padStart(2, "0")).join("") : "";
+    };
     const list = el.createDiv({ cls: "mn-iclist" });
     for (const line of source.split("\n")) {
         const [label = "", name = "", colour = ""] = line.split("|").map((s) => s.trim());
@@ -26,7 +30,8 @@ function iconsBlock(source: string, el: HTMLElement): void {
         row.createSpan({ cls: "mn-iclabel", text: label });
         row.createEl("code", { cls: known(name) ? "mn-icname" : "mn-icname mn-icbad", text: name || "(no icon)" });
         row.createSpan({ cls: "mn-icsw", attr: { style: COLOUR.test(colour) ? `background:${resolve(colour)}` : "visibility:hidden" } });
-        row.createEl("code", { cls: "mn-iccol", text: colour });
+        row.createEl("code", { cls: "mn-iccol", text: colour.startsWith("--") ? colour : "" });
+        row.createEl("code", { cls: "mn-ichex", text: COLOUR.test(colour) ? hex(resolve(colour)) : "" });
     }
     probe.remove();
 }
