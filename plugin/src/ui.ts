@@ -163,15 +163,24 @@ function pendingBackgrounds(host: HTMLElement): Promise<void>[] {
     }
     return out;
 }
-export function blockLoad(host: HTMLElement): void {
-    const pending = Array.from(host.querySelectorAll<HTMLImageElement>("img")).filter((im) => im.src && !im.complete);
-    const waits = [...pending.map((im) => new Promise<void>((done) => {
-        im.addEventListener("load", () => done(), { once: true });
-        im.addEventListener("error", () => done(), { once: true });
-    })), ...pendingBackgrounds(host)];
-    const st = blockState.get(host);
-    if (!waits.length) { if (st && st.open <= 0) lift(host, st); return; }   // redrawn with every picture already there
-    blockUntil(host, Promise.all(waits).then(() => undefined), host.classList.contains("mn-blk") ? 0 : BLOCK_DELAY_MS);
+// Several hosts drawn together (the blocks of a page that just opened) load as one: each keeps its loading look until the pictures of
+// all of them are in, so a block whose pictures were already there does not show sharp beside one still loading.
+export function blockLoad(host: HTMLElement | HTMLElement[]): void {
+    const hosts = Array.isArray(host) ? host : [host];
+    const waits = hosts.flatMap((one) => [
+        ...Array.from(one.querySelectorAll<HTMLImageElement>("img")).filter((im) => im.src && !im.complete).map((im) => new Promise<void>((done) => {
+            im.addEventListener("load", () => done(), { once: true });
+            im.addEventListener("error", () => done(), { once: true });
+        })),
+        ...pendingBackgrounds(one),
+    ]);
+    if (!waits.length) {   // redrawn with every picture already there
+        for (const one of hosts) { const st = blockState.get(one); if (st && st.open <= 0) lift(one, st); }
+        return;
+    }
+    const all = Promise.all(waits).then(() => undefined);
+    const delay = hosts.some((one) => one.classList.contains("mn-blk")) ? 0 : BLOCK_DELAY_MS;
+    for (const one of hosts) blockUntil(one, all, delay);
 }
 
 // A block as the Layouts note defines it (Dev Tools/Layouts.md: the title row, a grid, a shelf, a hero...). Marking its element is
@@ -192,7 +201,17 @@ export function autoLoading(root: HTMLElement): MutationObserver {
     const seen = new WeakSet<HTMLImageElement>();
     // the Layouts blocks that something was added to: checked once after this round of changes
     const blocks = new Set<HTMLElement>();
-    const flush = () => { for (const b of blocks) if (b.isConnected) blockLoad(b); blocks.clear(); };
+    // the blocks of one page that changed in the same round load together (a page that just opened: all of its blocks)
+    const flush = () => {
+        const byPage = new Map<Element, HTMLElement[]>();
+        for (const b of blocks) {
+            if (!b.isConnected) continue;
+            const pg = b.closest(".mn-page") ?? b;
+            byPage.set(pg, [...(byPage.get(pg) ?? []), b]);
+        }
+        blocks.clear();
+        for (const group of byPage.values()) blockLoad(group);
+    };
     const queue = (b: HTMLElement) => {
         if (b.closest(".mn-noauto, .mn-pager")) return;
         if (!blocks.size) window.setTimeout(flush, 0);

@@ -673,17 +673,24 @@ function pendingBackgrounds(host) {
   return out;
 }
 function blockLoad(host) {
-  const pending = Array.from(host.querySelectorAll("img")).filter((im) => im.src && !im.complete);
-  const waits = [...pending.map((im) => new Promise((done) => {
-    im.addEventListener("load", () => done(), { once: true });
-    im.addEventListener("error", () => done(), { once: true });
-  })), ...pendingBackgrounds(host)];
-  const st = blockState.get(host);
+  const hosts = Array.isArray(host) ? host : [host];
+  const waits = hosts.flatMap((one) => [
+    ...Array.from(one.querySelectorAll("img")).filter((im) => im.src && !im.complete).map((im) => new Promise((done) => {
+      im.addEventListener("load", () => done(), { once: true });
+      im.addEventListener("error", () => done(), { once: true });
+    })),
+    ...pendingBackgrounds(one)
+  ]);
   if (!waits.length) {
-    if (st && st.open <= 0) lift(host, st);
+    for (const one of hosts) {
+      const st = blockState.get(one);
+      if (st && st.open <= 0) lift(one, st);
+    }
     return;
   }
-  blockUntil(host, Promise.all(waits).then(() => void 0), host.classList.contains("mn-blk") ? 0 : BLOCK_DELAY_MS);
+  const all = Promise.all(waits).then(() => void 0);
+  const delay = hosts.some((one) => one.classList.contains("mn-blk")) ? 0 : BLOCK_DELAY_MS;
+  for (const one of hosts) blockUntil(one, all, delay);
 }
 function layoutBlock(el) {
   el.classList.add("mn-lb");
@@ -694,8 +701,14 @@ function autoLoading(root) {
   const seen = /* @__PURE__ */ new WeakSet();
   const blocks = /* @__PURE__ */ new Set();
   const flush = () => {
-    for (const b of blocks) if (b.isConnected) blockLoad(b);
+    const byPage = /* @__PURE__ */ new Map();
+    for (const b of blocks) {
+      if (!b.isConnected) continue;
+      const pg = b.closest(".mn-page") ?? b;
+      byPage.set(pg, [...byPage.get(pg) ?? [], b]);
+    }
     blocks.clear();
+    for (const group2 of byPage.values()) blockLoad(group2);
   };
   const queue = (b) => {
     if (b.closest(".mn-noauto, .mn-pager")) return;
