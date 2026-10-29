@@ -6,7 +6,7 @@ import { augmentsPage } from "./augments";
 import { championCard, championsPage, type SubTab } from "./champions";
 import { augmentPage, itemPage, notePage } from "./detail";
 import { handbookPage } from "./handbook";
-import { homePage } from "./home";
+import { gamesPage, homePage } from "./home";
 import { patchPage } from "./patch";
 import { rosterPage, swipePage } from "./roster";
 
@@ -46,7 +46,8 @@ export function renderPage(tab: TabId, ctx: PageCtx): PageOut {
         case "item": return itemPage(ctx);
         case "note": return notePage(ctx);
         case "roster": return rosterPage(ctx);
-        case "championlist": return championsPage(ctx);   // the Champions page, opened from Home
+        case "championlist": return championsPage(ctx);
+        case "games": return gamesPage(ctx);   // the Champions page, opened from Home
         case "rosterswipe": return swipePage(ctx);
         default: return PAGES[tab](ctx);
     }

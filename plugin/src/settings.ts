@@ -17,6 +17,7 @@ export interface MnSettings {
     roster: string[];          // the champions picked in Quick Look (ids), at most 15
     riotId: string;            // your Riot ID (Name#TAG) for Home; kept in this device's settings only (data.json is git-ignored)
     riotServer: string;        // the platform, e.g. TW2
+    riotKey: string;           // your Riot API key (Home's profile); in data.json, which is git-ignored: never in the repo
     wallpaper: string;         // Home's background, "<champion id>_<skin number>"; empty: your top mastery champion's newest skin
 }
 
@@ -32,6 +33,7 @@ export const DEFAULTS: MnSettings = {
     openOnStartup: Platform.isMobile,
     riotId: "",
     riotServer: "TW2",
+    riotKey: "",
     wallpaper: "",
     read: [],
     roster: [],
@@ -63,6 +65,9 @@ export class MnSettingTab extends PluginSettingTab {
         folder("Augment folder", "Notes made by tools/fetch_augments.py", "augmentFolder");
         folder("Patch notes folder", "Our own patch notes (frontmatter: patch, date, title, summary)", "patchFolder");
         folder("Guide folder", "Beginner guide notes", "guideFolder");
+        // Home's profile: the key is kept on this device only (data.json is git-ignored) and shown as dots
+        new Setting(c).setName("Riot API key").setDesc("For Home: your avatar, rank, mastery and recent games. From developer.riotgames.com (a development key expires every 24 hours; a personal key does not). Stays on this device.")
+            .addText((x) => { x.inputEl.type = "password"; x.setPlaceholder("RGAPI-…").setValue(s.riotKey).onChange(async (v) => { s.riotKey = v.trim(); await this.plugin.saveData(s); }); });
         new Setting(c).setName("Open on startup").setDesc("Show the app when Obsidian starts (on by default on a phone).")
             .addToggle((x) => x.setValue(s.openOnStartup).onChange(async (v) => { s.openOnStartup = v; await save(); }));
         // which way this phone gives the tick on the button bars, if any (see haptic in ui.ts)

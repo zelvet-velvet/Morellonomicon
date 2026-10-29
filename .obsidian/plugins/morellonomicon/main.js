@@ -23,7 +23,7 @@ __export(main_exports, {
   default: () => MorellonomiconPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian11 = require("obsidian");
+var import_obsidian12 = require("obsidian");
 
 // src/data/sound.ts
 function loose(s) {
@@ -1414,6 +1414,7 @@ var DEFAULTS = {
   openOnStartup: import_obsidian4.Platform.isMobile,
   riotId: "",
   riotServer: "TW2",
+  riotKey: "",
   wallpaper: "",
   read: [],
   roster: []
@@ -1451,6 +1452,13 @@ var MnSettingTab = class extends import_obsidian4.PluginSettingTab {
     folder("Augment folder", "Notes made by tools/fetch_augments.py", "augmentFolder");
     folder("Patch notes folder", "Our own patch notes (frontmatter: patch, date, title, summary)", "patchFolder");
     folder("Guide folder", "Beginner guide notes", "guideFolder");
+    new import_obsidian4.Setting(c).setName("Riot API key").setDesc("For Home: your avatar, rank, mastery and recent games. From developer.riotgames.com (a development key expires every 24 hours; a personal key does not). Stays on this device.").addText((x) => {
+      x.inputEl.type = "password";
+      x.setPlaceholder("RGAPI-\u2026").setValue(s.riotKey).onChange(async (v) => {
+        s.riotKey = v.trim();
+        await this.plugin.saveData(s);
+      });
+    });
     new import_obsidian4.Setting(c).setName("Open on startup").setDesc("Show the app when Obsidian starts (on by default on a phone).").addToggle((x) => x.setValue(s.openOnStartup).onChange(async (v) => {
       s.openOnStartup = v;
       await save();
@@ -1464,7 +1472,7 @@ var MnSettingTab = class extends import_obsidian4.PluginSettingTab {
 };
 
 // src/view.ts
-var import_obsidian10 = require("obsidian");
+var import_obsidian11 = require("obsidian");
 
 // src/pages/augments.ts
 var RARITIES = ["\u9280", "\u91D1", "\u7A1C\u93E1"];
@@ -4029,6 +4037,101 @@ function recipe(el, ctx, title, items) {
   }
 }
 
+// src/data/riot.ts
+var import_obsidian9 = require("obsidian");
+var KEY2 = "morellonomicon-profile";
+var PROFILE_FRESH = 10 * 60 * 1e3;
+var GAMES = 10;
+var REGION = {
+  TW2: { account: "asia", match: "sea" },
+  SG2: { account: "asia", match: "sea" },
+  VN2: { account: "asia", match: "sea" },
+  OC1: { account: "americas", match: "sea" },
+  JP1: { account: "asia", match: "asia" },
+  KR: { account: "asia", match: "asia" },
+  NA1: { account: "americas", match: "americas" },
+  EUW1: { account: "europe", match: "europe" },
+  EUN1: { account: "europe", match: "europe" }
+};
+var QUEUE = { 400: "\u4E00\u822C", 430: "\u4E00\u822C", 490: "\u5FEB\u901F\u5C0D\u6230", 420: "\u55AE/\u96D9\u6392", 440: "\u5F48\u6027\u7A4D\u5206", 450: "\u96A8\u6A5F\u55AE\u4E2D", 2400: "\u5927\u6DF7\u6230", 900: "\u963F\u798F\u5FEB\u6253", 1700: "\u7AF6\u6280\u5834", 1900: "\u963F\u798F\u5FEB\u6253", 830: "\u4EBA\u6A5F", 840: "\u4EBA\u6A5F", 850: "\u4EBA\u6A5F" };
+var RiotError = class extends Error {
+};
+function cachedProfile(app, riotId) {
+  try {
+    const p = app.loadLocalStorage(KEY2);
+    return p && p.riotId === riotId ? p : null;
+  } catch {
+    return null;
+  }
+}
+async function fetchProfile(app, riotId, server, key) {
+  if (!key) throw new RiotError("\u9084\u6C92\u8A2D\u5B9A Riot API \u91D1\u9470(\u8A2D\u5B9A \u2192 Riot API key)");
+  const [name, tag] = riotId.split("#");
+  const reg = REGION[server] ?? REGION.TW2;
+  const plat = server.toLowerCase();
+  const get = async (host, path) => {
+    const r = await (0, import_obsidian9.requestUrl)({ url: `https://${host}.api.riotgames.com${path}`, headers: { "X-Riot-Token": key }, throw: false });
+    if (r.status === 200) return r.json;
+    if (r.status === 401 || r.status === 403) throw new RiotError("\u91D1\u9470\u7121\u6548\u6216\u5DF2\u904E\u671F(\u958B\u767C\u91D1\u9470\u6BCF 24 \u5C0F\u6642\u8981\u63DB)");
+    if (r.status === 404) throw new RiotError("\u627E\u4E0D\u5230\u9019\u500B Riot ID,\u6AA2\u67E5\u540D\u7A31\u3001\u6A19\u7C64\u548C\u4F3A\u670D\u5668");
+    if (r.status === 429) throw new RiotError("\u67E5\u592A\u591A\u6B21\u4E86,\u7B49\u4E00\u5169\u5206\u9418\u518D\u8A66");
+    throw new RiotError(`Riot \u56DE\u61C9\u932F\u8AA4 ${r.status}`);
+  };
+  const acc = await get(reg.account, `/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name ?? "")}/${encodeURIComponent(tag ?? "")}`);
+  const id = encodeURIComponent(acc.puuid);
+  const [sum, leagues, mastery, ids] = await Promise.all([
+    get(plat, `/lol/summoner/v4/summoners/by-puuid/${id}`),
+    get(plat, `/lol/league/v4/entries/by-puuid/${id}`),
+    get(plat, `/lol/champion-mastery/v4/champion-masteries/by-puuid/${id}/top?count=3`),
+    get(reg.match, `/lol/match/v5/matches/by-puuid/${id}/ids?count=${GAMES}`)
+  ]);
+  const games = [];
+  for (const m of ids) {
+    try {
+      const g = await get(reg.match, `/lol/match/v5/matches/${encodeURIComponent(m)}`);
+      const p = g.info.participants.find((x) => x.puuid === acc.puuid);
+      if (!p) continue;
+      games.push({
+        id: m,
+        queue: g.info.queueId,
+        end: g.info.gameEndTimestamp,
+        duration: g.info.gameDuration,
+        champion: p.championName,
+        win: p.win,
+        k: p.kills,
+        d: p.deaths,
+        a: p.assists,
+        cs: p.totalMinionsKilled + p.neutralMinionsKilled,
+        items: [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5].filter((x) => x > 0)
+      });
+    } catch (e) {
+      if (e instanceof RiotError && /太多次/.test(e.message)) break;
+    }
+  }
+  const prof = {
+    riotId,
+    fetched: Date.now(),
+    name: acc.gameName,
+    tag: acc.tagLine,
+    icon: sum.profileIconId,
+    level: sum.summonerLevel,
+    ranks: leagues.map((l) => ({ queue: l.queueType, tier: l.tier, division: l.rank, lp: l.leaguePoints, wins: l.wins, losses: l.losses })),
+    mastery: mastery.map((x) => ({ championKey: x.championId, level: x.championLevel, points: x.championPoints })),
+    games
+  };
+  try {
+    app.saveLocalStorage(KEY2, prof);
+  } catch {
+  }
+  return prof;
+}
+var TIER = { IRON: "\u9435\u724C", BRONZE: "\u9285\u724C", SILVER: "\u9280\u724C", GOLD: "\u91D1\u724C", PLATINUM: "\u767D\u91D1", EMERALD: "\u7FE1\u7FE0", DIAMOND: "\u947D\u77F3", MASTER: "\u5927\u5E2B", GRANDMASTER: "\u5B97\u5E2B", CHALLENGER: "\u83C1\u82F1" };
+var emblem = (tier) => `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests/${tier.toLowerCase()}.png`;
+var ago = (t) => {
+  const m = Math.round((Date.now() - t) / 6e4);
+  return m < 60 ? `${Math.max(1, m)} \u5206\u9418\u524D` : m < 1440 ? `${Math.round(m / 60)} \u5C0F\u6642\u524D` : `${Math.round(m / 1440)} \u5929\u524D`;
+};
+
 // src/pages/home.ts
 var SERVERS = [["TW2", "\u53F0\u7063"], ["JP1", "\u65E5\u672C"], ["KR", "\u97D3\u570B"], ["SG2", "\u65B0\u52A0\u5761"], ["VN2", "\u8D8A\u5357"], ["NA1", "\u5317\u7F8E"], ["EUW1", "\u897F\u6B50"], ["EUN1", "\u5317\u6B50\u6771\u6B50"], ["OC1", "\u5927\u6D0B\u6D32"]];
 var TOP = 3;
@@ -4038,7 +4141,12 @@ function homePage(ctx) {
   const el = page("Home");
   const all = store.champions();
   const byId = new Map(all.map((c) => [c.id, c]));
-  const top = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).slice(0, TOP);
+  const prof = s.riotId ? cachedProfile(ctx.app, s.riotId) : null;
+  const byKey = new Map(all.map((c) => [c.key, c]));
+  let top = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).slice(0, TOP);
+  if (prof?.mastery.length) top = prof.mastery.filter((m) => byKey.has(m.championKey)).map((m) => [byKey.get(m.championKey).id, { level: m.level, points: m.points, last: "" }]);
+  const patch = all[0]?.patch ?? "";
+  const dd = (path) => `https://ddragon.leagueoflegends.com/cdn/${patch}/img/${path}`;
   const hero = h(el, "div", "mn-home-hero");
   if (!s.riotId) {
     hero.addClass("is-out");
@@ -4083,15 +4191,36 @@ function homePage(ctx) {
       bg.alt = "";
     }
     const av = h(hero, "button", "mn-home-av");
-    if (best) {
+    if (prof) {
+      const im = h(av, "img");
+      im.src = dd(`profileicon/${prof.icon}.png`);
+      im.alt = "";
+    } else if (best) {
       const im = h(av, "img");
       im.src = best.icon;
       im.alt = "";
     } else h(av, "span", void 0, (name ?? "?").slice(0, 1));
     av.setAttribute("aria-label", "\u66F4\u63DB Riot ID");
-    h(hero, "div", "mn-home-name").append(name ?? "", h(null, "small", void 0, `#${tag ?? ""}`));
-    h(hero, "div", "mn-home-sub", `${SERVERS.find((x) => x[0] === s.riotServer)?.[1] ?? s.riotServer} \xB7 \u982D\u50CF\u3001\u7B49\u7D1A\u3001\u724C\u4F4D\u5F85\u63A5\u4E0A Riot`);
+    if (prof) h(hero, "div", "mn-home-lvl", String(prof.level));
+    h(hero, "div", "mn-home-name").append(prof?.name ?? name ?? "", h(null, "small", void 0, `#${prof?.tag ?? tag ?? ""}`));
+    const where = SERVERS.find((x) => x[0] === s.riotServer)?.[1] ?? s.riotServer;
+    const sub = h(hero, "div", "mn-home-sub", prof ? `${where} \xB7 ${ago(prof.fetched)}\u66F4\u65B0` : s.riotKey ? `${where} \xB7 \u8B80\u53D6\u4E2D\u2026` : `${where} \xB7 \u8A2D\u5B9A\u88E1\u586B Riot API \u91D1\u9470\u5F8C\u986F\u793A\u982D\u50CF\u3001\u724C\u4F4D\u3001\u5C0D\u6230`);
+    const refresh = () => {
+      sub.textContent = `${where} \xB7 \u8B80\u53D6\u4E2D\u2026`;
+      fetchProfile(ctx.app, s.riotId, s.riotServer, s.riotKey).then(() => {
+        if (el.isConnected) ctx.goTab("home");
+      }).catch((err) => {
+        sub.textContent = err instanceof RiotError ? err.message : "\u9023\u4E0D\u4E0A Riot,\u7A0D\u5F8C\u518D\u8A66";
+        sub.addClass("is-err");
+      });
+    };
+    if (s.riotKey && (!prof || Date.now() - prof.fetched > PROFILE_FRESH)) refresh();
     const menu = h(hero, "div", "mn-home-menu is-hidden");
+    const again = h(menu, "button", void 0, "\u91CD\u65B0\u6574\u7406");
+    again.addEventListener("click", (e) => {
+      e.preventDefault();
+      refresh();
+    });
     const wallBtn = h(menu, "button", void 0, "\u63DB\u80CC\u666F");
     const out = h(menu, "button", void 0, "\u66F4\u63DB / \u767B\u51FA");
     const picker = h(el, "div", "mn-home-pick is-hidden");
@@ -4152,6 +4281,21 @@ function homePage(ctx) {
       menu.toggleClass("is-hidden", !menu.hasClass("is-hidden"));
     });
   }
+  if (prof?.ranks.length) {
+    const ranks = h(el, "div", "mn-home-ranks");
+    for (const q of ["RANKED_SOLO_5x5", "RANKED_FLEX_SR"]) {
+      const r = prof.ranks.find((x) => x.queue === q);
+      const t = h(ranks, "div", "mn-home-rank");
+      if (r) {
+        const im = h(t, "img");
+        im.src = emblem(r.tier);
+        im.alt = "";
+      }
+      const tx = h(t, "div");
+      h(tx, "b", void 0, r ? `${TIER[r.tier] ?? r.tier} ${["MASTER", "GRANDMASTER", "CHALLENGER"].includes(r.tier) ? "" : r.division} \xB7 ${r.lp} LP` : "\u672A\u5B9A\u7D1A");
+      h(tx, "span", void 0, `${q === "RANKED_SOLO_5x5" ? "\u55AE/\u96D9\u6392" : "\u5F48\u6027"}${r ? ` \xB7 ${r.wins} \u52DD ${r.losses} \u6557` : ""}`);
+    }
+  }
   const entries = h(el, "div", "mn-home-entries");
   const champs = h(entries, "button", "mn-home-entry is-wide");
   icon(champs, "users");
@@ -4189,7 +4333,56 @@ function homePage(ctx) {
       });
     }
   }
+  if (prof?.games.length) {
+    const lab = h(el, "div", "mn-home-lab mn-home-labrow");
+    h(lab, "span", void 0, "\u6700\u8FD1\u5C0D\u6230");
+    const more = h(lab, "button", "mn-home-more", "\u66F4\u591A");
+    more.addEventListener("click", (e) => {
+      e.preventDefault();
+      ctx.push({ key: "games", title: "\u6700\u8FD1\u5C0D\u6230" });
+    });
+    const list2 = h(el, "div", "mn-home-games");
+    for (const g of prof.games.slice(0, HOME_GAMES)) gameRow(ctx, list2, g, false);
+  }
   return { title: "Home", el };
+}
+var HOME_GAMES = 4;
+function gameRow(ctx, parent, g, full) {
+  const c = ctx.plugin.store.champions().find((x) => x.id.toLowerCase() === g.champion.toLowerCase());
+  const r = h(parent, "button", "mn-game" + (g.win ? " is-win" : " is-loss") + (full ? " is-full" : ""));
+  const im = h(r, "img");
+  im.src = c?.icon ?? "";
+  im.alt = "";
+  const tx = h(r, "div", "mn-game-t");
+  h(tx, "b", void 0, `${c?.name ?? g.champion} \xB7 ${g.k}/${g.d}/${g.a}`);
+  h(tx, "span", void 0, [QUEUE[g.queue] ?? "\u5176\u4ED6", ago(g.end), full ? `${Math.round(g.duration / 60)} \u5206 \xB7 ${g.cs} \u5175` : ""].filter(Boolean).join(" \xB7 "));
+  if (full && g.items.length) {
+    const items = h(tx, "div", "mn-game-items");
+    for (const id of g.items) {
+      const x = h(items, "img");
+      x.src = `https://ddragon.leagueoflegends.com/cdn/${ctx.plugin.store.champions()[0]?.patch ?? ""}/img/item/${id}.png`;
+      x.alt = "";
+      x.loading = "lazy";
+    }
+  }
+  h(r, "span", "mn-game-wl", g.win ? "\u52DD" : "\u6557");
+  if (c) r.addEventListener("click", (e) => {
+    e.preventDefault();
+    ctx.openChampion(c.id);
+  });
+}
+function gamesPage(ctx) {
+  const el = page("\u6700\u8FD1\u5C0D\u6230");
+  const prof = cachedProfile(ctx.app, ctx.plugin.settings.riotId);
+  if (!prof?.games.length) {
+    h(el, "p", "mn-home-sub", "\u9084\u6C92\u6709\u5C0D\u6230\u8CC7\u6599:\u5728 Home \u9023\u7D50 Riot ID \u4E26\u8A2D\u5B9A\u91D1\u9470\u3002");
+    return { title: "\u6700\u8FD1\u5C0D\u6230", el };
+  }
+  const wins = prof.games.filter((g) => g.win).length;
+  h(el, "div", "mn-home-sub", `\u6700\u8FD1 ${prof.games.length} \u5834 \xB7 ${wins} \u52DD ${prof.games.length - wins} \u6557 \xB7 ${ago(prof.fetched)}\u66F4\u65B0`);
+  const list2 = h(el, "div", "mn-home-games");
+  for (const g of prof.games) gameRow(ctx, list2, g, true);
+  return { title: "\u6700\u8FD1\u5C0D\u6230", el };
 }
 
 // src/pages/patch.ts
@@ -4317,7 +4510,7 @@ function mayhemSection(el, ctx, n) {
 }
 
 // src/pages/roster.ts
-var import_obsidian9 = require("obsidian");
+var import_obsidian10 = require("obsidian");
 var MAX_PICKS = 15;
 var SPLIT = /[\s,，、;；和跟與及]+/;
 var swipeAt = 0;
@@ -4538,7 +4731,7 @@ function rosterPage(ctx) {
   const toggle = (id) => {
     if (picks.includes(id)) picks = picks.filter((p) => p !== id);
     else if (picks.length >= MAX_PICKS) {
-      new import_obsidian9.Notice(`\u6700\u591A\u9078 ${MAX_PICKS} \u4F4D`);
+      new import_obsidian10.Notice(`\u6700\u591A\u9078 ${MAX_PICKS} \u4F4D`);
       return;
     } else picks = [...picks, id];
     save();
@@ -4977,6 +5170,8 @@ function renderPage(tab, ctx) {
       return rosterPage(ctx);
     case "championlist":
       return championsPage(ctx);
+    case "games":
+      return gamesPage(ctx);
     // the Champions page, opened from Home
     case "rosterswipe":
       return swipePage(ctx);
@@ -5006,7 +5201,7 @@ function arrive(page2, anim) {
   const from = anim === "push" ? "translateX(28px)" : anim === "back" ? "translateX(-28px)" : "translateY(10px)";
   page2.animate([{ opacity: 0, transform: from }, { opacity: 1, transform: "none" }], { duration: ARRIVE_MS, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" });
 }
-var MnView = class extends import_obsidian10.ItemView {
+var MnView = class extends import_obsidian11.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.plugin = plugin;
@@ -5039,7 +5234,7 @@ var MnView = class extends import_obsidian10.ItemView {
     c.addClass("mn-host");
     const app = h(c, "div", "mn-app");
     this.appEl = app;
-    app.toggleClass("is-full", import_obsidian10.Platform.isMobile);
+    app.toggleClass("is-full", import_obsidian11.Platform.isMobile);
     this.topEl = h(app, "div", "mn-top");
     this.backEl = h(this.topEl, "button", "mn-btn mn-back");
     icon(this.backEl, "chevron-left");
@@ -5098,7 +5293,7 @@ var MnView = class extends import_obsidian10.ItemView {
     for (const [k, v] of Object.entries(vars)) this.appEl.style.setProperty(k, v);
   }
   themeMenu(e) {
-    const menu = new import_obsidian10.Menu();
+    const menu = new import_obsidian11.Menu();
     for (const t of THEMES) menu.addItem((i) => i.setTitle(t.name).setChecked(this.plugin.settings.theme === t.id).onClick(() => {
       this.plugin.settings.theme = t.id;
       void this.plugin.saveTheme();
@@ -5106,7 +5301,7 @@ var MnView = class extends import_obsidian10.ItemView {
     menu.showAtMouseEvent(e);
   }
   modeMenu(e) {
-    const menu = new import_obsidian10.Menu();
+    const menu = new import_obsidian11.Menu();
     for (const id of MODE_ORDER) {
       const m = MODES[id];
       menu.addItem((i) => i.setTitle(m.label + (m.enabled ? "" : " (coming soon)")).setIcon(m.icon).setChecked(this.plugin.settings.mode === id).setDisabled(!m.enabled).onClick(() => {
@@ -5294,7 +5489,7 @@ var MnView = class extends import_obsidian10.ItemView {
 // src/main.ts
 var BOOT_QUIET_MS = 600;
 var BOOT_MAX_MS = 6e3;
-var MorellonomiconPlugin = class extends import_obsidian11.Plugin {
+var MorellonomiconPlugin = class extends import_obsidian12.Plugin {
   constructor() {
     super(...arguments);
     this.settings = { ...DEFAULTS };
@@ -5323,7 +5518,7 @@ var MorellonomiconPlugin = class extends import_obsidian11.Plugin {
   async onload() {
     preloadRoleIcons();
     await this.loadSettings();
-    if (import_obsidian11.Platform.isMobile && this.settings.openOnStartup) document.body.addClass("mn-on", "mn-full");
+    if (import_obsidian12.Platform.isMobile && this.settings.openOnStartup) document.body.addClass("mn-on", "mn-full");
     this.router = new Router(this.app);
     this.store = new Store(this);
     this.registerView(VIEW_TYPE, (leaf) => new MnView(leaf, this));
@@ -5343,7 +5538,7 @@ var MorellonomiconPlugin = class extends import_obsidian11.Plugin {
     this.registerEvent(this.app.vault.on("rename", (f, old) => onFile(f, old)));
     this.registerEvent(this.app.metadataCache.on("resolved", () => this.dataChanged()));
     this.home = createEl("button", { cls: "mn-home", attr: { "aria-label": "Open Morellonomicon" } });
-    (0, import_obsidian11.setIcon)(this.home, "book-open");
+    (0, import_obsidian12.setIcon)(this.home, "book-open");
     this.home.addEventListener("click", (e) => {
       e.preventDefault();
       void this.activate(false);
@@ -5370,9 +5565,9 @@ var MorellonomiconPlugin = class extends import_obsidian11.Plugin {
     const ws = this.app.workspace;
     const on = !!ws.getActiveViewOfType(MnView);
     document.body.toggleClass("mn-on", on);
-    document.body.toggleClass("mn-full", on && import_obsidian11.Platform.isMobile);
-    if (!import_obsidian11.Platform.isMobile) return;
-    const v = ws.getActiveViewOfType(import_obsidian11.View);
+    document.body.toggleClass("mn-full", on && import_obsidian12.Platform.isMobile);
+    if (!import_obsidian12.Platform.isMobile) return;
+    const v = ws.getActiveViewOfType(import_obsidian12.View);
     if (!v || v instanceof MnView || v.leaf.getRoot() !== ws.rootSplit) {
       this.home.remove();
       return;
@@ -5398,7 +5593,7 @@ var MorellonomiconPlugin = class extends import_obsidian11.Plugin {
     const ws = this.app.workspace;
     let leaf = ws.getLeavesOfType(VIEW_TYPE)[0] ?? null;
     if (!leaf) {
-      leaf = ws.getLeaf(startup || import_obsidian11.Platform.isMobile ? false : "tab");
+      leaf = ws.getLeaf(startup || import_obsidian12.Platform.isMobile ? false : "tab");
       await leaf.setViewState({ type: VIEW_TYPE, active: true });
     }
     await ws.revealLeaf(leaf);
@@ -5408,7 +5603,7 @@ var MorellonomiconPlugin = class extends import_obsidian11.Plugin {
   // A note in a tab of its own; a tab that already shows it is brought forward instead of opening a second one
   async openPath(path) {
     const f = this.app.vault.getAbstractFileByPath(path);
-    if (!(f instanceof import_obsidian11.TFile)) return;
+    if (!(f instanceof import_obsidian12.TFile)) return;
     const ws = this.app.workspace;
     const open = ws.getLeavesOfType("markdown").find((l) => l.view.file?.path === path);
     if (open) {

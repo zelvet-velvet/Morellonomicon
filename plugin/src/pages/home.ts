@@ -1,6 +1,7 @@
 import { mapUrl } from "./handbook";
 import type { PageCtx, PageOut } from "./index";
 import { h, icon, page } from "../ui";
+import { PROFILE_FRESH, QUEUE, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, type Profile } from "../data/riot";
 
 // The servers a Riot ID can be on (Riot's platform ids), Taiwan first
 const SERVERS: [string, string][] = [["TW2", "台灣"], ["JP1", "日本"], ["KR", "韓國"], ["SG2", "新加坡"], ["VN2", "越南"], ["NA1", "北美"], ["EUW1", "西歐"], ["EUN1", "北歐東歐"], ["OC1", "大洋洲"]];
@@ -15,7 +16,13 @@ export function homePage(ctx: PageCtx): PageOut {
     const el = page("Home");
     const all = store.champions();
     const byId = new Map(all.map((c) => [c.id, c]));
-    const top = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).slice(0, TOP);
+    // your profile from Riot (cached on this device); its top mastery wins over the mastery file
+    const prof: Profile | null = s.riotId ? cachedProfile(ctx.app, s.riotId) : null;
+    const byKey = new Map(all.map((c) => [c.key, c]));
+    let top = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).slice(0, TOP);
+    if (prof?.mastery.length) top = prof.mastery.filter((m) => byKey.has(m.championKey)).map((m) => [byKey.get(m.championKey)!.id, { level: m.level, points: m.points, last: "" }]);
+    const patch = all[0]?.patch ?? "";
+    const dd = (path: string) => `https://ddragon.leagueoflegends.com/cdn/${patch}/img/${path}`;
 
     const hero = h(el, "div", "mn-home-hero");
     if (!s.riotId) {
@@ -48,11 +55,24 @@ export function homePage(ctx: PageCtx): PageOut {
         const [wid, wn] = s.wallpaper ? s.wallpaper.split("_") : [best?.id ?? "", String(Math.max(0, ...(best?.skins ?? [0])))];
         if (wid) { const bg = h(hero, "img", "mn-home-wall"); bg.src = splash(wid, Number(wn) || 0); bg.alt = ""; }
         const av = h(hero, "button", "mn-home-av");
-        if (best) { const im = h(av, "img"); im.src = best.icon; im.alt = ""; } else h(av, "span", undefined, (name ?? "?").slice(0, 1));
+        if (prof) { const im = h(av, "img"); im.src = dd(`profileicon/${prof.icon}.png`); im.alt = ""; }
+        else if (best) { const im = h(av, "img"); im.src = best.icon; im.alt = ""; } else h(av, "span", undefined, (name ?? "?").slice(0, 1));
         av.setAttribute("aria-label", "更換 Riot ID");
-        h(hero, "div", "mn-home-name").append(name ?? "", h(null, "small", undefined, `#${tag ?? ""}`));
-        h(hero, "div", "mn-home-sub", `${SERVERS.find((x) => x[0] === s.riotServer)?.[1] ?? s.riotServer} · 頭像、等級、牌位待接上 Riot`);
+        if (prof) h(hero, "div", "mn-home-lvl", String(prof.level));
+        h(hero, "div", "mn-home-name").append(prof?.name ?? name ?? "", h(null, "small", undefined, `#${prof?.tag ?? tag ?? ""}`));
+        const where = SERVERS.find((x) => x[0] === s.riotServer)?.[1] ?? s.riotServer;
+        const sub = h(hero, "div", "mn-home-sub", prof ? `${where} · ${ago(prof.fetched)}更新` : s.riotKey ? `${where} · 讀取中…` : `${where} · 設定裡填 Riot API 金鑰後顯示頭像、牌位、對戰`);
+        // fetch when there is nothing yet or it is old; the page redraws itself once it has the new one
+        const refresh = () => {
+            sub.textContent = `${where} · 讀取中…`;
+            fetchProfile(ctx.app, s.riotId, s.riotServer, s.riotKey)
+                .then(() => { if (el.isConnected) ctx.goTab("home"); })
+                .catch((err) => { sub.textContent = err instanceof RiotError ? err.message : "連不上 Riot,稍後再試"; sub.addClass("is-err"); });
+        };
+        if (s.riotKey && (!prof || Date.now() - prof.fetched > PROFILE_FRESH)) refresh();
         const menu = h(hero, "div", "mn-home-menu is-hidden");
+        const again = h(menu, "button", undefined, "重新整理");
+        again.addEventListener("click", (e) => { e.preventDefault(); refresh(); });
         const wallBtn = h(menu, "button", undefined, "換背景");
         const out = h(menu, "button", undefined, "更換 / 登出");
         // the wallpaper picker: your champions (top mastery first, else all), then the chosen one's skins, newest first
@@ -86,6 +106,19 @@ export function homePage(ctx: PageCtx): PageOut {
         av.addEventListener("click", (e) => { e.preventDefault(); menu.toggleClass("is-hidden", !menu.hasClass("is-hidden")); });
     }
 
+    // rank: solo / duo and flex
+    if (prof?.ranks.length) {
+        const ranks = h(el, "div", "mn-home-ranks");
+        for (const q of ["RANKED_SOLO_5x5", "RANKED_FLEX_SR"]) {
+            const r = prof.ranks.find((x) => x.queue === q);
+            const t = h(ranks, "div", "mn-home-rank");
+            if (r) { const im = h(t, "img"); im.src = emblem(r.tier); im.alt = ""; }
+            const tx = h(t, "div");
+            h(tx, "b", undefined, r ? `${TIER[r.tier] ?? r.tier} ${["MASTER", "GRANDMASTER", "CHALLENGER"].includes(r.tier) ? "" : r.division} · ${r.lp} LP` : "未定級");
+            h(tx, "span", undefined, `${q === "RANKED_SOLO_5x5" ? "單/雙排" : "彈性"}${r ? ` · ${r.wins} 勝 ${r.losses} 敗` : ""}`);
+        }
+    }
+
     // the two ways in: Champions (all champions and the filters) and the next Handbook topic
     const entries = h(el, "div", "mn-home-entries");
     const champs = h(entries, "button", "mn-home-entry is-wide");
@@ -114,5 +147,44 @@ export function homePage(ctx: PageCtx): PageOut {
             card.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(id); });
         }
     }
+    // the last games: a few rows here, all of them on the recent games page
+    if (prof?.games.length) {
+        const lab = h(el, "div", "mn-home-lab mn-home-labrow");
+        h(lab, "span", undefined, "最近對戰");
+        const more = h(lab, "button", "mn-home-more", "更多");
+        more.addEventListener("click", (e) => { e.preventDefault(); ctx.push({ key: "games", title: "最近對戰" }); });
+        const list = h(el, "div", "mn-home-games");
+        for (const g of prof.games.slice(0, HOME_GAMES)) gameRow(ctx, list, g, false);
+    }
     return { title: "Home", el };
+}
+
+const HOME_GAMES = 4;   // rows on Home; the rest are on the recent games page
+
+// One game: a win / loss stripe, the champion, K/D/A, the mode and when; `full` adds CS, length and the items
+function gameRow(ctx: PageCtx, parent: HTMLElement, g: Profile["games"][number], full: boolean): void {
+    const c = ctx.plugin.store.champions().find((x) => x.id.toLowerCase() === g.champion.toLowerCase());   // matches spell some ids differently (FiddleSticks)
+    const r = h(parent, "button", "mn-game" + (g.win ? " is-win" : " is-loss") + (full ? " is-full" : ""));
+    const im = h(r, "img"); im.src = c?.icon ?? ""; im.alt = "";
+    const tx = h(r, "div", "mn-game-t");
+    h(tx, "b", undefined, `${c?.name ?? g.champion} · ${g.k}/${g.d}/${g.a}`);
+    h(tx, "span", undefined, [QUEUE[g.queue] ?? "其他", ago(g.end), full ? `${Math.round(g.duration / 60)} 分 · ${g.cs} 兵` : ""].filter(Boolean).join(" · "));
+    if (full && g.items.length) {
+        const items = h(tx, "div", "mn-game-items");
+        for (const id of g.items) { const x = h(items, "img"); x.src = `https://ddragon.leagueoflegends.com/cdn/${ctx.plugin.store.champions()[0]?.patch ?? ""}/img/item/${id}.png`; x.alt = ""; x.loading = "lazy"; }
+    }
+    h(r, "span", "mn-game-wl", g.win ? "勝" : "敗");
+    if (c) r.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); });
+}
+
+// The recent games page: every game Home has
+export function gamesPage(ctx: PageCtx): PageOut {
+    const el = page("最近對戰");
+    const prof = cachedProfile(ctx.app, ctx.plugin.settings.riotId);
+    if (!prof?.games.length) { h(el, "p", "mn-home-sub", "還沒有對戰資料:在 Home 連結 Riot ID 並設定金鑰。"); return { title: "最近對戰", el }; }
+    const wins = prof.games.filter((g) => g.win).length;
+    h(el, "div", "mn-home-sub", `最近 ${prof.games.length} 場 · ${wins} 勝 ${prof.games.length - wins} 敗 · ${ago(prof.fetched)}更新`);
+    const list = h(el, "div", "mn-home-games");
+    for (const g of prof.games) gameRow(ctx, list, g, true);
+    return { title: "最近對戰", el };
 }
