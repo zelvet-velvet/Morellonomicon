@@ -11,10 +11,8 @@ export const VIEW_TYPE = "morellonomicon";
 
 // The app screen: top bar (back, title, mode switch), page area, tab bar. A page is drawn in one step when a tab, a detail page
 // or the data changes; scroll positions are kept per page so Back returns to where you were.
-const KEYBOARD_GUESS = 336;      // px: an iPhone keyboard with its word bar, until the real height has been seen once
 const CAPSULE_SLIDE_MS = 450;
 const CAPSULE_CLOSE_MS = 300;
-const KEYBOARD_SHADE_MAX_MS = 900;   // the keyboard panel goes at the latest after this, if Obsidian never shrinks the page    // the capsule's glide down when the keyboard closes (the keyboard's own slide)     // the capsule's slide (styles.css) plus a little: the text cursor stays hidden this long
 const KEYBOARD_GAP = 8;          // px between the search capsule and the keyboard's top edge
 const DOCK_REST = 10;            // px the capsule sits above the scroll area's bottom when nothing covers it (styles.css)
 const KEYBOARD_SETTLE_MS = 700;   // how long after a tap in a search box iOS's own scroll to it is undone (the keyboard's slide)
@@ -100,11 +98,6 @@ export class MnView extends ItemView {
         let settleUntil = 0;
         let lastShift = (() => { try { return Number(localStorage.getItem("mn-kbshift")) || 0; } catch { return 0; } })();
         const readout = h(app, "div", "mn-kbread is-hidden");
-        // the iPhone keyboard is see-through while it slides and looks solid once it has stopped (then Obsidian's plain background is
-        // behind it): a plain panel the keyboard's height rises with it while it slides, so it looks solid all the way
-        const shade = h(app, "div", "mn-kbshade");
-        let lastKb = (() => { try { return Number(localStorage.getItem("mn-kbh")) || KEYBOARD_GUESS; } catch { return KEYBOARD_GUESS; } })();
-        shade.style.height = `${lastKb + KEYBOARD_GAP}px`;
         const visibleBottom = () => {
             const css = parseFloat(getComputedStyle(document.body).getPropertyValue("--keyboard-height")) || 0;
             const tells = [window.innerHeight];
@@ -116,8 +109,6 @@ export class MnView extends ItemView {
         const place = () => {
             if (!typingDock) return;
             const { bottom, css } = visibleBottom();
-            const kb = Math.round(window.innerHeight - bottom);
-            if (kb > 100 && kb !== lastKb) { lastKb = kb; shade.style.height = `${kb + KEYBOARD_GAP}px`; try { localStorage.setItem("mn-kbh", String(kb)); } catch { /* fine */ } }
             const scrollBottom = this.scrollEl.getBoundingClientRect().bottom;
             let shift = Math.max(0, Math.round(scrollBottom - bottom + KEYBOARD_GAP - DOCK_REST));
             if (Date.now() < settleUntil) shift = Math.max(shift, lastShift);   // while the keyboard comes up, never drop below the lift given at the tap
@@ -146,7 +137,6 @@ export class MnView extends ItemView {
             requestAnimationFrame(step);
         };
         const drop = () => {
-            app.removeClass("is-kbshade");
             if (typingDock) { const d = typingDock; moving(d); d.removeClass("is-typing"); glideDown(d); }
             typingDock = null; readout.addClass("is-hidden");
         };
@@ -154,13 +144,6 @@ export class MnView extends ItemView {
             if (typingDock === d) return;
             restTop = d.getBoundingClientRect().top;   // where it sits with no keyboard: where it glides back to
             typingDock = d; d.addClass("is-typing"); moving(d);
-            // the panel is only there while the keyboard slides: once it has stopped, Obsidian shrinks the screen to above it, and a panel
-            // still pinned to the bottom would sit over the list
-            app.addClass("is-kbshade");
-            const tall = window.innerHeight;
-            const fitted = () => { if (window.innerHeight < tall - 100) { app.removeClass("is-kbshade"); window.removeEventListener("resize", fitted); } };
-            window.addEventListener("resize", fitted);
-            window.setTimeout(() => { app.removeClass("is-kbshade"); window.removeEventListener("resize", fitted); }, KEYBOARD_SHADE_MAX_MS);   // if it never shrinks
             settleUntil = Date.now() + KEYBOARD_SETTLE_MS;
             if (lastShift) d.style.transform = `translateY(${-lastShift}px)`;
             const keep = this.scrollEl.scrollTop;
