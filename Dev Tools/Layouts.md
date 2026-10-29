@@ -11,7 +11,7 @@ Every page of the app as a phone with its blocks, to design and point at problem
 - **Tap** a block to rename it, change its kind (colour; pictures always sit at the back and floating parts in front), set exact x / y / w / h, write a note ("too much space here"), duplicate or delete it.
 - **Groups.** A page named `Home · linked` sits under the big title **Home** as *linked*; a page named just `Picks` is its group's main page. The **+** beside a big title adds a page to that group, and renaming the title renames all its pages.
 - **+ square** on a page adds a block, the bin deletes the page (tap twice), **+ Page** at the end adds one; the page name and its note are editable.
-- A page you changed since Claude last synced the layout is **outlined in the accent colour**; its **reset** takes it back to the synced layout (and clears the outline), and a sync by Claude clears it too.
+- A page you changed since Claude last synced the layout has an **orange frame**; its **reset** takes it back to the synced layout (and clears the outline), and a sync by Claude clears it too.
 - Each page has its own **back** and **forward** steps, **reset** and **save** (lit when the page has changes). Nothing is written into the note until you save that page; unsaved pages stay while Obsidian is open. Drag roughly: when you ask Claude to sync the layout, it tidies the sizes (edges, equal widths, margins, gaps) before applying them, and saves the tidied blocks back here.
 
 ---

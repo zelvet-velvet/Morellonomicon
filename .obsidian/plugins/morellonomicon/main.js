@@ -1314,6 +1314,8 @@ var H = 844;
 var SCALE = 0.78;
 var SNAP = 2;
 var TABBAR = 64;
+var STATUS = 47;
+var CARRIER = "\u4E2D\u83EF\u96FB\u4FE1";
 var SEP = " \xB7 ";
 var KINDS = {
   hero: { color: "#8fb4ee", name: "hero / picture" },
@@ -1522,10 +1524,23 @@ function layoutBlock2(plugin, source, el, ctx) {
     screen2.style.transform = `scale(${SCALE})`;
     screen2.style.width = `${W}px`;
     screen2.style.height = `${H}px`;
+    const sb = screen2.createDiv({ cls: "mn-lay-status" });
+    sb.style.height = `${STATUS}px`;
+    sb.createSpan({ cls: "mn-lay-carrier", text: CARRIER });
+    sb.createDiv({ cls: "mn-lay-notch" });
+    const sig = sb.createDiv({ cls: "mn-lay-sig" });
+    const bars = sig.createSpan({ cls: "mn-lay-bars" });
+    for (let i = 0; i < 4; i++) bars.createEl("i");
+    sig.createSpan({ text: "5G" });
+    sig.createSpan({ cls: "mn-lay-batt" }).createEl("i");
     if (page2.tabbar !== false) {
       const tb = screen2.createDiv({ cls: "mn-lay-tabbar" });
       tb.style.height = `${TABBAR}px`;
-      for (const t of ["Augments", "Patch", "Home", "Picks", "Handbook"]) tb.createSpan({ text: t });
+      for (const t of MODES[plugin.settings.mode].tabs) {
+        const c = tb.createSpan();
+        icon(c, TAB_ICON[t]);
+        c.createSpan({ text: TAB_LABEL[t] });
+      }
     }
     for (const b of page2.blocks) {
       const z = screen2.createDiv({ cls: "mn-lay-z" + (selected?.block === b ? " is-sel" : "") });

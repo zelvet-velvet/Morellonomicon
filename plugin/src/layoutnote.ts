@@ -1,5 +1,6 @@
 import { MarkdownPostProcessorContext, Notice, TFile } from "obsidian";
 import type MorellonomiconPlugin from "./main";
+import { MODES, TAB_ICON, TAB_LABEL } from "./modes";
 import { icon } from "./ui";
 
 // Dev Tools/Layouts.md is a layout editor: a ```mn-layout block holds every page of the app as a phone with colour-coded blocks
@@ -10,8 +11,10 @@ import { icon } from "./ui";
 const W = 390, H = 844;          // the phone, in CSS px (an iPhone 14)
 const SCALE = 0.78;              // drawn at this size
 const SNAP = 2;                  // px the blocks snap to
-const TABBAR = 64;
-const SEP = " · ";               // a page's group and its own name (Home · linked)               // the app's tab bar at the bottom of every page (drawn, not a block)
+const TABBAR = 64;               // the app's tab bar at the bottom of every page (drawn, not a block)
+const STATUS = 47;               // the phone's status bar with the notch at the top (drawn, not a block)
+const CARRIER = "中華電信";
+const SEP = " · ";               // a page's group and its own name (Home · linked)
 export const KINDS: Record<string, { color: string; name: string }> = {
     hero: { color: "#8fb4ee", name: "hero / picture" }, nav: { color: "#9aa3b8", name: "title / nav" }, entry: { color: "#7fd9ad", name: "entries / buttons" },
     list: { color: "#f0cd7a", name: "list / grid" }, info: { color: "#cba8f5", name: "info / stats" }, action: { color: "#f08ab8", name: "input / action" },
@@ -174,7 +177,22 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
         screen.style.transform = `scale(${SCALE})`;
         screen.style.width = `${W}px`;
         screen.style.height = `${H}px`;
-        if (page.tabbar !== false) { const tb = screen.createDiv({ cls: "mn-lay-tabbar" }); tb.style.height = `${TABBAR}px`; for (const t of ["Augments", "Patch", "Home", "Picks", "Handbook"]) tb.createSpan({ text: t }); }
+        // the phone around the page: the status bar with the notch (carrier at the left; signal, 5G and battery at the right) and the
+        // app's tab bar with its icons, in the current mode's order
+        const sb = screen.createDiv({ cls: "mn-lay-status" });
+        sb.style.height = `${STATUS}px`;
+        sb.createSpan({ cls: "mn-lay-carrier", text: CARRIER });
+        sb.createDiv({ cls: "mn-lay-notch" });
+        const sig = sb.createDiv({ cls: "mn-lay-sig" });
+        const bars = sig.createSpan({ cls: "mn-lay-bars" });
+        for (let i = 0; i < 4; i++) bars.createEl("i");
+        sig.createSpan({ text: "5G" });
+        sig.createSpan({ cls: "mn-lay-batt" }).createEl("i");
+        if (page.tabbar !== false) {
+            const tb = screen.createDiv({ cls: "mn-lay-tabbar" });
+            tb.style.height = `${TABBAR}px`;
+            for (const t of MODES[plugin.settings.mode].tabs) { const c = tb.createSpan(); icon(c, TAB_ICON[t]); c.createSpan({ text: TAB_LABEL[t] }); }
+        }
 
         for (const b of page.blocks) {
             const z = screen.createDiv({ cls: "mn-lay-z" + (selected?.block === b ? " is-sel" : "") });

@@ -1222,6 +1222,18 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay-phone { position: relative; flex: none; overflow: hidden; border-radius: 28px; border: 5px solid #2a2d38; background: var(--lay-phone); box-sizing: content-box; }
 .mn-lay-screen { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .mn-lay-tabbar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-around; align-items: center; background: #161922; border-top: 1px solid var(--lay-line); color: var(--lay-dim); font-size: 12px; pointer-events: none; }
+.mn-lay-tabbar > span { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; }
+.mn-lay-tabbar svg { width: 22px; height: 22px; }
+/* the phone's status bar (iPhone with a notch): carrier at the left, signal / 5G / battery at the right */
+.mn-lay-status { position: absolute; z-index: 6; left: 0; right: 0; top: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 22px 0 30px; color: #f2f2f2; font-size: 15px; font-weight: 600; pointer-events: none; }
+.mn-lay-notch { position: absolute; left: 50%; top: 0; width: 210px; height: 32px; margin-left: -105px; border-radius: 0 0 20px 20px; background: #000; }
+.mn-lay-sig { display: flex; align-items: center; gap: 6px; }
+.mn-lay-bars { display: flex; align-items: flex-end; gap: 2px; height: 12px; }
+.mn-lay-bars i { width: 3px; border-radius: 1px; background: #f2f2f2; }
+.mn-lay-bars i:nth-child(1) { height: 4px; } .mn-lay-bars i:nth-child(2) { height: 6px; } .mn-lay-bars i:nth-child(3) { height: 9px; } .mn-lay-bars i:nth-child(4) { height: 12px; }
+.mn-lay-batt { position: relative; width: 25px; height: 12px; border: 1px solid rgba(242, 242, 242, 0.5); border-radius: 4px; padding: 1px; box-sizing: border-box; }
+.mn-lay-batt::after { content: ""; position: absolute; right: -4px; top: 3px; width: 2px; height: 4px; border-radius: 0 1px 1px 0; background: rgba(242, 242, 242, 0.5); }
+.mn-lay-batt i { display: block; width: 70%; height: 100%; border-radius: 2px; background: #f2f2f2; }
 .mn-lay-z { position: absolute; box-sizing: border-box; border: 2px dashed var(--c); border-radius: 14px; background: color-mix(in srgb, var(--c) 10%, transparent); cursor: grab; touch-action: none; }
 .mn-lay-z.is-sel { border-style: solid; background: color-mix(in srgb, var(--c) 22%, transparent); z-index: 2; }
 .mn-lay-tag { position: absolute; left: 8px; right: 8px; top: 5px; display: flex; justify-content: space-between; gap: 6px; font-size: 13px; font-weight: 700; color: var(--c); white-space: nowrap; overflow: hidden; pointer-events: none; }
@@ -1241,8 +1253,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay button.mn-lay-btn.is-dirty { color: var(--interactive-accent); }
 /* keyboard open (view.ts): the capsule being typed in is pinned just above the keyboard, the way Safari's bar is */
 /* Layouts: a page changed since the last sync is outlined in the accent colour (the reset button takes it back) */
-.mn-lay-page.is-changed .mn-lay-phone { border-color: var(--interactive-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--interactive-accent) 30%, transparent); }
-.mn-lay-page.is-changed .mn-lay input.mn-lay-name, .mn-lay-page.is-changed input.mn-lay-name { color: var(--interactive-accent); }
+/* a page changed since the last sync: an orange frame */
+.mn-lay-page.is-changed .mn-lay-phone { border-color: #ff9500; box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.3); }
+.mn-lay-page.is-changed .mn-lay input.mn-lay-name, .mn-lay-page.is-changed input.mn-lay-name { color: #ff9500; }
 .mn-lay-synced { font-size: 12px; color: var(--text-faint); }
 /* typing in a search capsule: it slides up above the keyboard (a transform set by view.ts) */
 .mn-rq-dock.is-typing { z-index: 50; }
