@@ -1215,6 +1215,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-item-tile span { text-align: center; font-size: 11.5px; font-weight: 700; color: var(--mn-text); font-variant-numeric: tabular-nums; }
 .mn-shopic { display: inline-block; flex: none; width: 26px; height: 26px; overflow: hidden; }   /* a game shop icon (shopIcon in ui.ts) */
 :is(.mn-shopic, .mn-shop-sprite) > img { display: block; width: 26px; height: 26px; max-width: none; object-fit: none; }   /* the whole sheet at its own size, shifted to the icon */
+/* sharpened (shopIcon): the icon's shape as a mask over its parent's colour; the plain picture hides */
+:is(.mn-shopic, .mn-shop-sprite).is-sharp { background-color: currentColor; -webkit-mask: var(--mask) center / 100% 100% no-repeat; mask: var(--mask) center / 100% 100% no-repeat; }
+:is(.mn-shopic, .mn-shop-sprite).is-sharp > img { visibility: hidden; }
 .mn-qc-stat .mn-shopic { margin-left: -4px; }
 /* Champions: lanes and the count in one slim bar */
 .mn-lanebar { display: flex; align-items: center; gap: 2px; padding-bottom: 4px; border-bottom: 1px solid var(--mn-line); }

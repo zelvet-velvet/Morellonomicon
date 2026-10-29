@@ -377,14 +377,65 @@ export const REACH_ICON = "ruler";   // 近戰 / 中程 / 遠程
 export const SHOP_SPRITE = "https://raw.communitydragon.org/latest/game/assets/ux/itemshop/itemshop_texture_atlas4.png";
 export const SHOP_ICON_Y = [11.5, 37.5, 63.5, 91.5, 118.5, 147.5, 176.5, 203.5, 231.5, 259.5, 286.5, 314.5, 341.5, 370.5];
 export const SHOP_ICON_X = [12, 38, 64, 92.5, 120.5];
-// One of the shop's icons from that sheet (row: the ITEM_CATS index), plain grey or lit in its colour, in a `size` px square
+// One of the shop's icons from that sheet (row: the ITEM_CATS index), drawn in the colour of its parent (currentColor), so it takes
+// the app's own colours from the Icons note (Dev Tools/Icons.md) instead of the game's: grey when off, its stat's colour when on.
+// The sheet's icons are 26 px; on the device each one is enlarged smoothly and its soft edge hardened (SHOP_SHARP), then used as a
+// mask, so it is crisp at any size. Nothing is stored: the sheet is still shown by address. Until the mask is ready (and if the sheet
+// cannot be read) the plain cropped picture shows, with the loading look like any picture.
+const SHOP_SHARP = { scale: 6, edge: 0.42, steep: 5 };   // enlarge 6×; alpha around 0.42 becomes the edge, 5× steeper
+const SHOP_SHAPE_COL = 0;   // the sheet's plain column: every row has it (the light one lacks 技能急速 and 移動); colour comes from the app
+let shopSheet: Promise<HTMLImageElement | null> | null = null;
+const shopMasks = new Map<number, string>();
+const loadShopSheet = () => (shopSheet ??= new Promise((done) => {
+    const im = new Image();
+    im.crossOrigin = "anonymous";   // CommunityDragon allows it, so the pixels can be read
+    im.onload = () => done(im);
+    im.onerror = () => { shopSheet = null; done(null); };   // asked again next time
+    im.src = SHOP_SPRITE;
+}));
+const shopMask = (sheet: HTMLImageElement, row: number): string => {
+    const known = shopMasks.get(row);
+    if (known) return known;
+    const n = 26 * SHOP_SHARP.scale;
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = n;
+    const g = cv.getContext("2d", { willReadFrequently: true });
+    if (!g) return "";
+    g.imageSmoothingEnabled = true;
+    g.imageSmoothingQuality = "high";
+    g.drawImage(sheet, SHOP_ICON_X[SHOP_SHAPE_COL] - 13, SHOP_ICON_Y[row] - 13, 26, 26, 0, 0, n, n);
+    let url = "";
+    try {
+        const d = g.getImageData(0, 0, n, n), p = d.data;
+        for (let i = 3; i < p.length; i += 4) p[i] = 255 * Math.max(0, Math.min(1, (p[i] / 255 - SHOP_SHARP.edge) * SHOP_SHARP.steep + 0.5));
+        g.putImageData(d, 0, 0);
+        url = cv.toDataURL();
+    } catch { return ""; }   // a sheet that cannot be read: the plain picture stays
+    shopMasks.set(row, url);
+    return url;
+};
 export const shopIcon = (parent: HTMLElement, row: number, lit: boolean, cls = "mn-shopic"): HTMLElement => {
-    // a real picture of the sheet, cropped to the icon (not a CSS background), so it gets the loading look like every other picture
     const el = h(parent, "span", cls);
-    const im = h(el, "img");
+    const im = h(el, "img");   // the plain picture: what the loading look waits for, and the fallback
+    im.crossOrigin = "anonymous";
     im.src = SHOP_SPRITE; im.alt = ""; im.draggable = false;
     im.style.objectPosition = `${-(SHOP_ICON_X[lit ? 2 : 0] - 13)}px ${-(SHOP_ICON_Y[row] - 13)}px`;
+    const sharpen = (sheet: HTMLImageElement | null) => {
+        const url = sheet ? shopMask(sheet, row) : "";
+        if (!url) return;
+        el.style.setProperty("--mask", `url("${url}")`);
+        el.classList.add("is-sharp");
+    };
+    const ready = shopMasks.get(row);
+    if (ready) { el.style.setProperty("--mask", `url("${ready}")`); el.classList.add("is-sharp"); }
+    else void loadShopSheet().then(sharpen);
     return el;
+};
+// The rail's colour for each filter when it is on (the Icons note's colours; 魔力 and 法術穿透 chosen by Claude, see Dev Tools/Icons.md)
+export const ITEM_CAT_COLOR: Record<string, string> = {
+    攻擊力: "var(--mn-phys)", 暴擊: "var(--mn-exec)", 攻速: "var(--mn-true)", 攻擊特效: "var(--mn-onhit)", 物理穿透: "var(--mn-aa)", 法術強度: "var(--mn-magic)",
+    魔力: "var(--mn-magic)", 法術穿透: "var(--mn-weak)", 生命: "var(--mn-heal)", 護甲: "var(--mn-guard)", 魔防: "var(--mn-shield)", 技能急速: "var(--mn-haste)",
+    移動: "var(--mn-dash)", 吸血: "var(--mn-ls)",
 };
 // The stats and damage kinds that have a shop icon: the row in the sheet (others keep their Lucide icon)
 export const SHOP_ROW: Record<string, number> = { 攻擊力: 0, 物理: 0, 暴擊: 1, 攻速: 2, 穿透: 4, 法術強度: 5, 魔法: 5, 生命: 8, 護甲: 9, 魔防: 10, 技能急速: 11, 跑速: 12 };

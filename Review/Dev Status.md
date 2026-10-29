@@ -20,6 +20,7 @@ sticker: lucide//activity
 - **Liked champions page**: portraits two across, the actions pinned at the bottom (to check on the phone).
 - **Mock layouts**: proposals are light blue pages in [[Layouts]]; new and changed layouts are shown and picked there (rule in the LLM Guide).
 - **Items blocks load on their own**: role tabs, stat rail and list each with their loading look; the rail's sprite retried and kept (to check on the phone).
+- **Sharp shop icons**: the game's stat icons sharpened on the device and painted in the Icons note's colours (to check on the phone).
 - **Picks lanes**: bigger lane icons, one lane at a time, and Champions' lanes too (to check on the phone).
 - **Tidy-up**: about 80 unused style rules and a few unused bits of code removed.
 

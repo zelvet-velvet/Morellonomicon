@@ -65,24 +65,24 @@ Source: `STAT_ICON`, `STAT_COLOR` in `plugin/src/ui.ts` (the `stack` key of a ch
 ```
 
 ## 🛍️ Item shop filters (Items page)
-Source: `ITEM_CATS` in `plugin/src/ui.ts`. The rail shows the game's own shop icons, cut by position from its sprite sheet (`SHOP_SPRITE`, CommunityDragon `itemshop_texture_atlas4.png`, shown by address); an icon written `shop:N` is row N of that sheet (the editor draws it; the Lucide fallback stays in the code).
+Source: `ITEM_CATS` and `ITEM_CAT_COLOR` in `plugin/src/ui.ts`. Colours: grey when off, the colour below when on (魔力 and 法術穿透 chosen by Claude, 2026-10-29: mana with the magic blue, magic penetration in the debuff purple, as 物理穿透 is apart from 物理). The shop icons are sharpened on the device and painted in the app's colours, not the game's. The rail shows the game's own shop icons, cut by position from its sprite sheet (`SHOP_SPRITE`, CommunityDragon `itemshop_texture_atlas4.png`, shown by address); an icon written `shop:N` is row N of that sheet (the editor draws it; the Lucide fallback stays in the code).
 
 ```mn-icons
 全部 | layout-grid
-攻擊力 | shop:0
-暴擊 | shop:1
-攻速 | shop:2
-攻擊特效 | shop:3
-物理穿透 | shop:4
-法術強度 | shop:5
-魔力 | shop:6
-法術穿透 | shop:7
-生命 | shop:8
-護甲 | shop:9
-魔防 | shop:10
-技能急速 | shop:11
-移動 | shop:12
-吸血 | shop:13
+攻擊力 | shop:0 | --mn-phys
+暴擊 | shop:1 | --mn-exec
+攻速 | shop:2 | --mn-true
+攻擊特效 | shop:3 | --mn-onhit
+物理穿透 | shop:4 | --mn-aa
+法術強度 | shop:5 | --mn-magic
+魔力 | shop:6 | --mn-magic
+法術穿透 | shop:7 | --mn-weak
+生命 | shop:8 | --mn-heal
+護甲 | shop:9 | --mn-guard
+魔防 | shop:10 | --mn-shield
+技能急速 | shop:11 | --mn-haste
+移動 | shop:12 | --mn-dash
+吸血 | shop:13 | --mn-ls
 ```
 
 ## 🛡️ Roles and lanes

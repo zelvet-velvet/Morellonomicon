@@ -877,14 +877,79 @@ var REACH_ICON = "ruler";
 var SHOP_SPRITE = "https://raw.communitydragon.org/latest/game/assets/ux/itemshop/itemshop_texture_atlas4.png";
 var SHOP_ICON_Y = [11.5, 37.5, 63.5, 91.5, 118.5, 147.5, 176.5, 203.5, 231.5, 259.5, 286.5, 314.5, 341.5, 370.5];
 var SHOP_ICON_X = [12, 38, 64, 92.5, 120.5];
+var SHOP_SHARP = { scale: 6, edge: 0.42, steep: 5 };
+var SHOP_SHAPE_COL = 3;
+var shopSheet = null;
+var shopMasks = /* @__PURE__ */ new Map();
+var loadShopSheet = () => shopSheet ?? (shopSheet = new Promise((done) => {
+  const im = new Image();
+  im.crossOrigin = "anonymous";
+  im.onload = () => done(im);
+  im.onerror = () => {
+    shopSheet = null;
+    done(null);
+  };
+  im.src = SHOP_SPRITE;
+}));
+var shopMask = (sheet, row2) => {
+  const known = shopMasks.get(row2);
+  if (known) return known;
+  const n = 26 * SHOP_SHARP.scale;
+  const cv = document.createElement("canvas");
+  cv.width = cv.height = n;
+  const g = cv.getContext("2d", { willReadFrequently: true });
+  if (!g) return "";
+  g.imageSmoothingEnabled = true;
+  g.imageSmoothingQuality = "high";
+  g.drawImage(sheet, SHOP_ICON_X[SHOP_SHAPE_COL] - 13, SHOP_ICON_Y[row2] - 13, 26, 26, 0, 0, n, n);
+  let url = "";
+  try {
+    const d = g.getImageData(0, 0, n, n), p = d.data;
+    for (let i = 3; i < p.length; i += 4) p[i] = 255 * Math.max(0, Math.min(1, (p[i] / 255 - SHOP_SHARP.edge) * SHOP_SHARP.steep + 0.5));
+    g.putImageData(d, 0, 0);
+    url = cv.toDataURL();
+  } catch {
+    return "";
+  }
+  shopMasks.set(row2, url);
+  return url;
+};
 var shopIcon = (parent, row2, lit, cls = "mn-shopic") => {
   const el = h(parent, "span", cls);
   const im = h(el, "img");
+  im.crossOrigin = "anonymous";
   im.src = SHOP_SPRITE;
   im.alt = "";
   im.draggable = false;
   im.style.objectPosition = `${-(SHOP_ICON_X[lit ? 2 : 0] - 13)}px ${-(SHOP_ICON_Y[row2] - 13)}px`;
+  const sharpen = (sheet) => {
+    const url = sheet ? shopMask(sheet, row2) : "";
+    if (!url) return;
+    el.style.setProperty("--mask", `url("${url}")`);
+    el.classList.add("is-sharp");
+  };
+  const ready = shopMasks.get(row2);
+  if (ready) {
+    el.style.setProperty("--mask", `url("${ready}")`);
+    el.classList.add("is-sharp");
+  } else void loadShopSheet().then(sharpen);
   return el;
+};
+var ITEM_CAT_COLOR = {
+  \u653B\u64CA\u529B: "var(--mn-phys)",
+  \u66B4\u64CA: "var(--mn-exec)",
+  \u653B\u901F: "var(--mn-true)",
+  \u653B\u64CA\u7279\u6548: "var(--mn-onhit)",
+  \u7269\u7406\u7A7F\u900F: "var(--mn-aa)",
+  \u6CD5\u8853\u5F37\u5EA6: "var(--mn-magic)",
+  \u9B54\u529B: "var(--mn-magic)",
+  \u6CD5\u8853\u7A7F\u900F: "var(--mn-weak)",
+  \u751F\u547D: "var(--mn-heal)",
+  \u8B77\u7532: "var(--mn-guard)",
+  \u9B54\u9632: "var(--mn-shield)",
+  \u6280\u80FD\u6025\u901F: "var(--mn-haste)",
+  \u79FB\u52D5: "var(--mn-dash)",
+  \u5438\u8840: "var(--mn-ls)"
 };
 var SHOP_ROW = { \u653B\u64CA\u529B: 0, \u7269\u7406: 0, \u66B4\u64CA: 1, \u653B\u901F: 2, \u7A7F\u900F: 4, \u6CD5\u8853\u5F37\u5EA6: 5, \u9B54\u6CD5: 5, \u751F\u547D: 8, \u8B77\u7532: 9, \u9B54\u9632: 10, \u6280\u80FD\u6025\u901F: 11, \u8DD1\u901F: 12 };
 var ITEM_CATS = [
@@ -5041,6 +5106,7 @@ function itemsPage(ctx) {
     ITEM_CATS.forEach(([name], k) => {
       if (RAIL_BREAKS.has(name)) h(rail, "i", "mn-shop-break");
       const b = h(rail, "button", "mn-shop-stat" + (itemStats.has(name) ? " is-on" : ""));
+      if (itemStats.has(name)) b.style.color = ITEM_CAT_COLOR[name] ?? "";
       shopIcon(b, k, itemStats.has(name), "mn-shop-sprite");
       holdTip(b, name);
       b.addEventListener("click", (e) => {

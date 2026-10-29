@@ -1,6 +1,6 @@
 import { mapUrl } from "./handbook";
 import type { PageCtx, PageOut } from "./index";
-import { ITEM_CATS, layoutBlock, shopIcon, h, holdTip, icon, page, roleArt } from "../ui";
+import { ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, h, holdTip, icon, page, roleArt } from "../ui";
 import { MODES } from "../modes";
 import { PROFILE_FRESH, QUEUE, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, type Profile } from "../data/riot";
 
@@ -267,7 +267,8 @@ export function itemsPage(ctx: PageCtx): PageOut {
         ITEM_CATS.forEach(([name], k) => {
             if (RAIL_BREAKS.has(name)) h(rail, "i", "mn-shop-break");
             const b = h(rail, "button", "mn-shop-stat" + (itemStats.has(name) ? " is-on" : ""));
-            shopIcon(b, k, itemStats.has(name), "mn-shop-sprite");   // the shop's own icon: plain, or lit when on
+            if (itemStats.has(name)) b.style.color = ITEM_CAT_COLOR[name] ?? "";   // on: its colour from the Icons note, off: grey
+            shopIcon(b, k, itemStats.has(name), "mn-shop-sprite");   // the shop's own icon, sharpened
             holdTip(b, name);
             b.addEventListener("click", (e) => { e.preventDefault(); itemStats.has(name) ? itemStats.delete(name) : itemStats.add(name); drawRail(); draw(); });
         });
