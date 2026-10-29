@@ -4961,8 +4961,9 @@ function itemsPage(ctx) {
       drawRoles();
       draw();
     });
+    const mid = h(roles, "div", "mn-shop-rolemid");
     for (const [r] of ITEM_ROLES) {
-      const b = h(roles, "button", "mn-shop-role" + (itemRole === r ? " is-on" : ""));
+      const b = h(mid, "button", "mn-shop-role" + (itemRole === r ? " is-on" : ""));
       roleArt(b, r);
       holdTip(b, r);
       b.addEventListener("click", (e) => {

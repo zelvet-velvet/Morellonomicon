@@ -1184,6 +1184,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-shop-roles { display: flex; align-items: center; gap: 2px; margin: 4px 0 0 -16px; padding: 0 0 4px 6px; border-bottom: 1px solid var(--mn-line); }
 .mn-app .mn-shop-role { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 10px; border: 0; background: none; box-shadow: none; color: var(--mn-muted); }
 .mn-app .mn-shop-role { position: relative; }
+.mn-shop-rolemid { flex: 1; min-width: 0; display: flex; justify-content: center; gap: 2px; }
 .mn-app .mn-shop-role.is-on { color: var(--mn-text); }
 /* chosen: the short line under it, as on the Champions page's role and lane icons */
 .mn-app .mn-shop-role.is-on::after, .mn-app .mn-shop-stat.is-on::after { content: ""; position: absolute; left: 50%; bottom: -1px; width: 16px; height: 2px; margin-left: -8px; border-radius: 1px; background: var(--mn-text); }

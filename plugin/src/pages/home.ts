@@ -237,8 +237,10 @@ export function itemsPage(ctx: PageCtx): PageOut {
         icon(all, "layout-grid");
         all.setAttribute("aria-label", "全部");
         all.addEventListener("click", (e) => { e.preventDefault(); itemRole = ""; drawRoles(); draw(); });
+        // the six roles centred between 全部 (above the stat rail) and the sort button
+        const mid = h(roles, "div", "mn-shop-rolemid");
         for (const [r] of ITEM_ROLES) {
-            const b = h(roles, "button", "mn-shop-role" + (itemRole === r ? " is-on" : ""));
+            const b = h(mid, "button", "mn-shop-role" + (itemRole === r ? " is-on" : ""));
             roleArt(b, r);
             holdTip(b, r);
             b.addEventListener("click", (e) => { e.preventDefault(); itemRole = itemRole === r ? "" : r; drawRoles(); draw(); });
