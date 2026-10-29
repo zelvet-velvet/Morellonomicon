@@ -879,8 +879,11 @@ var SHOP_ICON_Y = [11.5, 37.5, 63.5, 91.5, 118.5, 147.5, 176.5, 203.5, 231.5, 25
 var SHOP_ICON_X = [12, 38, 64, 92.5, 120.5];
 var shopIcon = (parent, row2, lit, cls = "mn-shopic") => {
   const el = h(parent, "span", cls);
-  el.style.backgroundImage = `url("${SHOP_SPRITE}")`;
-  el.style.backgroundPosition = `${-(SHOP_ICON_X[lit ? 2 : 0] - 13)}px ${-(SHOP_ICON_Y[row2] - 13)}px`;
+  const im = h(el, "img");
+  im.src = SHOP_SPRITE;
+  im.alt = "";
+  im.draggable = false;
+  im.style.objectPosition = `${-(SHOP_ICON_X[lit ? 2 : 0] - 13)}px ${-(SHOP_ICON_Y[row2] - 13)}px`;
   return el;
 };
 var SHOP_ROW = { \u653B\u64CA\u529B: 0, \u7269\u7406: 0, \u66B4\u64CA: 1, \u653B\u901F: 2, \u7A7F\u900F: 4, \u6CD5\u8853\u5F37\u5EA6: 5, \u9B54\u6CD5: 5, \u751F\u547D: 8, \u8B77\u7532: 9, \u9B54\u9632: 10, \u6280\u80FD\u6025\u901F: 11, \u8DD1\u901F: 12 };

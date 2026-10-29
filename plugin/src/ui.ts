@@ -379,9 +379,11 @@ export const SHOP_ICON_Y = [11.5, 37.5, 63.5, 91.5, 118.5, 147.5, 176.5, 203.5, 
 export const SHOP_ICON_X = [12, 38, 64, 92.5, 120.5];
 // One of the shop's icons from that sheet (row: the ITEM_CATS index), plain grey or lit in its colour, in a `size` px square
 export const shopIcon = (parent: HTMLElement, row: number, lit: boolean, cls = "mn-shopic"): HTMLElement => {
+    // a real picture of the sheet, cropped to the icon (not a CSS background), so it gets the loading look like every other picture
     const el = h(parent, "span", cls);
-    el.style.backgroundImage = `url("${SHOP_SPRITE}")`;
-    el.style.backgroundPosition = `${-(SHOP_ICON_X[lit ? 2 : 0] - 13)}px ${-(SHOP_ICON_Y[row] - 13)}px`;
+    const im = h(el, "img");
+    im.src = SHOP_SPRITE; im.alt = ""; im.draggable = false;
+    im.style.objectPosition = `${-(SHOP_ICON_X[lit ? 2 : 0] - 13)}px ${-(SHOP_ICON_Y[row] - 13)}px`;
     return el;
 };
 // The stats and damage kinds that have a shop icon: the row in the sheet (others keep their Lucide icon)
