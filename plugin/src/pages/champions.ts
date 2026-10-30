@@ -6,7 +6,7 @@ import type { PageCtx, PageOut } from "./index";
 import { badgeColor, badgeText, changesBlock, entryDir, marker } from "./changes";
 import { metaLine } from "./fresh";
 import { skillStrip } from "./skills";
-import { augmentPicks, type AugmentPick } from "./detail";
+import { PICKS_SHOWN, augmentPicks, augmentTiles } from "./detail";
 
 const ROLES = ["戰士", "坦克", "法師", "刺客", "射手", "輔助"];
 const DAMAGES = ["物理", "魔法", "混合"];
@@ -223,7 +223,8 @@ export function championCard(ctx: PageCtx): PageOut {
         else if (p === "build") buildTop(body, c, ctx);
         else if (p === "augments") augmentTop(body, c, ctx);
         else tipsTop(body, c);
-        if (p !== "tips" || c.tips.length) moreLink(pg, part(p), `全部${name}`);
+        const count = p === "skills" ? c.skills.length : p === "augments" ? augmentPicks(store, c).length : p === "tips" ? c.tips.length : p === "build" ? c.builds.filter((x) => x.mode === ctx.plugin.settings.mode).length : 0;
+        if (p !== "tips" || c.tips.length) moreLink(pg, part(p), `全部${name}`, count);
     }
     // the dots and the page's name under the block; a dot jumps to its page
     const nav = h(el, "div", "mn-cpa-nav");
@@ -257,11 +258,13 @@ export function championCard(ctx: PageCtx): PageOut {
 }
 const CPA_BELOW = 12;   // px between the dots and the tab bar
 
-// 全部 › at the foot of a page: the full list as a page of its own
-function moreLink(parent: HTMLElement, go: () => void, label: string): void {
+// 全部 at the foot of a page: a bar across it (a list icon, 全部技能, how many, a round arrow); the full list as a page of its own
+function moreLink(parent: HTMLElement, go: () => void, label: string, count?: number): void {
     const b = h(parent, "button", "mn-cpa-more");
-    b.append(label);
-    icon(b, "chevron-right");
+    icon(b, "layout-list", "mn-cpa-more-ic");
+    h(b, "span", "mn-cpa-more-l", label);
+    if (count) h(b, "span", "mn-cpa-more-n", String(count));
+    icon(b, "chevron-right", "mn-cpa-more-go");
     b.addEventListener("click", (e) => { e.preventDefault(); go(); });
 }
 // 概覽: reach, damage kind and difficulty, and the ability tags it has (the style chart and this patch are behind 全部)
@@ -290,7 +293,6 @@ function skillsTop(body: HTMLElement, c: Champion): void {
 // The parts behind 全部 ›: the full lists of the old sub-tabs, as pages that scroll
 type Part = "overview" | "skills" | "build" | "augments" | "tips";
 const PART_TITLE: Record<Part, string> = { overview: "概覽", skills: "技能", build: "出裝", augments: "強化", tips: "技巧" };
-const TOP_AUGS = 2;   // per rarity on the card
 const TOP_TIPS = 3;
 export function championPart(ctx: PageCtx): PageOut {
     const c = ctx.plugin.store.champion(String(ctx.frame.params?.id ?? ""));
@@ -323,19 +325,11 @@ function buildTop(tab: HTMLElement, c: Champion, ctx: PageCtx): void {
     }
     if (b.note) h(tab, "p", "mn-cpa-empty", b.note);
 }
-// 強化 on the card: the best two of each rarity, with why
+// 強化 on the page: the champion's best augments (any rarity), as tiles
 function augmentTop(tab: HTMLElement, c: Champion, ctx: PageCtx): void {
     const picks = augmentPicks(ctx.plugin.store, c);
     if (!picks.length) { h(tab, "p", "mn-cpa-empty", "還沒有配對到的強化。"); return; }
-    const list = h(tab, "div", "mn-cc-augs");
-    for (const r of AUG_RARITIES) for (const p of picks.filter((x) => x.a.rarity === r).slice(0, TOP_AUGS)) {
-        const x = h(list, "button", "mn-cc-aug");
-        augIcon(x, p.a.icon, p.a.rarity, "mn-cc-augic");
-        const t = h(x, "span", "mn-cc-augt");
-        h(t, "b", undefined, p.a.name);
-        h(t, "span", undefined, `${p.a.rarity} · ${p.why}`);
-        x.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); ctx.openAugment(p.a.id); });
-    }
+    augmentTiles(tab, picks.slice(0, PICKS_SHOWN), ctx);
 }
 // 技巧 on the card: the first tips' titles
 function tipsTop(tab: HTMLElement, c: Champion): void {
@@ -354,23 +348,12 @@ function overview(body: HTMLElement, c: Champion, ctx: PageCtx): { el: HTMLEleme
     return changesBlock(body, c, ctx);
 }
 
-// Augments: the ones that suit this champion, by rarity (稜鏡, 金, 銀), best first, each with why; the first few of each, the rest folded
-const AUG_SHOWN = 6;
-const AUG_RARITIES = ["稜鏡", "金", "銀"];
+// 全部強化: every augment that suits the champion, best first, as tiles; a note on how they are picked
 function augmentsTab(body: HTMLElement, c: Champion, ctx: PageCtx): void {
     const picks = augmentPicks(ctx.plugin.store, c);
     if (!picks.length) { empty(body, { icon: "sparkles", title: "No augments matched yet" }); return; }
-    for (const r of AUG_RARITIES) {
-        const list = picks.filter((p) => p.a.rarity === r);
-        if (!list.length) continue;
-        const g = group(body, `${r}級 · ${list.length}`);
-        const add = (p: AugmentPick) => row(g, { image: p.a.icon, rarity: p.a.rarity, title: p.a.name, sub: p.a.effect || undefined, value: p.why, chevron: true, clamp: true, onTap: () => ctx.openAugment(p.a.id) });
-        list.slice(0, AUG_SHOWN).forEach(add);
-        if (list.length > AUG_SHOWN) {
-            const more = row(g, { icon: "chevron-down", title: `再看 ${list.length - AUG_SHOWN} 個`, muted: true, onTap: () => { more.remove(); list.slice(AUG_SHOWN).forEach(add); } });
-        }
-    }
-    h(body, "div", "mn-gf", "置頂：你在英雄筆記的 pinned；遊戲標籤：遊戲只會給適合的英雄；推測：依效果文字，僅供參考。沒有勝率資料（Riot 沒有公開大混戰對戰）。");
+    augmentTiles(body, picks, ctx);
+    h(body, "div", "mn-gf", "依強化效果和這位英雄的技能挑選：吃魔攻或物攻、普攻型、有護盾或治療、坦克、有位移或控場、用魔力。置頂是你在英雄筆記寫的 pinned。沒有勝率資料（Riot 沒有公開大混戰對戰）。");
 }
 
 function soon(body: HTMLElement, title: string): void {

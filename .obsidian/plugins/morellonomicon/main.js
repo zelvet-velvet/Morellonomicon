@@ -4821,31 +4821,56 @@ function suggest(effect, champions) {
   scored.sort((a, b) => b.n - a.n || a.c.name.localeCompare(b.c.name, "zh-Hant"));
   return { tags: kinds.map((k) => k.tag), champions: scored.slice(0, SUGGESTED).map((x) => x.c) };
 }
+var has = (c, t) => c.features.includes(t) || c.archetypes.includes(t);
+var NEEDS = [
+  { re: /魔攻|魔法傷害|適性/, fit: (c) => c.damageType === "\u9B54\u6CD5" ? 1 : c.skillDamage.includes("\u9B54\u6CD5") ? 0.5 : 0, why: () => "\u5403\u9B54\u653B" },
+  { re: /物攻|物理傷害|物理致命|穿透/, fit: (c) => c.damageType === "\u7269\u7406" ? 1 : c.damageType === "\u6DF7\u5408" ? 0.6 : 0, why: () => "\u5403\u7269\u653B" },
+  { re: /普攻|攻速|命中效果/, fit: (c) => c.roles.includes("\u5C04\u624B") ? 1 : has(c, "\u5F37\u5316\u666E\u653B") || has(c, "\u653B\u64CA\u7279\u6548") ? 0.7 : 0, why: (c) => c.roles.includes("\u5C04\u624B") ? "\u666E\u653B\u5C04\u624B" : "\u666E\u653B\u578B" },
+  { re: /暴擊/, fit: (c) => c.roles.includes("\u5C04\u624B") ? 1 : 0, why: () => "\u66B4\u64CA\u5C04\u624B" },
+  { re: /技能加速|冷卻/, fit: (c) => c.damageType === "\u9B54\u6CD5" || c.roles.includes("\u6CD5\u5E2B") ? 0.9 : 0.5, why: () => "\u9760\u6280\u80FD" },
+  { re: /治療|護盾/, fit: (c) => has(c, "\u8B77\u76FE") || has(c, "\u6CBB\u7642") ? 1 : c.roles.includes("\u8F14\u52A9") ? 0.8 : 0, why: (c) => has(c, "\u8B77\u76FE") ? "\u6709\u8B77\u76FE\u6280\u80FD" : has(c, "\u6CBB\u7642") ? "\u6709\u6CBB\u7642\u6280\u80FD" : "\u8F14\u52A9" },
+  { re: /生命|物防|魔防|韌性|傷害減免|體型/, fit: (c) => c.roles.includes("\u5766\u514B") ? 1 : c.roles.includes("\u6230\u58EB") ? 0.7 : 0.1, why: (c) => c.roles.includes("\u5766\u514B") ? "\u5766\u514B" : "\u524D\u6392\u6230\u58EB" },
+  { re: /衝刺|位移|閃現|跳躍/, fit: (c) => has(c, "\u4F4D\u79FB") ? 1 : 0, why: () => "\u6709\u4F4D\u79FB" },
+  { re: /硬控場|禁錮|控場|擊飛|暈眩/, fit: (c) => has(c, "\u63A7\u5834") ? 1 : 0, why: () => "\u6709\u63A7\u5834" },
+  { re: /魔力/, fit: (c) => c.resource === "\u9B54\u529B" ? 0.8 : 0, why: () => "\u7528\u9B54\u529B" },
+  { re: /大絕/, fit: () => 0.6, why: () => "\u5927\u7D55\u5F37\u5316" }
+];
+var PICKS_SHOWN = 6;
+function augmentTiles(parent, picks, ctx) {
+  const grid = h(parent, "div", "mn-aug-tiles");
+  for (const p of picks) {
+    const t = h(grid, "button", "mn-aug-tile");
+    t.style.setProperty("--r", RARITY_COLOR[p.a.rarity] ?? "var(--mn-muted)");
+    augIcon(t, p.a.icon, p.a.rarity, "mn-aug-tic");
+    h(t, "span", "mn-aug-tn", p.a.name);
+    h(t, "span", "mn-aug-tw", p.why);
+    t.addEventListener("click", (e) => {
+      e.preventDefault();
+      ctx.openAugment(p.a.id);
+    });
+  }
+  return grid;
+}
 function augmentPicks(store, c) {
   const out = [];
   for (const a of store.augments()) {
     if (c.avoid.includes(a.name)) continue;
     const data = store.augmentData(a.id);
     if (data?.fits && !data.fits.includes(c.id.toLowerCase())) continue;
-    let why = "", score2 = 0;
     if (c.pinned.includes(a.name)) {
-      why = "\u7F6E\u9802";
-      score2 = 100;
-    } else if (data?.fits) {
-      why = "\u904A\u6232\u6A19\u7C64";
-      score2 = 60;
-    } else if (a.fits.length && a.fits.some((f) => c.archetypes.includes(f) || c.features.includes(f) || c.roles.includes(f))) {
-      why = "\u4EBA\u5DE5\u6574\u7406";
-      score2 = 50;
-    } else if (a.effect) {
-      const kinds = KINDS3.filter((k) => k.re.test(a.effect));
-      const n = kinds.filter((k) => k.fits(c)).length;
-      if (kinds.length && n >= Math.max(1, Math.ceil(kinds.length * 0.6))) {
-        why = "\u63A8\u6E2C";
-        score2 = 10 + n * 5 + (n === kinds.length ? 5 : 0);
-      }
+      out.push({ a, why: "\u7F6E\u9802", score: 100 });
+      continue;
     }
-    if (score2) out.push({ a, why, score: score2 });
+    if (!a.effect) continue;
+    const needs = NEEDS.filter((n) => n.re.test(a.effect));
+    if (!needs.length) continue;
+    const fits = needs.map((n) => n.fit(c));
+    if (fits.filter((f) => f === 0).length > needs.length / 2) continue;
+    const mean = fits.reduce((x, y) => x + y, 0) / fits.length;
+    if (mean < 0.5) continue;
+    const best = needs[fits.indexOf(Math.max(...fits))];
+    const bonus = (a.rarity === "\u7A1C\u93E1" ? 0.12 : a.rarity === "\u91D1" ? 0.06 : 0) + (data?.fits ? 0.08 : 0) + (a.fits.some((f) => has(c, f) || c.roles.includes(f)) ? 0.15 : 0);
+    out.push({ a, why: best.why(c), score: Math.round((mean + bonus) * 100) });
   }
   return out.sort((x, y) => y.score - x.score || x.a.name.localeCompare(y.a.name, "zh-Hant"));
 }
@@ -5456,7 +5481,8 @@ function championCard(ctx) {
     else if (p === "build") buildTop(body, c, ctx);
     else if (p === "augments") augmentTop(body, c, ctx);
     else tipsTop(body, c);
-    if (p !== "tips" || c.tips.length) moreLink(pg, part(p), `\u5168\u90E8${name}`);
+    const count2 = p === "skills" ? c.skills.length : p === "augments" ? augmentPicks(store, c).length : p === "tips" ? c.tips.length : p === "build" ? c.builds.filter((x) => x.mode === ctx.plugin.settings.mode).length : 0;
+    if (p !== "tips" || c.tips.length) moreLink(pg, part(p), `\u5168\u90E8${name}`, count2);
   }
   const nav = h(el, "div", "mn-cpa-nav");
   const label = h(nav, "span", "mn-cpa-name");
@@ -5497,10 +5523,12 @@ function championCard(ctx) {
   return { title: "", el, ready: null };
 }
 var CPA_BELOW = 12;
-function moreLink(parent, go, label) {
+function moreLink(parent, go, label, count2) {
   const b = h(parent, "button", "mn-cpa-more");
-  b.append(label);
-  icon(b, "chevron-right");
+  icon(b, "layout-list", "mn-cpa-more-ic");
+  h(b, "span", "mn-cpa-more-l", label);
+  if (count2) h(b, "span", "mn-cpa-more-n", String(count2));
+  icon(b, "chevron-right", "mn-cpa-more-go");
   b.addEventListener("click", (e) => {
     e.preventDefault();
     go();
@@ -5529,7 +5557,6 @@ function skillsTop(body, c) {
   }
 }
 var PART_TITLE = { overview: "\u6982\u89BD", skills: "\u6280\u80FD", build: "\u51FA\u88DD", augments: "\u5F37\u5316", tips: "\u6280\u5DE7" };
-var TOP_AUGS = 2;
 var TOP_TIPS = 3;
 function championPart(ctx) {
   const c = ctx.plugin.store.champion(String(ctx.frame.params?.id ?? ""));
@@ -5578,19 +5605,7 @@ function augmentTop(tab, c, ctx) {
     h(tab, "p", "mn-cpa-empty", "\u9084\u6C92\u6709\u914D\u5C0D\u5230\u7684\u5F37\u5316\u3002");
     return;
   }
-  const list2 = h(tab, "div", "mn-cc-augs");
-  for (const r of AUG_RARITIES) for (const p of picks.filter((x) => x.a.rarity === r).slice(0, TOP_AUGS)) {
-    const x = h(list2, "button", "mn-cc-aug");
-    augIcon(x, p.a.icon, p.a.rarity, "mn-cc-augic");
-    const t = h(x, "span", "mn-cc-augt");
-    h(t, "b", void 0, p.a.name);
-    h(t, "span", void 0, `${p.a.rarity} \xB7 ${p.why}`);
-    x.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      ctx.openAugment(p.a.id);
-    });
-  }
+  augmentTiles(tab, picks.slice(0, PICKS_SHOWN), ctx);
 }
 function tipsTop(tab, c) {
   if (!c.tips.length) {
@@ -5610,28 +5625,14 @@ function overview(body, c, ctx) {
   if (c.video) row(group(body), { icon: "play-circle", title: "Combo video", chevron: true, onTap: () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video)}`) });
   return changesBlock(body, c, ctx);
 }
-var AUG_SHOWN = 6;
-var AUG_RARITIES = ["\u7A1C\u93E1", "\u91D1", "\u9280"];
 function augmentsTab(body, c, ctx) {
   const picks = augmentPicks(ctx.plugin.store, c);
   if (!picks.length) {
     empty(body, { icon: "sparkles", title: "No augments matched yet" });
     return;
   }
-  for (const r of AUG_RARITIES) {
-    const list2 = picks.filter((p) => p.a.rarity === r);
-    if (!list2.length) continue;
-    const g = group(body, `${r}\u7D1A \xB7 ${list2.length}`);
-    const add = (p) => row(g, { image: p.a.icon, rarity: p.a.rarity, title: p.a.name, sub: p.a.effect || void 0, value: p.why, chevron: true, clamp: true, onTap: () => ctx.openAugment(p.a.id) });
-    list2.slice(0, AUG_SHOWN).forEach(add);
-    if (list2.length > AUG_SHOWN) {
-      const more = row(g, { icon: "chevron-down", title: `\u518D\u770B ${list2.length - AUG_SHOWN} \u500B`, muted: true, onTap: () => {
-        more.remove();
-        list2.slice(AUG_SHOWN).forEach(add);
-      } });
-    }
-  }
-  h(body, "div", "mn-gf", "\u7F6E\u9802\uFF1A\u4F60\u5728\u82F1\u96C4\u7B46\u8A18\u7684 pinned\uFF1B\u904A\u6232\u6A19\u7C64\uFF1A\u904A\u6232\u53EA\u6703\u7D66\u9069\u5408\u7684\u82F1\u96C4\uFF1B\u63A8\u6E2C\uFF1A\u4F9D\u6548\u679C\u6587\u5B57\uFF0C\u50C5\u4F9B\u53C3\u8003\u3002\u6C92\u6709\u52DD\u7387\u8CC7\u6599\uFF08Riot \u6C92\u6709\u516C\u958B\u5927\u6DF7\u6230\u5C0D\u6230\uFF09\u3002");
+  augmentTiles(body, picks, ctx);
+  h(body, "div", "mn-gf", "\u4F9D\u5F37\u5316\u6548\u679C\u548C\u9019\u4F4D\u82F1\u96C4\u7684\u6280\u80FD\u6311\u9078\uFF1A\u5403\u9B54\u653B\u6216\u7269\u653B\u3001\u666E\u653B\u578B\u3001\u6709\u8B77\u76FE\u6216\u6CBB\u7642\u3001\u5766\u514B\u3001\u6709\u4F4D\u79FB\u6216\u63A7\u5834\u3001\u7528\u9B54\u529B\u3002\u7F6E\u9802\u662F\u4F60\u5728\u82F1\u96C4\u7B46\u8A18\u5BEB\u7684 pinned\u3002\u6C92\u6709\u52DD\u7387\u8CC7\u6599\uFF08Riot \u6C92\u6709\u516C\u958B\u5927\u6DF7\u6230\u5C0D\u6230\uFF09\u3002");
 }
 function tips(body, c, ctx) {
   void ctx;
@@ -6006,14 +6007,14 @@ function gamesPage(ctx) {
 }
 var TIERS = ["\u8D77\u59CB", "\u978B\u5B50", "\u57FA\u672C", "\u53F2\u8A69", "\u50B3\u8AAA"];
 var tierOf = (i) => i.tags.includes("Boots") ? "\u978B\u5B50" : !i.from.length && !i.into.length ? "\u8D77\u59CB" : !i.from.length ? "\u57FA\u672C" : i.into.length ? "\u53F2\u8A69" : "\u50B3\u8AAA";
-var has = (i, ...tags2) => tags2.some((x) => i.tags.includes(x));
+var has2 = (i, ...tags2) => tags2.some((x) => i.tags.includes(x));
 var ITEM_ROLES = [
-  ["\u6230\u58EB", (i) => has(i, "Damage") && has(i, "Health")],
-  ["\u5C04\u624B", (i) => has(i, "CriticalStrike") || has(i, "AttackSpeed") && has(i, "Damage")],
-  ["\u523A\u5BA2", (i) => has(i, "Damage") && has(i, "ArmorPenetration", "NonbootsMovement") && !has(i, "Health")],
-  ["\u6CD5\u5E2B", (i) => has(i, "SpellDamage")],
-  ["\u5766\u514B", (i) => has(i, "Health") && has(i, "Armor", "SpellBlock", "MagicResist") && !has(i, "Damage", "SpellDamage")],
-  ["\u8F14\u52A9", (i) => has(i, "GoldPer", "Aura") || has(i, "Active") && !has(i, "Damage", "SpellDamage")]
+  ["\u6230\u58EB", (i) => has2(i, "Damage") && has2(i, "Health")],
+  ["\u5C04\u624B", (i) => has2(i, "CriticalStrike") || has2(i, "AttackSpeed") && has2(i, "Damage")],
+  ["\u523A\u5BA2", (i) => has2(i, "Damage") && has2(i, "ArmorPenetration", "NonbootsMovement") && !has2(i, "Health")],
+  ["\u6CD5\u5E2B", (i) => has2(i, "SpellDamage")],
+  ["\u5766\u514B", (i) => has2(i, "Health") && has2(i, "Armor", "SpellBlock", "MagicResist") && !has2(i, "Damage", "SpellDamage")],
+  ["\u8F14\u52A9", (i) => has2(i, "GoldPer", "Aura") || has2(i, "Active") && !has2(i, "Damage", "SpellDamage")]
 ];
 var RAIL_BREAKS = /* @__PURE__ */ new Set(["\u6CD5\u8853\u5F37\u5EA6", "\u751F\u547D", "\u6280\u80FD\u6025\u901F"]);
 var itemRole = "";

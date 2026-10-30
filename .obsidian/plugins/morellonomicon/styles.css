@@ -1030,9 +1030,15 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-cpa-page { flex: 0 0 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: 14px 14px 12px; scroll-snap-align: start; scroll-snap-stop: always; overflow: hidden; }
 .mn-cpa-body { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
 .mn-cpa-body > .mn-style-card, .mn-cpa-body > .mn-facts { margin: 0; }
-.mn-app .mn-cpa-more { align-self: center; flex: none; display: inline-flex; align-items: center; gap: 2px; margin-top: 10px; height: 34px; padding: 0 12px 0 16px; border-radius: 17px;
-    border: 1px solid var(--mn-line); box-shadow: none; background: var(--mn-card-hi); color: var(--mn-text); font-size: 14px; font-weight: 700; }
-.mn-cpa-more svg { width: 16px; height: 16px; }
+/* 全部: a bar across the foot of a page, tinted with the accent: list icon, label, count, a round arrow */
+.mn-app .mn-cpa-more { flex: none; align-self: stretch; display: flex; align-items: center; gap: 10px; height: 46px; margin-top: 12px; padding: 0 7px 0 14px; border-radius: 15px; box-shadow: none;
+    border: 1px solid color-mix(in srgb, var(--mn-accent) 30%, transparent); background: color-mix(in srgb, var(--mn-accent) 10%, var(--mn-card-hi)); color: var(--mn-text); }
+.mn-cpa-more-ic { display: inline-flex; color: var(--mn-accent); }
+.mn-cpa-more-ic svg { width: 18px; height: 18px; }
+.mn-cpa-more-l { flex: 1; text-align: left; font-size: 15px; font-weight: 700; }
+.mn-cpa-more-n { font-size: 13px; font-weight: 700; color: var(--mn-muted); font-variant-numeric: tabular-nums; }
+.mn-cpa-more-go { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--mn-accent); color: var(--text-on-accent, #fff); }
+.mn-cpa-more-go svg { width: 18px; height: 18px; }
 .mn-cpa-nav { display: flex; align-items: center; justify-content: center; gap: 12px; height: 32px; }
 .mn-cpa-name { font-size: 13px; font-weight: 800; letter-spacing: 0.1em; color: var(--mn-muted); }
 .mn-cpa-dots { display: flex; gap: 6px; }
@@ -1055,13 +1061,13 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app .mn-cc-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 4px; border-radius: 14px; border: 1px solid var(--mn-line); box-shadow: none;
     background: var(--mn-card-hi); color: var(--mn-text); font-size: 12px; white-space: normal; height: auto; }
 .mn-cc-item img { width: 48px; height: 48px; border-radius: 10px; }
-.mn-cc-augs { display: flex; flex-direction: column; gap: 8px; }
-.mn-app .mn-cc-aug { display: flex; align-items: center; gap: 12px; padding: 8px 12px 8px 8px; border-radius: 14px; border: 1px solid var(--mn-line); box-shadow: none;
-    background: var(--mn-card-hi); color: var(--mn-text); text-align: left; height: auto; white-space: normal; }
-.mn-cc-augic { width: 44px; height: 44px; --ring: 3px; border-radius: 12px; }
-.mn-cc-augt { display: flex; flex-direction: column; min-width: 0; }
-.mn-cc-augt b { font-size: 15px; }
-.mn-cc-augt span { font-size: 12px; color: var(--mn-muted); }
+/* augment picks as tiles three across, all one size so icons and names line up; tinted in the rarity's colour */
+.mn-aug-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.mn-app .mn-aug-tile { --r: var(--mn-muted); display: flex; flex-direction: column; align-items: center; gap: 6px; height: auto; padding: 12px 6px 10px; border-radius: 16px; box-shadow: none; white-space: normal;
+    border: 1px solid color-mix(in srgb, var(--r) 35%, transparent); background: linear-gradient(180deg, color-mix(in srgb, var(--r) 16%, var(--mn-card-hi)), var(--mn-card-hi) 70%); color: var(--mn-text); }
+.mn-aug-tic { width: 52px; height: 52px; --ring: 3px; border-radius: 14px; }
+.mn-aug-tn { width: 100%; height: 2.5em; font-size: 13px; font-weight: 700; line-height: 1.25; text-align: center; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mn-aug-tw { padding: 1px 8px; border-radius: 9px; font-size: 11px; font-weight: 700; color: var(--r); background: color-mix(in srgb, var(--r) 14%, transparent); white-space: nowrap; }
 .mn-cpa-tips { display: flex; flex-direction: column; gap: 10px; }
 .mn-cpa-tip { margin: 0; padding: 12px 14px; border-radius: 14px; background: var(--mn-card-hi); font-size: 14px; line-height: 1.55; color: var(--mn-text); }
 .mn-rq-deck .mn-qc-words { padding: 4px 20px 100px; background: none; }   /* over the picture, Tinder style; the buttons sit under it */

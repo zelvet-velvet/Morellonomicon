@@ -68,26 +68,60 @@ function suggest(effect: string, champions: Champion[]): { tags: string[]; champ
     return { tags: kinds.map((k) => k.tag), champions: scored.slice(0, SUGGESTED).map((x) => x.c) };
 }
 
-// Which augments suit a champion (its Augments tab), best first, and why: pinned on the champion note first; then Riot's own augment
-// tags (the game offers it to this champion and not to everyone); then the augment's hand-written `fits`; then a guess from the
-// effect text (the same as the augment page's). Left out: the champion's `avoid`, and augments the game never offers it (Riot's tags).
+// Which augments suit a champion, best first, and why (its Augments page): each augment's effect is read for what it needs (AP, AD,
+// attacks, crits, haste, shields and heals, toughness, dashes, crowd control, mana), and each need is scored against what the champion
+// really does (damage kind, role, its abilities' tags, its resource); the augment's score is how well its needs fit, and the reason is
+// its best-fitting need in plain words. Pinned on the champion note first; its `avoid` and augments the game never offers it are out.
 export interface AugmentPick { a: Augment; why: string; score: number }
+interface Need { re: RegExp; fit: (c: Champion) => number; why: (c: Champion) => string }
+const has = (c: Champion, t: string) => c.features.includes(t) || c.archetypes.includes(t);
+const NEEDS: Need[] = [
+    { re: /魔攻|魔法傷害|適性/, fit: (c) => c.damageType === "魔法" ? 1 : c.skillDamage.includes("魔法") ? 0.5 : 0, why: () => "吃魔攻" },
+    { re: /物攻|物理傷害|物理致命|穿透/, fit: (c) => c.damageType === "物理" ? 1 : c.damageType === "混合" ? 0.6 : 0, why: () => "吃物攻" },
+    { re: /普攻|攻速|命中效果/, fit: (c) => c.roles.includes("射手") ? 1 : has(c, "強化普攻") || has(c, "攻擊特效") ? 0.7 : 0, why: (c) => c.roles.includes("射手") ? "普攻射手" : "普攻型" },
+    { re: /暴擊/, fit: (c) => c.roles.includes("射手") ? 1 : 0, why: () => "暴擊射手" },
+    { re: /技能加速|冷卻/, fit: (c) => c.damageType === "魔法" || c.roles.includes("法師") ? 0.9 : 0.5, why: () => "靠技能" },
+    { re: /治療|護盾/, fit: (c) => has(c, "護盾") || has(c, "治療") ? 1 : c.roles.includes("輔助") ? 0.8 : 0, why: (c) => has(c, "護盾") ? "有護盾技能" : has(c, "治療") ? "有治療技能" : "輔助" },
+    { re: /生命|物防|魔防|韌性|傷害減免|體型/, fit: (c) => c.roles.includes("坦克") ? 1 : c.roles.includes("戰士") ? 0.7 : 0.1, why: (c) => c.roles.includes("坦克") ? "坦克" : "前排戰士" },
+    { re: /衝刺|位移|閃現|跳躍/, fit: (c) => has(c, "位移") ? 1 : 0, why: () => "有位移" },
+    { re: /硬控場|禁錮|控場|擊飛|暈眩/, fit: (c) => has(c, "控場") ? 1 : 0, why: () => "有控場" },
+    { re: /魔力/, fit: (c) => c.resource === "魔力" ? 0.8 : 0, why: () => "用魔力" },
+    { re: /大絕/, fit: () => 0.6, why: () => "大絕強化" },
+];
+const PICKS_SHOWN = 6;   // on the champion page; the full page shows them all
+export { PICKS_SHOWN };
+// The picks as tiles three across, all the same size so they line up: the icon in its rarity frame, the name (two lines at most), the
+// reason as a small chip; the tile is tinted in its rarity's colour. Tap: the augment's page.
+export function augmentTiles(parent: HTMLElement, picks: AugmentPick[], ctx: PageCtx): HTMLElement {
+    const grid = h(parent, "div", "mn-aug-tiles");
+    for (const p of picks) {
+        const t = h(grid, "button", "mn-aug-tile");
+        t.style.setProperty("--r", RARITY_COLOR[p.a.rarity] ?? "var(--mn-muted)");
+        augIcon(t, p.a.icon, p.a.rarity, "mn-aug-tic");
+        h(t, "span", "mn-aug-tn", p.a.name);
+        h(t, "span", "mn-aug-tw", p.why);
+        t.addEventListener("click", (e) => { e.preventDefault(); ctx.openAugment(p.a.id); });
+    }
+    return grid;
+}
 export function augmentPicks(store: Store, c: Champion): AugmentPick[] {
     const out: AugmentPick[] = [];
     for (const a of store.augments()) {
         if (c.avoid.includes(a.name)) continue;
         const data = store.augmentData(a.id);
         if (data?.fits && !data.fits.includes(c.id.toLowerCase())) continue;   // never offered to this champion
-        let why = "", score = 0;
-        if (c.pinned.includes(a.name)) { why = "置頂"; score = 100; }
-        else if (data?.fits) { why = "遊戲標籤"; score = 60; }
-        else if (a.fits.length && a.fits.some((f) => c.archetypes.includes(f) || c.features.includes(f) || c.roles.includes(f))) { why = "人工整理"; score = 50; }
-        else if (a.effect) {
-            const kinds = KINDS.filter((k) => k.re.test(a.effect));
-            const n = kinds.filter((k) => k.fits(c)).length;
-            if (kinds.length && n >= Math.max(1, Math.ceil(kinds.length * 0.6))) { why = "推測"; score = 10 + n * 5 + (n === kinds.length ? 5 : 0); }
-        }
-        if (score) out.push({ a, why, score });
+        if (c.pinned.includes(a.name)) { out.push({ a, why: "置頂", score: 100 }); continue; }
+        if (!a.effect) continue;
+        const needs = NEEDS.filter((n) => n.re.test(a.effect));
+        if (!needs.length) continue;
+        const fits = needs.map((n) => n.fit(c));
+        if (fits.filter((f) => f === 0).length > needs.length / 2) continue;   // mostly for someone else
+        const mean = fits.reduce((x, y) => x + y, 0) / fits.length;
+        if (mean < 0.5) continue;
+        const best = needs[fits.indexOf(Math.max(...fits))];
+        // rarer is stronger, a hand-written `fits` or Riot's tags (it is offered to fewer champions) make it surer
+        const bonus = (a.rarity === "稜鏡" ? 0.12 : a.rarity === "金" ? 0.06 : 0) + (data?.fits ? 0.08 : 0) + (a.fits.some((f) => has(c, f) || c.roles.includes(f)) ? 0.15 : 0);
+        out.push({ a, why: best.why(c), score: Math.round((mean + bonus) * 100) });
     }
     return out.sort((x, y) => y.score - x.score || x.a.name.localeCompare(y.a.name, "zh-Hant"));
 }
