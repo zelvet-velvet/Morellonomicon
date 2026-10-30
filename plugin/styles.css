@@ -1609,7 +1609,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay-wnote:focus { border-color: var(--interactive-accent); }
 .mn-lay-legend.is-hidden { display: none; }
 /* 概覽: the style chart on the left, the three stat tiles stacked on its right (icon, value, what) */
-.mn-cv-look { display: grid; grid-template-columns: 132px minmax(0, 1fr); align-items: center; gap: 8px; }
+.mn-cv-look { display: grid; grid-template-columns: auto 200px; justify-content: center; align-items: center; gap: 12px; }   /* the stats and the chart as one centred pair */
 .mn-cv-look .mn-cv-stats { order: 1; }
 .mn-cv-look .mn-cv-radar { order: 2; }
 .mn-cv-radar svg { display: block; width: 100%; height: auto; }
