@@ -114,7 +114,9 @@ function placeVeil(veil: HTMLElement): void {
 }
 // While a block loads it takes no taps and does not scroll: the veil catches them
 function holdBlock(veil: HTMLElement): void {
-    const stop = (e: Event) => { e.preventDefault(); e.stopPropagation(); };
+    // a loading block stops its own scrolling; on the champion page's pages it leaves the swipe alone (a clip loading on 技能 would
+    // otherwise catch a sideways swipe that starts on it)
+    const stop = (e: Event) => { if (veil.closest(".mn-cpa-track")) return; e.preventDefault(); e.stopPropagation(); };
     for (const ev of ["touchmove", "wheel"]) veil.addEventListener(ev, stop, { passive: false });
     for (const ev of ["click", "pointerdown", "touchstart", "mousedown"]) veil.addEventListener(ev, (e) => e.stopPropagation());
     veil.addEventListener("click", (e) => e.preventDefault());

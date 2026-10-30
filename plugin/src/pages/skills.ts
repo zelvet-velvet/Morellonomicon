@@ -95,7 +95,9 @@ const clipAddress = (c: Champion, key: string): string => {
     // "Q" is the ability's first clip; "Q2" the second one (the other form of Jayce, Nidalee, Elise… where Riot made one)
     return `${DEMO_BASE}/${k}/ability_${k}_${/\d$/.test(key) ? key : `${key}1`}`;
 };
-// Clips downloaded ahead of time (see preloadClip): clip address -> a local address of the whole file, which plays at once
+// Clips downloaded ahead of time (see preloadClip): clip address -> a local address of the whole file, which plays at once. Only the
+// last CLIP_CACHE are kept (oldest first out), so browsing many champions does not fill the phone's memory
+const CLIP_CACHE = 15;
 const downloaded = new Map<string, string>();
 const webmOnly = new Set<string>();   // clips Riot has only as WebM: a phone decodes those in software, so only the clip in view should play
 const downloading = new Map<string, Promise<void>>();
@@ -110,7 +112,15 @@ export function preloadClip(c: Champion, key: string): Promise<void> {
         for (const ext of ["mp4", "webm"]) {
             try {
                 const r = await requestUrl({ url: `${url}.${ext}`, throw: false });
-                if (r.status === 200) { if (ext === "webm") webmOnly.add(url); downloaded.set(url, URL.createObjectURL(new Blob([r.arrayBuffer], { type: `video/${ext}` }))); return; }
+                if (r.status === 200) {
+                    if (ext === "webm") webmOnly.add(url);
+                    downloaded.set(url, URL.createObjectURL(new Blob([r.arrayBuffer], { type: `video/${ext}` })));
+                    for (const [old, local] of downloaded) {
+                        if (downloaded.size <= CLIP_CACHE) break;
+                        URL.revokeObjectURL(local); downloaded.delete(old); downloading.delete(old);
+                    }
+                    return;
+                }
             } catch { /* try the next format */ }
         }
     })();
@@ -154,6 +164,10 @@ export function demo(parent: HTMLElement, c: Champion, s: { key: string; seconds
     };
     const local = downloaded.get(url);
     if (local) { playLocal(local); return; }
+    // a clip being downloaded ahead (the champion page fetches its clips on opening): play it from memory when it is in. A muted clip
+    // off screen does not load on iOS until it is shown, so streaming it would only start when its page is swiped to
+    const job = downloading.get(url);
+    if (job) { void job.then(() => { const f = downloaded.get(url); if (!v.isConnected) return; if (f) playLocal(f); else fail(); }); return; }
     v.addEventListener("loadeddata", () => { void v.play().catch(() => undefined); }, { once: true });
     // Some champions (Pyke…) have only a WebM clip, which Riot's server labels as plain text; a phone refuses to stream that.
     // Downloading the file and playing it as a video makes the format known, so when neither source streams that is tried before giving up.

@@ -631,6 +631,7 @@ function placeVeil(veil) {
 }
 function holdBlock(veil) {
   const stop = (e) => {
+    if (veil.closest(".mn-cpa-track")) return;
     e.preventDefault();
     e.stopPropagation();
   };
@@ -3554,6 +3555,7 @@ var clipAddress = (c, key) => {
   const k = String(c.key).padStart(4, "0");
   return `${DEMO_BASE}/${k}/ability_${k}_${/\d$/.test(key) ? key : `${key}1`}`;
 };
+var CLIP_CACHE = 15;
 var downloaded = /* @__PURE__ */ new Map();
 var webmOnly = /* @__PURE__ */ new Set();
 var downloading = /* @__PURE__ */ new Map();
@@ -3569,6 +3571,12 @@ function preloadClip(c, key) {
         if (r.status === 200) {
           if (ext === "webm") webmOnly.add(url);
           downloaded.set(url, URL.createObjectURL(new Blob([r.arrayBuffer], { type: `video/${ext}` })));
+          for (const [old, local] of downloaded) {
+            if (downloaded.size <= CLIP_CACHE) break;
+            URL.revokeObjectURL(local);
+            downloaded.delete(old);
+            downloading.delete(old);
+          }
           return;
         }
       } catch {
@@ -3624,6 +3632,16 @@ function demo(parent, c, s, onFail) {
   const local = downloaded.get(url);
   if (local) {
     playLocal(local);
+    return;
+  }
+  const job = downloading.get(url);
+  if (job) {
+    void job.then(() => {
+      const f = downloaded.get(url);
+      if (!v.isConnected) return;
+      if (f) playLocal(f);
+      else fail();
+    });
     return;
   }
   v.addEventListener("loadeddata", () => {
@@ -6375,6 +6393,7 @@ var lastSub = /* @__PURE__ */ new Map();
 function rememberSub(id, sub) {
   lastSub.set(id, sub);
 }
+var SETTLE_MS2 = 160;
 var PAGES = [["overview", "\u6982\u89BD", "id-card"], ["skills", "\u6280\u80FD", "keyboard"], ["build", "\u51FA\u88DD", "shopping-bag"], ["augments", "\u5F37\u5316", "sparkles"], ["tips", "\u6280\u5DE7", "lightbulb"]];
 function championCard(ctx) {
   const store = ctx.plugin.store;
@@ -6421,6 +6440,13 @@ function championCard(ctx) {
     const m = marker(entryDir(official.entry));
     chip(tags2, `${m.mark} ${official.patch}`, { color: m.color, onTap: part("overview") });
   }
+  const clipOrder = [...c.skills.filter((s) => s.key === "Q"), ...c.skills.filter((s) => s.key !== "Q")];
+  void (async () => {
+    for (const s of clipOrder) {
+      await preloadClip(c, s.key);
+      if (!el.isConnected) return;
+    }
+  })();
   const pages = PAGES.filter(([p]) => p !== "augments" || mayhem);
   const box = h(el, "div", "mn-cpa");
   const track = h(box, "div", "mn-cpa-track");
@@ -6455,7 +6481,29 @@ function championCard(ctx) {
     track.scrollTo({ left: (cards[i]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0), behavior: "instant" });
     mark(i);
   };
-  track.addEventListener("scroll", () => mark(Math.min(cards.length - 1, at())), { passive: true });
+  let touching = false, settle = 0;
+  const snapBack = () => {
+    const step = (cards[1]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0);
+    if (touching || step <= 0) return;
+    const left = at() * step;
+    if (Math.abs(track.scrollLeft - left) > 1) track.scrollTo({ left, behavior: "smooth" });
+  };
+  const later = () => {
+    window.clearTimeout(settle);
+    settle = window.setTimeout(snapBack, SETTLE_MS2);
+  };
+  track.addEventListener("touchstart", () => {
+    touching = true;
+    window.clearTimeout(settle);
+  }, { passive: true });
+  for (const ev of ["touchend", "touchcancel"]) track.addEventListener(ev, () => {
+    touching = false;
+    later();
+  }, { passive: true });
+  track.addEventListener("scroll", () => {
+    mark(Math.min(cards.length - 1, at()));
+    if (!touching) later();
+  }, { passive: true });
   const startSub = lastSub.get(c.id);
   lastSub.delete(c.id);
   const start = Math.max(0, pages.findIndex(([p]) => p === startSub));

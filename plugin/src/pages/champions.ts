@@ -6,7 +6,7 @@ import { cardArt } from "./roster";
 import type { PageCtx, PageOut } from "./index";
 import { badgeColor, badgeText, changesBlock, entryDir, marker } from "./changes";
 import { metaLine } from "./fresh";
-import { skillStrip } from "./skills";
+import { preloadClip, skillStrip } from "./skills";
 import { PICKS_SHOWN, augmentPicks, augmentTiles } from "./detail";
 
 const ROLES = ["戰士", "坦克", "法師", "刺客", "射手", "輔助"];
@@ -184,6 +184,7 @@ export function rememberSub(id: string, sub: SubTab): void { lastSub.set(id, sub
 // chart, the tiles or the tags opens its page of its own (the style chart in full, the combo video, this patch's changes). The other
 // pages darken the art and show their whole detail in the page (it scrolls inside the page when long). A small page hint (a dot per
 // page, the current one lit) floats at the top middle.
+const SETTLE_MS = 160;   // the track has stopped moving this long: it is checked for sitting between two pages
 const PAGES: [Part, string, string][] = [["overview", "概覽", "id-card"], ["skills", "技能", "keyboard"], ["build", "出裝", "shopping-bag"], ["augments", "強化", "sparkles"], ["tips", "技巧", "lightbulb"]];
 export function championCard(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
@@ -218,6 +219,10 @@ export function championCard(ctx: PageCtx): PageOut {
     if (badgeText(now)) chip(tags, badgeText(now), { color: badgeColor(now), onTap: part("overview") });
     else if (official) { const m = marker(entryDir(official.entry)); chip(tags, `${m.mark} ${official.patch}`, { color: m.color, onTap: part("overview") }); }
 
+    // the ability clips, fetched on opening: Q's first (技能 opens on it), then the others, so a tapped ability plays at once
+    const clipOrder = [...c.skills.filter((s) => s.key === "Q"), ...c.skills.filter((s) => s.key !== "Q")];
+    void (async () => { for (const s of clipOrder) { await preloadClip(c, s.key); if (!el.isConnected) return; } })();
+
     // the pages: one each, snapped; native sideways scrolling keeps the swipe smooth
     const pages = PAGES.filter(([p]) => p !== "augments" || mayhem);
     const box = h(el, "div", "mn-cpa");
@@ -248,7 +253,19 @@ export function championCard(ctx: PageCtx): PageOut {
     };
     const at = () => { const step = (cards[1]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0); return step > 0 ? Math.round(track.scrollLeft / step) : 0; };
     const go = (i: number) => { track.scrollTo({ left: (cards[i]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0), behavior: "instant" as ScrollBehavior }); mark(i); };
-    track.addEventListener("scroll", () => mark(Math.min(cards.length - 1, at())), { passive: true });
+    // iOS can leave the track between two pages (a swipe taken over by a page's own up-down scrolling, a page that changed while it
+    // moved): once the finger is off and the scrolling has settled, it is put back on the nearest page
+    let touching = false, settle = 0;
+    const snapBack = () => {
+        const step = (cards[1]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0);
+        if (touching || step <= 0) return;
+        const left = at() * step;
+        if (Math.abs(track.scrollLeft - left) > 1) track.scrollTo({ left, behavior: "smooth" });
+    };
+    const later = () => { window.clearTimeout(settle); settle = window.setTimeout(snapBack, SETTLE_MS); };
+    track.addEventListener("touchstart", () => { touching = true; window.clearTimeout(settle); }, { passive: true });
+    for (const ev of ["touchend", "touchcancel"]) track.addEventListener(ev, () => { touching = false; later(); }, { passive: true });
+    track.addEventListener("scroll", () => { mark(Math.min(cards.length - 1, at())); if (!touching) later(); }, { passive: true });
     // a link may ask for a page (once: the next visit starts on 概覽 again)
     const startSub = lastSub.get(c.id);
     lastSub.delete(c.id);
