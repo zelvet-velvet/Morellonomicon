@@ -27,7 +27,7 @@ interface Block { id: string; label: string; kind: string; x: number; y: number;
 interface Page { id: string; name: string; note?: string; tabbar?: boolean; mock?: boolean; blocks: Block[] }   // mock: a proposal by Claude, not built yet (a light blue frame)
 
 // each page's unsaved state and steps, by note and page id: kept here so a redraw of the note (after a save) does not lose them
-interface Steps { past: string[]; future: string[]; last: string }
+interface Steps { past: string[]; future: string[]; last: string; home: string }   // home: the mn-layout block the page belongs to
 const memory = new Map<string, Map<string, Steps>>();
 const winAt = new Map<string, { x: number; y: number }>();   // where a page's block window was dragged to (kept across redraws)
 type Metric = "top" | "left" | "right" | "bottom" | "w" | "h";
@@ -48,9 +48,12 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
     const steps = memory.get(ctx.sourcePath) ?? new Map<string, Steps>();
     memory.set(ctx.sourcePath, steps);
     // what is shown: each saved page, or its unsaved state; then pages added but not saved yet
-    const pages: Page[] = saved.map((p) => (steps.has(p.id) ? (JSON.parse(steps.get(p.id)!.last) as Page) : p));
-    for (const [id, s] of steps) if (!saved.some((p) => p.id === id)) pages.push(JSON.parse(s.last) as Page);
+    // The note may hold several mn-layout blocks (one per group, each under its own heading so it shows in the outline): a block's
+    // key is its first saved page, and an unsaved page belongs to the block it was added in
     const info = ctx.getSectionInfo(el);
+    const home = saved[0]?.id ?? `@${info?.lineStart ?? 0}`;
+    const pages: Page[] = saved.map((p) => (steps.has(p.id) ? (JSON.parse(steps.get(p.id)!.last) as Page) : p));
+    for (const [id, s] of steps) if (s.home === home && !saved.some((p) => p.id === id)) pages.push(JSON.parse(s.last) as Page);
     const root = el.createDiv({ cls: "mn-lay" });
     if (source.trim() && !saved.length) { root.createDiv({ cls: "mn-lay-err", text: "The layout data could not be read (JSON). Fix it in the source view." }); return; }
     // the saved pages are written into the note (the lines between the fences)
@@ -69,13 +72,16 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
     if (file0 instanceof TFile) void plugin.app.vault.cachedRead(file0).then((text) => {
         const m = new RegExp("```" + SYNCED + "\\n([\\s\\S]*?)\\n```").exec(text);
         synced = new Map(parse(m?.[1] ?? "").map((p) => [p.id, JSON.stringify(p)]));
+        // the colour legend shows once, over the note's first layout block
+        const first = text.split("\n").findIndex((l) => l.trim() === "```mn-layout");
+        legend.toggleClass("is-hidden", !!info && first >= 0 && first !== info.lineStart);
         draw();
     });
     const changedSinceSync = (page: Page) => synced.size > 0 && synced.get(page.id) !== savedJson(page.id);
     const savedJson = (id: string) => { const p = saved.find((x) => x.id === id); return p ? JSON.stringify(p) : ""; };
     const stepsOf = (page: Page): Steps => {
         let s = steps.get(page.id);
-        if (!s) { s = { past: [], future: [], last: savedJson(page.id) || JSON.stringify(page) }; steps.set(page.id, s); }
+        if (!s) { s = { past: [], future: [], last: savedJson(page.id) || JSON.stringify(page), home }; steps.set(page.id, s); }
         return s;
     };
     // after any change to a page: the state before it becomes a step back

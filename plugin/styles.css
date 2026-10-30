@@ -1610,3 +1610,4 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* the block window's note box keeps its frame too, like the name box (accent while typing) */
 .mn-app .mn-lay-wnote, .mn-lay-wnote { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); box-shadow: none; }
 .mn-lay-wnote:focus { border-color: var(--interactive-accent); }
+.mn-lay-legend.is-hidden { display: none; }

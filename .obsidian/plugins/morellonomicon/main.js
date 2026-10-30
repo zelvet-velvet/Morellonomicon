@@ -1551,9 +1551,10 @@ function layoutBlock2(plugin, source, el, ctx) {
   const saved = parse2(source);
   const steps = memory.get(ctx.sourcePath) ?? /* @__PURE__ */ new Map();
   memory.set(ctx.sourcePath, steps);
-  const pages = saved.map((p) => steps.has(p.id) ? JSON.parse(steps.get(p.id).last) : p);
-  for (const [id, s] of steps) if (!saved.some((p) => p.id === id)) pages.push(JSON.parse(s.last));
   const info = ctx.getSectionInfo(el);
+  const home = saved[0]?.id ?? `@${info?.lineStart ?? 0}`;
+  const pages = saved.map((p) => steps.has(p.id) ? JSON.parse(steps.get(p.id).last) : p);
+  for (const [id, s] of steps) if (s.home === home && !saved.some((p) => p.id === id)) pages.push(JSON.parse(s.last));
   const root = el.createDiv({ cls: "mn-lay" });
   if (source.trim() && !saved.length) {
     root.createDiv({ cls: "mn-lay-err", text: "The layout data could not be read (JSON). Fix it in the source view." });
@@ -1576,6 +1577,8 @@ function layoutBlock2(plugin, source, el, ctx) {
   if (file0 instanceof import_obsidian4.TFile) void plugin.app.vault.cachedRead(file0).then((text) => {
     const m = new RegExp("```" + SYNCED + "\\n([\\s\\S]*?)\\n```").exec(text);
     synced = new Map(parse2(m?.[1] ?? "").map((p) => [p.id, JSON.stringify(p)]));
+    const first = text.split("\n").findIndex((l) => l.trim() === "```mn-layout");
+    legend.toggleClass("is-hidden", !!info && first >= 0 && first !== info.lineStart);
     draw();
   });
   const changedSinceSync = (page2) => synced.size > 0 && synced.get(page2.id) !== savedJson(page2.id);
@@ -1586,7 +1589,7 @@ function layoutBlock2(plugin, source, el, ctx) {
   const stepsOf = (page2) => {
     let s = steps.get(page2.id);
     if (!s) {
-      s = { past: [], future: [], last: savedJson(page2.id) || JSON.stringify(page2) };
+      s = { past: [], future: [], last: savedJson(page2.id) || JSON.stringify(page2), home };
       steps.set(page2.id, s);
     }
     return s;
