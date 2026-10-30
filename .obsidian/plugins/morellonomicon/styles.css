@@ -1019,28 +1019,27 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-deck .mn-sl-face { border-radius: 22px; }
 .mn-rq-deck .mn-qc-tab { padding-bottom: 104px; }
 .mn-rq-deck .mn-qc-tab.is-look { padding-bottom: 0; }
-/* the champion page (v3, champions.ts championCard): the splash as one big rounded art card behind the page (Back floats on it), fading
-   out at its foot; the icon, name and chips over it; under them the pages swipe sideways with no card panel, their name at the top left,
-   全部 at the top right and the content at the bottom; small icon chips in one capsule float over the foot. Tinted with --dc. */
+/* the champion page (v3, champions.ts championCard): the centered splash fills the upper screen edge to edge behind the page, fading out
+   under the status bar and at its foot; the name, the pages and their parts sit at the bottom over the fade with no frames; small icon
+   chips in one capsule float over the foot. Tinted with --dc. */
 .mn-champ.is-v3 { position: relative; }
-.mn-champ.is-v3::before { content: ""; flex: 0 1 236px; min-height: 120px; }   /* the art shows above the name */
-.mn-app.is-overlay .mn-champ.is-v3::before { flex-basis: calc(236px + var(--mn-safe-top)); }
-.mn-champ.is-v3 .mn-hero { position: absolute; z-index: 0; top: 4px; left: 16px; right: 16px; height: 78%; min-height: 0; margin: 0; border-radius: 24px; display: block; }
-.mn-app.is-overlay .mn-champ.is-v3 .mn-hero { top: calc(var(--mn-safe-top) + 4px); min-height: 0; }
-.mn-champ.is-v3 .mn-hero-bg { top: 0; transform: none; background-position: center 20%; -webkit-mask-image: none; mask-image: none; }
-.mn-champ.is-v3 .mn-hero::after { background: linear-gradient(180deg, color-mix(in srgb, var(--mn-bg) 30%, transparent) 0, transparent 18%, transparent 34%, color-mix(in srgb, var(--mn-bg) 70%, transparent) 52%, var(--mn-bg) 74%); }
+.mn-champ.is-v3::before { content: ""; flex: 1 1 auto; min-height: 140px; }   /* the art takes the room above the name */
+.mn-champ.is-v3 .mn-hero { position: absolute; z-index: 0; top: 0; left: 0; right: 0; height: 72%; min-height: 0; margin: 0; display: block; border-radius: 0;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--mn-safe-top, 0px) + 64px), #000 52%, transparent 100%); mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--mn-safe-top, 0px) + 64px), #000 52%, transparent 100%); }
+.mn-app.is-overlay .mn-champ.is-v3 .mn-hero { min-height: 0; }
+.mn-champ.is-v3 .mn-hero-bg { top: 0; transform: none; background-size: cover; background-position: center 30%; -webkit-mask-image: none; mask-image: none; }
+.mn-champ.is-v3 .mn-hero::after { background: linear-gradient(180deg, transparent 45%, color-mix(in srgb, var(--mn-bg) 55%, transparent) 100%); }   /* a little darker where the name sits */
 .mn-champ.is-v3 > :not(.mn-hero) { position: relative; z-index: 1; }
-.mn-champ .mn-card-head { padding: 0 12px 4px; }
+.mn-champ .mn-card-head { padding: 0 4px 4px; }
 .mn-champ .mn-card-img { width: 64px; height: 64px; }
 .mn-app .mn-champ .mn-card-who .mn-title { font-size: 30px; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6); }
-.mn-champ.is-v3 > .mn-cpa { flex: 1 1 auto; min-height: 0; height: auto; margin: 8px -16px 0; }
+.mn-champ.is-v3 > .mn-cpa { flex: none; height: auto; margin: 4px -16px 0; }
 .mn-cpa-track { display: flex; height: 100%; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
 .mn-cpa-track::-webkit-scrollbar { display: none; }
-.mn-cpa-page { flex: 0 0 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: 0 16px 66px; scroll-snap-align: start; scroll-snap-stop: always; overflow: hidden; }
+.mn-cpa-page { flex: 0 0 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: 0 16px 66px; scroll-snap-align: start; scroll-snap-stop: always; overflow: hidden; }
 .mn-cpa-top { flex: none; display: flex; align-items: center; justify-content: space-between; height: 48px; }
 .mn-cpa-name { font-size: 20px; font-weight: 800; color: var(--mn-text); }
-.mn-app .mn-cpa-all { display: inline-flex; align-items: center; gap: 2px; height: 34px; padding: 0 8px 0 14px; border-radius: 17px; box-shadow: none; font-size: 14px; font-weight: 700;
-    border: 1px solid color-mix(in srgb, var(--mn-accent) 35%, transparent); background: color-mix(in srgb, var(--mn-accent) 12%, transparent); color: var(--mn-text); }
+.mn-app .mn-cpa-all { display: inline-flex; align-items: center; gap: 2px; height: 34px; padding: 0 0 0 10px; border: 0; border-radius: 0; box-shadow: none; background: none; font-size: 15px; font-weight: 700; color: var(--mn-accent); }
 .mn-cpa-all svg { width: 16px; height: 16px; color: var(--mn-accent); }
 .mn-cpa-all .mn-ic { display: flex; }
 .mn-cpa-body { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; }   /* the content at the bottom */
@@ -1578,3 +1577,12 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay-win input.mn-lay-num { flex: 1; min-width: 0; width: auto; height: 28px; padding: 0 6px 0 0; border: 0; background: transparent; box-shadow: none; font-size: 13px; font-variant-numeric: tabular-nums; }
 .mn-lay-wnote { width: 100%; min-height: 30px; resize: none; overflow: hidden; font-size: 13px; line-height: 1.4; }
 .mn-lay-win .mn-lay-acts { display: flex; justify-content: flex-end; gap: 4px; }
+
+/* champion page v3: the parts float on the art's fade with no frames (no tile, panel or pill backgrounds or borders) */
+.mn-champ.is-v3 .mn-cv-stat { padding: 4px; border: 0; border-radius: 0; background: none; }
+.mn-champ.is-v3 .mn-cv-stat b { font-size: 20px; }
+.mn-champ.is-v3 .mn-cv-stat span { font-size: 12px; }
+.mn-app .mn-champ.is-v3 .mn-cv-tags .mn-tg { border: 0; background: none; padding: 6px 4px; font-size: 14px; }
+.mn-champ.is-v3 .mn-cv-sk { padding: 4px 2px 0; border-radius: 0; background: none; }
+.mn-champ.is-v3 .mn-cv-tip { padding: 4px 2px; border-radius: 0; background: none; }
+.mn-app .mn-champ.is-v3 .mn-aug-tile { border: 0; background: none; padding: 4px; }

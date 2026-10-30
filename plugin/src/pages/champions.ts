@@ -2,6 +2,7 @@ import type { Champion, Item } from "../data/store";
 import { DAMAGE_COLOR, DAMAGE_ICON, augIcon, scalingParts, warmPictures, blockUntil, layoutBlock, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, slideSeg, tip, fixedPage } from "../ui";
 import { TAG_GROUPS, championProfile, iconFilter, reachOf, tagFilter, tagRow } from "./profile";
 import { buildTab } from "./build";
+import { cardArt } from "./roster";
 import type { PageCtx, PageOut } from "./index";
 import { badgeColor, badgeText, changesBlock, entryDir, marker } from "./changes";
 import { metaLine } from "./fresh";
@@ -177,10 +178,11 @@ export type SubTab = "overview" | "skills" | "build" | "augments" | "tips";
 const lastSub = new Map<string, SubTab>();
 export function rememberSub(id: string, sub: SubTab): void { lastSub.set(id, sub); }   // the page a link asks the champion card to open on
 
-// The champion page (v3, Zaviel 2026-10-30, Dev Tools/Layouts.md "Champion page v3"): the splash as one big rounded art card behind the
-// page (Back floats on it), the icon, name and chips over it; under them the pages swipe sideways (snapped), their content straight on
-// the art's fade with no card panel: the page's name at the top left, 全部 at the top right, the content at the bottom; five small icon
-// chips in one capsule float over the foot (the current one lit; tap to jump). The page never scrolls down.
+// The champion page (v3, Zaviel 2026-10-30, Dev Tools/Layouts.md "Champion page v3"): the centered splash fills the upper screen behind
+// the page (Back floats on it) and fades out at its foot; the icon, name and chips, then the pages, sit at the bottom over the fade, so
+// the art takes the room above (no empty band). The pages swipe sideways (snapped), their parts floating on the fade with no frames: the
+// page's name at the top left, 全部 at the top right, the content under them; five small icon chips in one capsule float over the foot
+// (the current one lit; tap to jump). The page never scrolls down.
 const PAGES: [Part, string, string][] = [["overview", "概覽", "id-card"], ["skills", "技能", "keyboard"], ["build", "出裝", "shopping-bag"], ["augments", "強化", "sparkles"], ["tips", "技巧", "lightbulb"]];
 export function championCard(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
@@ -192,10 +194,11 @@ export function championCard(ctx: PageCtx): PageOut {
     const part = (p: Part) => () => ctx.push({ key: "champpart", title: `${c.name} · ${PART_TITLE[p]}`, params: { id: c.id, part: p } });
     el.style.setProperty("--dc", DAMAGE_COLOR[c.damageType || c.skillDamage[0] || ""] ?? "var(--mn-accent)");   // the page's tint
 
-    // the art card behind the page: the splash, fading out at its foot into the page
+    // the art behind the page: Riot's centered splash (the champion in the middle), filling the upper screen edge to edge and fading out
+    // under the status bar and at its foot (Design Rules: no hard edges)
     const hero = h(el, "div", "mn-hero");
     const bg = h(hero, "div", "mn-hero-bg");
-    bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
+    bg.style.backgroundImage = `url("${cardArt(c.id)}")`;
     // the icon, name, title and chips over the art
     const head = h(el, "div", "mn-card-head");
     const im = h(head, "img", "mn-card-img"); im.src = c.icon; im.alt = "";

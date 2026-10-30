@@ -3280,6 +3280,9 @@ function itemRow(parent, c, ctx, ids, captions = []) {
   });
 }
 
+// src/pages/roster.ts
+var import_obsidian12 = require("obsidian");
+
 // src/pages/changes.ts
 var DIR_COLOR = { buff: "var(--color-green)", nerf: "var(--color-red)", mixed: "var(--color-yellow)", change: "var(--color-blue)", text: "var(--color-blue)" };
 var DIR_MARK = { buff: "\u25B2", nerf: "\u25BC", mixed: "\u25C6", change: "\u25CF", text: "\u270E" };
@@ -3637,8 +3640,297 @@ function rankTable(parent, s, changes) {
   }
 }
 
-// src/pages/detail.ts
-var import_obsidian12 = require("obsidian");
+// src/pages/cardkit.ts
+var LEVELS_STAT = { ap: 300, ad: 200 };
+var ULT_LEVELS = [6, 11, 16];
+var FORM_ICONS = ["hammer", "crosshair"];
+var FORM_ART = "https://raw.communitydragon.org/latest/game/assets/characters";
+var DAMAGE_ROW = /^(物理|魔法|真實)傷害|^治療|^護盾/;
+var SCALING = /\+([\d./]+)%\s*(額外物理攻擊|物理攻擊|魔法攻擊)/;
+var NEUTRAL = "#6b7183";
+var kindColor = (s) => DAMAGE_COLOR[s.damage[0] ?? ""] ?? NEUTRAL;
+var statColor = (stat) => stat.includes("\u9B54\u6CD5") ? DAMAGE_COLOR["\u9B54\u6CD5"] : DAMAGE_COLOR["\u7269\u7406"];
+var lastNum2 = (v) => parseFloat(v.split("/").pop() ?? "") || 0;
+function pill(parent, label, color, ic) {
+  const p = h(parent, "span", "mn-ck-pill");
+  p.style.setProperty("--c", color);
+  if (ic) icon(p, ic);
+  h(p, "span", void 0, label);
+}
+var measure = null;
+function centreInk(letter) {
+  if (!letter.isConnected) return;
+  measure ?? (measure = document.createElement("canvas").getContext("2d"));
+  if (!measure) return;
+  const cs = getComputedStyle(letter);
+  measure.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  const m = measure.measureText(letter.textContent ?? "");
+  const box = (m.fontBoundingBoxAscent - m.fontBoundingBoxDescent) / 2;
+  const ink = (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+  if (Number.isFinite(ink) && Number.isFinite(box)) letter.style.setProperty("--dy", `${(ink - box).toFixed(2)}px`);
+}
+function keyBadge(parent, key, color) {
+  const k = h(parent, "span", "mn-ck-key" + (key === "P" ? " is-zh" : ""));
+  const letter = h(k, "span", void 0, key === "P" ? "\u88AB" : key);
+  k.style.setProperty("--c", color);
+  requestAnimationFrame(() => centreInk(letter));
+  void document.fonts?.ready.then(() => centreInk(letter));
+  return k;
+}
+var head = (el, { c, s }) => {
+  const color = kindColor(s);
+  const ic = h(el, "div", "mn-ck-ic");
+  ic.style.setProperty("--c", color);
+  const im = h(ic, "img");
+  im.src = s.icon;
+  im.alt = "";
+  keyBadge(ic, s.key, color);
+  const who = h(el, "div", "mn-ck-who");
+  h(who, "div", "mn-ck-kn", `${c.name} \xB7 ${s.key === "P" ? "\u88AB\u52D5" : s.key}`);
+  h(who, "div", "mn-ck-name", s.name);
+};
+var tags = (el, { s }) => {
+  for (const k of s.damage) pill(el, `${k}\u50B7\u5BB3`, DAMAGE_COLOR[k] ?? NEUTRAL, DAMAGE_ICON[k] ?? "flame");
+  for (const t of s.tags) {
+    const i = tagInfo(t);
+    pill(el, t, i?.color ?? "var(--mn-muted)", i?.icon);
+  }
+};
+var desc = (el, { s }) => {
+  el.textContent = s.desc;
+};
+var numbers2 = (el, { s }) => {
+  const rows = s.rows.filter((r) => DAMAGE_ROW.test(r.label));
+  if (!rows.length) return;
+  const ranks = Math.max(1, ...rows.map((r) => r.vals.length));
+  el.style.setProperty("--r", String(ranks));
+  if (ranks > 1) {
+    h(el, "div");
+    for (let i = 1; i <= ranks; i++) h(el, "div", "mn-ck-h", s.levels[i - 1] ? `Lv ${s.levels[i - 1]}` : `${i} \u7D1A`);
+  }
+  for (const r of rows) {
+    const color = DAMAGE_COLOR[r.label.slice(0, 2)] ?? (r.label.startsWith("\u6CBB\u7642") ? "var(--mn-heal)" : "var(--mn-shield)");
+    const name = h(el, "div", "mn-ck-l", r.label);
+    name.style.color = color;
+    if (r.vals.length === 1) {
+      const v = h(el, "div", "mn-ck-v", r.vals[0]);
+      v.style.gridColumn = `span ${ranks}`;
+      v.style.color = color;
+    } else for (const v of r.vals) h(el, "div", "mn-ck-v", v).style.color = color;
+    if (r.note) {
+      const sc = h(el, "div", "mn-ck-sc");
+      sc.style.gridColumn = "1 / -1";
+      for (const p of scalingParts(r.note)) pill(sc, p.text, p.color, p.icon);
+    }
+  }
+};
+var stats = (el, { s }) => {
+  const val = (re) => s.rows.find((r) => re.test(r.label))?.vals.join(" / ");
+  const box = (ic, v, label) => {
+    if (!v) return;
+    const b = h(el, "div", "mn-ck-stat");
+    icon(b, ic);
+    h(b, "b", void 0, v);
+    h(b, "span", void 0, label);
+  };
+  box("timer", val(/^冷卻/), "\u51B7\u537B \u79D2");
+  box("droplet", val(/^消耗/), "\u6D88\u8017");
+  box("crosshair", s.range, "\u5C04\u7A0B");
+};
+var media = (el, { c, s, args }) => {
+  const wrap = h(el, "div", "mn-sl-video");
+  const spec = args.find((a) => /^\d+(?:\.\d+)?-\d+(?:\.\d+)?(?:\+\d+(?:\.\d+)?-\d+(?:\.\d+)?)*$/.test(a));
+  const seconds = spec?.split("+").map((p) => p.split("-").map(Number));
+  demo(wrap, c, { key: args.find((a) => /^[PQWER]\d?$/i.test(a))?.toUpperCase() ?? s.key, seconds }, () => {
+    const im = h(wrap, "img", "mn-ck-failic");
+    im.src = s.icon;
+    im.alt = "";
+  });
+  tags(h(wrap, "div", "mn-ck-onclip"), { c, s, args });
+  const hud = h(wrap, "div", "mn-ck-hud");
+  keyBadge(hud, s.key, kindColor(s));
+  h(hud, "span", "mn-ck-hudn", s.name);
+};
+var levelBars = (el, { s, args }) => {
+  const row2 = s.rows.find((r) => /^(物理|魔法|真實)傷害/.test(r.label));
+  const m = row2 ? SCALING.exec(row2.note) : null;
+  if (!row2 || !m) return;
+  const pct2 = lastNum2(m[1]), stat = m[2], color = statColor(stat);
+  const amount = Number(args.find((a2) => /^\d+$/.test(a2))) || (stat.includes("\u9B54\u6CD5") ? LEVELS_STAT.ap : LEVELS_STAT.ad);
+  const bonus = Math.round(pct2 / 100 * amount);
+  const bases = row2.vals.map((v) => lastNum2(v));
+  const top = Math.max(...bases) + bonus;
+  bases.forEach((base, i) => {
+    const r = h(el, "div", "mn-ck-lv");
+    const lab = h(r, "div", "mn-ck-lvk");
+    h(lab, "b", void 0, `${i + 1} \u7D1A`);
+    if (s.key === "R" && ULT_LEVELS[i]) h(lab, "span", void 0, `Lv ${ULT_LEVELS[i]}`);
+    const pair = h(r, "div", "mn-ck-lvp");
+    const one = (withStat) => {
+      const line = h(pair, "div", "mn-ck-lvl");
+      const tr = h(line, "div", "mn-ck-track");
+      h(tr, "i", "mn-ck-b1", withStat ? "" : String(base)).style.width = `${base / top * 100}%`;
+      if (withStat) {
+        const b2 = h(tr, "i", "mn-ck-b2", `+${bonus}`);
+        b2.style.width = `${bonus / top * 100}%`;
+        b2.style.background = color;
+      }
+      h(line, "b", void 0, String(base + (withStat ? bonus : 0)));
+    };
+    one(false);
+    one(true);
+  });
+  const lg = h(el, "div", "mn-ck-lg");
+  const a = h(lg, "span");
+  h(a, "i").style.background = "#6e7b92";
+  a.append("\u6280\u80FD\u7B49\u7D1A\u7D66\u7684");
+  const b = h(lg, "span");
+  h(b, "i").style.background = color;
+  b.append(`${amount} ${stat.replace("\u653B\u64CA", "\u653B")}\u591A\u7D66\u7684`);
+};
+var formsTitle = (el, { c, args }) => {
+  const im = h(el, "img", "mn-ck-sq");
+  im.src = c.icon;
+  im.alt = "";
+  h(el, "span", void 0, `${c.name} \xB7 ${args.filter((a) => !/^[PQWER]\d?$/i.test(a)).length || 2} \u7A2E\u578B\u614B`);
+};
+var formSets = (el, { c, args }) => {
+  const names = args.map((a) => a.replace(/^\*/, "")).filter((a) => !/^[PQWER]\d?$/i.test(a));
+  const id = c.id.toLowerCase();
+  names.forEach((form, i) => {
+    const col = h(el, "div", "mn-ck-set");
+    const t = h(col, "div", "mn-ck-formh");
+    icon(t, FORM_ICONS[i] ?? "shapes");
+    h(t, "span", void 0, form);
+    const pic2 = (parent, key, big) => {
+      const s = c.skills.find((x) => x.key === key);
+      if (!s) return;
+      const cell = h(parent, "div", "mn-ck-cell" + (big ? " is-big" : ""));
+      const ic = h(cell, "div", "mn-ck-ic" + (big ? " is-big" : " is-sm"));
+      ic.style.setProperty("--c", kindColor(s));
+      const im = h(ic, "img");
+      im.alt = "";
+      im.src = `${FORM_ART}/${id}/hud/icons2d/${id}${key.toLowerCase()}_${i === 0 ? "melee" : "ranged"}.png`;
+      im.addEventListener("error", () => {
+        if (i === 0) im.src = s.icon;
+        else im.remove();
+      }, { once: true });
+      keyBadge(ic, key, kindColor(s));
+      h(cell, "span", "mn-ck-cn", s.name.split("\uFF0F")[i] ?? s.name);
+    };
+    pic2(col, "R", true);
+    const row2 = h(col, "div", "mn-ck-qwe");
+    for (const k of ["Q", "W", "E"]) pic2(row2, k, false);
+  });
+};
+var RESULT_ICON = [[/快|速/, "zap"], [/遠|長/, "move-horizontal"], [/痛|傷|強/, "flame"], [/穩|盾/, "shield"]];
+var beforeEquals = (args) => args.includes("=") ? args.slice(0, args.indexOf("=")) : args;
+var comboMedia = (el, { c, args }) => {
+  const keys = beforeEquals(args).filter((a) => /^[PQWER]\d?$/i.test(a)).map((a) => a.toUpperCase());
+  const wrap = h(el, "div", "mn-sl-video");
+  const reels = keys.map((key) => {
+    const box = h(wrap, "div", "mn-ck-reel");
+    demo(box, c, { key });
+    return box;
+  });
+  let now = 0;
+  const show = (i) => {
+    now = i;
+    reels.forEach((box, n) => {
+      box.classList.toggle("is-on", n === i);
+      if (n !== i) box.querySelector("video")?.pause();
+    });
+    const v = reels[i]?.querySelector("video");
+    if (v) {
+      v.currentTime = 0;
+      void v.play().catch(() => void 0);
+    }
+  };
+  reels.forEach((box, i) => {
+    const v = box.querySelector("video");
+    if (!v || reels.length < 2) return;
+    v.loop = false;
+    v.addEventListener("ended", () => {
+      if (now === i) show((i + 1) % reels.length);
+    });
+    v.addEventListener("play", () => {
+      if (now !== i) v.pause();
+    });
+  });
+  reels[0]?.classList.add("is-on");
+  comboFlow(h(wrap, "div", "mn-ck-comboFlow"), { c, s: c.skills[0], args });
+};
+var comboFlow = (el, { c, args }) => {
+  const spec = beforeEquals(args);
+  const names = spec.filter((a) => !/^[PQWER]\d?$/i.test(a)).map((a) => a.replace(/^\*/, ""));
+  const form = Math.max(0, names.indexOf(spec.find((a) => a.startsWith("*"))?.slice(1) ?? ""));
+  const keys = spec.filter((a) => /^[PQWER]\d?$/i.test(a)).map((a) => a.toUpperCase());
+  const id = c.id.toLowerCase();
+  keys.forEach((key, i) => {
+    if (i) icon(el, "arrow-right", "mn-ck-arrow");
+    const s = c.skills.find((x) => x.key === key.charAt(0));
+    if (!s) return;
+    const cell = h(el, "div", "mn-ck-cell is-step");
+    const ic = h(cell, "div", "mn-ck-ic is-huge");
+    ic.style.setProperty("--c", kindColor(s));
+    const im = h(ic, "img");
+    im.alt = "";
+    im.src = `${FORM_ART}/${id}/hud/icons2d/${id}${key.toLowerCase()}_${form === 0 ? "melee" : "ranged"}.png`;
+    im.addEventListener("error", () => {
+      im.src = s.icon;
+    }, { once: true });
+    keyBadge(ic, key, kindColor(s));
+    h(ic, "span", "mn-ck-step", String(i + 1));
+    h(cell, "span", "mn-ck-cn", s.name.split("\uFF0F")[form] ?? s.name);
+  });
+  const at = args.indexOf("=");
+  if (at < 0) return;
+  const chips = h(el, "div", "mn-ck-comboChips");
+  for (const w of args.slice(at + 1)) pill(chips, w, "#f0b074", RESULT_ICON.find(([re]) => re.test(w))?.[1] ?? "sparkles");
+};
+var formCols = (el, { c, args }) => {
+  const names = args.map((a) => a.replace(/^\*/, "")).filter((a) => !/^[PQWER]$/i.test(a));
+  const on = args.find((a) => a.startsWith("*"))?.slice(1);
+  const cut = new RegExp(`(?=(?:${names.join("|")})[^\uFF1A:\uFF0C\u3002\\s]{0,3}\u578B\u614B[\uFF1A:])`);
+  names.forEach((form, i) => {
+    const col = h(el, "div", "mn-ck-form" + (form === on ? " is-on" : ""));
+    const t = h(col, "div", "mn-ck-formh");
+    icon(t, FORM_ICONS[i] ?? "shapes");
+    h(t, "span", void 0, form);
+    for (const key of ["Q", "W", "E"]) {
+      const s = c.skills.find((x) => x.key === key);
+      const part = s?.desc.split(cut).find((p) => p.startsWith(form));
+      if (!part) continue;
+      const line = h(col, "div", "mn-ck-fl");
+      keyBadge(line, key, s ? kindColor(s) : "var(--mn-muted)");
+      h(line, "span", void 0, part.replace(/^[^：:]*[：:]/, "").trim());
+    }
+  });
+};
+var LAYOUTS = {
+  ability: { areas: ["head", "tags", "desc", "numbers", "stats"], rows: "auto auto auto auto auto", fill: { head, tags, desc, numbers: numbers2, stats } },
+  clip: { areas: ["media"], rows: "1fr", fill: { media } },
+  levels: { areas: ["head", "levelBars"], rows: "auto auto", fill: { head, levelBars } },
+  forms: { areas: ["formsTitle", "formCols"], rows: "auto auto", fill: { formsTitle, formCols } },
+  combo: { areas: ["comboMedia"], rows: "1fr", fill: { comboMedia } },
+  formset: { areas: ["formsTitle", "formSets"], rows: "auto auto", fill: { formsTitle, formSets } }
+};
+function cardKit(box, kind, c, args) {
+  const layout = LAYOUTS[kind];
+  if (!layout || !c) return false;
+  const key = (args.find((a) => /^[PQWER]\d?$/i.test(a)) ?? "Q").toUpperCase();
+  const s = c.skills.find((x) => x.key === key.charAt(0));
+  if (!s && kind !== "forms" && kind !== "formset" && kind !== "combo") return false;
+  const root = h(box, "div", `mn-ck mn-ck-${kind}`);
+  root.style.gridTemplateAreas = layout.areas.map((a) => `"${a}"`).join(" ");
+  root.style.gridTemplateRows = layout.rows;
+  for (const area of layout.areas) {
+    const slot = h(root, "div", `mn-ck-slot mn-ck-${area}`);
+    slot.style.gridArea = area;
+    layout.fill[area](slot, { c, s: s ?? c.skills[0], args });
+  }
+  return true;
+}
 
 // src/pages/deck.ts
 var import_obsidian11 = require("obsidian");
@@ -4121,298 +4413,6 @@ function cardPile(pager, sec, o) {
   } };
 }
 
-// src/pages/cardkit.ts
-var LEVELS_STAT = { ap: 300, ad: 200 };
-var ULT_LEVELS = [6, 11, 16];
-var FORM_ICONS = ["hammer", "crosshair"];
-var FORM_ART = "https://raw.communitydragon.org/latest/game/assets/characters";
-var DAMAGE_ROW = /^(物理|魔法|真實)傷害|^治療|^護盾/;
-var SCALING = /\+([\d./]+)%\s*(額外物理攻擊|物理攻擊|魔法攻擊)/;
-var NEUTRAL = "#6b7183";
-var kindColor = (s) => DAMAGE_COLOR[s.damage[0] ?? ""] ?? NEUTRAL;
-var statColor = (stat) => stat.includes("\u9B54\u6CD5") ? DAMAGE_COLOR["\u9B54\u6CD5"] : DAMAGE_COLOR["\u7269\u7406"];
-var lastNum2 = (v) => parseFloat(v.split("/").pop() ?? "") || 0;
-function pill(parent, label, color, ic) {
-  const p = h(parent, "span", "mn-ck-pill");
-  p.style.setProperty("--c", color);
-  if (ic) icon(p, ic);
-  h(p, "span", void 0, label);
-}
-var measure = null;
-function centreInk(letter) {
-  if (!letter.isConnected) return;
-  measure ?? (measure = document.createElement("canvas").getContext("2d"));
-  if (!measure) return;
-  const cs = getComputedStyle(letter);
-  measure.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-  const m = measure.measureText(letter.textContent ?? "");
-  const box = (m.fontBoundingBoxAscent - m.fontBoundingBoxDescent) / 2;
-  const ink = (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
-  if (Number.isFinite(ink) && Number.isFinite(box)) letter.style.setProperty("--dy", `${(ink - box).toFixed(2)}px`);
-}
-function keyBadge(parent, key, color) {
-  const k = h(parent, "span", "mn-ck-key" + (key === "P" ? " is-zh" : ""));
-  const letter = h(k, "span", void 0, key === "P" ? "\u88AB" : key);
-  k.style.setProperty("--c", color);
-  requestAnimationFrame(() => centreInk(letter));
-  void document.fonts?.ready.then(() => centreInk(letter));
-  return k;
-}
-var head = (el, { c, s }) => {
-  const color = kindColor(s);
-  const ic = h(el, "div", "mn-ck-ic");
-  ic.style.setProperty("--c", color);
-  const im = h(ic, "img");
-  im.src = s.icon;
-  im.alt = "";
-  keyBadge(ic, s.key, color);
-  const who = h(el, "div", "mn-ck-who");
-  h(who, "div", "mn-ck-kn", `${c.name} \xB7 ${s.key === "P" ? "\u88AB\u52D5" : s.key}`);
-  h(who, "div", "mn-ck-name", s.name);
-};
-var tags = (el, { s }) => {
-  for (const k of s.damage) pill(el, `${k}\u50B7\u5BB3`, DAMAGE_COLOR[k] ?? NEUTRAL, DAMAGE_ICON[k] ?? "flame");
-  for (const t of s.tags) {
-    const i = tagInfo(t);
-    pill(el, t, i?.color ?? "var(--mn-muted)", i?.icon);
-  }
-};
-var desc = (el, { s }) => {
-  el.textContent = s.desc;
-};
-var numbers2 = (el, { s }) => {
-  const rows = s.rows.filter((r) => DAMAGE_ROW.test(r.label));
-  if (!rows.length) return;
-  const ranks = Math.max(1, ...rows.map((r) => r.vals.length));
-  el.style.setProperty("--r", String(ranks));
-  if (ranks > 1) {
-    h(el, "div");
-    for (let i = 1; i <= ranks; i++) h(el, "div", "mn-ck-h", s.levels[i - 1] ? `Lv ${s.levels[i - 1]}` : `${i} \u7D1A`);
-  }
-  for (const r of rows) {
-    const color = DAMAGE_COLOR[r.label.slice(0, 2)] ?? (r.label.startsWith("\u6CBB\u7642") ? "var(--mn-heal)" : "var(--mn-shield)");
-    const name = h(el, "div", "mn-ck-l", r.label);
-    name.style.color = color;
-    if (r.vals.length === 1) {
-      const v = h(el, "div", "mn-ck-v", r.vals[0]);
-      v.style.gridColumn = `span ${ranks}`;
-      v.style.color = color;
-    } else for (const v of r.vals) h(el, "div", "mn-ck-v", v).style.color = color;
-    if (r.note) {
-      const sc = h(el, "div", "mn-ck-sc");
-      sc.style.gridColumn = "1 / -1";
-      for (const p of scalingParts(r.note)) pill(sc, p.text, p.color, p.icon);
-    }
-  }
-};
-var stats = (el, { s }) => {
-  const val = (re) => s.rows.find((r) => re.test(r.label))?.vals.join(" / ");
-  const box = (ic, v, label) => {
-    if (!v) return;
-    const b = h(el, "div", "mn-ck-stat");
-    icon(b, ic);
-    h(b, "b", void 0, v);
-    h(b, "span", void 0, label);
-  };
-  box("timer", val(/^冷卻/), "\u51B7\u537B \u79D2");
-  box("droplet", val(/^消耗/), "\u6D88\u8017");
-  box("crosshair", s.range, "\u5C04\u7A0B");
-};
-var media = (el, { c, s, args }) => {
-  const wrap = h(el, "div", "mn-sl-video");
-  const spec = args.find((a) => /^\d+(?:\.\d+)?-\d+(?:\.\d+)?(?:\+\d+(?:\.\d+)?-\d+(?:\.\d+)?)*$/.test(a));
-  const seconds = spec?.split("+").map((p) => p.split("-").map(Number));
-  demo(wrap, c, { key: args.find((a) => /^[PQWER]\d?$/i.test(a))?.toUpperCase() ?? s.key, seconds }, () => {
-    const im = h(wrap, "img", "mn-ck-failic");
-    im.src = s.icon;
-    im.alt = "";
-  });
-  tags(h(wrap, "div", "mn-ck-onclip"), { c, s, args });
-  const hud = h(wrap, "div", "mn-ck-hud");
-  keyBadge(hud, s.key, kindColor(s));
-  h(hud, "span", "mn-ck-hudn", s.name);
-};
-var levelBars = (el, { s, args }) => {
-  const row2 = s.rows.find((r) => /^(物理|魔法|真實)傷害/.test(r.label));
-  const m = row2 ? SCALING.exec(row2.note) : null;
-  if (!row2 || !m) return;
-  const pct2 = lastNum2(m[1]), stat = m[2], color = statColor(stat);
-  const amount = Number(args.find((a2) => /^\d+$/.test(a2))) || (stat.includes("\u9B54\u6CD5") ? LEVELS_STAT.ap : LEVELS_STAT.ad);
-  const bonus = Math.round(pct2 / 100 * amount);
-  const bases = row2.vals.map((v) => lastNum2(v));
-  const top = Math.max(...bases) + bonus;
-  bases.forEach((base, i) => {
-    const r = h(el, "div", "mn-ck-lv");
-    const lab = h(r, "div", "mn-ck-lvk");
-    h(lab, "b", void 0, `${i + 1} \u7D1A`);
-    if (s.key === "R" && ULT_LEVELS[i]) h(lab, "span", void 0, `Lv ${ULT_LEVELS[i]}`);
-    const pair = h(r, "div", "mn-ck-lvp");
-    const one = (withStat) => {
-      const line = h(pair, "div", "mn-ck-lvl");
-      const tr = h(line, "div", "mn-ck-track");
-      h(tr, "i", "mn-ck-b1", withStat ? "" : String(base)).style.width = `${base / top * 100}%`;
-      if (withStat) {
-        const b2 = h(tr, "i", "mn-ck-b2", `+${bonus}`);
-        b2.style.width = `${bonus / top * 100}%`;
-        b2.style.background = color;
-      }
-      h(line, "b", void 0, String(base + (withStat ? bonus : 0)));
-    };
-    one(false);
-    one(true);
-  });
-  const lg = h(el, "div", "mn-ck-lg");
-  const a = h(lg, "span");
-  h(a, "i").style.background = "#6e7b92";
-  a.append("\u6280\u80FD\u7B49\u7D1A\u7D66\u7684");
-  const b = h(lg, "span");
-  h(b, "i").style.background = color;
-  b.append(`${amount} ${stat.replace("\u653B\u64CA", "\u653B")}\u591A\u7D66\u7684`);
-};
-var formsTitle = (el, { c, args }) => {
-  const im = h(el, "img", "mn-ck-sq");
-  im.src = c.icon;
-  im.alt = "";
-  h(el, "span", void 0, `${c.name} \xB7 ${args.filter((a) => !/^[PQWER]\d?$/i.test(a)).length || 2} \u7A2E\u578B\u614B`);
-};
-var formSets = (el, { c, args }) => {
-  const names = args.map((a) => a.replace(/^\*/, "")).filter((a) => !/^[PQWER]\d?$/i.test(a));
-  const id = c.id.toLowerCase();
-  names.forEach((form, i) => {
-    const col = h(el, "div", "mn-ck-set");
-    const t = h(col, "div", "mn-ck-formh");
-    icon(t, FORM_ICONS[i] ?? "shapes");
-    h(t, "span", void 0, form);
-    const pic2 = (parent, key, big) => {
-      const s = c.skills.find((x) => x.key === key);
-      if (!s) return;
-      const cell = h(parent, "div", "mn-ck-cell" + (big ? " is-big" : ""));
-      const ic = h(cell, "div", "mn-ck-ic" + (big ? " is-big" : " is-sm"));
-      ic.style.setProperty("--c", kindColor(s));
-      const im = h(ic, "img");
-      im.alt = "";
-      im.src = `${FORM_ART}/${id}/hud/icons2d/${id}${key.toLowerCase()}_${i === 0 ? "melee" : "ranged"}.png`;
-      im.addEventListener("error", () => {
-        if (i === 0) im.src = s.icon;
-        else im.remove();
-      }, { once: true });
-      keyBadge(ic, key, kindColor(s));
-      h(cell, "span", "mn-ck-cn", s.name.split("\uFF0F")[i] ?? s.name);
-    };
-    pic2(col, "R", true);
-    const row2 = h(col, "div", "mn-ck-qwe");
-    for (const k of ["Q", "W", "E"]) pic2(row2, k, false);
-  });
-};
-var RESULT_ICON = [[/快|速/, "zap"], [/遠|長/, "move-horizontal"], [/痛|傷|強/, "flame"], [/穩|盾/, "shield"]];
-var beforeEquals = (args) => args.includes("=") ? args.slice(0, args.indexOf("=")) : args;
-var comboMedia = (el, { c, args }) => {
-  const keys = beforeEquals(args).filter((a) => /^[PQWER]\d?$/i.test(a)).map((a) => a.toUpperCase());
-  const wrap = h(el, "div", "mn-sl-video");
-  const reels = keys.map((key) => {
-    const box = h(wrap, "div", "mn-ck-reel");
-    demo(box, c, { key });
-    return box;
-  });
-  let now = 0;
-  const show = (i) => {
-    now = i;
-    reels.forEach((box, n) => {
-      box.classList.toggle("is-on", n === i);
-      if (n !== i) box.querySelector("video")?.pause();
-    });
-    const v = reels[i]?.querySelector("video");
-    if (v) {
-      v.currentTime = 0;
-      void v.play().catch(() => void 0);
-    }
-  };
-  reels.forEach((box, i) => {
-    const v = box.querySelector("video");
-    if (!v || reels.length < 2) return;
-    v.loop = false;
-    v.addEventListener("ended", () => {
-      if (now === i) show((i + 1) % reels.length);
-    });
-    v.addEventListener("play", () => {
-      if (now !== i) v.pause();
-    });
-  });
-  reels[0]?.classList.add("is-on");
-  comboFlow(h(wrap, "div", "mn-ck-comboFlow"), { c, s: c.skills[0], args });
-};
-var comboFlow = (el, { c, args }) => {
-  const spec = beforeEquals(args);
-  const names = spec.filter((a) => !/^[PQWER]\d?$/i.test(a)).map((a) => a.replace(/^\*/, ""));
-  const form = Math.max(0, names.indexOf(spec.find((a) => a.startsWith("*"))?.slice(1) ?? ""));
-  const keys = spec.filter((a) => /^[PQWER]\d?$/i.test(a)).map((a) => a.toUpperCase());
-  const id = c.id.toLowerCase();
-  keys.forEach((key, i) => {
-    if (i) icon(el, "arrow-right", "mn-ck-arrow");
-    const s = c.skills.find((x) => x.key === key.charAt(0));
-    if (!s) return;
-    const cell = h(el, "div", "mn-ck-cell is-step");
-    const ic = h(cell, "div", "mn-ck-ic is-huge");
-    ic.style.setProperty("--c", kindColor(s));
-    const im = h(ic, "img");
-    im.alt = "";
-    im.src = `${FORM_ART}/${id}/hud/icons2d/${id}${key.toLowerCase()}_${form === 0 ? "melee" : "ranged"}.png`;
-    im.addEventListener("error", () => {
-      im.src = s.icon;
-    }, { once: true });
-    keyBadge(ic, key, kindColor(s));
-    h(ic, "span", "mn-ck-step", String(i + 1));
-    h(cell, "span", "mn-ck-cn", s.name.split("\uFF0F")[form] ?? s.name);
-  });
-  const at = args.indexOf("=");
-  if (at < 0) return;
-  const chips = h(el, "div", "mn-ck-comboChips");
-  for (const w of args.slice(at + 1)) pill(chips, w, "#f0b074", RESULT_ICON.find(([re]) => re.test(w))?.[1] ?? "sparkles");
-};
-var formCols = (el, { c, args }) => {
-  const names = args.map((a) => a.replace(/^\*/, "")).filter((a) => !/^[PQWER]$/i.test(a));
-  const on = args.find((a) => a.startsWith("*"))?.slice(1);
-  const cut = new RegExp(`(?=(?:${names.join("|")})[^\uFF1A:\uFF0C\u3002\\s]{0,3}\u578B\u614B[\uFF1A:])`);
-  names.forEach((form, i) => {
-    const col = h(el, "div", "mn-ck-form" + (form === on ? " is-on" : ""));
-    const t = h(col, "div", "mn-ck-formh");
-    icon(t, FORM_ICONS[i] ?? "shapes");
-    h(t, "span", void 0, form);
-    for (const key of ["Q", "W", "E"]) {
-      const s = c.skills.find((x) => x.key === key);
-      const part = s?.desc.split(cut).find((p) => p.startsWith(form));
-      if (!part) continue;
-      const line = h(col, "div", "mn-ck-fl");
-      keyBadge(line, key, s ? kindColor(s) : "var(--mn-muted)");
-      h(line, "span", void 0, part.replace(/^[^：:]*[：:]/, "").trim());
-    }
-  });
-};
-var LAYOUTS = {
-  ability: { areas: ["head", "tags", "desc", "numbers", "stats"], rows: "auto auto auto auto auto", fill: { head, tags, desc, numbers: numbers2, stats } },
-  clip: { areas: ["media"], rows: "1fr", fill: { media } },
-  levels: { areas: ["head", "levelBars"], rows: "auto auto", fill: { head, levelBars } },
-  forms: { areas: ["formsTitle", "formCols"], rows: "auto auto", fill: { formsTitle, formCols } },
-  combo: { areas: ["comboMedia"], rows: "1fr", fill: { comboMedia } },
-  formset: { areas: ["formsTitle", "formSets"], rows: "auto auto", fill: { formsTitle, formSets } }
-};
-function cardKit(box, kind, c, args) {
-  const layout = LAYOUTS[kind];
-  if (!layout || !c) return false;
-  const key = (args.find((a) => /^[PQWER]\d?$/i.test(a)) ?? "Q").toUpperCase();
-  const s = c.skills.find((x) => x.key === key.charAt(0));
-  if (!s && kind !== "forms" && kind !== "formset" && kind !== "combo") return false;
-  const root = h(box, "div", `mn-ck mn-ck-${kind}`);
-  root.style.gridTemplateAreas = layout.areas.map((a) => `"${a}"`).join(" ");
-  root.style.gridTemplateRows = layout.rows;
-  for (const area of layout.areas) {
-    const slot = h(root, "div", `mn-ck-slot mn-ck-${area}`);
-    slot.style.gridArea = area;
-    layout.fill[area](slot, { c, s: s ?? c.skills[0], args });
-  }
-  return true;
-}
-
 // src/pages/deck.ts
 var GLOSSARY2 = "\u540D\u8A5E\u8868";
 var STRIP = 6;
@@ -4835,6 +4835,726 @@ function strip(box, items) {
   }
 }
 
+// src/pages/roster.ts
+var MAX_PICKS = 15;
+var SPLIT = /[\s,，、;；和跟與及]+/;
+var swipeAt = 0;
+var swipeLiked = [];
+var swipeSig = "";
+function matchScore(c, raw) {
+  const q = raw.trim().toLowerCase();
+  if (!q) return 0;
+  const name = c.name.toLowerCase(), title = c.title.toLowerCase(), id = c.id.toLowerCase(), en = (c.nameEn ?? "").toLowerCase();
+  const nick = c.aliases.map((a) => a.toLowerCase());
+  if (name === q || id === q || en === q || nick.includes(q)) return 100;
+  if (name.startsWith(q) || id.startsWith(q) || en.startsWith(q) || nick.some((a) => a.startsWith(q))) return 90;
+  if (name.includes(q)) return 80;
+  if (id.includes(q) || en.includes(q)) return q.length >= 4 ? 80 : 40;
+  if (q.length >= 2 && nick.some((a) => a.includes(q))) return 70;
+  if (title.includes(q)) return 60;
+  const chars = [...q];
+  let at = 0;
+  for (const ch of name) if (ch === chars[at]) at++;
+  if (at === chars.length && chars.length >= 2) return 50;
+  const shared = chars.filter((ch) => name.includes(ch)).length;
+  return chars.length >= 3 && shared / chars.length >= 0.66 ? 20 + shared : 0;
+}
+function distance(a, b) {
+  const x = [...a], y = [...b];
+  let prev = Array.from({ length: y.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= x.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= y.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (x[i - 1] === y[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[y.length];
+}
+function enKey(s) {
+  return s.toLowerCase().replace(/[^a-z]/g, "").replace(/ph/g, "f").replace(/ck/g, "k").replace(/ch/g, "1").replace(/c/g, "k").replace(/q/g, "k").replace(/x/g, "ks").replace(/z/g, "s").replace(/ee|ea|ie/g, "i").replace(/oo|ou/g, "u").replace(/y/g, "i").replace(/(.)\1+/g, "$1");
+}
+function edits(a, b) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => Array.from({ length: b.length + 1 }, (_2, j) => i === 0 ? j : j === 0 ? i : 0));
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) {
+    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+  }
+  return d[a.length][b.length];
+}
+function enScore(c, raw) {
+  return Math.max(enScoreOf(enKey(c.id), raw), c.nameEn ? enScoreOf(enKey(c.nameEn), raw) : 0);
+}
+function enScoreOf(name, raw) {
+  const q = enKey(raw);
+  if (q.length < 3 || !name) return 0;
+  if (q === name) return 88;
+  if (name.startsWith(q)) return 84;
+  const allowed = q.length <= 4 ? 1 : q.length <= 7 ? 2 : 3;
+  const whole = edits(q, name);
+  if (whole <= allowed) return 60 - 4 * whole;
+  if (q.length >= 4 && q.length < name.length && edits(q, name.slice(0, q.length)) <= 1) return 52;
+  return 0;
+}
+function closest(all, raw, limit = 4) {
+  const q = raw.trim().toLowerCase();
+  if (!q) return [];
+  const allowed = [...q].length <= 4 ? 1 : 2;
+  return all.map((c) => ({ c, d: Math.min(distance(q, c.name.toLowerCase()), distance(q, c.id.toLowerCase()), distance(q, (c.nameEn || c.id).toLowerCase())) })).filter((x) => x.d <= allowed).sort((a, b) => a.d - b.d || a.c.name.localeCompare(b.c.name, "zh-Hant")).slice(0, limit).map((x) => x.c);
+}
+function finder(all, sounds) {
+  const heard = /* @__PURE__ */ new Map();
+  const heardOf = (c) => {
+    let x = heard.get(c.id);
+    if (!x && sounds) heard.set(c.id, x = { name: [sounds.said(c.name), sounds.said(c.name, true)], title: [sounds.said(c.title), sounds.said(c.title, true)], nick: c.aliases.map((a) => [sounds.said(a), sounds.said(a, true)]) });
+    return x;
+  };
+  const score2 = (c, t) => {
+    const s = Math.max(matchScore(c, t), enScore(c, t));
+    if (s >= 80 || !sounds) return s;
+    const q = [sounds.said(t, false, true), sounds.said(t, true, true)];
+    if (!q[0].length) return s;
+    const x = heardOf(c);
+    const byName = Math.max(soundScore(q[0], x.name[0], false), soundScore(q[1], x.name[1], true));
+    const byTitle = Math.max(soundScore(q[0], x.title[0], false), soundScore(q[1], x.title[1], true));
+    const byNick = Math.max(0, ...x.nick.map((n) => Math.max(soundScore(q[0], n[0], false), soundScore(q[1], n[1], true))));
+    return Math.max(s, byName, byNick, byTitle >= 64 ? byTitle - 20 : 0);
+  };
+  const within = (t) => {
+    if (!sounds) return [];
+    const han = [...t].filter((ch) => /\p{Script=Han}/u.test(ch));
+    const q = [sounds.said(t, false, true), sounds.said(t, true, true)];
+    if (q[0].length < 3) return [];
+    const hits = [];
+    for (const c of all) {
+      const x = heardOf(c);
+      if (x.name[0].length < 2 || x.name[0].length >= q[0].length) continue;
+      for (const near of [0, 1]) {
+        const at = findSaid(q[near], x.name[near]);
+        if (at >= 0) {
+          hits.push({ c, at, len: x.name[0].length, near });
+          break;
+        }
+      }
+    }
+    hits.sort((a, b) => b.len - a.len || a.near - b.near || a.at - b.at);
+    const used = /* @__PURE__ */ new Set(), out = [];
+    const take = (c, at, len) => {
+      for (let i = at; i < at + len; i++) used.add(i);
+      out.push({ c, at });
+    };
+    for (const h_ of hits) {
+      if (out.some((o) => o.c.id === h_.c.id)) continue;
+      if (Array.from({ length: h_.len }, (_, i) => h_.at + i).some((i) => used.has(i))) continue;
+      take(h_.c, h_.at, h_.len);
+    }
+    if (out.length) {
+      for (let i = 0; i < han.length; ) {
+        if (used.has(i)) {
+          i++;
+          continue;
+        }
+        let j = i;
+        while (j < han.length && !used.has(j)) j++;
+        const part = han.slice(i, j).join("");
+        const best = all.map((c) => ({ c, s: score2(c, part) })).sort((a, b) => b.s - a.s)[0];
+        if (best && best.s >= (j - i >= 2 ? 50 : 78) && !out.some((o) => o.c.id === best.c.id)) take(best.c, i, j - i);
+        i = j;
+      }
+    }
+    return out.sort((a, b) => a.at - b.at).map((x) => x.c);
+  };
+  return { score: score2, within };
+}
+var cardArt = (id, skin = 0) => `https://ddragon.leagueoflegends.com/cdn/img/champion/centered/${encodeURIComponent(id)}_${skin}.jpg`;
+var loading = (id) => `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(id)}_0.jpg`;
+function rosterPage(ctx) {
+  const store = ctx.plugin.store;
+  const el = page("Picks");
+  fixedPage(el, ctx.component);
+  const all = store.champions();
+  let picks = ctx.plugin.settings.roster.filter((id) => all.some((c) => c.id === id)).slice(0, MAX_PICKS);
+  let query = "", lane = "";
+  const save = () => {
+    void ctx.plugin.setRoster(picks);
+  };
+  const { score: score2, within } = finder(all, store.sounds);
+  const head2 = h(el, "div", "mn-rq-hhead");
+  const handN = h(head2, "span", "mn-rq-hn");
+  const clearAll = h(head2, "button", "mn-rq-hclear", "\u6E05\u9664");
+  clearAll.addEventListener("click", (e) => {
+    e.preventDefault();
+    picks = [];
+    save();
+    drawCount();
+    drawGrid();
+    if (query) drawSuggest();
+  });
+  const shelf = layoutBlock(h(el, "div", "mn-rq-shelf"));
+  h(el, "div", "mn-rq-lab", "\u52A0\u5165\u82F1\u96C4 \xB7 \u4F9D\u5206\u8DEF");
+  const lanes = fgrid(el, LANES.length);
+  lanes.addClass("mn-rq-lanes");
+  layoutBlock(lanes);
+  const list2 = h(el, "div", "mn-rq-list");
+  const grid = layoutBlock(h(list2, "div", "mn-faces"));
+  const dock = h(el, "div", "mn-rq-dock");
+  const suggest2 = h(dock, "div", "mn-chips mn-rq-sugg");
+  const cap = h(dock, "div", "mn-rq-cap");
+  icon(cap, "search", "mn-rq-cap-ic");
+  const search = h(cap, "input");
+  search.type = "search";
+  search.placeholder = "\u8AAA\u6216\u6253\u82F1\u96C4\u540D\u5B57";
+  search.setAttribute("enterkeyhint", "search");
+  const mic = h(cap, "button", "mn-rq-mic");
+  icon(mic, "mic");
+  mic.setAttribute("aria-label", "\u7528\u9375\u76E4\u7684\u9EA5\u514B\u98A8\u8AAA");
+  mic.addEventListener("click", (e) => {
+    e.preventDefault();
+    search.focus();
+  });
+  const go = h(cap, "button", "mn-rq-go");
+  h(go, "span", void 0, "\u914D\u5C0D");
+  icon(go, "arrow-right");
+  go.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (picks.length) ctx.push({ key: "rosterswipe", title: "\u901F\u67E5" });
+  });
+  const masteryTag = (parent, id, cls) => {
+    const ms = store.masteryOf(id);
+    if (ms && ms.level >= 5) h(parent, "span", cls + (ms.level >= 10 ? " is-high" : ""), String(ms.level));
+    return ms?.level ?? 0;
+  };
+  const drawCount = () => {
+    handN.textContent = `\u4F60\u7684\u724C \xB7 ${picks.length} / ${MAX_PICKS}`;
+    clearAll.toggleClass("is-hidden", !picks.length);
+    go.toggleClass("is-off", !picks.length);
+    shelf.empty();
+    for (const id of picks) {
+      const c = all.find((x2) => x2.id === id);
+      if (!c) continue;
+      const card = h(shelf, "div", "mn-rq-mini");
+      const im = h(card, "img");
+      im.src = loading(c.id);
+      im.alt = "";
+      const ms = store.masteryOf(c.id);
+      if (ms && ms.level >= 5) h(card, "span", "mn-rq-mtag" + (ms.level >= 10 ? " is-high" : ""), `\u719F\u7DF4 ${ms.level}`);
+      h(card, "b", void 0, c.name);
+      const x = h(card, "button", "mn-rq-mx");
+      icon(x, "x");
+      x.setAttribute("aria-label", "\u79FB\u9664");
+      x.addEventListener("click", (e) => {
+        e.preventDefault();
+        toggle(c.id);
+        if (query) drawSuggest();
+      });
+    }
+    if (picks.length < MAX_PICKS) {
+      const add = h(shelf, "button", "mn-rq-mini is-add");
+      icon(add, "plus");
+      add.addEventListener("click", (e) => {
+        e.preventDefault();
+        search.focus();
+      });
+    }
+  };
+  const toggle = (id) => {
+    if (picks.includes(id)) picks = picks.filter((p) => p !== id);
+    else if (picks.length >= MAX_PICKS) {
+      new import_obsidian12.Notice(`\u6700\u591A\u9078 ${MAX_PICKS} \u4F4D`);
+      return;
+    } else picks = [...picks, id];
+    save();
+    drawCount();
+    drawGrid();
+  };
+  let named = [];
+  const pickFromSearch = (id) => {
+    const adding = !picks.includes(id);
+    toggle(id);
+    if (adding && query && named.every((n) => picks.includes(n))) {
+      search.value = "";
+      query = "";
+      drawSuggest();
+      drawGrid();
+      search.focus();
+    } else if (query) drawSuggest();
+  };
+  const drawSuggest = () => {
+    suggest2.empty();
+    named = [];
+    const tokens = query.split(SPLIT).filter(Boolean);
+    if (!tokens.length) return;
+    const best = (t) => {
+      const ranked = all.map((c) => ({ c, s: score2(c, t) })).sort((a, b) => b.s - a.s);
+      if (ranked[0] && ranked[0].s >= 70) return { list: [ranked[0].c], exact: true };
+      const many = within(t);
+      if (many.length >= 2) return { list: many, exact: true };
+      if (ranked[0] && ranked[0].s >= 50) return { list: [ranked[0].c], exact: true };
+      const near = ranked.filter((x) => x.s > 0).slice(0, 3).map((x) => x.c);
+      return { list: near.length ? near : closest(all, t, 3), exact: false };
+    };
+    const found = tokens.map(best);
+    const unique = [...new Map(found.flatMap((f) => f.list).map((c) => [c.id, c])).values()];
+    named = found.every((f) => f.exact) ? unique.map((c) => c.id) : [];
+    if (!unique.length) return;
+    const guessed = found.some((f) => !f.exact && f.list.length);
+    if (unique.length === 1 && !guessed) return;
+    if (guessed) h(suggest2, "span", "mn-dym", "\u4F60\u662F\u4E0D\u662F\u5728\u627E:");
+    for (const c of unique) chip(suggest2, `${picks.includes(c.id) ? "\u2713 " : "+ "}${c.name}`, { color: "var(--color-green)", onTap: () => pickFromSearch(c.id) });
+    if (unique.length > 1) chip(suggest2, "\u5168\u90E8\u52A0\u5165", { on: true, onTap: () => {
+      for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) picks = [...picks, c.id];
+      save();
+      search.value = "";
+      query = "";
+      drawCount();
+      drawSuggest();
+      drawGrid();
+    } });
+  };
+  const drawGrid = () => {
+    grid.empty();
+    const tokens = query.split(SPLIT).filter(Boolean);
+    let list3 = all.filter((c) => !lane || store.lanes(c).includes(lane));
+    if (tokens.length) {
+      const said = new Set(tokens.filter((t) => !all.some((c) => score2(c, t) >= 70)).flatMap((t) => within(t)).map((c) => c.id));
+      const scored = list3.map((c) => ({ c, s: Math.max(said.has(c.id) ? 75 : 0, ...tokens.map((t) => score2(c, t))) })).filter((x) => x.s > 0);
+      scored.sort((a, b) => b.s - a.s || a.c.name.localeCompare(b.c.name, "zh-Hant"));
+      list3 = scored.map((x) => x.c);
+    }
+    grid.toggleClass("is-rows", tokens.length > 0);
+    for (const c of tokens.length ? list3.slice(0, 30) : list3) {
+      const on = picks.includes(c.id);
+      if (tokens.length) {
+        const r = h(grid, "button", "mn-rq-res" + (on ? " is-pick" : ""));
+        const im2 = h(r, "img");
+        im2.src = c.icon;
+        im2.alt = "";
+        const who = h(r, "span", "mn-rq-rw");
+        h(who, "b", void 0, c.name);
+        h(who, "span", void 0, [c.roles.join(" \xB7 "), store.lanes(c).slice(0, 2).join(" \xB7 ")].filter(Boolean).join(" \uFF5C "));
+        masteryTag(r, c.id, "mn-rq-rm");
+        icon(r, on ? "check" : "plus", "mn-rq-radd");
+        r.addEventListener("click", (e) => {
+          e.preventDefault();
+          pickFromSearch(c.id);
+        });
+        continue;
+      }
+      const t = h(grid, "button", "mn-face" + (on ? " is-pick" : ""));
+      const im = h(t, "img");
+      im.src = c.icon;
+      im.alt = c.name;
+      if (on) icon(h(t, "span", "mn-pick-ok"), "check");
+      if (masteryTag(t, c.id, "mn-face-m") >= 10) t.addClass("is-m10");
+      holdTip(t, c.name);
+      t.addEventListener("click", (e) => {
+        e.preventDefault();
+        pickFromSearch(c.id);
+      });
+    }
+    if (!list3.length) empty(grid, { icon: "search-x", title: "\u627E\u4E0D\u5230\u9019\u500B\u540D\u5B57", text: "\u63DB\u500B\u8AAA\u6CD5\u518D\u8A66,\u6216\u770B\u4E0B\u9762\u7684\u300C\u4F60\u662F\u4E0D\u662F\u5728\u627E\u300D\u3002" });
+  };
+  const drawLanes = () => {
+    lanes.empty();
+    const known = store.hasLanes();
+    for (const l of LANES) {
+      const chipEl = laneChip(lanes, l, { on: lane === l, onTap: () => {
+        if (!known) {
+          tip(chipEl, "\u9084\u6C92\u6709\u5206\u8DEF\u8CC7\u6599");
+          return;
+        }
+        lane = lane === l ? "" : l;
+        drawLanes();
+        drawGrid();
+      } });
+    }
+  };
+  search.addEventListener("input", () => {
+    query = search.value;
+    drawSuggest();
+    drawGrid();
+  });
+  drawCount();
+  drawLanes();
+  drawGrid();
+  return { title: "\u901F\u67E5", el };
+}
+function swipePage(ctx) {
+  const store = ctx.plugin.store;
+  const el = h(null, "div", "mn-page mn-deckpage");
+  const all = store.champions();
+  let picks = ctx.plugin.settings.roster.filter((id) => all.some((c) => c.id === id)).slice(0, MAX_PICKS);
+  const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)]));
+  if (swipeSig !== picks.join(",")) {
+    swipeSig = picks.join(",");
+    swipeAt = 0;
+    swipeLiked = [];
+  }
+  let at = swipeAt, liked = swipeLiked;
+  const results = h(el, "div", "mn-rq-results");
+  const restart = () => {
+    at = swipeAt = 0;
+    liked = swipeLiked = [];
+    drawResults();
+  };
+  const qc = (c, face) => quickCard(ctx, c, face, { kicker: `\u901F\u67E5 \xB7 ${picks.indexOf(c.id) + 1} / ${picks.length}`, recent });
+  const drawResults = () => {
+    results.empty();
+    if (!picks.length) {
+      empty(results, { icon: "users", title: "\u9084\u6C92\u9078\u82F1\u96C4" });
+      return;
+    }
+    const done = at >= picks.length;
+    if (done) {
+      const box = h(results, "div", "mn-rq-end");
+      const fitEnd = () => {
+        const scroll = el.closest(".mn-scroll");
+        if (!scroll || !box.isConnected) return;
+        box.style.height = `${Math.max(240, scroll.clientHeight - (box.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop) - DECK_BELOW)}px`;
+      };
+      likedGrid(box);
+      requestAnimationFrame(fitEnd);
+      return;
+    }
+    const wrap = h(results, "div", "mn-deckwrap mn-rq-deck");
+    const pager = h(wrap, "div", "mn-pager");
+    for (const ev of ["touchstart", "touchmove"]) pager.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
+    const ids = picks.slice(at);
+    const sec = [];
+    const stamps = [];
+    const skins = [];
+    const warmed = /* @__PURE__ */ new Set();
+    const warmSkins = (cur) => {
+      const urls = [cur, cur + 1].filter((i) => skins[i] && !warmed.has(i)).flatMap((i) => (warmed.add(i), skins[i]));
+      if (urls.length) void warmPictures(urls);
+    };
+    for (const id of ids) {
+      const c = all.find((x) => x.id === id);
+      if (!c) continue;
+      const section2 = h(pager, "section", "mn-slide");
+      const face = h(h(section2, "div", "mn-sl-card"), "div", "mn-sl-face");
+      skins.push(qc(c, face));
+      const st = h(section2.firstElementChild, "div", "mn-rq-stamp");
+      icon(st, "heart", "mn-rq-st-like");
+      icon(st, "x", "mn-rq-st-pass");
+      stamps.push(st);
+      sec.push(section2);
+    }
+    let armed = false;
+    const btns = h(wrap, "div", "mn-rq-btns");
+    const pile = cardPile(pager, sec, {
+      judge: true,
+      flat: true,
+      onLayout: (cur) => {
+        sec.forEach((c, i) => {
+          c.style.visibility = i >= cur - 1 && i <= cur + 2 ? "" : "hidden";
+        });
+        warmSkins(cur);
+      },
+      onDrag: (dx, w) => {
+        const st = stamps[pile?.cur ?? 0];
+        if (!st) return;
+        const k = Math.min(1, Math.abs(dx) / (w * SWIPE.at));
+        st.toggleClass("is-like", dx > 0);
+        st.style.opacity = String(Math.min(1, k * 1.4));
+        st.style.setProperty("--k", String(k));
+        if (k >= 1 && !armed) {
+          st.removeClass("is-pop");
+          void st.offsetWidth;
+          st.addClass("is-pop");
+        }
+        armed = k >= 1;
+        if (!dx) st.removeClass("is-pop");
+        btns.toggleClass("is-left", dx < 0);
+        btns.toggleClass("is-right", dx > 0);
+      },
+      onJudge: (i, like) => {
+        at = ++swipeAt;
+        armed = false;
+        btns.removeClass("is-left", "is-right");
+        if (like) swipeLiked = liked = [...liked, ids[i]];
+      },
+      onEnd: () => drawResults()
+    });
+    pile.layout(false);
+    const fit = () => {
+      const scroll = el.closest(".mn-scroll");
+      if (!scroll || !wrap.isConnected) return;
+      const top = wrap.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
+      wrap.style.height = `${Math.max(380, scroll.clientHeight - top - DECK_BELOW)}px`;
+    };
+    requestAnimationFrame(fit);
+    const no = h(btns, "button", "mn-rq-no");
+    icon(no, "x");
+    no.setAttribute("aria-label", "\u7565\u904E");
+    const yes = h(btns, "button", "mn-rq-yes");
+    icon(yes, "heart");
+    yes.setAttribute("aria-label", "\u559C\u6B61");
+    const press = (like) => {
+      const st = stamps[pile.cur];
+      if (st) {
+        st.toggleClass("is-like", like);
+        st.style.opacity = "1";
+        st.style.setProperty("--k", "1");
+        st.removeClass("is-pop");
+        void st.offsetWidth;
+        st.addClass("is-pop");
+      }
+      btns.toggleClass("is-left", !like);
+      btns.toggleClass("is-right", like);
+      window.setTimeout(() => pile.decide(like), 160);
+    };
+    no.addEventListener("click", (e) => {
+      e.preventDefault();
+      press(false);
+    });
+    yes.addEventListener("click", (e) => {
+      e.preventDefault();
+      press(true);
+    });
+  };
+  const likedGrid = (box) => {
+    const head2 = h(box, "div", "mn-rq-endhead");
+    h(head2, "b", void 0, "Pick Me Up!");
+    h(head2, "span", void 0, `${liked.length} / ${picks.length} \u4F4D`);
+    const list2 = h(box, "div", "mn-rq-endlist");
+    if (liked.length) {
+      const g = h(list2, "div", "mn-rq-liked");
+      for (const id of liked) {
+        const c = all.find((x) => x.id === id);
+        if (!c) continue;
+        const b = h(g, "button", "mn-rq-lk");
+        const im = h(b, "img");
+        im.src = loading(c.id);
+        im.alt = "";
+        if (c.face) im.style.objectPosition = c.face;
+        const who = h(b, "span", "mn-rq-lw");
+        h(who, "b", void 0, c.name);
+        const main = c.damageType || c.skillDamage[0] || "";
+        h(who, "span", "mn-rq-ls", [c.roles[0], main && `${main}\u50B7`, c.range ? c.range >= 550 ? "\u9060\u7A0B" : c.range >= 300 ? "\u4E2D\u7A0B" : "\u8FD1\u6230" : ""].filter(Boolean).join(" \xB7 "));
+        if (c.punch) h(who, "span", "mn-rq-lp", c.punch);
+        b.addEventListener("click", (e) => {
+          e.preventDefault();
+          ctx.openChampion(c.id);
+        });
+      }
+    } else empty(list2, { icon: "heart-off", title: "\u4E00\u500B\u90FD\u6C92\u559C\u6B61" });
+    const foot = h(box, "div", "mn-rq-endfoot");
+    const back = h(foot, "button", "mn-rq-back", "\u91CD\u65B0\u6311\u9078");
+    back.addEventListener("click", (e) => {
+      e.preventDefault();
+      ctx.pop();
+    });
+    const again = h(foot, "button", "mn-rq-go");
+    icon(again, "rotate-ccw");
+    again.append("\u518D\u6ED1\u4E00\u6B21");
+    again.addEventListener("click", (e) => {
+      e.preventDefault();
+      restart();
+    });
+  };
+  drawResults();
+  return { title: "\u901F\u67E5", el };
+}
+var SWIPE_TURN_PX = 50;
+var QUICK_TABS = ["\u6982\u89BD", "\u73A9\u6CD5", "\u6280\u80FD", "\u98A8\u683C"];
+var cooldown = (s) => {
+  const r = s.rows?.find((x) => x.label.startsWith("\u51B7\u537B"));
+  return r ? r.vals[r.vals.length - 1] ?? "" : "";
+};
+function moreLink(tab, go) {
+  const b = h(tab, "button", "mn-qc-more");
+  b.append("\u5168\u90E8");
+  icon(b, "chevron-right");
+  b.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    go();
+  });
+}
+function quickCard(ctx, c, face, o) {
+  const store = ctx.plugin.store;
+  const TABS = [...QUICK_TABS, ...(o.extra ?? []).map((x) => x.name)];
+  face.addClass("mn-qc");
+  const tabs = TABS.map((name, i) => h(face, "div", `mn-qc-tab is-${["look", "play", "skill", "style"][i] ?? "more"}`));
+  const art = (n) => cardArt(c.id, n);
+  const others = c.skins.filter((n) => n !== 0).sort((a, b) => b - a);
+  const skins = tabs.slice(1).map((tab, k) => {
+    const bg = h(tab, "img", "mn-qc-bg");
+    bg.loading = "lazy";
+    bg.src = art(others.length ? others[k % others.length] : 0);
+    bg.alt = "";
+    return bg.src;
+  });
+  const hud = h(face, "div", "mn-qc-hud");
+  const bars = h(hud, "div", "mn-qc-bars");
+  const marks = TABS.map(() => h(bars, "i"));
+  const hudRow = h(hud, "div", "mn-qc-hudrow");
+  const label = h(hudRow, "span", "mn-qc-label");
+  if (o.back) {
+    const back = h(hudRow, "button", "mn-qc-open mn-qc-back");
+    icon(back, "chevron-left");
+    back.setAttribute("aria-label", "Back");
+    back.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      o.back();
+    });
+    hudRow.prepend(back);
+  } else {
+    const open = h(hudRow, "button", "mn-qc-open");
+    icon(open, "arrow-up-right");
+    open.setAttribute("aria-label", "\u82F1\u96C4\u9801");
+    open.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      ctx.openChampion(c.id);
+    });
+  }
+  let cur = 0;
+  const show = (i) => {
+    cur = Math.max(0, Math.min(TABS.length - 1, i));
+    tabs.forEach((x, k) => x.toggleClass("is-on", k === cur));
+    marks.forEach((x, k) => x.toggleClass("is-on", k === cur));
+    label.textContent = cur ? `${c.name} \xB7 ${TABS[cur]}` : "";
+    face.toggleClass("is-first", cur === 0);
+  };
+  let swiped = false;
+  if (o.back) {
+    let x0 = 0, y0 = 0, down = false;
+    face.addEventListener("pointerdown", (e) => {
+      down = true;
+      x0 = e.clientX;
+      y0 = e.clientY;
+      swiped = false;
+    });
+    face.addEventListener("pointerup", (e) => {
+      if (!down) return;
+      down = false;
+      const dx = e.clientX - x0, dy = e.clientY - y0;
+      if (Math.abs(dx) > SWIPE_TURN_PX && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        swiped = true;
+        show(cur + (dx < 0 ? 1 : -1));
+      }
+    });
+    face.addEventListener("pointercancel", () => {
+      down = false;
+    });
+  }
+  face.addEventListener("click", (e) => {
+    if (swiped) {
+      swiped = false;
+      return;
+    }
+    if (e.target.closest("button")) return;
+    const r = face.getBoundingClientRect();
+    show(cur + (e.clientX > r.left + r.width / 2 ? 1 : -1));
+  });
+  const look = tabs[0];
+  const im = h(look, "img", "mn-qc-splash");
+  im.src = cardArt(c.id, 0);
+  im.alt = "";
+  if (c.face) im.style.objectPosition = c.face;
+  const tiles = h(look, "div", "mn-qc-tiles");
+  const tile2 = (iconName, color, big, small, art2) => {
+    const t = h(tiles, "div", "mn-qc-tile");
+    t.style.setProperty("--c", color);
+    const ic = h(t, "span", "mn-qc-tic");
+    if (art2) art2(ic);
+    else icon(ic, iconName);
+    h(t, "b", void 0, big);
+    h(t, "span", void 0, small);
+  };
+  const main = c.damageType || c.skillDamage[0] || "";
+  if (main) {
+    const also = c.skillDamage.filter((k) => k !== main);
+    tile2(DAMAGE_ICON[main] ?? "flame", DAMAGE_COLOR[main] ?? "var(--mn-muted)", main === "\u7269\u7406" ? "\u7269\u653B" : main === "\u9B54\u6CD5" ? "\u9B54\u653B" : main, also.length ? `\u517C${also.join("\u3001")}` : "\u50B7\u5BB3");
+  }
+  if (c.roles.length) tile2("", "var(--mn-accent)", c.roles[0], c.roles[1] ?? "\u5B9A\u4F4D", (el) => roleArt(el, c.roles[0]));
+  const reach = reachOf(c);
+  if (reach) tile2(REACH_ICON, "var(--mn-dash)", reach, c.range ? `\u5C04\u7A0B ${c.range}` : "");
+  const dock = h(look, "div", "mn-qc-dock");
+  const dots = h(dock, "span", "mn-qc-chip");
+  dots.textContent = `\u96E3\u5EA6 ${"\u25CF".repeat(Math.round(c.difficulty / 2))}${"\u25CB".repeat(5 - Math.round(c.difficulty / 2))}`;
+  const rd = o.recent?.get(c.name);
+  if (rd) {
+    const m = marker(rd);
+    const x = h(dock, "span", "mn-qc-chip", `${m.mark} \u672C\u7248\u8ABF\u6574`);
+    x.style.color = m.color;
+  }
+  const lanes = store.lanes(c);
+  if (lanes.length) h(dock, "span", "mn-qc-chip", lanes.slice(0, 2).join(" \xB7 "));
+  const words = h(look, "div", "mn-sl-words mn-qc-words");
+  h(words, "div", "mn-sl-kn", o.kicker);
+  h(words, "h2", "mn-sl-t", c.name);
+  h(words, "div", "mn-sl-x", c.punch || c.title);
+  const play = tabs[1];
+  const stats2 = c.stack.filter((s) => STAT_ICON[s]);
+  if (stats2.length) {
+    h(play, "div", "mn-qc-k", "\u5806");
+    const row2 = h(play, "div", "mn-qc-stats");
+    for (const s of stats2) {
+      const x = h(row2, "span", "mn-qc-stat");
+      x.style.setProperty("--c", STAT_COLOR[s]);
+      if (SHOP_ROW[s] !== void 0) shopIcon(x, SHOP_ROW[s], true);
+      else icon(x, STAT_ICON[s]);
+      x.append(s);
+    }
+  }
+  if (c.how.length) {
+    h(play, "div", "mn-qc-k", "\u600E\u9EBC\u73A9");
+    const box = h(play, "div", "mn-qc-howbox");
+    for (const line of c.how.slice(0, 3)) h(box, "p", "mn-qc-how", line);
+  }
+  const fs = c.focus ? c.skills.find((s) => s.key === c.focus) : void 0;
+  if (fs) {
+    const f = h(play, "div", "mn-qc-focus");
+    keyBadge(f, fs.key, DAMAGE_COLOR[fs.damage[0] ?? ""] ?? "#6b7183");
+    const tx = h(f, "div");
+    h(tx, "span", "mn-qc-star", "\u2605 \u4E3B\u529B \xB7 \u591A\u7528\u9019\u62DB");
+    h(tx, "b", void 0, fs.name);
+    if (c.plain[fs.key]) h(tx, "span", void 0, c.plain[fs.key]);
+  }
+  if (!stats2.length && !c.how.length && !fs) empty(play, { icon: "pencil", title: "\u9084\u6C92\u5BEB\u73A9\u6CD5", text: "\u5BEB\u5728 Inbox/\u901F\u67E5\u5361\u7247" });
+  const sk = tabs[2];
+  const dmg = damageLines(c);
+  for (const key of ["P", "Q", "W", "E", "R"]) {
+    const s = c.skills.find((x) => x.key === key);
+    if (!s) continue;
+    const row2 = h(sk, "div", "mn-qc-sk" + (key === c.focus ? " is-focus" : ""));
+    const color = DAMAGE_COLOR[s.damage[0] ?? ""] ?? "#6b7183";
+    const ic = h(row2, "div", "mn-ck-ic is-sm");
+    ic.style.setProperty("--c", color);
+    const im2 = h(ic, "img");
+    im2.src = s.icon;
+    im2.alt = "";
+    keyBadge(ic, key, color);
+    const tx = h(row2, "div", "mn-qc-skt");
+    h(tx, "b", void 0, s.name);
+    h(tx, "span", void 0, c.plain[key] || [...s.tags, ...s.damage.map((d2) => `${d2}\u50B7\u5BB3`)].join(" \xB7 "));
+    const nums = h(row2, "div", "mn-qc-num");
+    const d = dmg.find((x) => x.key === key);
+    if (d && d.base) h(nums, "b", void 0, String(d.base));
+    if (d && (d.ap || d.ad)) {
+      const x = h(nums, "span", void 0, d.ap ? `+${d.ap}% \u9B54\u653B` : `+${d.ad}% \u7269\u653B`);
+      x.style.color = d.ap ? DAMAGE_COLOR["\u9B54\u6CD5"] : DAMAGE_COLOR["\u7269\u7406"];
+    }
+    const cd = cooldown(s);
+    if (cd) h(nums, "span", void 0, `${cd} \u79D2`);
+  }
+  if (o.more?.skills) moreLink(sk, o.more.skills);
+  styleCard(h(tabs[3], "div", "mn-qc-style"), c, ctx.app);
+  if (o.more?.style) moreLink(tabs[3], o.more.style);
+  (o.extra ?? []).forEach((x, i) => {
+    const tab = tabs[QUICK_TABS.length + i];
+    x.build(tab);
+    if (x.more) moreLink(tab, x.more);
+  });
+  show(Math.max(0, TABS.indexOf(o.start ?? "")));
+  return skins;
+}
+
+// src/pages/detail.ts
+var import_obsidian13 = require("obsidian");
+
 // src/pages/glossary.ts
 var OWN = {
   AD: [DAMAGE_ICON["\u7269\u7406"], DAMAGE_COLOR["\u7269\u7406"]],
@@ -4931,7 +5651,7 @@ function notePage(ctx) {
   const path = String(ctx.frame.params?.path ?? "");
   const file = ctx.app.vault.getAbstractFileByPath(path);
   const el = h(null, "div", "mn-page");
-  if (!(file instanceof import_obsidian12.TFile)) {
+  if (!(file instanceof import_obsidian13.TFile)) {
     empty(el, { icon: "file-x", title: "Note not found" });
     return { title: "", el };
   }
@@ -4939,7 +5659,7 @@ function notePage(ctx) {
   if (file.basename === GLOSSARY3) return glossaryPage(ctx, file);
   h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
   const body = h(el, "div", "mn-note markdown-rendered");
-  void ctx.app.vault.cachedRead(file).then((text) => import_obsidian12.MarkdownRenderer.render(ctx.app, text.replace(/^---[\s\S]*?---\n/, ""), body, path, ctx.component));
+  void ctx.app.vault.cachedRead(file).then((text) => import_obsidian13.MarkdownRenderer.render(ctx.app, text.replace(/^---[\s\S]*?---\n/, ""), body, path, ctx.component));
   const guide = ctx.plugin.store.guideNotes();
   const at = guide.findIndex((n) => n.file.path === path);
   if (at >= 0) {
@@ -5596,7 +6316,7 @@ function championCard(ctx) {
   el.style.setProperty("--dc", DAMAGE_COLOR[c.damageType || c.skillDamage[0] || ""] ?? "var(--mn-accent)");
   const hero = h(el, "div", "mn-hero");
   const bg = h(hero, "div", "mn-hero-bg");
-  bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
+  bg.style.backgroundImage = `url("${cardArt(c.id)}")`;
   const head2 = h(el, "div", "mn-card-head");
   const im = h(head2, "img", "mn-card-img");
   im.src = c.icon;
@@ -5856,7 +6576,7 @@ function tips(body, c, ctx) {
 }
 
 // src/data/riot.ts
-var import_obsidian13 = require("obsidian");
+var import_obsidian14 = require("obsidian");
 var KEY2 = "morellonomicon-profile";
 var PROFILE_FRESH = 10 * 60 * 1e3;
 var GAMES = 10;
@@ -5888,7 +6608,7 @@ async function fetchProfile(app, riotId, server, key) {
   const reg = REGION[server] ?? REGION.TW2;
   const plat = server.toLowerCase();
   const get = async (host, path) => {
-    const r = await (0, import_obsidian13.requestUrl)({ url: `https://${host}.api.riotgames.com${path}`, headers: { "X-Riot-Token": key }, throw: false });
+    const r = await (0, import_obsidian14.requestUrl)({ url: `https://${host}.api.riotgames.com${path}`, headers: { "X-Riot-Token": key }, throw: false });
     if (r.status === 200) return r.json;
     if (r.status === 401 || r.status === 403) throw new RiotError("\u91D1\u9470\u7121\u6548\u6216\u5DF2\u904E\u671F(\u958B\u767C\u91D1\u9470\u6BCF 24 \u5C0F\u6642\u8981\u63DB)");
     if (r.status === 404) throw new RiotError("\u627E\u4E0D\u5230\u9019\u500B Riot ID,\u6AA2\u67E5\u540D\u7A31\u3001\u6A19\u7C64\u548C\u4F3A\u670D\u5668");
@@ -6477,724 +7197,6 @@ function mayhemSection(el, ctx, n) {
     const chips = h(el, "div", "mn-chips");
     for (const r of removed) chip(chips, r, { color: RARITY_COLOR["\u9280"] });
   }
-}
-
-// src/pages/roster.ts
-var import_obsidian14 = require("obsidian");
-var MAX_PICKS = 15;
-var SPLIT = /[\s,，、;；和跟與及]+/;
-var swipeAt = 0;
-var swipeLiked = [];
-var swipeSig = "";
-function matchScore(c, raw) {
-  const q = raw.trim().toLowerCase();
-  if (!q) return 0;
-  const name = c.name.toLowerCase(), title = c.title.toLowerCase(), id = c.id.toLowerCase(), en = (c.nameEn ?? "").toLowerCase();
-  const nick = c.aliases.map((a) => a.toLowerCase());
-  if (name === q || id === q || en === q || nick.includes(q)) return 100;
-  if (name.startsWith(q) || id.startsWith(q) || en.startsWith(q) || nick.some((a) => a.startsWith(q))) return 90;
-  if (name.includes(q)) return 80;
-  if (id.includes(q) || en.includes(q)) return q.length >= 4 ? 80 : 40;
-  if (q.length >= 2 && nick.some((a) => a.includes(q))) return 70;
-  if (title.includes(q)) return 60;
-  const chars = [...q];
-  let at = 0;
-  for (const ch of name) if (ch === chars[at]) at++;
-  if (at === chars.length && chars.length >= 2) return 50;
-  const shared = chars.filter((ch) => name.includes(ch)).length;
-  return chars.length >= 3 && shared / chars.length >= 0.66 ? 20 + shared : 0;
-}
-function distance(a, b) {
-  const x = [...a], y = [...b];
-  let prev = Array.from({ length: y.length + 1 }, (_, j) => j);
-  for (let i = 1; i <= x.length; i++) {
-    const cur = [i];
-    for (let j = 1; j <= y.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (x[i - 1] === y[j - 1] ? 0 : 1));
-    prev = cur;
-  }
-  return prev[y.length];
-}
-function enKey(s) {
-  return s.toLowerCase().replace(/[^a-z]/g, "").replace(/ph/g, "f").replace(/ck/g, "k").replace(/ch/g, "1").replace(/c/g, "k").replace(/q/g, "k").replace(/x/g, "ks").replace(/z/g, "s").replace(/ee|ea|ie/g, "i").replace(/oo|ou/g, "u").replace(/y/g, "i").replace(/(.)\1+/g, "$1");
-}
-function edits(a, b) {
-  const d = Array.from({ length: a.length + 1 }, (_, i) => Array.from({ length: b.length + 1 }, (_2, j) => i === 0 ? j : j === 0 ? i : 0));
-  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) {
-    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-    if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
-  }
-  return d[a.length][b.length];
-}
-function enScore(c, raw) {
-  return Math.max(enScoreOf(enKey(c.id), raw), c.nameEn ? enScoreOf(enKey(c.nameEn), raw) : 0);
-}
-function enScoreOf(name, raw) {
-  const q = enKey(raw);
-  if (q.length < 3 || !name) return 0;
-  if (q === name) return 88;
-  if (name.startsWith(q)) return 84;
-  const allowed = q.length <= 4 ? 1 : q.length <= 7 ? 2 : 3;
-  const whole = edits(q, name);
-  if (whole <= allowed) return 60 - 4 * whole;
-  if (q.length >= 4 && q.length < name.length && edits(q, name.slice(0, q.length)) <= 1) return 52;
-  return 0;
-}
-function closest(all, raw, limit = 4) {
-  const q = raw.trim().toLowerCase();
-  if (!q) return [];
-  const allowed = [...q].length <= 4 ? 1 : 2;
-  return all.map((c) => ({ c, d: Math.min(distance(q, c.name.toLowerCase()), distance(q, c.id.toLowerCase()), distance(q, (c.nameEn || c.id).toLowerCase())) })).filter((x) => x.d <= allowed).sort((a, b) => a.d - b.d || a.c.name.localeCompare(b.c.name, "zh-Hant")).slice(0, limit).map((x) => x.c);
-}
-function finder(all, sounds) {
-  const heard = /* @__PURE__ */ new Map();
-  const heardOf = (c) => {
-    let x = heard.get(c.id);
-    if (!x && sounds) heard.set(c.id, x = { name: [sounds.said(c.name), sounds.said(c.name, true)], title: [sounds.said(c.title), sounds.said(c.title, true)], nick: c.aliases.map((a) => [sounds.said(a), sounds.said(a, true)]) });
-    return x;
-  };
-  const score2 = (c, t) => {
-    const s = Math.max(matchScore(c, t), enScore(c, t));
-    if (s >= 80 || !sounds) return s;
-    const q = [sounds.said(t, false, true), sounds.said(t, true, true)];
-    if (!q[0].length) return s;
-    const x = heardOf(c);
-    const byName = Math.max(soundScore(q[0], x.name[0], false), soundScore(q[1], x.name[1], true));
-    const byTitle = Math.max(soundScore(q[0], x.title[0], false), soundScore(q[1], x.title[1], true));
-    const byNick = Math.max(0, ...x.nick.map((n) => Math.max(soundScore(q[0], n[0], false), soundScore(q[1], n[1], true))));
-    return Math.max(s, byName, byNick, byTitle >= 64 ? byTitle - 20 : 0);
-  };
-  const within = (t) => {
-    if (!sounds) return [];
-    const han = [...t].filter((ch) => /\p{Script=Han}/u.test(ch));
-    const q = [sounds.said(t, false, true), sounds.said(t, true, true)];
-    if (q[0].length < 3) return [];
-    const hits = [];
-    for (const c of all) {
-      const x = heardOf(c);
-      if (x.name[0].length < 2 || x.name[0].length >= q[0].length) continue;
-      for (const near of [0, 1]) {
-        const at = findSaid(q[near], x.name[near]);
-        if (at >= 0) {
-          hits.push({ c, at, len: x.name[0].length, near });
-          break;
-        }
-      }
-    }
-    hits.sort((a, b) => b.len - a.len || a.near - b.near || a.at - b.at);
-    const used = /* @__PURE__ */ new Set(), out = [];
-    const take = (c, at, len) => {
-      for (let i = at; i < at + len; i++) used.add(i);
-      out.push({ c, at });
-    };
-    for (const h_ of hits) {
-      if (out.some((o) => o.c.id === h_.c.id)) continue;
-      if (Array.from({ length: h_.len }, (_, i) => h_.at + i).some((i) => used.has(i))) continue;
-      take(h_.c, h_.at, h_.len);
-    }
-    if (out.length) {
-      for (let i = 0; i < han.length; ) {
-        if (used.has(i)) {
-          i++;
-          continue;
-        }
-        let j = i;
-        while (j < han.length && !used.has(j)) j++;
-        const part = han.slice(i, j).join("");
-        const best = all.map((c) => ({ c, s: score2(c, part) })).sort((a, b) => b.s - a.s)[0];
-        if (best && best.s >= (j - i >= 2 ? 50 : 78) && !out.some((o) => o.c.id === best.c.id)) take(best.c, i, j - i);
-        i = j;
-      }
-    }
-    return out.sort((a, b) => a.at - b.at).map((x) => x.c);
-  };
-  return { score: score2, within };
-}
-var cardArt = (id, skin = 0) => `https://ddragon.leagueoflegends.com/cdn/img/champion/centered/${encodeURIComponent(id)}_${skin}.jpg`;
-var loading = (id) => `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(id)}_0.jpg`;
-function rosterPage(ctx) {
-  const store = ctx.plugin.store;
-  const el = page("Picks");
-  fixedPage(el, ctx.component);
-  const all = store.champions();
-  let picks = ctx.plugin.settings.roster.filter((id) => all.some((c) => c.id === id)).slice(0, MAX_PICKS);
-  let query = "", lane = "";
-  const save = () => {
-    void ctx.plugin.setRoster(picks);
-  };
-  const { score: score2, within } = finder(all, store.sounds);
-  const head2 = h(el, "div", "mn-rq-hhead");
-  const handN = h(head2, "span", "mn-rq-hn");
-  const clearAll = h(head2, "button", "mn-rq-hclear", "\u6E05\u9664");
-  clearAll.addEventListener("click", (e) => {
-    e.preventDefault();
-    picks = [];
-    save();
-    drawCount();
-    drawGrid();
-    if (query) drawSuggest();
-  });
-  const shelf = layoutBlock(h(el, "div", "mn-rq-shelf"));
-  h(el, "div", "mn-rq-lab", "\u52A0\u5165\u82F1\u96C4 \xB7 \u4F9D\u5206\u8DEF");
-  const lanes = fgrid(el, LANES.length);
-  lanes.addClass("mn-rq-lanes");
-  layoutBlock(lanes);
-  const list2 = h(el, "div", "mn-rq-list");
-  const grid = layoutBlock(h(list2, "div", "mn-faces"));
-  const dock = h(el, "div", "mn-rq-dock");
-  const suggest2 = h(dock, "div", "mn-chips mn-rq-sugg");
-  const cap = h(dock, "div", "mn-rq-cap");
-  icon(cap, "search", "mn-rq-cap-ic");
-  const search = h(cap, "input");
-  search.type = "search";
-  search.placeholder = "\u8AAA\u6216\u6253\u82F1\u96C4\u540D\u5B57";
-  search.setAttribute("enterkeyhint", "search");
-  const mic = h(cap, "button", "mn-rq-mic");
-  icon(mic, "mic");
-  mic.setAttribute("aria-label", "\u7528\u9375\u76E4\u7684\u9EA5\u514B\u98A8\u8AAA");
-  mic.addEventListener("click", (e) => {
-    e.preventDefault();
-    search.focus();
-  });
-  const go = h(cap, "button", "mn-rq-go");
-  h(go, "span", void 0, "\u914D\u5C0D");
-  icon(go, "arrow-right");
-  go.addEventListener("click", (e) => {
-    e.preventDefault();
-    if (picks.length) ctx.push({ key: "rosterswipe", title: "\u901F\u67E5" });
-  });
-  const masteryTag = (parent, id, cls) => {
-    const ms = store.masteryOf(id);
-    if (ms && ms.level >= 5) h(parent, "span", cls + (ms.level >= 10 ? " is-high" : ""), String(ms.level));
-    return ms?.level ?? 0;
-  };
-  const drawCount = () => {
-    handN.textContent = `\u4F60\u7684\u724C \xB7 ${picks.length} / ${MAX_PICKS}`;
-    clearAll.toggleClass("is-hidden", !picks.length);
-    go.toggleClass("is-off", !picks.length);
-    shelf.empty();
-    for (const id of picks) {
-      const c = all.find((x2) => x2.id === id);
-      if (!c) continue;
-      const card = h(shelf, "div", "mn-rq-mini");
-      const im = h(card, "img");
-      im.src = loading(c.id);
-      im.alt = "";
-      const ms = store.masteryOf(c.id);
-      if (ms && ms.level >= 5) h(card, "span", "mn-rq-mtag" + (ms.level >= 10 ? " is-high" : ""), `\u719F\u7DF4 ${ms.level}`);
-      h(card, "b", void 0, c.name);
-      const x = h(card, "button", "mn-rq-mx");
-      icon(x, "x");
-      x.setAttribute("aria-label", "\u79FB\u9664");
-      x.addEventListener("click", (e) => {
-        e.preventDefault();
-        toggle(c.id);
-        if (query) drawSuggest();
-      });
-    }
-    if (picks.length < MAX_PICKS) {
-      const add = h(shelf, "button", "mn-rq-mini is-add");
-      icon(add, "plus");
-      add.addEventListener("click", (e) => {
-        e.preventDefault();
-        search.focus();
-      });
-    }
-  };
-  const toggle = (id) => {
-    if (picks.includes(id)) picks = picks.filter((p) => p !== id);
-    else if (picks.length >= MAX_PICKS) {
-      new import_obsidian14.Notice(`\u6700\u591A\u9078 ${MAX_PICKS} \u4F4D`);
-      return;
-    } else picks = [...picks, id];
-    save();
-    drawCount();
-    drawGrid();
-  };
-  let named = [];
-  const pickFromSearch = (id) => {
-    const adding = !picks.includes(id);
-    toggle(id);
-    if (adding && query && named.every((n) => picks.includes(n))) {
-      search.value = "";
-      query = "";
-      drawSuggest();
-      drawGrid();
-      search.focus();
-    } else if (query) drawSuggest();
-  };
-  const drawSuggest = () => {
-    suggest2.empty();
-    named = [];
-    const tokens = query.split(SPLIT).filter(Boolean);
-    if (!tokens.length) return;
-    const best = (t) => {
-      const ranked = all.map((c) => ({ c, s: score2(c, t) })).sort((a, b) => b.s - a.s);
-      if (ranked[0] && ranked[0].s >= 70) return { list: [ranked[0].c], exact: true };
-      const many = within(t);
-      if (many.length >= 2) return { list: many, exact: true };
-      if (ranked[0] && ranked[0].s >= 50) return { list: [ranked[0].c], exact: true };
-      const near = ranked.filter((x) => x.s > 0).slice(0, 3).map((x) => x.c);
-      return { list: near.length ? near : closest(all, t, 3), exact: false };
-    };
-    const found = tokens.map(best);
-    const unique = [...new Map(found.flatMap((f) => f.list).map((c) => [c.id, c])).values()];
-    named = found.every((f) => f.exact) ? unique.map((c) => c.id) : [];
-    if (!unique.length) return;
-    const guessed = found.some((f) => !f.exact && f.list.length);
-    if (unique.length === 1 && !guessed) return;
-    if (guessed) h(suggest2, "span", "mn-dym", "\u4F60\u662F\u4E0D\u662F\u5728\u627E:");
-    for (const c of unique) chip(suggest2, `${picks.includes(c.id) ? "\u2713 " : "+ "}${c.name}`, { color: "var(--color-green)", onTap: () => pickFromSearch(c.id) });
-    if (unique.length > 1) chip(suggest2, "\u5168\u90E8\u52A0\u5165", { on: true, onTap: () => {
-      for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) picks = [...picks, c.id];
-      save();
-      search.value = "";
-      query = "";
-      drawCount();
-      drawSuggest();
-      drawGrid();
-    } });
-  };
-  const drawGrid = () => {
-    grid.empty();
-    const tokens = query.split(SPLIT).filter(Boolean);
-    let list3 = all.filter((c) => !lane || store.lanes(c).includes(lane));
-    if (tokens.length) {
-      const said = new Set(tokens.filter((t) => !all.some((c) => score2(c, t) >= 70)).flatMap((t) => within(t)).map((c) => c.id));
-      const scored = list3.map((c) => ({ c, s: Math.max(said.has(c.id) ? 75 : 0, ...tokens.map((t) => score2(c, t))) })).filter((x) => x.s > 0);
-      scored.sort((a, b) => b.s - a.s || a.c.name.localeCompare(b.c.name, "zh-Hant"));
-      list3 = scored.map((x) => x.c);
-    }
-    grid.toggleClass("is-rows", tokens.length > 0);
-    for (const c of tokens.length ? list3.slice(0, 30) : list3) {
-      const on = picks.includes(c.id);
-      if (tokens.length) {
-        const r = h(grid, "button", "mn-rq-res" + (on ? " is-pick" : ""));
-        const im2 = h(r, "img");
-        im2.src = c.icon;
-        im2.alt = "";
-        const who = h(r, "span", "mn-rq-rw");
-        h(who, "b", void 0, c.name);
-        h(who, "span", void 0, [c.roles.join(" \xB7 "), store.lanes(c).slice(0, 2).join(" \xB7 ")].filter(Boolean).join(" \uFF5C "));
-        masteryTag(r, c.id, "mn-rq-rm");
-        icon(r, on ? "check" : "plus", "mn-rq-radd");
-        r.addEventListener("click", (e) => {
-          e.preventDefault();
-          pickFromSearch(c.id);
-        });
-        continue;
-      }
-      const t = h(grid, "button", "mn-face" + (on ? " is-pick" : ""));
-      const im = h(t, "img");
-      im.src = c.icon;
-      im.alt = c.name;
-      if (on) icon(h(t, "span", "mn-pick-ok"), "check");
-      if (masteryTag(t, c.id, "mn-face-m") >= 10) t.addClass("is-m10");
-      holdTip(t, c.name);
-      t.addEventListener("click", (e) => {
-        e.preventDefault();
-        pickFromSearch(c.id);
-      });
-    }
-    if (!list3.length) empty(grid, { icon: "search-x", title: "\u627E\u4E0D\u5230\u9019\u500B\u540D\u5B57", text: "\u63DB\u500B\u8AAA\u6CD5\u518D\u8A66,\u6216\u770B\u4E0B\u9762\u7684\u300C\u4F60\u662F\u4E0D\u662F\u5728\u627E\u300D\u3002" });
-  };
-  const drawLanes = () => {
-    lanes.empty();
-    const known = store.hasLanes();
-    for (const l of LANES) {
-      const chipEl = laneChip(lanes, l, { on: lane === l, onTap: () => {
-        if (!known) {
-          tip(chipEl, "\u9084\u6C92\u6709\u5206\u8DEF\u8CC7\u6599");
-          return;
-        }
-        lane = lane === l ? "" : l;
-        drawLanes();
-        drawGrid();
-      } });
-    }
-  };
-  search.addEventListener("input", () => {
-    query = search.value;
-    drawSuggest();
-    drawGrid();
-  });
-  drawCount();
-  drawLanes();
-  drawGrid();
-  return { title: "\u901F\u67E5", el };
-}
-function swipePage(ctx) {
-  const store = ctx.plugin.store;
-  const el = h(null, "div", "mn-page mn-deckpage");
-  const all = store.champions();
-  let picks = ctx.plugin.settings.roster.filter((id) => all.some((c) => c.id === id)).slice(0, MAX_PICKS);
-  const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)]));
-  if (swipeSig !== picks.join(",")) {
-    swipeSig = picks.join(",");
-    swipeAt = 0;
-    swipeLiked = [];
-  }
-  let at = swipeAt, liked = swipeLiked;
-  const results = h(el, "div", "mn-rq-results");
-  const restart = () => {
-    at = swipeAt = 0;
-    liked = swipeLiked = [];
-    drawResults();
-  };
-  const qc = (c, face) => quickCard(ctx, c, face, { kicker: `\u901F\u67E5 \xB7 ${picks.indexOf(c.id) + 1} / ${picks.length}`, recent });
-  const drawResults = () => {
-    results.empty();
-    if (!picks.length) {
-      empty(results, { icon: "users", title: "\u9084\u6C92\u9078\u82F1\u96C4" });
-      return;
-    }
-    const done = at >= picks.length;
-    if (done) {
-      const box = h(results, "div", "mn-rq-end");
-      const fitEnd = () => {
-        const scroll = el.closest(".mn-scroll");
-        if (!scroll || !box.isConnected) return;
-        box.style.height = `${Math.max(240, scroll.clientHeight - (box.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop) - DECK_BELOW)}px`;
-      };
-      likedGrid(box);
-      requestAnimationFrame(fitEnd);
-      return;
-    }
-    const wrap = h(results, "div", "mn-deckwrap mn-rq-deck");
-    const pager = h(wrap, "div", "mn-pager");
-    for (const ev of ["touchstart", "touchmove"]) pager.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
-    const ids = picks.slice(at);
-    const sec = [];
-    const stamps = [];
-    const skins = [];
-    const warmed = /* @__PURE__ */ new Set();
-    const warmSkins = (cur) => {
-      const urls = [cur, cur + 1].filter((i) => skins[i] && !warmed.has(i)).flatMap((i) => (warmed.add(i), skins[i]));
-      if (urls.length) void warmPictures(urls);
-    };
-    for (const id of ids) {
-      const c = all.find((x) => x.id === id);
-      if (!c) continue;
-      const section2 = h(pager, "section", "mn-slide");
-      const face = h(h(section2, "div", "mn-sl-card"), "div", "mn-sl-face");
-      skins.push(qc(c, face));
-      const st = h(section2.firstElementChild, "div", "mn-rq-stamp");
-      icon(st, "heart", "mn-rq-st-like");
-      icon(st, "x", "mn-rq-st-pass");
-      stamps.push(st);
-      sec.push(section2);
-    }
-    let armed = false;
-    const btns = h(wrap, "div", "mn-rq-btns");
-    const pile = cardPile(pager, sec, {
-      judge: true,
-      flat: true,
-      onLayout: (cur) => {
-        sec.forEach((c, i) => {
-          c.style.visibility = i >= cur - 1 && i <= cur + 2 ? "" : "hidden";
-        });
-        warmSkins(cur);
-      },
-      onDrag: (dx, w) => {
-        const st = stamps[pile?.cur ?? 0];
-        if (!st) return;
-        const k = Math.min(1, Math.abs(dx) / (w * SWIPE.at));
-        st.toggleClass("is-like", dx > 0);
-        st.style.opacity = String(Math.min(1, k * 1.4));
-        st.style.setProperty("--k", String(k));
-        if (k >= 1 && !armed) {
-          st.removeClass("is-pop");
-          void st.offsetWidth;
-          st.addClass("is-pop");
-        }
-        armed = k >= 1;
-        if (!dx) st.removeClass("is-pop");
-        btns.toggleClass("is-left", dx < 0);
-        btns.toggleClass("is-right", dx > 0);
-      },
-      onJudge: (i, like) => {
-        at = ++swipeAt;
-        armed = false;
-        btns.removeClass("is-left", "is-right");
-        if (like) swipeLiked = liked = [...liked, ids[i]];
-      },
-      onEnd: () => drawResults()
-    });
-    pile.layout(false);
-    const fit = () => {
-      const scroll = el.closest(".mn-scroll");
-      if (!scroll || !wrap.isConnected) return;
-      const top = wrap.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
-      wrap.style.height = `${Math.max(380, scroll.clientHeight - top - DECK_BELOW)}px`;
-    };
-    requestAnimationFrame(fit);
-    const no = h(btns, "button", "mn-rq-no");
-    icon(no, "x");
-    no.setAttribute("aria-label", "\u7565\u904E");
-    const yes = h(btns, "button", "mn-rq-yes");
-    icon(yes, "heart");
-    yes.setAttribute("aria-label", "\u559C\u6B61");
-    const press = (like) => {
-      const st = stamps[pile.cur];
-      if (st) {
-        st.toggleClass("is-like", like);
-        st.style.opacity = "1";
-        st.style.setProperty("--k", "1");
-        st.removeClass("is-pop");
-        void st.offsetWidth;
-        st.addClass("is-pop");
-      }
-      btns.toggleClass("is-left", !like);
-      btns.toggleClass("is-right", like);
-      window.setTimeout(() => pile.decide(like), 160);
-    };
-    no.addEventListener("click", (e) => {
-      e.preventDefault();
-      press(false);
-    });
-    yes.addEventListener("click", (e) => {
-      e.preventDefault();
-      press(true);
-    });
-  };
-  const likedGrid = (box) => {
-    const head2 = h(box, "div", "mn-rq-endhead");
-    h(head2, "b", void 0, "Pick Me Up!");
-    h(head2, "span", void 0, `${liked.length} / ${picks.length} \u4F4D`);
-    const list2 = h(box, "div", "mn-rq-endlist");
-    if (liked.length) {
-      const g = h(list2, "div", "mn-rq-liked");
-      for (const id of liked) {
-        const c = all.find((x) => x.id === id);
-        if (!c) continue;
-        const b = h(g, "button", "mn-rq-lk");
-        const im = h(b, "img");
-        im.src = loading(c.id);
-        im.alt = "";
-        if (c.face) im.style.objectPosition = c.face;
-        const who = h(b, "span", "mn-rq-lw");
-        h(who, "b", void 0, c.name);
-        const main = c.damageType || c.skillDamage[0] || "";
-        h(who, "span", "mn-rq-ls", [c.roles[0], main && `${main}\u50B7`, c.range ? c.range >= 550 ? "\u9060\u7A0B" : c.range >= 300 ? "\u4E2D\u7A0B" : "\u8FD1\u6230" : ""].filter(Boolean).join(" \xB7 "));
-        if (c.punch) h(who, "span", "mn-rq-lp", c.punch);
-        b.addEventListener("click", (e) => {
-          e.preventDefault();
-          ctx.openChampion(c.id);
-        });
-      }
-    } else empty(list2, { icon: "heart-off", title: "\u4E00\u500B\u90FD\u6C92\u559C\u6B61" });
-    const foot = h(box, "div", "mn-rq-endfoot");
-    const back = h(foot, "button", "mn-rq-back", "\u91CD\u65B0\u6311\u9078");
-    back.addEventListener("click", (e) => {
-      e.preventDefault();
-      ctx.pop();
-    });
-    const again = h(foot, "button", "mn-rq-go");
-    icon(again, "rotate-ccw");
-    again.append("\u518D\u6ED1\u4E00\u6B21");
-    again.addEventListener("click", (e) => {
-      e.preventDefault();
-      restart();
-    });
-  };
-  drawResults();
-  return { title: "\u901F\u67E5", el };
-}
-var SWIPE_TURN_PX = 50;
-var QUICK_TABS = ["\u6982\u89BD", "\u73A9\u6CD5", "\u6280\u80FD", "\u98A8\u683C"];
-var cooldown = (s) => {
-  const r = s.rows?.find((x) => x.label.startsWith("\u51B7\u537B"));
-  return r ? r.vals[r.vals.length - 1] ?? "" : "";
-};
-function moreLink(tab, go) {
-  const b = h(tab, "button", "mn-qc-more");
-  b.append("\u5168\u90E8");
-  icon(b, "chevron-right");
-  b.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    go();
-  });
-}
-function quickCard(ctx, c, face, o) {
-  const store = ctx.plugin.store;
-  const TABS = [...QUICK_TABS, ...(o.extra ?? []).map((x) => x.name)];
-  face.addClass("mn-qc");
-  const tabs = TABS.map((name, i) => h(face, "div", `mn-qc-tab is-${["look", "play", "skill", "style"][i] ?? "more"}`));
-  const art = (n) => cardArt(c.id, n);
-  const others = c.skins.filter((n) => n !== 0).sort((a, b) => b - a);
-  const skins = tabs.slice(1).map((tab, k) => {
-    const bg = h(tab, "img", "mn-qc-bg");
-    bg.loading = "lazy";
-    bg.src = art(others.length ? others[k % others.length] : 0);
-    bg.alt = "";
-    return bg.src;
-  });
-  const hud = h(face, "div", "mn-qc-hud");
-  const bars = h(hud, "div", "mn-qc-bars");
-  const marks = TABS.map(() => h(bars, "i"));
-  const hudRow = h(hud, "div", "mn-qc-hudrow");
-  const label = h(hudRow, "span", "mn-qc-label");
-  if (o.back) {
-    const back = h(hudRow, "button", "mn-qc-open mn-qc-back");
-    icon(back, "chevron-left");
-    back.setAttribute("aria-label", "Back");
-    back.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      o.back();
-    });
-    hudRow.prepend(back);
-  } else {
-    const open = h(hudRow, "button", "mn-qc-open");
-    icon(open, "arrow-up-right");
-    open.setAttribute("aria-label", "\u82F1\u96C4\u9801");
-    open.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      ctx.openChampion(c.id);
-    });
-  }
-  let cur = 0;
-  const show = (i) => {
-    cur = Math.max(0, Math.min(TABS.length - 1, i));
-    tabs.forEach((x, k) => x.toggleClass("is-on", k === cur));
-    marks.forEach((x, k) => x.toggleClass("is-on", k === cur));
-    label.textContent = cur ? `${c.name} \xB7 ${TABS[cur]}` : "";
-    face.toggleClass("is-first", cur === 0);
-  };
-  let swiped = false;
-  if (o.back) {
-    let x0 = 0, y0 = 0, down = false;
-    face.addEventListener("pointerdown", (e) => {
-      down = true;
-      x0 = e.clientX;
-      y0 = e.clientY;
-      swiped = false;
-    });
-    face.addEventListener("pointerup", (e) => {
-      if (!down) return;
-      down = false;
-      const dx = e.clientX - x0, dy = e.clientY - y0;
-      if (Math.abs(dx) > SWIPE_TURN_PX && Math.abs(dx) > Math.abs(dy) * 1.5) {
-        swiped = true;
-        show(cur + (dx < 0 ? 1 : -1));
-      }
-    });
-    face.addEventListener("pointercancel", () => {
-      down = false;
-    });
-  }
-  face.addEventListener("click", (e) => {
-    if (swiped) {
-      swiped = false;
-      return;
-    }
-    if (e.target.closest("button")) return;
-    const r = face.getBoundingClientRect();
-    show(cur + (e.clientX > r.left + r.width / 2 ? 1 : -1));
-  });
-  const look = tabs[0];
-  const im = h(look, "img", "mn-qc-splash");
-  im.src = cardArt(c.id, 0);
-  im.alt = "";
-  if (c.face) im.style.objectPosition = c.face;
-  const tiles = h(look, "div", "mn-qc-tiles");
-  const tile2 = (iconName, color, big, small, art2) => {
-    const t = h(tiles, "div", "mn-qc-tile");
-    t.style.setProperty("--c", color);
-    const ic = h(t, "span", "mn-qc-tic");
-    if (art2) art2(ic);
-    else icon(ic, iconName);
-    h(t, "b", void 0, big);
-    h(t, "span", void 0, small);
-  };
-  const main = c.damageType || c.skillDamage[0] || "";
-  if (main) {
-    const also = c.skillDamage.filter((k) => k !== main);
-    tile2(DAMAGE_ICON[main] ?? "flame", DAMAGE_COLOR[main] ?? "var(--mn-muted)", main === "\u7269\u7406" ? "\u7269\u653B" : main === "\u9B54\u6CD5" ? "\u9B54\u653B" : main, also.length ? `\u517C${also.join("\u3001")}` : "\u50B7\u5BB3");
-  }
-  if (c.roles.length) tile2("", "var(--mn-accent)", c.roles[0], c.roles[1] ?? "\u5B9A\u4F4D", (el) => roleArt(el, c.roles[0]));
-  const reach = reachOf(c);
-  if (reach) tile2(REACH_ICON, "var(--mn-dash)", reach, c.range ? `\u5C04\u7A0B ${c.range}` : "");
-  const dock = h(look, "div", "mn-qc-dock");
-  const dots = h(dock, "span", "mn-qc-chip");
-  dots.textContent = `\u96E3\u5EA6 ${"\u25CF".repeat(Math.round(c.difficulty / 2))}${"\u25CB".repeat(5 - Math.round(c.difficulty / 2))}`;
-  const rd = o.recent?.get(c.name);
-  if (rd) {
-    const m = marker(rd);
-    const x = h(dock, "span", "mn-qc-chip", `${m.mark} \u672C\u7248\u8ABF\u6574`);
-    x.style.color = m.color;
-  }
-  const lanes = store.lanes(c);
-  if (lanes.length) h(dock, "span", "mn-qc-chip", lanes.slice(0, 2).join(" \xB7 "));
-  const words = h(look, "div", "mn-sl-words mn-qc-words");
-  h(words, "div", "mn-sl-kn", o.kicker);
-  h(words, "h2", "mn-sl-t", c.name);
-  h(words, "div", "mn-sl-x", c.punch || c.title);
-  const play = tabs[1];
-  const stats2 = c.stack.filter((s) => STAT_ICON[s]);
-  if (stats2.length) {
-    h(play, "div", "mn-qc-k", "\u5806");
-    const row2 = h(play, "div", "mn-qc-stats");
-    for (const s of stats2) {
-      const x = h(row2, "span", "mn-qc-stat");
-      x.style.setProperty("--c", STAT_COLOR[s]);
-      if (SHOP_ROW[s] !== void 0) shopIcon(x, SHOP_ROW[s], true);
-      else icon(x, STAT_ICON[s]);
-      x.append(s);
-    }
-  }
-  if (c.how.length) {
-    h(play, "div", "mn-qc-k", "\u600E\u9EBC\u73A9");
-    const box = h(play, "div", "mn-qc-howbox");
-    for (const line of c.how.slice(0, 3)) h(box, "p", "mn-qc-how", line);
-  }
-  const fs = c.focus ? c.skills.find((s) => s.key === c.focus) : void 0;
-  if (fs) {
-    const f = h(play, "div", "mn-qc-focus");
-    keyBadge(f, fs.key, DAMAGE_COLOR[fs.damage[0] ?? ""] ?? "#6b7183");
-    const tx = h(f, "div");
-    h(tx, "span", "mn-qc-star", "\u2605 \u4E3B\u529B \xB7 \u591A\u7528\u9019\u62DB");
-    h(tx, "b", void 0, fs.name);
-    if (c.plain[fs.key]) h(tx, "span", void 0, c.plain[fs.key]);
-  }
-  if (!stats2.length && !c.how.length && !fs) empty(play, { icon: "pencil", title: "\u9084\u6C92\u5BEB\u73A9\u6CD5", text: "\u5BEB\u5728 Inbox/\u901F\u67E5\u5361\u7247" });
-  const sk = tabs[2];
-  const dmg = damageLines(c);
-  for (const key of ["P", "Q", "W", "E", "R"]) {
-    const s = c.skills.find((x) => x.key === key);
-    if (!s) continue;
-    const row2 = h(sk, "div", "mn-qc-sk" + (key === c.focus ? " is-focus" : ""));
-    const color = DAMAGE_COLOR[s.damage[0] ?? ""] ?? "#6b7183";
-    const ic = h(row2, "div", "mn-ck-ic is-sm");
-    ic.style.setProperty("--c", color);
-    const im2 = h(ic, "img");
-    im2.src = s.icon;
-    im2.alt = "";
-    keyBadge(ic, key, color);
-    const tx = h(row2, "div", "mn-qc-skt");
-    h(tx, "b", void 0, s.name);
-    h(tx, "span", void 0, c.plain[key] || [...s.tags, ...s.damage.map((d2) => `${d2}\u50B7\u5BB3`)].join(" \xB7 "));
-    const nums = h(row2, "div", "mn-qc-num");
-    const d = dmg.find((x) => x.key === key);
-    if (d && d.base) h(nums, "b", void 0, String(d.base));
-    if (d && (d.ap || d.ad)) {
-      const x = h(nums, "span", void 0, d.ap ? `+${d.ap}% \u9B54\u653B` : `+${d.ad}% \u7269\u653B`);
-      x.style.color = d.ap ? DAMAGE_COLOR["\u9B54\u6CD5"] : DAMAGE_COLOR["\u7269\u7406"];
-    }
-    const cd = cooldown(s);
-    if (cd) h(nums, "span", void 0, `${cd} \u79D2`);
-  }
-  if (o.more?.skills) moreLink(sk, o.more.skills);
-  styleCard(h(tabs[3], "div", "mn-qc-style"), c, ctx.app);
-  if (o.more?.style) moreLink(tabs[3], o.more.style);
-  (o.extra ?? []).forEach((x, i) => {
-    const tab = tabs[QUICK_TABS.length + i];
-    x.build(tab);
-    if (x.more) moreLink(tab, x.more);
-  });
-  show(Math.max(0, TABS.indexOf(o.start ?? "")));
-  return skins;
 }
 
 // src/pages/index.ts
