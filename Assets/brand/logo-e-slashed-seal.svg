@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Option E · Slashed seal, after the Morellonomicon item, flat: the tome face-on, gold corners, three green slashes, a thin green ring -->
+  <defs>
+    <linearGradient id="ebg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1A1D26"/><stop offset="1" stop-color="#12141B"/></linearGradient>
+    <linearGradient id="ecover" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4E3775"/><stop offset="1" stop-color="#2B1E42"/></linearGradient>
+    <radialGradient id="eglow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#8CCB5E" stop-opacity="0.35"/><stop offset="1" stop-color="#8CCB5E" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#ebg)"/>
+  <circle cx="256" cy="256" r="196" fill="url(#eglow)"/>
+  <circle cx="256" cy="256" r="196" fill="none" stroke="#8CCB5E" stroke-width="3" opacity="0.55"/>
+  <!-- pages and cover -->
+  <path d="M164 112 h196 a12 12 0 0 1 12 12 v264 a12 12 0 0 1 -12 12 h-196 z" fill="#D9CFB4"/>
+  <rect x="140" y="100" width="222" height="300" rx="16" fill="url(#ecover)" stroke="#C9A24A" stroke-width="5"/>
+  <path d="M170 100 v300" stroke="#C9A24A" stroke-width="3" opacity="0.7"/>
+  <!-- gold corners -->
+  <g fill="#C9A24A"><path d="M362 100 v46 l-46 -46 z"/><path d="M362 400 v-46 l-46 46 z"/></g>
+  <!-- three claw slashes -->
+  <g fill="#9BD86A" stroke="#12141B" stroke-width="2" stroke-linejoin="round"><path d="M232 136 Q251.6 228.0 196 366 Q211.6 228.0 232 136 Z"/><path d="M288 124 Q308.4 226.4 244 380 Q260.4 226.4 288 124 Z"/><path d="M340 148 Q356.0 231.2 300 356 Q320.0 231.2 340 148 Z"/></g>
+</svg>
