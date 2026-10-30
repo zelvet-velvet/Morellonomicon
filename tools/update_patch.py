@@ -5,7 +5,7 @@
     python3 tools/update_patch.py --commit    # ...then commit and push the result to main
 
 Steps, in order: champions and items (fetch_data), Mayhem augments (fetch_augments), what changed since the last patch
-(fetch_changes), Riot's patch notes in short (fetch_patch_notes), augment effect text (fetch_augment_text), the
+(fetch_changes), Riot's patch notes in short (fetch_patch_notes), augment effect text (fetch_augment_text), augment numbers and tags (fetch_augment_data), the
 ability tag audit (audit_tags, Review/Tag Audit.md). Your own notes in the generated files are kept (see
 HAND_KEYS in fetch_data.py). If a step fails the rest still run and the failures are listed at the end. Standard library only.
 """
@@ -20,7 +20,7 @@ TOOLS = Path(__file__).resolve().parent
 ROOT = TOOLS.parent
 STEPS = [("champions and items", "fetch_data.py"), ("Mayhem augments", "fetch_augments.py"),
          ("changes since the last patch", "fetch_changes.py"), ("Riot's patch notes", "fetch_patch_notes.py"),
-         ("augment effect text", "fetch_augment_text.py"), ("lanes (Meraki)", "fetch_positions.py"), ("loading screen tips", "fetch_loading_tips.py"),
+         ("augment effect text", "fetch_augment_text.py"), ("augment numbers and tags", "fetch_augment_data.py"), ("lanes (Meraki)", "fetch_positions.py"), ("loading screen tips", "fetch_loading_tips.py"),
          ("ability tag audit", "audit_tags.py")]
 ATTRIBUTION = "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 
