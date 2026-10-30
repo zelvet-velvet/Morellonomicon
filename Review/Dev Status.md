@@ -13,7 +13,6 @@ sticker: lucide//activity
 - **README like a public tool**: logo, title with badges, feature table, install, FAQ, data sources; screenshots still to add.
 - **Augment page A**: a banner, a Lv1 / 最大 switch, stat chips with the shop icons, the effect with its numbers filled in and coloured by kind, the fitting champions as a sideways strip; numbers for 102 of 249 augments from the game data (to check on the phone).
 - **Wiki numbers for every augment**: 247 of 248 augments have a zh_TW effect line with the League wiki's Mayhem numbers (待驗證); the page shows it instead of Arena's numbers (which differed for 34 of 54) and keeps Riot's tags for 適合的英雄.
-
 - **Effect text like the game's**: values by level and scalings are pills with an icon in their stat's colour, with space around them; stat amounts and damage kinds are coloured (to check on the phone).
 - **Augment header and champion page options**: mocks in [[Layouts]] (header A top bar / B centred icon; champion page A short banner and tabs / B one card like Picks), to pick.
 
