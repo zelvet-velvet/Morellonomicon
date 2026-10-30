@@ -167,11 +167,16 @@ var Store = class {
     // _data/loading-tips.json: the game's loading screen tips (zh_TW)
     this.gameText = {};
     // augment id -> the game's own description (tools/fetch_augment_text.py)
+    this.augData = {};
     // false until the data files (_data/*.json) have been read once after start-up
     this.ready = false;
   }
   masteryOf(id) {
     return this.mastery?.champions[id];
+  }
+  // augment id -> numbers, levels, tags (tools/fetch_augment_data.py)
+  augmentData(id) {
+    return this.augData[String(id)];
   }
   get app() {
     return this.plugin.app;
@@ -199,6 +204,13 @@ var Store = class {
       this.augs = null;
     } catch {
       this.gameText = {};
+    }
+    try {
+      const path = (0, import_obsidian.normalizePath)("_data/augment-data.json");
+      this.augData = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)).augments ?? {} : {};
+      this.augs = null;
+    } catch {
+      this.augData = {};
     }
     try {
       const path = (0, import_obsidian.normalizePath)("_data/positions.json");
@@ -371,18 +383,13 @@ var Store = class {
   }
   augments() {
     if (!this.augs) {
-      this.augs = this.notes(this.s.augmentFolder).filter((n) => n.fm.type === "augment").map(({ file, fm }) => ({
-        id: num(fm.id),
-        name: str(fm.name, file.basename),
-        rarity: str(fm.rarity),
-        icon: str(fm.icon),
-        // hand-written first, then Riot's patch notes (full numbers), then the game's own text (numbers left out, `partial`)
-        effect: str(fm.effect) || this.officialEffect(str(fm.name, file.basename)) || this.gameText[String(num(fm.id))]?.text || "",
-        partial: !str(fm.effect) && !this.officialEffect(str(fm.name, file.basename)) && !!this.gameText[String(num(fm.id))]?.partial,
-        fits: list(fm.fits),
-        tier: str(fm.tier),
-        path: file.path
-      })).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
+      this.augs = this.notes(this.s.augmentFolder).filter((n) => n.fm.type === "augment").map(({ file, fm }) => {
+        const id = num(fm.id), name = str(fm.name, file.basename), d = this.augData[String(id)];
+        const filled = d?.runs[0]?.map((r) => r[0]).join("") ?? "";
+        const effect = str(fm.effect) || filled || this.officialEffect(name) || this.gameText[String(id)]?.text || "";
+        const partial = !str(fm.effect) && (filled ? d.partial : !this.officialEffect(name) && !!this.gameText[String(id)]?.partial);
+        return { id, name, rarity: str(fm.rarity), icon: str(fm.icon), effect, partial, fits: list(fm.fits), tier: str(fm.tier), path: file.path };
+      }).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
     }
     return this.augs;
   }
@@ -4698,38 +4705,136 @@ function suggest(effect, champions) {
   scored.sort((a, b) => b.n - a.n || a.c.name.localeCompare(b.c.name, "zh-Hant"));
   return { tags: kinds.map((k) => k.tag), champions: scored.slice(0, SUGGESTED).map((x) => x.c) };
 }
+var KIND_COLOR = {
+  magicDamage: "var(--mn-magic)",
+  scaleAP: "var(--mn-magic)",
+  scaleMana: "var(--mn-magic)",
+  physicalDamage: "var(--mn-phys)",
+  scaleAD: "var(--mn-phys)",
+  trueDamage: "var(--mn-true)",
+  healing: "var(--mn-heal)",
+  scaleHealth: "var(--mn-heal)",
+  lifeSteal: "var(--mn-ls)",
+  lifesteal: "var(--mn-ls)",
+  shield: "var(--mn-shield)",
+  scaleMR: "var(--mn-shield)",
+  scaleArmor: "var(--mn-guard)",
+  crit: "var(--mn-exec)",
+  scaleCrit: "var(--mn-exec)",
+  speed: "var(--mn-true)",
+  attackSpeed: "var(--mn-true)",
+  scaleAS: "var(--mn-true)",
+  scaleAbilityHaste: "var(--mn-haste)",
+  scaleAH: "var(--mn-haste)",
+  armorPen: "var(--mn-aa)",
+  magicPen: "var(--mn-weak)"
+};
+var KIND_BOLD = /* @__PURE__ */ new Set(["keywordMajor", "status", "attention", "spellName"]);
+var CHIP_CAT = {
+  scaleAP: "\u6CD5\u8853\u5F37\u5EA6",
+  scaleAD: "\u653B\u64CA\u529B",
+  scaleCrit: "\u66B4\u64CA",
+  scaleAS: "\u653B\u901F",
+  scaleAH: "\u6280\u80FD\u6025\u901F",
+  scaleAbilityHaste: "\u6280\u80FD\u6025\u901F",
+  scaleHealth: "\u751F\u547D",
+  scaleArmor: "\u8B77\u7532",
+  scaleMR: "\u9B54\u9632",
+  scaleAPen: "\u7269\u7406\u7A7F\u900F",
+  scaleMPen: "\u6CD5\u8853\u7A7F\u900F",
+  scaleMana: "\u9B54\u529B",
+  scaleMS: "\u79FB\u52D5",
+  scaleLS: "\u5438\u8840"
+};
+var LEVEL_LABEL = (lv, top) => lv === top && top > 1 ? "\u6700\u5927" : `Lv${lv}`;
 function augmentPage(ctx) {
   const store = ctx.plugin.store;
   const a = store.augment(Number(ctx.frame.params?.id));
-  const el = h(null, "div", "mn-page");
+  const el = h(null, "div", "mn-page mn-itpage");
   if (!a) {
     empty(el, { icon: "sparkles", title: "Augment not found" });
     return { title: "", el };
   }
+  const data = store.augmentData(a.id);
   const history = store.augmentHistory(a.name);
-  const head2 = h(el, "div", "mn-dhead");
-  augIcon(head2, a.icon, a.rarity, "mn-dimg-aug");
-  const who = h(head2, "div", "mn-dwho");
-  h(who, "h1", "mn-title", a.name);
-  const tags2 = h(who, "div", "mn-chips");
-  chip(tags2, a.rarity, { color: RARITY_COLOR[a.rarity] });
-  const last = history[0];
-  if (last) chip(tags2, `${last.what === "added" ? "\u65B0\u589E\u65BC" : "\u79FB\u9664\u65BC"} ${last.patch}`, { color: last.what === "added" ? "var(--color-blue)" : "var(--color-red)" });
-  const panel = h(el, "div", "mn-panel mn-dpanel");
-  if (a.effect) {
-    h(panel, "p", "mn-dtext", a.effect);
-    const official = store.officialEffect(a.name) === a.effect;
-    h(panel, "div", "mn-pn-src", `Effect text: Riot Games ${official ? "patch notes" : "game text"}`);
-    if (a.partial) h(panel, "div", "mn-pn-src", "X = \u904A\u6232\u5167\u624D\u770B\u5F97\u5230\u7684\u6578\u503C");
-  } else {
-    h(panel, "p", "mn-dtext mn-muted", "\u9019\u500B\u5F37\u5316\u7684\u6548\u679C\u8AAA\u660E\u9084\u6C92\u6709\u6536\u9304\u3002");
+  const hero = h(el, "div", "mn-it-hero mn-ag-hero");
+  const bg = h(hero, "img", "mn-it-bg");
+  bg.src = a.icon;
+  bg.alt = "";
+  augIcon(hero, a.icon, a.rarity, "mn-dimg-aug mn-ag-ic");
+  const who = h(hero, "div", "mn-it-who");
+  h(who, "h1", "mn-it-name", a.name);
+  const tags2 = h(who, "div", "mn-it-tags");
+  const rar = h(tags2, "span", "mn-ag-rar", a.rarity);
+  rar.style.setProperty("--c", RARITY_COLOR[a.rarity] ?? "var(--mn-muted)");
+  if (history[0]?.what === "added" && history[0].patch === store.riotNotes[0]?.patch) h(tags2, "span", "mn-ag-new", "\u65B0");
+  const levels = data?.levels ?? [];
+  let at = 0;
+  const seg = levels.length > 1 ? h(el, "div", "mn-seg is-sm mn-ag-lv") : null;
+  const chipsEl = h(el, "div", "mn-it-stats");
+  const card = h(el, "div", "mn-it-fx mn-ag-fx");
+  const draw = () => {
+    chipsEl.empty();
+    card.empty();
+    for (const c of data?.chips[at] ?? []) {
+      const cat = CHIP_CAT[c.stat];
+      const x = h(chipsEl, "span", "mn-it-stat");
+      if (cat) x.style.setProperty("--c", ITEM_CAT_COLOR[cat] ?? "var(--mn-muted)");
+      const k = cat ? ITEM_CATS.findIndex(([n]) => n === cat) : -1;
+      if (k >= 0) shopIcon(x, k, true);
+      const m = /^([+\-]?[\d.]+%?)\s*(.*)$/.exec(c.text);
+      if (m) {
+        h(x, "b", void 0, m[1]);
+        x.append(m[2]);
+      } else x.append(c.text);
+    }
+    chipsEl.toggleClass("is-empty", !chipsEl.childElementCount);
+    const p = h(card, "p", "mn-it-fxt");
+    if (data) {
+      for (const [text, kind] of data.runs[at] ?? []) {
+        if (!kind) {
+          p.append(text);
+          continue;
+        }
+        const sp = h(p, "span", KIND_BOLD.has(kind) ? "mn-ag-kw" : "mn-ag-k", text);
+        if (KIND_COLOR[kind]) sp.style.setProperty("--c", KIND_COLOR[kind]);
+      }
+      h(card, "div", "mn-pn-src", data.partial ? "\u6578\u503C\uFF1A\u904A\u6232\u8CC7\u6599\uFF08X \u662F\u904A\u6232\u5167\u624D\u7B97\u5F97\u51FA\u7684\u6578\u503C\uFF09" : "\u6578\u503C\uFF1A\u904A\u6232\u8CC7\u6599");
+    } else if (a.effect) {
+      p.setText(a.effect);
+      h(card, "div", "mn-pn-src", a.partial ? "\u6578\u503C\u5F85\u88DC\uFF08X \u662F\u904A\u6232\u5167\u624D\u770B\u5F97\u5230\u7684\u6578\u503C\uFF09" : "\u6548\u679C\uFF1ARiot Games");
+    } else {
+      p.addClass("mn-muted");
+      p.setText("\u9019\u500B\u5F37\u5316\u7684\u6548\u679C\u8AAA\u660E\u9084\u6C92\u6709\u6536\u9304\u3002");
+    }
+  };
+  if (seg) {
+    levels.forEach((lv, i) => {
+      const b = h(seg, "button", "mn-seg-b" + (i === 0 ? " is-on" : ""), LEVEL_LABEL(lv, levels[levels.length - 1]));
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (at === i) return;
+        at = i;
+        seg.querySelectorAll(".mn-seg-b").forEach((x, j) => x.toggleClass("is-on", j === i));
+        draw();
+      });
+    });
+    slideSeg(seg);
+  }
+  draw();
+  if (!a.effect && !data) {
     const links = group(el);
     row(links, { icon: "external-link", title: "\u5728 League \u7DAD\u57FA\u67E5\u770B\u6548\u679C", chevron: true, onTap: () => window.open("https://wiki.leagueoflegends.com/en-us/ARAM_Mayhem/Augments") });
     row(links, { icon: "external-link", title: "OP.GG \u5F37\u5316\u5217\u8868", chevron: true, onTap: () => window.open("https://op.gg/lol/modes/aram-mayhem") });
   }
   const all = store.champions();
   let tagList = [], list2 = [], label = "";
-  if (a.fits.length) {
+  if (data?.fits) {
+    const ok = new Set(data.fits);
+    tagList = data.tags;
+    list2 = all.filter((c) => ok.has(c.id.toLowerCase()));
+    label = `\u904A\u6232\u7684\u5F37\u5316\u6A19\u7C64\uFF1A\u53EA\u6703\u51FA\u73FE\u5728\u9019 ${list2.length} \u4F4D\u82F1\u96C4\u7684\u9078\u9805\u88E1`;
+  } else if (a.fits.length) {
     tagList = a.fits;
     list2 = all.filter((c) => a.fits.some((f) => c.archetypes.includes(f) || c.features.includes(f) || c.roles.includes(f))).slice(0, SUGGESTED);
     label = "\u4EBA\u5DE5\u6574\u7406";
@@ -4737,18 +4842,17 @@ function augmentPage(ctx) {
     const s = suggest(a.effect, all);
     tagList = s.tags;
     list2 = s.champions;
-    label = "\u4F9D\u6548\u679C\u6587\u5B57\u81EA\u52D5\u63A8\u6E2C,\u50C5\u4F9B\u53C3\u8003";
-  }
-  if (tagList.length) {
-    h(el, "div", "mn-gh", "\u6548\u679C\u91CD\u9EDE");
-    const chips = h(el, "div", "mn-chips");
-    for (const t of tagList) chip(chips, t);
+    label = "\u4F9D\u6548\u679C\u6587\u5B57\u63A8\u6E2C\uFF0C\u50C5\u4F9B\u53C3\u8003";
   }
   if (list2.length) {
     h(el, "div", "mn-gh", "\u9069\u5408\u7684\u82F1\u96C4");
-    const grid = h(el, "div", "mn-grid");
+    if (tagList.length) {
+      const chips = h(el, "div", "mn-chips mn-ag-tags");
+      for (const t of tagList) chip(chips, t);
+    }
+    const strip2 = layoutBlock(h(el, "div", "mn-ag-strip"));
     for (const c of list2) {
-      const tile2 = h(grid, "button", "mn-tile");
+      const tile2 = h(strip2, "button", "mn-tile");
       const t = h(tile2, "img");
       t.src = c.icon;
       t.alt = "";
@@ -4762,8 +4866,7 @@ function augmentPage(ctx) {
   }
   if (history.length) {
     h(el, "div", "mn-gh", "\u7248\u672C\u7D00\u9304");
-    const g = group(el);
-    for (const x of history) row(g, { icon: x.what === "added" ? "plus-circle" : "minus-circle", title: x.what === "added" ? "\u65B0\u589E" : "\u79FB\u9664", value: x.patch });
+    h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "\u65B0\u589E\u65BC" : "\u79FB\u9664\u65BC"} ${x.patch}`).join(" \xB7 "));
   }
   return { title: "", el };
 }

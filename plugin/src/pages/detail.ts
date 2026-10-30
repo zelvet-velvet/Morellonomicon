@@ -1,6 +1,6 @@
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { Champion, Item } from "../data/store";
-import { ITEM_CAT_COLOR, ITEM_CATS, augIcon, chip, empty, group, h, icon, row, shopIcon } from "../ui";
+import { ITEM_CAT_COLOR, ITEM_CATS, augIcon, chip, empty, group, h, icon, layoutBlock, row, shopIcon, slideSeg } from "../ui";
 import { RARITY_COLOR } from "./augments";
 import { officialBlock } from "./changes";
 import { deckPage, itemTree } from "./deck";
@@ -68,40 +68,108 @@ function suggest(effect: string, champions: Champion[]): { tags: string[]; champ
     return { tags: kinds.map((k) => k.tag), champions: scored.slice(0, SUGGESTED).map((x) => x.c) };
 }
 
-// ---- an augment: effect, what it is about, which champions suit it, and its history
+// ---- an augment (layout A 強化卡, chosen 2026-10-30): a banner, a Lv1 / 最大 switch, stat chips, the effect as a card with its numbers
+// coloured by kind, the fitting champions as a sideways strip, the history in one line
+// The game's markup around a number or word -> its colour (the app's damage and stat colours); words like 燃燒 are only bold
+const KIND_COLOR: Record<string, string> = {
+    magicDamage: "var(--mn-magic)", scaleAP: "var(--mn-magic)", scaleMana: "var(--mn-magic)", physicalDamage: "var(--mn-phys)", scaleAD: "var(--mn-phys)",
+    trueDamage: "var(--mn-true)", healing: "var(--mn-heal)", scaleHealth: "var(--mn-heal)", lifeSteal: "var(--mn-ls)", lifesteal: "var(--mn-ls)",
+    shield: "var(--mn-shield)", scaleMR: "var(--mn-shield)", scaleArmor: "var(--mn-guard)", crit: "var(--mn-exec)", scaleCrit: "var(--mn-exec)",
+    speed: "var(--mn-true)", attackSpeed: "var(--mn-true)", scaleAS: "var(--mn-true)", scaleAbilityHaste: "var(--mn-haste)", scaleAH: "var(--mn-haste)",
+    armorPen: "var(--mn-aa)", magicPen: "var(--mn-weak)",
+};
+const KIND_BOLD = new Set(["keywordMajor", "status", "attention", "spellName"]);
+// A stat icon in the game's text -> the item shop's stat (for its icon and colour)
+const CHIP_CAT: Record<string, string> = {
+    scaleAP: "法術強度", scaleAD: "攻擊力", scaleCrit: "暴擊", scaleAS: "攻速", scaleAH: "技能急速", scaleAbilityHaste: "技能急速", scaleHealth: "生命",
+    scaleArmor: "護甲", scaleMR: "魔防", scaleAPen: "物理穿透", scaleMPen: "法術穿透", scaleMana: "魔力", scaleMS: "移動", scaleLS: "吸血",
+};
+const LEVEL_LABEL = (lv: number, top: number) => (lv === top && top > 1 ? "最大" : `Lv${lv}`);
+
 export function augmentPage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const a = store.augment(Number(ctx.frame.params?.id));
-    const el = h(null, "div", "mn-page");
+    const el = h(null, "div", "mn-page mn-itpage");
     if (!a) { empty(el, { icon: "sparkles", title: "Augment not found" }); return { title: "", el }; }
+    const data = store.augmentData(a.id);
     const history = store.augmentHistory(a.name);
-    const head = h(el, "div", "mn-dhead");
-    augIcon(head, a.icon, a.rarity, "mn-dimg-aug");
-    const who = h(head, "div", "mn-dwho");
-    h(who, "h1", "mn-title", a.name);
-    const tags = h(who, "div", "mn-chips");
-    chip(tags, a.rarity, { color: RARITY_COLOR[a.rarity] });
-    const last = history[0];
-    if (last) chip(tags, `${last.what === "added" ? "新增於" : "移除於"} ${last.patch}`, { color: last.what === "added" ? "var(--color-blue)" : "var(--color-red)" });
 
-    const panel = h(el, "div", "mn-panel mn-dpanel");
-    if (a.effect) {
-        h(panel, "p", "mn-dtext", a.effect);
-        const official = store.officialEffect(a.name) === a.effect;
-        h(panel, "div", "mn-pn-src", `Effect text: Riot Games ${official ? "patch notes" : "game text"}`);
-        if (a.partial) h(panel, "div", "mn-pn-src", "X = 遊戲內才看得到的數值");
-    } else {
-        // Riot's patch notes only describe an augment in the patch that adds or changes it; older ones have no text we can read yet
-        h(panel, "p", "mn-dtext mn-muted", "這個強化的效果說明還沒有收錄。");
+    // banner: the icon in its rarity frame over a soft blur of itself, the name, the rarity and 新 when it came in this patch
+    const hero = h(el, "div", "mn-it-hero mn-ag-hero");
+    const bg = h(hero, "img", "mn-it-bg"); bg.src = a.icon; bg.alt = "";
+    augIcon(hero, a.icon, a.rarity, "mn-dimg-aug mn-ag-ic");
+    const who = h(hero, "div", "mn-it-who");
+    h(who, "h1", "mn-it-name", a.name);
+    const tags = h(who, "div", "mn-it-tags");
+    const rar = h(tags, "span", "mn-ag-rar", a.rarity);
+    rar.style.setProperty("--c", RARITY_COLOR[a.rarity] ?? "var(--mn-muted)");
+    if (history[0]?.what === "added" && history[0].patch === store.riotNotes[0]?.patch) h(tags, "span", "mn-ag-new", "新");
+
+    // the numbers: a Lv1 / 最大 switch when it levels up; chips and the effect card follow it
+    const levels = data?.levels ?? [];
+    let at = 0;
+    const seg = levels.length > 1 ? h(el, "div", "mn-seg is-sm mn-ag-lv") : null;
+    const chipsEl = h(el, "div", "mn-it-stats");
+    const card = h(el, "div", "mn-it-fx mn-ag-fx");
+    const draw = () => {
+        chipsEl.empty();
+        card.empty();
+        for (const c of data?.chips[at] ?? []) {
+            const cat = CHIP_CAT[c.stat];
+            const x = h(chipsEl, "span", "mn-it-stat");
+            if (cat) x.style.setProperty("--c", ITEM_CAT_COLOR[cat] ?? "var(--mn-muted)");
+            const k = cat ? ITEM_CATS.findIndex(([n]) => n === cat) : -1;
+            if (k >= 0) shopIcon(x, k, true);
+            const m = /^([+\-]?[\d.]+%?)\s*(.*)$/.exec(c.text);
+            if (m) { h(x, "b", undefined, m[1]); x.append(m[2]); } else x.append(c.text);
+        }
+        chipsEl.toggleClass("is-empty", !chipsEl.childElementCount);
+        const p = h(card, "p", "mn-it-fxt");
+        if (data) {
+            for (const [text, kind] of data.runs[at] ?? []) {
+                if (!kind) { p.append(text); continue; }
+                const sp = h(p, "span", KIND_BOLD.has(kind) ? "mn-ag-kw" : "mn-ag-k", text);
+                if (KIND_COLOR[kind]) sp.style.setProperty("--c", KIND_COLOR[kind]);
+            }
+            h(card, "div", "mn-pn-src", data.partial ? "數值：遊戲資料（X 是遊戲內才算得出的數值）" : "數值：遊戲資料");
+        } else if (a.effect) {
+            p.setText(a.effect);
+            h(card, "div", "mn-pn-src", a.partial ? "數值待補（X 是遊戲內才看得到的數值）" : "效果：Riot Games");
+        } else {
+            // Riot's patch notes only describe an augment in the patch that adds or changes it; older ones have no text we can read yet
+            p.addClass("mn-muted");
+            p.setText("這個強化的效果說明還沒有收錄。");
+        }
+    };
+    if (seg) {
+        levels.forEach((lv, i) => {
+            const b = h(seg, "button", "mn-seg-b" + (i === 0 ? " is-on" : ""), LEVEL_LABEL(lv, levels[levels.length - 1]));
+            b.addEventListener("click", (e) => {
+                e.preventDefault();
+                if (at === i) return;
+                at = i;
+                seg.querySelectorAll(".mn-seg-b").forEach((x, j) => x.toggleClass("is-on", j === i));
+                draw();
+            });
+        });
+        slideSeg(seg);
+    }
+    draw();
+    if (!a.effect && !data) {
         const links = group(el);
         row(links, { icon: "external-link", title: "在 League 維基查看效果", chevron: true, onTap: () => window.open("https://wiki.leagueoflegends.com/en-us/ARAM_Mayhem/Augments") });
         row(links, { icon: "external-link", title: "OP.GG 強化列表", chevron: true, onTap: () => window.open("https://op.gg/lol/modes/aram-mayhem") });
     }
 
-    // which champions suit it: the hand-written `fits` when there is one, else a guess from the wording
+    // who it suits: Riot's own tags when they rule champions out, else the hand-written `fits`, else a guess from the wording
     const all = store.champions();
     let tagList: string[] = [], list: Champion[] = [], label = "";
-    if (a.fits.length) {
+    if (data?.fits) {
+        const ok = new Set(data.fits);
+        tagList = data.tags;
+        list = all.filter((c) => ok.has(c.id.toLowerCase()));
+        label = `遊戲的強化標籤：只會出現在這 ${list.length} 位英雄的選項裡`;
+    } else if (a.fits.length) {
         tagList = a.fits;
         list = all.filter((c) => a.fits.some((f) => c.archetypes.includes(f) || c.features.includes(f) || c.roles.includes(f))).slice(0, SUGGESTED);
         label = "人工整理";
@@ -109,18 +177,14 @@ export function augmentPage(ctx: PageCtx): PageOut {
         const s = suggest(a.effect, all);
         tagList = s.tags;
         list = s.champions;
-        label = "依效果文字自動推測,僅供參考";
-    }
-    if (tagList.length) {
-        h(el, "div", "mn-gh", "效果重點");
-        const chips = h(el, "div", "mn-chips");
-        for (const t of tagList) chip(chips, t);
+        label = "依效果文字推測，僅供參考";
     }
     if (list.length) {
         h(el, "div", "mn-gh", "適合的英雄");
-        const grid = h(el, "div", "mn-grid");
+        if (tagList.length) { const chips = h(el, "div", "mn-chips mn-ag-tags"); for (const t of tagList) chip(chips, t); }
+        const strip = layoutBlock(h(el, "div", "mn-ag-strip"));
         for (const c of list) {
-            const tile = h(grid, "button", "mn-tile");
+            const tile = h(strip, "button", "mn-tile");
             const t = h(tile, "img"); t.src = c.icon; t.alt = "";
             h(tile, "span", "mn-tile-n", c.name);
             tile.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id, "augments"); });
@@ -129,8 +193,7 @@ export function augmentPage(ctx: PageCtx): PageOut {
     }
     if (history.length) {
         h(el, "div", "mn-gh", "版本紀錄");
-        const g = group(el);
-        for (const x of history) row(g, { icon: x.what === "added" ? "plus-circle" : "minus-circle", title: x.what === "added" ? "新增" : "移除", value: x.patch });
+        h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "新增於" : "移除於"} ${x.patch}`).join(" · "));
     }
     return { title: "", el };   // the name is already the big heading
 }

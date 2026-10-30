@@ -1347,3 +1347,19 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-it-fxn { font-size: 18px; color: #d9b15c; }
 .mn-it-fx.is-active .mn-it-fxn { color: var(--mn-accent); }
 .mn-app .mn-it-fxt { margin: 0; font-size: 15px; line-height: 1.55; color: var(--mn-text); }
+/* augment page (layout A 強化卡): the item page's banner and chips, a Lv1 / 最大 switch, numbers coloured by kind, a sideways strip of champions */
+.mn-ag-ic { position: relative; z-index: 1; width: 84px; height: 84px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); }
+.mn-ag-rar, .mn-ag-new { display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border-radius: 15px; font-size: 14px; font-weight: 800; }
+.mn-ag-rar { --c: var(--mn-muted); color: var(--c); background: color-mix(in srgb, var(--c) 18%, transparent); border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); }
+.mn-ag-new { color: var(--color-blue); border: 1px solid color-mix(in srgb, var(--color-blue) 45%, transparent); }
+.mn-seg.mn-ag-lv { margin: 0 0 12px; }
+.mn-it-stats.is-empty { display: none; }
+.mn-ag-fx .mn-it-fxt { font-size: 16px; line-height: 1.65; }
+.mn-ag-k { --c: var(--mn-text); color: var(--c); font-weight: 700; font-variant-numeric: tabular-nums; }
+.mn-ag-kw { font-weight: 700; color: var(--mn-text); }
+.mn-ag-fx .mn-pn-src { margin-top: 6px; }
+.mn-chips.mn-ag-tags { margin-bottom: 4px; }
+.mn-ag-strip { display: flex; gap: 10px; margin: 8px -16px 0; padding: 4px 16px 6px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+.mn-ag-strip::-webkit-scrollbar { display: none; }
+.mn-ag-strip .mn-tile { flex: none; width: 64px; }
+.mn-ag-hist { font-size: 14px; color: var(--mn-muted); }

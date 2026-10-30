@@ -45,6 +45,11 @@ function withOnHit(skills: Skill[], keys: string[]): Skill[] {
 
 export interface Skill { key: string; name: string; damage: string[]; tags: string[]; icon: string; desc: string; upgrade: string; range: string; rows: SkillRow[]; levels: number[] }   // levels: a passive's numbers are by champion level (Lv 1, 6, 11 ...), not by rank
 export interface Augment { id: number; name: string; rarity: string; icon: string; effect: string; partial: boolean; fits: string[]; tier: string; path: string }
+// An augment's numbers from the game data (tools/fetch_augment_data.py): per level its text as runs [text, the game's markup kind]
+// and its stat chips; Riot's augment tags and, when a tag rules some champions out, the champions it is offered to (lower-case ids)
+export interface AugmentData {
+    levels: number[]; runs: [string, string][][]; chips: { stat: string; text: string }[][]; partial: boolean; tags: string[]; fits?: string[];
+}
 export interface Item {
     id: number; name: string; tags: string[]; desc: string; from: number[]; into: number[]; goldTotal: number; aram: boolean; rift: boolean; icon: string; variantOf?: string; path: string;
 }
@@ -106,6 +111,8 @@ export class Store {
     sounds: Sounds | null = null;   // _data/sounds.json: how characters are said, for finding names from speech to text
     loadingTips: { group: string; text: string }[] = [];   // _data/loading-tips.json: the game's loading screen tips (zh_TW)
     gameText: Record<string, { text: string; partial: boolean }> = {};   // augment id -> the game's own description (tools/fetch_augment_text.py)
+    augData: Record<string, AugmentData> = {};   // augment id -> numbers, levels, tags (tools/fetch_augment_data.py)
+    augmentData(id: number): AugmentData | undefined { return this.augData[String(id)]; }
 
     // false until the data files (_data/*.json) have been read once after start-up
     ready = false;
@@ -128,6 +135,11 @@ export class Store {
             this.gameText = (await this.app.vault.adapter.exists(path)) ? ((JSON.parse(await this.app.vault.adapter.read(path)) as { augments: Record<string, { text: string; partial: boolean }> }).augments ?? {}) : {};
             this.augs = null;
         } catch { this.gameText = {}; }
+        try {
+            const path = normalizePath("_data/augment-data.json");
+            this.augData = (await this.app.vault.adapter.exists(path)) ? ((JSON.parse(await this.app.vault.adapter.read(path)) as { augments: Record<string, AugmentData> }).augments ?? {}) : {};
+            this.augs = null;
+        } catch { this.augData = {}; }
         try {
             const path = normalizePath("_data/positions.json");
             this.positions = (await this.app.vault.adapter.exists(path)) ? JSON.parse(await this.app.vault.adapter.read(path)) : null;
@@ -246,13 +258,15 @@ export class Store {
 
     augments(): Augment[] {
         if (!this.augs) {
-            this.augs = this.notes(this.s.augmentFolder).filter((n) => n.fm.type === "augment").map(({ file, fm }) => ({
-                id: num(fm.id), name: str(fm.name, file.basename), rarity: str(fm.rarity), icon: str(fm.icon),
-                // hand-written first, then Riot's patch notes (full numbers), then the game's own text (numbers left out, `partial`)
-                effect: str(fm.effect) || this.officialEffect(str(fm.name, file.basename)) || this.gameText[String(num(fm.id))]?.text || "",
-                partial: !str(fm.effect) && !this.officialEffect(str(fm.name, file.basename)) && !!this.gameText[String(num(fm.id))]?.partial,
-                fits: list(fm.fits), tier: str(fm.tier), path: file.path,
-            })).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
+            this.augs = this.notes(this.s.augmentFolder).filter((n) => n.fm.type === "augment").map(({ file, fm }) => {
+                const id = num(fm.id), name = str(fm.name, file.basename), d = this.augData[String(id)];
+                // hand-written first, then the game text with its numbers filled (level 1), then Riot's patch notes, then the game's text
+                // with the numbers left out (`partial`)
+                const filled = d?.runs[0]?.map((r) => r[0]).join("") ?? "";
+                const effect = str(fm.effect) || filled || this.officialEffect(name) || this.gameText[String(id)]?.text || "";
+                const partial = !str(fm.effect) && (filled ? d!.partial : !this.officialEffect(name) && !!this.gameText[String(id)]?.partial);
+                return { id, name, rarity: str(fm.rarity), icon: str(fm.icon), effect, partial, fits: list(fm.fits), tier: str(fm.tier), path: file.path };
+            }).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
         }
         return this.augs;
     }
