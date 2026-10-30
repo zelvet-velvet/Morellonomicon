@@ -398,6 +398,7 @@ var Store = class {
           fits: list(fm.fits),
           tier: str(fm.tier),
           path: file.path,
+          hand: !!str(fm.effect),
           effectSource: str(fm.effect) ? str(fm.effect_source) : "",
           effectStatus: str(fm.effect_status),
           effectPatch: str(fm.effect_patch)
@@ -4769,6 +4770,7 @@ function augmentPage(ctx) {
     return { title: "", el };
   }
   const data = store.augmentData(a.id);
+  const nums = a.hand ? void 0 : data;
   const history = store.augmentHistory(a.name);
   const hero = h(el, "div", "mn-it-hero mn-ag-hero");
   const bg = h(hero, "img", "mn-it-bg");
@@ -4781,7 +4783,7 @@ function augmentPage(ctx) {
   const rar = h(tags2, "span", "mn-ag-rar", a.rarity);
   rar.style.setProperty("--c", RARITY_COLOR[a.rarity] ?? "var(--mn-muted)");
   if (history[0]?.what === "added" && history[0].patch === store.riotNotes[0]?.patch) h(tags2, "span", "mn-ag-new", "\u65B0");
-  const levels = data?.levels ?? [];
+  const levels = nums?.levels ?? [];
   let at = 0;
   const seg = levels.length > 1 ? h(el, "div", "mn-seg is-sm mn-ag-lv") : null;
   const chipsEl = h(el, "div", "mn-it-stats");
@@ -4789,7 +4791,7 @@ function augmentPage(ctx) {
   const draw = () => {
     chipsEl.empty();
     card.empty();
-    for (const c of data?.chips[at] ?? []) {
+    for (const c of nums?.chips[at] ?? []) {
       const cat = CHIP_CAT[c.stat];
       const x = h(chipsEl, "span", "mn-it-stat");
       if (cat) x.style.setProperty("--c", ITEM_CAT_COLOR[cat] ?? "var(--mn-muted)");
@@ -4803,8 +4805,8 @@ function augmentPage(ctx) {
     }
     chipsEl.toggleClass("is-empty", !chipsEl.childElementCount);
     const p = h(card, "p", "mn-it-fxt");
-    if (data) {
-      for (const [text, kind] of data.runs[at] ?? []) {
+    if (nums) {
+      for (const [text, kind] of nums.runs[at] ?? []) {
         if (!kind) {
           p.append(text);
           continue;
@@ -4812,7 +4814,7 @@ function augmentPage(ctx) {
         const sp = h(p, "span", KIND_BOLD.has(kind) ? "mn-ag-kw" : "mn-ag-k", text);
         if (KIND_COLOR[kind]) sp.style.setProperty("--c", KIND_COLOR[kind]);
       }
-      h(card, "div", "mn-pn-src", `\u6578\u503C\uFF1A\u7AF6\u6280\u5834\u7684\u904A\u6232\u8CC7\u6599\uFF0C\u5927\u6DF7\u6230\u53EF\u80FD\u4E0D\u540C${data.partial ? "\uFF08X \u662F\u904A\u6232\u5167\u624D\u7B97\u5F97\u51FA\u7684\u6578\u503C\uFF09" : ""}`);
+      h(card, "div", "mn-pn-src", `\u6578\u503C\uFF1A\u7AF6\u6280\u5834\u7684\u904A\u6232\u8CC7\u6599\uFF0C\u5927\u6DF7\u6230\u53EF\u80FD\u4E0D\u540C${nums.partial ? "\uFF08X \u662F\u904A\u6232\u5167\u624D\u7B97\u5F97\u51FA\u7684\u6578\u503C\uFF09" : ""}`);
     } else if (a.effect) {
       p.setText(a.effect);
       const src = a.effectSource ? `\u6578\u503C\uFF1A${a.effectSource}${a.effectSource.includes("Wiki") ? "\uFF08CC BY-SA\uFF09" : ""}${a.effectPatch ? ` \xB7 ${a.effectPatch}` : ""}${a.effectStatus ? ` \xB7 ${a.effectStatus}` : ""}` : "";

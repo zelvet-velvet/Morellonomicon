@@ -92,6 +92,9 @@ export function augmentPage(ctx: PageCtx): PageOut {
     const el = h(null, "div", "mn-page mn-itpage");
     if (!a) { empty(el, { icon: "sparkles", title: "Augment not found" }); return { title: "", el }; }
     const data = store.augmentData(a.id);
+    // a hand-written effect (the League wiki's Mayhem numbers) wins over Arena's game data, whose numbers often differ in Mayhem;
+    // the game data is then used only for Riot's augment tags (who it suits)
+    const nums = a.hand ? undefined : data;
     const history = store.augmentHistory(a.name);
 
     // banner: the icon in its rarity frame over a soft blur of itself, the name, the rarity and 新 when it came in this patch
@@ -106,7 +109,7 @@ export function augmentPage(ctx: PageCtx): PageOut {
     if (history[0]?.what === "added" && history[0].patch === store.riotNotes[0]?.patch) h(tags, "span", "mn-ag-new", "新");
 
     // the numbers: a Lv1 / 最大 switch when it levels up; chips and the effect card follow it
-    const levels = data?.levels ?? [];
+    const levels = nums?.levels ?? [];
     let at = 0;
     const seg = levels.length > 1 ? h(el, "div", "mn-seg is-sm mn-ag-lv") : null;
     const chipsEl = h(el, "div", "mn-it-stats");
@@ -114,7 +117,7 @@ export function augmentPage(ctx: PageCtx): PageOut {
     const draw = () => {
         chipsEl.empty();
         card.empty();
-        for (const c of data?.chips[at] ?? []) {
+        for (const c of nums?.chips[at] ?? []) {
             const cat = CHIP_CAT[c.stat];
             const x = h(chipsEl, "span", "mn-it-stat");
             if (cat) x.style.setProperty("--c", ITEM_CAT_COLOR[cat] ?? "var(--mn-muted)");
@@ -125,13 +128,13 @@ export function augmentPage(ctx: PageCtx): PageOut {
         }
         chipsEl.toggleClass("is-empty", !chipsEl.childElementCount);
         const p = h(card, "p", "mn-it-fxt");
-        if (data) {
-            for (const [text, kind] of data.runs[at] ?? []) {
+        if (nums) {
+            for (const [text, kind] of nums.runs[at] ?? []) {
                 if (!kind) { p.append(text); continue; }
                 const sp = h(p, "span", KIND_BOLD.has(kind) ? "mn-ag-kw" : "mn-ag-k", text);
                 if (KIND_COLOR[kind]) sp.style.setProperty("--c", KIND_COLOR[kind]);
             }
-            h(card, "div", "mn-pn-src", `數值：競技場的遊戲資料，大混戰可能不同${data.partial ? "（X 是遊戲內才算得出的數值）" : ""}`);
+            h(card, "div", "mn-pn-src", `數值：競技場的遊戲資料，大混戰可能不同${nums.partial ? "（X 是遊戲內才算得出的數值）" : ""}`);
         } else if (a.effect) {
             p.setText(a.effect);
             // a hand-written effect names where it came from (the League wiki's numbers, CC BY-SA) and whether it was checked in game
