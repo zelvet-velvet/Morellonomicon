@@ -6427,14 +6427,12 @@ function championCard(ctx) {
   for (const ev of ["touchstart", "touchmove"]) track.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
   const cards = pages.map(([p]) => {
     const pg = h(track, "section", "mn-cpa-page is-" + p);
-    const top = h(pg, "div", "mn-cpa-top");
-    if (p !== "tips" || c.tips.length) allButton(top, part(p));
     const body = h(pg, "div", "mn-cpa-body");
-    if (p === "overview") overviewTop(body, c);
-    else if (p === "skills") skillsTop(body, c);
-    else if (p === "build") buildTop(body, c, ctx);
-    else if (p === "augments") augmentTop(body, c, ctx);
-    else tipsTop(body, c);
+    if (p === "overview") overviewTop(body, c, part("overview"));
+    else if (p === "skills") skillStrip(body, c, now, { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false });
+    else if (p === "build") buildTab(body, c, ctx);
+    else if (p === "augments") augmentsTab(body, c, ctx);
+    else tips(body, c, ctx);
     return pg;
   });
   el.append(head2);
@@ -6463,18 +6461,9 @@ function championCard(ctx) {
   mark(start);
   return { title: "", el, ready: null };
 }
-function allButton(parent, go) {
-  const b = h(parent, "button", "mn-cpa-all");
-  h(b, "span", void 0, "\u5168\u90E8");
-  icon(b, "chevron-right");
-  b.addEventListener("click", (e) => {
-    e.preventDefault();
-    go();
-  });
-}
 var DIFF_STEPS = 10;
 var TAGS_SHOWN = 4;
-function overviewTop(body, c) {
+function overviewTop(body, c, more) {
   const row2 = h(body, "div", "mn-cv-look");
   profileRadar(h(row2, "div", "mn-cv-radar"), profileAxes(c), DAMAGE_COLOR[c.damageType || c.skillDamage[0] || ""] ?? "var(--mn-accent)");
   const tiles = h(row2, "div", "mn-cv-stats");
@@ -6496,47 +6485,10 @@ function overviewTop(body, c) {
   const t = tagRow(body, c, void 0, true);
   t.addClass("mn-cv-tags");
   Array.from(t.children).slice(TAGS_SHOWN).forEach((x) => x.remove());
-}
-function skillsTop(body, c) {
-  const bar = h(body, "div", "mn-cv-hud");
-  const panel = h(body, "div", "mn-cv-sk");
-  const show = (i) => {
-    bar.querySelectorAll(".mn-cv-key").forEach((b, k) => b.toggleClass("is-on", k === i));
-    panel.empty();
-    const s = c.skills[i];
-    if (!s) return;
-    const head2 = h(panel, "div", "mn-cv-skh");
-    h(head2, "span", "mn-cv-skk", s.key);
-    h(head2, "b", void 0, s.name);
-    const chips = h(panel, "div", "mn-cv-skc");
-    const dmg = s.rows?.find((r) => /傷害/.test(r.label));
-    if (dmg) {
-      const x = h(chips, "span", "mn-cv-pill", `${dmg.label} ${dmg.vals[dmg.vals.length - 1]}`);
-      x.style.setProperty("--c", DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--mn-muted)");
-      for (const part of scalingParts(dmg.note)) {
-        const y = h(chips, "span", "mn-cv-pill", part.text);
-        y.style.setProperty("--c", part.color);
-      }
-    }
-    const cd = s.rows?.find((r) => r.label.startsWith("\u51B7\u537B"));
-    if (cd) h(chips, "span", "mn-cv-pill", `\u51B7\u537B ${cd.vals[cd.vals.length - 1]} \u79D2`);
-    const cost = s.rows?.find((r) => r.label.startsWith("\u6D88\u8017"));
-    if (cost && cost.vals[0] !== "\u7121") h(chips, "span", "mn-cv-pill", `${cost.label.replace(/[()（）]/g, " ").trim()} ${cost.vals[cost.vals.length - 1]}`);
-    h(panel, "p", "mn-cv-skp", c.plain[s.key] || s.desc.slice(0, 60));
-  };
-  c.skills.forEach((s, i) => {
-    const b = h(bar, "button", "mn-cv-key");
-    b.style.setProperty("--c", DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--mn-line)");
-    const pic2 = h(b, "img");
-    pic2.src = s.icon;
-    pic2.alt = "";
-    h(b, "span", void 0, s.key);
-    b.addEventListener("click", (e) => {
-      e.preventDefault();
-      show(i);
-    });
+  for (const x of [row2, t]) x.addEventListener("click", (e) => {
+    e.preventDefault();
+    more();
   });
-  show(Math.max(0, c.skills.findIndex((s) => s.key === "Q")));
 }
 var PART_TITLE = { overview: "\u6982\u89BD", skills: "\u6280\u80FD", build: "\u51FA\u88DD", augments: "\u5F37\u5316", tips: "\u6280\u5DE7" };
 function championPart(ctx) {
@@ -6554,56 +6506,6 @@ function championPart(ctx) {
   else if (p === "augments") augmentsTab(el, c, ctx);
   else tips(el, c, ctx);
   return { title: `${c.name} \xB7 ${PART_TITLE[p] ?? ""}`, el };
-}
-var BUILD_SHOWN = 3;
-function buildTop(tab, c, ctx) {
-  const store = ctx.plugin.store;
-  const b = c.builds.find((x) => x.mode === ctx.plugin.settings.mode);
-  if (!b) {
-    h(tab, "p", "mn-cpa-empty", "\u9084\u6C92\u6709\u5BEB\u51FA\u88DD\u3002\u4E4B\u5F8C\u4F9D\u73A9\u6CD5\u63A8\u85A6\u524D\u4E09\u4EF6\u3002");
-    return;
-  }
-  h(tab, "b", "mn-cv-title", b.name);
-  const row2 = h(tab, "div", "mn-cv-items");
-  b.items.slice(0, BUILD_SHOWN).map((id) => store.item(id)).filter((i) => !!i).forEach((i, k) => {
-    if (k) icon(row2, "chevron-right", "mn-cv-arrow");
-    const x = h(row2, "button", "mn-cv-item");
-    h(x, "span", "mn-cv-no", String(k + 1));
-    const im = h(x, "img");
-    im.src = i.icon;
-    im.alt = "";
-    h(x, "span", "mn-cv-iname", i.name);
-    x.addEventListener("click", (e) => {
-      e.preventDefault();
-      ctx.openItem(i.id);
-    });
-  });
-  if (b.note) h(tab, "p", "mn-cv-note", b.note);
-}
-var AUGS_SHOWN = 3;
-function augmentTop(tab, c, ctx) {
-  const picks = augmentPicks(ctx.plugin.store, c);
-  if (!picks.length) {
-    h(tab, "p", "mn-cpa-empty", "\u9084\u6C92\u6709\u914D\u5C0D\u5230\u7684\u5F37\u5316\u3002");
-    return;
-  }
-  augmentTiles(tab, picks.slice(0, AUGS_SHOWN), ctx).addClass("is-big");
-}
-function tipsTop(tab, c) {
-  if (!c.tips.length) {
-    h(tab, "p", "mn-cpa-empty", "\u9084\u6C92\u6709\u6280\u5DE7\u3002\u5BEB\u5728 Inbox/\u6280\u5DE7\uFF0C\u6574\u7406\u5F8C\u6703\u51FA\u73FE\u5728\u9019\u88E1\u3002");
-    return;
-  }
-  const t = c.tips[0];
-  const card = h(tab, "div", "mn-cv-tip");
-  h(card, "b", void 0, t.title);
-  if (t.text) h(card, "p", void 0, t.text);
-  const meta = [t.sourceName, t.patch].filter(Boolean).join(" \xB7 ");
-  if (meta) h(card, "span", "mn-cv-meta", meta);
-  if (c.tips.length > 1) {
-    const d = h(tab, "div", "mn-cv-dots");
-    c.tips.forEach((_, i) => h(d, "i", i ? "" : "is-on"));
-  }
 }
 var CHAMPION_TABS = [["\u6982\u89BD", "id-card"], ["\u6280\u80FD", "keyboard"], ["\u51FA\u88DD", "shopping-bag"], ["\u5F37\u5316", "sparkles"], ["\u6280\u5DE7", "lightbulb"]];
 function overview(body, c, ctx) {

@@ -1030,7 +1030,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-champ.is-v3.is-deep .mn-hero-bg { filter: brightness(0.35) saturate(0.85) blur(2px); }
 .mn-champ.is-v3 .mn-hero::after { background: linear-gradient(180deg, transparent 40%, color-mix(in srgb, var(--mn-bg) 55%, transparent) 100%); }   /* a little darker where the parts and the name sit */
 .mn-champ.is-v3 > :not(.mn-hero) { position: relative; z-index: 1; }
-.mn-champ .mn-card-head { padding: 4px 4px 8px; }
+.mn-champ .mn-card-head { padding: 4px 4px 24px; }   /* clear of the tab bar */
 .mn-champ .mn-card-img { width: 64px; height: 64px; }
 .mn-app .mn-champ .mn-card-who .mn-title { font-size: 30px; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6); }
 .mn-champ.is-v3 > .mn-cpa { flex: 1 1 auto; min-height: 0; height: auto; margin: 0 -16px; }
@@ -1039,13 +1039,12 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-cpa-hint i.is-on { width: 18px; background: var(--mn-accent); }
 .mn-cpa-track { display: flex; height: 100%; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
 .mn-cpa-track::-webkit-scrollbar { display: none; }
-.mn-cpa-page { flex: 0 0 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: calc(var(--mn-safe-top, 0px) + 48px) 16px 8px; scroll-snap-align: start; scroll-snap-stop: always; overflow: hidden; }
-.mn-cpa-top { flex: none; display: flex; align-items: center; justify-content: flex-end; height: 40px; }
-.mn-app .mn-cpa-all { display: inline-flex; align-items: center; gap: 2px; height: 34px; padding: 0 0 0 10px; border: 0; border-radius: 0; box-shadow: none; background: none; font-size: 15px; font-weight: 700; color: var(--mn-accent); }
-.mn-cpa-all svg { width: 16px; height: 16px; color: var(--mn-accent); }
-.mn-cpa-all .mn-ic { display: flex; }
-.mn-cpa-body { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 14px; }   /* the other pages: their parts spread over the whole page */
-.mn-cpa-page.is-overview .mn-cpa-body { justify-content: flex-end; }   /* 概覽: just above the name, the art above it */
+.mn-cpa-page { flex: 0 0 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: calc(var(--mn-safe-top, 0px) + 72px) 16px 8px; scroll-snap-align: start; scroll-snap-stop: always; overflow: hidden; }
+.mn-cpa-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding-bottom: 8px; }   /* the other pages: their whole detail, scrolling inside the page when long */
+.mn-cpa-body::-webkit-scrollbar { display: none; }
+.mn-cpa-page.is-overview .mn-cpa-body { justify-content: flex-end; overflow: visible; }
+.mn-cpa-body > * { flex: none; }
+.mn-cv-look, .mn-cv-tags { cursor: pointer; }   /* 概覽: just above the name, the art above it */
 .mn-cpa-empty { margin: 0; text-align: center; font-size: 15px; line-height: 1.6; color: var(--mn-muted); }
 /* 概覽: three stat tiles, the tags two across */
 .mn-cv-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
