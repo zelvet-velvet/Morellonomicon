@@ -1030,7 +1030,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-champ.is-v3.is-deep .mn-hero-bg { filter: brightness(0.35) saturate(0.85) blur(2px); }
 .mn-champ.is-v3 .mn-hero::after { background: linear-gradient(180deg, transparent 40%, color-mix(in srgb, var(--mn-bg) 55%, transparent) 100%); }   /* a little darker where the parts and the name sit */
 .mn-champ.is-v3 > :not(.mn-hero) { position: relative; z-index: 1; }
-.mn-app .mn-champ.is-v3 .mn-card-head { padding: 4px 4px 12px; }   /* the tags under it (beats the overlay's 4 px) */
+.mn-app .mn-champ.is-v3 .mn-card-head { padding: 4px 4px 12px; justify-content: center; }   /* the icon and name centred over the tags (beats the overlay's 4 px) */
 .mn-champ.is-v3 > .mn-cv-foot { flex: none; padding-bottom: 24px; }   /* 概覽's tags under the name, clear of the tab bar */
 .mn-champ.is-v3.is-deep > .mn-cv-foot { display: none; }
 .mn-champ.is-v3.is-deep .mn-card-head { display: none; }   /* the name, title and roles only on 概覽 */
