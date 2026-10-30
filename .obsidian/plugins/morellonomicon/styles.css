@@ -1043,7 +1043,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-cpa-page { flex: 0 0 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: calc(var(--mn-safe-top, 0px) + 72px) 16px 8px; scroll-snap-align: start; scroll-snap-stop: always; overflow: hidden; }
 .mn-cpa-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding-bottom: 8px; }   /* the other pages: their whole detail, scrolling inside the page when long */
 .mn-cpa-body::-webkit-scrollbar { display: none; }
-.mn-cpa-page.is-overview .mn-cpa-body { justify-content: flex-end; overflow: visible; }
+.mn-cpa-page.is-overview .mn-cpa-body { justify-content: flex-end; overflow: visible; padding-bottom: 40px; }   /* a little above the name */
 .mn-cpa-body > * { flex: none; }
 .mn-cv-look, .mn-cv-tags { cursor: pointer; }   /* 概覽: just above the name, the art above it */
 .mn-cpa-empty { margin: 0; text-align: center; font-size: 15px; line-height: 1.6; color: var(--mn-muted); }
@@ -1609,7 +1609,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay-wnote:focus { border-color: var(--interactive-accent); }
 .mn-lay-legend.is-hidden { display: none; }
 /* 概覽: the style chart on the left, the three stat tiles stacked on its right (icon, value, what) */
-.mn-cv-look { display: grid; grid-template-columns: auto 200px; justify-content: center; align-items: center; gap: 12px; }   /* the stats and the chart as one centred pair */
+.mn-cv-look { display: grid; grid-template-columns: auto 232px; justify-content: center; align-items: center; gap: 12px; }   /* the stats and the chart as one centred pair */
 .mn-cv-look .mn-cv-stats { order: 1; }
 .mn-cv-look .mn-cv-radar { order: 2; }
 .mn-cv-radar svg { display: block; width: 100%; height: auto; }
