@@ -1,4 +1,4 @@
-import { MarkdownPostProcessorContext, Notice, TFile } from "obsidian";
+import { MarkdownPostProcessorContext, MarkdownRenderChild, Notice, TFile } from "obsidian";
 import type MorellonomiconPlugin from "./main";
 import { MODES, TAB_ICON, TAB_LABEL } from "./modes";
 import { icon } from "./ui";
@@ -105,6 +105,11 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
     for (const v of Object.values(KINDS)) { const s = legend.createSpan(); s.createEl("i").style.borderColor = v.color; s.append(v.name); }
     const wall = root.createDiv({ cls: "mn-lay-groups" });
     let selected: { page: Page; block: Block } | null = null;
+    let openWin: HTMLElement | null = null;
+    // when Obsidian redraws or closes the note, the window on the body goes with this block
+    const life = new MarkdownRenderChild(el);
+    life.onunload = () => { openWin?.remove(); openWin = null; };
+    ctx.addChild(life);
 
     // pages are grouped by the part of their name before " · ": the group is a big title (Home), its pages sit under it by the rest
     // of their name (not linked, linked); a page named just "Picks" is the group's main page
@@ -118,6 +123,8 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
     };
     const draw = () => {
         wall.empty();
+        openWin?.remove();   // the chosen block's window lives on the body; drawn again below when a block is still chosen
+        openWin = null;
         const groups = new Map<string, Page[]>();
         for (const p of pages) groups.set(groupOf(p), [...(groups.get(groupOf(p)) ?? []), p]);
         for (const [group, list] of groups) {
@@ -282,13 +289,23 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
     // phone's top left; X and Y are the block's top-left corner; an edge keeps the opposite edge where it is. Then the note (it grows
     // with its text) and the duplicate and delete icons.
     const inspector = (fig: HTMLElement, page: Page, b: Block) => {
-        const win = fig.createDiv({ cls: "mn-lay-win" });
-        const phone = fig.querySelector<HTMLElement>(".mn-lay-phone");
-        // under the block if there is room on the phone, else over its lower part; where it was dragged to wins
-        const top = (phone?.offsetTop ?? 0) + (b.y + b.h) * SCALE + 8;
-        win.style.top = `${Math.min(top, (phone?.offsetTop ?? 0) + H * SCALE - 360)}px`;
-        const moved = winAt.get(page.id);
-        if (moved) win.style.transform = `translate(${moved.x}px, ${moved.y}px)`;
+        // the window floats in the middle of the screen (on the document body, so no parent's scrolling or transform moves it);
+        // where it was dragged to wins. It closes when the note scrolls, unless you are typing in it.
+        openWin?.remove();
+        const win = document.body.createDiv({ cls: "mn-lay-win" });
+        openWin = win;
+        const place = (p: { x: number; y: number }) => { win.style.transform = `translate(calc(-50% + ${p.x}px), calc(-50% + ${p.y}px))`; };
+        place(winAt.get(page.id) ?? { x: 0, y: 0 });
+        const shut = () => { selected = null; winAt.delete(page.id); draw(); };
+        const onScroll = (e: Event) => {
+            if (!win.isConnected) { document.removeEventListener("scroll", onScroll, true); return; }
+            if (e.target instanceof Node && win.contains(e.target)) return;   // the window's own scrolling
+            if (win.contains(document.activeElement)) return;   // typing: the keyboard scrolls the note to the box
+            document.removeEventListener("scroll", onScroll, true);
+            shut();
+        };
+        document.addEventListener("scroll", onScroll, true);
+        for (const ev of ["pointerdown", "mousedown", "click", "touchstart"]) win.addEventListener(ev, (e) => e.stopPropagation());   // as inside the editor: not Live Preview's
         const commit = () => { changed(page); draw(); };
 
         // top bar: the name as text, left; double-tap to rename it in place; the rest of the bar drags the window
@@ -307,7 +324,7 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
         title.addEventListener("change", () => { b.label = title.value.replace(/\s+/g, " ").trim() || b.label; commit(); });
         const close = head.createEl("button", { cls: "mn-lay-wbtn", attr: { "aria-label": "Close" } });
         icon(close, "x");
-        close.addEventListener("click", () => { selected = null; winAt.delete(page.id); draw(); });
+        close.addEventListener("click", shut);
         head.addEventListener("pointerdown", (e) => {
             if ((e.target as HTMLElement).closest("input, textarea, button")) return;
             const x0 = e.clientX, y0 = e.clientY, start = winAt.get(page.id) ?? { x: 0, y: 0 };
@@ -318,7 +335,7 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
                 dragging = true;
                 const p = { x: start.x + m.clientX - x0, y: start.y + m.clientY - y0 };
                 winAt.set(page.id, p);
-                win.style.transform = `translate(${p.x}px, ${p.y}px)`;
+                place(p);
             };
             const up = () => { head.removeEventListener("pointermove", move); head.removeEventListener("pointerup", up); head.removeEventListener("pointercancel", up); };
             head.addEventListener("pointermove", move);

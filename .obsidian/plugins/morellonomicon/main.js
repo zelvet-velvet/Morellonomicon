@@ -1624,6 +1624,13 @@ function layoutBlock2(plugin, source, el, ctx) {
   }
   const wall = root.createDiv({ cls: "mn-lay-groups" });
   let selected = null;
+  let openWin = null;
+  const life = new import_obsidian4.MarkdownRenderChild(el);
+  life.onunload = () => {
+    openWin?.remove();
+    openWin = null;
+  };
+  ctx.addChild(life);
   const groupOf = (p) => p.name.split(SEP)[0];
   const subOf = (p) => p.name.split(SEP).slice(1).join(SEP);
   const named = (group2, sub) => sub ? group2 + SEP + sub : group2;
@@ -1635,6 +1642,8 @@ function layoutBlock2(plugin, source, el, ctx) {
   };
   const draw = () => {
     wall.empty();
+    openWin?.remove();
+    openWin = null;
     const groups = /* @__PURE__ */ new Map();
     for (const p of pages) groups.set(groupOf(p), [...groups.get(groupOf(p)) ?? [], p]);
     for (const [group2, list2] of groups) {
@@ -1842,12 +1851,30 @@ function layoutBlock2(plugin, source, el, ctx) {
     return g;
   };
   const inspector = (fig, page2, b) => {
-    const win = fig.createDiv({ cls: "mn-lay-win" });
-    const phone = fig.querySelector(".mn-lay-phone");
-    const top = (phone?.offsetTop ?? 0) + (b.y + b.h) * SCALE + 8;
-    win.style.top = `${Math.min(top, (phone?.offsetTop ?? 0) + H * SCALE - 360)}px`;
-    const moved = winAt.get(page2.id);
-    if (moved) win.style.transform = `translate(${moved.x}px, ${moved.y}px)`;
+    openWin?.remove();
+    const win = document.body.createDiv({ cls: "mn-lay-win" });
+    openWin = win;
+    const place = (p) => {
+      win.style.transform = `translate(calc(-50% + ${p.x}px), calc(-50% + ${p.y}px))`;
+    };
+    place(winAt.get(page2.id) ?? { x: 0, y: 0 });
+    const shut = () => {
+      selected = null;
+      winAt.delete(page2.id);
+      draw();
+    };
+    const onScroll = (e) => {
+      if (!win.isConnected) {
+        document.removeEventListener("scroll", onScroll, true);
+        return;
+      }
+      if (e.target instanceof Node && win.contains(e.target)) return;
+      if (win.contains(document.activeElement)) return;
+      document.removeEventListener("scroll", onScroll, true);
+      shut();
+    };
+    document.addEventListener("scroll", onScroll, true);
+    for (const ev of ["pointerdown", "mousedown", "click", "touchstart"]) win.addEventListener(ev, (e) => e.stopPropagation());
     const commit = () => {
       changed(page2);
       draw();
@@ -1875,11 +1902,7 @@ function layoutBlock2(plugin, source, el, ctx) {
     });
     const close = head2.createEl("button", { cls: "mn-lay-wbtn", attr: { "aria-label": "Close" } });
     icon(close, "x");
-    close.addEventListener("click", () => {
-      selected = null;
-      winAt.delete(page2.id);
-      draw();
-    });
+    close.addEventListener("click", shut);
     head2.addEventListener("pointerdown", (e) => {
       if (e.target.closest("input, textarea, button")) return;
       const x0 = e.clientX, y0 = e.clientY, start = winAt.get(page2.id) ?? { x: 0, y: 0 };
@@ -1890,7 +1913,7 @@ function layoutBlock2(plugin, source, el, ctx) {
         dragging = true;
         const p = { x: start.x + m.clientX - x0, y: start.y + m.clientY - y0 };
         winAt.set(page2.id, p);
-        win.style.transform = `translate(${p.x}px, ${p.y}px)`;
+        place(p);
       };
       const up = () => {
         head2.removeEventListener("pointermove", move);
