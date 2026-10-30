@@ -1618,4 +1618,4 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-cv-look .mn-cv-stat .mn-cv-sic { grid-row: 1 / span 2; justify-self: start; }
 .mn-champ.is-v3 .mn-cv-look .mn-cv-stat b { font-size: 17px; line-height: 1.2; }
 .mn-cv-look .mn-cv-bar { grid-column: 2; justify-self: end; }
-.mn-cv-look .mn-cv-stat b, .mn-cv-look .mn-cv-stat span { grid-column: 2; justify-self: end; text-align: right; }   /* the text hangs on the right edge of the 難度 bar, beside the chart */
+.mn-cv-look .mn-cv-stat b, .mn-cv-look .mn-cv-stat span:not(.mn-cv-sic) { grid-column: 2; justify-self: end; text-align: right; }   /* the text hangs on the right edge of the 難度 bar, beside the chart */
