@@ -4,6 +4,7 @@ import { MODES, MODE_ORDER, TAB_ICON, TAB_LABEL, TabId } from "./modes";
 import { THEMES, themeVars } from "./themes";
 import { PageOut, renderPage } from "./pages";
 import { rememberSub } from "./pages/champions";
+import { preloadClip } from "./pages/skills";
 import type { Frame } from "./router";
 import { autoLoading, empty, h, icon, preloadRoleIcons, releaseVideos, slideSeg, whenLoaded } from "./ui";
 
@@ -321,7 +322,12 @@ export class MnView extends ItemView {
             out = renderPage(this.router.tab, {
                 app: this.app, plugin: this.plugin, component: this, frame: f, push: (x) => this.push(x), pop: () => this.back(), goTab: (id) => this.goTab(id),
                 redraw: () => { if (this.router.top() === f) this.draw(); },   // the same page again, in place: no animation, the scroll kept
-                openChampion: (id, sub) => { if (sub) rememberSub(id, sub); this.push({ key: "champion", title: store.champion(id)?.name ?? id, params: { id } }); },
+                openChampion: (id, sub) => {
+                    if (sub) rememberSub(id, sub);
+                    const c = store.champion(id);
+                    if (c) void preloadClip(c, "Q");   // 技能 opens on Q: its clip starts downloading with the tap, before the page is drawn
+                    this.push({ key: "champion", title: c?.name ?? id, params: { id } });
+                },
                 openAugment: (id) => this.push({ key: "augment", title: store.augment(id)?.name ?? "Augment", params: { id } }),
                 openItem: (id) => this.push({ key: "item", title: store.item(id)?.name ?? "Item", params: { id } }),
                 openNote: (path) => this.push({ key: "note", title: path.split("/").pop()?.replace(/\.md$/, "") ?? "Note", params: { path } }),

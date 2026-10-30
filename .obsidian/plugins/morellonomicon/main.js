@@ -3635,15 +3635,10 @@ function demo(parent, c, s, onFail) {
     return;
   }
   const job = downloading.get(url);
-  if (job) {
-    void job.then(() => {
-      const f = downloaded.get(url);
-      if (!v.isConnected) return;
-      if (f) playLocal(f);
-      else fail();
-    });
-    return;
-  }
+  if (job) void job.then(() => {
+    const f = downloaded.get(url);
+    if (f && v.isConnected && v.readyState < 2) playLocal(f);
+  });
   v.addEventListener("loadeddata", () => {
     void v.play().catch(() => void 0);
   }, { once: true });
@@ -6393,7 +6388,12 @@ var lastSub = /* @__PURE__ */ new Map();
 function rememberSub(id, sub) {
   lastSub.set(id, sub);
 }
-var SETTLE_MS2 = 160;
+var AXIS_PX = 8;
+var TURN_PART = 0.22;
+var FLICK_PX_MS = 0.35;
+var EDGE_PULL = 0.3;
+var WHEEL_PX = 12;
+var WHEEL_GAP_MS = 450;
 var PAGES = [["overview", "\u6982\u89BD", "id-card"], ["skills", "\u6280\u80FD", "keyboard"], ["build", "\u51FA\u88DD", "shopping-bag"], ["augments", "\u5F37\u5316", "sparkles"], ["tips", "\u6280\u5DE7", "lightbulb"]];
 function championCard(ctx) {
   const store = ctx.plugin.store;
@@ -6450,7 +6450,6 @@ function championCard(ctx) {
   const pages = PAGES.filter(([p]) => p !== "augments" || mayhem);
   const box = h(el, "div", "mn-cpa");
   const track = h(box, "div", "mn-cpa-track");
-  for (const ev of ["touchstart", "touchmove"]) track.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
   let tagLine = null;
   const cards = pages.map(([p]) => {
     const pg = h(track, "section", "mn-cpa-page is-" + p);
@@ -6473,42 +6472,63 @@ function championCard(ctx) {
     dots.forEach((d, k) => d.toggleClass("is-on", k === i));
     el.toggleClass("is-deep", i > 0);
   };
-  const at = () => {
-    const step = (cards[1]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0);
-    return step > 0 ? Math.round(track.scrollLeft / step) : 0;
+  let pos = 0;
+  const place = (px, animate) => {
+    track.toggleClass("is-settling", animate);
+    track.style.transform = `translateX(calc(${-pos * 100}% + ${px}px))`;
   };
-  const go = (i) => {
-    track.scrollTo({ left: (cards[i]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0), behavior: "instant" });
-    mark(i);
+  const go = (i, animate = true) => {
+    pos = Math.max(0, Math.min(cards.length - 1, i));
+    place(0, animate);
+    mark(pos);
   };
-  let touching = false, settle = 0;
-  const snapBack = () => {
-    const step = (cards[1]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0);
-    if (touching || step <= 0) return;
-    const left = at() * step;
-    if (Math.abs(track.scrollLeft - left) > 1) track.scrollTo({ left, behavior: "smooth" });
-  };
-  const later = () => {
-    window.clearTimeout(settle);
-    settle = window.setTimeout(snapBack, SETTLE_MS2);
-  };
-  track.addEventListener("touchstart", () => {
-    touching = true;
-    window.clearTimeout(settle);
+  let x0 = 0, y0 = 0, t0 = 0, dx = 0, axis = "";
+  track.addEventListener("touchstart", (e) => {
+    e.stopPropagation();
+    const t = e.touches[0];
+    x0 = t.clientX;
+    y0 = t.clientY;
+    t0 = Date.now();
+    dx = 0;
+    axis = "";
   }, { passive: true });
-  for (const ev of ["touchend", "touchcancel"]) track.addEventListener(ev, () => {
-    touching = false;
-    later();
-  }, { passive: true });
-  track.addEventListener("scroll", () => {
-    mark(Math.min(cards.length - 1, at()));
-    if (!touching) later();
-  }, { passive: true });
+  track.addEventListener("touchmove", (e) => {
+    e.stopPropagation();
+    const t = e.touches[0];
+    const mx = t.clientX - x0, my = t.clientY - y0;
+    if (!axis) {
+      if (Math.abs(mx) < AXIS_PX && Math.abs(my) < AXIS_PX) return;
+      axis = Math.abs(mx) > Math.abs(my) ? "x" : "y";
+    }
+    if (axis !== "x") return;
+    if (e.cancelable) e.preventDefault();
+    const edge = pos === 0 && mx > 0 || pos === cards.length - 1 && mx < 0;
+    dx = edge ? mx * EDGE_PULL : mx;
+    place(dx, false);
+  }, { passive: false });
+  const end = () => {
+    if (axis !== "x") {
+      axis = "";
+      return;
+    }
+    axis = "";
+    const w = track.clientWidth || 1;
+    const flick = Math.abs(dx) / Math.max(1, Date.now() - t0) > FLICK_PX_MS && Math.abs(dx) > AXIS_PX * 2;
+    go(pos + (Math.abs(dx) > w * TURN_PART || flick ? dx < 0 ? 1 : -1 : 0));
+  };
+  for (const ev of ["touchend", "touchcancel"]) track.addEventListener(ev, end, { passive: true });
+  let wheelAt = 0;
+  track.addEventListener("wheel", (e) => {
+    if (Math.abs(e.deltaX) <= Math.abs(e.deltaY) || Math.abs(e.deltaX) < WHEEL_PX) return;
+    e.preventDefault();
+    if (Date.now() - wheelAt < WHEEL_GAP_MS) return;
+    wheelAt = Date.now();
+    go(pos + (e.deltaX > 0 ? 1 : -1));
+  }, { passive: false });
   const startSub = lastSub.get(c.id);
   lastSub.delete(c.id);
   const start = Math.max(0, pages.findIndex(([p]) => p === startSub));
-  requestAnimationFrame(() => go(start));
-  mark(start);
+  go(start, false);
   return { title: "", el, ready: null };
 }
 var DIFF_STEPS = 10;
@@ -7643,7 +7663,9 @@ var MnView = class extends import_obsidian15.ItemView {
         // the same page again, in place: no animation, the scroll kept
         openChampion: (id2, sub) => {
           if (sub) rememberSub(id2, sub);
-          this.push({ key: "champion", title: store.champion(id2)?.name ?? id2, params: { id: id2 } });
+          const c = store.champion(id2);
+          if (c) void preloadClip(c, "Q");
+          this.push({ key: "champion", title: c?.name ?? id2, params: { id: id2 } });
         },
         openAugment: (id2) => this.push({ key: "augment", title: store.augment(id2)?.name ?? "Augment", params: { id: id2 } }),
         openItem: (id2) => this.push({ key: "item", title: store.item(id2)?.name ?? "Item", params: { id: id2 } }),

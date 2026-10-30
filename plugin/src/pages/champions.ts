@@ -184,7 +184,11 @@ export function rememberSub(id: string, sub: SubTab): void { lastSub.set(id, sub
 // chart, the tiles or the tags opens its page of its own (the style chart in full, the combo video, this patch's changes). The other
 // pages darken the art and show their whole detail in the page (it scrolls inside the page when long). A small page hint (a dot per
 // page, the current one lit) floats at the top middle.
-const SETTLE_MS = 160;   // the track has stopped moving this long: it is checked for sitting between two pages
+const AXIS_PX = 8;          // a touch's first move this far picks its direction (sideways: the pages; up-down: the page's own scrolling)
+const TURN_PART = 0.22;     // a swipe past this part of the width turns the page
+const FLICK_PX_MS = 0.35;   // or a quick flick (px per ms)
+const EDGE_PULL = 0.3;      // past the first or last page the pages follow the finger this much
+const WHEEL_PX = 12, WHEEL_GAP_MS = 450;   // a trackpad swipe: its least move, and the pause before the next one turns a page
 const PAGES: [Part, string, string][] = [["overview", "概覽", "id-card"], ["skills", "技能", "keyboard"], ["build", "出裝", "shopping-bag"], ["augments", "強化", "sparkles"], ["tips", "技巧", "lightbulb"]];
 export function championCard(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
@@ -223,11 +227,10 @@ export function championCard(ctx: PageCtx): PageOut {
     const clipOrder = [...c.skills.filter((s) => s.key === "Q"), ...c.skills.filter((s) => s.key !== "Q")];
     void (async () => { for (const s of clipOrder) { await preloadClip(c, s.key); if (!el.isConnected) return; } })();
 
-    // the pages: one each, snapped; native sideways scrolling keeps the swipe smooth
+    // the pages: one each, side by side; they follow the finger (below)
     const pages = PAGES.filter(([p]) => p !== "augments" || mayhem);
     const box = h(el, "div", "mn-cpa");
     const track = h(box, "div", "mn-cpa-track");
-    for (const ev of ["touchstart", "touchmove"]) track.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });   // not Obsidian's edge swipes
     let tagLine: HTMLElement | null = null;   // 概覽's tags: under the name, at the very foot
     const cards = pages.map(([p]) => {
         const pg = h(track, "section", "mn-cpa-page is-" + p);
@@ -251,27 +254,57 @@ export function championCard(ctx: PageCtx): PageOut {
         dots.forEach((d, k) => d.toggleClass("is-on", k === i));
         el.toggleClass("is-deep", i > 0);   // past 概覽 the art darkens, so the page's parts can use all of it
     };
-    const at = () => { const step = (cards[1]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0); return step > 0 ? Math.round(track.scrollLeft / step) : 0; };
-    const go = (i: number) => { track.scrollTo({ left: (cards[i]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0), behavior: "instant" as ScrollBehavior }); mark(i); };
-    // iOS can leave the track between two pages (a swipe taken over by a page's own up-down scrolling, a page that changed while it
-    // moved): once the finger is off and the scrolling has settled, it is put back on the nearest page
-    let touching = false, settle = 0;
-    const snapBack = () => {
-        const step = (cards[1]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0);
-        if (touching || step <= 0) return;
-        const left = at() * step;
-        if (Math.abs(track.scrollLeft - left) > 1) track.scrollTo({ left, behavior: "smooth" });
+    // The pages move with the finger (a transform), not by the browser's own sideways scrolling, which iOS left half way between two
+    // pages when a page's own up-down scrolling took the swipe over. A touch picks its direction in its first AXIS_PX: sideways moves
+    // the pages and lands on one (past TURN_PART of the width, or a quick flick), up-down is left to the page's own scrolling.
+    let pos = 0;
+    const place = (px: number, animate: boolean) => {
+        track.toggleClass("is-settling", animate);
+        track.style.transform = `translateX(calc(${-pos * 100}% + ${px}px))`;
     };
-    const later = () => { window.clearTimeout(settle); settle = window.setTimeout(snapBack, SETTLE_MS); };
-    track.addEventListener("touchstart", () => { touching = true; window.clearTimeout(settle); }, { passive: true });
-    for (const ev of ["touchend", "touchcancel"]) track.addEventListener(ev, () => { touching = false; later(); }, { passive: true });
-    track.addEventListener("scroll", () => { mark(Math.min(cards.length - 1, at())); if (!touching) later(); }, { passive: true });
+    const go = (i: number, animate = true) => { pos = Math.max(0, Math.min(cards.length - 1, i)); place(0, animate); mark(pos); };
+    let x0 = 0, y0 = 0, t0 = 0, dx = 0, axis: "" | "x" | "y" = "";
+    track.addEventListener("touchstart", (e) => {
+        e.stopPropagation();   // not Obsidian's edge swipes
+        const t = e.touches[0];
+        x0 = t.clientX; y0 = t.clientY; t0 = Date.now(); dx = 0; axis = "";
+    }, { passive: true });
+    track.addEventListener("touchmove", (e) => {
+        e.stopPropagation();
+        const t = e.touches[0];
+        const mx = t.clientX - x0, my = t.clientY - y0;
+        if (!axis) {
+            if (Math.abs(mx) < AXIS_PX && Math.abs(my) < AXIS_PX) return;
+            axis = Math.abs(mx) > Math.abs(my) ? "x" : "y";
+        }
+        if (axis !== "x") return;
+        if (e.cancelable) e.preventDefault();   // no up-down scrolling while the pages move
+        const edge = (pos === 0 && mx > 0) || (pos === cards.length - 1 && mx < 0);
+        dx = edge ? mx * EDGE_PULL : mx;
+        place(dx, false);
+    }, { passive: false });
+    const end = () => {
+        if (axis !== "x") { axis = ""; return; }
+        axis = "";
+        const w = track.clientWidth || 1;
+        const flick = Math.abs(dx) / Math.max(1, Date.now() - t0) > FLICK_PX_MS && Math.abs(dx) > AXIS_PX * 2;
+        go(pos + (Math.abs(dx) > w * TURN_PART || flick ? (dx < 0 ? 1 : -1) : 0));
+    };
+    for (const ev of ["touchend", "touchcancel"]) track.addEventListener(ev, end, { passive: true });
+    // a trackpad's sideways swipe on a computer: one page per swipe
+    let wheelAt = 0;
+    track.addEventListener("wheel", (e) => {
+        if (Math.abs(e.deltaX) <= Math.abs(e.deltaY) || Math.abs(e.deltaX) < WHEEL_PX) return;
+        e.preventDefault();
+        if (Date.now() - wheelAt < WHEEL_GAP_MS) return;
+        wheelAt = Date.now();
+        go(pos + (e.deltaX > 0 ? 1 : -1));
+    }, { passive: false });
     // a link may ask for a page (once: the next visit starts on 概覽 again)
     const startSub = lastSub.get(c.id);
     lastSub.delete(c.id);
     const start = Math.max(0, pages.findIndex(([p]) => p === startSub));
-    requestAnimationFrame(() => go(start));
-    mark(start);
+    go(start, false);
     return { title: "", el, ready: null };   // the name is over the art; the blocks load on their own
 }
 
