@@ -27,7 +27,7 @@ sticker: lucide//ruler
 
 ## ✅ Picture check after every page change
 
-> [!important]+ Never an empty page · Every picture block has its look · Fetch what comes next ahead · The first screen first · Cached pictures show at once · A failure never leaves a hole · Say what was checked
+> [!note]+ Never an empty page · Every picture block has its look · Fetch what comes next ahead · The first screen first · Cached pictures show at once · A failure never leaves a hole · Say what was checked
 > A rule from Zaviel (2026-10-30): after a new page, or any change to a page, its picture loading is reviewed before the change is committed, so whoever opens the page never sees an empty screen or empty frames.
 >
 > - **Never an empty page.** From the first frame the page shows either its pictures or its loading look (the blur with the band of light); never a blank area, an empty frame or a picture that pops in without a placeholder.
