@@ -16,6 +16,7 @@ sticker: lucide//activity
 > - **Wiki numbers for every augment**: 247 of 248 augments have a zh_TW effect line with the League wiki's Mayhem numbers (待驗證); the page shows it instead of Arena's numbers (which differed for 34 of 54) and keeps Riot's tags for 適合的英雄.
 > - **Effect text like the game's**: values by level and scalings are pills with an icon in their stat's colour, with space around them; stat amounts and damage kinds are coloured (to check on the phone).
 > - **Layouts editor**: its own heading at the top of [[Layouts]] (in the outline), note boxes four lines tall.
+> - **Augment picks as tiles**: the champion's best augments overall (scored against what it does), tiles three across with a reason chip; a new 全部 bar (to check on the phone).
 > - **Champion page v2**: every page drawn as mocks in [[Layouts]] (big banner, peeking cards, page chips, visual pages), to look at and change before it is built.
 > - **Champion page A**: the banner, then one block that swipes sideways between 概覽 · 技能 · 出裝 · 強化 · 技巧 with dots under it, no scrolling; top picks centred, 全部 › opens the full list (to check on the phone).
 > - **Balance rule**: [[Design Rules]] has Balance (no big empty space, weight spread, few components centred); the LLM Guide's check includes it.
