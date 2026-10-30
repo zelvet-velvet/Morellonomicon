@@ -1030,7 +1030,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-champ.is-v3.is-deep .mn-hero-bg { filter: brightness(0.35) saturate(0.85) blur(2px); }
 .mn-champ.is-v3 .mn-hero::after { background: linear-gradient(180deg, transparent 40%, color-mix(in srgb, var(--mn-bg) 55%, transparent) 100%); }   /* a little darker where the parts and the name sit */
 .mn-champ.is-v3 > :not(.mn-hero) { position: relative; z-index: 1; }
-.mn-champ .mn-card-head { padding: 4px 4px 24px; }   /* clear of the tab bar */
+.mn-app .mn-champ.is-v3 .mn-card-head { padding: 4px 4px 28px; }   /* clear of the tab bar (beats the overlay's 4 px) */
 .mn-champ.is-v3.is-deep .mn-card-head { display: none; }   /* the name, title and roles only on 概覽 */
 .mn-champ .mn-card-img { width: 64px; height: 64px; }
 .mn-app .mn-champ .mn-card-who .mn-title { font-size: 30px; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6); }
@@ -1057,7 +1057,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-cv-bar { display: flex; gap: 2px; margin-top: 2px; }
 .mn-cv-bar i { width: 6px; height: 4px; border-radius: 1px; background: var(--mn-line); }
 .mn-cv-bar i.is-on { background: var(--c); }
-.mn-tgs.mn-cv-tags { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mn-tgs.mn-cv-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; }   /* one centred row, a second when there are many */
 .mn-cv-tags .mn-tg { justify-content: center; }
 /* 技能: the HUD bar and the chosen ability */
 .mn-cv-hud { display: flex; justify-content: space-between; gap: 6px; }
@@ -1609,7 +1609,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay-wnote:focus { border-color: var(--interactive-accent); }
 .mn-lay-legend.is-hidden { display: none; }
 /* 概覽: the style chart on the left, the three stat tiles stacked on its right (icon, value, what) */
-.mn-cv-look { display: grid; grid-template-columns: minmax(0, 1fr) 132px; align-items: center; gap: 8px; }
+.mn-cv-look { display: grid; grid-template-columns: 132px minmax(0, 1fr); align-items: center; gap: 8px; }
+.mn-cv-look .mn-cv-stats { order: 1; }
+.mn-cv-look .mn-cv-radar { order: 2; }
 .mn-cv-radar svg { display: block; width: 100%; height: auto; }
 .mn-cv-look .mn-cv-stats { grid-template-columns: 1fr; gap: 6px; }
 .mn-champ.is-v3 .mn-cv-look .mn-cv-stat { display: grid; grid-template-columns: 26px 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; text-align: left; padding: 2px; }
