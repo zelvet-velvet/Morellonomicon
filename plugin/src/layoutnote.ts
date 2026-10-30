@@ -1,4 +1,4 @@
-import { MarkdownPostProcessorContext, MarkdownRenderChild, Notice, TFile } from "obsidian";
+import { MarkdownPostProcessorContext, MarkdownRenderChild, Notice, Platform, TFile } from "obsidian";
 import type MorellonomiconPlugin from "./main";
 import { MODES, TAB_ICON, TAB_LABEL } from "./modes";
 import { icon } from "./ui";
@@ -289,12 +289,12 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
     // phone's top left; X and Y are the block's top-left corner; an edge keeps the opposite edge where it is. Then the note (it grows
     // with its text) and the duplicate and delete icons.
     const inspector = (fig: HTMLElement, page: Page, b: Block) => {
-        // the window floats in the middle of the screen (on the document body, so no parent's scrolling or transform moves it);
-        // where it was dragged to wins. It closes when the note scrolls, unless you are typing in it.
+        // the window floats at the right side of the screen on a computer, in the middle on a phone (on the document body, so no
+        // parent's scrolling or transform moves it); where it was dragged to wins. It closes when the note scrolls, unless you are typing in it.
         openWin?.remove();
         const win = document.body.createDiv({ cls: "mn-lay-win" });
         openWin = win;
-        const place = (p: { x: number; y: number }) => { win.style.transform = `translate(calc(-50% + ${p.x}px), calc(-50% + ${p.y}px))`; };
+        const place = (p: { x: number; y: number }) => { win.style.transform = `translate(calc(${Platform.isMobile ? "-50%" : `50vw - ${MARGIN}px - 100%`} + ${p.x}px), calc(-50% + ${p.y}px))`; };
         place(winAt.get(page.id) ?? { x: 0, y: 0 });
         const shut = () => { selected = null; winAt.delete(page.id); draw(); };
         const onScroll = (e: Event) => {

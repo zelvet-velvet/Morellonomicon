@@ -1855,7 +1855,7 @@ function layoutBlock2(plugin, source, el, ctx) {
     const win = document.body.createDiv({ cls: "mn-lay-win" });
     openWin = win;
     const place = (p) => {
-      win.style.transform = `translate(calc(-50% + ${p.x}px), calc(-50% + ${p.y}px))`;
+      win.style.transform = `translate(calc(${import_obsidian4.Platform.isMobile ? "-50%" : `50vw - ${MARGIN}px - 100%`} + ${p.x}px), calc(-50% + ${p.y}px))`;
     };
     place(winAt.get(page2.id) ?? { x: 0, y: 0 });
     const shut = () => {
