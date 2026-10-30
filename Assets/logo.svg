@@ -1,13 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- Morellonomicon logo (no background): a flat tome after the in-game item, gold corner caps, three green claws, a green aura of flames -->
-  <g transform="translate(256 300) scale(0.94 0.96) translate(-256 -300)">
-  <!-- aura: three layers of flame tongues rising behind the book and licking up its sides -->
-  <path d="M256 6 C272 52 300 70 318 104 C322 78 316 58 306 40 C356 76 384 118 390 170 C402 150 404 126 398 104 C446 150 470 214 456 282 C466 270 474 254 476 236 C500 300 470 380 380 430 L146 440 C42 380 12 300 36 236 C38 254 46 270 56 282 C42 214 66 150 114 104 C108 126 110 150 122 170 C128 118 156 76 206 40 C196 58 190 78 194 104 C212 70 240 52 256 6 Z" fill="#244A1F"/>
-  <path d="M256 58 C270 96 294 112 306 140 C312 120 308 102 300 88 C340 118 360 152 362 196 C374 180 376 160 372 142 C410 180 428 232 416 290 C428 278 434 262 436 248 C454 300 430 370 370 410 L150 414 C82 370 58 300 76 248 C78 262 84 278 96 290 C84 232 102 180 140 142 C136 160 138 180 150 196 C152 152 172 118 212 88 C204 102 200 120 206 140 C218 112 242 96 256 58 Z" fill="#3E7F31"/>
-  <path d="M256 112 C268 140 286 152 294 174 C300 160 298 146 292 136 C322 160 334 190 334 222 C344 210 346 196 344 184 C372 214 382 254 372 296 L140 296 C130 254 140 214 168 184 C166 196 168 210 178 222 C178 190 190 160 220 136 C214 146 212 160 218 174 C226 152 244 140 256 112 Z" fill="#79C24F"/>
-  <!-- embers -->
-  <g fill="#A6E36E"><circle cx="96" cy="150" r="7"/><circle cx="420" cy="120" r="6"/><circle cx="62" cy="214" r="4.5"/><circle cx="452" cy="196" r="5"/><circle cx="160" cy="64" r="4.5"/><circle cx="356" cy="52" r="5.5"/></g>
+  <!-- Morellonomicon logo (no background): a flat tome after the in-game item, gold corner caps, three green claws, an aura of green flames sweeping to the right -->
+  <!-- aura: one fire shape per layer, wide behind the book, its tips flicking up and to the right with the claws; loose wisps breaking away -->
+  <path d="M150 430 C96 410 58 370 66 318 C84 344 104 350 118 344 C92 300 96 246 128 206 C128 236 140 254 152 262 C150 200 176 140 222 104 C214 136 220 160 232 176 C246 120 286 70 344 40 C326 78 322 112 330 140 C356 116 396 104 434 108 C410 126 392 150 388 178 C414 170 446 178 470 196 C440 214 420 240 412 270 C430 290 440 320 440 352 C420 340 400 336 384 340 C392 380 388 410 370 440 Z" fill="#244A1F"/>
+  <path d="M170 410 C128 380 116 330 128 290 C142 310 156 316 168 312 C160 260 182 210 220 180 C220 206 228 222 240 230 C256 180 294 136 340 112 C328 146 330 172 340 192 C366 176 398 172 426 180 C402 200 390 224 388 250 C404 266 414 290 414 316 C398 306 384 304 372 308 C376 350 372 380 360 410 Z" fill="#3E7F31"/>
+  <path d="M200 380 C182 340 190 300 214 270 C222 290 232 298 244 300 C254 256 284 222 320 204 C312 232 316 254 328 270 C348 260 372 258 392 264 C372 286 362 312 360 340 C362 360 356 376 346 390 Z" fill="#79C24F"/>
+  <g fill="#3E7F31">
+    <path d="M372 70 C386 54 404 46 424 46 C408 56 396 70 392 86 C386 80 378 74 372 70 Z"/>
+    <path d="M100 262 C86 252 76 236 74 216 C86 230 98 236 112 238 C104 244 100 252 100 262 Z"/>
+    <path d="M262 92 C258 74 264 56 280 42 C278 58 282 70 290 80 C280 82 270 86 262 92 Z"/>
   </g>
+  <g fill="#A6E36E"><circle cx="452" cy="72" r="6"/><circle cx="488" cy="160" r="4.5"/><circle cx="96" cy="170" r="5"/><circle cx="196" cy="70" r="4"/><circle cx="318" cy="18" r="4.5"/></g>
   <g transform="translate(256 300) scale(0.86) translate(-256 -300)">
     <g transform="rotate(-8 256 300)">
       <!-- page block and back cover -->
