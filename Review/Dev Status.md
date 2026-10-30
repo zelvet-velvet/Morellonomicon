@@ -15,9 +15,9 @@ sticker: lucide//activity
 > - **Augment page A**: a banner, a Lv1 / 最大 switch, stat chips with the shop icons, the effect with its numbers filled in and coloured by kind, the fitting champions as a sideways strip; numbers for 102 of 249 augments from the game data (to check on the phone).
 > - **Wiki numbers for every augment**: 247 of 248 augments have a zh_TW effect line with the League wiki's Mayhem numbers (待驗證); the page shows it instead of Arena's numbers (which differed for 34 of 54) and keeps Riot's tags for 適合的英雄.
 > - **Effect text like the game's**: values by level and scalings are pills with an icon in their stat's colour, with space around them; stat amounts and damage kinds are coloured (to check on the phone).
-> - **Champion page with tabs**: the big banner as before (no blank band under it), then Overview · Skills · Build · Augments · Tips as icon tabs that stay under the top bar; Skills shows one ability at a time with its clip first (to check on the phone).
 > - **Layouts editor**: its own heading at the top of [[Layouts]] (in the outline), note boxes four lines tall.
-> - **Champion page without scrolling**: options A swipe pages / B tiles / C one card like Picks in [[Layouts]], to pick.
+> - **Champion page as one card (C)**: the 速查 card's frame and pages plus 出裝 · 強化 · 技巧, on one screen; tap or swipe sideways to turn, top picks only, 全部 › opens the full list (to check on the phone).
+> - **Sharper card art**: the 速查 and champion cards use Riot's centered splash (1280 × 720) instead of the loading art (308 × 560) (to check on the phone).
 > - **Picture check rule**: [[Design Rules]] has a picture check after every page change (loading look on every picture block, fetch what comes next ahead, no empty page); the LLM Guide's workflow points to it.
 > - **Champion Augments tab**: the augments that suit the champion by rarity, best first, each with why (pinned, Riot's tags, hand-written, a guess); the first six of each rarity, the rest folded (to check on the phone).
 > - **No orange bar, calmer cold open**: blocks no longer show Obsidian's orange loading bar; the tab bar is not rebuilt while the notes arrive and Home redraws in place when the Riot profile comes in (to check on the phone).
