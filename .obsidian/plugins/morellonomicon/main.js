@@ -23,7 +23,7 @@ __export(main_exports, {
   default: () => MorellonomiconPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian13 = require("obsidian");
+var import_obsidian14 = require("obsidian");
 
 // src/data/sound.ts
 function loose(s) {
@@ -1876,8 +1876,154 @@ function registerLayoutNote(plugin) {
   });
 }
 
-// src/settings.ts
+// src/inboxnote.ts
 var import_obsidian5 = require("obsidian");
+var MODES2 = ["\u5927\u6DF7\u6230", "\u5CFD\u8C37"];
+var STATUS2 = ["\u5F85\u9A57\u8B49", "\u5DF2\u9A57\u8B49"];
+var FIELDS = {
+  tip: [
+    { key: "hero", label: "\u82F1\u96C4", type: "text", list: "champions" },
+    { key: "mode", label: "\u6A21\u5F0F", type: "select", options: MODES2 },
+    { key: "type", label: "\u985E\u578B", type: "select", options: ["\u6280\u5DE7", "\u51FA\u88DD", "\u6709\u8DA3\u51FA\u88DD", "\u642D\u914D"] },
+    { key: "title", label: "\u6A19\u984C", type: "text" },
+    { key: "text", label: "\u5167\u5BB9", type: "area" },
+    { key: "items", label: "\u51FA\u88DD", type: "text", hint: "\u7E41\u4E2D\u88DD\u5099\u540D\uFF0C\u7528\u300C\u3001\u300D\u5206\u958B" },
+    { key: "with", label: "\u642D\u914D\u82F1\u96C4", type: "text" },
+    { key: "patch", label: "\u7248\u672C", type: "text", hint: "26.21 \u6216 16.21\uFF1B\u4E0D\u78BA\u5B9A\u5BEB ?" },
+    { key: "date", label: "\u65E5\u671F", type: "date" },
+    { key: "source", label: "\u4F86\u6E90", type: "text", hint: "\u983B\u9053\u540D\u7A31 + \u7DB2\u5740" },
+    { key: "status", label: "\u72C0\u614B", type: "select", options: STATUS2 }
+  ],
+  build: [
+    { key: "style", label: "\u73A9\u6CD5", type: "text" },
+    { key: "mode", label: "\u6A21\u5F0F", type: "select", options: MODES2 },
+    { key: "items", label: "\u524D\u4E09\u4EF6", type: "text", hint: "\u7167\u8CFC\u8CB7\u9806\u5E8F\uFF0C\u7528\u300C\u3001\u300D\u5206\u958B" },
+    { key: "why", label: "\u70BA\u4EC0\u9EBC", type: "area" },
+    { key: "champs", label: "\u9069\u5408\u7684\u82F1\u96C4", type: "text", hint: "\u8209\u5E7E\u500B\u5C31\u597D" },
+    { key: "patch", label: "\u7248\u672C", type: "text" },
+    { key: "date", label: "\u65E5\u671F", type: "date" },
+    { key: "source", label: "\u4F86\u6E90", type: "text", hint: "\u7DB2\u7AD9\u548C\u7DB2\u5740\uFF08\u6578\u5B57\u4E0D\u7167\u6284\uFF09" },
+    { key: "status", label: "\u72C0\u614B", type: "select", options: STATUS2 }
+  ]
+};
+var opened = /* @__PURE__ */ new Map();
+var uid2 = () => Math.random().toString(36).slice(2, 8);
+var parse3 = (source) => {
+  if (!source.trim()) return { kind: "tip", entries: [] };
+  try {
+    const v = JSON.parse(source);
+    return { kind: v.kind === "build" ? "build" : "tip", entries: Array.isArray(v.entries) ? v.entries : [] };
+  } catch {
+    return null;
+  }
+};
+var serialise3 = (b) => `{"kind": "${b.kind}", "entries": [` + (b.entries.length ? "\n" + b.entries.map((e) => "  " + JSON.stringify(e)).join(",\n") + "\n" : "") + "]}";
+function inboxBlock(plugin, source, el, ctx) {
+  const box = parse3(source);
+  const root = el.createDiv({ cls: "mn-inb" });
+  if (!box) {
+    root.createDiv({ cls: "mn-lay-err", text: "The inbox data could not be read (JSON). Fix it in the source view." });
+    return;
+  }
+  const fields = FIELDS[box.kind];
+  const write = () => {
+    const info = ctx.getSectionInfo(el);
+    const file = plugin.app.vault.getAbstractFileByPath(ctx.sourcePath);
+    if (!info || !(file instanceof import_obsidian5.TFile)) {
+      new import_obsidian5.Notice("Could not save the inbox");
+      return;
+    }
+    void plugin.app.vault.process(file, (data) => {
+      const lines = data.split("\n");
+      lines.splice(info.lineStart + 1, info.lineEnd - info.lineStart - 1, ...serialise3(box).split("\n"));
+      return lines.join("\n");
+    });
+  };
+  const listId = `mn-inb-ch-${uid2()}`;
+  const dl = root.createEl("datalist", { attr: { id: listId } });
+  for (const c of plugin.store.champions()) dl.createEl("option", { attr: { value: c.name } });
+  const bar = root.createDiv({ cls: "mn-inb-bar" });
+  bar.createSpan({ cls: "mn-inb-count", text: box.entries.length ? `${box.entries.length} \u7B46\u5F85\u6574\u7406` : "\u9084\u6C92\u6709\u6771\u897F\uFF0C\u6309 + \u65B0\u589E" });
+  const add = bar.createEl("button", { cls: "mn-inb-add" });
+  (0, import_obsidian5.setIcon)(add.createSpan(), "plus");
+  add.createSpan({ text: "\u65B0\u589E" });
+  add.addEventListener("click", () => {
+    const e = { id: uid2(), mode: MODES2[0], status: STATUS2[0], date: window.moment().format("YYYY-MM-DD"), patch: plugin.store.currentPatch() };
+    if (box.kind === "tip") e.type = "\u6280\u5DE7";
+    box.entries.unshift(e);
+    opened.set(ctx.sourcePath, e.id);
+    write();
+  });
+  for (const e of box.entries) {
+    if (!e.id) e.id = uid2();
+    const card = root.createDiv({ cls: "mn-inb-card" });
+    const head2 = card.createDiv({ cls: "mn-inb-head" });
+    const who = head2.createDiv({ cls: "mn-inb-who" });
+    const top = box.kind === "tip" ? [e.hero || "\uFF08\u82F1\u96C4\uFF09", e.type, e.mode] : [e.style || "\uFF08\u73A9\u6CD5\uFF09", e.mode];
+    who.createDiv({ cls: "mn-inb-t", text: top.filter(Boolean).join(" \xB7 ") });
+    const sub = box.kind === "tip" ? e.title || e.text || "" : e.items || e.why || "";
+    if (sub) who.createDiv({ cls: "mn-inb-s", text: sub });
+    head2.createSpan({ cls: "mn-inb-st" + (e.status === "\u5DF2\u9A57\u8B49" ? " is-ok" : ""), text: e.status || STATUS2[0] });
+    const form = card.createDiv({ cls: "mn-inb-form" });
+    const isOpen = opened.get(ctx.sourcePath) === e.id;
+    card.toggleClass("is-open", isOpen);
+    head2.addEventListener("click", () => {
+      const now = !card.hasClass("is-open");
+      root.querySelectorAll(".mn-inb-card.is-open").forEach((c) => c.removeClass("is-open"));
+      card.toggleClass("is-open", now);
+      if (now) opened.set(ctx.sourcePath, e.id);
+      else opened.delete(ctx.sourcePath);
+    });
+    for (const f of fields) {
+      const row2 = form.createDiv({ cls: "mn-inb-row" });
+      row2.createDiv({ cls: "mn-inb-l", text: f.label });
+      let input;
+      if (f.type === "select") {
+        input = row2.createEl("select");
+        for (const o of f.options ?? []) input.createEl("option", { text: o, attr: { value: o } });
+        input.value = e[f.key] || f.options?.[0] || "";
+      } else if (f.type === "area") {
+        input = row2.createEl("textarea", { attr: { rows: "4" } });
+        input.value = e[f.key] ?? "";
+      } else {
+        input = row2.createEl("input", { attr: { type: f.type === "date" ? "date" : "text", spellcheck: "false" } });
+        if (f.list) input.setAttr("list", listId);
+        input.value = e[f.key] ?? "";
+      }
+      if (f.hint) input.setAttr("placeholder", f.hint);
+      input.addEventListener("change", () => {
+        const v = input.value.trim();
+        if ((e[f.key] ?? "") === v) return;
+        if (v) e[f.key] = v;
+        else delete e[f.key];
+        write();
+      });
+    }
+    const del = form.createEl("button", { cls: "mn-inb-del", text: "\u522A\u9664\u9019\u4E00\u7B46" });
+    let armed = false;
+    del.addEventListener("click", () => {
+      if (!armed) {
+        armed = true;
+        del.setText("\u518D\u6309\u4E00\u6B21\u522A\u9664");
+        del.addClass("is-armed");
+        window.setTimeout(() => {
+          armed = false;
+          del.setText("\u522A\u9664\u9019\u4E00\u7B46");
+          del.removeClass("is-armed");
+        }, 2500);
+        return;
+      }
+      box.entries = box.entries.filter((x) => x !== e);
+      write();
+    });
+  }
+}
+function registerInboxNote(plugin) {
+  plugin.registerMarkdownCodeBlockProcessor("mn-inbox", (source, el, ctx) => inboxBlock(plugin, source, el, ctx));
+}
+
+// src/settings.ts
+var import_obsidian6 = require("obsidian");
 
 // src/themes.ts
 var THEMES = [
@@ -2130,7 +2276,7 @@ var DEFAULTS = {
   guideFolder: "\u65B0\u624B\u5165\u9580",
   augmentFolder: "\u5F37\u5316",
   patchFolder: "\u7248\u672C\u66F4\u65B0",
-  openOnStartup: import_obsidian5.Platform.isMobile,
+  openOnStartup: import_obsidian6.Platform.isMobile,
   riotId: "",
   riotServer: "TW2",
   riotKey: "",
@@ -2139,7 +2285,7 @@ var DEFAULTS = {
   read: [],
   roster: []
 };
-var MnSettingTab = class extends import_obsidian5.PluginSettingTab {
+var MnSettingTab = class extends import_obsidian6.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -2149,21 +2295,21 @@ var MnSettingTab = class extends import_obsidian5.PluginSettingTab {
     const s = this.plugin.settings;
     const save = () => this.plugin.saveSettings();
     c.empty();
-    new import_obsidian5.Setting(c).setName("Mode").setDesc("What the app shows. Rift is planned.").addDropdown((d) => {
+    new import_obsidian6.Setting(c).setName("Mode").setDesc("What the app shows. Rift is planned.").addDropdown((d) => {
       for (const id of MODE_ORDER) d.addOption(id, MODES[id].label + (MODES[id].enabled ? "" : " (coming soon)"));
       d.setValue(s.mode).onChange(async (v) => {
         s.mode = v;
         await save();
       });
     });
-    new import_obsidian5.Setting(c).setName("Color theme").setDesc("Colors of the app screen. Follows Obsidian's light / dark.").addDropdown((d) => {
+    new import_obsidian6.Setting(c).setName("Color theme").setDesc("Colors of the app screen. Follows Obsidian's light / dark.").addDropdown((d) => {
       for (const t of THEMES) d.addOption(t.id, t.name);
       d.setValue(s.theme).onChange(async (v) => {
         s.theme = v;
         await save();
       });
     });
-    const folder = (name, desc2, key) => new import_obsidian5.Setting(c).setName(name).setDesc(desc2).addText((x) => x.setValue(s[key]).onChange(async (v) => {
+    const folder = (name, desc2, key) => new import_obsidian6.Setting(c).setName(name).setDesc(desc2).addText((x) => x.setValue(s[key]).onChange(async (v) => {
       s[key] = v.trim() || DEFAULTS[key];
       await save();
     }));
@@ -2172,22 +2318,22 @@ var MnSettingTab = class extends import_obsidian5.PluginSettingTab {
     folder("Augment folder", "Notes made by tools/fetch_augments.py", "augmentFolder");
     folder("Patch notes folder", "Our own patch notes (frontmatter: patch, date, title, summary)", "patchFolder");
     folder("Guide folder", "Beginner guide notes", "guideFolder");
-    new import_obsidian5.Setting(c).setName("Riot API key").setDesc("For Home: your avatar, rank, mastery and recent games. From developer.riotgames.com (a development key expires every 24 hours; a personal key does not). Stays on this device.").addText((x) => {
+    new import_obsidian6.Setting(c).setName("Riot API key").setDesc("For Home: your avatar, rank, mastery and recent games. From developer.riotgames.com (a development key expires every 24 hours; a personal key does not). Stays on this device.").addText((x) => {
       x.inputEl.type = "password";
       x.setPlaceholder("RGAPI-\u2026").setValue(s.riotKey).onChange(async (v) => {
         s.riotKey = v.trim();
         await this.plugin.saveData(s);
       });
     });
-    new import_obsidian5.Setting(c).setName("Keyboard readout").setDesc("While typing in a search box, show what the phone reports about the keyboard (for fixing the search bar position).").addToggle((x) => x.setValue(s.kbDebug).onChange(async (v) => {
+    new import_obsidian6.Setting(c).setName("Keyboard readout").setDesc("While typing in a search box, show what the phone reports about the keyboard (for fixing the search bar position).").addToggle((x) => x.setValue(s.kbDebug).onChange(async (v) => {
       s.kbDebug = v;
       await this.plugin.saveData(s);
     }));
-    new import_obsidian5.Setting(c).setName("Open on startup").setDesc("Show the app when Obsidian starts (on by default on a phone).").addToggle((x) => x.setValue(s.openOnStartup).onChange(async (v) => {
+    new import_obsidian6.Setting(c).setName("Open on startup").setDesc("Show the app when Obsidian starts (on by default on a phone).").addToggle((x) => x.setValue(s.openOnStartup).onChange(async (v) => {
       s.openOnStartup = v;
       await save();
     }));
-    const hap = new import_obsidian5.Setting(c).setName("Test haptic").setDesc("Tap: the phone should tick once.");
+    const hap = new import_obsidian6.Setting(c).setName("Test haptic").setDesc("Tap: the phone should tick once.");
     hap.addButton((b) => b.setButtonText("Tick").onClick(() => {
       const how = haptic();
       hap.setDesc({ capacitor: "Used: Obsidian's haptics.", vibrate: "Used: web vibration.", switch: "Used: the iOS 18 switch tick. Felt nothing? Then Obsidian has no haptics here.", "": "No haptics found on this device." }[how] ?? how);
@@ -2196,7 +2342,7 @@ var MnSettingTab = class extends import_obsidian5.PluginSettingTab {
 };
 
 // src/view.ts
-var import_obsidian12 = require("obsidian");
+var import_obsidian13 = require("obsidian");
 
 // src/pages/augments.ts
 var RARITIES = ["\u9280", "\u91D1", "\u7A1C\u93E1"];
@@ -2281,7 +2427,7 @@ function augmentsPage(ctx) {
 }
 
 // src/pages/profile.ts
-var import_obsidian6 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 var SKILL_STEPS = [0, 4, 7, 9, 10];
 var count = (c, ...tags2) => c.skills.filter((s) => s.key !== "P" && tags2.some((t) => s.tags.includes(t))).length;
 var score = (n) => SKILL_STEPS[Math.min(n, SKILL_STEPS.length - 1)];
@@ -2295,7 +2441,7 @@ function profileAxes(c) {
     { label: "\u5C04\u7A0B", value: Math.min(10, Math.round(c.range / 65)) }
   ];
 }
-var uid2 = 0;
+var uid3 = 0;
 function profileRadar(parent, axes, color, max = 10) {
   const W2 = 300, H2 = 204, cx = W2 / 2, cy = 102, R = 66, LABEL = 22, n = axes.length;
   const pt = (i, r) => {
@@ -2306,7 +2452,7 @@ function profileRadar(parent, axes, color, max = 10) {
   const val = (i) => R * Math.max(0, Math.min(max, axes[i].value)) / max;
   const root = svg(parent, "svg", { viewBox: `0 0 ${W2} ${H2}` }, "mn-radar mn-pro");
   root.style.setProperty("--rd", color);
-  const id = `mn-grad-${++uid2}`;
+  const id = `mn-grad-${++uid3}`;
   const defs = svg(root, "defs");
   const grad = svg(defs, "linearGradient", { id, x1: 0, y1: 0, x2: 0, y2: 1 });
   svg(grad, "stop", { offset: "0%", "stop-opacity": 0.62 }, "mn-rd-stop").setAttribute("style", `stop-color:${color}`);
@@ -2368,7 +2514,7 @@ var TAG_GROUPS = [
 ];
 var TAG = new Map(TAGS.map((t) => [t.tag, t]));
 var tagInfo = (tag) => TAG.get(tag);
-var TagLegend = class extends import_obsidian6.Modal {
+var TagLegend = class extends import_obsidian7.Modal {
   constructor(app) {
     super(app);
   }
@@ -2537,7 +2683,7 @@ function styleChart(parent, c) {
   const color = axes[0].color;
   const wrap = h(parent, "div", "mn-sc");
   const root = svg(wrap, "svg", { viewBox: `0 0 ${SW} ${SH}`, "aria-hidden": "true" }, "mn-sc-svg");
-  const id = `mn-grad-${++uid2}`;
+  const id = `mn-grad-${++uid3}`;
   const grad = svg(svg(root, "defs"), "linearGradient", { id, x1: 0, y1: 0, x2: 0, y2: 1 });
   svg(grad, "stop", { offset: "0%", "stop-opacity": 0.55 }).setAttribute("style", `stop-color:${color}`);
   svg(grad, "stop", { offset: "100%", "stop-opacity": 0.12 }).setAttribute("style", `stop-color:${color}`);
@@ -2833,7 +2979,7 @@ function changesBlock(parent, c, ctx) {
 }
 
 // src/pages/skills.ts
-var import_obsidian7 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 var CLIP_FADE_MS = 350;
 function skillStrip(parent, c, changes = [], opt = {}) {
   if (!c.skills.length) return;
@@ -2929,7 +3075,7 @@ function preloadClip(c, key) {
   const job = (async () => {
     for (const ext of ["mp4", "webm"]) {
       try {
-        const r = await (0, import_obsidian7.requestUrl)({ url: `${url}.${ext}`, throw: false });
+        const r = await (0, import_obsidian8.requestUrl)({ url: `${url}.${ext}`, throw: false });
         if (r.status === 200) {
           if (ext === "webm") webmOnly.add(url);
           downloaded.set(url, URL.createObjectURL(new Blob([r.arrayBuffer], { type: `video/${ext}` })));
@@ -3397,10 +3543,10 @@ function tips(body, c, ctx) {
 }
 
 // src/pages/detail.ts
-var import_obsidian9 = require("obsidian");
+var import_obsidian10 = require("obsidian");
 
 // src/pages/deck.ts
-var import_obsidian8 = require("obsidian");
+var import_obsidian9 = require("obsidian");
 
 // src/pages/handbook.ts
 var SNIPPET = 46;
@@ -4271,11 +4417,11 @@ function deckPage(ctx, file) {
       const tip2 = /^([\s\S]*?)\*\*([^*\n]{1,8})[:：]\*\*\s*([\s\S]+)$/.exec(s.text);
       const main = tip2 ? tip2[1].trim() : s.text;
       const body = h(words, "div", "mn-sl-x markdown-rendered");
-      if (main) void import_obsidian8.MarkdownRenderer.render(ctx.app, main, body, file.path, ctx.component);
+      if (main) void import_obsidian9.MarkdownRenderer.render(ctx.app, main, body, file.path, ctx.component);
       const box = h(words, "div", "mn-sl-tip" + (tip2 ? "" : " is-empty"));
       if (tip2) {
         h(box, "div", "mn-sl-tip-k", tip2[2]);
-        void import_obsidian8.MarkdownRenderer.render(ctx.app, tip2[3].trim(), h(box, "div", "mn-sl-tip-x markdown-rendered"), file.path, ctx.component);
+        void import_obsidian9.MarkdownRenderer.render(ctx.app, tip2[3].trim(), h(box, "div", "mn-sl-tip-x markdown-rendered"), file.path, ctx.component);
       }
       sec.push(section2);
     });
@@ -4617,7 +4763,7 @@ var termArt = (term) => {
   return OWN[key] ?? (tag ? [tag.icon, tag.color] : ["book-a", "var(--mn-muted)"]);
 };
 var plain = (s) => s.replace(/[*_`]/g, "").replace(/!?\[\[([^\]|]*)(?:\|([^\]]*))?\]\]/g, (_m, a, b) => b ?? a).trim();
-function parse3(text) {
+function parse4(text) {
   const out = [];
   for (const line of text.replace(/^---[\s\S]*?---\n/, "").split("\n")) {
     const g = /^##\s+(.+)/.exec(line);
@@ -4677,7 +4823,7 @@ function glossaryPage(ctx, file) {
   };
   search.addEventListener("input", draw);
   void ctx.app.vault.cachedRead(file).then((text) => {
-    groups = parse3(text);
+    groups = parse4(text);
     draw();
   });
   return { title: "", el };
@@ -4690,7 +4836,7 @@ function notePage(ctx) {
   const path = String(ctx.frame.params?.path ?? "");
   const file = ctx.app.vault.getAbstractFileByPath(path);
   const el = h(null, "div", "mn-page");
-  if (!(file instanceof import_obsidian9.TFile)) {
+  if (!(file instanceof import_obsidian10.TFile)) {
     empty(el, { icon: "file-x", title: "Note not found" });
     return { title: "", el };
   }
@@ -4698,7 +4844,7 @@ function notePage(ctx) {
   if (file.basename === GLOSSARY3) return glossaryPage(ctx, file);
   h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
   const body = h(el, "div", "mn-note markdown-rendered");
-  void ctx.app.vault.cachedRead(file).then((text) => import_obsidian9.MarkdownRenderer.render(ctx.app, text.replace(/^---[\s\S]*?---\n/, ""), body, path, ctx.component));
+  void ctx.app.vault.cachedRead(file).then((text) => import_obsidian10.MarkdownRenderer.render(ctx.app, text.replace(/^---[\s\S]*?---\n/, ""), body, path, ctx.component));
   const guide = ctx.plugin.store.guideNotes();
   const at = guide.findIndex((n) => n.file.path === path);
   if (at >= 0) {
@@ -5083,7 +5229,7 @@ function recipe(el, ctx, title, items) {
 }
 
 // src/data/riot.ts
-var import_obsidian10 = require("obsidian");
+var import_obsidian11 = require("obsidian");
 var KEY2 = "morellonomicon-profile";
 var PROFILE_FRESH = 10 * 60 * 1e3;
 var GAMES = 10;
@@ -5115,7 +5261,7 @@ async function fetchProfile(app, riotId, server, key) {
   const reg = REGION[server] ?? REGION.TW2;
   const plat = server.toLowerCase();
   const get = async (host, path) => {
-    const r = await (0, import_obsidian10.requestUrl)({ url: `https://${host}.api.riotgames.com${path}`, headers: { "X-Riot-Token": key }, throw: false });
+    const r = await (0, import_obsidian11.requestUrl)({ url: `https://${host}.api.riotgames.com${path}`, headers: { "X-Riot-Token": key }, throw: false });
     if (r.status === 200) return r.json;
     if (r.status === 401 || r.status === 403) throw new RiotError("\u91D1\u9470\u7121\u6548\u6216\u5DF2\u904E\u671F(\u958B\u767C\u91D1\u9470\u6BCF 24 \u5C0F\u6642\u8981\u63DB)");
     if (r.status === 404) throw new RiotError("\u627E\u4E0D\u5230\u9019\u500B Riot ID,\u6AA2\u67E5\u540D\u7A31\u3001\u6A19\u7C64\u548C\u4F3A\u670D\u5668");
@@ -5707,7 +5853,7 @@ function mayhemSection(el, ctx, n) {
 }
 
 // src/pages/roster.ts
-var import_obsidian11 = require("obsidian");
+var import_obsidian12 = require("obsidian");
 var MAX_PICKS = 15;
 var SPLIT = /[\s,，、;；和跟與及]+/;
 var swipeAt = 0;
@@ -5929,7 +6075,7 @@ function rosterPage(ctx) {
   const toggle = (id) => {
     if (picks.includes(id)) picks = picks.filter((p) => p !== id);
     else if (picks.length >= MAX_PICKS) {
-      new import_obsidian11.Notice(`\u6700\u591A\u9078 ${MAX_PICKS} \u4F4D`);
+      new import_obsidian12.Notice(`\u6700\u591A\u9078 ${MAX_PICKS} \u4F4D`);
       return;
     } else picks = [...picks, id];
     save();
@@ -6416,7 +6562,7 @@ function arrive(page2, anim) {
   const from = anim === "push" ? "translateX(28px)" : anim === "back" ? "translateX(-28px)" : "translateY(10px)";
   page2.animate([{ opacity: 0, transform: from }, { opacity: 1, transform: "none" }], { duration: ARRIVE_MS, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" });
 }
-var MnView = class extends import_obsidian12.ItemView {
+var MnView = class extends import_obsidian13.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.plugin = plugin;
@@ -6451,7 +6597,7 @@ var MnView = class extends import_obsidian12.ItemView {
     this.appEl = app;
     const loading2 = autoLoading(app);
     this.register(() => loading2.disconnect());
-    app.toggleClass("is-full", import_obsidian12.Platform.isMobile);
+    app.toggleClass("is-full", import_obsidian13.Platform.isMobile);
     this.topEl = h(app, "div", "mn-top");
     this.backEl = h(this.topEl, "button", "mn-btn mn-back");
     icon(this.backEl, "chevron-left");
@@ -6650,7 +6796,7 @@ var MnView = class extends import_obsidian12.ItemView {
     for (const [k, v] of Object.entries(vars)) this.appEl.style.setProperty(k, v);
   }
   themeMenu(e) {
-    const menu = new import_obsidian12.Menu();
+    const menu = new import_obsidian13.Menu();
     for (const t of THEMES) menu.addItem((i) => i.setTitle(t.name).setChecked(this.plugin.settings.theme === t.id).onClick(() => {
       this.plugin.settings.theme = t.id;
       void this.plugin.saveTheme();
@@ -6658,7 +6804,7 @@ var MnView = class extends import_obsidian12.ItemView {
     menu.showAtMouseEvent(e);
   }
   modeMenu(e) {
-    const menu = new import_obsidian12.Menu();
+    const menu = new import_obsidian13.Menu();
     for (const id of MODE_ORDER) {
       const m = MODES[id];
       menu.addItem((i) => i.setTitle(m.label + (m.enabled ? "" : " (coming soon)")).setIcon(m.icon).setChecked(this.plugin.settings.mode === id).setDisabled(!m.enabled).onClick(() => {
@@ -6846,7 +6992,7 @@ var MnView = class extends import_obsidian12.ItemView {
 // src/main.ts
 var BOOT_QUIET_MS = 600;
 var BOOT_MAX_MS = 6e3;
-var MorellonomiconPlugin = class extends import_obsidian13.Plugin {
+var MorellonomiconPlugin = class extends import_obsidian14.Plugin {
   constructor() {
     super(...arguments);
     this.settings = { ...DEFAULTS };
@@ -6875,7 +7021,7 @@ var MorellonomiconPlugin = class extends import_obsidian13.Plugin {
   async onload() {
     preloadRoleIcons();
     await this.loadSettings();
-    if (import_obsidian13.Platform.isMobile && this.settings.openOnStartup) document.body.addClass("mn-on", "mn-full");
+    if (import_obsidian14.Platform.isMobile && this.settings.openOnStartup) document.body.addClass("mn-on", "mn-full");
     this.router = new Router(this.app);
     this.store = new Store(this);
     this.registerView(VIEW_TYPE, (leaf) => new MnView(leaf, this));
@@ -6888,6 +7034,7 @@ var MorellonomiconPlugin = class extends import_obsidian13.Plugin {
     this.addSettingTab(new MnSettingTab(this.app, this));
     registerIconsNote(this);
     registerLayoutNote(this);
+    registerInboxNote(this);
     const onFile = (file, oldPath) => {
       if (this.store.inData(file.path) || oldPath && this.store.inData(oldPath)) this.dataChanged();
     };
@@ -6896,7 +7043,7 @@ var MorellonomiconPlugin = class extends import_obsidian13.Plugin {
     this.registerEvent(this.app.vault.on("rename", (f, old) => onFile(f, old)));
     this.registerEvent(this.app.metadataCache.on("resolved", () => this.dataChanged()));
     this.home = createEl("button", { cls: "mn-home", attr: { "aria-label": "Open Morellonomicon" } });
-    (0, import_obsidian13.setIcon)(this.home, "book-open");
+    (0, import_obsidian14.setIcon)(this.home, "book-open");
     this.home.addEventListener("click", (e) => {
       e.preventDefault();
       void this.activate(false);
@@ -6923,9 +7070,9 @@ var MorellonomiconPlugin = class extends import_obsidian13.Plugin {
     const ws = this.app.workspace;
     const on = !!ws.getActiveViewOfType(MnView);
     document.body.toggleClass("mn-on", on);
-    document.body.toggleClass("mn-full", on && import_obsidian13.Platform.isMobile);
-    if (!import_obsidian13.Platform.isMobile) return;
-    const v = ws.getActiveViewOfType(import_obsidian13.View);
+    document.body.toggleClass("mn-full", on && import_obsidian14.Platform.isMobile);
+    if (!import_obsidian14.Platform.isMobile) return;
+    const v = ws.getActiveViewOfType(import_obsidian14.View);
     if (!v || v instanceof MnView || v.leaf.getRoot() !== ws.rootSplit) {
       this.home.remove();
       return;
@@ -6951,7 +7098,7 @@ var MorellonomiconPlugin = class extends import_obsidian13.Plugin {
     const ws = this.app.workspace;
     let leaf = ws.getLeavesOfType(VIEW_TYPE)[0] ?? null;
     if (!leaf) {
-      leaf = ws.getLeaf(startup || import_obsidian13.Platform.isMobile ? false : "tab");
+      leaf = ws.getLeaf(startup || import_obsidian14.Platform.isMobile ? false : "tab");
       await leaf.setViewState({ type: VIEW_TYPE, active: true });
     }
     await ws.revealLeaf(leaf);
@@ -6961,7 +7108,7 @@ var MorellonomiconPlugin = class extends import_obsidian13.Plugin {
   // A note in a tab of its own; a tab that already shows it is brought forward instead of opening a second one
   async openPath(path) {
     const f = this.app.vault.getAbstractFileByPath(path);
-    if (!(f instanceof import_obsidian13.TFile)) return;
+    if (!(f instanceof import_obsidian14.TFile)) return;
     const ws = this.app.workspace;
     const open = ws.getLeavesOfType("markdown").find((l) => l.view.file?.path === path);
     if (open) {

@@ -1242,6 +1242,28 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* Dev Tools/Layouts.md: the layout editor (src/layoutnote.ts). Phones in the app's dark look, blocks as colour-coded dashed zones */
 .mn-lay { --lay-phone: #12141b; --lay-text: #f4f1e8; --lay-dim: #9a97a0; --lay-line: rgba(255, 255, 255, 0.14); user-select: none; -webkit-user-select: none; }
 .mn-lay-err { color: var(--color-red); }
+/* the inbox editor (inboxnote.ts): a bar with the count and + 新增, then one card per entry; a card opens into its form */
+.mn-inb { display: flex; flex-direction: column; gap: 8px; }
+.mn-inb-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mn-inb-count { color: var(--text-muted); font-size: 0.9em; }
+.mn-inb-add { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 4px 14px; background: var(--interactive-accent); color: var(--text-on-accent); }
+.mn-inb-add svg { width: 16px; height: 16px; }
+.mn-inb-card { border: 1px solid var(--background-modifier-border); border-radius: 12px; background: var(--background-secondary); overflow: hidden; }
+.mn-inb-card.is-open { border-color: color-mix(in srgb, var(--interactive-accent) 55%, transparent); }
+.mn-inb-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; }
+.mn-inb-who { flex: 1; min-width: 0; }
+.mn-inb-t { font-weight: 700; }
+.mn-inb-s { color: var(--text-muted); font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mn-inb-st { flex: none; border-radius: 999px; padding: 1px 10px; font-size: 0.8em; font-weight: 700; color: var(--color-yellow); background: color-mix(in srgb, var(--color-yellow) 15%, transparent); }
+.mn-inb-st.is-ok { color: var(--color-green); background: color-mix(in srgb, var(--color-green) 15%, transparent); }
+.mn-inb-form { display: none; flex-direction: column; gap: 8px; padding: 4px 12px 12px; border-top: 1px solid var(--background-modifier-border); }
+.mn-inb-card.is-open .mn-inb-form { display: flex; }
+.mn-inb-row { display: flex; flex-direction: column; gap: 3px; }
+.mn-inb-l { font-size: 0.8em; font-weight: 700; color: var(--text-muted); }
+.mn-inb-row input, .mn-inb-row select, .mn-inb-row textarea { width: 100%; }
+.mn-inb-row textarea { resize: vertical; }
+.mn-inb-del { align-self: flex-start; margin-top: 4px; color: var(--text-muted); }
+.mn-inb-del.is-armed { color: var(--color-red); }
 .mn-lay-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 14px; font-size: 12.5px; color: var(--text-muted); }
 .mn-lay-legend i { display: inline-block; width: 12px; height: 12px; margin-right: 5px; border: 1.5px dashed; border-radius: 4px; vertical-align: -2px; }
 .mn-lay-groups { display: flex; flex-direction: column; gap: 36px; }
