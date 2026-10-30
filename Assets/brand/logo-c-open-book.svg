@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Option C · Open book: a book lying open, an arcane flame rising from its pages -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1F1B2C"/><stop offset="1" stop-color="#12141B"/></linearGradient>
+    <linearGradient id="flame" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#E38B3A"/><stop offset="0.6" stop-color="#E5B567"/><stop offset="1" stop-color="#9E86C8"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- flame -->
+  <path d="M256 92 c34 52 70 84 58 140 c-6 30 -30 50 -58 50 c-28 0 -52 -20 -58 -50 c-10 -46 26 -68 30 -108 c14 22 18 40 14 58 c18 -20 24 -52 14 -90 z" fill="url(#flame)" opacity="0.95"/>
+  <path d="M256 196 c14 18 22 30 18 50 c-3 14 -10 20 -18 20 s-15 -6 -18 -20 c-4 -20 4 -32 18 -50 z" fill="#F4F1E8"/>
+  <!-- book -->
+  <path d="M256 300 c-40 -26 -96 -32 -156 -22 v128 c60 -10 116 -4 156 22 z" fill="#E9DFC8"/>
+  <path d="M256 300 c40 -26 96 -32 156 -22 v128 c-60 -10 -116 -4 -156 22 z" fill="#DCD1B6"/>
+  <path d="M256 300 v128" stroke="#12141B" stroke-width="4"/>
+  <path d="M92 290 v130 c64 -12 124 -4 164 22 c40 -26 100 -34 164 -22 v-130" fill="none" stroke="#E38B3A" stroke-width="8" stroke-linejoin="round"/>
+  <g stroke="#B9AE93" stroke-width="3" stroke-linecap="round">
+    <path d="M128 318 c40 -4 76 2 104 16"/><path d="M128 344 c40 -4 76 2 104 16"/><path d="M128 370 c40 -4 76 2 104 16"/>
+    <path d="M384 318 c-40 -4 -76 2 -104 16"/><path d="M384 344 c-40 -4 -76 2 -104 16"/><path d="M384 370 c-40 -4 -76 2 -104 16"/>
+  </g>
+</svg>
