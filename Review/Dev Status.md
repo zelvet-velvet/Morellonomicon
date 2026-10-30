@@ -9,8 +9,8 @@ sticker: lucide//activity
 > Read [[LLM Guide]] before any `CMD_` or status update. This note is kept by `CMD_SYNC` / `CMD_ROLLOVER` / `CMD_NOTES_SYNC`; the day notes in `Review/Log/` by `CMD_JOURNAL`.
 
 ## 🚀 Today's Progress (2026-10-30)
-- **Logo and opening screen options**: five logos (D redrawn after the item's picture: the tome in perspective in green fire) and three moving opening screens (C: a hard-hitting start that settles into calm motion) in [[Brand]] and [[Layouts]] (to pick).
-- **README like a public tool**: title with badges, feature table, install, FAQ, data sources; the logo and screenshots still to add.
+- **Project logo**: a clean flat tome after the Morellonomicon item (purple cover, gold corner caps, three green claws, a flame behind), at the top of the README.
+- **README like a public tool**: logo, title with badges, feature table, install, FAQ, data sources; screenshots still to add.
 
 ## 📅 Yesterday's Progress (2026-10-29)
 - **Search capsule on the keyboard**: on Picks and Champions it rises with the keyboard from the tap and goes down the moment it closes, with no jumps (to check on the phone).
@@ -94,6 +94,8 @@ sticker: lucide//activity
 - [ ] **Modes**: item-pick differences for Normal, Ranked and ARAM.
 
 ### 🎨 Vault look
+- [ ] **Opening animation (pending)**: a full-screen opening when Obsidian starts (a strong intro, then calm looping motion, tap for Home). Drawing it in code looked poor; make the art first (an AI image and image-to-video tool, or an artist), then the app plays the clips.
+- [ ] **README screenshots**: phone screenshots into `Assets/readme/` (Home, 速查 card, a champion, Items, a Handbook card, Patch), then a gallery in the README.
 - [>] **Theme and snippets**: copied from clawd-room (Minimal + 4 snippets); `baseFontSize` is 30 there, check it on phone and PC and tune.
 - [ ] **Plugins**: `tools/install_plugins.py` downloads the 13 listed plugins; decide which to keep (Dataview, Templater, Style Settings, Minimal Settings, Breadcrumbs are the useful ones here).
 

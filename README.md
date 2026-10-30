@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="Assets/logo.svg" alt="Morellonomicon logo" width="128">
+
 # Morellonomicon · 黑魔禁書
 
 **給英雄聯盟新手的繁體中文攻略 App**<br>

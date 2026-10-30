@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Morellonomicon logo: a flat tome after the in-game item, gold corner caps, three green claws torn across it, a green flame behind -->
+  <rect width="512" height="512" rx="112" fill="#17131F"/>
+  <g transform="translate(256 268) scale(0.84) translate(-256 -268)">
+    <!-- flame behind the book: three tongues, tucked under it -->
+    <path d="M256 40 C300 96 360 118 374 190 C384 160 378 132 366 110 C440 170 448 250 384 300 L150 310 C70 250 80 160 146 110 C134 132 128 160 138 190 C152 118 212 96 256 40 Z" fill="#2F5D27"/>
+    <path d="M256 96 C290 138 330 158 340 210 C348 190 346 170 340 154 C384 194 392 256 360 300 L170 300 C122 256 130 192 172 154 C166 170 164 190 172 210 C182 158 222 138 256 96 Z" fill="#4C8D38"/>
+    <g transform="rotate(-8 256 300)">
+      <!-- page block and back cover -->
+      <rect x="150" y="152" width="236" height="300" rx="18" fill="#2A1E3D"/>
+      <rect x="148" y="146" width="224" height="290" rx="12" fill="#E9DFC6"/>
+      <path d="M372 166 v252 M362 160 v264" stroke="#C7BA98" stroke-width="3"/>
+      <!-- cover and spine -->
+      <rect x="124" y="128" width="236" height="300" rx="18" fill="#5B3F8C"/>
+      <path d="M142 128 h22 v300 h-22 a18 18 0 0 1 -18 -18 v-264 a18 18 0 0 1 18 -18 z" fill="#432C6B"/>
+      <rect x="186" y="158" width="148" height="240" rx="10" fill="none" stroke="#7458A6" stroke-width="5"/>
+      <!-- gold corner caps, three holes each -->
+      <g fill="#E0B354">
+        <path d="M290 128 h52 a18 18 0 0 1 18 18 v52 z"/>
+        <path d="M290 428 h52 a18 18 0 0 0 18 -18 v-52 z"/>
+      </g>
+      <g fill="#17131F">
+        <circle cx="336" cy="142" r="5.5"/><circle cx="346" cy="160" r="4.5"/><circle cx="318" cy="140" r="4.5"/>
+        <circle cx="336" cy="414" r="5.5"/><circle cx="346" cy="396" r="4.5"/><circle cx="318" cy="416" r="4.5"/>
+      </g>
+      <!-- ribbon -->
+      <path d="M296 428 h26 v58 l-13 -13 l-13 13 z" fill="#C2408A"/>
+      <!-- three claw slashes: a dark cut, then the green -->
+      <g fill="#140F1C">
+        <path d="M236 150 C252 220 238 310 186 404 C206 304 214 222 236 150 Z" transform="translate(7 3)"/>
+        <path d="M290 140 C306 214 292 316 240 414 C260 310 268 218 290 140 Z" transform="translate(7 3)"/>
+        <path d="M344 156 C356 222 344 306 296 392 C314 300 322 222 344 156 Z" transform="translate(7 3)"/>
+      </g>
+      <g fill="#9BE35E">
+        <path d="M236 150 C252 220 238 310 186 404 C206 304 214 222 236 150 Z"/>
+        <path d="M290 140 C306 214 292 316 240 414 C260 310 268 218 290 140 Z"/>
+        <path d="M344 156 C356 222 344 306 296 392 C314 300 322 222 344 156 Z"/>
+      </g>
+    </g>
+  </g>
+</svg>
