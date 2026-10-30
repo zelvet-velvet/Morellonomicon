@@ -5,6 +5,7 @@ import { preloadRoleIcons, warmPictures } from "./ui";
 import { registerIconsNote } from "./iconsnote";
 import { registerLayoutNote } from "./layoutnote";
 import { registerInboxNote } from "./inboxnote";
+import { registerPicksNote } from "./picksnote";
 import { DEFAULTS, MnSettingTab, MnSettings } from "./settings";
 import { MnView, VIEW_TYPE } from "./view";
 
@@ -50,6 +51,7 @@ export default class MorellonomiconPlugin extends Plugin {
         registerIconsNote(this);
         registerLayoutNote(this);
         registerInboxNote(this);
+        registerPicksNote(this);
 
         // A champion / item / guide note changed: redraw once for a burst of changes (e.g. a sync or a fetch_data run)
         const onFile = (file: TAbstractFile, oldPath?: string) => {

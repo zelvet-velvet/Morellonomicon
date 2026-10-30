@@ -30,15 +30,15 @@ sticker: lucide//text-cursor-input
 
 > [!example]+ 12 texts
 > - `text` · 有趣出裝
-> - `text` · 繁中裝備名，用「、」分開
 > - `text` · 搭配英雄
 > - `text` · 26.21 或 16.21；不確定寫 ?
 > - `text` · 頻道名稱 + 網址
-> - `text` · 照購買順序，用「、」分開
+> - `text` · 照購買順序
 > - `text` · 適合的英雄
 > - `text` · 舉幾個就好
 > - `text` · 網站和網址（數字不照抄）
 > - `line` · 還沒有東西，按 + 新增
+> - `placeholder` · 搜尋裝備
 > - `line` · 刪除這一筆
 > - `text` · 再按一次刪除
 
@@ -218,7 +218,7 @@ sticker: lucide//text-cursor-input
 > - `text` · ${m.mark} 本版調整
 > - `text` · ★ 主力 · 多用這招
 > - `empty page` · 還沒寫玩法
-> - `empty page` · 寫在 Inbox/速查卡片草稿
+> - `empty page` · 寫在 Inbox/速查卡片
 > - `empty page` · 還沒選英雄
 > - `empty page` · 一個都沒喜歡
 > - `text` · 重新挑選
@@ -230,6 +230,18 @@ sticker: lucide//text-cursor-input
 > - `text` · 攻擊特效
 > - `text` · 觸發攻擊特效
 > - `text` · 進化 / 升級
+
+## picksnote.ts
+
+> [!example]+ 8 texts
+> - `line` · 下一位待驗證
+> - `text` · 已驗證 ${all.filter((c) => statusOf(c) === "已驗證").length} / ${all.length}
+> - `placeholder` · 堆（stack）· 兩三個
+> - `text` · 玩法（soul）· 一行一句
+> - `text` · 主力（focus）· 只有一招是重點時
+> - `text` · 技能白話（plain）
+> - `line` · 打開英雄筆記
+> - `placeholder` · 選一位英雄
 
 ## settings.ts
 

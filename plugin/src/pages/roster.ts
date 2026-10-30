@@ -443,7 +443,7 @@ export function swipePage(ctx: PageCtx): PageOut {
             h(tx, "b", undefined, fs.name);
             if (c.plain[fs.key]) h(tx, "span", undefined, c.plain[fs.key]);
         }
-        if (!stats.length && !c.how.length && !fs) empty(play, { icon: "pencil", title: "還沒寫玩法", text: "寫在 Inbox/速查卡片草稿" });
+        if (!stats.length && !c.how.length && !fs) empty(play, { icon: "pencil", title: "還沒寫玩法", text: "寫在 Inbox/速查卡片" });
 
         // 3 · 技能, with the numbers
         const sk = tabs[2];

@@ -31,7 +31,7 @@ WORKERS = 16
 
 GEN_START = "<!-- generated:start (rewritten by tools/fetch_data.py; write your own notes below the end marker) -->"
 GEN_END = "<!-- generated:end -->"
-HAND_KEYS = ("video", "archetypes_extra", "features_extra", "onhit", "aliases", "pinned", "avoid", "effect", "effect_source", "effect_patch", "effect_status", "fits", "tier", "combos", "builds", "tips", "punch", "soul", "plain", "stack", "focus", "face")   # kept when a note is regenerated
+HAND_KEYS = ("video", "archetypes_extra", "features_extra", "onhit", "aliases", "pinned", "avoid", "effect", "effect_source", "effect_patch", "effect_status", "fits", "tier", "combos", "builds", "tips", "punch", "soul", "plain", "stack", "focus", "picks_status", "face")   # kept when a note is regenerated
 ARAM_MAP = "12"          # Howling Abyss; ARAM Mayhem uses its item list
 ARAM_TWIN_PREFIX = "77"  # id 77NNNN is the ARAM-only copy of item NNNN (other price/stats)
 RIFT_DUPLICATE_PREFIXES = ("32", "66")   # 32NNNN / 66NNNN: Summoner's Rift variants of item NNNN, not needed here
