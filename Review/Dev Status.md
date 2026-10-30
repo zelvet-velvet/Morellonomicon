@@ -17,6 +17,8 @@ sticker: lucide//activity
 > - **Effect text like the game's**: values by level and scalings are pills with an icon in their stat's colour, with space around them; stat amounts and damage kinds are coloured (to check on the phone).
 > - **Layouts editor**: its own heading at the top of [[Layouts]] (in the outline), note boxes four lines tall.
 > - **Augment picks as tiles**: the champion's best augments overall (scored against what it does), tiles three across with a reason chip; a new 全部 bar (to check on the phone).
+> - **Layouts editor like a design tool**: + block opens a grid of kinds; a tapped block opens a floating window (drag its top bar to move it, double-tap the name to rename) with alignment buttons, X Y W H and the right / bottom edges (drag a letter to scrub), a note that grows, duplicate and delete icons (to check on the PC and phone).
+> - **Champion page v3 mocks**: Zaviel's v3 outline tidied into five mock pages in [[Layouts]] (a big art card, the content on its fade with no panel, 全部 top right, a small chip strip), to adjust before it is built.
 > - **Champion page v2 built**: a big banner with the name over it, the pages as cards with the next peeking in, icon-only chips; 概覽 stat tiles and tags, 技能 HUD bar, 出裝 1 → 2 → 3, 強化 best three, 技巧 first tip; every page and 全部 page in [[Layouts]] (to check on the phone).
 > - **Champion page A**: the banner, then one block that swipes sideways between 概覽 · 技能 · 出裝 · 強化 · 技巧 with dots under it, no scrolling; top picks centred, 全部 › opens the full list (to check on the phone).
 > - **Balance rule**: [[Design Rules]] has Balance (no big empty space, weight spread, few components centred); the LLM Guide's check includes it.
@@ -105,6 +107,7 @@ sticker: lucide//activity
 > - [x] **Items list**: the Items page (from Home) lists every item of the mode like the shop: role tabs, stat rail, tiers or price.
 > - [!] **速查 swipe on the phone**: check the pile height with the ✕ / ♥ buttons, the big ♥ / ✕ while dragging, no scrollbar; liked champions are not kept after leaving the page. (waiting for Zaviel's check on the phone)
 > - [?] **True damage icon**: `gem` for 真實 was chosen by Claude (see [[Icons]]); `crosshair` and `sword` each mean two things there. (Zaviel to confirm)
+> - [?] **Champion page v3**: build v3 from its mocks once Zaviel has adjusted them (the content to the bottom, the chips floating over it).
 > - [ ] **Rift slot**: `plugin/src/modes.ts` has Rift (disabled); to open it set `enabled`, give `home.ts` and the champion card's "Build" block real content, and fill the `rift` item flag.
 > - [ ] **Mayhem advisor**: augment data first, then the card's "Best augments" block (augments declare which archetypes they suit; champions pin / avoid).
 > - [ ] **Sheets and settings panel** when a flow needs them (the skeleton has a bottom sheet to copy).
