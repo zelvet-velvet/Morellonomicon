@@ -17,7 +17,7 @@ sticker: lucide//activity
 > - **Effect text like the game's**: values by level and scalings are pills with an icon in their stat's colour, with space around them; stat amounts and damage kinds are coloured (to check on the phone).
 > - **Layouts editor**: its own heading at the top of [[Layouts]] (in the outline), note boxes four lines tall.
 > - **Augment picks as tiles**: the champion's best augments overall (scored against what it does), tiles three across with a reason chip; a new 全部 bar (to check on the phone).
-> - **Champion page v2**: every page drawn as mocks in [[Layouts]] (big banner, peeking cards, page chips, visual pages), to look at and change before it is built.
+> - **Champion page v2 built**: a big banner with the name over it, the pages as cards with the next peeking in, icon-only chips; 概覽 stat tiles and tags, 技能 HUD bar, 出裝 1 → 2 → 3, 強化 best three, 技巧 first tip; every page and 全部 page in [[Layouts]] (to check on the phone).
 > - **Champion page A**: the banner, then one block that swipes sideways between 概覽 · 技能 · 出裝 · 強化 · 技巧 with dots under it, no scrolling; top picks centred, 全部 › opens the full list (to check on the phone).
 > - **Balance rule**: [[Design Rules]] has Balance (no big empty space, weight spread, few components centred); the LLM Guide's check includes it.
 > - **Sharper card art**: the 速查 and champion cards use Riot's centered splash (1280 × 720) instead of the loading art (308 × 560) (to check on the phone).

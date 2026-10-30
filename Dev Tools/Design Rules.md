@@ -15,7 +15,7 @@ sticker: lucide//ruler
 > - **Blocks.** Every page is the blocks drawn in [[Layouts]] (phone px, 390 × 844). Sides keep 16 px margins, gaps and sizes go in 4 px steps, neighbours share edges and widths. A block that sits on the screen edge in the Layouts note does so in the app (Items' role tabs and stat rail).
 > - **Fixed pages with one scrolling list.** A page with a search or a filter bar on top does not scroll as a whole: the top stays and only its list scrolls (`fixedPage` and `.mn-rq-list`: Picks, Champions; Items does the same with its grid).
 > - **Title row.** A tab's first page has the big serif title with the palette and mode buttons; deeper pages have the top bar with Back. A page that opens with a banner picture (an item, an augment) puts it under the top bar, Back floating on it; the bar is clear until the page scrolls, and the banner ends close to what follows (no blank band).
-> - **One screen, top picks.** A page with several parts does not scroll down (the champion page): under its banner, one block swipes sideways between its pages (snapped, dots under it, a dot jumps); each page shows only its top picks and a **全部 ›** that opens the full list as a page of its own.
+> - **One screen, top picks.** A page with several parts does not scroll down (the champion page): under its banner, its pages are cards that swipe sideways (snapped, the next one peeking in at the edge), with icon chips under them (no text; a chip jumps); each card shows only its top picks and a **全部** bar that opens the full list as a page of its own.
 > - **Moving between pages.** A page slides in from the side it comes from (push, back) or rises a little (tab); Back returns to where the page was scrolled.
 
 ## ⚖️ Balance
