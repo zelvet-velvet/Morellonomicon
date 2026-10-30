@@ -679,7 +679,7 @@ function lift(host, state) {
     if (blockState.get(host) !== state) return;
     blockState.delete(host);
     settledBlocks.add(host);
-    host.classList.remove("is-loading", "is-held");
+    host.classList.remove("mn-blk-busy", "is-held");
     state.veil.classList.remove("is-in");
     endBand(state.veil);
   }, Math.max(0, BLOCK_MIN_MS - (Date.now() - state.since)));
@@ -699,7 +699,7 @@ function blockUntil(host, until, delay = 0) {
   let st = blockState.get(host);
   if (!st) {
     st = { veil: h(host, "div", "mn-blkveil is-in"), since: Date.now(), open: 0 };
-    host.classList.add("is-loading");
+    host.classList.add("mn-blk-busy");
     if (scrollsItself(host)) host.classList.add("is-held");
     holdBlock(st.veil);
     placeVeil(st.veil);
@@ -847,7 +847,7 @@ function autoLoading(root) {
   };
   const take = (im) => {
     const src = im.getAttribute("src");
-    if (!src || seen.get(im) === src || im.closest(".mn-noauto, .mn-blk.is-loading, .mn-pager")) return;
+    if (!src || seen.get(im) === src || im.closest(".mn-noauto, .mn-blk.mn-blk-busy, .mn-pager")) return;
     seen.set(im, src);
     if (im.complete && im.naturalWidth) return;
     waiting.add(im);
@@ -3480,324 +3480,6 @@ function rankTable(parent, s, changes) {
   }
 }
 
-// src/pages/champions.ts
-var ROLES = ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u5C04\u624B", "\u8F14\u52A9"];
-var DAMAGES = ["\u7269\u7406", "\u9B54\u6CD5", "\u6DF7\u5408"];
-var REACH = ["\u8FD1\u6230", "\u4E2D\u7A0B", "\u9060\u7A0B"];
-var SORTS2 = [["name", "\u540D\u7A31"], ["diff", "\u96E3\u5EA6"], ["range", "\u5C04\u7A0B"]];
-var SORT_DIR2 = { name: 1, diff: 1, range: -1 };
-var SEARCH_EXTRA = 8;
-var F = { lanes: /* @__PURE__ */ new Set(), roles: /* @__PURE__ */ new Set(), dmg: "", feat: /* @__PURE__ */ new Map(), reach: "", sort: "name", dir: 1, open: false };
-var activeFilters = () => F.roles.size + (F.dmg ? 1 : 0) + F.feat.size + (F.reach ? 1 : 0);
-function matches(c, lanes) {
-  if (F.lanes.size && !lanes.some((l) => F.lanes.has(l))) return false;
-  if (F.roles.size && !c.roles.some((r) => F.roles.has(r))) return false;
-  if (F.dmg && c.damageType !== F.dmg) return false;
-  for (const [f, want] of F.feat) if (c.features.includes(f) !== (want === 1)) return false;
-  return !F.reach || c.archetypes.includes(F.reach);
-}
-function sorted(list2) {
-  const byName = (a, b) => a.name.localeCompare(b.name, "zh-Hant");
-  if (F.sort === "diff") return [...list2].sort((a, b) => F.dir * (a.difficulty - b.difficulty) || byName(a, b));
-  if (F.sort === "range") return [...list2].sort((a, b) => F.dir * (a.range - b.range) || byName(a, b));
-  return F.dir === 1 ? list2 : [...list2].reverse();
-}
-function championPicker(parent, ctx) {
-  const store = ctx.plugin.store;
-  const all = store.champions();
-  if (!all.length) {
-    empty(parent, { icon: "database", title: "No champion notes yet", text: "Run python3 tools/fetch_data.py" });
-    return;
-  }
-  let query = "";
-  const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)]));
-  const filtersHost = layoutBlock(h(parent, "div"));
-  const filters = h(filtersHost, "div", "mn-fgroup");
-  const count2 = h(parent, "div", "mn-count");
-  const list2 = h(parent, "div", "mn-rq-list");
-  const gridHost = layoutBlock(h(list2, "div"));
-  const grid = h(gridHost, "div", "mn-grid");
-  const extra = layoutBlock(h(list2, "div"));
-  const dock = h(parent, "div", "mn-rq-dock");
-  const panel = h(dock, "div", "mn-fpanel mn-fsheet");
-  const cap = h(dock, "div", "mn-rq-cap");
-  icon(cap, "search", "mn-rq-cap-ic");
-  const search = h(cap, "input");
-  search.type = "search";
-  search.placeholder = "\u641C\u5C0B\u82F1\u96C4\u3001\u5F37\u5316\u3001\u88DD\u5099";
-  search.setAttribute("enterkeyhint", "search");
-  const mic = h(cap, "button", "mn-rq-mic");
-  icon(mic, "mic");
-  mic.setAttribute("aria-label", "\u7528\u9375\u76E4\u7684\u9EA5\u514B\u98A8\u8AAA");
-  mic.addEventListener("click", (e) => {
-    e.preventDefault();
-    search.focus();
-  });
-  const fbHost = h(cap, "div", "mn-cap-fb");
-  const draw = () => {
-    grid.empty();
-    extra.empty();
-    const q = query.trim().toLowerCase();
-    const hits = sorted(all.filter((c) => matches(c, store.lanes(c)) && (!q || c.name.toLowerCase().includes(q) || c.title.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))));
-    count2.textContent = `${hits.length} / ${all.length}`;
-    for (const c of hits) {
-      const tile2 = h(grid, "button", "mn-tile");
-      const im = h(tile2, "img");
-      im.src = c.icon;
-      im.alt = "";
-      const rd = recent.get(c.name);
-      if (rd) {
-        const m = marker(rd);
-        const b = h(tile2, "span", "mn-tile-b", m.mark);
-        b.style.background = m.color;
-      }
-      const ms = store.masteryOf(c.id);
-      if (ms && ms.level > 0) h(tile2, "span", "mn-tile-m" + (ms.level >= 10 ? " is-high" : ""), String(ms.level));
-      h(tile2, "span", "mn-tile-n", c.name);
-      tile2.addEventListener("click", (e) => {
-        e.preventDefault();
-        ctx.openChampion(c.id);
-      });
-    }
-    if (!q) return;
-    if (!hits.length) empty(grid, { icon: "search-x", title: "No champion" });
-    const augs = ctx.plugin.settings.mode === "mayhem" ? store.augments().filter((a) => a.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA) : [];
-    if (augs.length) {
-      const g = group(extra, "Augments");
-      for (const a of augs) row(g, { image: a.icon, rarity: a.rarity, title: a.name, value: a.rarity, chevron: true, onTap: () => ctx.openAugment(a.id) });
-    }
-    const items = store.modeItems().filter((i) => i.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA);
-    if (items.length) {
-      const g = group(extra, "Items");
-      for (const i of items) row(g, { image: i.icon, title: i.name, sub: i.desc || void 0, value: `${i.goldTotal}`, chevron: true, onTap: () => ctx.openItem(i.id) });
-    }
-  };
-  const redraw = () => {
-    drawFilters();
-    drawPanel();
-    draw();
-  };
-  const drawFilters = () => {
-    filters.empty();
-    const row2 = h(filters, "div", "mn-lanebar");
-    const known = store.hasLanes();
-    for (const l of LANES) {
-      const chipEl = laneChip(row2, l, { on: F.lanes.has(l), onTap: () => {
-        if (!known) {
-          tip(chipEl, "\u9084\u6C92\u6709\u5206\u8DEF\u8CC7\u6599");
-          return;
-        }
-        const was = F.lanes.has(l);
-        F.lanes.clear();
-        if (!was) F.lanes.add(l);
-        redraw();
-      } });
-    }
-    const n = activeFilters();
-    row2.prepend(count2);
-    fbHost.empty();
-    const fb = h(fbHost, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
-    fb.setAttribute("aria-label", "\u7BE9\u9078");
-    icon(fb, "sliders-horizontal", "mn-filterbtn-ic");
-    if (n) h(fb, "span", "mn-filterbtn-n", String(n));
-    fb.addEventListener("click", (e) => {
-      e.preventDefault();
-      F.open = !F.open;
-      drawFilters();
-      drawPanel();
-    });
-  };
-  const drawPanel = () => {
-    panel.empty();
-    panel.toggleClass("is-open", F.open);
-    if (!F.open) return;
-    const sect = (title, hint = "") => {
-      const s = h(panel, "div", "mn-fp-s");
-      const head2 = h(s, "div", "mn-fp-h");
-      h(head2, "span", "mn-fp-t", title);
-      if (hint) h(head2, "span", "mn-fp-hint", hint);
-      return s;
-    };
-    const roleSect = sect("\u5B9A\u4F4D");
-    if (activeFilters() || F.sort !== "name" || F.dir !== 1) {
-      const clear = h(roleSect.querySelector(".mn-fp-h") ?? roleSect, "button", "mn-clear", "\u5168\u90E8\u6E05\u9664");
-      clear.addEventListener("click", (e) => {
-        e.preventDefault();
-        F.roles.clear();
-        F.dmg = "";
-        F.feat.clear();
-        F.reach = "";
-        F.sort = "name";
-        F.dir = 1;
-        redraw();
-      });
-    }
-    const roleRow = fgrid(roleSect, ROLES.length);
-    for (const r of ROLES) roleChip(roleRow, r, { on: F.roles.has(r), onTap: () => {
-      F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r);
-      redraw();
-    } });
-    const ab = sect("\u6280\u80FD");
-    for (const [group2, tags2] of TAG_GROUPS) {
-      const line = h(ab, "div", "mn-fcat");
-      h(line, "span", "mn-fcat-l", group2);
-      for (const f of tags2) {
-        const on = F.feat.get(f) === 1;
-        tagFilter(line, f, on, () => {
-          if (on) F.feat.delete(f);
-          else F.feat.set(f, 1);
-          redraw();
-        });
-      }
-    }
-    const kindRow = fgrid(sect("\u50B7\u5BB3\u985E\u578B"), DAMAGES.length);
-    for (const d of DAMAGES) iconFilter(kindRow, d, DAMAGE_ICON[d], DAMAGE_COLOR[d], F.dmg === d, () => {
-      F.dmg = F.dmg === d ? "" : d;
-      redraw();
-    });
-    segmented(sect("\u653B\u64CA\u8DDD\u96E2"), [["", "\u5168\u90E8"], ...REACH.map((r) => [r, r])], F.reach, (id) => {
-      F.reach = id;
-      redraw();
-    }, "is-sm");
-    const arrow = (id) => F.sort !== id ? "" : F.dir === 1 ? " \u2191" : " \u2193";
-    segmented(sect("\u6392\u5E8F"), SORTS2.map(([id, l]) => [id, l + arrow(id)]), F.sort, (id) => {
-      if (id === F.sort) F.dir = F.dir === 1 ? -1 : 1;
-      else {
-        F.sort = id;
-        F.dir = SORT_DIR2[id] ?? 1;
-      }
-      redraw();
-    }, "is-sm");
-  };
-  search.addEventListener("input", () => {
-    query = search.value;
-    draw();
-  });
-  redraw();
-}
-function championsPage(ctx) {
-  if (ctx.frame.key === "champion") return championCard(ctx);
-  const el = page("Champions");
-  fixedPage(el, ctx.component);
-  championPicker(el, ctx);
-  return { title: "Champions", el, ready: null };
-}
-var lastSub = /* @__PURE__ */ new Map();
-function rememberSub(id, sub) {
-  lastSub.set(id, sub);
-}
-function championCard(ctx) {
-  const c = ctx.plugin.store.champion(String(ctx.frame.params?.id ?? ""));
-  const el = h(null, "div", "mn-page");
-  if (!c) {
-    empty(el, { icon: "user-x", title: "Champion not found" });
-    return { title: "", el };
-  }
-  const hero = h(el, "div", "mn-hero");
-  const bg = h(hero, "div", "mn-hero-bg");
-  bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
-  const head2 = h(hero, "div", "mn-card-head");
-  const im = h(head2, "img", "mn-card-img");
-  im.src = c.icon;
-  im.alt = "";
-  const splash = bg.style.backgroundImage.slice(5, -2);
-  blockUntil(hero, Promise.all([new Promise((r) => {
-    const s = new Image();
-    s.onload = s.onerror = () => r();
-    s.src = splash;
-  }), new Promise((r) => {
-    if (im.complete) r();
-    else {
-      im.addEventListener("load", () => r(), { once: true });
-      im.addEventListener("error", () => r(), { once: true });
-    }
-  })]).then(() => void 0), 200);
-  const who = h(head2, "div", "mn-card-who");
-  h(who, "h1", "mn-title", c.name);
-  h(who, "div", "mn-card-sub", c.title);
-  const tags2 = h(who, "div", "mn-chips");
-  for (const r of c.roles) chip(tags2, r);
-  if (c.tier) chip(tags2, `\u8A55\u50F9 ${c.tier}`, { color: "var(--color-green)" });
-  const mastery = ctx.plugin.store.masteryOf(c.id);
-  if (mastery && mastery.level > 0) chip(tags2, `\u719F\u7DF4\u5EA6 ${mastery.level} \xB7 ${mastery.points.toLocaleString("en-US")}`, { color: "var(--color-yellow)" });
-  const now = ctx.plugin.store.currentChanges(c.id);
-  const openChanges = () => {
-    show("overview");
-    block?.open();
-    block?.el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-  const official = ctx.plugin.store.officialFor("champions", c.name)[0];
-  if (badgeText(now)) chip(tags2, badgeText(now), { color: badgeColor(now), onTap: openChanges });
-  else if (official) {
-    const m = marker(entryDir(official.entry));
-    chip(tags2, `${m.mark} ${official.patch}`, { color: m.color, onTap: openChanges });
-  }
-  const mayhem = ctx.plugin.settings.mode === "mayhem";
-  const tabs = SUB_TABS.map(([t, label, ic]) => [t, t === "augments" && !mayhem ? "Runes" : label, ic]);
-  let block = null;
-  const bar = h(el, "div", "mn-ctabs");
-  const seg = h(bar, "div", "mn-seg");
-  const body = h(el, "div", "mn-sub");
-  const show = (t) => {
-    lastSub.set(c.id, t);
-    seg.querySelectorAll(".mn-seg-b").forEach((b) => b.toggleClass("is-on", b.dataset.t === t));
-    body.empty();
-    block = null;
-    if (t === "overview") block = overview(body, c, ctx);
-    else if (t === "skills") skillStrip(body, c, ctx.plugin.store.currentChanges(c.id), { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false });
-    else if (t === "build") buildTab(body, c, ctx);
-    else if (t === "augments") soon(body, mayhem ? "Best augments" : "Runes");
-    else tips(body, c, ctx);
-    const view = el.closest(".mn-scroll");
-    if (view && view.scrollTop > bar.offsetTop) view.scrollTo({ top: bar.offsetTop - 8, behavior: "instant" });
-  };
-  for (const [t, label, ic] of tabs) {
-    const b = h(seg, "button", "mn-seg-b");
-    b.dataset.t = t;
-    icon(b, ic, "mn-ctab-ic");
-    h(b, "span", "mn-ctab-l", label);
-    b.addEventListener("click", (e) => {
-      e.preventDefault();
-      show(t);
-    });
-  }
-  slideSeg(seg);
-  show(lastSub.get(c.id) ?? "overview");
-  return { title: "", el, ready: null };
-}
-var SUB_TABS = [["overview", "Overview", "id-card"], ["skills", "Skills", "keyboard"], ["build", "Build", "shopping-bag"], ["augments", "Augments", "sparkles"], ["tips", "Tips", "lightbulb"]];
-var CHAMPION_TABS = SUB_TABS.map(([, l, ic]) => [l, ic]);
-function overview(body, c, ctx) {
-  championProfile(body, c, ctx.app);
-  if (c.video) row(group(body), { icon: "play-circle", title: "Combo video", chevron: true, onTap: () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video)}`) });
-  return changesBlock(body, c, ctx);
-}
-function soon(body, title) {
-  row(group(body), { icon: "sparkles", title, value: "Soon", muted: true });
-}
-function tips(body, c, ctx) {
-  void ctx;
-  if (!c.tips.length) {
-    empty(body, { icon: "lightbulb", title: "No tips yet", text: "Add tips to this champion's note." });
-    return;
-  }
-  for (const t of c.tips) {
-    const card = h(body, "div", "mn-tip");
-    icon(card, "lightbulb", "mn-tip-ic");
-    const main = h(card, "div", "mn-tip-main");
-    h(main, "div", "mn-tip-t", t.title);
-    h(main, "div", "mn-tip-s", t.text);
-    metaLine(main, t, ctx.plugin.store.currentPatch());
-    if (t.video) {
-      const v = h(main, "button", "mn-tip-v", "\u25B6 Video");
-      v.addEventListener("click", (e) => {
-        e.preventDefault();
-        window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(t.video)}`);
-      });
-    }
-  }
-}
-
 // src/pages/detail.ts
 var import_obsidian12 = require("obsidian");
 
@@ -5139,6 +4821,34 @@ function suggest(effect, champions) {
   scored.sort((a, b) => b.n - a.n || a.c.name.localeCompare(b.c.name, "zh-Hant"));
   return { tags: kinds.map((k) => k.tag), champions: scored.slice(0, SUGGESTED).map((x) => x.c) };
 }
+function augmentPicks(store, c) {
+  const out = [];
+  for (const a of store.augments()) {
+    if (c.avoid.includes(a.name)) continue;
+    const data = store.augmentData(a.id);
+    if (data?.fits && !data.fits.includes(c.id.toLowerCase())) continue;
+    let why = "", score2 = 0;
+    if (c.pinned.includes(a.name)) {
+      why = "\u7F6E\u9802";
+      score2 = 100;
+    } else if (data?.fits) {
+      why = "\u904A\u6232\u6A19\u7C64";
+      score2 = 60;
+    } else if (a.fits.length && a.fits.some((f) => c.archetypes.includes(f) || c.features.includes(f) || c.roles.includes(f))) {
+      why = "\u4EBA\u5DE5\u6574\u7406";
+      score2 = 50;
+    } else if (a.effect) {
+      const kinds = KINDS3.filter((k) => k.re.test(a.effect));
+      const n = kinds.filter((k) => k.fits(c)).length;
+      if (kinds.length && n >= Math.max(1, Math.ceil(kinds.length * 0.6))) {
+        why = "\u63A8\u6E2C";
+        score2 = 10 + n * 5 + (n === kinds.length ? 5 : 0);
+      }
+    }
+    if (score2) out.push({ a, why, score: score2 });
+  }
+  return out.sort((x, y) => y.score - x.score || x.a.name.localeCompare(y.a.name, "zh-Hant"));
+}
 var KIND_COLOR = {
   magicDamage: "var(--mn-magic)",
   scaleAP: "var(--mn-magic)",
@@ -5484,6 +5194,349 @@ function recipe(el, ctx, title, items) {
   }
 }
 
+// src/pages/champions.ts
+var ROLES = ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u5C04\u624B", "\u8F14\u52A9"];
+var DAMAGES = ["\u7269\u7406", "\u9B54\u6CD5", "\u6DF7\u5408"];
+var REACH = ["\u8FD1\u6230", "\u4E2D\u7A0B", "\u9060\u7A0B"];
+var SORTS2 = [["name", "\u540D\u7A31"], ["diff", "\u96E3\u5EA6"], ["range", "\u5C04\u7A0B"]];
+var SORT_DIR2 = { name: 1, diff: 1, range: -1 };
+var SEARCH_EXTRA = 8;
+var F = { lanes: /* @__PURE__ */ new Set(), roles: /* @__PURE__ */ new Set(), dmg: "", feat: /* @__PURE__ */ new Map(), reach: "", sort: "name", dir: 1, open: false };
+var activeFilters = () => F.roles.size + (F.dmg ? 1 : 0) + F.feat.size + (F.reach ? 1 : 0);
+function matches(c, lanes) {
+  if (F.lanes.size && !lanes.some((l) => F.lanes.has(l))) return false;
+  if (F.roles.size && !c.roles.some((r) => F.roles.has(r))) return false;
+  if (F.dmg && c.damageType !== F.dmg) return false;
+  for (const [f, want] of F.feat) if (c.features.includes(f) !== (want === 1)) return false;
+  return !F.reach || c.archetypes.includes(F.reach);
+}
+function sorted(list2) {
+  const byName = (a, b) => a.name.localeCompare(b.name, "zh-Hant");
+  if (F.sort === "diff") return [...list2].sort((a, b) => F.dir * (a.difficulty - b.difficulty) || byName(a, b));
+  if (F.sort === "range") return [...list2].sort((a, b) => F.dir * (a.range - b.range) || byName(a, b));
+  return F.dir === 1 ? list2 : [...list2].reverse();
+}
+function championPicker(parent, ctx) {
+  const store = ctx.plugin.store;
+  const all = store.champions();
+  if (!all.length) {
+    empty(parent, { icon: "database", title: "No champion notes yet", text: "Run python3 tools/fetch_data.py" });
+    return;
+  }
+  let query = "";
+  const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)]));
+  const filtersHost = layoutBlock(h(parent, "div"));
+  const filters = h(filtersHost, "div", "mn-fgroup");
+  const count2 = h(parent, "div", "mn-count");
+  const list2 = h(parent, "div", "mn-rq-list");
+  const gridHost = layoutBlock(h(list2, "div"));
+  const grid = h(gridHost, "div", "mn-grid");
+  const extra = layoutBlock(h(list2, "div"));
+  const dock = h(parent, "div", "mn-rq-dock");
+  const panel = h(dock, "div", "mn-fpanel mn-fsheet");
+  const cap = h(dock, "div", "mn-rq-cap");
+  icon(cap, "search", "mn-rq-cap-ic");
+  const search = h(cap, "input");
+  search.type = "search";
+  search.placeholder = "\u641C\u5C0B\u82F1\u96C4\u3001\u5F37\u5316\u3001\u88DD\u5099";
+  search.setAttribute("enterkeyhint", "search");
+  const mic = h(cap, "button", "mn-rq-mic");
+  icon(mic, "mic");
+  mic.setAttribute("aria-label", "\u7528\u9375\u76E4\u7684\u9EA5\u514B\u98A8\u8AAA");
+  mic.addEventListener("click", (e) => {
+    e.preventDefault();
+    search.focus();
+  });
+  const fbHost = h(cap, "div", "mn-cap-fb");
+  const draw = () => {
+    grid.empty();
+    extra.empty();
+    const q = query.trim().toLowerCase();
+    const hits = sorted(all.filter((c) => matches(c, store.lanes(c)) && (!q || c.name.toLowerCase().includes(q) || c.title.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))));
+    count2.textContent = `${hits.length} / ${all.length}`;
+    for (const c of hits) {
+      const tile2 = h(grid, "button", "mn-tile");
+      const im = h(tile2, "img");
+      im.src = c.icon;
+      im.alt = "";
+      const rd = recent.get(c.name);
+      if (rd) {
+        const m = marker(rd);
+        const b = h(tile2, "span", "mn-tile-b", m.mark);
+        b.style.background = m.color;
+      }
+      const ms = store.masteryOf(c.id);
+      if (ms && ms.level > 0) h(tile2, "span", "mn-tile-m" + (ms.level >= 10 ? " is-high" : ""), String(ms.level));
+      h(tile2, "span", "mn-tile-n", c.name);
+      tile2.addEventListener("click", (e) => {
+        e.preventDefault();
+        ctx.openChampion(c.id);
+      });
+    }
+    if (!q) return;
+    if (!hits.length) empty(grid, { icon: "search-x", title: "No champion" });
+    const augs = ctx.plugin.settings.mode === "mayhem" ? store.augments().filter((a) => a.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA) : [];
+    if (augs.length) {
+      const g = group(extra, "Augments");
+      for (const a of augs) row(g, { image: a.icon, rarity: a.rarity, title: a.name, value: a.rarity, chevron: true, onTap: () => ctx.openAugment(a.id) });
+    }
+    const items = store.modeItems().filter((i) => i.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA);
+    if (items.length) {
+      const g = group(extra, "Items");
+      for (const i of items) row(g, { image: i.icon, title: i.name, sub: i.desc || void 0, value: `${i.goldTotal}`, chevron: true, onTap: () => ctx.openItem(i.id) });
+    }
+  };
+  const redraw = () => {
+    drawFilters();
+    drawPanel();
+    draw();
+  };
+  const drawFilters = () => {
+    filters.empty();
+    const row2 = h(filters, "div", "mn-lanebar");
+    const known = store.hasLanes();
+    for (const l of LANES) {
+      const chipEl = laneChip(row2, l, { on: F.lanes.has(l), onTap: () => {
+        if (!known) {
+          tip(chipEl, "\u9084\u6C92\u6709\u5206\u8DEF\u8CC7\u6599");
+          return;
+        }
+        const was = F.lanes.has(l);
+        F.lanes.clear();
+        if (!was) F.lanes.add(l);
+        redraw();
+      } });
+    }
+    const n = activeFilters();
+    row2.prepend(count2);
+    fbHost.empty();
+    const fb = h(fbHost, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
+    fb.setAttribute("aria-label", "\u7BE9\u9078");
+    icon(fb, "sliders-horizontal", "mn-filterbtn-ic");
+    if (n) h(fb, "span", "mn-filterbtn-n", String(n));
+    fb.addEventListener("click", (e) => {
+      e.preventDefault();
+      F.open = !F.open;
+      drawFilters();
+      drawPanel();
+    });
+  };
+  const drawPanel = () => {
+    panel.empty();
+    panel.toggleClass("is-open", F.open);
+    if (!F.open) return;
+    const sect = (title, hint = "") => {
+      const s = h(panel, "div", "mn-fp-s");
+      const head2 = h(s, "div", "mn-fp-h");
+      h(head2, "span", "mn-fp-t", title);
+      if (hint) h(head2, "span", "mn-fp-hint", hint);
+      return s;
+    };
+    const roleSect = sect("\u5B9A\u4F4D");
+    if (activeFilters() || F.sort !== "name" || F.dir !== 1) {
+      const clear = h(roleSect.querySelector(".mn-fp-h") ?? roleSect, "button", "mn-clear", "\u5168\u90E8\u6E05\u9664");
+      clear.addEventListener("click", (e) => {
+        e.preventDefault();
+        F.roles.clear();
+        F.dmg = "";
+        F.feat.clear();
+        F.reach = "";
+        F.sort = "name";
+        F.dir = 1;
+        redraw();
+      });
+    }
+    const roleRow = fgrid(roleSect, ROLES.length);
+    for (const r of ROLES) roleChip(roleRow, r, { on: F.roles.has(r), onTap: () => {
+      F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r);
+      redraw();
+    } });
+    const ab = sect("\u6280\u80FD");
+    for (const [group2, tags2] of TAG_GROUPS) {
+      const line = h(ab, "div", "mn-fcat");
+      h(line, "span", "mn-fcat-l", group2);
+      for (const f of tags2) {
+        const on = F.feat.get(f) === 1;
+        tagFilter(line, f, on, () => {
+          if (on) F.feat.delete(f);
+          else F.feat.set(f, 1);
+          redraw();
+        });
+      }
+    }
+    const kindRow = fgrid(sect("\u50B7\u5BB3\u985E\u578B"), DAMAGES.length);
+    for (const d of DAMAGES) iconFilter(kindRow, d, DAMAGE_ICON[d], DAMAGE_COLOR[d], F.dmg === d, () => {
+      F.dmg = F.dmg === d ? "" : d;
+      redraw();
+    });
+    segmented(sect("\u653B\u64CA\u8DDD\u96E2"), [["", "\u5168\u90E8"], ...REACH.map((r) => [r, r])], F.reach, (id) => {
+      F.reach = id;
+      redraw();
+    }, "is-sm");
+    const arrow = (id) => F.sort !== id ? "" : F.dir === 1 ? " \u2191" : " \u2193";
+    segmented(sect("\u6392\u5E8F"), SORTS2.map(([id, l]) => [id, l + arrow(id)]), F.sort, (id) => {
+      if (id === F.sort) F.dir = F.dir === 1 ? -1 : 1;
+      else {
+        F.sort = id;
+        F.dir = SORT_DIR2[id] ?? 1;
+      }
+      redraw();
+    }, "is-sm");
+  };
+  search.addEventListener("input", () => {
+    query = search.value;
+    draw();
+  });
+  redraw();
+}
+function championsPage(ctx) {
+  if (ctx.frame.key === "champion") return championCard(ctx);
+  const el = page("Champions");
+  fixedPage(el, ctx.component);
+  championPicker(el, ctx);
+  return { title: "Champions", el, ready: null };
+}
+var lastSub = /* @__PURE__ */ new Map();
+function rememberSub(id, sub) {
+  lastSub.set(id, sub);
+}
+function championCard(ctx) {
+  const c = ctx.plugin.store.champion(String(ctx.frame.params?.id ?? ""));
+  const el = h(null, "div", "mn-page");
+  if (!c) {
+    empty(el, { icon: "user-x", title: "Champion not found" });
+    return { title: "", el };
+  }
+  const hero = h(el, "div", "mn-hero");
+  const bg = h(hero, "div", "mn-hero-bg");
+  bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
+  const head2 = h(hero, "div", "mn-card-head");
+  const im = h(head2, "img", "mn-card-img");
+  im.src = c.icon;
+  im.alt = "";
+  const splash = bg.style.backgroundImage.slice(5, -2);
+  blockUntil(hero, Promise.all([new Promise((r) => {
+    const s = new Image();
+    s.onload = s.onerror = () => r();
+    s.src = splash;
+  }), new Promise((r) => {
+    if (im.complete) r();
+    else {
+      im.addEventListener("load", () => r(), { once: true });
+      im.addEventListener("error", () => r(), { once: true });
+    }
+  })]).then(() => void 0), 200);
+  const who = h(head2, "div", "mn-card-who");
+  h(who, "h1", "mn-title", c.name);
+  h(who, "div", "mn-card-sub", c.title);
+  const tags2 = h(who, "div", "mn-chips");
+  for (const r of c.roles) chip(tags2, r);
+  if (c.tier) chip(tags2, `\u8A55\u50F9 ${c.tier}`, { color: "var(--color-green)" });
+  const mastery = ctx.plugin.store.masteryOf(c.id);
+  if (mastery && mastery.level > 0) chip(tags2, `\u719F\u7DF4\u5EA6 ${mastery.level} \xB7 ${mastery.points.toLocaleString("en-US")}`, { color: "var(--color-yellow)" });
+  const now = ctx.plugin.store.currentChanges(c.id);
+  const openChanges = () => {
+    show("overview");
+    block?.open();
+    block?.el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  const official = ctx.plugin.store.officialFor("champions", c.name)[0];
+  if (badgeText(now)) chip(tags2, badgeText(now), { color: badgeColor(now), onTap: openChanges });
+  else if (official) {
+    const m = marker(entryDir(official.entry));
+    chip(tags2, `${m.mark} ${official.patch}`, { color: m.color, onTap: openChanges });
+  }
+  const mayhem = ctx.plugin.settings.mode === "mayhem";
+  const tabs = SUB_TABS.map(([t, label, ic]) => [t, t === "augments" && !mayhem ? "Runes" : label, ic]);
+  let block = null;
+  const bar = h(el, "div", "mn-ctabs");
+  const seg = h(bar, "div", "mn-seg");
+  const body = h(el, "div", "mn-sub");
+  const show = (t) => {
+    lastSub.set(c.id, t);
+    seg.querySelectorAll(".mn-seg-b").forEach((b) => b.toggleClass("is-on", b.dataset.t === t));
+    body.empty();
+    block = null;
+    if (t === "overview") block = overview(body, c, ctx);
+    else if (t === "skills") skillStrip(body, c, ctx.plugin.store.currentChanges(c.id), { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false });
+    else if (t === "build") buildTab(body, c, ctx);
+    else if (t === "augments") {
+      if (mayhem) augmentsTab(body, c, ctx);
+      else soon(body, "Runes");
+    } else tips(body, c, ctx);
+    const view = el.closest(".mn-scroll");
+    if (view && view.scrollTop > bar.offsetTop) view.scrollTo({ top: bar.offsetTop - 8, behavior: "instant" });
+  };
+  for (const [t, label, ic] of tabs) {
+    const b = h(seg, "button", "mn-seg-b");
+    b.dataset.t = t;
+    icon(b, ic, "mn-ctab-ic");
+    h(b, "span", "mn-ctab-l", label);
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      show(t);
+    });
+  }
+  slideSeg(seg);
+  show(lastSub.get(c.id) ?? "overview");
+  return { title: "", el, ready: null };
+}
+var SUB_TABS = [["overview", "Overview", "id-card"], ["skills", "Skills", "keyboard"], ["build", "Build", "shopping-bag"], ["augments", "Augments", "sparkles"], ["tips", "Tips", "lightbulb"]];
+var CHAMPION_TABS = SUB_TABS.map(([, l, ic]) => [l, ic]);
+function overview(body, c, ctx) {
+  championProfile(body, c, ctx.app);
+  if (c.video) row(group(body), { icon: "play-circle", title: "Combo video", chevron: true, onTap: () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video)}`) });
+  return changesBlock(body, c, ctx);
+}
+var AUG_SHOWN = 6;
+var AUG_RARITIES = ["\u7A1C\u93E1", "\u91D1", "\u9280"];
+function augmentsTab(body, c, ctx) {
+  const picks = augmentPicks(ctx.plugin.store, c);
+  if (!picks.length) {
+    empty(body, { icon: "sparkles", title: "No augments matched yet" });
+    return;
+  }
+  for (const r of AUG_RARITIES) {
+    const list2 = picks.filter((p) => p.a.rarity === r);
+    if (!list2.length) continue;
+    const g = group(body, `${r}\u7D1A \xB7 ${list2.length}`);
+    const add = (p) => row(g, { image: p.a.icon, rarity: p.a.rarity, title: p.a.name, sub: p.a.effect || void 0, value: p.why, chevron: true, clamp: true, onTap: () => ctx.openAugment(p.a.id) });
+    list2.slice(0, AUG_SHOWN).forEach(add);
+    if (list2.length > AUG_SHOWN) {
+      const more = row(g, { icon: "chevron-down", title: `\u518D\u770B ${list2.length - AUG_SHOWN} \u500B`, muted: true, onTap: () => {
+        more.remove();
+        list2.slice(AUG_SHOWN).forEach(add);
+      } });
+    }
+  }
+  h(body, "div", "mn-gf", "\u7F6E\u9802\uFF1A\u4F60\u5728\u82F1\u96C4\u7B46\u8A18\u7684 pinned\uFF1B\u904A\u6232\u6A19\u7C64\uFF1A\u904A\u6232\u53EA\u6703\u7D66\u9069\u5408\u7684\u82F1\u96C4\uFF1B\u63A8\u6E2C\uFF1A\u4F9D\u6548\u679C\u6587\u5B57\uFF0C\u50C5\u4F9B\u53C3\u8003\u3002\u6C92\u6709\u52DD\u7387\u8CC7\u6599\uFF08Riot \u6C92\u6709\u516C\u958B\u5927\u6DF7\u6230\u5C0D\u6230\uFF09\u3002");
+}
+function soon(body, title) {
+  row(group(body), { icon: "sparkles", title, value: "Soon", muted: true });
+}
+function tips(body, c, ctx) {
+  void ctx;
+  if (!c.tips.length) {
+    empty(body, { icon: "lightbulb", title: "No tips yet", text: "Add tips to this champion's note." });
+    return;
+  }
+  for (const t of c.tips) {
+    const card = h(body, "div", "mn-tip");
+    icon(card, "lightbulb", "mn-tip-ic");
+    const main = h(card, "div", "mn-tip-main");
+    h(main, "div", "mn-tip-t", t.title);
+    h(main, "div", "mn-tip-s", t.text);
+    metaLine(main, t, ctx.plugin.store.currentPatch());
+    if (t.video) {
+      const v = h(main, "button", "mn-tip-v", "\u25B6 Video");
+      v.addEventListener("click", (e) => {
+        e.preventDefault();
+        window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(t.video)}`);
+      });
+    }
+  }
+}
+
 // src/data/riot.ts
 var import_obsidian13 = require("obsidian");
 var KEY2 = "morellonomicon-profile";
@@ -5655,7 +5708,7 @@ function homePage(ctx) {
     const refresh = () => {
       sub.textContent = `${where} \xB7 \u8B80\u53D6\u4E2D\u2026`;
       fetchProfile(ctx.app, s.riotId, s.riotServer, s.riotKey).then(() => {
-        if (el.isConnected) ctx.goTab("home");
+        if (el.isConnected) ctx.redraw();
       }).catch((err) => {
         sub.textContent = err instanceof RiotError ? err.message : "\u9023\u4E0D\u4E0A Riot,\u7A0D\u5F8C\u518D\u8A66";
         sub.addClass("is-err");
@@ -6829,6 +6882,7 @@ var MnView = class extends import_obsidian15.ItemView {
     // the loading veil over the page area
     this.drawId = 0;
     this.themed = [];
+    this.tabsKey = "";
   }
   getViewType() {
     return VIEW_TYPE;
@@ -7076,9 +7130,16 @@ var MnView = class extends import_obsidian15.ItemView {
   tabIcon(id) {
     return TAB_ICON[id];
   }
+  // the mode and tabs the bar was last built for
   buildTabs() {
     const tabs = MODES[this.plugin.settings.mode].tabs;
     this.router.fix(tabs);
+    const key = `${this.plugin.settings.mode}|${tabs.join(",")}|${tabs.map((t) => this.tabLabel(t)).join(",")}`;
+    if (key === this.tabsKey && this.tabsEl.childElementCount) {
+      this.tabsEl.querySelectorAll(".mn-tab").forEach((b) => b.toggleClass("is-on", b.dataset.tab === this.router.tab));
+      return;
+    }
+    this.tabsKey = key;
     this.tabsEl.empty();
     this.tabsEl.style.setProperty("--n", String(tabs.length));
     for (const id of tabs) {
@@ -7173,6 +7234,10 @@ var MnView = class extends import_obsidian15.ItemView {
         push: (x) => this.push(x),
         pop: () => this.back(),
         goTab: (id2) => this.goTab(id2),
+        redraw: () => {
+          if (this.router.top() === f) this.draw();
+        },
+        // the same page again, in place: no animation, the scroll kept
         openChampion: (id2, sub) => {
           if (sub) rememberSub(id2, sub);
           this.push({ key: "champion", title: store.champion(id2)?.name ?? id2, params: { id: id2 } });
