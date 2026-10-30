@@ -1605,7 +1605,5 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay-win .mn-lay-sbtn { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 12px; box-shadow: none; background: var(--background-secondary); }
 .mn-lay-sbtn svg { width: 18px; height: 18px; }
 .mn-lay-win input.mn-lay-sin { flex: none; box-sizing: border-box; width: 84px; height: 44px; padding: 0 8px; text-align: center; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; border-radius: 12px; }
-.mn-lay-wgrip { display: inline-flex; color: var(--text-faint); }
-.mn-lay-wgrip svg { width: 18px; height: 18px; }
 .mn-lay-wspace { flex: 1; align-self: stretch; }   /* the empty part of the top bar: drag the window by it */
 .mn-lay-wbtn .mn-ic, .mn-lay-sbtn .mn-ic { display: flex; }   /* the icon box is just the icon, so it sits in the middle of its button */
