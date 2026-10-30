@@ -7,13 +7,26 @@ const CLIP_FADE_MS = 350;   // a clip fades in over 0.3 s (styles.css, .mn-app v
 // Passive + Q W E R as icons; the frame colour is the damage type of the skill (orange physical, blue magic, yellow true).
 // Tap an icon to open its details right below (tap again to close); no new page.
 // opt.open: open this skill at once and keep one always open (the champion page's Skills tab); opt.clipFirst: the clip above the
-// numbers; opt.scroll false: never scroll the page to the card (the tab already shows it)
-export interface StripOpts { open?: number; clipFirst?: boolean; scroll?: boolean }
+// numbers; opt.scroll false: never scroll the page to the card (the tab already shows it); opt.shelf: a tiny holder on the screen where
+// every ability's clip loads ahead (iOS loads a clip only while it is on the screen), so a tap shows a clip that is already there
+export interface StripOpts { open?: number; clipFirst?: boolean; scroll?: boolean; shelf?: HTMLElement }
 export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] = [], opt: StripOpts = {}): void {
     if (!c.skills.length) return;
     const strip = h(parent, "div", "mn-skills");
     const detail = h(parent, "div", "mn-skill-detail");
     let open = -1;
+    // every ability's clip, loading ahead in the shelf; one that has its first frame waits there paused until its ability is shown
+    const shelf = opt.shelf;
+    const held = new Map<number, HTMLVideoElement>();
+    if (shelf) c.skills.forEach((s, i) => {
+        demo(shelf, c, s, () => { held.delete(i); if (open === i) detail.querySelector(".mn-sd-clipbox")?.remove(); });
+        const v = shelf.lastElementChild;
+        if (!(v instanceof HTMLVideoElement)) return;
+        held.set(i, v);
+        v.addEventListener("loadeddata", () => { if (v.parentElement === shelf) v.pause(); }, { once: true });
+    });
+    const isHeld = (v: HTMLVideoElement) => [...held.values()].includes(v);
+    const shelve = (v: HTMLVideoElement) => { v.pause(); v.currentTime = 0; shelf?.append(v); };
     const boxes = c.skills.map((s, i) => {
         const box = h(strip, "button", "mn-skill-box");
         box.setAttribute("aria-label", `${s.key} ${s.name}`);
@@ -34,25 +47,50 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
         prev?.remove();
         detail.empty();
         detail.toggleClass("is-open", i >= 0);
-        if (i < 0) return;
+        // the clip that was on show: back to the shelf when it is a held one, otherwise let go
+        let dropped = false;
+        const dropPrev = () => {
+            if (!prev || dropped) return;
+            dropped = true;
+            if (isHeld(prev)) { shelve(prev); return; }
+            prev.remove(); prev.pause(); prev.removeAttribute("src"); prev.replaceChildren(); prev.load();
+        };
+        if (i < 0) { dropPrev(); return; }
         const s = c.skills[i];
         const clip = () => {
             // The clip has its room from the start (a box of the clip's shape) and loads as a block of its own, with the blur and the band
             // of light. A clip that cannot play takes its box away.
             const clipBox = h(detail, "div", "mn-sd-clipbox");
-            // something to blur from the first moment, before the clip has a single frame: the skill's own picture, enlarged and blurred;
-            // the clip covers it when it appears (and goes after the clip's own fade-in, so nothing shows through)
-            // (the clip that was on show takes that place when there is one)
+            const ready = held.get(i);
+            if (shelf && !ready) { dropPrev(); clipBox.remove(); return null; }   // its clip could not play: no box
+            if (ready && ready.readyState >= 2) {   // loaded ahead: straight in, no stand-in and no loading look
+                dropPrev();
+                clipBox.append(ready);
+                void ready.play().catch(() => undefined);
+                return Promise.resolve();
+            }
+            // something to blur from the first moment, before the clip has a single frame: the clip that was on show, or else the skill's
+            // own picture, enlarged and blurred; the clip covers it when it appears (and goes after the clip's own fade-in)
             let stand: HTMLElement;
             if (prev) { stand = prev; clipBox.append(prev); void prev.play().catch(() => undefined); }
             else { stand = h(clipBox, "div", "mn-sd-clipph"); stand.style.backgroundImage = `url("${s.icon}")`; }
-            const letGo = () => { stand.remove(); if (stand === prev) { prev.pause(); prev.removeAttribute("src"); prev.replaceChildren(); prev.load(); } };
-            demo(clipBox, c, s, () => { letGo(); clipBox.remove(); });
-            const last = clipBox.lastElementChild;   // demo's new clip, after the stand-in
-            const v = last instanceof HTMLVideoElement && last !== prev ? last : null;
+            const letGo = () => { if (stand === prev) dropPrev(); else stand.remove(); };
+            let v: HTMLVideoElement | null = null;
+            if (ready) {
+                // still loading: it goes on loading in the shelf (always on the screen; this page may not be) and comes in with its first frame
+                v = ready;
+                ready.addEventListener("loadeddata", () => { if (open !== i || !clipBox.isConnected) return; clipBox.append(ready); void ready.play().catch(() => undefined); }, { once: true });
+            } else {
+                demo(clipBox, c, s, () => { letGo(); clipBox.remove(); });
+                const last = clipBox.lastElementChild;   // demo's new clip, after the stand-in
+                v = last instanceof HTMLVideoElement && last !== prev ? last : null;
+            }
             v?.addEventListener("loadeddata", () => window.setTimeout(letGo, CLIP_FADE_MS), { once: true });
             if (!v) { letGo(); clipBox.remove(); return null; }   // no clip for this skill
-            const loaded = whenMediaLoaded([clipBox], CLIP_WAIT_MS);
+            const wait = v;
+            const loaded = ready
+                ? new Promise<void>((done) => { wait.addEventListener("loadeddata", () => done(), { once: true }); window.setTimeout(done, CLIP_WAIT_MS); })
+                : whenMediaLoaded([clipBox], CLIP_WAIT_MS);
             blockUntil(clipBox, loaded);
             return loaded;
         };

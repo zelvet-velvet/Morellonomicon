@@ -228,11 +228,13 @@ export function championCard(ctx: PageCtx): PageOut {
     const box = h(el, "div", "mn-cpa");
     const track = h(box, "div", "mn-cpa-track");
     let tagLine: HTMLElement | null = null;   // 概覽's tags: under the name, at the very foot
+    // every ability's clip loads here ahead, on the screen but too small to see (iOS loads a clip only while it is on the screen)
+    const shelf = h(el, "div", "mn-clip-shelf");
     const cards = pages.map(([p]) => {
         const pg = h(track, "section", "mn-cpa-page is-" + p);
         const body = h(pg, "div", "mn-cpa-body");   // 概覽: just above the name; the others: the whole page, scrolling inside when long
         if (p === "overview") tagLine = overviewTop(body, c, part("overview"));
-        else if (p === "skills") skillStrip(body, c, now, { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false });
+        else if (p === "skills") skillStrip(body, c, now, { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false, shelf });
         else if (p === "build") buildTab(body, c, ctx);
         else if (p === "augments") augmentsTab(body, c, ctx);
         else tips(body, c, ctx);

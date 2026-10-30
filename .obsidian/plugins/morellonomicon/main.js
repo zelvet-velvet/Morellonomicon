@@ -3477,6 +3477,26 @@ function skillStrip(parent, c, changes = [], opt = {}) {
   const strip2 = h(parent, "div", "mn-skills");
   const detail = h(parent, "div", "mn-skill-detail");
   let open = -1;
+  const shelf = opt.shelf;
+  const held = /* @__PURE__ */ new Map();
+  if (shelf) c.skills.forEach((s, i) => {
+    demo(shelf, c, s, () => {
+      held.delete(i);
+      if (open === i) detail.querySelector(".mn-sd-clipbox")?.remove();
+    });
+    const v = shelf.lastElementChild;
+    if (!(v instanceof HTMLVideoElement)) return;
+    held.set(i, v);
+    v.addEventListener("loadeddata", () => {
+      if (v.parentElement === shelf) v.pause();
+    }, { once: true });
+  });
+  const isHeld = (v) => [...held.values()].includes(v);
+  const shelve = (v) => {
+    v.pause();
+    v.currentTime = 0;
+    shelf?.append(v);
+  };
   const boxes = c.skills.map((s, i) => {
     const box = h(strip2, "button", "mn-skill-box");
     box.setAttribute("aria-label", `${s.key} ${s.name}`);
@@ -3501,10 +3521,39 @@ function skillStrip(parent, c, changes = [], opt = {}) {
     prev?.remove();
     detail.empty();
     detail.toggleClass("is-open", i >= 0);
-    if (i < 0) return;
+    let dropped = false;
+    const dropPrev = () => {
+      if (!prev || dropped) return;
+      dropped = true;
+      if (isHeld(prev)) {
+        shelve(prev);
+        return;
+      }
+      prev.remove();
+      prev.pause();
+      prev.removeAttribute("src");
+      prev.replaceChildren();
+      prev.load();
+    };
+    if (i < 0) {
+      dropPrev();
+      return;
+    }
     const s = c.skills[i];
     const clip = () => {
       const clipBox = h(detail, "div", "mn-sd-clipbox");
+      const ready = held.get(i);
+      if (shelf && !ready) {
+        dropPrev();
+        clipBox.remove();
+        return null;
+      }
+      if (ready && ready.readyState >= 2) {
+        dropPrev();
+        clipBox.append(ready);
+        void ready.play().catch(() => void 0);
+        return Promise.resolve();
+      }
       let stand;
       if (prev) {
         stand = prev;
@@ -3515,27 +3564,36 @@ function skillStrip(parent, c, changes = [], opt = {}) {
         stand.style.backgroundImage = `url("${s.icon}")`;
       }
       const letGo = () => {
-        stand.remove();
-        if (stand === prev) {
-          prev.pause();
-          prev.removeAttribute("src");
-          prev.replaceChildren();
-          prev.load();
-        }
+        if (stand === prev) dropPrev();
+        else stand.remove();
       };
-      demo(clipBox, c, s, () => {
-        letGo();
-        clipBox.remove();
-      });
-      const last = clipBox.lastElementChild;
-      const v = last instanceof HTMLVideoElement && last !== prev ? last : null;
+      let v = null;
+      if (ready) {
+        v = ready;
+        ready.addEventListener("loadeddata", () => {
+          if (open !== i || !clipBox.isConnected) return;
+          clipBox.append(ready);
+          void ready.play().catch(() => void 0);
+        }, { once: true });
+      } else {
+        demo(clipBox, c, s, () => {
+          letGo();
+          clipBox.remove();
+        });
+        const last = clipBox.lastElementChild;
+        v = last instanceof HTMLVideoElement && last !== prev ? last : null;
+      }
       v?.addEventListener("loadeddata", () => window.setTimeout(letGo, CLIP_FADE_MS), { once: true });
       if (!v) {
         letGo();
         clipBox.remove();
         return null;
       }
-      const loaded2 = whenMediaLoaded([clipBox], CLIP_WAIT_MS);
+      const wait = v;
+      const loaded2 = ready ? new Promise((done) => {
+        wait.addEventListener("loadeddata", () => done(), { once: true });
+        window.setTimeout(done, CLIP_WAIT_MS);
+      }) : whenMediaLoaded([clipBox], CLIP_WAIT_MS);
       blockUntil(clipBox, loaded2);
       return loaded2;
     };
@@ -6464,11 +6522,12 @@ function championCard(ctx) {
   const box = h(el, "div", "mn-cpa");
   const track = h(box, "div", "mn-cpa-track");
   let tagLine = null;
+  const shelf = h(el, "div", "mn-clip-shelf");
   const cards = pages.map(([p]) => {
     const pg = h(track, "section", "mn-cpa-page is-" + p);
     const body = h(pg, "div", "mn-cpa-body");
     if (p === "overview") tagLine = overviewTop(body, c, part("overview"));
-    else if (p === "skills") skillStrip(body, c, now, { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false });
+    else if (p === "skills") skillStrip(body, c, now, { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false, shelf });
     else if (p === "build") buildTab(body, c, ctx);
     else if (p === "augments") augmentsTab(body, c, ctx);
     else tips(body, c, ctx);
