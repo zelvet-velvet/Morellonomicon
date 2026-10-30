@@ -1609,13 +1609,13 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay-wnote:focus { border-color: var(--interactive-accent); }
 .mn-lay-legend.is-hidden { display: none; }
 /* 概覽: the style chart on the left, the three stat tiles stacked on its right (icon, value, what) */
-.mn-cv-look { display: grid; grid-template-columns: auto 232px; justify-content: center; align-items: center; gap: 12px; }   /* the stats and the chart as one centred pair */
+.mn-cv-look { display: grid; grid-template-columns: minmax(0, 1fr) 232px; align-items: center; gap: 8px; }   /* the stats fill the left: icons on the page margin, texts against the chart */
 .mn-cv-look .mn-cv-stats { order: 1; }
 .mn-cv-look .mn-cv-radar { order: 2; }
 .mn-cv-radar svg { display: block; width: 100%; height: auto; }
 .mn-cv-look .mn-cv-stats { grid-template-columns: 1fr; gap: 6px; }
 .mn-champ.is-v3 .mn-cv-look .mn-cv-stat { display: grid; grid-template-columns: 26px 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; text-align: left; padding: 2px; }
-.mn-cv-look .mn-cv-stat .mn-cv-sic { grid-row: 1 / span 2; }
+.mn-cv-look .mn-cv-stat .mn-cv-sic { grid-row: 1 / span 2; justify-self: start; }
 .mn-champ.is-v3 .mn-cv-look .mn-cv-stat b { font-size: 17px; line-height: 1.2; }
 .mn-cv-look .mn-cv-bar { grid-column: 2; justify-self: end; }
 .mn-cv-look .mn-cv-stat b, .mn-cv-look .mn-cv-stat span { grid-column: 2; justify-self: end; text-align: right; }   /* the text hangs on the right edge of the 難度 bar, beside the chart */
