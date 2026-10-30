@@ -44,7 +44,10 @@ function withOnHit(skills: Skill[], keys: string[]): Skill[] {
 }
 
 export interface Skill { key: string; name: string; damage: string[]; tags: string[]; icon: string; desc: string; upgrade: string; range: string; rows: SkillRow[]; levels: number[] }   // levels: a passive's numbers are by champion level (Lv 1, 6, 11 ...), not by rank
-export interface Augment { id: number; name: string; rarity: string; icon: string; effect: string; partial: boolean; fits: string[]; tier: string; path: string }
+export interface Augment {
+    id: number; name: string; rarity: string; icon: string; effect: string; partial: boolean; fits: string[]; tier: string; path: string;
+    effectSource: string; effectStatus: string; effectPatch: string;   // who the hand-written `effect` comes from (e.g. the League wiki), 待驗證 / 已驗證, its patch
+}
 // An augment's numbers from the game data (tools/fetch_augment_data.py): per level its text as runs [text, the game's markup kind]
 // and its stat chips; Riot's augment tags and, when a tag rules some champions out, the champions it is offered to (lower-case ids)
 export interface AugmentData {
@@ -265,7 +268,8 @@ export class Store {
                 const filled = d?.runs[0]?.map((r) => r[0]).join("") ?? "";
                 const effect = str(fm.effect) || filled || this.officialEffect(name) || this.gameText[String(id)]?.text || "";
                 const partial = !str(fm.effect) && (filled ? d!.partial : !this.officialEffect(name) && !!this.gameText[String(id)]?.partial);
-                return { id, name, rarity: str(fm.rarity), icon: str(fm.icon), effect, partial, fits: list(fm.fits), tier: str(fm.tier), path: file.path };
+                return { id, name, rarity: str(fm.rarity), icon: str(fm.icon), effect, partial, fits: list(fm.fits), tier: str(fm.tier), path: file.path,
+                    effectSource: str(fm.effect) ? str(fm.effect_source) : "", effectStatus: str(fm.effect_status), effectPatch: str(fm.effect_patch) };
             }).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
         }
         return this.augs;

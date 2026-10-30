@@ -131,10 +131,12 @@ export function augmentPage(ctx: PageCtx): PageOut {
                 const sp = h(p, "span", KIND_BOLD.has(kind) ? "mn-ag-kw" : "mn-ag-k", text);
                 if (KIND_COLOR[kind]) sp.style.setProperty("--c", KIND_COLOR[kind]);
             }
-            h(card, "div", "mn-pn-src", data.partial ? "數值：遊戲資料（X 是遊戲內才算得出的數值）" : "數值：遊戲資料");
+            h(card, "div", "mn-pn-src", `數值：競技場的遊戲資料，大混戰可能不同${data.partial ? "（X 是遊戲內才算得出的數值）" : ""}`);
         } else if (a.effect) {
             p.setText(a.effect);
-            h(card, "div", "mn-pn-src", a.partial ? "數值待補（X 是遊戲內才看得到的數值）" : "效果：Riot Games");
+            // a hand-written effect names where it came from (the League wiki's numbers, CC BY-SA) and whether it was checked in game
+            const src = a.effectSource ? `數值：${a.effectSource}${a.effectSource.includes("Wiki") ? "（CC BY-SA）" : ""}${a.effectPatch ? ` · ${a.effectPatch}` : ""}${a.effectStatus ? ` · ${a.effectStatus}` : ""}` : "";
+            h(card, "div", "mn-pn-src", src || (a.partial ? "數值待補（X 是遊戲內才看得到的數值）" : "效果：Riot Games"));
         } else {
             // Riot's patch notes only describe an augment in the patch that adds or changes it; older ones have no text we can read yet
             p.addClass("mn-muted");

@@ -388,7 +388,20 @@ var Store = class {
         const filled = d?.runs[0]?.map((r) => r[0]).join("") ?? "";
         const effect = str(fm.effect) || filled || this.officialEffect(name) || this.gameText[String(id)]?.text || "";
         const partial = !str(fm.effect) && (filled ? d.partial : !this.officialEffect(name) && !!this.gameText[String(id)]?.partial);
-        return { id, name, rarity: str(fm.rarity), icon: str(fm.icon), effect, partial, fits: list(fm.fits), tier: str(fm.tier), path: file.path };
+        return {
+          id,
+          name,
+          rarity: str(fm.rarity),
+          icon: str(fm.icon),
+          effect,
+          partial,
+          fits: list(fm.fits),
+          tier: str(fm.tier),
+          path: file.path,
+          effectSource: str(fm.effect) ? str(fm.effect_source) : "",
+          effectStatus: str(fm.effect_status),
+          effectPatch: str(fm.effect_patch)
+        };
       }).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
     }
     return this.augs;
@@ -4799,10 +4812,11 @@ function augmentPage(ctx) {
         const sp = h(p, "span", KIND_BOLD.has(kind) ? "mn-ag-kw" : "mn-ag-k", text);
         if (KIND_COLOR[kind]) sp.style.setProperty("--c", KIND_COLOR[kind]);
       }
-      h(card, "div", "mn-pn-src", data.partial ? "\u6578\u503C\uFF1A\u904A\u6232\u8CC7\u6599\uFF08X \u662F\u904A\u6232\u5167\u624D\u7B97\u5F97\u51FA\u7684\u6578\u503C\uFF09" : "\u6578\u503C\uFF1A\u904A\u6232\u8CC7\u6599");
+      h(card, "div", "mn-pn-src", `\u6578\u503C\uFF1A\u7AF6\u6280\u5834\u7684\u904A\u6232\u8CC7\u6599\uFF0C\u5927\u6DF7\u6230\u53EF\u80FD\u4E0D\u540C${data.partial ? "\uFF08X \u662F\u904A\u6232\u5167\u624D\u7B97\u5F97\u51FA\u7684\u6578\u503C\uFF09" : ""}`);
     } else if (a.effect) {
       p.setText(a.effect);
-      h(card, "div", "mn-pn-src", a.partial ? "\u6578\u503C\u5F85\u88DC\uFF08X \u662F\u904A\u6232\u5167\u624D\u770B\u5F97\u5230\u7684\u6578\u503C\uFF09" : "\u6548\u679C\uFF1ARiot Games");
+      const src = a.effectSource ? `\u6578\u503C\uFF1A${a.effectSource}${a.effectSource.includes("Wiki") ? "\uFF08CC BY-SA\uFF09" : ""}${a.effectPatch ? ` \xB7 ${a.effectPatch}` : ""}${a.effectStatus ? ` \xB7 ${a.effectStatus}` : ""}` : "";
+      h(card, "div", "mn-pn-src", src || (a.partial ? "\u6578\u503C\u5F85\u88DC\uFF08X \u662F\u904A\u6232\u5167\u624D\u770B\u5F97\u5230\u7684\u6578\u503C\uFF09" : "\u6548\u679C\uFF1ARiot Games"));
     } else {
       p.addClass("mn-muted");
       p.setText("\u9019\u500B\u5F37\u5316\u7684\u6548\u679C\u8AAA\u660E\u9084\u6C92\u6709\u6536\u9304\u3002");
