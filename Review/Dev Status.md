@@ -9,7 +9,7 @@ sticker: lucide//activity
 > Read [[LLM Guide]] before any `CMD_` or status update. This note is kept by `CMD_SYNC` / `CMD_ROLLOVER` / `CMD_NOTES_SYNC`; the day notes in `Review/Log/` by `CMD_JOURNAL`.
 
 ## 🚀 Today's Progress (2026-10-30)
-- **Project logo**: a clean flat tome after the Morellonomicon item (purple cover, gold corner caps, three green claws, a flame behind), at the top of the README.
+- **Project logo**: a clean flat tome after the Morellonomicon item (purple cover, gold corner caps, three green claws, an aura of green flames), no background, a transparent PNG at the top of the README.
 - **README like a public tool**: logo, title with badges, feature table, install, FAQ, data sources; screenshots still to add.
 
 ## 📅 Yesterday's Progress (2026-10-29)

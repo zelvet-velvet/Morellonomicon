@@ -1,10 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- Morellonomicon logo: a flat tome after the in-game item, gold corner caps, three green claws torn across it, a green flame behind -->
-  <rect width="512" height="512" rx="112" fill="#17131F"/>
-  <g transform="translate(256 268) scale(0.84) translate(-256 -268)">
-    <!-- flame behind the book: three tongues, tucked under it -->
-    <path d="M256 40 C300 96 360 118 374 190 C384 160 378 132 366 110 C440 170 448 250 384 300 L150 310 C70 250 80 160 146 110 C134 132 128 160 138 190 C152 118 212 96 256 40 Z" fill="#2F5D27"/>
-    <path d="M256 96 C290 138 330 158 340 210 C348 190 346 170 340 154 C384 194 392 256 360 300 L170 300 C122 256 130 192 172 154 C166 170 164 190 172 210 C182 158 222 138 256 96 Z" fill="#4C8D38"/>
+  <!-- Morellonomicon logo (no background): a flat tome after the in-game item, gold corner caps, three green claws, a green aura of flames -->
+  <g transform="translate(256 300) scale(0.94 0.96) translate(-256 -300)">
+  <!-- aura: three layers of flame tongues rising behind the book and licking up its sides -->
+  <path d="M256 6 C272 52 300 70 318 104 C322 78 316 58 306 40 C356 76 384 118 390 170 C402 150 404 126 398 104 C446 150 470 214 456 282 C466 270 474 254 476 236 C500 300 470 380 380 430 L146 440 C42 380 12 300 36 236 C38 254 46 270 56 282 C42 214 66 150 114 104 C108 126 110 150 122 170 C128 118 156 76 206 40 C196 58 190 78 194 104 C212 70 240 52 256 6 Z" fill="#244A1F"/>
+  <path d="M256 58 C270 96 294 112 306 140 C312 120 308 102 300 88 C340 118 360 152 362 196 C374 180 376 160 372 142 C410 180 428 232 416 290 C428 278 434 262 436 248 C454 300 430 370 370 410 L150 414 C82 370 58 300 76 248 C78 262 84 278 96 290 C84 232 102 180 140 142 C136 160 138 180 150 196 C152 152 172 118 212 88 C204 102 200 120 206 140 C218 112 242 96 256 58 Z" fill="#3E7F31"/>
+  <path d="M256 112 C268 140 286 152 294 174 C300 160 298 146 292 136 C322 160 334 190 334 222 C344 210 346 196 344 184 C372 214 382 254 372 296 L140 296 C130 254 140 214 168 184 C166 196 168 210 178 222 C178 190 190 160 220 136 C214 146 212 160 218 174 C226 152 244 140 256 112 Z" fill="#79C24F"/>
+  <!-- embers -->
+  <g fill="#A6E36E"><circle cx="96" cy="150" r="7"/><circle cx="420" cy="120" r="6"/><circle cx="62" cy="214" r="4.5"/><circle cx="452" cy="196" r="5"/><circle cx="160" cy="64" r="4.5"/><circle cx="356" cy="52" r="5.5"/></g>
+  </g>
+  <g transform="translate(256 300) scale(0.86) translate(-256 -300)">
     <g transform="rotate(-8 256 300)">
       <!-- page block and back cover -->
       <rect x="150" y="152" width="236" height="300" rx="18" fill="#2A1E3D"/>

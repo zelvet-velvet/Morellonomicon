@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="Assets/logo.svg" alt="Morellonomicon logo" width="128">
+<img src="Assets/logo.png" alt="Morellonomicon logo" width="160">
 
 # Morellonomicon · 黑魔禁書
 
