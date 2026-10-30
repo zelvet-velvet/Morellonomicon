@@ -1609,7 +1609,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay-wnote:focus { border-color: var(--interactive-accent); }
 .mn-lay-legend.is-hidden { display: none; }
 /* 概覽: the style chart on the left, the three stat tiles stacked on its right (icon, value, what) */
-.mn-cv-look { display: grid; grid-template-columns: minmax(0, 1fr) 232px; align-items: center; gap: 8px; }   /* the stats fill the left: icons on the page margin, texts against the chart */
+.mn-cv-look { display: grid; grid-template-columns: auto 232px; justify-content: center; align-items: center; gap: 8px; }   /* the stats as wide as icon + 難度 bar, the texts on the bar's right edge, the chart beside them */
 .mn-cv-look .mn-cv-stats { order: 1; }
 .mn-cv-look .mn-cv-radar { order: 2; }
 .mn-cv-radar svg { display: block; width: 100%; height: auto; }
