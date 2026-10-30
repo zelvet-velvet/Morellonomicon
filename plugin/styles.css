@@ -1274,21 +1274,24 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-pick-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 6px 3px 4px; border-radius: 999px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); font-size: 0.9em; }
 .mn-pick-no { min-width: 18px; height: 18px; border-radius: 9px; text-align: center; line-height: 18px; font-size: 0.75em; font-weight: 800; background: var(--interactive-accent); color: var(--text-on-accent); }
 .mn-pick-pic { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; flex: none; }
-.mn-pick-pic img { width: 24px; height: 24px; border-radius: 6px; object-fit: cover; }
+.mn-pick-pic img { width: 24px; height: 24px; min-width: 24px; max-width: none; border-radius: 6px; object-fit: cover; }
 .mn-pick-pic svg { width: 18px; height: 18px; }
 .mn-pick-x { display: inline-flex; color: var(--text-faint); cursor: pointer; }
 .mn-pick-x svg { width: 14px; height: 14px; }
 .mn-pick-in.is-hidden { display: none; }
-.mn-pick-list { display: none; position: absolute; z-index: 5; left: 0; right: 0; top: 100%; margin-top: 4px; max-height: 260px; overflow-y: auto; border-radius: 10px;
+.mn-pick-list { display: none; position: absolute; z-index: 5; left: 0; right: 0; top: 100%; margin-top: 4px; max-height: 300px; overflow-y: auto; border-radius: 10px;
     background: var(--background-primary); border: 1px solid var(--background-modifier-border); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); }
-.mn-pick-list.is-open { display: block; }
-.mn-pick-opt { display: flex; align-items: center; gap: 10px; padding: 6px 10px; cursor: pointer; }
+.mn-pick-list.is-open { display: grid; grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); gap: 4px; padding: 6px; }
+.mn-pick-opt { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 2px; border-radius: 8px; cursor: pointer; text-align: center; font-size: 0.75em; line-height: 1.2; }
+.mn-pick-opt > span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mn-pick-opt:hover { background: var(--background-modifier-hover); }
+.mn-pick-opt .mn-pick-pic, .mn-pick-opt .mn-pick-pic img { width: 40px; height: 40px; min-width: 40px; border-radius: 8px; }
+.mn-pick-opt .mn-pick-pic svg { width: 24px; height: 24px; }
 /* the 速查卡片 editor (picksnote.ts) */
 .mn-pk-form { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 12px; background: var(--background-secondary); border: 1px solid var(--background-modifier-border); }
 .mn-pk-form:empty { display: none; }
 .mn-pk-head { display: flex; align-items: center; gap: 10px; }
-.mn-pk-head > img { width: 48px; height: 48px; border-radius: 12px; }
+.mn-pk-head > img { flex: none; width: 48px; height: 48px; min-width: 48px; max-width: none; object-fit: cover; border-radius: 12px; }
 .mn-pk-head > div { flex: 1; min-width: 0; }
 .mn-pk-status { color: var(--color-yellow); font-weight: 700; }
 .mn-pk-status.is-ok { color: var(--color-green); }
@@ -1297,7 +1300,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-pk-n { flex: none; font-size: 0.75em; color: var(--text-faint); font-variant-numeric: tabular-nums; }
 .mn-pk-n.is-over { color: var(--color-red); font-weight: 700; }
 .mn-pk-skill { display: flex; align-items: center; gap: 8px; }
-.mn-pk-skill img { width: 28px; height: 28px; border-radius: 6px; flex: none; }
+.mn-pk-skill img { flex: none; width: 28px; height: 28px; min-width: 28px; max-width: none; object-fit: cover; border-radius: 6px; }
 .mn-pk-key { width: 14px; flex: none; font-weight: 800; color: var(--text-muted); }
 .mn-pk-skill input { flex: 1; min-width: 0; }
 .mn-pk .mn-inb-row + .mn-inb-row { margin-top: 2px; }

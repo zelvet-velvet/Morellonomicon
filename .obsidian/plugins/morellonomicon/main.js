@@ -1899,10 +1899,19 @@ function picker(parent, o) {
   const input = root.createEl("input", { cls: "mn-pick-in", attr: { type: "text", placeholder: o.placeholder ?? "\u641C\u5C0B\u2026", spellcheck: "false", autocomplete: "off" } });
   const list2 = root.createDiv({ cls: "mn-pick-list" });
   const full = () => !o.multi ? false : !!o.max && value.length >= o.max;
-  const set = (v) => {
+  let pending = false;
+  const set = (v, now = true) => {
     value = v;
     drawChips();
-    o.onChange(value);
+    if (now) o.onChange(value);
+    else pending = true;
+  };
+  const close = () => {
+    list2.removeClass("is-open");
+    if (pending) {
+      pending = false;
+      o.onChange(value);
+    }
   };
   const drawChips = () => {
     chips.empty();
@@ -1915,7 +1924,7 @@ function picker(parent, o) {
       (0, import_obsidian5.setIcon)(x, "x");
       x.addEventListener("click", (e) => {
         e.stopPropagation();
-        set(value.filter((_, j) => j !== i));
+        set(value.filter((_, j) => j !== i), !list2.hasClass("is-open"));
       });
     });
     chips.toggleClass("is-empty", !value.length);
@@ -1930,21 +1939,27 @@ function picker(parent, o) {
       const row2 = list2.createDiv({ cls: "mn-pick-opt" });
       pic(row2, c, "mn-pick-pic");
       row2.createSpan({ text: c.name });
-      row2.addEventListener("pointerdown", (e) => {
+      row2.addEventListener("click", (e) => {
         e.preventDefault();
         input.value = "";
-        set(o.multi ? [...value, c.name] : [c.name]);
-        if (o.multi && !full()) drawList();
-        else {
+        if (o.multi) {
+          set([...value, c.name], false);
+          if (full()) {
+            input.blur();
+            close();
+          } else drawList();
+        } else {
+          set([c.name]);
           list2.removeClass("is-open");
           input.blur();
         }
       });
     }
   };
+  list2.addEventListener("mousedown", (e) => e.preventDefault());
   input.addEventListener("focus", drawList);
   input.addEventListener("input", drawList);
-  input.addEventListener("blur", () => window.setTimeout(() => list2.removeClass("is-open"), 120));
+  input.addEventListener("blur", () => window.setTimeout(close, 120));
   drawChips();
   return root;
 }

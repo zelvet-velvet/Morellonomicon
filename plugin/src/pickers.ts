@@ -2,7 +2,9 @@ import { setIcon } from "obsidian";
 
 // A picker for the note editors (inbox, 速查卡片): the chosen ones as chips with their picture and name (× takes one out), and a box that
 // opens a list of matches with picture and name while you type (or as soon as it is tapped). One choice or several; with `max` the order
-// counts and the chips are numbered (前三件). Values are names; the field keeps them joined with 「、」.
+// counts and the chips are numbered (前三件). Values are names; the field keeps them joined with 「、」. The list is a grid of pictures
+// with their names; with several choices it stays open while you pick, and the change is handed on once it closes (a save redraws a
+// note's editor, which would close it after every pick).
 export interface Choice { name: string; img?: string; icon?: string; color?: string; also?: string }   // img: a picture URL; icon: a Lucide name; also: other words it is found by
 export interface PickerOpts { choices: Choice[]; value: string[]; multi?: boolean; max?: number; placeholder?: string; onChange: (v: string[]) => void }
 const LIMIT = 40;   // matches shown at once
@@ -23,7 +25,9 @@ export function picker(parent: HTMLElement, o: PickerOpts): HTMLElement {
     const input = root.createEl("input", { cls: "mn-pick-in", attr: { type: "text", placeholder: o.placeholder ?? "搜尋…", spellcheck: "false", autocomplete: "off" } });
     const list = root.createDiv({ cls: "mn-pick-list" });
     const full = () => !o.multi ? false : !!o.max && value.length >= o.max;
-    const set = (v: string[]) => { value = v; drawChips(); o.onChange(value); };
+    let pending = false;   // picks made while the list is open, handed on when it closes
+    const set = (v: string[], now = true) => { value = v; drawChips(); if (now) o.onChange(value); else pending = true; };
+    const close = () => { list.removeClass("is-open"); if (pending) { pending = false; o.onChange(value); } };
     const drawChips = () => {
         chips.empty();
         value.forEach((n, i) => {
@@ -33,7 +37,7 @@ export function picker(parent: HTMLElement, o: PickerOpts): HTMLElement {
             chip.createSpan({ text: n });
             const x = chip.createSpan({ cls: "mn-pick-x" });
             setIcon(x, "x");
-            x.addEventListener("click", (e) => { e.stopPropagation(); set(value.filter((_, j) => j !== i)); });
+            x.addEventListener("click", (e) => { e.stopPropagation(); set(value.filter((_, j) => j !== i), !list.hasClass("is-open")); });
         });
         chips.toggleClass("is-empty", !value.length);
         input.toggleClass("is-hidden", full());
@@ -47,18 +51,21 @@ export function picker(parent: HTMLElement, o: PickerOpts): HTMLElement {
             const row = list.createDiv({ cls: "mn-pick-opt" });
             pic(row, c, "mn-pick-pic");
             row.createSpan({ text: c.name });
-            // pointerdown, not click: the box loses its focus on the way and would close the list first
-            row.addEventListener("pointerdown", (e) => {
+            // a tap picks (a finger that scrolls the grid does not); the list keeps the box focused (see the mousedown below)
+            row.addEventListener("click", (e) => {
                 e.preventDefault();
                 input.value = "";
-                set(o.multi ? [...value, c.name] : [c.name]);
-                if (o.multi && !full()) drawList(); else { list.removeClass("is-open"); input.blur(); }
+                if (o.multi) {
+                    set([...value, c.name], false);
+                    if (full()) { input.blur(); close(); } else drawList();
+                } else { set([c.name]); list.removeClass("is-open"); input.blur(); }
             });
         }
     };
+    list.addEventListener("mousedown", (e) => e.preventDefault());   // a press in the list leaves the focus in the box, so it does not close
     input.addEventListener("focus", drawList);
     input.addEventListener("input", drawList);
-    input.addEventListener("blur", () => window.setTimeout(() => list.removeClass("is-open"), 120));
+    input.addEventListener("blur", () => window.setTimeout(close, 120));
     drawChips();
     return root;
 }
