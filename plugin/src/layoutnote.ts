@@ -30,6 +30,10 @@ interface Page { id: string; name: string; note?: string; tabbar?: boolean; mock
 interface Steps { past: string[]; future: string[]; last: string }
 const memory = new Map<string, Map<string, Steps>>();
 const winAt = new Map<string, { x: number; y: number }>();   // where a page's block window was dragged to (kept across redraws)
+type Metric = "top" | "left" | "right" | "bottom" | "w" | "h";
+let metricAt: Metric = "left";   // the number chosen in the box diagram (kept across redraws)
+const STEP = 4;                  // px a − / + tap moves (Design Rules: 4 px steps)
+const REPEAT_MS = 110;           // a held − / + repeats this often
 const uid = () => Math.random().toString(36).slice(2, 8);
 const snap = (v: number) => Math.round(v / SNAP) * SNAP;
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -283,21 +287,19 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
 
         // top bar: the name as text, left; double-tap to rename it in place; the rest of the bar drags the window
         const head = win.createDiv({ cls: "mn-lay-winhead" });
-        const title = head.createDiv({ cls: "mn-lay-wtitle", text: b.label });
+        // the name: a box you tap to type in; it wraps and grows with its text (16 px, so iOS does not zoom in on it)
+        const title = head.createEl("textarea", { cls: "mn-lay-wtitle-in", attr: { rows: "1", spellcheck: "false", "aria-label": "Block name" } });
+        title.value = b.label;
+        const growTitle = () => { title.style.height = "auto"; title.style.height = `${title.scrollHeight}px`; };
+        title.addEventListener("input", growTitle);
+        requestAnimationFrame(growTitle);
+        title.addEventListener("keydown", (k) => { if (k.key === "Enter") { k.preventDefault(); title.blur(); } });
+        title.addEventListener("change", () => { b.label = title.value.replace(/\s+/g, " ").trim() || b.label; commit(); });
         const close = head.createEl("button", { cls: "mn-lay-wbtn", attr: { "aria-label": "Close" } });
         icon(close, "x");
         close.addEventListener("click", () => { selected = null; winAt.delete(page.id); draw(); });
-        title.addEventListener("dblclick", (e) => {
-            e.stopPropagation();
-            const input = createEl("input", { cls: "mn-lay-wtitle-in", attr: { value: b.label, spellcheck: "false" } });
-            title.replaceWith(input);
-            input.focus(); input.select();
-            const done = (keep: boolean) => { if (keep) b.label = input.value.trim() || b.label; commit(); };
-            input.addEventListener("keydown", (k) => { if (k.key === "Enter") done(true); if (k.key === "Escape") done(false); });
-            input.addEventListener("blur", () => done(true));
-        });
         head.addEventListener("pointerdown", (e) => {
-            if ((e.target as HTMLElement).closest("input, button")) return;
+            if ((e.target as HTMLElement).closest("input, textarea, button")) return;
             const x0 = e.clientX, y0 = e.clientY, start = winAt.get(page.id) ?? { x: 0, y: 0 };
             let dragging = false;
             head.setPointerCapture(e.pointerId);
@@ -346,29 +348,53 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
         al("stretch-horizontal", "Full width (16 px margins)", () => { b.x = MARGIN; b.w = W - 2 * MARGIN; });
         al("layout-grid", "Snap every edge to 4 px", () => { const r = (v: number) => Math.round(v / 4) * 4; const x2 = r(b.x + b.w), y2 = r(b.y + b.h); b.x = r(b.x); b.y = r(b.y); b.w = Math.max(4, x2 - b.x); b.h = Math.max(4, y2 - b.y); });
 
-        // position and size: labelled fields two across; drag a label sideways to scrub the value
-        const geo = win.createDiv({ cls: "mn-lay-fields" });
-        const field = (lab: string, hint: string, get: () => number, set: (v: number) => void) => {
-            const f = geo.createDiv({ cls: "mn-lay-field", attr: { title: hint } });
-            const l = f.createSpan({ cls: "mn-lay-flab", text: lab });
-            const n = f.createEl("input", { cls: "mn-lay-num", attr: { type: "number", value: String(get()), step: String(SNAP), "aria-label": hint } });
-            n.addEventListener("change", () => { set(Math.round(Number(n.value) || 0)); commit(); });
-            l.addEventListener("pointerdown", (e) => {
-                e.preventDefault();
-                const x0 = e.clientX, v0 = get();
-                l.setPointerCapture(e.pointerId);
-                const move = (m: PointerEvent) => { set(snap(v0 + (m.clientX - x0))); n.value = String(get()); };
-                const up = () => { l.removeEventListener("pointermove", move); l.removeEventListener("pointerup", up); if (get() !== v0) commit(); };
-                l.addEventListener("pointermove", move);
-                l.addEventListener("pointerup", up);
-            });
+        // position and size as a box diagram (like a browser's box model): the screen's outline with the block in it, its distance to each
+        // screen edge on the four sides and its size inside; tap a number to choose it, then change it with − / + (4 px a tap, held to
+        // repeat) or type it. A distance moves the block (its size stays); W and H resize it from its top-left corner.
+        const get: Record<Metric, () => number> = { top: () => b.y, left: () => b.x, right: () => W - b.x - b.w, bottom: () => H - b.y - b.h, w: () => b.w, h: () => b.h };
+        const put: Record<Metric, (v: number) => void> = {
+            top: (v) => { b.y = clamp(v, 0, H - b.h); }, left: (v) => { b.x = clamp(v, 0, W - b.w); },
+            right: (v) => { b.x = clamp(W - v - b.w, 0, W - b.w); }, bottom: (v) => { b.y = clamp(H - v - b.h, 0, H - b.h); },
+            w: (v) => { b.w = clamp(v, 8, W - b.x); }, h: (v) => { b.h = clamp(v, 8, H - b.y); },
         };
-        field("X", "Left edge (x)", () => b.x, (v) => { b.x = clamp(v, 0, W - b.w); });
-        field("Y", "Top edge (y)", () => b.y, (v) => { b.y = clamp(v, 0, H - b.h); });
-        field("W", "Width", () => b.w, (v) => { b.w = clamp(v, 8, W - b.x); });
-        field("H", "Height", () => b.h, (v) => { b.h = clamp(v, 8, H - b.y); });
-        field("R", "Right edge (x + w)", () => b.x + b.w, (v) => { b.w = clamp(v - b.x, 8, W - b.x); });
-        field("B", "Bottom edge (y + h)", () => b.y + b.h, (v) => { b.h = clamp(v - b.y, 8, H - b.y); });
+        const NAME: Record<Metric, string> = { top: "Top gap", left: "Left gap", right: "Right gap", bottom: "Bottom gap", w: "Width", h: "Height" };
+        const boxEl = win.createDiv({ cls: "mn-lay-box" });
+        const nums = new Map<Metric, HTMLElement>();
+        const num = (m: Metric, parent: HTMLElement, cls: string) => {
+            const btn = parent.createEl("button", { cls: "mn-lay-bnum " + cls + (m === metricAt ? " is-on" : ""), text: String(get[m]()), attr: { "aria-label": NAME[m] } });
+            btn.addEventListener("click", () => { metricAt = m; nums.forEach((x, k) => x.toggleClass("is-on", k === m)); showStep(); });
+            nums.set(m, btn);
+        };
+        num("top", boxEl, "is-top");
+        num("left", boxEl, "is-left");
+        const blockEl = boxEl.createDiv({ cls: "mn-lay-bblock" });
+        blockEl.style.setProperty("--c", KINDS[b.kind]?.color ?? "#9aa3b8");
+        num("w", blockEl, "is-w");
+        blockEl.createSpan({ cls: "mn-lay-bx", text: "×" });
+        num("h", blockEl, "is-h");
+        num("right", boxEl, "is-right");
+        num("bottom", boxEl, "is-bottom");
+        // the chosen number's stepper
+        const step = win.createDiv({ cls: "mn-lay-step" });
+        const stepName = step.createSpan({ cls: "mn-lay-sname" });
+        const minus = step.createEl("button", { cls: "mn-lay-sbtn", attr: { "aria-label": "Less" } });
+        icon(minus, "minus");
+        const input = step.createEl("input", { cls: "mn-lay-sin", attr: { type: "number", inputmode: "numeric", step: String(STEP) } });
+        const plus = step.createEl("button", { cls: "mn-lay-sbtn", attr: { "aria-label": "More" } });
+        icon(plus, "plus");
+        const showStep = () => { stepName.setText(NAME[metricAt]); input.value = String(get[metricAt]()); };
+        const refresh = () => { nums.forEach((x, k) => x.setText(String(get[k]()))); input.value = String(get[metricAt]()); };
+        const nudge = (d: number) => { put[metricAt](get[metricAt]() + d); refresh(); };
+        let held = 0, nudged = false;
+        const hold = (btn: HTMLElement, d: number) => {
+            btn.addEventListener("pointerdown", (e) => { e.preventDefault(); nudge(d); nudged = true; held = window.setInterval(() => nudge(d), REPEAT_MS); });
+            const stop = () => { window.clearInterval(held); held = 0; if (nudged) { nudged = false; commit(); } };
+            for (const ev of ["pointerup", "pointercancel", "pointerleave"]) btn.addEventListener(ev, stop);
+        };
+        hold(minus, -STEP);
+        hold(plus, STEP);
+        input.addEventListener("change", () => { put[metricAt](Math.round(Number(input.value) || 0)); commit(); });
+        showStep();
 
         // the note grows with its text
         const note = win.createEl("textarea", { cls: "mn-lay-wnote", attr: { rows: "1", placeholder: "Note: what goes here, what is wrong" } });
