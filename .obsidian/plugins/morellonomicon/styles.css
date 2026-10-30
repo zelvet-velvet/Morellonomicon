@@ -1019,36 +1019,33 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-deck .mn-sl-face { border-radius: 22px; }
 .mn-rq-deck .mn-qc-tab { padding-bottom: 104px; }
 .mn-rq-deck .mn-qc-tab.is-look { padding-bottom: 0; }
-/* the champion page (v3, champions.ts championCard): the centered splash fills the upper screen edge to edge behind the page, fading out
-   under the status bar and at its foot; the name, the pages and their parts sit at the bottom over the fade with no frames; small icon
-   chips in one capsule float over the foot. Tinted with --dc. */
+/* the champion page (v3, champions.ts championCard): the centered splash fills the whole page behind it, fading out under the status
+   bar and at its foot; the pages (no titles, 全部 at the top right) float on it with no frames, the name at the foot; past 概覽 the
+   art darkens so a page's parts can use all of it; a page hint (dots) floats at the top middle. Tinted with --dc. */
 .mn-champ.is-v3 { position: relative; }
-.mn-champ.is-v3::before { content: ""; flex: 1 1 auto; min-height: 140px; }   /* the art takes the room above the name */
-.mn-champ.is-v3 .mn-hero { position: absolute; z-index: 0; top: 0; left: 0; right: 0; height: 72%; min-height: 0; margin: 0; display: block; border-radius: 0;
-    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--mn-safe-top, 0px) + 64px), #000 52%, transparent 100%); mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--mn-safe-top, 0px) + 64px), #000 52%, transparent 100%); }
+.mn-champ.is-v3 .mn-hero { position: absolute; z-index: 0; top: 0; left: 0; right: 0; bottom: 0; height: auto; min-height: 0; margin: 0; display: block; border-radius: 0;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--mn-safe-top, 0px) + 64px), #000 70%, transparent 100%); mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--mn-safe-top, 0px) + 64px), #000 70%, transparent 100%); }
 .mn-app.is-overlay .mn-champ.is-v3 .mn-hero { min-height: 0; }
-.mn-champ.is-v3 .mn-hero-bg { top: 0; transform: none; background-size: cover; background-position: center 30%; -webkit-mask-image: none; mask-image: none; }
-.mn-champ.is-v3 .mn-hero::after { background: linear-gradient(180deg, transparent 45%, color-mix(in srgb, var(--mn-bg) 55%, transparent) 100%); }   /* a little darker where the name sits */
+.mn-champ.is-v3 .mn-hero-bg { top: 0; transform: none; background-size: cover; background-position: center 30%; -webkit-mask-image: none; mask-image: none; transition: filter 0.35s ease-out; }
+.mn-champ.is-v3.is-deep .mn-hero-bg { filter: brightness(0.35) saturate(0.85) blur(2px); }
+.mn-champ.is-v3 .mn-hero::after { background: linear-gradient(180deg, transparent 40%, color-mix(in srgb, var(--mn-bg) 55%, transparent) 100%); }   /* a little darker where the parts and the name sit */
 .mn-champ.is-v3 > :not(.mn-hero) { position: relative; z-index: 1; }
-.mn-champ .mn-card-head { padding: 0 4px 4px; }
+.mn-champ .mn-card-head { padding: 4px 4px 8px; }
 .mn-champ .mn-card-img { width: 64px; height: 64px; }
 .mn-app .mn-champ .mn-card-who .mn-title { font-size: 30px; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6); }
-.mn-champ.is-v3 > .mn-cpa { flex: none; height: auto; margin: 4px -16px 0; }
+.mn-champ.is-v3 > .mn-cpa { flex: 1 1 auto; min-height: 0; height: auto; margin: 0 -16px; }
+.mn-champ.is-v3 > .mn-cpa-hint { position: absolute; z-index: 3; top: calc(var(--mn-safe-top, 0px) + 20px); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 6px; pointer-events: none; }
+.mn-cpa-hint i { width: 6px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.45); transition: width 0.25s, background 0.25s; }
+.mn-cpa-hint i.is-on { width: 18px; background: var(--mn-accent); }
 .mn-cpa-track { display: flex; height: 100%; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
 .mn-cpa-track::-webkit-scrollbar { display: none; }
-.mn-cpa-page { flex: 0 0 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: 0 16px 66px; scroll-snap-align: start; scroll-snap-stop: always; overflow: hidden; }
-.mn-cpa-top { flex: none; display: flex; align-items: center; justify-content: space-between; height: 48px; }
-.mn-cpa-name { font-size: 20px; font-weight: 800; color: var(--mn-text); }
+.mn-cpa-page { flex: 0 0 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: calc(var(--mn-safe-top, 0px) + 48px) 16px 8px; scroll-snap-align: start; scroll-snap-stop: always; overflow: hidden; }
+.mn-cpa-top { flex: none; display: flex; align-items: center; justify-content: flex-end; height: 40px; }
 .mn-app .mn-cpa-all { display: inline-flex; align-items: center; gap: 2px; height: 34px; padding: 0 0 0 10px; border: 0; border-radius: 0; box-shadow: none; background: none; font-size: 15px; font-weight: 700; color: var(--mn-accent); }
 .mn-cpa-all svg { width: 16px; height: 16px; color: var(--mn-accent); }
 .mn-cpa-all .mn-ic { display: flex; }
-.mn-cpa-body { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; }   /* the content at the bottom */
-.mn-champ.is-v3 > .mn-cpa-nav { position: absolute; z-index: 3; left: 50%; bottom: 12px; transform: translateX(-50%); display: flex; gap: 2px; height: auto; margin: 0; padding: 4px; border-radius: 18px;
-    background: color-mix(in srgb, var(--mn-bg) 72%, transparent); border: 1px solid var(--mn-line); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); }
-.mn-app .mn-cpa-chip { display: grid; place-items: center; width: 38px; height: 30px; min-height: 0; padding: 0; border-radius: 14px; border: 0; box-shadow: none; background: transparent; color: var(--mn-muted); transition: background 0.2s, color 0.2s; }
-.mn-app .mn-cpa-chip.is-on { background: var(--mn-accent); color: var(--text-on-accent, #fff); }
-.mn-cpa-chip svg { width: 17px; height: 17px; }
-.mn-cpa-chip .mn-ic { display: flex; }
+.mn-cpa-body { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 14px; }   /* the other pages: their parts spread over the whole page */
+.mn-cpa-page.is-overview .mn-cpa-body { justify-content: flex-end; }   /* 概覽: just above the name, the art above it */
 .mn-cpa-empty { margin: 0; text-align: center; font-size: 15px; line-height: 1.6; color: var(--mn-muted); }
 /* 概覽: three stat tiles, the tags two across */
 .mn-cv-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
@@ -1611,3 +1608,11 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app .mn-lay-wnote, .mn-lay-wnote { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); box-shadow: none; }
 .mn-lay-wnote:focus { border-color: var(--interactive-accent); }
 .mn-lay-legend.is-hidden { display: none; }
+/* 概覽: the style chart on the left, the three stat tiles stacked on its right (icon, value, what) */
+.mn-cv-look { display: grid; grid-template-columns: minmax(0, 1fr) 132px; align-items: center; gap: 8px; }
+.mn-cv-radar svg { display: block; width: 100%; height: auto; }
+.mn-cv-look .mn-cv-stats { grid-template-columns: 1fr; gap: 6px; }
+.mn-champ.is-v3 .mn-cv-look .mn-cv-stat { display: grid; grid-template-columns: 26px 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; text-align: left; padding: 2px; }
+.mn-cv-look .mn-cv-stat .mn-cv-sic { grid-row: 1 / span 2; }
+.mn-champ.is-v3 .mn-cv-look .mn-cv-stat b { font-size: 17px; line-height: 1.2; }
+.mn-cv-look .mn-cv-bar { grid-column: 2; }

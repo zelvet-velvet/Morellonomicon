@@ -6391,7 +6391,7 @@ function championCard(ctx) {
   const hero = h(el, "div", "mn-hero");
   const bg = h(hero, "div", "mn-hero-bg");
   bg.style.backgroundImage = `url("${cardArt(c.id)}")`;
-  const head2 = h(el, "div", "mn-card-head");
+  const head2 = h(null, "div", "mn-card-head");
   const im = h(head2, "img", "mn-card-img");
   im.src = c.icon;
   im.alt = "";
@@ -6425,10 +6425,9 @@ function championCard(ctx) {
   const box = h(el, "div", "mn-cpa");
   const track = h(box, "div", "mn-cpa-track");
   for (const ev of ["touchstart", "touchmove"]) track.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
-  const cards = pages.map(([p, name]) => {
-    const pg = h(track, "section", "mn-cpa-page");
+  const cards = pages.map(([p]) => {
+    const pg = h(track, "section", "mn-cpa-page is-" + p);
     const top = h(pg, "div", "mn-cpa-top");
-    h(top, "b", "mn-cpa-name", name);
     if (p !== "tips" || c.tips.length) allButton(top, part(p));
     const body = h(pg, "div", "mn-cpa-body");
     if (p === "overview") overviewTop(body, c);
@@ -6438,36 +6437,29 @@ function championCard(ctx) {
     else tipsTop(body, c);
     return pg;
   });
-  const nav = h(el, "div", "mn-cpa-nav");
-  const chips = pages.map(([, name, ic], i) => {
-    const d = h(nav, "button", "mn-cpa-chip");
-    icon(d, ic);
-    d.setAttribute("aria-label", name);
-    d.addEventListener("click", (e) => {
-      e.preventDefault();
-      go(i, true);
-    });
-    return d;
-  });
+  el.append(head2);
+  const hint = h(el, "div", "mn-cpa-hint");
+  const dots = pages.map(() => h(hint, "i"));
   let cur = -1;
   const mark = (i) => {
     if (i === cur) return;
     cur = i;
-    chips.forEach((d, k) => d.toggleClass("is-on", k === i));
+    dots.forEach((d, k) => d.toggleClass("is-on", k === i));
+    el.toggleClass("is-deep", i > 0);
   };
   const at = () => {
     const step = (cards[1]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0);
     return step > 0 ? Math.round(track.scrollLeft / step) : 0;
   };
-  const go = (i, smooth) => {
-    track.scrollTo({ left: (cards[i]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0), behavior: smooth ? "smooth" : "instant" });
+  const go = (i) => {
+    track.scrollTo({ left: (cards[i]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0), behavior: "instant" });
     mark(i);
   };
   track.addEventListener("scroll", () => mark(Math.min(cards.length - 1, at())), { passive: true });
   const startSub = lastSub.get(c.id);
   lastSub.delete(c.id);
   const start = Math.max(0, pages.findIndex(([p]) => p === startSub));
-  requestAnimationFrame(() => go(start, false));
+  requestAnimationFrame(() => go(start));
   mark(start);
   return { title: "", el, ready: null };
 }
@@ -6483,7 +6475,9 @@ function allButton(parent, go) {
 var DIFF_STEPS = 10;
 var TAGS_SHOWN = 4;
 function overviewTop(body, c) {
-  const tiles = h(body, "div", "mn-cv-stats");
+  const row2 = h(body, "div", "mn-cv-look");
+  profileRadar(h(row2, "div", "mn-cv-radar"), profileAxes(c), DAMAGE_COLOR[c.damageType || c.skillDamage[0] || ""] ?? "var(--mn-accent)");
+  const tiles = h(row2, "div", "mn-cv-stats");
   const tile2 = (iconName, color, big, small) => {
     const t2 = h(tiles, "div", "mn-cv-stat");
     t2.style.setProperty("--c", color);

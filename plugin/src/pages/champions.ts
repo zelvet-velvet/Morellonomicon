@@ -1,6 +1,6 @@
 import type { Champion, Item } from "../data/store";
 import { DAMAGE_COLOR, DAMAGE_ICON, augIcon, scalingParts, warmPictures, blockUntil, layoutBlock, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, slideSeg, tip, fixedPage } from "../ui";
-import { TAG_GROUPS, championProfile, iconFilter, reachOf, tagFilter, tagRow } from "./profile";
+import { TAG_GROUPS, championProfile, iconFilter, profileAxes, profileRadar, reachOf, tagFilter, tagRow } from "./profile";
 import { buildTab } from "./build";
 import { cardArt } from "./roster";
 import type { PageCtx, PageOut } from "./index";
@@ -178,11 +178,11 @@ export type SubTab = "overview" | "skills" | "build" | "augments" | "tips";
 const lastSub = new Map<string, SubTab>();
 export function rememberSub(id: string, sub: SubTab): void { lastSub.set(id, sub); }   // the page a link asks the champion card to open on
 
-// The champion page (v3, Zaviel 2026-10-30, Dev Tools/Layouts.md "Champion page v3"): the centered splash fills the upper screen behind
-// the page (Back floats on it) and fades out at its foot; the icon, name and chips, then the pages, sit at the bottom over the fade, so
-// the art takes the room above (no empty band). The pages swipe sideways (snapped), their parts floating on the fade with no frames: the
-// page's name at the top left, 全部 at the top right, the content under them; five small icon chips in one capsule float over the foot
-// (the current one lit; tap to jump). The page never scrolls down.
+// The champion page (v3, Zaviel 2026-10-30, Dev Tools/Layouts.md "Champions · champion page"): the centered splash fills the whole page
+// behind it (Back floats on it); the icon, name and chips sit at its foot. Above the name the pages swipe sideways (snapped) with their
+// parts floating on the art, no frames and no page titles; 全部 › at the top right opens the full list as a page of its own. 概覽 keeps
+// the art bright with its parts just above the name; on the other pages the art darkens so their parts can use the whole page. A small
+// page hint (a dot per page, the current one lit) floats at the top middle. The page never scrolls down.
 const PAGES: [Part, string, string][] = [["overview", "概覽", "id-card"], ["skills", "技能", "keyboard"], ["build", "出裝", "shopping-bag"], ["augments", "強化", "sparkles"], ["tips", "技巧", "lightbulb"]];
 export function championCard(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
@@ -200,7 +200,7 @@ export function championCard(ctx: PageCtx): PageOut {
     const bg = h(hero, "div", "mn-hero-bg");
     bg.style.backgroundImage = `url("${cardArt(c.id)}")`;
     // the icon, name, title and chips over the art
-    const head = h(el, "div", "mn-card-head");
+    const head = h(null, "div", "mn-card-head");   // placed at the foot, under the pages (below)
     const im = h(head, "img", "mn-card-img"); im.src = c.icon; im.alt = "";
     // the art card loads as a block of its own: the splash picture (a CSS background, so it is fetched here) and the icon
     const splash = bg.style.backgroundImage.slice(5, -2);
@@ -222,12 +222,11 @@ export function championCard(ctx: PageCtx): PageOut {
     const box = h(el, "div", "mn-cpa");
     const track = h(box, "div", "mn-cpa-track");
     for (const ev of ["touchstart", "touchmove"]) track.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });   // not Obsidian's edge swipes
-    const cards = pages.map(([p, name]) => {
-        const pg = h(track, "section", "mn-cpa-page");
-        const top = h(pg, "div", "mn-cpa-top");
-        h(top, "b", "mn-cpa-name", name);
+    const cards = pages.map(([p]) => {
+        const pg = h(track, "section", "mn-cpa-page is-" + p);
+        const top = h(pg, "div", "mn-cpa-top");   // no page title: only 全部 at the top right
         if (p !== "tips" || c.tips.length) allButton(top, part(p));
-        const body = h(pg, "div", "mn-cpa-body");   // the content at the bottom, just above the chips
+        const body = h(pg, "div", "mn-cpa-body");   // 概覽: just above the name; the others: the whole page
         if (p === "overview") overviewTop(body, c);
         else if (p === "skills") skillsTop(body, c);
         else if (p === "build") buildTop(body, c, ctx);
@@ -235,25 +234,25 @@ export function championCard(ctx: PageCtx): PageOut {
         else tipsTop(body, c);
         return pg;
     });
-    // the page chips: small icons in one capsule floating over the foot, the current one lit; a chip jumps to its page
-    const nav = h(el, "div", "mn-cpa-nav");
-    const chips = pages.map(([, name, ic], i) => {
-        const d = h(nav, "button", "mn-cpa-chip");
-        icon(d, ic);
-        d.setAttribute("aria-label", name);
-        d.addEventListener("click", (e) => { e.preventDefault(); go(i, true); });
-        return d;
-    });
+    el.append(head);   // the name at the foot
+    // the page hint at the top middle: a dot per page, the current one lit (a hint only; the pages swipe)
+    const hint = h(el, "div", "mn-cpa-hint");
+    const dots = pages.map(() => h(hint, "i"));
     let cur = -1;
-    const mark = (i: number) => { if (i === cur) return; cur = i; chips.forEach((d, k) => d.toggleClass("is-on", k === i)); };
+    const mark = (i: number) => {
+        if (i === cur) return;
+        cur = i;
+        dots.forEach((d, k) => d.toggleClass("is-on", k === i));
+        el.toggleClass("is-deep", i > 0);   // past 概覽 the art darkens, so the page's parts can use all of it
+    };
     const at = () => { const step = (cards[1]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0); return step > 0 ? Math.round(track.scrollLeft / step) : 0; };
-    const go = (i: number, smooth: boolean) => { track.scrollTo({ left: (cards[i]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0), behavior: smooth ? "smooth" : ("instant" as ScrollBehavior) }); mark(i); };
+    const go = (i: number) => { track.scrollTo({ left: (cards[i]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0), behavior: "instant" as ScrollBehavior }); mark(i); };
     track.addEventListener("scroll", () => mark(Math.min(cards.length - 1, at())), { passive: true });
     // a link may ask for a page (once: the next visit starts on 概覽 again)
     const startSub = lastSub.get(c.id);
     lastSub.delete(c.id);
     const start = Math.max(0, pages.findIndex(([p]) => p === startSub));
-    requestAnimationFrame(() => go(start, false));
+    requestAnimationFrame(() => go(start));
     mark(start);
     return { title: "", el, ready: null };   // the name is over the art; the blocks load on their own
 }
@@ -267,9 +266,12 @@ function allButton(parent: HTMLElement, go: () => void): void {
 }
 const DIFF_STEPS = 10;
 const TAGS_SHOWN = 4;
-// 概覽: three stat tiles (damage kind, reach, difficulty as a 10-step bar), then its ability tags two across
+// 概覽: the style chart beside three stat tiles (damage kind, reach, difficulty as a 10-step bar), then its ability tags two across
 function overviewTop(body: HTMLElement, c: Champion): void {
-    const tiles = h(body, "div", "mn-cv-stats");
+    // the style chart (radar) on the left, the three stat tiles stacked on its right, the tags under them
+    const row = h(body, "div", "mn-cv-look");
+    profileRadar(h(row, "div", "mn-cv-radar"), profileAxes(c), DAMAGE_COLOR[c.damageType || c.skillDamage[0] || ""] ?? "var(--mn-accent)");
+    const tiles = h(row, "div", "mn-cv-stats");
     const tile = (iconName: string, color: string, big: string, small: string) => {
         const t = h(tiles, "div", "mn-cv-stat");
         t.style.setProperty("--c", color);
