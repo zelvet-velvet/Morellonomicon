@@ -6,7 +6,7 @@ import { cardArt } from "./roster";
 import type { PageCtx, PageOut } from "./index";
 import { badgeColor, badgeText, changesBlock, entryDir, marker } from "./changes";
 import { metaLine } from "./fresh";
-import { preloadClip, skillStrip } from "./skills";
+import { skillStrip } from "./skills";
 import { PICKS_SHOWN, augmentPicks, augmentTiles } from "./detail";
 
 const ROLES = ["戰士", "坦克", "法師", "刺客", "射手", "輔助"];
@@ -222,10 +222,6 @@ export function championCard(ctx: PageCtx): PageOut {
     const official = store.officialFor("champions", c.name)[0];
     if (badgeText(now)) chip(tags, badgeText(now), { color: badgeColor(now), onTap: part("overview") });
     else if (official) { const m = marker(entryDir(official.entry)); chip(tags, `${m.mark} ${official.patch}`, { color: m.color, onTap: part("overview") }); }
-
-    // the ability clips, fetched on opening: Q's first (技能 opens on it), then the others, so a tapped ability plays at once
-    const clipOrder = [...c.skills.filter((s) => s.key === "Q"), ...c.skills.filter((s) => s.key !== "Q")];
-    void (async () => { for (const s of clipOrder) { await preloadClip(c, s.key); if (!el.isConnected) return; } })();
 
     // the pages: one each, side by side; they follow the finger (below)
     const pages = PAGES.filter(([p]) => p !== "augments" || mayhem);

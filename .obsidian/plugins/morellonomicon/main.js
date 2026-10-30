@@ -3634,11 +3634,6 @@ function demo(parent, c, s, onFail) {
     playLocal(local);
     return;
   }
-  const job = downloading.get(url);
-  if (job) void job.then(() => {
-    const f = downloaded.get(url);
-    if (f && v.isConnected && v.readyState < 2) playLocal(f);
-  });
   v.addEventListener("loadeddata", () => {
     void v.play().catch(() => void 0);
   }, { once: true });
@@ -6440,13 +6435,6 @@ function championCard(ctx) {
     const m = marker(entryDir(official.entry));
     chip(tags2, `${m.mark} ${official.patch}`, { color: m.color, onTap: part("overview") });
   }
-  const clipOrder = [...c.skills.filter((s) => s.key === "Q"), ...c.skills.filter((s) => s.key !== "Q")];
-  void (async () => {
-    for (const s of clipOrder) {
-      await preloadClip(c, s.key);
-      if (!el.isConnected) return;
-    }
-  })();
   const pages = PAGES.filter(([p]) => p !== "augments" || mayhem);
   const box = h(el, "div", "mn-cpa");
   const track = h(box, "div", "mn-cpa-track");
@@ -7663,9 +7651,7 @@ var MnView = class extends import_obsidian15.ItemView {
         // the same page again, in place: no animation, the scroll kept
         openChampion: (id2, sub) => {
           if (sub) rememberSub(id2, sub);
-          const c = store.champion(id2);
-          if (c) void preloadClip(c, "Q");
-          this.push({ key: "champion", title: c?.name ?? id2, params: { id: id2 } });
+          this.push({ key: "champion", title: store.champion(id2)?.name ?? id2, params: { id: id2 } });
         },
         openAugment: (id2) => this.push({ key: "augment", title: store.augment(id2)?.name ?? "Augment", params: { id: id2 } }),
         openItem: (id2) => this.push({ key: "item", title: store.item(id2)?.name ?? "Item", params: { id: id2 } }),

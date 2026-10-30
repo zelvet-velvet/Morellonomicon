@@ -164,11 +164,6 @@ export function demo(parent: HTMLElement, c: Champion, s: { key: string; seconds
     };
     const local = downloaded.get(url);
     if (local) { playLocal(local); return; }
-    // a clip being downloaded ahead (the champion page fetches its clips from the tap that opens it): a muted clip off screen does
-    // not load on iOS until it is shown, so it also streams as usual; whichever has a frame first plays (the download takes over a
-    // stream that has none yet)
-    const job = downloading.get(url);
-    if (job) void job.then(() => { const f = downloaded.get(url); if (f && v.isConnected && v.readyState < 2) playLocal(f); });
     v.addEventListener("loadeddata", () => { void v.play().catch(() => undefined); }, { once: true });
     // Some champions (Pyke…) have only a WebM clip, which Riot's server labels as plain text; a phone refuses to stream that.
     // Downloading the file and playing it as a video makes the format known, so when neither source streams that is tried before giving up.
