@@ -1614,6 +1614,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-cv-look .mn-cv-stats { order: 1; }
 .mn-cv-look .mn-cv-radar { order: 2; }
 .mn-cv-radar svg { display: block; width: 100%; height: auto; }
+.mn-cv-look .mn-cv-radar { transform: translateX(40px); }   /* the chart's labels leave ~40 px blank at its sides: its drawing ends on the right margin */
 .mn-cv-radar .mn-rd-label { font-size: 14px; }   /* the chart is drawn at 0.8 of its 300 px viewBox: about 11 px on screen */
 .mn-cv-radar .mn-rd-val { font-size: 15px; }
 .mn-cv-look .mn-cv-stats { grid-template-columns: 1fr; gap: 12px; }
@@ -1621,5 +1622,5 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-cv-look .mn-cv-stat .mn-cv-sic { grid-row: 1 / span 2; }
 .mn-champ.is-v3 .mn-cv-look .mn-cv-stat b { font-size: 18px; line-height: 1.2; }
 .mn-cv-look .mn-cv-stat b, .mn-cv-look .mn-cv-stat span:not(.mn-cv-sic), .mn-cv-look .mn-cv-bar { grid-column: 2; }
-.mn-cpa-page.is-overview .mn-cpa-body { gap: 20px; padding-bottom: 20px; }
-.mn-champ.is-v3 .mn-tgs.mn-cv-tags { justify-content: flex-start; margin-left: -4px; }   /* the first pill's own padding on the margin */
+.mn-cpa-page.is-overview .mn-cpa-body { gap: 20px; padding-bottom: 8px; }
+.mn-champ.is-v3 .mn-tgs.mn-cv-tags { justify-content: center; margin-top: 12px; }   /* centred, a little lower: nearer the name than the chart */
