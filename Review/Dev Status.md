@@ -8,7 +8,9 @@ sticker: lucide//activity
 > [!important] For AI assistants
 > Read [[LLM Guide]] before any `CMD_` or status update. This note is kept by `CMD_SYNC` / `CMD_ROLLOVER` / `CMD_NOTES_SYNC`; the day notes in `Review/Log/` by `CMD_JOURNAL`.
 
-## 🚀 Today's Progress (2026-10-29)
+## 🚀 Today's Progress (2026-10-30)
+
+## 📅 Yesterday's Progress (2026-10-29)
 - **Search capsule on the keyboard**: on Picks and Champions it rises with the keyboard from the tap and goes down the moment it closes, with no jumps (to check on the phone).
 - **Loading look for every block**: each Layouts block with pictures blurs with the band of light until they are in; a page's blocks load together (Home, Picks, Champions, Items) (to check on the phone).
 - **Design Rules note**: [[Design Rules]] holds how every page looks and behaves; the LLM Guide points to it.
@@ -27,57 +29,6 @@ sticker: lucide//activity
 - **New glossary and item pages**: 名詞表 as a grouped list with icons and search (B); the item page as a banner, stat chips and effect cards (A) (to check on the phone).
 - **Picks lanes**: bigger lane icons, one lane at a time, and Champions' lanes too (to check on the phone).
 - **Tidy-up**: about 80 unused style rules and a few unused bits of code removed.
-
-## 📅 Yesterday's Progress (2026-10-28)
-- **速查 swipe**: picked champions as the Handbook card pile, right = like, left = pass, then the liked ones two across (to check on the phone).
-- **速查 overview cards**: one-line overview, big 魔攻 / 物攻 and role tiles, a 靈魂 box, folded 技能白話 and 詳細; text for 8 champions drafted (to check on the phone and to proofread).
-- **Item page**: recipe as the shop's tree above 版本調整; the Build tab links to the item page (to check on the phone).
-- **Icons in one place**: [[Icons]] records which icon means what (from the filter panel) and the code maps they live in; skill cards now use the same damage icons; the 被 badge is readable (to check on the phone).
-- **Scaling colours and %生命傷害 icon**: magic and physical scaling are separate pills in their own colours; the %生命傷害 tag no longer shows % twice (to check on the phone).
-- **No press highlight on icons**: no grey blob or shadow around any tapped icon or button (to check on the phone).
-- **Malphite ult by level**: a `levels` card shows each ult level's damage alone and with 300 魔法攻擊; the misleading big-number card is gone (to check on the phone).
-- **Fixed text rows**: kicker, 1-line title, 2-line body and a 小技巧 line (short orange line, label, tip), the same height on every card; long text is cut with … (to check on the phone).
-- **Clip height and 小技巧**: clips end at the top of the words so the whole height shows; the card tip label is 小技巧 (to check on the phone).
-- **Frame F2 in the app**: the picture fills the card behind the words, the words fit their content, the dock and the clip fade follow the text height (to check on the phone).
-- **Card layout rules**: one frame for every Handbook card (F2, whole-card stage, words fit their content, dock on top of the words), text limits and stage templates in the Handbook card section of [[Layouts]]; `tools/check_cards.py` finds 35 of 68 cards over the limits.
-- **Clip crop and fade**: every clip card fills the picture, cut to where the champion stands (about three quarters from the left), with an eased fade (no edge line) and the tags / steps just above the words (to check on the phone).
-- **Combo card**: Jayce's cannon page is the demo clip with the ability pictures, an arrow and three result chips instead of text columns; a new `combo` visual; its clip fills the card (cut to the middle) and plays E then Q (to check on the phone).
-- **Clip cards and centring**: clips sit as a rounded 16:9 picture on the card's own background (no black strip, no blur); skill cards are centred vertically; the number card says which rank its bars use (to check on the phone).
-- **Loading screen tips in the Handbook**: the trivia card shows the game's own loading screen tips in zh_TW, only the ones Zaviel picked from the wiki (2017 Miscellaneous and 2025 Did You Know, all 152 found), over one of ARAM's three loading screen backgrounds (Howling Abyss, Butcher's Bridge, the Ionian bridge); random each visit, no repeats.
-- **Patch job push**: the job puts its commit on top of a newer main before pushing (a push made while it ran used to make it fail).
-- **Handbook home**: opens with the loading tip on an ARAM map, then two blocks, 初來乍到 (basics) and 高手必備 (advanced), each with its own progress, the next topic as a large picture and the rest two across; the glossary is a row at the end.
-- **Roles and lanes**: 英雄定位 explains how roles map to lanes (下路 pair, 中路 roaming, 打野) and why counters change with lane and time; the last-card next-topic panel is now fixed under the card, and a tilted card passes over the progress bars.
-- **Your mastery**: `tools/fetch_mastery.py` writes a git-ignored `_data/mastery.json`; the Champions grid and a champion's page show your mastery level and points on devices that have it (the phone does not until it is published) (to check).
-- **%生命傷害 tag**: 75 champions that deal a share of the target's health (max / current / missing) can be filtered in the 傷害 group (to check on the phone); a sort by the size of the percent is not built.
-- **Passive numbers**: 44 champions' passives show damage / heal / shield by champion level with scaling (from the passive's own tooltip); percent-of-health amounts are left out (to check on the phone).
-- **Folder names in one place**: `tools/vault_paths.py` and the plugin defaults name the note folders; the rename to English (when calm) is then a `git mv` plus a map of the saved read paths.
-- **No blocking veil, scroll reset**: detail pages show at once (no page-wide veil that blocks taps), the champion banner loads as a block, and a page always starts at the top (to check on the phone).
-- **Handbook blocks**: the tip stack and each group of topic tiles load as blocks; the keyword row keeps its height; the band of light is only inside blocks (to check on the phone).
-- **Blocks that load on their own**: the lane row, champion grid, augment list and Patch grids each show blurred with the light band until their own pictures are in (to check on the phone).
-- **Icons without blink, lighter Pyke**: small icons load at once and are warmed in the background; a WebM-only clip plays only when on top (to check on the phone).
-- **Complete pages, calm start-up**: pages wait a quarter second for their pictures and appear complete (blur only if slower); the start-up veil waits until the data stops changing; Handbook opens at home after a restart (to check on the phone).
-- **Start-up without the glitch**: one blur layer from the first frame, kept across the rebuild, fading out once the first page's icons are in (to check on the phone).
-- **Clips, blink, start-up icons**: clips are released when a page is left and the blur backdrop is a still (no stuck black clips on a second visit); the loading look waits 0.25 s before showing and stays 0.5 s; the first page after start-up waits for its icons (to check on the phone).
-- **Start-up loading look**: the first page shows the blur and light band until the data files are read (to check on the phone).
-- **Glass-sheen loading**: loading shows a soft band of light sliding from the bottom right to the left over a screen-sized blur veil (the blank Champions page came from blurring the whole page) (to check on the phone).
-- **Page start and loading look**: champion and pushed pages start at the top; tab pages show blurred with the ripple until their icons are in (to check on the phone).
-- **Rippling load and warm clips**: the loading look is rippling light; `clip` cards show their video again; the next topic's first clips are downloaded while on the Handbook home (to check on the phone).
-- **Loading and tabs**: topic cards breathe blurred while loading (waits for the first three cards' media); switching tabs resets the tab you left to its main page.
-- **Topic loading and Jayce**: a topic shows once all its clips and pictures have loaded; 杰西 has a form-set card with both forms' ability pictures (no cannon clip: Riot's clips Q2 / E2 are the hammer).
-- **Card layout templates**: `ability`, `clip`, `number`, `forms` cards place shared components in grid areas (`cardkit.ts`); used by 跳脫定位框架; other topics can switch their skill cards over (to check on the phone).
-- **跳脫定位框架 in detail**: 杰西 (R and the cannon Q, E clips), 派克 (R clip and R card), 墨菲特 (R clip and R numbers with AP scaling); new card options `skill … grid` and `video … Q2`.
-- **Collectible cards**: Handbook topic cards use mock D (white border carrying a rainbow sheen that follows the drag, dark full-art face; no badge) (to check on the phone).
-- **Tip swipe and tab bar fixes**: the tip stack is easier to swipe (no hint text); the tab highlight is a plain pill and dragging it no longer opens the sidebar (to check on the phone).
-- **Cards and glass**: clearer card frames and a visible pile; the tip block is a swipeable card stack (no refresh button); the Handbook home shows only when all its pictures are loaded; the tab bar highlight is a liquid-glass pill (to check on the phone).
-- **Patch order and pictures**: the Patch tab lists champions (buffs first), items, new Mayhem augments, removed augments; pages and the first Handbook card wait briefly for their pictures instead of showing empty frames (to check on the phone).
-- **Handbook tidy**: 高手必備 as a 2x2 grid; topics renamed 走位技巧, 視野控制, 跳脫定位框架; the glossary is an i button beside each topic title instead of a row on the home (to check on the phone).
-- **Glass tab highlight**: the bottom bar shows one glass pill behind the chosen tab instead of the orange tint (to check on the phone).
-- **Card pile**: Handbook cards lie in a pile like the last page; swipe left to turn a card away (tilting), swipe right to bring the previous one back (to check on the phone).
-- **Tinder-style swiping**: cards tilt while swiped; pulling the last card tilts it and the next topic fills the gap on the right as a growing panel (to check on the phone).
-- **Handbook cards**: picture on top, a line, then a text panel (where you are, title, line, and a 大混戰裡 tip box); text breaks only between phrases; clips shown whole over a blurred copy; pulling the last card left (shiver, haptic) opens the next topic.
-- **New and rewritten topics**: role counters as a graph of role icons with coloured arrows; item recipes drawn like the shop; 高手必備: 跳脫定位框架 (7 champions, each with the ability that breaks the role), 走位技巧, 限制走位 and 視野控制 (Rift wards on the minimap).
-- **Scope**: the project is described as a guide for both Summoner's Rift and ARAM Mayhem.
-- **Tidy-up**: unused code, styles, the art finder and a placeholder augment removed (248 augments); ARAM item copies show the normal item's current art.
 
 ---
 
