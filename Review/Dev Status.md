@@ -17,6 +17,8 @@ sticker: lucide//activity
 > - **Effect text like the game's**: values by level and scalings are pills with an icon in their stat's colour, with space around them; stat amounts and damage kinds are coloured (to check on the phone).
 > - **Champion page with tabs**: the big banner as before (no blank band under it), then Overview · Skills · Build · Augments · Tips as icon tabs that stay under the top bar; Skills shows one ability at a time with its clip first (to check on the phone).
 > - **Layouts editor**: its own heading at the top of [[Layouts]] (in the outline), note boxes four lines tall.
+> - **Inbox editor**: both inboxes have an editor like the Layouts note: + 新增, cards with a status pill, a form per entry (to check on the phone).
+> - **Dev Tools in callouts**: Design Rules, Icons, Layouts and UI Text keep their headings, their text sits in callouts.
 > - **Callout format**: [[LLM Guide]] has the vault note format (callouts by state); Dev Status areas and the inbox templates follow it, with waiting items marked `[!]` and decisions `[?]`.
 > - **Augment and item banners**: under the top bar with Back floating on the art, little space under them (to check on the phone).
 
