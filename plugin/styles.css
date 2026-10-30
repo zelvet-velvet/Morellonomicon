@@ -1363,6 +1363,22 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-ag-strip::-webkit-scrollbar { display: none; }
 .mn-ag-strip .mn-tile { flex: none; width: 64px; }
 .mn-ag-hist { font-size: 14px; color: var(--mn-muted); }
+/* the item and augment banners sit under the top bar (Back floats on the art) and end close to what follows */
+.mn-app.is-overlay .mn-it-hero { margin-top: -4px; padding: calc(48px + var(--mn-safe-top) + 6px) 20px 10px; margin-bottom: 8px; }
+.mn-app.is-overlay .mn-it-hero::after { background: linear-gradient(180deg, color-mix(in srgb, var(--mn-bg) 30%, transparent), color-mix(in srgb, var(--mn-bg) 55%, transparent) 70%, var(--mn-bg)); }
+/* the champion page's tab bar: a capsule of icons over labels, a soft sliding highlight, staying under the top bar */
+.mn-ctabs { position: sticky; top: calc(48px + var(--mn-safe-top)); z-index: 2; margin: 0 -16px 12px; padding: 6px 16px 8px;
+    background: color-mix(in srgb, var(--mn-bg) 86%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.mn-ctabs .mn-seg { margin: 0; padding: 4px; border-radius: 18px; }
+.mn-app .mn-ctabs .mn-seg-b { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 50px; padding: 0 2px; border-radius: 14px; }
+.mn-ctabs .mn-seg-hl { border-radius: 14px; background: color-mix(in srgb, var(--mn-accent) 18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mn-accent) 40%, transparent); }
+.mn-app .mn-ctabs .mn-seg.has-hl .mn-seg-b.is-on, .mn-app .mn-ctabs .mn-seg-b.is-on { color: var(--mn-accent); background: none; box-shadow: none; }
+.mn-ctab-ic { display: inline-flex; }
+.mn-ctab-ic svg { width: 19px; height: 19px; }
+.mn-ctab-l { font-size: 11px; font-weight: 700; letter-spacing: 0.02em; }
+/* the banner keeps its size; the blank band under the name is gone */
+.mn-app.is-overlay .mn-hero + .mn-ctabs { margin-top: -6px; }
+.mn-app.is-overlay .mn-card-head { padding-bottom: 4px; }
 /* an effect line like the game's tooltip: values by level and scalings as pills with an icon, stat amounts and damage kinds coloured */
 .mn-fx-v { --c: var(--mn-text); color: var(--c); font-weight: 700; font-variant-numeric: tabular-nums; }
 .mn-fx-sc, .mn-fx-lv { --c: var(--mn-muted); display: inline-flex; align-items: center; gap: 3px; margin: 0 4px; padding: 0 8px 0 6px; border-radius: 11px; line-height: 22px;

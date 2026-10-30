@@ -13,7 +13,7 @@ export const VIEW_TYPE = "morellonomicon";
 // or the data changes; scroll positions are kept per page so Back returns to where you were.
 const CAPSULE_TAU = 65;          // ms; the capsule covers most of the way to its new place in about 4× this (the keyboard's own slide)
 const KEYBOARD_GAP = 8;          // px between the search capsule and the keyboard's top edge
-const OVERLAY_PAGES = new Set(["champion"]);
+const OVERLAY_PAGES = new Set(["champion", "augment", "item"]);   // a banner picture under the top bar, Back floating on it
 const IMMERSIVE_PAGES = new Set(["rosterswipe"]);   // full screen: no top bar at all (速查's swipe, like Tinder)
 const OVERLAY_SCROLL = 220;   // px scrolled before the top bar gets its background back over a splash
 const ARRIVE_MS = 240;

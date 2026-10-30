@@ -6,7 +6,10 @@ const CLIP_FADE_MS = 350;   // a clip fades in over 0.3 s (styles.css, .mn-app v
 
 // Passive + Q W E R as icons; the frame colour is the damage type of the skill (orange physical, blue magic, yellow true).
 // Tap an icon to open its details right below (tap again to close); no new page.
-export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] = []): void {
+// opt.open: open this skill at once and keep one always open (the champion page's Skills tab); opt.clipFirst: the clip above the
+// numbers; opt.scroll false: never scroll the page to the card (the tab already shows it)
+export interface StripOpts { open?: number; clipFirst?: boolean; scroll?: boolean }
+export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] = [], opt: StripOpts = {}): void {
     if (!c.skills.length) return;
     const strip = h(parent, "div", "mn-skills");
     const detail = h(parent, "div", "mn-skill-detail");
@@ -18,7 +21,7 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
         box.style.setProperty("--chip", DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--background-modifier-border)");
         h(box, "span", "mn-skill-k", s.key);
         if (s.upgrade) icon(box, "chevrons-up", "mn-skill-up");   // this skill has an upgrade / evolve effect
-        box.addEventListener("click", (e) => { e.preventDefault(); show(open === i ? -1 : i); });
+        box.addEventListener("click", (e) => { e.preventDefault(); show(open === i && opt.open === undefined ? -1 : i); });
         if (s.key === "P") h(strip, "span", "mn-skill-sep");   // a thin line between the passive and Q W E R
         return box;
     });
@@ -29,6 +32,22 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
         detail.toggleClass("is-open", i >= 0);
         if (i < 0) return;
         const s = c.skills[i];
+        const clip = () => {
+            // The clip has its room from the start (a box of the clip's shape) and loads as a block of its own, with the blur and the band
+            // of light. A clip that cannot play takes its box away.
+            const clipBox = h(detail, "div", "mn-sd-clipbox");
+            // something to blur from the first moment, before the clip has a single frame: the skill's own picture, enlarged and blurred;
+            // the clip covers it when it appears (and goes after the clip's own fade-in, so nothing shows through)
+            const ph = h(clipBox, "div", "mn-sd-clipph");
+            ph.style.backgroundImage = `url("${s.icon}")`;
+            demo(clipBox, c, s, () => clipBox.remove());
+            clipBox.querySelector("video")?.addEventListener("loadeddata", () => window.setTimeout(() => ph.remove(), CLIP_FADE_MS), { once: true });
+            if (!clipBox.querySelector("video")) { clipBox.remove(); return null; }   // no clip for this skill
+            const loaded = whenMediaLoaded([clipBox], CLIP_WAIT_MS);
+            blockUntil(clipBox, loaded);
+            return loaded;
+        };
+        const early = opt.clipFirst ? clip() : undefined;
         const head = h(detail, "div", "mn-sd-head");
         h(head, "span", "mn-sd-key", s.key);
         h(head, "span", "mn-sd-name", s.name);
@@ -50,31 +69,20 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
             h(t, "span", "", "進化 / 升級");
             h(up, "p", "mn-sd-desc", s.upgrade);
         }
-        // The clip has its room from the start (a box of the clip's shape) and loads as a block of its own, with the blur and the band
-        // of light. The page scrolls down to the end of the card at once, and once more when the clip is in (a no-op when the card is
-        // already where it should be). A clip that cannot play takes its box away.
-        const clipBox = h(detail, "div", "mn-sd-clipbox");
-        // something to blur from the first moment, before the clip has a single frame: the skill's own picture, enlarged and blurred;
-        // the clip covers it when it appears
-        const ph = h(clipBox, "div", "mn-sd-clipph");
-        ph.style.backgroundImage = `url("${s.icon}")`;
-        demo(clipBox, c, s, () => clipBox.remove());
-        // once the clip shows a frame the blurred stand-in goes (left under the clip, its blur showed at the edges)
-        // (after the clip's own fade-in, so nothing shows through while it fades up)
-        clipBox.querySelector("video")?.addEventListener("loadeddata", () => window.setTimeout(() => ph.remove(), CLIP_FADE_MS), { once: true });
-        // scroll down to the end of the card (its clip included); a card taller than the screen shows from its top instead
+        const loaded = opt.clipFirst ? early : clip();
+        if (opt.scroll === false) return;
+        // scroll down to the end of the card (its clip included); a card taller than the screen shows from its top instead. Once at
+        // once (the clip box already has its room) and again when the clip is in, in case the card ended up elsewhere
         const reveal = () => {
             if (open !== i || !detail.isConnected) return;   // another skill was opened meanwhile, or the page was left
             const view = detail.closest<HTMLElement>(".mn-scroll");
             const tall = view ? detail.offsetHeight > view.clientHeight - 80 : false;
             detail.scrollIntoView({ behavior: "smooth", block: tall ? "start" : "end" });
         };
-        if (!clipBox.querySelector("video")) { clipBox.remove(); window.requestAnimationFrame(reveal); return; }   // no clip for this skill
-        const loaded = whenMediaLoaded([clipBox], CLIP_WAIT_MS);
-        blockUntil(clipBox, loaded);
-        window.requestAnimationFrame(reveal);   // scroll down at once (the box already has its room) so the loading can be watched ...
-        void loaded.then(() => window.requestAnimationFrame(reveal));   // ... and again once the clip is in, in case the card ended up elsewhere
+        window.requestAnimationFrame(reveal);
+        if (loaded) void loaded.then(() => window.requestAnimationFrame(reveal));
     };
+    if (opt.open !== undefined) show(Math.max(0, Math.min(opt.open, c.skills.length - 1)));
 }
 
 // Riot's own ability demo (the clip the official champion page plays): <champion key, 4 digits>/ability_<key>_<P|Q|W|E|R>1.mp4/.webm.

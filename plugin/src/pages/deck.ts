@@ -1,3 +1,4 @@
+import { CHAMPION_TABS } from "./champions";
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { Champion } from "../data/store";
 import { mapUrl } from "./handbook";
@@ -255,9 +256,9 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
         }
         return;
     } else if (kind === "tabs") {
-        // the champion page's four tabs, as they look there
-        const seg = h(h(box, "div", "mn-sl-tabs"), "div", "mn-seg mn-seg-line");
-        ["Skills", "Build", "Augments", "Tips"].forEach((l, i) => h(seg, "span", "mn-seg-b" + (i === 0 ? " is-on" : ""), l));
+        // the champion page's tabs, as they look there
+        const seg = h(h(box, "div", "mn-sl-tabs mn-ctabs"), "div", "mn-seg");
+        CHAMPION_TABS.forEach(([l, ic], i) => { const b = h(seg, "span", "mn-seg-b" + (i === 0 ? " is-on" : "")); icon(b, ic, "mn-ctab-ic"); h(b, "span", "mn-ctab-l", l); });
         return;
     } else if (kind === "damage") {
         // the three kinds of damage in the colours the app uses for them

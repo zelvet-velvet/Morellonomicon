@@ -27,7 +27,7 @@ export function patchPage(ctx: PageCtx): PageOut {
         const grid = h(el, "div", "mn-grid");
         for (const { e, dir } of byDir(latest.champions)) {
             const c = store.champions().find((x) => x.name === e.name);
-            if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "skills"), { dir });
+            if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "overview"), { dir });
         }
         blockLoad(grid);
         h(el, "div", "mn-gf", LEGEND);

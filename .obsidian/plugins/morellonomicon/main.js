@@ -109,8 +109,8 @@ var TAB_LABEL = { home: "Home", champions: "Champions", picks: "Picks", augments
 var TAB_ICON = { home: "house", champions: "users", picks: "clipboard-edit", augments: "sparkles", patch: "newspaper", handbook: "book-open" };
 
 // src/data/store.ts
-function withOnHit(skills2, keys) {
-  return keys.length ? skills2.map((s) => keys.includes(s.key) && !s.tags.includes("\u653B\u64CA\u7279\u6548") ? { ...s, tags: [...s.tags, "\u653B\u64CA\u7279\u6548"] } : s) : skills2;
+function withOnHit(skills, keys) {
+  return keys.length ? skills.map((s) => keys.includes(s.key) && !s.tags.includes("\u653B\u64CA\u7279\u6548") ? { ...s, tags: [...s.tags, "\u653B\u64CA\u7279\u6548"] } : s) : skills;
 }
 var patchNo = (p) => {
   const m = /^(\d+)\.(\d+)/.exec(p.trim());
@@ -2835,7 +2835,7 @@ function changesBlock(parent, c, ctx) {
 // src/pages/skills.ts
 var import_obsidian7 = require("obsidian");
 var CLIP_FADE_MS = 350;
-function skillStrip(parent, c, changes = []) {
+function skillStrip(parent, c, changes = [], opt = {}) {
   if (!c.skills.length) return;
   const strip2 = h(parent, "div", "mn-skills");
   const detail = h(parent, "div", "mn-skill-detail");
@@ -2851,7 +2851,7 @@ function skillStrip(parent, c, changes = []) {
     if (s.upgrade) icon(box, "chevrons-up", "mn-skill-up");
     box.addEventListener("click", (e) => {
       e.preventDefault();
-      show(open === i ? -1 : i);
+      show(open === i && opt.open === void 0 ? -1 : i);
     });
     if (s.key === "P") h(strip2, "span", "mn-skill-sep");
     return box;
@@ -2863,6 +2863,21 @@ function skillStrip(parent, c, changes = []) {
     detail.toggleClass("is-open", i >= 0);
     if (i < 0) return;
     const s = c.skills[i];
+    const clip = () => {
+      const clipBox = h(detail, "div", "mn-sd-clipbox");
+      const ph = h(clipBox, "div", "mn-sd-clipph");
+      ph.style.backgroundImage = `url("${s.icon}")`;
+      demo(clipBox, c, s, () => clipBox.remove());
+      clipBox.querySelector("video")?.addEventListener("loadeddata", () => window.setTimeout(() => ph.remove(), CLIP_FADE_MS), { once: true });
+      if (!clipBox.querySelector("video")) {
+        clipBox.remove();
+        return null;
+      }
+      const loaded2 = whenMediaLoaded([clipBox], CLIP_WAIT_MS);
+      blockUntil(clipBox, loaded2);
+      return loaded2;
+    };
+    const early = opt.clipFirst ? clip() : void 0;
     const head2 = h(detail, "div", "mn-sd-head");
     h(head2, "span", "mn-sd-key", s.key);
     h(head2, "span", "mn-sd-name", s.name);
@@ -2883,27 +2898,18 @@ function skillStrip(parent, c, changes = []) {
       h(t, "span", "", "\u9032\u5316 / \u5347\u7D1A");
       h(up, "p", "mn-sd-desc", s.upgrade);
     }
-    const clipBox = h(detail, "div", "mn-sd-clipbox");
-    const ph = h(clipBox, "div", "mn-sd-clipph");
-    ph.style.backgroundImage = `url("${s.icon}")`;
-    demo(clipBox, c, s, () => clipBox.remove());
-    clipBox.querySelector("video")?.addEventListener("loadeddata", () => window.setTimeout(() => ph.remove(), CLIP_FADE_MS), { once: true });
+    const loaded = opt.clipFirst ? early : clip();
+    if (opt.scroll === false) return;
     const reveal = () => {
       if (open !== i || !detail.isConnected) return;
       const view = detail.closest(".mn-scroll");
       const tall = view ? detail.offsetHeight > view.clientHeight - 80 : false;
       detail.scrollIntoView({ behavior: "smooth", block: tall ? "start" : "end" });
     };
-    if (!clipBox.querySelector("video")) {
-      clipBox.remove();
-      window.requestAnimationFrame(reveal);
-      return;
-    }
-    const loaded = whenMediaLoaded([clipBox], CLIP_WAIT_MS);
-    blockUntil(clipBox, loaded);
     window.requestAnimationFrame(reveal);
-    void loaded.then(() => window.requestAnimationFrame(reveal));
+    if (loaded) void loaded.then(() => window.requestAnimationFrame(reveal));
   };
+  if (opt.open !== void 0) show(Math.max(0, Math.min(opt.open, c.skills.length - 1)));
 }
 var DEMO_BASE = "https://d28xe8vt774jo5.cloudfront.net/champion-abilities";
 var CLIP_WAIT_MS = 8e3;
@@ -3314,7 +3320,7 @@ function championCard(ctx) {
   if (mastery && mastery.level > 0) chip(tags2, `\u719F\u7DF4\u5EA6 ${mastery.level} \xB7 ${mastery.points.toLocaleString("en-US")}`, { color: "var(--color-yellow)" });
   const now = ctx.plugin.store.currentChanges(c.id);
   const openChanges = () => {
-    show("skills");
+    show("overview");
     block?.open();
     block?.el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -3324,35 +3330,43 @@ function championCard(ctx) {
     const m = marker(entryDir(official.entry));
     chip(tags2, `${m.mark} ${official.patch}`, { color: m.color, onTap: openChanges });
   }
-  championProfile(el, c, ctx.app);
   const mayhem = ctx.plugin.settings.mode === "mayhem";
-  const tabs = [["skills", "Skills"], ["build", "Build"], ["augments", mayhem ? "Augments" : "Runes"], ["tips", "Tips"]];
+  const tabs = SUB_TABS.map(([t, label, ic]) => [t, t === "augments" && !mayhem ? "Runes" : label, ic]);
   let block = null;
-  const seg = h(el, "div", "mn-seg mn-seg-line");
+  const bar = h(el, "div", "mn-ctabs");
+  const seg = h(bar, "div", "mn-seg");
   const body = h(el, "div", "mn-sub");
   const show = (t) => {
     lastSub.set(c.id, t);
     seg.querySelectorAll(".mn-seg-b").forEach((b) => b.toggleClass("is-on", b.dataset.t === t));
     body.empty();
-    if (t === "skills") block = skills(body, c, ctx);
+    block = null;
+    if (t === "overview") block = overview(body, c, ctx);
+    else if (t === "skills") skillStrip(body, c, ctx.plugin.store.currentChanges(c.id), { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false });
     else if (t === "build") buildTab(body, c, ctx);
     else if (t === "augments") soon(body, mayhem ? "Best augments" : "Runes");
     else tips(body, c, ctx);
+    const view = el.closest(".mn-scroll");
+    if (view && view.scrollTop > bar.offsetTop) view.scrollTo({ top: bar.offsetTop - 8, behavior: "instant" });
   };
-  for (const [t, label] of tabs) {
-    const b = h(seg, "button", "mn-seg-b", label);
+  for (const [t, label, ic] of tabs) {
+    const b = h(seg, "button", "mn-seg-b");
     b.dataset.t = t;
+    icon(b, ic, "mn-ctab-ic");
+    h(b, "span", "mn-ctab-l", label);
     b.addEventListener("click", (e) => {
       e.preventDefault();
       show(t);
     });
   }
   slideSeg(seg);
-  show(lastSub.get(c.id) ?? "skills");
+  show(lastSub.get(c.id) ?? "overview");
   return { title: "", el, ready: null };
 }
-function skills(body, c, ctx) {
-  skillStrip(body, c, ctx.plugin.store.currentChanges(c.id));
+var SUB_TABS = [["overview", "Overview", "id-card"], ["skills", "Skills", "keyboard"], ["build", "Build", "shopping-bag"], ["augments", "Augments", "sparkles"], ["tips", "Tips", "lightbulb"]];
+var CHAMPION_TABS = SUB_TABS.map(([, l, ic]) => [l, ic]);
+function overview(body, c, ctx) {
+  championProfile(body, c, ctx.app);
   if (c.video) row(group(body), { icon: "play-circle", title: "Combo video", chevron: true, onTap: () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video)}`) });
   return changesBlock(body, c, ctx);
 }
@@ -4405,8 +4419,12 @@ function visual(ctx, box, s) {
     }
     return;
   } else if (kind === "tabs") {
-    const seg = h(h(box, "div", "mn-sl-tabs"), "div", "mn-seg mn-seg-line");
-    ["Skills", "Build", "Augments", "Tips"].forEach((l, i) => h(seg, "span", "mn-seg-b" + (i === 0 ? " is-on" : ""), l));
+    const seg = h(h(box, "div", "mn-sl-tabs mn-ctabs"), "div", "mn-seg");
+    CHAMPION_TABS.forEach(([l, ic], i) => {
+      const b = h(seg, "span", "mn-seg-b" + (i === 0 ? " is-on" : ""));
+      icon(b, ic, "mn-ctab-ic");
+      h(b, "span", "mn-ctab-l", l);
+    });
     return;
   } else if (kind === "damage") {
     const row2 = h(box, "div", "mn-sl-dmg");
@@ -5582,7 +5600,7 @@ function patchPage(ctx) {
     const grid = h(el, "div", "mn-grid");
     for (const { e, dir } of byDir(latest.champions)) {
       const c = store.champions().find((x) => x.name === e.name);
-      if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "skills"), { dir });
+      if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "overview"), { dir });
     }
     blockLoad(grid);
     h(el, "div", "mn-gf", LEGEND);
@@ -6386,7 +6404,7 @@ function renderPage(tab, ctx) {
 var VIEW_TYPE = "morellonomicon";
 var CAPSULE_TAU = 65;
 var KEYBOARD_GAP = 8;
-var OVERLAY_PAGES = /* @__PURE__ */ new Set(["champion"]);
+var OVERLAY_PAGES = /* @__PURE__ */ new Set(["champion", "augment", "item"]);
 var IMMERSIVE_PAGES = /* @__PURE__ */ new Set(["rosterswipe"]);
 var OVERLAY_SCROLL = 220;
 var ARRIVE_MS = 240;

@@ -172,7 +172,7 @@ export function championsPage(ctx: PageCtx): PageOut {
     return { title: "Champions", el, ready: null };   // the page shows at once; its blocks load on their own
 }
 
-export type SubTab = "skills" | "build" | "augments" | "tips";
+export type SubTab = "overview" | "skills" | "build" | "augments" | "tips";
 const lastSub = new Map<string, SubTab>();
 export function rememberSub(id: string, sub: SubTab): void { lastSub.set(id, sub); }   // the sub-tab you were on, per champion, while the app is open
 
@@ -199,40 +199,53 @@ export function championCard(ctx: PageCtx): PageOut {
     const mastery = ctx.plugin.store.masteryOf(c.id);   // your own numbers, when this device has _data/mastery.json
     if (mastery && mastery.level > 0) chip(tags, `熟練度 ${mastery.level} · ${mastery.points.toLocaleString("en-US")}`, { color: "var(--color-yellow)" });   // optional, hand-written `tier` in the champion note
     const now = ctx.plugin.store.currentChanges(c.id);
-    const openChanges = () => { show("skills"); block?.open(); block?.el.scrollIntoView({ behavior: "smooth", block: "start" }); };
+    const openChanges = () => { show("overview"); block?.open(); block?.el.scrollIntoView({ behavior: "smooth", block: "start" }); };
     const official = ctx.plugin.store.officialFor("champions", c.name)[0];
     if (badgeText(now)) chip(tags, badgeText(now), { color: badgeColor(now), onTap: openChanges });
     else if (official) { const m = marker(entryDir(official.entry)); chip(tags, `${m.mark} ${official.patch}`, { color: m.color, onTap: openChanges }); }
 
-    // what the champion can do at a glance: reach, damage kind, difficulty, a six-axis profile and its abilities (see profile.ts)
-    championProfile(el, c, ctx.app);
-
+    // Sub-tabs right under the banner (layout A, chosen 2026-10-30): each tab is one screen's worth instead of one long page; the tab bar
+    // stays under the top bar while the banner scrolls away. Overview holds what the champion can do at a glance (see profile.ts).
     const mayhem = ctx.plugin.settings.mode === "mayhem";
-    const tabs: [SubTab, string][] = [["skills", "Skills"], ["build", "Build"], ["augments", mayhem ? "Augments" : "Runes"], ["tips", "Tips"]];
-    let block: { el: HTMLElement; open(): void } | null = null;   // the Recent changes block of the Skills sub-tab
-    const seg = h(el, "div", "mn-seg mn-seg-line");
+    const tabs = SUB_TABS.map(([t, label, ic]) => [t, t === "augments" && !mayhem ? "Runes" : label, ic] as const);
+    let block: { el: HTMLElement; open(): void } | null = null;   // the Recent changes block of the Overview tab
+    const bar = h(el, "div", "mn-ctabs");
+    const seg = h(bar, "div", "mn-seg");
     const body = h(el, "div", "mn-sub");
     const show = (t: SubTab) => {
         lastSub.set(c.id, t);
         seg.querySelectorAll<HTMLElement>(".mn-seg-b").forEach((b) => b.toggleClass("is-on", b.dataset.t === t));
         body.empty();
-        if (t === "skills") block = skills(body, c, ctx);
+        block = null;
+        if (t === "overview") block = overview(body, c, ctx);
+        else if (t === "skills") skillStrip(body, c, ctx.plugin.store.currentChanges(c.id), { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false });
         else if (t === "build") buildTab(body, c, ctx);
         else if (t === "augments") soon(body, mayhem ? "Best augments" : "Runes");
         else tips(body, c, ctx);
+        // a tab chosen further down the page starts at its top, just under the tab bar
+        const view = el.closest<HTMLElement>(".mn-scroll");
+        if (view && view.scrollTop > bar.offsetTop) view.scrollTo({ top: bar.offsetTop - 8, behavior: "instant" as ScrollBehavior });
     };
-    for (const [t, label] of tabs) {
-        const b = h(seg, "button", "mn-seg-b", label);
+    for (const [t, label, ic] of tabs) {
+        const b = h(seg, "button", "mn-seg-b");
         b.dataset.t = t;
+        icon(b, ic, "mn-ctab-ic");
+        h(b, "span", "mn-ctab-l", label);
         b.addEventListener("click", (e) => { e.preventDefault(); show(t); });
     }
     slideSeg(seg);
-    show(lastSub.get(c.id) ?? "skills");
+    show(lastSub.get(c.id) ?? "overview");
     return { title: "", el, ready: null };   // the name is in the banner; no second copy in the top bar; the page shows at once, its blocks load on their own
 }
 
-function skills(body: HTMLElement, c: Champion, ctx: PageCtx): { el: HTMLElement; open(): void } | null {
-    skillStrip(body, c, ctx.plugin.store.currentChanges(c.id));
+// The tab bar under a champion's banner: tab, label (UI labels are English), icon (the Champion page tabs in the Icons note)
+const SUB_TABS: [SubTab, string, string][] = [["overview", "Overview", "id-card"], ["skills", "Skills", "keyboard"], ["build", "Build", "shopping-bag"], ["augments", "Augments", "sparkles"], ["tips", "Tips", "lightbulb"]];
+
+// Overview: reach, damage kind, difficulty and the style chart, then the combo video and this patch's changes
+export const CHAMPION_TABS = SUB_TABS.map(([, l, ic]) => [l, ic] as const);   // for the Handbook card that shows them
+
+function overview(body: HTMLElement, c: Champion, ctx: PageCtx): { el: HTMLElement; open(): void } | null {
+    championProfile(body, c, ctx.app);
     if (c.video) row(group(body), { icon: "play-circle", title: "Combo video", chevron: true, onTap: () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video!)}`) });
     return changesBlock(body, c, ctx);
 }
