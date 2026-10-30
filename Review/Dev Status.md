@@ -15,6 +15,7 @@ sticker: lucide//activity
 - **Wiki numbers for every augment**: 247 of 248 augments have a zh_TW effect line with the League wiki's Mayhem numbers (待驗證); the page shows it instead of Arena's numbers (which differed for 34 of 54) and keeps Riot's tags for 適合的英雄.
 - **Effect text like the game's**: values by level and scalings are pills with an icon in their stat's colour, with space around them; stat amounts and damage kinds are coloured (to check on the phone).
 - **Champion page with tabs**: the big banner as before (no blank band under it), then Overview · Skills · Build · Augments · Tips as icon tabs that stay under the top bar; Skills shows one ability at a time with its clip first (to check on the phone).
+- **Layouts editor**: its own heading at the top of [[Layouts]] (in the outline), note boxes four lines tall.
 - **Augment and item banners**: under the top bar with Back floating on the art, little space under them (to check on the phone).
 
 ## 📅 Yesterday's Progress (2026-10-29)

@@ -171,7 +171,7 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
             if (saved.some((p) => p.id === page.id)) write(saved.filter((p) => p.id !== page.id));
             else { pages.splice(pages.indexOf(page), 1); draw(); }
         });
-        const note = fig.createEl("textarea", { cls: "mn-lay-pnote", attr: { rows: "2", placeholder: "What this page is for" } });
+        const note = fig.createEl("textarea", { cls: "mn-lay-pnote", attr: { rows: "4", placeholder: "What this page is for" } });
         note.value = page.note ?? "";
         note.addEventListener("change", () => { page.note = note.value.trim() || undefined; changed(page); draw(); });
 
@@ -256,7 +256,7 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
             const n = nums.createEl("input", { cls: "mn-lay-num", attr: { type: "number", value: String(b[key]), step: String(SNAP) } });
             n.addEventListener("change", () => { b[key] = Math.max(0, Number(n.value) || 0); changed(page); draw(); });
         }
-        const note = row("Note").createEl("textarea", { attr: { rows: "2", placeholder: "What goes here, what is wrong" } });
+        const note = row("Note").createEl("textarea", { attr: { rows: "4", placeholder: "What goes here, what is wrong" } });
         note.value = b.note ?? "";
         note.addEventListener("change", () => { b.note = note.value.trim() || undefined; changed(page); draw(); });
         const acts = box.createDiv({ cls: "mn-lay-acts" });

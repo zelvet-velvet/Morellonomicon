@@ -1719,7 +1719,7 @@ function layoutBlock2(plugin, source, el, ctx) {
         draw();
       }
     });
-    const note = fig.createEl("textarea", { cls: "mn-lay-pnote", attr: { rows: "2", placeholder: "What this page is for" } });
+    const note = fig.createEl("textarea", { cls: "mn-lay-pnote", attr: { rows: "4", placeholder: "What this page is for" } });
     note.value = page2.note ?? "";
     note.addEventListener("change", () => {
       page2.note = note.value.trim() || void 0;
@@ -1838,7 +1838,7 @@ function layoutBlock2(plugin, source, el, ctx) {
         draw();
       });
     }
-    const note = row2("Note").createEl("textarea", { attr: { rows: "2", placeholder: "What goes here, what is wrong" } });
+    const note = row2("Note").createEl("textarea", { attr: { rows: "4", placeholder: "What goes here, what is wrong" } });
     note.value = b.note ?? "";
     note.addEventListener("change", () => {
       b.note = note.value.trim() || void 0;
