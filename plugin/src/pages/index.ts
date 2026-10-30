@@ -3,7 +3,7 @@ import type MorellonomiconPlugin from "../main";
 import type { Frame } from "../router";
 import type { TabId } from "../modes";
 import { augmentsPage } from "./augments";
-import { championCard, championsPage, type SubTab } from "./champions";
+import { championCard, championPart, championsPage, type SubTab } from "./champions";
 import { augmentPage, itemPage, notePage } from "./detail";
 import { handbookPage } from "./handbook";
 import { gamesPage, homePage, itemsPage } from "./home";
@@ -51,6 +51,7 @@ export function renderPage(tab: TabId, ctx: PageCtx): PageOut {
         case "games": return gamesPage(ctx);
         case "itemlist": return itemsPage(ctx);   // the Champions page, opened from Home
         case "rosterswipe": return swipePage(ctx);
+        case "champpart": return championPart(ctx);
         default: return PAGES[tab](ctx);
     }
 }

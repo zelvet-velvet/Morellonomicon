@@ -1,11 +1,13 @@
 import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, DAMAGE_ICON, blockUntil, layoutBlock, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, slideSeg, tip, fixedPage } from "../ui";
+import { DAMAGE_COLOR, DAMAGE_ICON, augIcon, warmPictures, blockUntil, layoutBlock, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, slideSeg, tip, fixedPage } from "../ui";
 import { TAG_GROUPS, championProfile, iconFilter, tagFilter } from "./profile";
 import { buildTab } from "./build";
 import type { PageCtx, PageOut } from "./index";
 import { badgeColor, badgeText, changesBlock, entryDir, marker } from "./changes";
 import { metaLine } from "./fresh";
 import { skillStrip } from "./skills";
+import { quickCard } from "./roster";
+import { DECK_BELOW } from "./deck";
 import { augmentPicks, type AugmentPick } from "./detail";
 
 const ROLES = ["戰士", "坦克", "法師", "刺客", "射手", "輔助"];
@@ -175,76 +177,112 @@ export function championsPage(ctx: PageCtx): PageOut {
 
 export type SubTab = "overview" | "skills" | "build" | "augments" | "tips";
 const lastSub = new Map<string, SubTab>();
-export function rememberSub(id: string, sub: SubTab): void { lastSub.set(id, sub); }   // the sub-tab you were on, per champion, while the app is open
+export function rememberSub(id: string, sub: SubTab): void { lastSub.set(id, sub); }   // the page a link asks the champion card to open on
 
-// The champion card: a banner and radar always on top, then sub-tabs. Everything glanceable, no paragraphs.
+// The champion page (layout C, chosen 2026-10-30): the champion as one card like the 速查 card, on one screen with no scrolling. The
+// 速查 card's pages (概覽, 玩法, 技能, 風格) and three more (出裝, 強化, 技巧), turned by tapping a half of the card or swiping sideways;
+// each shows its top picks, and 全部 › opens the full list as a page of its own (championPart). Back sits on the card.
 export function championCard(ctx: PageCtx): PageOut {
-    const c = ctx.plugin.store.champion(String(ctx.frame.params?.id ?? ""));
-    const el = h(null, "div", "mn-page");
+    const store = ctx.plugin.store;
+    const c = store.champion(String(ctx.frame.params?.id ?? ""));
+    const el = h(null, "div", "mn-page mn-deckpage");
     if (!c) { empty(el, { icon: "user-x", title: "Champion not found" }); return { title: "", el }; }
-
-    const hero = h(el, "div", "mn-hero");
-    const bg = h(hero, "div", "mn-hero-bg");
-    bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
-    const head = h(hero, "div", "mn-card-head");
-    const im = h(head, "img", "mn-card-img"); im.src = c.icon; im.alt = "";
-    // the banner loads as a block of its own: the splash picture (a CSS background, so it is fetched here) and the icon
-    const splash = bg.style.backgroundImage.slice(5, -2);
-    blockUntil(hero, Promise.all([new Promise<void>((r) => { const s = new Image(); s.onload = s.onerror = () => r(); s.src = splash; }), new Promise<void>((r) => { if (im.complete) r(); else { im.addEventListener("load", () => r(), { once: true }); im.addEventListener("error", () => r(), { once: true }); } })]).then(() => undefined), 200);   // (no loading look when the pictures come from the cache)
-    const who = h(head, "div", "mn-card-who");
-    h(who, "h1", "mn-title", c.name);
-    h(who, "div", "mn-card-sub", c.title);
-    const tags = h(who, "div", "mn-chips");
-    for (const r of c.roles) chip(tags, r);
-    if (c.tier) chip(tags, `評價 ${c.tier}`, { color: "var(--color-green)" });
-    const mastery = ctx.plugin.store.masteryOf(c.id);   // your own numbers, when this device has _data/mastery.json
-    if (mastery && mastery.level > 0) chip(tags, `熟練度 ${mastery.level} · ${mastery.points.toLocaleString("en-US")}`, { color: "var(--color-yellow)" });   // optional, hand-written `tier` in the champion note
-    const now = ctx.plugin.store.currentChanges(c.id);
-    const openChanges = () => { show("overview"); block?.open(); block?.el.scrollIntoView({ behavior: "smooth", block: "start" }); };
-    const official = ctx.plugin.store.officialFor("champions", c.name)[0];
-    if (badgeText(now)) chip(tags, badgeText(now), { color: badgeColor(now), onTap: openChanges });
-    else if (official) { const m = marker(entryDir(official.entry)); chip(tags, `${m.mark} ${official.patch}`, { color: m.color, onTap: openChanges }); }
-
-    // Sub-tabs right under the banner (layout A, chosen 2026-10-30): each tab is one screen's worth instead of one long page; the tab bar
-    // stays under the top bar while the banner scrolls away. Overview holds what the champion can do at a glance (see profile.ts).
     const mayhem = ctx.plugin.settings.mode === "mayhem";
-    const tabs = SUB_TABS.map(([t, label, ic]) => [t, t === "augments" && !mayhem ? "Runes" : label, ic] as const);
-    let block: { el: HTMLElement; open(): void } | null = null;   // the Recent changes block of the Overview tab
-    const bar = h(el, "div", "mn-ctabs");
-    const seg = h(bar, "div", "mn-seg");
-    const body = h(el, "div", "mn-sub");
-    const show = (t: SubTab) => {
-        lastSub.set(c.id, t);
-        seg.querySelectorAll<HTMLElement>(".mn-seg-b").forEach((b) => b.toggleClass("is-on", b.dataset.t === t));
-        body.empty();
-        block = null;
-        if (t === "overview") block = overview(body, c, ctx);
-        else if (t === "skills") skillStrip(body, c, ctx.plugin.store.currentChanges(c.id), { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false });
-        else if (t === "build") buildTab(body, c, ctx);
-        else if (t === "augments") { if (mayhem) augmentsTab(body, c, ctx); else soon(body, "Runes"); }
-        else tips(body, c, ctx);
-        // a tab chosen further down the page starts at its top, just under the tab bar
-        const view = el.closest<HTMLElement>(".mn-scroll");
-        if (view && view.scrollTop > bar.offsetTop) view.scrollTo({ top: bar.offsetTop - 8, behavior: "instant" as ScrollBehavior });
+    const part = (p: Part) => () => ctx.push({ key: "champpart", title: `${c.name} · ${PART_TITLE[p]}`, params: { id: c.id, part: p } });
+    const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)] as const));
+    const startSub = lastSub.get(c.id);   // a link may ask for a page (once): the next visit starts on 概覽 again
+    lastSub.delete(c.id);
+    const wrap = h(el, "div", "mn-deckwrap mn-rq-deck mn-cc");
+    const card = h(h(h(wrap, "div", "mn-pager"), "section", "mn-slide"), "div", "mn-sl-card");
+    const face = h(card, "div", "mn-sl-face");
+    const skins = quickCard(ctx, c, face, {
+        kicker: [c.title, c.roles.join(" · ")].filter(Boolean).join(" · "), recent, back: () => ctx.pop(),
+        start: { overview: "概覽", skills: "技能", build: "出裝", augments: "強化", tips: "技巧" }[startSub ?? "overview"],
+        more: { skills: part("skills"), style: part("overview") },
+        extra: [
+            { name: "出裝", build: (tab) => buildTop(tab, c, ctx), more: part("build") },
+            ...(mayhem ? [{ name: "強化", build: (tab: HTMLElement) => augmentTop(tab, c, ctx), more: part("augments") }] : []),
+            { name: "技巧", build: (tab) => tipsTop(tab, c), more: c.tips.length ? part("tips") : undefined },
+        ],
+    });
+    // the skins behind the later pages are fetched while the first is read (a tap shows them at once)
+    window.setTimeout(() => void warmPictures(skins), CARD_WARM_MS);
+    // the card fills the screen down to the tab bar, like the 速查 swipe
+    const fit = () => {
+        const scroll = el.closest<HTMLElement>(".mn-scroll");
+        if (!scroll || !wrap.isConnected) return;
+        const top = wrap.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
+        wrap.style.height = `${Math.max(380, scroll.clientHeight - top - DECK_BELOW)}px`;
     };
-    for (const [t, label, ic] of tabs) {
-        const b = h(seg, "button", "mn-seg-b");
-        b.dataset.t = t;
-        icon(b, ic, "mn-ctab-ic");
-        h(b, "span", "mn-ctab-l", label);
-        b.addEventListener("click", (e) => { e.preventDefault(); show(t); });
-    }
-    slideSeg(seg);
-    show(lastSub.get(c.id) ?? "overview");
-    return { title: "", el, ready: null };   // the name is in the banner; no second copy in the top bar; the page shows at once, its blocks load on their own
+    requestAnimationFrame(fit);
+    return { title: "", el, ready: null };   // the card's own pictures load as blocks
 }
 
-// The tab bar under a champion's banner: tab, label (UI labels are English), icon (the Champion page tabs in the Icons note)
-const SUB_TABS: [SubTab, string, string][] = [["overview", "Overview", "id-card"], ["skills", "Skills", "keyboard"], ["build", "Build", "shopping-bag"], ["augments", "Augments", "sparkles"], ["tips", "Tips", "lightbulb"]];
+// The parts behind 全部 ›: the full lists of the old sub-tabs, as pages that scroll
+type Part = "overview" | "skills" | "build" | "augments" | "tips";
+const PART_TITLE: Record<Part, string> = { overview: "風格與本版", skills: "技能", build: "出裝", augments: "強化", tips: "技巧" };
+const CARD_WARM_MS = 600;
+const TOP_AUGS = 2;   // per rarity on the card
+const TOP_TIPS = 3;
+export function championPart(ctx: PageCtx): PageOut {
+    const c = ctx.plugin.store.champion(String(ctx.frame.params?.id ?? ""));
+    const p = String(ctx.frame.params?.part ?? "") as Part;
+    const el = h(null, "div", "mn-page");
+    if (!c) { empty(el, { icon: "user-x", title: "Champion not found" }); return { title: "", el }; }
+    h(h(el, "div", "mn-title-row"), "h1", "mn-title", `${c.name} · ${PART_TITLE[p] ?? ""}`);
+    if (p === "overview") overview(el, c, ctx);
+    else if (p === "skills") skillStrip(el, c, ctx.plugin.store.currentChanges(c.id), { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false });
+    else if (p === "build") buildTab(el, c, ctx);
+    else if (p === "augments") augmentsTab(el, c, ctx);
+    else tips(el, c, ctx);
+    return { title: `${c.name} · ${PART_TITLE[p] ?? ""}`, el };
+}
+
+// 出裝 on the card: the first build for this mode, its items in buying order
+function buildTop(tab: HTMLElement, c: Champion, ctx: PageCtx): void {
+    const store = ctx.plugin.store;
+    const b = c.builds.find((x) => x.mode === ctx.plugin.settings.mode);
+    h(tab, "div", "mn-qc-k", "出裝");
+    if (!b) { h(tab, "p", "mn-qc-how", "還沒有寫出裝。之後依玩法推薦前三件。"); return; }
+    h(tab, "b", "mn-cc-t", b.name);
+    const row = h(tab, "div", "mn-cc-items");
+    for (const id of b.items.slice(0, 6)) {
+        const i = store.item(id);
+        if (!i) continue;
+        const x = h(row, "button", "mn-cc-item");
+        const im = h(x, "img"); im.src = i.icon; im.alt = "";
+        h(x, "span", undefined, i.name);
+        x.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); ctx.openItem(i.id); });
+    }
+    if (b.note) h(tab, "p", "mn-qc-how", b.note);
+}
+// 強化 on the card: the best two of each rarity, with why
+function augmentTop(tab: HTMLElement, c: Champion, ctx: PageCtx): void {
+    const picks = augmentPicks(ctx.plugin.store, c);
+    h(tab, "div", "mn-qc-k", "強化");
+    if (!picks.length) { h(tab, "p", "mn-qc-how", "還沒有配對到的強化。"); return; }
+    const list = h(tab, "div", "mn-cc-augs");
+    for (const r of AUG_RARITIES) for (const p of picks.filter((x) => x.a.rarity === r).slice(0, TOP_AUGS)) {
+        const x = h(list, "button", "mn-cc-aug");
+        augIcon(x, p.a.icon, p.a.rarity, "mn-cc-augic");
+        const t = h(x, "span", "mn-cc-augt");
+        h(t, "b", undefined, p.a.name);
+        h(t, "span", undefined, `${p.a.rarity} · ${p.why}`);
+        x.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); ctx.openAugment(p.a.id); });
+    }
+}
+// 技巧 on the card: the first tips' titles
+function tipsTop(tab: HTMLElement, c: Champion): void {
+    h(tab, "div", "mn-qc-k", "技巧");
+    if (!c.tips.length) { h(tab, "p", "mn-qc-how", "還沒有技巧。寫在 Inbox/技巧，整理後會出現在這裡。"); return; }
+    const box = h(tab, "div", "mn-qc-howbox");
+    for (const t of c.tips.slice(0, TOP_TIPS)) { const p = h(box, "p", "mn-qc-how"); h(p, "b", undefined, t.title); if (t.text) p.append(`：${t.text}`); }
+}
+
+// The champion card's pages, for the Handbook card that pictures them (label, icon; the Champion page tabs in the Icons note)
+export const CHAMPION_TABS = [["概覽", "id-card"], ["玩法", "gamepad-2"], ["技能", "keyboard"], ["風格", "radar"], ["出裝", "shopping-bag"], ["強化", "sparkles"], ["技巧", "lightbulb"]] as const;
 
 // Overview: reach, damage kind, difficulty and the style chart, then the combo video and this patch's changes
-export const CHAMPION_TABS = SUB_TABS.map(([, l, ic]) => [l, ic] as const);   // for the Handbook card that shows them
-
 function overview(body: HTMLElement, c: Champion, ctx: PageCtx): { el: HTMLElement; open(): void } | null {
     championProfile(body, c, ctx.app);
     if (c.video) row(group(body), { icon: "play-circle", title: "Combo video", chevron: true, onTap: () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video!)}`) });

@@ -1017,6 +1017,26 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-deck .mn-sl-face { border-radius: 22px; }
 .mn-rq-deck .mn-qc-tab { padding-bottom: 104px; }
 .mn-rq-deck .mn-qc-tab.is-look { padding-bottom: 0; }
+/* the champion page (layout C): the 速查 card without the like / pass buttons, Back on the card, 全部 › at the foot of a page */
+.mn-cc .mn-qc-tab { padding-bottom: 16px; }
+.mn-cc .mn-qc-tab.is-look { padding-bottom: 0; }
+.mn-cc .mn-qc-words { padding-bottom: 28px; }
+.mn-app .mn-qc-back { margin-right: 8px; }
+.mn-app .mn-qc-more { align-self: flex-end; display: inline-flex; align-items: center; gap: 2px; margin-top: auto; height: 34px; padding: 0 10px 0 14px; border-radius: 17px; border: 0;
+    box-shadow: none; background: rgba(10, 12, 18, 0.6); color: var(--mn-text); font-size: 14px; font-weight: 700; }
+.mn-qc-more svg { width: 16px; height: 16px; }
+.mn-cc-t { font-size: 18px; color: var(--mn-text); }
+.mn-cc-items { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.mn-app .mn-cc-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border-radius: 14px; border: 1px solid var(--mn-line); box-shadow: none;
+    background: rgba(10, 12, 18, 0.55); color: var(--mn-text); font-size: 12px; white-space: normal; height: auto; }
+.mn-cc-item img { width: 48px; height: 48px; border-radius: 10px; }
+.mn-cc-augs { display: flex; flex-direction: column; gap: 8px; }
+.mn-app .mn-cc-aug { display: flex; align-items: center; gap: 12px; padding: 8px 12px 8px 8px; border-radius: 14px; border: 1px solid var(--mn-line); box-shadow: none;
+    background: rgba(10, 12, 18, 0.55); color: var(--mn-text); text-align: left; height: auto; white-space: normal; }
+.mn-cc-augic { width: 44px; height: 44px; --ring: 3px; border-radius: 12px; }
+.mn-cc-augt { display: flex; flex-direction: column; min-width: 0; }
+.mn-cc-augt b { font-size: 15px; }
+.mn-cc-augt span { font-size: 12px; color: var(--mn-muted); }
 .mn-rq-deck .mn-qc-words { padding: 4px 20px 100px; background: none; }   /* over the picture, Tinder style; the buttons sit under it */
 .mn-rq-deck .mn-qc-words .mn-sl-t { text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6); }
 .mn-rq-deck .mn-qc-words .mn-sl-x { height: auto; max-height: 56px; color: #e8e2d2; }
