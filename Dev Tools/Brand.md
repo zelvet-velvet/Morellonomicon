@@ -10,7 +10,7 @@ The project's own look outside the pages: the logo (README, the opening screen) 
 ---
 ## 🔖 Logo options
 
-Pick one (tell Claude the letter). D and E follow the in-game Morellonomicon item (Zaviel, 2026-10-30): its purple tome with gold corners, the three green claw slashes and the green fire of its anti-heal; redrawn by us, not Riot's picture.
+Pick one (tell Claude the letter). The chosen one becomes `Assets/brand/logo.svg`, used at the top of the README and on the opening screen; the others are deleted. D and E follow the in-game Morellonomicon item (Zaviel, 2026-10-30): its purple tome with gold corners, the three green claw slashes and the green fire of its anti-heal; redrawn by us, not Riot's picture.
 
 | D · Cursed tome (after the item) | E · Slashed seal (after the item, flat) |
 | --- | --- |
@@ -18,7 +18,6 @@ Pick one (tell Claude the letter). D and E follow the in-game Morellonomicon ite
 | The tome tilted like the item's, gold corners, glowing green claw slashes, green fire rising around it | The tome face-on with gold edges, three green claw slashes, a thin green ring; simpler, reads best small |
 
 Earlier options:
- The chosen one becomes `Assets/brand/logo.svg`, used at the top of the README and on the opening screen; the others are deleted.
 
 | A · Grimoire | B · Monogram | C · Open book |
 | --- | --- | --- |
