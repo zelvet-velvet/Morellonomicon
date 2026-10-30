@@ -1552,7 +1552,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay-win input, .mn-lay-win textarea { font-size: 16px; }   /* 16 px: iOS zooms in on a smaller box when it is tapped */
 .mn-lay-win button, .mn-lay-kinds button { font-size: 13px; }
 .mn-lay-winhead { display: flex; align-items: center; gap: 8px; min-height: 30px; margin: -2px -2px 0; padding: 0 2px 6px 4px; border-bottom: 1px solid var(--background-modifier-border); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
-.mn-app .mn-lay-wtitle-in, .mn-lay-wtitle-in { flex: 1; min-width: 0; height: auto; min-height: 32px; padding: 4px 8px; resize: none; overflow: hidden; font-weight: 700; line-height: 1.35; white-space: pre-wrap; overflow-wrap: anywhere; border-radius: 8px; border: 1px solid transparent; background: var(--background-secondary); box-shadow: none; }
+.mn-app .mn-lay-wtitle-in, .mn-lay-wtitle-in { flex: 1; min-width: 0; height: auto; min-height: 32px; padding: 4px 8px; resize: none; overflow: hidden; font-weight: 700; line-height: 1.35; white-space: pre-wrap; overflow-wrap: anywhere; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); box-shadow: none; }
 .mn-lay-wtitle-in:focus { border-color: var(--interactive-accent); }
 .mn-lay-wbtn { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border-radius: 8px; background: transparent; box-shadow: none; color: var(--text-muted); }
 .mn-lay-wbtn:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
@@ -1607,3 +1607,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay-win input.mn-lay-sin { flex: none; box-sizing: border-box; width: 84px; height: 44px; padding: 0 8px; text-align: center; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; border-radius: 12px; }
 .mn-lay-wspace { flex: 1; align-self: stretch; }   /* the empty part of the top bar: drag the window by it */
 .mn-lay-wbtn .mn-ic, .mn-lay-sbtn .mn-ic { display: flex; }   /* the icon box is just the icon, so it sits in the middle of its button */
+/* the block window's note box keeps its frame too, like the name box (accent while typing) */
+.mn-app .mn-lay-wnote, .mn-lay-wnote { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); box-shadow: none; }
+.mn-lay-wnote:focus { border-color: var(--interactive-accent); }
