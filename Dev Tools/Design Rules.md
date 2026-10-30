@@ -25,6 +25,19 @@ sticker: lucide//ruler
 > - **No hard edges.** A splash or wallpaper fades out at every side where it meets the page (mask or gradient), the top under the header too.
 > - **Game art by address.** Riot, CommunityDragon and wiki pictures are shown from their sites, never stored in the vault.
 
+## ✅ Picture check after every page change
+
+> [!important]+ Never an empty page · Every picture block has its look · Fetch what comes next ahead · The first screen first · Cached pictures show at once · A failure never leaves a hole · Say what was checked
+> A rule from Zaviel (2026-10-30): after a new page, or any change to a page, its picture loading is reviewed before the change is committed, so whoever opens the page never sees an empty screen or empty frames.
+>
+> - **Never an empty page.** From the first frame the page shows either its pictures or its loading look (the blur with the band of light); never a blank area, an empty frame or a picture that pops in without a placeholder.
+> - **Every picture block has its look.** Each block from [[Layouts]] that holds pictures (CSS backgrounds too) is marked with `layoutBlock()` (or `blockUntil` / `blockLoad` when it waits for more than pictures: clips, data); a big single picture outside a block gets the look by itself (`autoLoading`). A new block is checked for this one by one.
+> - **Fetch what comes next ahead.** What the user is likely to open next is fetched before the tap, at a quiet moment: the icons after start-up (`warmPictures`), the next topic's clips on the Handbook home (`preloadClip`), the next Picks card's skins, the clip of an ability before its card shows. A new page says what leads to it and starts its pictures there when it is cheap (a few icons, one splash), never a whole gallery.
+> - **The first screen first.** The pictures in view load before those further down or in a hidden tab (`loading="lazy"` only for those, and never for pictures a page redraws on every tap); heavy ones (splash, clips) do not hold up the small ones.
+> - **Cached pictures show at once.** A redraw or a page you come back to shows its cached pictures without the loading look (the 90 ms grace); nothing blinks.
+> - **A failure never leaves a hole.** A picture that fails is retried (CSS backgrounds) or its box is taken away or replaced by a plain tile; a clip that cannot play removes its frame; nothing waits forever (every wait has a time limit).
+> - **Say what was checked.** The report of the change names which pictures the page has, how each one loads (cache, preload, the loading look) and what the user sees on a slow connection; what could only be seen on the phone is said so.
+
 ## 🔍 Search capsule and keyboard
 
 > [!note]+ One floating capsule · It rides on the keyboard · Typing shows results in place

@@ -17,6 +17,7 @@ sticker: lucide//activity
 > - **Effect text like the game's**: values by level and scalings are pills with an icon in their stat's colour, with space around them; stat amounts and damage kinds are coloured (to check on the phone).
 > - **Champion page with tabs**: the big banner as before (no blank band under it), then Overview · Skills · Build · Augments · Tips as icon tabs that stay under the top bar; Skills shows one ability at a time with its clip first (to check on the phone).
 > - **Layouts editor**: its own heading at the top of [[Layouts]] (in the outline), note boxes four lines tall.
+> - **Picture check rule**: [[Design Rules]] has a picture check after every page change (loading look on every picture block, fetch what comes next ahead, no empty page); the LLM Guide's workflow points to it.
 > - **Champion Augments tab**: the augments that suit the champion by rarity, best first, each with why (pinned, Riot's tags, hand-written, a guess); the first six of each rarity, the rest folded (to check on the phone).
 > - **No orange bar, calmer cold open**: blocks no longer show Obsidian's orange loading bar; the tab bar is not rebuilt while the notes arrive and Home redraws in place when the Riot profile comes in (to check on the phone).
 > - **Pickers and the 速查卡片 editor**: champions and items in the inbox editors are picked from a list with icon and name; `Inbox/速查卡片` edits each champion's 速查 text in its note, with room counters and a 已驗證 count (to check on the phone).
