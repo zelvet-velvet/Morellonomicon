@@ -1,34 +1,71 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- Option D · Cursed tome, after the Morellonomicon item: a purple tome tilted, gold corners, three green slashes, green fire around -->
+  <!-- Option D · Cursed tome, after the Morellonomicon item: a purple tome with gold corners, spine bands, a clasp and a ribbon,
+       three green claw slashes torn into its cover, green fire around it. Our own drawing, made by tools/draw_brand.py. -->
   <defs>
-    <radialGradient id="dbg" cx="0.5" cy="0.5" r="0.7"><stop offset="0" stop-color="#1E2A1F"/><stop offset="1" stop-color="#0E1210"/></radialGradient>
-    <radialGradient id="daura" cx="0.5" cy="0.5" r="0.5"><stop offset="0.45" stop-color="#7FCB4E" stop-opacity="0.5"/><stop offset="1" stop-color="#7FCB4E" stop-opacity="0"/></radialGradient>
-    <linearGradient id="dcover" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5B3F86"/><stop offset="0.6" stop-color="#3D2A5E"/><stop offset="1" stop-color="#261A3B"/></linearGradient>
-    <linearGradient id="dslash" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E4FFB0"/><stop offset="0.5" stop-color="#9BE05A"/><stop offset="1" stop-color="#4E9A2E"/></linearGradient>
-    <filter id="dsoft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="4"/></filter><filter id="dsoft2" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2"/></filter>
-    <filter id="dblur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="7"/></filter>
-  </defs>
-  <rect width="512" height="512" rx="112" fill="url(#dbg)"/>
-  <!-- green fire behind -->
-  <circle cx="256" cy="262" r="210" fill="url(#daura)"/>
-  <g fill="#5FA83C" opacity="0.8" filter="url(#dsoft)"><path d="M96 420 C70 340 110 290 120 230 C140 280 160 300 168 330 C170 270 200 220 214 170 C236 240 230 280 236 300 Z"/><path d="M300 300 C310 250 300 190 330 130 C350 190 372 210 370 260 C390 230 400 200 420 180 C440 260 430 340 410 420 Z"/><path d="M120 440 C200 400 320 400 400 440 C330 470 190 470 120 440 Z"/></g><g fill="#A6E070" opacity="0.7" filter="url(#dsoft2)"><path d="M126 400 C112 350 130 310 140 270 C152 310 166 330 170 360 Z"/><path d="M382 400 C392 340 384 290 400 240 C414 300 416 350 404 400 Z"/></g>
-  <g transform="rotate(-14 256 262)">
-    <!-- pages -->
-    <path d="M150 140 h208 a12 12 0 0 1 12 12 v236 a12 12 0 0 1 -12 12 h-208 z" fill="#CFC3A6"/>
-    <path d="M362 150 v240 M354 146 v248" stroke="#9F947A" stroke-width="2"/>
+    <radialGradient id="tbg" cx="0.5" cy="0.55" r="0.75"><stop offset="0" stop-color="#1F2E1F"/><stop offset="0.6" stop-color="#121A13"/><stop offset="1" stop-color="#0A0D0B"/></radialGradient>
+    <radialGradient id="taura" cx="0.5" cy="0.5" r="0.5"><stop offset="0.35" stop-color="#7FCB4E" stop-opacity="0.55"/><stop offset="1" stop-color="#7FCB4E" stop-opacity="0"/></radialGradient>
+    <linearGradient id="tcover" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6A4A9A"/><stop offset="0.45" stop-color="#46306C"/><stop offset="1" stop-color="#241838"/></linearGradient>
+    <linearGradient id="tspine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1C1330"/><stop offset="0.5" stop-color="#3A2858"/><stop offset="1" stop-color="#22173A"/></linearGradient>
+    <linearGradient id="tpages" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#B8AC8E"/><stop offset="1" stop-color="#E6DCC2"/></linearGradient>
+    <linearGradient id="tgold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F3D88A"/><stop offset="0.5" stop-color="#C9A24A"/><stop offset="1" stop-color="#8A6A28"/></linearGradient>
+    <linearGradient id="tslash" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E9FFC0"/><stop offset="0.45" stop-color="#9BE05A"/><stop offset="1" stop-color="#4A962C"/></linearGradient>
+    <linearGradient id="tflame" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#3E8A2A"/><stop offset="0.6" stop-color="#76C24A"/><stop offset="1" stop-color="#B9EE86" stop-opacity="0.2"/></linearGradient>
+    <linearGradient id="tribbon" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C2408A"/><stop offset="1" stop-color="#7E2259"/></linearGradient>
+    <filter id="tsoft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="5"/></filter>
+    <filter id="tglow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="8"/></filter>
+    <filter id="tsmall" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="1.6"/></filter>
+    <linearGradient id="tfadeg" x1="0" y1="0" x2="0" y2="1"><stop offset="0.7" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <mask id="tfade" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512"><rect x="0" y="0" width="512" height="450" fill="url(#tfadeg)"/></mask>
+    <clipPath id="tcoverclip"><rect x="128" y="128" width="222" height="264" rx="14"/></clipPath></defs>
+  <rect width="512" height="512" rx="112" fill="url(#tbg)"/>
+  <circle cx="256" cy="270" r="220" fill="url(#taura)"/>
+  <g mask="url(#tfade)"><g fill="#2F6E22" opacity="0.85" filter="url(#tsoft)"><path d="M46 430 C46 345 94 311 116 260 C136 328 166 354 166 430 Z"/><path d="M81 430 C81 365 141 339 168 300 C194 352 231 372 231 430 Z"/><path d="M161 430 C161 325 205 283 225 220 C244 304 271 336 271 430 Z"/><path d="M236 430 C236 330 284 290 306 230 C326 310 356 340 356 430 Z"/><path d="M281 430 C281 360 341 332 368 290 C394 346 431 367 431 430 Z"/><path d="M346 430 C346 345 394 311 416 260 C436 328 466 354 466 430 Z"/><path d="M211 430 C211 310 247 262 263 190 C278 286 301 322 301 430 Z"/></g>
+  <g fill="url(#tflame)" opacity="0.8" filter="url(#tsmall)"><path d="M76 430 C76 355 108 325 122 280 C136 340 156 362 156 430 Z"/><path d="M111 430 C111 375 155 353 175 320 C194 364 221 380 221 430 Z"/><path d="M291 430 C291 370 335 346 355 310 C374 358 401 376 401 430 Z"/><path d="M356 430 C356 355 388 325 402 280 C416 340 436 362 436 430 Z"/><path d="M226 430 C226 325 250 283 261 220 C271 304 286 336 286 430 Z"/></g>
+  <g fill="#B5EC80" opacity="0.55" filter="url(#tsmall)"><path d="M105 430 C105 360 123 332 132 290 C140 346 151 367 151 430 Z"/><path d="M140 430 C140 380 166 360 177 330 C188 370 204 385 204 430 Z"/><path d="M308 430 C308 376 334 354 345 322 C356 365 372 381 372 430 Z"/><path d="M361 430 C361 360 379 332 388 290 C396 346 407 367 407 430 Z"/></g></g>
+  <g transform="rotate(-14 256 262)"><g>
+    <!-- back cover and page block -->
+    <rect x="136" y="136" width="230" height="270" rx="14" fill="#1A1228"/>
+    <path d="M150 140 h204 a12 12 0 0 1 12 12 v240 a12 12 0 0 1 -12 12 h-204 z" fill="url(#tpages)"/>
+    <path d="M352 146 v232" stroke="#9F947A" stroke-width="1"/><path d="M355 147 v230" stroke="#9F947A" stroke-width="1"/><path d="M358 148 v228" stroke="#9F947A" stroke-width="1"/><path d="M361 149 v226" stroke="#9F947A" stroke-width="1"/><path d="M364 150 v224" stroke="#9F947A" stroke-width="1"/><path d="M367 151 v222" stroke="#9F947A" stroke-width="1"/><path d="M160 396.0 h188" stroke="#A89C80" stroke-width="0.8"/><path d="M160 398.4 h187" stroke="#A89C80" stroke-width="0.8"/><path d="M160 400.8 h186" stroke="#A89C80" stroke-width="0.8"/><path d="M160 403.2 h185" stroke="#A89C80" stroke-width="0.8"/><path d="M160 405.6 h184" stroke="#A89C80" stroke-width="0.8"/>
+    <!-- ribbon bookmark hanging from the pages -->
+    <path d="M300 396 h20 v60 l-10 -10 l-10 10 z" fill="url(#tribbon)" stroke="#5A1740" stroke-width="1.5"/>
     <!-- cover -->
-    <rect x="128" y="128" width="222" height="264" rx="14" fill="url(#dcover)" stroke="#1A1226" stroke-width="4"/>
-    <rect x="128" y="128" width="30" height="264" rx="12" fill="#2A1D40"/>
-    <!-- gold corners -->
-    <g fill="#C9A24A" stroke="#7A5E22" stroke-width="2">
-      <path d="M350 128 v54 l-18 -6 v-30 h-30 l-6 -18 z"/>
-      <path d="M350 392 v-54 l-18 6 v30 h-30 l-6 18 z"/>
-      <path d="M158 128 h44 l-6 18 h-38 z"/><path d="M158 392 h44 l-6 -18 h-38 z"/>
+    <rect x="128" y="128" width="222" height="264" rx="14" fill="url(#tcover)" stroke="#140D20" stroke-width="4"/>
+    <g clip-path="url(#tcoverclip)">
+      <path d="M128 128 L350 128 L350 160 C280 150 200 170 128 220 Z" fill="#FFFFFF" opacity="0.07"/>
+      <g stroke="#2A1C44" stroke-width="1" opacity="0.6"><path d="M150 128 l-30 264"/><path d="M164 128 l-30 264"/><path d="M178 128 l-30 264"/><path d="M192 128 l-30 264"/><path d="M206 128 l-30 264"/><path d="M220 128 l-30 264"/><path d="M234 128 l-30 264"/><path d="M248 128 l-30 264"/><path d="M262 128 l-30 264"/><path d="M276 128 l-30 264"/><path d="M290 128 l-30 264"/><path d="M304 128 l-30 264"/><path d="M318 128 l-30 264"/><path d="M332 128 l-30 264"/><path d="M346 128 l-30 264"/><path d="M360 128 l-30 264"/><path d="M374 128 l-30 264"/></g>
     </g>
-    <circle cx="341" cy="137" r="4" fill="#F0D58A"/><circle cx="341" cy="383" r="4" fill="#F0D58A"/>
+    <!-- embossed frame and an etched rune seal -->
+    <rect x="170" y="146" width="164" height="228" rx="8" fill="none" stroke="#24183A" stroke-width="5"/>
+    <rect x="172" y="148" width="160" height="224" rx="7" fill="none" stroke="#7E62AE" stroke-width="1.5" opacity="0.7"/>
+    <g fill="none" stroke="#2A1C44" stroke-width="3" opacity="0.9">
+      <circle cx="252" cy="260" r="46"/><circle cx="252" cy="260" r="34" stroke-dasharray="4 6"/>
+      <path d="M252 220 L287 280 L217 280 Z"/>
+    </g>
+    <g fill="none" stroke="#8C70BC" stroke-width="1" opacity="0.45"><circle cx="253" cy="259" r="46"/><path d="M253 219 L288 279 L218 279 Z"/></g>
+    <!-- spine with gold bands -->
+    <rect x="128" y="128" width="34" height="264" rx="12" fill="url(#tspine)"/>
+    <g fill="url(#tgold)" stroke="#6E5420" stroke-width="1">
+      <rect x="128" y="168" width="34" height="9" rx="2"/><rect x="128" y="256" width="34" height="9" rx="2"/><rect x="128" y="344" width="34" height="9" rx="2"/>
+    </g>
+    <!-- gold corners with filigree -->
+    <g fill="url(#tgold)" stroke="#6E5420" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M350 128 v62 c-8 -4 -14 -12 -16 -22 c-6 2 -12 0 -14 -6 c-6 2 -12 -2 -12 -8 c-10 -2 -18 -8 -20 -26 z"/>
+      <path d="M350 392 v-62 c-8 4 -14 12 -16 22 c-6 -2 -12 0 -14 6 c-6 -2 -12 2 -12 8 c-10 2 -18 8 -20 26 z"/>
+      <path d="M162 128 h44 c-2 10 -10 16 -18 16 c-2 6 -8 10 -14 8 c-4 6 -8 8 -12 8 z"/>
+      <path d="M162 392 h44 c-2 -10 -10 -16 -18 -16 c-2 -6 -8 -10 -14 -8 c-4 -6 -8 -8 -12 -8 z"/>
+    </g>
+    <circle cx="338" cy="141" r="3.2" fill="#F6E2A4" stroke="#6E5420" stroke-width="1"/><circle cx="338" cy="379" r="3.2" fill="#F6E2A4" stroke="#6E5420" stroke-width="1"/><circle cx="172" cy="141" r="3.2" fill="#F6E2A4" stroke="#6E5420" stroke-width="1"/><circle cx="172" cy="379" r="3.2" fill="#F6E2A4" stroke="#6E5420" stroke-width="1"/>
+    <!-- clasp on the open side -->
+    <path d="M340 238 h24 a6 6 0 0 1 6 6 v32 a6 6 0 0 1 -6 6 h-24 z" fill="url(#tgold)" stroke="#6E5420" stroke-width="1.5"/>
+    <circle cx="358" cy="260" r="6" fill="#7FCB4E" stroke="#2F6E22" stroke-width="1.5"/><circle cx="356" cy="258" r="2" fill="#E9FFC0"/>
+  </g></g>
+  <g>
+    <g fill="#9BE05A" opacity="0.9" filter="url(#tglow)"><path d="M212 122 Q243 236 164 408 Q171 236 212 122 Z"/><path d="M280 108 Q309 234 218 424 Q229 234 280 108 Z"/><path d="M344 140 Q370 246 288 404 Q302 246 344 140 Z"/></g>
+    <g fill="#120A1C" opacity="0.85"><path d="M212 122 Q236 236 164 408 Q178 236 212 122 Z"/><path d="M280 108 Q302 234 218 424 Q236 234 280 108 Z"/><path d="M344 140 Q363 246 288 404 Q309 246 344 140 Z"/></g>
+    <g fill="url(#tslash)"><path d="M212 122 Q231 236 164 408 Q183 236 212 122 Z"/><path d="M280 108 Q297 234 218 424 Q241 234 280 108 Z"/><path d="M344 140 Q358 246 288 404 Q314 246 344 140 Z"/></g>
+    <g fill="#F4FFE0" opacity="0.9"><path d="M212 122 Q213 236 164 408 Q201 236 212 122 Z"/><path d="M280 108 Q276 234 218 424 Q262 234 280 108 Z"/><path d="M344 140 Q341 246 288 404 Q331 246 344 140 Z"/></g>
+    <g fill="#9BE05A" opacity="0.85"><path d="M170 392 c-3 6 -3 12 0 16 c3 -4 3 -10 0 -16 z"/><path d="M224 410 c-3 6 -3 12 0 16 c3 -4 3 -10 0 -16 z"/><path d="M292 390 c-3 6 -3 12 0 16 c3 -4 3 -10 0 -16 z"/></g>
   </g>
-  <!-- three claw slashes, glowing -->
-  <g filter="url(#dblur)" fill="#9BE05A" opacity="0.9"><path d="M214 126 Q242.8 237.2 166 404 Q174.8 237.2 214 126 Z"/><path d="M280 114 Q308.0 235.60000000000002 220 418 Q232.0 235.60000000000002 280 114 Z"/><path d="M342 146 Q366.4 246.8 288 398 Q302.4 246.8 342 146 Z"/></g>
-  <g fill="url(#dslash)"><path d="M214 126 Q232.8 237.2 166 404 Q184.8 237.2 214 126 Z"/><path d="M280 114 Q298.0 235.60000000000002 220 418 Q242.0 235.60000000000002 280 114 Z"/><path d="M342 146 Q356.4 246.8 288 398 Q312.4 246.8 342 146 Z"/></g>
-  <g fill="#F2FFD8" opacity="0.85"><path d="M214 126 Q214.8 237.2 166 404 Q202.8 237.2 214 126 Z"/><path d="M280 114 Q277.0 235.60000000000002 220 418 Q263.0 235.60000000000002 280 114 Z"/><path d="M342 146 Q339.4 246.8 288 398 Q329.4 246.8 342 146 Z"/></g>
+  <g filter="url(#tsmall)"><circle cx="194" cy="141" r="2.4" fill="#C8F59A" opacity="0.44"/><circle cx="269" cy="214" r="1.1" fill="#C8F59A" opacity="0.70"/><circle cx="93" cy="237" r="1.2" fill="#C8F59A" opacity="0.45"/><circle cx="229" cy="371" r="1.3" fill="#C8F59A" opacity="0.53"/><circle cx="301" cy="412" r="2.3" fill="#C8F59A" opacity="0.64"/><circle cx="424" cy="106" r="2.9" fill="#C8F59A" opacity="0.57"/><circle cx="131" cy="130" r="1.7" fill="#C8F59A" opacity="0.89"/><circle cx="144" cy="288" r="2.4" fill="#C8F59A" opacity="0.62"/><circle cx="273" cy="111" r="1.1" fill="#C8F59A" opacity="0.52"/><circle cx="320" cy="235" r="1.7" fill="#C8F59A" opacity="0.75"/><circle cx="240" cy="192" r="2.7" fill="#C8F59A" opacity="0.82"/><circle cx="166" cy="285" r="2.2" fill="#C8F59A" opacity="0.93"/><circle cx="337" cy="188" r="3.2" fill="#C8F59A" opacity="0.47"/><circle cx="227" cy="347" r="1.3" fill="#C8F59A" opacity="0.69"/></g>
 </svg>

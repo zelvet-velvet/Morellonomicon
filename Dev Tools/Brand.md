@@ -15,7 +15,7 @@ Pick one (tell Claude the letter). The chosen one becomes `Assets/brand/logo.svg
 | D · Cursed tome (after the item) | E · Slashed seal (after the item, flat) |
 | --- | --- |
 | ![[logo-d-cursed-tome.svg\|200]] | ![[logo-e-slashed-seal.svg\|200]] |
-| The tome tilted like the item's, gold corners, glowing green claw slashes, green fire rising around it | The tome face-on with gold edges, three green claw slashes, a thin green ring; simpler, reads best small |
+| The tome tilted like the item's: gold corners with filigree and rivets, spine bands, a clasp with a green stone, a magenta ribbon, an etched rune seal, three claw slashes torn into the cover, green fire and sparks around it (more detail, 2026-10-30) | The tome face-on with gold edges, three green claw slashes, a thin green ring; simpler, reads best small |
 
 Earlier options:
 
@@ -27,7 +27,17 @@ Earlier options:
 ---
 ## 🎬 Opening screen options
 
-Shown once when Obsidian starts, over the whole screen with no tab bar. A short intro plays once, then the screen keeps moving (looping) until you tap; a tap fades it out to Home. Both pages are also light-blue mocks under **Cold open options** in [[Layouts]]. These previews move in Obsidian; the app builds them in CSS, with the logo you pick.
+Shown once when Obsidian starts, over the whole screen with no tab bar. A short intro plays once, then the screen keeps moving (looping) until you tap; a tap fades it out to Home. All three are light-blue mocks under **Cold open options** in [[Layouts]]. These previews move in Obsidian.
+
+### C · Tome awakens (with logo D)
+A vivid start that settles into calm, living motion (Zaviel, 2026-10-30). Made with logo D by `tools/draw_brand.py`, so the app can show this very SVG.
+
+![[splash-c-tome.svg|300]]
+
+- **Intro, about 3 s, once:** green sparks rush to the middle → a flash → the tome slams in (overshoots and settles) → three claw marks rip across the whole screen while it shakes → a shockwave ring → the fire bursts up → MORELLONOMICON lands, letters closing in, then 黑魔禁書 rises.
+- **Loop, until a tap:** the tome floats up and down and sways a little, each flame flickers on its own beat, the slashes breathe, embers rise, the rune ring turns slowly, a glint crosses the cover every few seconds, 輕觸進入 pulses.
+
+### A and B (earlier, with logo A)
 
 | A · Rune circle | B · Map and title |
 | --- | --- |
