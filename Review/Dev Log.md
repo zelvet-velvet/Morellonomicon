@@ -1,7 +1,7 @@
 ---
 title: Morellonomicon - Dev Log
 date: 2026-10-27
-updated: 2026-10-29
+updated: 2026-10-30
 tags:
   - dev-log
   - morellonomicon
@@ -12,6 +12,7 @@ What changed and when, in short: **one note per day** in `Log/` (newest first), 
 ## 📆 Days
 
 ### 2026
-- [[2026-10-29]]: 速查 finds nicknames
+- [[2026-10-30]]: logo and opening screen options ([[Brand]]), a new README
+- [[2026-10-29]]: search capsule on the keyboard, the loading look for every block, [[Design Rules]], Handbook topics full screen, Items like the shop, 速查 text for every champion, new glossary and item pages
 - [[2026-10-28]]: loading screen tips, one Handbook card layout ([[Card Layout]]), [[Icons]], Malphite's ult by level, item recipe tree, 速查 overview cards and swipe
 - [[2026-10-27]]: project start, vault setup, workflow copied from clawd-room
