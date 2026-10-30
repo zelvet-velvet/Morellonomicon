@@ -4760,6 +4760,67 @@ var CHIP_CAT = {
   scaleMS: "\u79FB\u52D5",
   scaleLS: "\u5438\u8840"
 };
+var FX_STAT = [
+  [/魔法傷害|魔攻|魔力|魔法穿透/, "var(--mn-magic)", "sparkles"],
+  [/物理傷害|物攻|物理致命|物理穿透/, "var(--mn-phys)", "sword"],
+  [/真實傷害/, "var(--mn-true)", "gem"],
+  [/適性/, "var(--mn-mixed)", "blend"],
+  [/治療與護盾強度|治療|生命/, "var(--mn-heal)", "heart"],
+  [/護盾|魔防/, "var(--mn-shield)", "shield-check"],
+  [/物防/, "var(--mn-guard)", "shield"],
+  [/攻速/, "var(--mn-true)", "gauge"],
+  [/技能加速|大絕加速|道具加速/, "var(--mn-haste)", "timer-reset"],
+  [/跑速/, "var(--mn-dash)", "footprints"],
+  [/暴擊/, "var(--mn-exec)", "dice-5"],
+  [/吸血/, "var(--mn-ls)", "syringe"],
+  [/攻擊距離/, "var(--mn-range)", "ruler"]
+];
+var fxStat = (t) => {
+  for (const [re, c, i] of FX_STAT) if (re.test(t)) return [c, i];
+  return null;
+};
+var FX_TOKEN = new RegExp([
+  "\uFF08(?:\\+|\u6BCF)[^\uFF08\uFF09]*(?:\uFF08[^\uFF08\uFF09]*\uFF09[^\uFF08\uFF09]*)*\uFF09",
+  // a scaling in brackets, maybe with a ranged value inside
+  "\\d+(?:\\.\\d+)?%?\u2013\\d+(?:\\.\\d+)?%?\uFF08\u96A8\u7B49\u7D1A[^\uFF09]*\uFF09",
+  // a value by level
+  "\\d+(?:\\.\\d+)?%?(?:\uFF08\u9060\u7A0B [^\uFF09]+\uFF09)?\\s?(?:\u984D\u5916|\u6700\u5927|\u76EE\u524D|\u5DF2\u640D\u5931|\u57FA\u790E|\u7E3D)?(?:\u7269\u653B|\u9B54\u653B|\u653B\u901F|\u6280\u80FD\u52A0\u901F|\u5927\u7D55\u52A0\u901F|\u57FA\u790E\u6280\u80FD\u52A0\u901F|\u9053\u5177\u52A0\u901F|\u8DD1\u901F|\u7269\u9632|\u9B54\u9632|\u751F\u547D|\u66B4\u64CA\u7387|\u66B4\u64CA\u50B7\u5BB3|\u5168\u80FD\u5438\u8840|\u666E\u653B\u5438\u8840|\u7269\u7406\u81F4\u547D|\u7269\u7406\u7A7F\u900F|\u9B54\u6CD5\u7A7F\u900F|\u6CBB\u7642\u8207\u8B77\u76FE\u5F37\u5EA6|\u9069\u6027\u4E4B\u529B|\u9B54\u529B|\u653B\u64CA\u8DDD\u96E2)",
+  "\\d+(?:\\.\\d+)?%?(?:\uFF08\u9060\u7A0B [^\uFF09]+\uFF09|(?=\uFF08\u6BCF))",
+  // a number with its ranged value, or before a scaling
+  "\u9B54\u6CD5\u50B7\u5BB3|\u7269\u7406\u50B7\u5BB3|\u771F\u5BE6\u50B7\u5BB3|\u9069\u6027\u50B7\u5BB3",
+  "(?:\u984D\u5916|\u6700\u5927|\u5DF2\u640D\u5931)?(?:\u7269\u653B|\u9B54\u653B|\u653B\u901F|\u6280\u80FD\u52A0\u901F|\u5927\u7D55\u52A0\u901F|\u8DD1\u901F|\u7269\u9632|\u9B54\u9632|\u66B4\u64CA\u7387|\u66B4\u64CA\u50B7\u5BB3|\u5168\u80FD\u5438\u8840|\u666E\u653B\u5438\u8840|\u7269\u7406\u81F4\u547D|\u7269\u7406\u7A7F\u900F|\u9B54\u6CD5\u7A7F\u900F|\u6CBB\u7642\u8207\u8B77\u76FE\u5F37\u5EA6|\u9069\u6027\u4E4B\u529B)"
+  // a stat named on its own
+].join("|"), "g");
+function richEffect(p, text) {
+  let at = 0;
+  for (const m of text.matchAll(FX_TOKEN)) {
+    const t = m[0], i = m.index ?? 0;
+    if (i > at) p.append(text.slice(at, i));
+    at = i + t.length;
+    if (t.startsWith("\uFF08")) {
+      const inner = t.slice(1, -1);
+      const st2 = fxStat(inner);
+      const pill2 = h(p, "span", "mn-fx-sc");
+      if (st2) {
+        pill2.style.setProperty("--c", st2[0]);
+        icon(pill2, st2[1], "mn-fx-ic");
+      }
+      pill2.append(inner.replace(/^每\s*/, "\u6BCF "));
+      continue;
+    }
+    const lv = /^(.+?)（隨等級[^）]*）$/.exec(t);
+    if (lv) {
+      const pill2 = h(p, "span", "mn-fx-lv");
+      icon(pill2, "trending-up", "mn-fx-ic");
+      pill2.append(lv[1]);
+      continue;
+    }
+    const st = fxStat(t);
+    const v = h(p, "span", "mn-fx-v", t);
+    if (st) v.style.setProperty("--c", st[0]);
+  }
+  if (at < text.length) p.append(text.slice(at));
+}
 var LEVEL_LABEL = (lv, top) => lv === top && top > 1 ? "\u6700\u5927" : `Lv${lv}`;
 function augmentPage(ctx) {
   const store = ctx.plugin.store;
@@ -4816,7 +4877,7 @@ function augmentPage(ctx) {
       }
       h(card, "div", "mn-pn-src", `\u6578\u503C\uFF1A\u7AF6\u6280\u5834\u7684\u904A\u6232\u8CC7\u6599\uFF0C\u5927\u6DF7\u6230\u53EF\u80FD\u4E0D\u540C${nums.partial ? "\uFF08X \u662F\u904A\u6232\u5167\u624D\u7B97\u5F97\u51FA\u7684\u6578\u503C\uFF09" : ""}`);
     } else if (a.effect) {
-      p.setText(a.effect);
+      richEffect(p, a.effect);
       const src = a.effectSource ? `\u6578\u503C\uFF1A${a.effectSource}${a.effectSource.includes("Wiki") ? "\uFF08CC BY-SA\uFF09" : ""}${a.effectPatch ? ` \xB7 ${a.effectPatch}` : ""}${a.effectStatus ? ` \xB7 ${a.effectStatus}` : ""}` : "";
       h(card, "div", "mn-pn-src", src || (a.partial ? "\u6578\u503C\u5F85\u88DC\uFF08X \u662F\u904A\u6232\u5167\u624D\u770B\u5F97\u5230\u7684\u6578\u503C\uFF09" : "\u6548\u679C\uFF1ARiot Games"));
     } else {

@@ -84,6 +84,52 @@ const CHIP_CAT: Record<string, string> = {
     scaleAP: "法術強度", scaleAD: "攻擊力", scaleCrit: "暴擊", scaleAS: "攻速", scaleAH: "技能急速", scaleAbilityHaste: "技能急速", scaleHealth: "生命",
     scaleArmor: "護甲", scaleMR: "魔防", scaleAPen: "物理穿透", scaleMPen: "法術穿透", scaleMana: "魔力", scaleMS: "移動", scaleLS: "吸血",
 };
+// An effect line drawn like the game's tooltip: a value that grows with level is a pill with a rising-line icon, a scaling ("（+50% 額外物攻）")
+// is a pill in its stat's colour with the stat's icon, an amount of a stat ("20% 物攻") and a damage kind ("物理傷害") are coloured;
+// pills keep a little space on both sides. One stat -> [colour, Lucide icon]; the longest word wins.
+const FX_STAT: [RegExp, string, string][] = [
+    [/魔法傷害|魔攻|魔力|魔法穿透/, "var(--mn-magic)", "sparkles"], [/物理傷害|物攻|物理致命|物理穿透/, "var(--mn-phys)", "sword"],
+    [/真實傷害/, "var(--mn-true)", "gem"], [/適性/, "var(--mn-mixed)", "blend"], [/治療與護盾強度|治療|生命/, "var(--mn-heal)", "heart"],
+    [/護盾|魔防/, "var(--mn-shield)", "shield-check"], [/物防/, "var(--mn-guard)", "shield"], [/攻速/, "var(--mn-true)", "gauge"],
+    [/技能加速|大絕加速|道具加速/, "var(--mn-haste)", "timer-reset"], [/跑速/, "var(--mn-dash)", "footprints"], [/暴擊/, "var(--mn-exec)", "dice-5"],
+    [/吸血/, "var(--mn-ls)", "syringe"], [/攻擊距離/, "var(--mn-range)", "ruler"],
+];
+const fxStat = (t: string): [string, string] | null => { for (const [re, c, i] of FX_STAT) if (re.test(t)) return [c, i]; return null; };
+const FX_TOKEN = new RegExp([
+    "（(?:\\+|每)[^（）]*(?:（[^（）]*）[^（）]*)*）",                                  // a scaling in brackets, maybe with a ranged value inside
+    "\\d+(?:\\.\\d+)?%?–\\d+(?:\\.\\d+)?%?（隨等級[^）]*）",                              // a value by level
+    "\\d+(?:\\.\\d+)?%?(?:（遠程 [^）]+）)?\\s?(?:額外|最大|目前|已損失|基礎|總)?(?:物攻|魔攻|攻速|技能加速|大絕加速|基礎技能加速|道具加速|跑速|物防|魔防|生命|暴擊率|暴擊傷害|全能吸血|普攻吸血|物理致命|物理穿透|魔法穿透|治療與護盾強度|適性之力|魔力|攻擊距離)",
+    "\\d+(?:\\.\\d+)?%?(?:（遠程 [^）]+）|(?=（每))",                                     // a number with its ranged value, or before a scaling
+    "魔法傷害|物理傷害|真實傷害|適性傷害",
+    "(?:額外|最大|已損失)?(?:物攻|魔攻|攻速|技能加速|大絕加速|跑速|物防|魔防|暴擊率|暴擊傷害|全能吸血|普攻吸血|物理致命|物理穿透|魔法穿透|治療與護盾強度|適性之力)",   // a stat named on its own
+].join("|"), "g");
+function richEffect(p: HTMLElement, text: string): void {
+    let at = 0;
+    for (const m of text.matchAll(FX_TOKEN)) {
+        const t = m[0], i = m.index ?? 0;
+        if (i > at) p.append(text.slice(at, i));
+        at = i + t.length;
+        if (t.startsWith("（")) {   // a scaling pill: "+50% 額外物攻", the brackets dropped
+            const inner = t.slice(1, -1);
+            const st = fxStat(inner);
+            const pill = h(p, "span", "mn-fx-sc");
+            if (st) { pill.style.setProperty("--c", st[0]); icon(pill, st[1], "mn-fx-ic"); }
+            pill.append(inner.replace(/^每\s*/, "每 "));
+            continue;
+        }
+        const lv = /^(.+?)（隨等級[^）]*）$/.exec(t);
+        if (lv) {   // a value by level
+            const pill = h(p, "span", "mn-fx-lv");
+            icon(pill, "trending-up", "mn-fx-ic");
+            pill.append(lv[1]);
+            continue;
+        }
+        const st = fxStat(t);
+        const v = h(p, "span", "mn-fx-v", t);
+        if (st) v.style.setProperty("--c", st[0]);
+    }
+    if (at < text.length) p.append(text.slice(at));
+}
 const LEVEL_LABEL = (lv: number, top: number) => (lv === top && top > 1 ? "最大" : `Lv${lv}`);
 
 export function augmentPage(ctx: PageCtx): PageOut {
@@ -136,7 +182,7 @@ export function augmentPage(ctx: PageCtx): PageOut {
             }
             h(card, "div", "mn-pn-src", `數值：競技場的遊戲資料，大混戰可能不同${nums.partial ? "（X 是遊戲內才算得出的數值）" : ""}`);
         } else if (a.effect) {
-            p.setText(a.effect);
+            richEffect(p, a.effect);
             // a hand-written effect names where it came from (the League wiki's numbers, CC BY-SA) and whether it was checked in game
             const src = a.effectSource ? `數值：${a.effectSource}${a.effectSource.includes("Wiki") ? "（CC BY-SA）" : ""}${a.effectPatch ? ` · ${a.effectPatch}` : ""}${a.effectStatus ? ` · ${a.effectStatus}` : ""}` : "";
             h(card, "div", "mn-pn-src", src || (a.partial ? "數值待補（X 是遊戲內才看得到的數值）" : "效果：Riot Games"));

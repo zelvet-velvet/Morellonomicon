@@ -1363,3 +1363,10 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-ag-strip::-webkit-scrollbar { display: none; }
 .mn-ag-strip .mn-tile { flex: none; width: 64px; }
 .mn-ag-hist { font-size: 14px; color: var(--mn-muted); }
+/* an effect line like the game's tooltip: values by level and scalings as pills with an icon, stat amounts and damage kinds coloured */
+.mn-fx-v { --c: var(--mn-text); color: var(--c); font-weight: 700; font-variant-numeric: tabular-nums; }
+.mn-fx-sc, .mn-fx-lv { --c: var(--mn-muted); display: inline-flex; align-items: center; gap: 3px; margin: 0 4px; padding: 0 8px 0 6px; border-radius: 11px; line-height: 22px;
+    font-size: 14px; font-weight: 700; white-space: nowrap; vertical-align: 1px; color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent); }
+.mn-fx-lv { --c: var(--color-yellow); }
+.mn-fx-ic { display: inline-flex; }
+.mn-fx-ic svg { width: 13px; height: 13px; }
