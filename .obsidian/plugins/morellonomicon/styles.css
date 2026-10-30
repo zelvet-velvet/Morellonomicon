@@ -1617,4 +1617,5 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-champ.is-v3 .mn-cv-look .mn-cv-stat { display: grid; grid-template-columns: 26px 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; text-align: left; padding: 2px; }
 .mn-cv-look .mn-cv-stat .mn-cv-sic { grid-row: 1 / span 2; }
 .mn-champ.is-v3 .mn-cv-look .mn-cv-stat b { font-size: 17px; line-height: 1.2; }
-.mn-cv-look .mn-cv-bar { grid-column: 2; }
+.mn-cv-look .mn-cv-bar { grid-column: 2; justify-self: end; }
+.mn-cv-look .mn-cv-stat b, .mn-cv-look .mn-cv-stat span { grid-column: 2; justify-self: end; text-align: right; }   /* the text hangs on the right edge of the 難度 bar, beside the chart */
