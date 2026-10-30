@@ -1881,7 +1881,6 @@ var import_obsidian6 = require("obsidian");
 
 // src/pickers.ts
 var import_obsidian5 = require("obsidian");
-var LIMIT = 40;
 var splitNames = (s) => (s ?? "").split(/[、,，]/).map((x) => x.trim()).filter(Boolean);
 var pic = (parent, c, cls) => {
   const box = parent.createSpan({ cls });
@@ -1935,9 +1934,14 @@ function picker(parent, o) {
   const drawList = () => {
     list2.empty();
     const q = input.value.trim().toLowerCase();
-    const hits = o.choices.filter((c) => !value.includes(c.name) && (!q || c.name.toLowerCase().includes(q) || (c.also ?? "").toLowerCase().includes(q))).slice(0, LIMIT);
+    const hits = o.choices.filter((c) => !value.includes(c.name) && (!q || c.name.toLowerCase().includes(q) || (c.also ?? "").toLowerCase().includes(q)));
     list2.toggleClass("is-open", document.activeElement === input && hits.length > 0);
+    let group2 = "";
     for (const c of hits) {
+      if (c.group && c.group !== group2) {
+        group2 = c.group;
+        list2.createDiv({ cls: "mn-pick-group", text: group2 });
+      }
       const row2 = list2.createDiv({ cls: "mn-pick-opt" });
       pic(row2, c, "mn-pick-pic");
       row2.createSpan({ text: c.name });
@@ -2030,13 +2034,13 @@ function inboxBlock(plugin, source, el, ctx) {
   };
   const champs = plugin.store.champions().map((c) => ({ name: c.name, img: c.icon, also: `${c.nameEn} ${c.aliases.join(" ")}` }));
   const itemsFor = (mode) => {
-    const seen = /* @__PURE__ */ new Set(), out = [];
-    for (const i of plugin.store.items()) {
-      if ((mode === "\u5CFD\u8C37" ? !i.rift : !i.aram) || seen.has(i.name)) continue;
+    const seen = /* @__PURE__ */ new Set(), legendary = [], epic = [];
+    for (const i of [...plugin.store.items()].reverse()) {
+      if ((mode === "\u5CFD\u8C37" ? !i.rift : !i.aram) || !i.from.length || seen.has(i.name)) continue;
       seen.add(i.name);
-      out.push({ name: i.name, img: i.icon });
+      (i.into.length ? epic : legendary).push({ name: i.name, img: i.icon, group: i.into.length ? "\u4E2D\u968E" : "\u50B3\u8AAA" });
     }
-    return out;
+    return [...legendary, ...epic];
   };
   const bar = root.createDiv({ cls: "mn-inb-bar" });
   bar.createSpan({ cls: "mn-inb-count", text: box.entries.length ? `${box.entries.length} \u7B46\u5F85\u6574\u7406` : "\u9084\u6C92\u6709\u6771\u897F\uFF0C\u6309 + \u65B0\u589E" });

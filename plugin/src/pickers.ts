@@ -5,9 +5,8 @@ import { setIcon } from "obsidian";
 // counts and the chips are numbered (前三件). Values are names; the field keeps them joined with 「、」. The list is a grid of pictures
 // with their names; with several choices it stays open while you pick, and the change is handed on once it closes (a save redraws a
 // note's editor, which would close it after every pick).
-export interface Choice { name: string; img?: string; icon?: string; color?: string; also?: string }   // img: a picture URL; icon: a Lucide name; also: other words it is found by
+export interface Choice { name: string; img?: string; icon?: string; color?: string; also?: string; group?: string }   // img: a picture URL; icon: a Lucide name; also: other words it is found by; group: a heading it sits under in the list
 export interface PickerOpts { choices: Choice[]; value: string[]; multi?: boolean; max?: number; placeholder?: string; onChange: (v: string[]) => void }
-const LIMIT = 40;   // matches shown at once
 
 export const splitNames = (s: string | undefined): string[] => (s ?? "").split(/[、,，]/).map((x) => x.trim()).filter(Boolean);
 
@@ -46,9 +45,11 @@ export function picker(parent: HTMLElement, o: PickerOpts): HTMLElement {
     const drawList = () => {
         list.empty();
         const q = input.value.trim().toLowerCase();
-        const hits = o.choices.filter((c) => !value.includes(c.name) && (!q || c.name.toLowerCase().includes(q) || (c.also ?? "").toLowerCase().includes(q))).slice(0, LIMIT);
+        const hits = o.choices.filter((c) => !value.includes(c.name) && (!q || c.name.toLowerCase().includes(q) || (c.also ?? "").toLowerCase().includes(q)));   // all of them: the grid scrolls
         list.toggleClass("is-open", document.activeElement === input && hits.length > 0);
+        let group = "";
         for (const c of hits) {
+            if (c.group && c.group !== group) { group = c.group; list.createDiv({ cls: "mn-pick-group", text: group }); }   // a heading across the grid
             const row = list.createDiv({ cls: "mn-pick-opt" });
             pic(row, c, "mn-pick-pic");
             row.createSpan({ text: c.name });

@@ -70,14 +70,16 @@ function inboxBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLElemen
     };
     // what the pickers offer: champions (found by their English name too), and the items of the entry's mode (one per name)
     const champs: Choice[] = plugin.store.champions().map((c) => ({ name: c.name, img: c.icon, also: `${c.nameEn} ${c.aliases.join(" ")}` }));
+    // the items worth naming in a build: legendary (made from parts, builds into nothing more) first, then epic (made from parts and
+    // still building into something: a champion may sit on one, e.g. for Kai'Sa's evolutions); no parts, starters or potions. One per name.
     const itemsFor = (mode: string): Choice[] => {
-        const seen = new Set<string>(), out: Choice[] = [];
-        for (const i of plugin.store.items()) {
-            if ((mode === "峽谷" ? !i.rift : !i.aram) || seen.has(i.name)) continue;
+        const seen = new Set<string>(), legendary: Choice[] = [], epic: Choice[] = [];
+        for (const i of [...plugin.store.items()].reverse()) {   // the dearest first
+            if ((mode === "峽谷" ? !i.rift : !i.aram) || !i.from.length || seen.has(i.name)) continue;
             seen.add(i.name);
-            out.push({ name: i.name, img: i.icon });
+            (i.into.length ? epic : legendary).push({ name: i.name, img: i.icon, group: i.into.length ? "中階" : "傳說" });
         }
-        return out;
+        return [...legendary, ...epic];
     };
 
     const bar = root.createDiv({ cls: "mn-inb-bar" });

@@ -1279,12 +1279,13 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-pick-x { display: inline-flex; color: var(--text-faint); cursor: pointer; }
 .mn-pick-x svg { width: 14px; height: 14px; }
 .mn-pick-in.is-hidden { display: none; }
-.mn-pick-list { display: none; position: absolute; z-index: 5; left: 0; right: 0; top: 100%; margin-top: 4px; max-height: 300px; overflow-y: auto; border-radius: 10px;
+.mn-pick-list { display: none; position: absolute; z-index: 5; left: 0; right: 0; top: 100%; margin-top: 4px; max-height: 340px; overflow-y: auto; border-radius: 10px;
     background: var(--background-primary); border: 1px solid var(--background-modifier-border); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); }
 .mn-pick-list.is-open { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 4px; padding: 6px; }
 .mn-pick-opt { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 2px; border-radius: 8px; cursor: pointer; text-align: center; font-size: 11px; line-height: 1.25; }
 .mn-pick-opt > span:last-child { max-width: 100%; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-all; }
 .mn-pick-opt:hover { background: var(--background-modifier-hover); }
+.mn-pick-group { grid-column: 1 / -1; padding: 6px 4px 2px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: var(--text-muted); }
 .mn-pick-opt .mn-pick-pic { width: 40px; height: 40px; border-radius: 8px; }
 .mn-pick-opt .mn-pick-pic svg { width: 24px; height: 24px; }
 /* the 速查卡片 editor (picksnote.ts) */
