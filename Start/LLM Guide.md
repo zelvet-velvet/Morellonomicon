@@ -104,13 +104,34 @@ This is a **solo project** (owner Zaviel, GitHub `zelvet-velvet`): no branches o
 
 The progress lives in two places: **[[Dev Status]]** (`Review/Dev Status.md`: 🚀 Today (date), 📅 Yesterday (date), ⏳ Ongoing by area, 💡 Ideas, 🏁 Last Progress) and the **day notes** (`Review/Log/YYYY/MM/Www/YYYY-MM-DD.md`, one `## ` entry per change; the [[Dev Log]] lists them). **Read before edit**: always read the note right before changing it; the user may have rolled something back: never put it back.
 
-- **CMD_SYNC**: From the chat and `git log` / `git status`, update Dev Status: `Today`, `Yesterday` and `Ongoing` (`[x]` done, `[>]` in progress, `[ ]` not started; by area). Keep the `Today` heading date right: an earlier date with items → `CMD_ROLLOVER` first (or ask); empty → just set today. **Results, not steps**: one line per item, bold title, no file lists (details belong in the notes: link them).
+- **CMD_SYNC**: From the chat and `git log` / `git status`, update Dev Status: `Today`, `Yesterday` and `Ongoing` (`[x]` done, `[>]` in progress, `[ ]` not started, `[!]` waiting for someone, `[?]` waiting for a decision; by area, each area's callout type following its boxes, see Vault note format). Keep the `Today` heading date right: an earlier date with items → `CMD_ROLLOVER` first (or ask); empty → just set today. **Results, not steps**: one line per item, bold title, no file lists (details belong in the notes: link them).
 - **CMD_JOURNAL [YYYY-MM-DD]** (default today): Write that day's note from `Today's Progress` (or `Yesterday's` when its date matches). Make the note from [[Day note]] if it is missing (outside Obsidian: copy the last day's frontmatter, make the year / month / week folders). One `## ` entry per change, newest first: an emoji title with the author in brackets, two to four plain bullets of what changed **for the reader of the vault**, the branch if not merged, pictures if visual. Then add the day to the [[Dev Log]] list.
 - **CMD_ROLLOVER**: The day is over. If the day note has no entries for `Today`'s items, run `CMD_JOURNAL` for that date first. Then replace `Yesterday` with `Today`'s list and date, clear `Today` and set its heading to today. `Today` empty → change nothing and say to run `CMD_SYNC` first (never overwrite `Yesterday` with an empty list).
 - **CMD_NOTES_SYNC**: Bring the notes up to date, then retire finished work: update `README.md` / the Start Guide / this guide if a rule or command changed; move `[x]` items from `Ongoing` to `Last Progress` (one line each, by area, result only). Leave `[>]` and `[ ]`.
 - **Trust order** (when sources disagree): the code, then today's chat and Dev Status, then other notes. If a note contradicts the code, say so and suggest `CMD_NOTES_SYNC`.
 - **Commit**: vault updates are committed to `main` as `docs(vault): sync` (or the command's name).
 - **Notifications**: at the very end, only for what changed, one line each: `**[Today's Progress]** Updated in Dev Status`, `**[Journal]** 2 entries in 2026-10-27`. A blank line before and after.
+
+---
+## 🗂️ Vault note format (callouts)
+
+For the workflow notes (`Start/`, `Review/`, `Dev Tools/`) and the inbox templates (`Inbox/`). Not for generated notes (英雄, 道具, 強化), the Handbook decks (`新手入門/`: the app reads their `## ` cards), the day notes' change entries (records with no state), or what a script writes (`Dev Tools/UI Text.md`, `Review/Tag Audit.md`).
+
+- **Callout before table.** Items that each carry a status or a short detail (tasks, findings, open points, per-area summaries) go in callouts, one per group. A table is only for a real grid read across columns (the Handbook card text limits and stage templates in [[Layouts]], the folder map on [[Home]], the state table below).
+- **Callout type = the block's state** (Zaviel, 2026-10-30). A block with a state shows it in its callout type, and the type changes in the same edit as its boxes. The states use the checkbox symbols Minimal draws (its checkbox styles), so a box and its block use the same words:
+
+| Checkbox | Item state | Callout type |
+| --- | --- | --- |
+| `[ ]` to do · `[/]` incomplete · `[>]` in progress | open or in progress | `[!todo]` |
+| `[x]` done | finished | `[!done]` |
+| `[!]` important | blocked or waiting for someone (name who or what: Zaviel, a Riot key, the art) | `[!warning]` |
+| `[?]` question | waiting for a decision | `[!question]` |
+| `[-]` canceled | failed or dropped (say why) | `[!failure]` |
+| `[i]` information, or no boxes | no state | `note`, `info`, `abstract`, `example`, `quote`, `tip` |
+
+- **Block from its boxes.** Every box `[x]` (or `[x]` and `[-]`) → `[!done]`; every box `[-]` → `[!failure]`; otherwise any `[!]` → `[!warning]`, else any `[?]` → `[!question]`, else `[!todo]`.
+- **Keep it in sync.** Ticking the last open box turns `[!todo]` into `[!done]`; adding an open item to a `[!done]` block turns it back to `[!todo]`. Keep the fold sign (`-` / `+`) and the title.
+- **In [[Dev Status]]:** Today and Yesterday are an `[!abstract]` callout under their dated heading (Today open `+`, Yesterday folded `-`); each Ongoing area is one callout titled with the area (its type from its boxes); Ideas is an `[!example]`; Last Progress one folded `[!done]`. An inbox entry is a `[!todo]` callout until it is processed (then it is removed).
 
 ---
 ## 🗣️ Conventions
