@@ -287,8 +287,14 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
 
         // top bar: the name as text, left; double-tap to rename it in place; the rest of the bar drags the window
         const head = win.createDiv({ cls: "mn-lay-winhead" });
+        // the top bar is the window's handle: a grip and an empty stretch to drag it by, and ✕ (nothing to type in, so a drag never
+        // starts typing); the name box is the first row under it
+        const grip = head.createSpan({ cls: "mn-lay-wgrip" });
+        icon(grip, "grip-horizontal");
+        head.createSpan({ cls: "mn-lay-wspace" });
         // the name: a box you tap to type in; it wraps and grows with its text (16 px, so iOS does not zoom in on it)
-        const title = head.createEl("textarea", { cls: "mn-lay-wtitle-in", attr: { rows: "1", spellcheck: "false", "aria-label": "Block name" } });
+        const nameRow = win.createDiv({ cls: "mn-lay-wrow" });
+        const title = nameRow.createEl("textarea", { cls: "mn-lay-wtitle-in", attr: { rows: "1", spellcheck: "false", "aria-label": "Block name" } });
         title.value = b.label;
         const growTitle = () => { title.style.height = "auto"; title.style.height = `${title.scrollHeight}px`; };
         title.addEventListener("input", growTitle);

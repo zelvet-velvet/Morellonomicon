@@ -1850,7 +1850,11 @@ function layoutBlock2(plugin, source, el, ctx) {
       draw();
     };
     const head2 = win.createDiv({ cls: "mn-lay-winhead" });
-    const title = head2.createEl("textarea", { cls: "mn-lay-wtitle-in", attr: { rows: "1", spellcheck: "false", "aria-label": "Block name" } });
+    const grip = head2.createSpan({ cls: "mn-lay-wgrip" });
+    icon(grip, "grip-horizontal");
+    head2.createSpan({ cls: "mn-lay-wspace" });
+    const nameRow = win.createDiv({ cls: "mn-lay-wrow" });
+    const title = nameRow.createEl("textarea", { cls: "mn-lay-wtitle-in", attr: { rows: "1", spellcheck: "false", "aria-label": "Block name" } });
     title.value = b.label;
     const growTitle = () => {
       title.style.height = "auto";
