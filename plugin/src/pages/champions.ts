@@ -6,6 +6,7 @@ import type { PageCtx, PageOut } from "./index";
 import { badgeColor, badgeText, changesBlock, entryDir, marker } from "./changes";
 import { metaLine } from "./fresh";
 import { skillStrip } from "./skills";
+import { augmentPicks, type AugmentPick } from "./detail";
 
 const ROLES = ["戰士", "坦克", "法師", "刺客", "射手", "輔助"];
 const DAMAGES = ["物理", "魔法", "混合"];
@@ -220,7 +221,7 @@ export function championCard(ctx: PageCtx): PageOut {
         if (t === "overview") block = overview(body, c, ctx);
         else if (t === "skills") skillStrip(body, c, ctx.plugin.store.currentChanges(c.id), { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false });
         else if (t === "build") buildTab(body, c, ctx);
-        else if (t === "augments") soon(body, mayhem ? "Best augments" : "Runes");
+        else if (t === "augments") { if (mayhem) augmentsTab(body, c, ctx); else soon(body, "Runes"); }
         else tips(body, c, ctx);
         // a tab chosen further down the page starts at its top, just under the tab bar
         const view = el.closest<HTMLElement>(".mn-scroll");
@@ -248,6 +249,25 @@ function overview(body: HTMLElement, c: Champion, ctx: PageCtx): { el: HTMLEleme
     championProfile(body, c, ctx.app);
     if (c.video) row(group(body), { icon: "play-circle", title: "Combo video", chevron: true, onTap: () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video!)}`) });
     return changesBlock(body, c, ctx);
+}
+
+// Augments: the ones that suit this champion, by rarity (稜鏡, 金, 銀), best first, each with why; the first few of each, the rest folded
+const AUG_SHOWN = 6;
+const AUG_RARITIES = ["稜鏡", "金", "銀"];
+function augmentsTab(body: HTMLElement, c: Champion, ctx: PageCtx): void {
+    const picks = augmentPicks(ctx.plugin.store, c);
+    if (!picks.length) { empty(body, { icon: "sparkles", title: "No augments matched yet" }); return; }
+    for (const r of AUG_RARITIES) {
+        const list = picks.filter((p) => p.a.rarity === r);
+        if (!list.length) continue;
+        const g = group(body, `${r}級 · ${list.length}`);
+        const add = (p: AugmentPick) => row(g, { image: p.a.icon, rarity: p.a.rarity, title: p.a.name, sub: p.a.effect || undefined, value: p.why, chevron: true, clamp: true, onTap: () => ctx.openAugment(p.a.id) });
+        list.slice(0, AUG_SHOWN).forEach(add);
+        if (list.length > AUG_SHOWN) {
+            const more = row(g, { icon: "chevron-down", title: `再看 ${list.length - AUG_SHOWN} 個`, muted: true, onTap: () => { more.remove(); list.slice(AUG_SHOWN).forEach(add); } });
+        }
+    }
+    h(body, "div", "mn-gf", "置頂：你在英雄筆記的 pinned；遊戲標籤：遊戲只會給適合的英雄；推測：依效果文字，僅供參考。沒有勝率資料（Riot 沒有公開大混戰對戰）。");
 }
 
 function soon(body: HTMLElement, title: string): void {

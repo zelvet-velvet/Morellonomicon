@@ -159,7 +159,7 @@ function lift(host: HTMLElement, state: { veil: HTMLElement; since: number; open
         if (blockState.get(host) !== state) return;
         blockState.delete(host);
         settledBlocks.add(host);
-        host.classList.remove("is-loading", "is-held");
+        host.classList.remove("mn-blk-busy", "is-held");
         state.veil.classList.remove("is-in");   // the blur fades out, the band finishes its pass
         endBand(state.veil);
     }, Math.max(0, BLOCK_MIN_MS - (Date.now() - state.since)));
@@ -178,7 +178,7 @@ export function blockUntil(host: HTMLElement, until: Promise<void>, delay = 0): 
     let st = blockState.get(host);
     if (!st) {
         st = { veil: h(host, "div", "mn-blkveil is-in"), since: Date.now(), open: 0 };
-        host.classList.add("is-loading");
+        host.classList.add("mn-blk-busy");   // not "is-loading": Obsidian draws its own orange loading bar on that class
         if (scrollsItself(host)) host.classList.add("is-held");   // its own scrolling stops while it loads
         holdBlock(st.veil);
         placeVeil(st.veil);
@@ -328,7 +328,7 @@ export function autoLoading(root: HTMLElement): MutationObserver {
     };
     const take = (im: HTMLImageElement) => {
         const src = im.getAttribute("src");
-        if (!src || seen.get(im) === src || im.closest(".mn-noauto, .mn-blk.is-loading, .mn-pager")) return;   // a loading block: its veil covers it
+        if (!src || seen.get(im) === src || im.closest(".mn-noauto, .mn-blk.mn-blk-busy, .mn-pager")) return;   // a loading block: its veil covers it
         seen.set(im, src);
         if (im.complete && im.naturalWidth) return;
         waiting.add(im);

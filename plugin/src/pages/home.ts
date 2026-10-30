@@ -67,7 +67,7 @@ export function homePage(ctx: PageCtx): PageOut {
         const refresh = () => {
             sub.textContent = `${where} · 讀取中…`;
             fetchProfile(ctx.app, s.riotId, s.riotServer, s.riotKey)
-                .then(() => { if (el.isConnected) ctx.goTab("home"); })
+                .then(() => { if (el.isConnected) ctx.redraw(); })   // in place: opening Home again would replay its arrival (a glitch on a cold open)
                 .catch((err) => { sub.textContent = err instanceof RiotError ? err.message : "連不上 Riot,稍後再試"; sub.addClass("is-err"); });
         };
         if (s.riotKey && (!prof || Date.now() - prof.fetched > PROFILE_FRESH)) refresh();

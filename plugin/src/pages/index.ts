@@ -20,6 +20,7 @@ export interface PageCtx {
     push(f: Frame): void;
     pop(): void;
     goTab(id: TabId): void;        // jump to another tab's first page
+    redraw(): void;                // draw this page again where it is (new data for it), without the page animation
     // every detail opens as a page of the app on top of the current tab (Back returns to where you were)
     openChampion(id: string, sub?: SubTab): void;
     openAugment(id: number): void;

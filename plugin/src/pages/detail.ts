@@ -1,5 +1,5 @@
 import { MarkdownRenderer, TFile } from "obsidian";
-import type { Champion, Item } from "../data/store";
+import type { Augment, Champion, Item, Store } from "../data/store";
 import { ITEM_CAT_COLOR, ITEM_CATS, augIcon, chip, empty, group, h, icon, layoutBlock, row, shopIcon, slideSeg } from "../ui";
 import { RARITY_COLOR } from "./augments";
 import { officialBlock } from "./changes";
@@ -66,6 +66,30 @@ function suggest(effect: string, champions: Champion[]): { tags: string[]; champ
     const scored = champions.map((c) => ({ c, n: kinds.filter((k) => k.fits(c)).length })).filter((x) => x.n >= need);
     scored.sort((a, b) => b.n - a.n || a.c.name.localeCompare(b.c.name, "zh-Hant"));
     return { tags: kinds.map((k) => k.tag), champions: scored.slice(0, SUGGESTED).map((x) => x.c) };
+}
+
+// Which augments suit a champion (its Augments tab), best first, and why: pinned on the champion note first; then Riot's own augment
+// tags (the game offers it to this champion and not to everyone); then the augment's hand-written `fits`; then a guess from the
+// effect text (the same as the augment page's). Left out: the champion's `avoid`, and augments the game never offers it (Riot's tags).
+export interface AugmentPick { a: Augment; why: string; score: number }
+export function augmentPicks(store: Store, c: Champion): AugmentPick[] {
+    const out: AugmentPick[] = [];
+    for (const a of store.augments()) {
+        if (c.avoid.includes(a.name)) continue;
+        const data = store.augmentData(a.id);
+        if (data?.fits && !data.fits.includes(c.id.toLowerCase())) continue;   // never offered to this champion
+        let why = "", score = 0;
+        if (c.pinned.includes(a.name)) { why = "置頂"; score = 100; }
+        else if (data?.fits) { why = "遊戲標籤"; score = 60; }
+        else if (a.fits.length && a.fits.some((f) => c.archetypes.includes(f) || c.features.includes(f) || c.roles.includes(f))) { why = "人工整理"; score = 50; }
+        else if (a.effect) {
+            const kinds = KINDS.filter((k) => k.re.test(a.effect));
+            const n = kinds.filter((k) => k.fits(c)).length;
+            if (kinds.length && n >= Math.max(1, Math.ceil(kinds.length * 0.6))) { why = "推測"; score = 10 + n * 5 + (n === kinds.length ? 5 : 0); }
+        }
+        if (score) out.push({ a, why, score });
+    }
+    return out.sort((x, y) => y.score - x.score || x.a.name.localeCompare(y.a.name, "zh-Hant"));
 }
 
 // ---- an augment (layout A 強化卡, chosen 2026-10-30): a banner, a Lv1 / 最大 switch, stat chips, the effect as a card with its numbers

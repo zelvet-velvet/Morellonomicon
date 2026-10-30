@@ -229,9 +229,18 @@ export class MnView extends ItemView {
     private tabLabel(id: TabId): string { return TAB_LABEL[id]; }
     private tabIcon(id: TabId): string { return TAB_ICON[id]; }
 
+    private tabsKey = "";   // the mode and tabs the bar was last built for
     buildTabs(): void {
         const tabs = MODES[this.plugin.settings.mode].tabs;
         this.router.fix(tabs);
+        // the same tabs as now (a data refresh, e.g. the notes arriving at start-up): only the chosen one is marked; rebuilding the bar
+        // would redraw its icons and slide its pill again each time, a flicker under the start-up veil
+        const key = `${this.plugin.settings.mode}|${tabs.join(",")}|${tabs.map((t) => this.tabLabel(t)).join(",")}`;
+        if (key === this.tabsKey && this.tabsEl.childElementCount) {
+            this.tabsEl.querySelectorAll<HTMLElement>(".mn-tab").forEach((b) => b.toggleClass("is-on", b.dataset.tab === this.router.tab));
+            return;
+        }
+        this.tabsKey = key;
         this.tabsEl.empty();
         this.tabsEl.style.setProperty("--n", String(tabs.length));
         for (const id of tabs) {
@@ -311,6 +320,7 @@ export class MnView extends ItemView {
             const store = this.plugin.store;
             out = renderPage(this.router.tab, {
                 app: this.app, plugin: this.plugin, component: this, frame: f, push: (x) => this.push(x), pop: () => this.back(), goTab: (id) => this.goTab(id),
+                redraw: () => { if (this.router.top() === f) this.draw(); },   // the same page again, in place: no animation, the scroll kept
                 openChampion: (id, sub) => { if (sub) rememberSub(id, sub); this.push({ key: "champion", title: store.champion(id)?.name ?? id, params: { id } }); },
                 openAugment: (id) => this.push({ key: "augment", title: store.augment(id)?.name ?? "Augment", params: { id } }),
                 openItem: (id) => this.push({ key: "item", title: store.item(id)?.name ?? "Item", params: { id } }),
