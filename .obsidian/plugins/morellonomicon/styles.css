@@ -1019,18 +1019,25 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-deck .mn-sl-face { border-radius: 22px; }
 .mn-rq-deck .mn-qc-tab { padding-bottom: 104px; }
 .mn-rq-deck .mn-qc-tab.is-look { padding-bottom: 0; }
-/* the champion page (layout A): the banner, then one block that swipes sideways between its pages (snapped), the dots under it.
-   A page centres what it holds (balance: no empty band under a short page), 全部 › sits at its foot */
-.mn-app.is-overlay .mn-champ .mn-hero { min-height: calc(212px + var(--mn-safe-top)); }   /* the banner leaves the swipe block its room (260 px with the top bar) */
-.mn-champ .mn-hero + .mn-cpa { margin-top: 2px; }
-.mn-cpa-tags { display: flex; justify-content: center; }
-.mn-cpa { position: relative; height: 420px; border-radius: 22px; background: var(--mn-card); border: 1px solid var(--mn-line); overflow: hidden; }
-.mn-cpa-track { display: flex; height: 100%; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
+/* the champion page (v2): a big splash banner with the name over its foot; the pages as cards that swipe sideways (snapped, the next
+   peeking in at the edge), tinted with the champion's damage colour (--dc); icon chips under them. A card centres what it holds. */
+.mn-app.is-overlay .mn-champ .mn-hero { min-height: calc(352px + var(--mn-safe-top)); }
+.mn-champ .mn-hero-bg { background-position: center 20%; }
+.mn-champ .mn-card-head { padding: 0 16px 8px; }
+.mn-champ .mn-card-img { width: 64px; height: 64px; }
+.mn-app .mn-champ .mn-card-who .mn-title { font-size: 30px; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6); }
+.mn-champ .mn-hero + .mn-cpa { margin-top: 4px; }
+.mn-cpa { position: relative; height: 300px; margin-right: -16px; }
+.mn-cpa-track { display: flex; gap: 8px; height: 100%; padding-right: 48px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
 .mn-cpa-track::-webkit-scrollbar { display: none; }
-.mn-cpa-page { flex: 0 0 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: 14px 14px 12px; scroll-snap-align: start; scroll-snap-stop: always; overflow: hidden; }
+.mn-cpa-page { flex: 0 0 calc(100% - 48px); height: 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: 14px 14px 12px; scroll-snap-align: start; scroll-snap-stop: always; overflow: hidden;
+    border-radius: 22px; border: 1px solid color-mix(in srgb, var(--dc) 30%, var(--mn-line)); background: linear-gradient(160deg, color-mix(in srgb, var(--dc) 16%, var(--mn-card)), var(--mn-card) 60%); }
 .mn-cpa-body { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
-.mn-cpa-body > .mn-style-card, .mn-cpa-body > .mn-facts { margin: 0; }
-/* 全部: a bar across the foot of a page, tinted with the accent: list icon, label, count, a round arrow */
+.mn-cpa-nav { display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; margin-top: 8px; }
+.mn-app .mn-cpa-chip { display: grid; place-items: center; width: 44px; height: 34px; min-height: 0; padding: 0; border-radius: 12px; border: 1px solid var(--mn-line); box-shadow: none; background: var(--mn-card); color: var(--mn-muted); transition: background 0.2s, color 0.2s; }
+.mn-app .mn-cpa-chip.is-on { background: var(--mn-accent); border-color: transparent; color: var(--text-on-accent, #fff); }
+.mn-cpa-chip svg { width: 18px; height: 18px; }
+/* 全部: a bar across the foot of a card, tinted with the accent: list icon, label, count, a round arrow */
 .mn-app .mn-cpa-more { flex: none; align-self: stretch; display: flex; align-items: center; gap: 10px; height: 46px; margin-top: 12px; padding: 0 7px 0 14px; border-radius: 15px; box-shadow: none;
     border: 1px solid color-mix(in srgb, var(--mn-accent) 30%, transparent); background: color-mix(in srgb, var(--mn-accent) 10%, var(--mn-card-hi)); color: var(--mn-text); }
 .mn-cpa-more-ic { display: inline-flex; color: var(--mn-accent); }
@@ -1039,22 +1046,52 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-cpa-more-n { font-size: 13px; font-weight: 700; color: var(--mn-muted); font-variant-numeric: tabular-nums; }
 .mn-cpa-more-go { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--mn-accent); color: var(--text-on-accent, #fff); }
 .mn-cpa-more-go svg { width: 18px; height: 18px; }
-.mn-cpa-nav { display: flex; align-items: center; justify-content: center; gap: 12px; height: 32px; }
-.mn-cpa-name { font-size: 13px; font-weight: 800; letter-spacing: 0.1em; color: var(--mn-muted); }
-.mn-cpa-dots { display: flex; gap: 6px; }
-.mn-app .mn-cpa-dot { width: 7px; height: 7px; min-height: 0; padding: 0; border: 0; border-radius: 4px; box-shadow: none; background: var(--mn-line); transition: width 0.2s, background 0.2s; }
-.mn-app .mn-cpa-dot.is-on { width: 18px; background: var(--mn-accent); }
 .mn-cpa-empty { margin: 0; text-align: center; font-size: 15px; line-height: 1.6; color: var(--mn-muted); }
-/* 技能: five even rows */
-.mn-cpa-skills { display: flex; flex-direction: column; justify-content: space-evenly; gap: 6px; height: 100%; }
-.mn-cpa-sk { display: flex; align-items: center; gap: 12px; }
-.mn-cpa-skic { position: relative; flex: none; width: 46px; height: 46px; border-radius: 12px; overflow: hidden; border: 2px solid var(--c); }
-.mn-cpa-skic img { width: 100%; height: 100%; display: block; }
-.mn-cpa-key { position: absolute; right: 0; bottom: 0; padding: 0 4px; border-top-left-radius: 6px; font-size: 11px; font-weight: 800; background: rgba(10, 12, 18, 0.8); color: #fff; }
-.mn-cpa-skt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.mn-cpa-skt b { font-size: 15px; }
-.mn-cpa-skt span { font-size: 13px; color: var(--mn-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mn-cpa-cd { flex: none; font-size: 13px; color: var(--mn-muted); font-variant-numeric: tabular-nums; }
+/* 概覽: three stat tiles, the tags two across */
+.mn-cv-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.mn-cv-stat { --c: var(--mn-muted); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 4px; border-radius: 14px; background: var(--mn-card-hi); border: 1px solid color-mix(in srgb, var(--c) 30%, transparent); }
+.mn-cv-sic { display: inline-flex; color: var(--c); }
+.mn-cv-sic svg { width: 22px; height: 22px; }
+.mn-cv-stat b { font-size: 18px; color: var(--mn-text); }
+.mn-cv-stat span { font-size: 11px; color: var(--mn-muted); }
+.mn-cv-bar { display: flex; gap: 2px; margin-top: 2px; }
+.mn-cv-bar i { width: 6px; height: 4px; border-radius: 1px; background: var(--mn-line); }
+.mn-cv-bar i.is-on { background: var(--c); }
+.mn-tgs.mn-cv-tags { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mn-cv-tags .mn-tg { justify-content: center; }
+/* 技能: the HUD bar and the chosen ability */
+.mn-cv-hud { display: flex; justify-content: space-between; gap: 6px; }
+.mn-app .mn-cv-key { --c: var(--mn-line); position: relative; flex: 1; aspect-ratio: 1; max-width: 54px; min-height: 0; height: auto; padding: 0; border-radius: 12px; overflow: hidden; border: 2px solid transparent; box-shadow: none; background: var(--mn-card-hi); opacity: 0.6; transition: transform 0.15s, opacity 0.15s; }
+.mn-app .mn-cv-key.is-on { opacity: 1; border-color: var(--c); transform: translateY(-3px); box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35); }
+.mn-cv-key img { width: 100%; height: 100%; display: block; }
+.mn-cv-key span { position: absolute; right: 0; bottom: 0; padding: 0 4px; border-top-left-radius: 6px; font-size: 10px; font-weight: 800; background: rgba(10, 12, 18, 0.8); color: #fff; }
+.mn-cv-sk { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px; background: var(--mn-card-hi); }
+.mn-cv-skh { display: flex; align-items: center; gap: 8px; }
+.mn-cv-skk { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 7px; font-size: 13px; font-weight: 800; background: var(--mn-accent); color: var(--text-on-accent, #fff); }
+.mn-cv-skh b { font-size: 16px; }
+.mn-cv-skc { display: flex; flex-wrap: wrap; gap: 6px; }
+.mn-cv-pill { --c: var(--mn-muted); padding: 2px 9px; border-radius: 10px; font-size: 12px; font-weight: 700; color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); }
+.mn-cv-skp { margin: 0; font-size: 14px; line-height: 1.5; color: var(--mn-text); }
+/* 出裝: 1 → 2 → 3 */
+.mn-cv-title { font-size: 16px; text-align: center; }
+.mn-cv-items { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.mn-cv-arrow { display: inline-flex; color: var(--mn-faint); }
+.mn-cv-arrow svg { width: 18px; height: 18px; }
+.mn-app .mn-cv-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 84px; height: auto; padding: 0; border: 0; box-shadow: none; background: none; color: var(--mn-text); white-space: normal; }
+.mn-cv-item img { width: 60px; height: 60px; border-radius: 14px; border: 2px solid color-mix(in srgb, #d9b15c 60%, transparent); }
+.mn-cv-no { position: absolute; left: 6px; top: -6px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: 800; background: var(--mn-accent); color: var(--text-on-accent, #fff); }
+.mn-cv-iname { font-size: 12px; line-height: 1.25; text-align: center; }
+.mn-cv-note { margin: 0; text-align: center; font-size: 13px; color: var(--mn-muted); }
+/* 強化: three big tiles */
+.mn-aug-tiles.is-big .mn-aug-tic { width: 64px; height: 64px; }
+/* 技巧: the first tip */
+.mn-cv-tip { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 14px; background: var(--mn-card-hi); text-align: center; }
+.mn-cv-tip b { font-size: 17px; }
+.mn-cv-tip p { margin: 0; font-size: 14px; line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.mn-cv-meta { font-size: 11px; color: var(--mn-faint); }
+.mn-cv-dots { display: flex; justify-content: center; gap: 5px; }
+.mn-cv-dots i { width: 6px; height: 6px; border-radius: 3px; background: var(--mn-line); }
+.mn-cv-dots i.is-on { background: var(--mn-accent); }
 /* 出裝 / 強化 / 技巧 */
 .mn-cc-t { font-size: 18px; text-align: center; color: var(--mn-text); }
 .mn-cc-items { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }

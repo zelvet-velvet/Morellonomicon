@@ -1,6 +1,6 @@
-import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, DAMAGE_ICON, augIcon, warmPictures, blockUntil, layoutBlock, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, slideSeg, tip, fixedPage } from "../ui";
-import { TAG_GROUPS, championProfile, factsStrip, iconFilter, tagFilter, tagRow } from "./profile";
+import type { Champion, Item } from "../data/store";
+import { DAMAGE_COLOR, DAMAGE_ICON, augIcon, scalingParts, warmPictures, blockUntil, layoutBlock, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, slideSeg, tip, fixedPage } from "../ui";
+import { TAG_GROUPS, championProfile, iconFilter, reachOf, tagFilter, tagRow } from "./profile";
 import { buildTab } from "./build";
 import type { PageCtx, PageOut } from "./index";
 import { badgeColor, badgeText, changesBlock, entryDir, marker } from "./changes";
@@ -177,10 +177,10 @@ export type SubTab = "overview" | "skills" | "build" | "augments" | "tips";
 const lastSub = new Map<string, SubTab>();
 export function rememberSub(id: string, sub: SubTab): void { lastSub.set(id, sub); }   // the page a link asks the champion card to open on
 
-// The champion page (layout A, chosen 2026-10-30): the splash banner, then one big block that swipes sideways between five pages
-// (概覽 · 技能 · 出裝 · 強化 · 技巧) with dots under it; the page never scrolls down. Each page shows only its top picks, centred when
-// it has little, and 全部 › opens the full list as a page of its own (championPart).
-const PAGES: [Part, string][] = [["overview", "概覽"], ["skills", "技能"], ["build", "出裝"], ["augments", "強化"], ["tips", "技巧"]];
+// The champion page (v2, Zaviel 2026-10-30): a big splash banner with the name over its bottom, then the pages as cards that swipe
+// sideways (snapped; the next card peeks in at the edge), and icon chips under them (no text; tap to jump). The page never scrolls
+// down; each card shows its top picks, centred, and the 全部 bar opens the full list as a page of its own (championPart).
+const PAGES: [Part, string, string][] = [["overview", "概覽", "id-card"], ["skills", "技能", "keyboard"], ["build", "出裝", "shopping-bag"], ["augments", "強化", "sparkles"], ["tips", "技巧", "lightbulb"]];
 export function championCard(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const c = store.champion(String(ctx.frame.params?.id ?? ""));
@@ -188,8 +188,9 @@ export function championCard(ctx: PageCtx): PageOut {
     if (!c) { empty(el, { icon: "user-x", title: "Champion not found" }); return { title: "", el }; }
     const mayhem = ctx.plugin.settings.mode === "mayhem";
     const part = (p: Part) => () => ctx.push({ key: "champpart", title: `${c.name} · ${PART_TITLE[p]}`, params: { id: c.id, part: p } });
+    el.style.setProperty("--dc", DAMAGE_COLOR[c.damageType || c.skillDamage[0] || ""] ?? "var(--mn-accent)");   // the cards' tint
 
-    // the banner: the splash under the top bar (Back floats on it), the icon, name, title, roles and this patch's change
+    // the banner: the splash under the top bar (Back floats on it), the icon, name, title, roles and this patch's change over its foot
     const hero = h(el, "div", "mn-hero");
     const bg = h(hero, "div", "mn-hero-bg");
     bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
@@ -210,55 +211,56 @@ export function championCard(ctx: PageCtx): PageOut {
     if (badgeText(now)) chip(tags, badgeText(now), { color: badgeColor(now), onTap: part("overview") });
     else if (official) { const m = marker(entryDir(official.entry)); chip(tags, `${m.mark} ${official.patch}`, { color: m.color, onTap: part("overview") }); }
 
-    // the swipe block: one page a screen wide each, snapped into place; native sideways scrolling keeps the swipe smooth
+    // the cards: one page each, snapped; the next card peeks in at the right edge; native sideways scrolling keeps the swipe smooth
     const pages = PAGES.filter(([p]) => p !== "augments" || mayhem);
     const box = h(el, "div", "mn-cpa");
     const track = h(box, "div", "mn-cpa-track");
     for (const ev of ["touchstart", "touchmove"]) track.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });   // not Obsidian's edge swipes
-    for (const [p, name] of pages) {
+    const cards = pages.map(([p, name]) => {
         const pg = h(track, "section", "mn-cpa-page");
         const body = h(pg, "div", "mn-cpa-body");   // centred when it holds little (Design Rules: balance)
-        if (p === "overview") overviewTop(body, c, ctx);
+        if (p === "overview") overviewTop(body, c);
         else if (p === "skills") skillsTop(body, c);
         else if (p === "build") buildTop(body, c, ctx);
         else if (p === "augments") augmentTop(body, c, ctx);
         else tipsTop(body, c);
         const count = p === "skills" ? c.skills.length : p === "augments" ? augmentPicks(store, c).length : p === "tips" ? c.tips.length : p === "build" ? c.builds.filter((x) => x.mode === ctx.plugin.settings.mode).length : 0;
         if (p !== "tips" || c.tips.length) moreLink(pg, part(p), `全部${name}`, count);
-    }
-    // the dots and the page's name under the block; a dot jumps to its page
+        return pg;
+    });
+    // the page chips under the cards: icons only, the current one lit; a chip jumps to its page
     const nav = h(el, "div", "mn-cpa-nav");
-    const label = h(nav, "span", "mn-cpa-name");
-    const dots = h(nav, "div", "mn-cpa-dots");
-    const dotEls = pages.map(([, name], i) => {
-        const d = h(dots, "button", "mn-cpa-dot");
+    const chips = pages.map(([, name, ic], i) => {
+        const d = h(nav, "button", "mn-cpa-chip");
+        icon(d, ic);
         d.setAttribute("aria-label", name);
         d.addEventListener("click", (e) => { e.preventDefault(); go(i, true); });
         return d;
     });
     let cur = -1;
-    const mark = (i: number) => { if (i === cur) return; cur = i; dotEls.forEach((d, k) => d.toggleClass("is-on", k === i)); label.setText(pages[i]?.[1] ?? ""); };
-    const go = (i: number, smooth: boolean) => { track.scrollTo({ left: i * track.clientWidth, behavior: smooth ? "smooth" : ("instant" as ScrollBehavior) }); mark(i); };
-    track.addEventListener("scroll", () => mark(Math.round(track.scrollLeft / Math.max(1, track.clientWidth))), { passive: true });
+    const mark = (i: number) => { if (i === cur) return; cur = i; chips.forEach((d, k) => d.toggleClass("is-on", k === i)); };
+    const at = () => { const step = (cards[1]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0); return step > 0 ? Math.round(track.scrollLeft / step) : 0; };
+    const go = (i: number, smooth: boolean) => { track.scrollTo({ left: (cards[i]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0), behavior: smooth ? "smooth" : ("instant" as ScrollBehavior) }); mark(i); };
+    track.addEventListener("scroll", () => mark(Math.min(cards.length - 1, at())), { passive: true });
     // a link may ask for a page (once: the next visit starts on 概覽 again)
     const startSub = lastSub.get(c.id);
     lastSub.delete(c.id);
     const start = Math.max(0, pages.findIndex(([p]) => p === startSub));
-    // the block fills the screen between the banner and the dots, down to the tab bar: nothing below it to scroll to
+    // the cards fill the screen between the banner and the chips, down to the tab bar: nothing below to scroll to
     const fit = () => {
         const scroll = el.closest<HTMLElement>(".mn-scroll");
         if (!scroll || !box.isConnected) return;
         const top = box.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
-        box.style.height = `${Math.max(320, scroll.clientHeight - top - nav.offsetHeight - CPA_BELOW)}px`;
+        box.style.height = `${Math.max(280, scroll.clientHeight - top - nav.offsetHeight - CPA_BELOW)}px`;
         go(start, false);
     };
     requestAnimationFrame(fit);
     mark(start);
     return { title: "", el, ready: null };   // the name is in the banner; the blocks load on their own
 }
-const CPA_BELOW = 12;   // px between the dots and the tab bar
+const CPA_BELOW = 10;   // px between the chips and the tab bar
 
-// 全部 at the foot of a page: a bar across it (a list icon, 全部技能, how many, a round arrow); the full list as a page of its own
+// 全部 at the foot of a card: a bar across it (a list icon, 全部技能, how many, a round arrow); the full list as a page of its own
 function moreLink(parent: HTMLElement, go: () => void, label: string, count?: number): void {
     const b = h(parent, "button", "mn-cpa-more");
     icon(b, "layout-list", "mn-cpa-more-ic");
@@ -267,33 +269,68 @@ function moreLink(parent: HTMLElement, go: () => void, label: string, count?: nu
     icon(b, "chevron-right", "mn-cpa-more-go");
     b.addEventListener("click", (e) => { e.preventDefault(); go(); });
 }
-// 概覽: reach, damage kind and difficulty, and the ability tags it has (the style chart and this patch are behind 全部)
-function overviewTop(body: HTMLElement, c: Champion, ctx: PageCtx): void {
-    void ctx;
-    factsStrip(body, c);
-    tagRow(h(body, "div", "mn-cpa-tags"), c, undefined, true);
+const DIFF_STEPS = 10;
+const TAGS_SHOWN = 4;
+// 概覽: three stat tiles (damage kind, reach, difficulty as a 10-step bar), then its ability tags two across
+function overviewTop(body: HTMLElement, c: Champion): void {
+    const tiles = h(body, "div", "mn-cv-stats");
+    const tile = (iconName: string, color: string, big: string, small: string) => {
+        const t = h(tiles, "div", "mn-cv-stat");
+        t.style.setProperty("--c", color);
+        icon(t, iconName, "mn-cv-sic");
+        h(t, "b", undefined, big);
+        h(t, "span", undefined, small);
+        return t;
+    };
+    const main = c.damageType || c.skillDamage[0] || "";
+    if (main) tile(DAMAGE_ICON[main] ?? "flame", DAMAGE_COLOR[main] ?? "var(--mn-muted)", main === "物理" ? "物攻" : main === "魔法" ? "魔攻" : main, "傷害");
+    const reach = reachOf(c) || (c.range >= 550 ? "遠程" : c.range >= 300 ? "中程" : "近戰");
+    tile("ruler", "var(--mn-dash)", reach, c.range ? `射程 ${c.range}` : "距離");
+    const d = tile("gauge", "var(--mn-accent)", `${c.difficulty}`, "難度");
+    const bar = h(d, "div", "mn-cv-bar");
+    for (let i = 0; i < DIFF_STEPS; i++) h(bar, "i", i < c.difficulty ? "is-on" : "");
+    const t = tagRow(body, c, undefined, true);
+    t.addClass("mn-cv-tags");
+    Array.from(t.children).slice(TAGS_SHOWN).forEach((x) => x.remove());
 }
-// 技能: the five abilities, one line each (key and picture, name, the ability in plain words, cooldown); the full page has clips and numbers
+// 技能: the five abilities as a bar like the game's; the chosen one (Q at first) below: name, damage and scaling, cooldown, cost, plain words
 function skillsTop(body: HTMLElement, c: Champion): void {
-    const list = h(body, "div", "mn-cpa-skills");
-    for (const s of c.skills) {
-        const r = h(list, "div", "mn-cpa-sk");
-        const ic = h(r, "div", "mn-cpa-skic");
-        ic.style.setProperty("--c", DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--mn-line)");
-        const pic = h(ic, "img"); pic.src = s.icon; pic.alt = "";
-        h(ic, "span", "mn-cpa-key", s.key);
-        const t = h(r, "div", "mn-cpa-skt");
-        h(t, "b", undefined, s.name);
-        h(t, "span", undefined, c.plain[s.key] || s.damage.map((d) => `${d}傷害`).join(" · "));
-        const cd = s.rows?.find((x) => x.label.startsWith("冷卻"));
-        if (cd) h(r, "span", "mn-cpa-cd", `${cd.vals[cd.vals.length - 1]} 秒`);
-    }
+    const bar = h(body, "div", "mn-cv-hud");
+    const panel = h(body, "div", "mn-cv-sk");
+    const show = (i: number) => {
+        bar.querySelectorAll(".mn-cv-key").forEach((b, k) => b.toggleClass("is-on", k === i));
+        panel.empty();
+        const s = c.skills[i];
+        if (!s) return;
+        const head = h(panel, "div", "mn-cv-skh");
+        h(head, "span", "mn-cv-skk", s.key);
+        h(head, "b", undefined, s.name);
+        const chips = h(panel, "div", "mn-cv-skc");
+        const dmg = s.rows?.find((r) => /傷害/.test(r.label));
+        if (dmg) {
+            const x = h(chips, "span", "mn-cv-pill", `${dmg.label} ${dmg.vals[dmg.vals.length - 1]}`);
+            x.style.setProperty("--c", DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--mn-muted)");
+            for (const part of scalingParts(dmg.note)) { const y = h(chips, "span", "mn-cv-pill", part.text); y.style.setProperty("--c", part.color); }
+        }
+        const cd = s.rows?.find((r) => r.label.startsWith("冷卻"));
+        if (cd) h(chips, "span", "mn-cv-pill", `冷卻 ${cd.vals[cd.vals.length - 1]} 秒`);
+        const cost = s.rows?.find((r) => r.label.startsWith("消耗"));
+        if (cost && cost.vals[0] !== "無") h(chips, "span", "mn-cv-pill", `${cost.label.replace(/[()（）]/g, " ").trim()} ${cost.vals[cost.vals.length - 1]}`);
+        h(panel, "p", "mn-cv-skp", c.plain[s.key] || s.desc.slice(0, 60));
+    };
+    c.skills.forEach((s, i) => {
+        const b = h(bar, "button", "mn-cv-key");
+        b.style.setProperty("--c", DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--mn-line)");
+        const pic = h(b, "img"); pic.src = s.icon; pic.alt = "";
+        h(b, "span", undefined, s.key);
+        b.addEventListener("click", (e) => { e.preventDefault(); show(i); });
+    });
+    show(Math.max(0, c.skills.findIndex((s) => s.key === "Q")));
 }
 
 // The parts behind 全部 ›: the full lists of the old sub-tabs, as pages that scroll
 type Part = "overview" | "skills" | "build" | "augments" | "tips";
 const PART_TITLE: Record<Part, string> = { overview: "概覽", skills: "技能", build: "出裝", augments: "強化", tips: "技巧" };
-const TOP_TIPS = 3;
 export function championPart(ctx: PageCtx): PageOut {
     const c = ctx.plugin.store.champion(String(ctx.frame.params?.id ?? ""));
     const p = String(ctx.frame.params?.part ?? "") as Part;
@@ -308,34 +345,41 @@ export function championPart(ctx: PageCtx): PageOut {
     return { title: `${c.name} · ${PART_TITLE[p] ?? ""}`, el };
 }
 
-// 出裝 on the card: the first build for this mode, its items in buying order
+// 出裝: the first build for this mode, its first three items big, in buying order with arrows; its name above, its note below
+const BUILD_SHOWN = 3;
 function buildTop(tab: HTMLElement, c: Champion, ctx: PageCtx): void {
     const store = ctx.plugin.store;
     const b = c.builds.find((x) => x.mode === ctx.plugin.settings.mode);
     if (!b) { h(tab, "p", "mn-cpa-empty", "還沒有寫出裝。之後依玩法推薦前三件。"); return; }
-    h(tab, "b", "mn-cc-t", b.name);
-    const row = h(tab, "div", "mn-cc-items");
-    for (const id of b.items.slice(0, 6)) {
-        const i = store.item(id);
-        if (!i) continue;
-        const x = h(row, "button", "mn-cc-item");
+    h(tab, "b", "mn-cv-title", b.name);
+    const row = h(tab, "div", "mn-cv-items");
+    b.items.slice(0, BUILD_SHOWN).map((id) => store.item(id)).filter((i): i is Item => !!i).forEach((i, k) => {
+        if (k) icon(row, "chevron-right", "mn-cv-arrow");
+        const x = h(row, "button", "mn-cv-item");
+        h(x, "span", "mn-cv-no", String(k + 1));
         const im = h(x, "img"); im.src = i.icon; im.alt = "";
-        h(x, "span", undefined, i.name);
-        x.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); ctx.openItem(i.id); });
-    }
-    if (b.note) h(tab, "p", "mn-cpa-empty", b.note);
+        h(x, "span", "mn-cv-iname", i.name);
+        x.addEventListener("click", (e) => { e.preventDefault(); ctx.openItem(i.id); });
+    });
+    if (b.note) h(tab, "p", "mn-cv-note", b.note);
 }
-// 強化 on the page: the champion's best augments (any rarity), as tiles
+// 強化: the champion's best three augments (any rarity), as big tiles
+const AUGS_SHOWN = 3;
 function augmentTop(tab: HTMLElement, c: Champion, ctx: PageCtx): void {
     const picks = augmentPicks(ctx.plugin.store, c);
     if (!picks.length) { h(tab, "p", "mn-cpa-empty", "還沒有配對到的強化。"); return; }
-    augmentTiles(tab, picks.slice(0, PICKS_SHOWN), ctx);
+    augmentTiles(tab, picks.slice(0, AUGS_SHOWN), ctx).addClass("is-big");
 }
-// 技巧 on the card: the first tips' titles
+// 技巧: the first tip as a card (title, text, where from); dots when there are more
 function tipsTop(tab: HTMLElement, c: Champion): void {
     if (!c.tips.length) { h(tab, "p", "mn-cpa-empty", "還沒有技巧。寫在 Inbox/技巧，整理後會出現在這裡。"); return; }
-    const box = h(tab, "div", "mn-cpa-tips");
-    for (const t of c.tips.slice(0, TOP_TIPS)) { const p = h(box, "p", "mn-cpa-tip"); h(p, "b", undefined, t.title); if (t.text) p.append(`：${t.text}`); }
+    const t = c.tips[0];
+    const card = h(tab, "div", "mn-cv-tip");
+    h(card, "b", undefined, t.title);
+    if (t.text) h(card, "p", undefined, t.text);
+    const meta = [t.sourceName, t.patch].filter(Boolean).join(" · ");
+    if (meta) h(card, "span", "mn-cv-meta", meta);
+    if (c.tips.length > 1) { const d = h(tab, "div", "mn-cv-dots"); c.tips.forEach((_, i) => h(d, "i", i ? "" : "is-on")); }
 }
 
 // The champion page's swipe pages, for the Handbook card that pictures them (label, icon; the Champion page pages in the Icons note)

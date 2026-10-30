@@ -4835,7 +4835,6 @@ var NEEDS = [
   { re: /魔力/, fit: (c) => c.resource === "\u9B54\u529B" ? 0.8 : 0, why: () => "\u7528\u9B54\u529B" },
   { re: /大絕/, fit: () => 0.6, why: () => "\u5927\u7D55\u5F37\u5316" }
 ];
-var PICKS_SHOWN = 6;
 function augmentTiles(parent, picks, ctx) {
   const grid = h(parent, "div", "mn-aug-tiles");
   for (const p of picks) {
@@ -5425,7 +5424,7 @@ var lastSub = /* @__PURE__ */ new Map();
 function rememberSub(id, sub) {
   lastSub.set(id, sub);
 }
-var PAGES = [["overview", "\u6982\u89BD"], ["skills", "\u6280\u80FD"], ["build", "\u51FA\u88DD"], ["augments", "\u5F37\u5316"], ["tips", "\u6280\u5DE7"]];
+var PAGES = [["overview", "\u6982\u89BD", "id-card"], ["skills", "\u6280\u80FD", "keyboard"], ["build", "\u51FA\u88DD", "shopping-bag"], ["augments", "\u5F37\u5316", "sparkles"], ["tips", "\u6280\u5DE7", "lightbulb"]];
 function championCard(ctx) {
   const store = ctx.plugin.store;
   const c = store.champion(String(ctx.frame.params?.id ?? ""));
@@ -5436,6 +5435,7 @@ function championCard(ctx) {
   }
   const mayhem = ctx.plugin.settings.mode === "mayhem";
   const part = (p) => () => ctx.push({ key: "champpart", title: `${c.name} \xB7 ${PART_TITLE[p]}`, params: { id: c.id, part: p } });
+  el.style.setProperty("--dc", DAMAGE_COLOR[c.damageType || c.skillDamage[0] || ""] ?? "var(--mn-accent)");
   const hero = h(el, "div", "mn-hero");
   const bg = h(hero, "div", "mn-hero-bg");
   bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
@@ -5473,22 +5473,22 @@ function championCard(ctx) {
   const box = h(el, "div", "mn-cpa");
   const track = h(box, "div", "mn-cpa-track");
   for (const ev of ["touchstart", "touchmove"]) track.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
-  for (const [p, name] of pages) {
+  const cards = pages.map(([p, name]) => {
     const pg = h(track, "section", "mn-cpa-page");
     const body = h(pg, "div", "mn-cpa-body");
-    if (p === "overview") overviewTop(body, c, ctx);
+    if (p === "overview") overviewTop(body, c);
     else if (p === "skills") skillsTop(body, c);
     else if (p === "build") buildTop(body, c, ctx);
     else if (p === "augments") augmentTop(body, c, ctx);
     else tipsTop(body, c);
     const count2 = p === "skills" ? c.skills.length : p === "augments" ? augmentPicks(store, c).length : p === "tips" ? c.tips.length : p === "build" ? c.builds.filter((x) => x.mode === ctx.plugin.settings.mode).length : 0;
     if (p !== "tips" || c.tips.length) moreLink(pg, part(p), `\u5168\u90E8${name}`, count2);
-  }
+    return pg;
+  });
   const nav = h(el, "div", "mn-cpa-nav");
-  const label = h(nav, "span", "mn-cpa-name");
-  const dots = h(nav, "div", "mn-cpa-dots");
-  const dotEls = pages.map(([, name], i) => {
-    const d = h(dots, "button", "mn-cpa-dot");
+  const chips = pages.map(([, name, ic], i) => {
+    const d = h(nav, "button", "mn-cpa-chip");
+    icon(d, ic);
     d.setAttribute("aria-label", name);
     d.addEventListener("click", (e) => {
       e.preventDefault();
@@ -5500,14 +5500,17 @@ function championCard(ctx) {
   const mark = (i) => {
     if (i === cur) return;
     cur = i;
-    dotEls.forEach((d, k) => d.toggleClass("is-on", k === i));
-    label.setText(pages[i]?.[1] ?? "");
+    chips.forEach((d, k) => d.toggleClass("is-on", k === i));
+  };
+  const at = () => {
+    const step = (cards[1]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0);
+    return step > 0 ? Math.round(track.scrollLeft / step) : 0;
   };
   const go = (i, smooth) => {
-    track.scrollTo({ left: i * track.clientWidth, behavior: smooth ? "smooth" : "instant" });
+    track.scrollTo({ left: (cards[i]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0), behavior: smooth ? "smooth" : "instant" });
     mark(i);
   };
-  track.addEventListener("scroll", () => mark(Math.round(track.scrollLeft / Math.max(1, track.clientWidth))), { passive: true });
+  track.addEventListener("scroll", () => mark(Math.min(cards.length - 1, at())), { passive: true });
   const startSub = lastSub.get(c.id);
   lastSub.delete(c.id);
   const start = Math.max(0, pages.findIndex(([p]) => p === startSub));
@@ -5515,14 +5518,14 @@ function championCard(ctx) {
     const scroll = el.closest(".mn-scroll");
     if (!scroll || !box.isConnected) return;
     const top = box.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
-    box.style.height = `${Math.max(320, scroll.clientHeight - top - nav.offsetHeight - CPA_BELOW)}px`;
+    box.style.height = `${Math.max(280, scroll.clientHeight - top - nav.offsetHeight - CPA_BELOW)}px`;
     go(start, false);
   };
   requestAnimationFrame(fit);
   mark(start);
   return { title: "", el, ready: null };
 }
-var CPA_BELOW = 12;
+var CPA_BELOW = 10;
 function moreLink(parent, go, label, count2) {
   const b = h(parent, "button", "mn-cpa-more");
   icon(b, "layout-list", "mn-cpa-more-ic");
@@ -5534,30 +5537,71 @@ function moreLink(parent, go, label, count2) {
     go();
   });
 }
-function overviewTop(body, c, ctx) {
-  void ctx;
-  factsStrip(body, c);
-  tagRow(h(body, "div", "mn-cpa-tags"), c, void 0, true);
+var DIFF_STEPS = 10;
+var TAGS_SHOWN = 4;
+function overviewTop(body, c) {
+  const tiles = h(body, "div", "mn-cv-stats");
+  const tile2 = (iconName, color, big, small) => {
+    const t2 = h(tiles, "div", "mn-cv-stat");
+    t2.style.setProperty("--c", color);
+    icon(t2, iconName, "mn-cv-sic");
+    h(t2, "b", void 0, big);
+    h(t2, "span", void 0, small);
+    return t2;
+  };
+  const main = c.damageType || c.skillDamage[0] || "";
+  if (main) tile2(DAMAGE_ICON[main] ?? "flame", DAMAGE_COLOR[main] ?? "var(--mn-muted)", main === "\u7269\u7406" ? "\u7269\u653B" : main === "\u9B54\u6CD5" ? "\u9B54\u653B" : main, "\u50B7\u5BB3");
+  const reach = reachOf(c) || (c.range >= 550 ? "\u9060\u7A0B" : c.range >= 300 ? "\u4E2D\u7A0B" : "\u8FD1\u6230");
+  tile2("ruler", "var(--mn-dash)", reach, c.range ? `\u5C04\u7A0B ${c.range}` : "\u8DDD\u96E2");
+  const d = tile2("gauge", "var(--mn-accent)", `${c.difficulty}`, "\u96E3\u5EA6");
+  const bar = h(d, "div", "mn-cv-bar");
+  for (let i = 0; i < DIFF_STEPS; i++) h(bar, "i", i < c.difficulty ? "is-on" : "");
+  const t = tagRow(body, c, void 0, true);
+  t.addClass("mn-cv-tags");
+  Array.from(t.children).slice(TAGS_SHOWN).forEach((x) => x.remove());
 }
 function skillsTop(body, c) {
-  const list2 = h(body, "div", "mn-cpa-skills");
-  for (const s of c.skills) {
-    const r = h(list2, "div", "mn-cpa-sk");
-    const ic = h(r, "div", "mn-cpa-skic");
-    ic.style.setProperty("--c", DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--mn-line)");
-    const pic2 = h(ic, "img");
+  const bar = h(body, "div", "mn-cv-hud");
+  const panel = h(body, "div", "mn-cv-sk");
+  const show = (i) => {
+    bar.querySelectorAll(".mn-cv-key").forEach((b, k) => b.toggleClass("is-on", k === i));
+    panel.empty();
+    const s = c.skills[i];
+    if (!s) return;
+    const head2 = h(panel, "div", "mn-cv-skh");
+    h(head2, "span", "mn-cv-skk", s.key);
+    h(head2, "b", void 0, s.name);
+    const chips = h(panel, "div", "mn-cv-skc");
+    const dmg = s.rows?.find((r) => /傷害/.test(r.label));
+    if (dmg) {
+      const x = h(chips, "span", "mn-cv-pill", `${dmg.label} ${dmg.vals[dmg.vals.length - 1]}`);
+      x.style.setProperty("--c", DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--mn-muted)");
+      for (const part of scalingParts(dmg.note)) {
+        const y = h(chips, "span", "mn-cv-pill", part.text);
+        y.style.setProperty("--c", part.color);
+      }
+    }
+    const cd = s.rows?.find((r) => r.label.startsWith("\u51B7\u537B"));
+    if (cd) h(chips, "span", "mn-cv-pill", `\u51B7\u537B ${cd.vals[cd.vals.length - 1]} \u79D2`);
+    const cost = s.rows?.find((r) => r.label.startsWith("\u6D88\u8017"));
+    if (cost && cost.vals[0] !== "\u7121") h(chips, "span", "mn-cv-pill", `${cost.label.replace(/[()（）]/g, " ").trim()} ${cost.vals[cost.vals.length - 1]}`);
+    h(panel, "p", "mn-cv-skp", c.plain[s.key] || s.desc.slice(0, 60));
+  };
+  c.skills.forEach((s, i) => {
+    const b = h(bar, "button", "mn-cv-key");
+    b.style.setProperty("--c", DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--mn-line)");
+    const pic2 = h(b, "img");
     pic2.src = s.icon;
     pic2.alt = "";
-    h(ic, "span", "mn-cpa-key", s.key);
-    const t = h(r, "div", "mn-cpa-skt");
-    h(t, "b", void 0, s.name);
-    h(t, "span", void 0, c.plain[s.key] || s.damage.map((d) => `${d}\u50B7\u5BB3`).join(" \xB7 "));
-    const cd = s.rows?.find((x) => x.label.startsWith("\u51B7\u537B"));
-    if (cd) h(r, "span", "mn-cpa-cd", `${cd.vals[cd.vals.length - 1]} \u79D2`);
-  }
+    h(b, "span", void 0, s.key);
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      show(i);
+    });
+  });
+  show(Math.max(0, c.skills.findIndex((s) => s.key === "Q")));
 }
 var PART_TITLE = { overview: "\u6982\u89BD", skills: "\u6280\u80FD", build: "\u51FA\u88DD", augments: "\u5F37\u5316", tips: "\u6280\u5DE7" };
-var TOP_TIPS = 3;
 function championPart(ctx) {
   const c = ctx.plugin.store.champion(String(ctx.frame.params?.id ?? ""));
   const p = String(ctx.frame.params?.part ?? "");
@@ -5574,6 +5618,7 @@ function championPart(ctx) {
   else tips(el, c, ctx);
   return { title: `${c.name} \xB7 ${PART_TITLE[p] ?? ""}`, el };
 }
+var BUILD_SHOWN = 3;
 function buildTop(tab, c, ctx) {
   const store = ctx.plugin.store;
   const b = c.builds.find((x) => x.mode === ctx.plugin.settings.mode);
@@ -5581,42 +5626,46 @@ function buildTop(tab, c, ctx) {
     h(tab, "p", "mn-cpa-empty", "\u9084\u6C92\u6709\u5BEB\u51FA\u88DD\u3002\u4E4B\u5F8C\u4F9D\u73A9\u6CD5\u63A8\u85A6\u524D\u4E09\u4EF6\u3002");
     return;
   }
-  h(tab, "b", "mn-cc-t", b.name);
-  const row2 = h(tab, "div", "mn-cc-items");
-  for (const id of b.items.slice(0, 6)) {
-    const i = store.item(id);
-    if (!i) continue;
-    const x = h(row2, "button", "mn-cc-item");
+  h(tab, "b", "mn-cv-title", b.name);
+  const row2 = h(tab, "div", "mn-cv-items");
+  b.items.slice(0, BUILD_SHOWN).map((id) => store.item(id)).filter((i) => !!i).forEach((i, k) => {
+    if (k) icon(row2, "chevron-right", "mn-cv-arrow");
+    const x = h(row2, "button", "mn-cv-item");
+    h(x, "span", "mn-cv-no", String(k + 1));
     const im = h(x, "img");
     im.src = i.icon;
     im.alt = "";
-    h(x, "span", void 0, i.name);
+    h(x, "span", "mn-cv-iname", i.name);
     x.addEventListener("click", (e) => {
       e.preventDefault();
-      e.stopPropagation();
       ctx.openItem(i.id);
     });
-  }
-  if (b.note) h(tab, "p", "mn-cpa-empty", b.note);
+  });
+  if (b.note) h(tab, "p", "mn-cv-note", b.note);
 }
+var AUGS_SHOWN = 3;
 function augmentTop(tab, c, ctx) {
   const picks = augmentPicks(ctx.plugin.store, c);
   if (!picks.length) {
     h(tab, "p", "mn-cpa-empty", "\u9084\u6C92\u6709\u914D\u5C0D\u5230\u7684\u5F37\u5316\u3002");
     return;
   }
-  augmentTiles(tab, picks.slice(0, PICKS_SHOWN), ctx);
+  augmentTiles(tab, picks.slice(0, AUGS_SHOWN), ctx).addClass("is-big");
 }
 function tipsTop(tab, c) {
   if (!c.tips.length) {
     h(tab, "p", "mn-cpa-empty", "\u9084\u6C92\u6709\u6280\u5DE7\u3002\u5BEB\u5728 Inbox/\u6280\u5DE7\uFF0C\u6574\u7406\u5F8C\u6703\u51FA\u73FE\u5728\u9019\u88E1\u3002");
     return;
   }
-  const box = h(tab, "div", "mn-cpa-tips");
-  for (const t of c.tips.slice(0, TOP_TIPS)) {
-    const p = h(box, "p", "mn-cpa-tip");
-    h(p, "b", void 0, t.title);
-    if (t.text) p.append(`\uFF1A${t.text}`);
+  const t = c.tips[0];
+  const card = h(tab, "div", "mn-cv-tip");
+  h(card, "b", void 0, t.title);
+  if (t.text) h(card, "p", void 0, t.text);
+  const meta = [t.sourceName, t.patch].filter(Boolean).join(" \xB7 ");
+  if (meta) h(card, "span", "mn-cv-meta", meta);
+  if (c.tips.length > 1) {
+    const d = h(tab, "div", "mn-cv-dots");
+    c.tips.forEach((_, i) => h(d, "i", i ? "" : "is-on"));
   }
 }
 var CHAMPION_TABS = [["\u6982\u89BD", "id-card"], ["\u6280\u80FD", "keyboard"], ["\u51FA\u88DD", "shopping-bag"], ["\u5F37\u5316", "sparkles"], ["\u6280\u5DE7", "lightbulb"]];
