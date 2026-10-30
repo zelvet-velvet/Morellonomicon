@@ -128,6 +128,17 @@ Patch | newspaper
 Handbook | book-open
 ```
 
+## 🦸 Champion page tabs
+Source: `SUB_TABS` in `plugin/src/pages/champions.ts`. The tab bar under a champion's banner.
+
+```mn-icons
+Overview | id-card
+Skills | keyboard
+Build | shopping-bag
+Augments | sparkles
+Tips | lightbulb
+```
+
 ## 🃏 Handbook cards
 Combo result chips (`RESULT_ICON` in `plugin/src/pages/cardkit.ts`), forms (`FORM_ICONS`) and ability stat boxes. The tip line is a short accent line with no icon.
 

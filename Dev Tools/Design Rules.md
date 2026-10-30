@@ -12,7 +12,8 @@ How the whole app looks and behaves, so every page feels the same. A shared beha
 
 - **Blocks.** Every page is the blocks drawn in [[Layouts]] (phone px, 390 × 844). Sides keep 16 px margins, gaps and sizes go in 4 px steps, neighbours share edges and widths. A block that sits on the screen edge in the Layouts note does so in the app (Items' role tabs and stat rail).
 - **Fixed pages with one scrolling list.** A page with a search or a filter bar on top does not scroll as a whole: the top stays and only its list scrolls (`fixedPage` and `.mn-rq-list`: Picks, Champions; Items does the same with its grid).
-- **Title row.** A tab's first page has the big serif title with the palette and mode buttons; deeper pages have the top bar with Back. Over a splash the top bar is clear until the page scrolls.
+- **Title row.** A tab's first page has the big serif title with the palette and mode buttons; deeper pages have the top bar with Back. A page that opens with a banner picture (a champion, an item, an augment) puts it under the top bar, Back floating on it; the bar is clear until the page scrolls, and the banner ends close to what follows (no blank band).
+- **Sub-tabs.** A page with several parts uses sub-tabs right under its banner instead of one long scroll (the champion page): a capsule of icons over English labels with a soft sliding highlight (`.mn-ctabs`), staying under the top bar while the banner scrolls away; each tab is about one screen.
 - **Moving between pages.** A page slides in from the side it comes from (push, back) or rises a little (tab); Back returns to where the page was scrolled.
 
 ## 🖼️ Pictures
