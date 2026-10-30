@@ -223,10 +223,11 @@ export function championCard(ctx: PageCtx): PageOut {
     const box = h(el, "div", "mn-cpa");
     const track = h(box, "div", "mn-cpa-track");
     for (const ev of ["touchstart", "touchmove"]) track.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });   // not Obsidian's edge swipes
+    let tagLine: HTMLElement | null = null;   // 概覽's tags: under the name, at the very foot
     const cards = pages.map(([p]) => {
         const pg = h(track, "section", "mn-cpa-page is-" + p);
         const body = h(pg, "div", "mn-cpa-body");   // 概覽: just above the name; the others: the whole page, scrolling inside when long
-        if (p === "overview") overviewTop(body, c, part("overview"));
+        if (p === "overview") tagLine = overviewTop(body, c, part("overview"));
         else if (p === "skills") skillStrip(body, c, now, { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false });
         else if (p === "build") buildTab(body, c, ctx);
         else if (p === "augments") augmentsTab(body, c, ctx);
@@ -234,6 +235,7 @@ export function championCard(ctx: PageCtx): PageOut {
         return pg;
     });
     el.append(head);   // the name at the foot
+    if (tagLine) h(el, "div", "mn-cv-foot").append(tagLine);   // the tags under it (only on 概覽, like the name)
     // the page hint at the top middle: a dot per page, the current one lit (a hint only; the pages swipe)
     const hint = h(el, "div", "mn-cpa-hint");
     const dots = pages.map(() => h(hint, "i"));
@@ -259,7 +261,7 @@ export function championCard(ctx: PageCtx): PageOut {
 const DIFF_STEPS = 10;
 const TAGS_SHOWN = 4;
 // 概覽: the style chart beside three stat tiles (damage kind, reach, difficulty as a 10-step bar), then its ability tags two across
-function overviewTop(body: HTMLElement, c: Champion, more: () => void): void {
+function overviewTop(body: HTMLElement, c: Champion, more: () => void): HTMLElement {
     // the style chart (radar) on the left, the three stat tiles stacked on its right, the tags under them
     const row = h(body, "div", "mn-cv-look");
     profileRadar(h(row, "div", "mn-cv-radar"), profileAxes(c), DAMAGE_COLOR[c.damageType || c.skillDamage[0] || ""] ?? "var(--mn-accent)");
@@ -283,6 +285,7 @@ function overviewTop(body: HTMLElement, c: Champion, more: () => void): void {
     t.addClass("mn-cv-tags");
     Array.from(t.children).slice(TAGS_SHOWN).forEach((x) => x.remove());
     for (const x of [row, t]) x.addEventListener("click", (e) => { e.preventDefault(); more(); });   // the chart, the tiles and the tags open the page of its own
+    return t;   // placed under the name by the caller
 }
 // 概覽's page of its own (the chart in full, the combo video, this patch's changes), opened from its chart, tiles or tags
 type Part = "overview" | "skills" | "build" | "augments" | "tips";

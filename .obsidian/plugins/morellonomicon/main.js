@@ -6425,10 +6425,11 @@ function championCard(ctx) {
   const box = h(el, "div", "mn-cpa");
   const track = h(box, "div", "mn-cpa-track");
   for (const ev of ["touchstart", "touchmove"]) track.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
+  let tagLine = null;
   const cards = pages.map(([p]) => {
     const pg = h(track, "section", "mn-cpa-page is-" + p);
     const body = h(pg, "div", "mn-cpa-body");
-    if (p === "overview") overviewTop(body, c, part("overview"));
+    if (p === "overview") tagLine = overviewTop(body, c, part("overview"));
     else if (p === "skills") skillStrip(body, c, now, { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false });
     else if (p === "build") buildTab(body, c, ctx);
     else if (p === "augments") augmentsTab(body, c, ctx);
@@ -6436,6 +6437,7 @@ function championCard(ctx) {
     return pg;
   });
   el.append(head2);
+  if (tagLine) h(el, "div", "mn-cv-foot").append(tagLine);
   const hint = h(el, "div", "mn-cpa-hint");
   const dots = pages.map(() => h(hint, "i"));
   let cur = -1;
@@ -6489,6 +6491,7 @@ function overviewTop(body, c, more) {
     e.preventDefault();
     more();
   });
+  return t;
 }
 var PART_TITLE = { overview: "\u6982\u89BD", skills: "\u6280\u80FD", build: "\u51FA\u88DD", augments: "\u5F37\u5316", tips: "\u6280\u5DE7" };
 function championPart(ctx) {

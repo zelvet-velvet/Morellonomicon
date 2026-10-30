@@ -1030,7 +1030,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-champ.is-v3.is-deep .mn-hero-bg { filter: brightness(0.35) saturate(0.85) blur(2px); }
 .mn-champ.is-v3 .mn-hero::after { background: linear-gradient(180deg, transparent 40%, color-mix(in srgb, var(--mn-bg) 55%, transparent) 100%); }   /* a little darker where the parts and the name sit */
 .mn-champ.is-v3 > :not(.mn-hero) { position: relative; z-index: 1; }
-.mn-app .mn-champ.is-v3 .mn-card-head { padding: 4px 4px 28px; }   /* clear of the tab bar (beats the overlay's 4 px) */
+.mn-app .mn-champ.is-v3 .mn-card-head { padding: 4px 4px 12px; }   /* the tags under it (beats the overlay's 4 px) */
+.mn-champ.is-v3 > .mn-cv-foot { flex: none; padding-bottom: 24px; }   /* 概覽's tags under the name, clear of the tab bar */
+.mn-champ.is-v3.is-deep > .mn-cv-foot { display: none; }
 .mn-champ.is-v3.is-deep .mn-card-head { display: none; }   /* the name, title and roles only on 概覽 */
 .mn-champ .mn-card-img { width: 64px; height: 64px; }
 .mn-app .mn-champ .mn-card-who .mn-title { font-size: 30px; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6); }
@@ -1622,5 +1624,5 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-cv-look .mn-cv-stat .mn-cv-sic { grid-row: 1 / span 2; }
 .mn-champ.is-v3 .mn-cv-look .mn-cv-stat b { font-size: 18px; line-height: 1.2; }
 .mn-cv-look .mn-cv-stat b, .mn-cv-look .mn-cv-stat span:not(.mn-cv-sic), .mn-cv-look .mn-cv-bar { grid-column: 2; }
-.mn-cpa-page.is-overview .mn-cpa-body { gap: 20px; padding-bottom: 8px; }
-.mn-champ.is-v3 .mn-tgs.mn-cv-tags { justify-content: center; margin-top: 12px; }   /* centred, a little lower: nearer the name than the chart */
+.mn-cpa-page.is-overview .mn-cpa-body { gap: 20px; padding-bottom: 20px; }
+.mn-champ.is-v3 .mn-tgs.mn-cv-tags { justify-content: center; }   /* centred, under the name */
