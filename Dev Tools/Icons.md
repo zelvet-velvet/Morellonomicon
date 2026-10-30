@@ -6,15 +6,20 @@ tags:
   - icons
 sticker: lucide//shapes
 ---
-One idea, one icon, everywhere in the app. Settled by the Champions filter panel (Zaviel, 2026-10-28). Icons are [Lucide](https://lucide.dev/icons) names drawn by Obsidian (`setIcon`); a name Obsidian does not have shows a plain circle. Colours are the CSS variables in `plugin/styles.css` (`.mn-app`).
+> [!abstract]+ One idea, one icon
+> One idea, one icon, everywhere in the app. Settled by the Champions filter panel (Zaviel, 2026-10-28). Icons are [Lucide](https://lucide.dev/icons) names drawn by Obsidian (`setIcon`); a name Obsidian does not have shows a plain circle. Colours are the CSS variables in `plugin/styles.css` (`.mn-app`).
 
-**See and change them:** every list below is an editor. Each row shows the icon in its colour; tap the name box and a scrolling grid of Lucide icons opens under the row (type to filter it by name; tap an icon to take it), pick a colour with the colour square or type a `#hex`, and the note saves by itself. The ↺ button drops your colour and goes back to the app's own (the small `--name` under the label). A name Obsidian does not have turns the box red. When you are done, tell Claude to apply the note to the code: the map in the code stays the source of truth until then.
+> [!tip]+ See and change them
+> Every list below is an editor. Each row shows the icon in its colour; tap the name box and a scrolling grid of Lucide icons opens under the row (type to filter it by name; tap an icon to take it), pick a colour with the colour square or type a `#hex`, and the note saves by itself. The ↺ button drops your colour and goes back to the app's own (the small `--name` under the label). A name Obsidian does not have turns the box red. When you are done, tell Claude to apply the note to the code: the map in the code stays the source of truth until then.
 
-**Rule for new work:** take the icon from the map in the code (the source of truth), never pick one in a page. A new idea gets its icon added to the map and to this note first.
+> [!info]+ Rule for new work
+> Take the icon from the map in the code (the source of truth), never pick one in a page. A new idea gets its icon added to the map and to this note first.
 
 ---
+
 ## 🗡️ Damage kind
-Source: `DAMAGE_ICON`, `DAMAGE_COLOR` in `plugin/src/ui.ts`. Used for damage type filters, damage pills on skill cards, scaling pills (`+60% 魔法攻擊`).
+> [!info]+ Where it lives
+> Source: `DAMAGE_ICON`, `DAMAGE_COLOR` in `plugin/src/ui.ts`. Used for damage type filters, damage pills on skill cards, scaling pills (`+60% 魔法攻擊`).
 
 ```mn-icons
 物理 (AD) | sword | --mn-phys | #d5763f
@@ -25,7 +30,8 @@ other scaling (+其他加成) | plus | --mn-muted | #c4beb4
 ```
 
 ## 🏷️ Ability tags
-Source: `TAGS` in `plugin/src/pages/profile.ts` (also the groups and the legend text). Used for the 技能 filter, champion pages, skill cards, 速查.
+> [!info]+ Where it lives
+> Source: `TAGS` in `plugin/src/pages/profile.ts` (also the groups and the legend text). Used for the 技能 filter, champion pages, skill cards, 速查.
 
 ```mn-icons
 傷害 強化普攻 | sword | --mn-aa | #b05279
@@ -44,11 +50,12 @@ Source: `TAGS` in `plugin/src/pages/profile.ts` (also the groups and the legend 
 生存 免傷 | shield-half | --mn-guard | #d4a95f
 團隊 隊友增益 | users | --mn-team | #7ccf8f
 ```
-
-強化普攻 and 物理 share `sword` (both are about the basic attack / AD); they never stand side by side without their label colour.
+> [!note]+ Note
+> 強化普攻 and 物理 share `sword` (both are about the basic attack / AD); they never stand side by side without their label colour.
 
 ## 📈 Stats to build (速查 玩法)
-Source: `STAT_ICON`, `STAT_COLOR` in `plugin/src/ui.ts` (the `stack` key of a champion note); stats with a `shop:N` icon show the game's shop icon (`SHOP_ROW`), the colour is the chip's; reach (近戰 / 中程 / 遠程) is `REACH_ICON`.
+> [!info]+ Where it lives
+> Source: `STAT_ICON`, `STAT_COLOR` in `plugin/src/ui.ts` (the `stack` key of a champion note); stats with a `shop:N` icon show the game's shop icon (`SHOP_ROW`), the colour is the chip's; reach (近戰 / 中程 / 遠程) is `REACH_ICON`.
 
 ```mn-icons
 法術強度 | shop:5 | --mn-magic
@@ -65,7 +72,8 @@ Source: `STAT_ICON`, `STAT_COLOR` in `plugin/src/ui.ts` (the `stack` key of a ch
 ```
 
 ## 🛍️ Item shop filters (Items page)
-Source: `ITEM_CATS` and `ITEM_CAT_COLOR` in `plugin/src/ui.ts`. Colours: grey when off, the colour below when on (魔力 and 法術穿透 chosen by Claude, 2026-10-29: mana with the magic blue, magic penetration in the debuff purple, as 物理穿透 is apart from 物理). The shop icons are sharpened on the device and painted in the app's colours, not the game's. The rail shows the game's own shop icons, cut by position from its sprite sheet (`SHOP_SPRITE`, CommunityDragon `itemshop_texture_atlas4.png`, shown by address); an icon written `shop:N` is row N of that sheet (the editor draws it; the Lucide fallback stays in the code).
+> [!info]+ Where it lives
+> Source: `ITEM_CATS` and `ITEM_CAT_COLOR` in `plugin/src/ui.ts`. Colours: grey when off, the colour below when on (魔力 and 法術穿透 chosen by Claude, 2026-10-29: mana with the magic blue, magic penetration in the debuff purple, as 物理穿透 is apart from 物理). The shop icons are sharpened on the device and painted in the app's colours, not the game's. The rail shows the game's own shop icons, cut by position from its sprite sheet (`SHOP_SPRITE`, CommunityDragon `itemshop_texture_atlas4.png`, shown by address); an icon written `shop:N` is row N of that sheet (the editor draws it; the Lucide fallback stays in the code).
 
 ```mn-icons
 全部 | layout-grid
@@ -86,7 +94,8 @@ Source: `ITEM_CATS` and `ITEM_CAT_COLOR` in `plugin/src/ui.ts`. Colours: grey wh
 ```
 
 ## 📖 名詞表 (glossary)
-Source: `OWN` in `plugin/src/pages/glossary.ts`. A term that is also a damage kind, a stat or an ability tag keeps that icon and colour (AD = 物理, 護甲, 控場…); only the terms below are the glossary's own (chosen by Claude, 2026-10-29).
+> [!info]+ Where it lives
+> Source: `OWN` in `plugin/src/pages/glossary.ts`. A term that is also a damage kind, a stat or an ability tag keeps that icon and colour (AD = 物理, 護甲, 控場…); only the terms below are the glossary's own (chosen by Claude, 2026-10-29).
 
 ```mn-icons
 普攻 | mouse-pointer-click | --mn-text
@@ -100,7 +109,8 @@ Source: `OWN` in `plugin/src/pages/glossary.ts`. A term that is also a damage ki
 ```
 
 ## 🛡️ Roles and lanes
-Source: `ROLE_FILE` / `ROLE_ICON` and `LANE_FILE` / `LANE_ICON` in `plugin/src/ui.ts`. The game's own class and position icons (from the League of Legends Wiki, shown by address); the Lucide name is only the fallback when a file does not load.
+> [!info]+ Where it lives
+> Source: `ROLE_FILE` / `ROLE_ICON` and `LANE_FILE` / `LANE_ICON` in `plugin/src/ui.ts`. The game's own class and position icons (from the League of Legends Wiki, shown by address); the Lucide name is only the fallback when a file does not load.
 
 ```mn-icons
 戰士 (Fighter) | swords
@@ -117,7 +127,8 @@ Source: `ROLE_FILE` / `ROLE_ICON` and `LANE_FILE` / `LANE_ICON` in `plugin/src/u
 ```
 
 ## 🧭 Tabs
-Source: `TAB_ICON` in `plugin/src/modes.ts`.
+> [!info]+ Where it lives
+> Source: `TAB_ICON` in `plugin/src/modes.ts`.
 
 ```mn-icons
 Home | house
@@ -129,7 +140,8 @@ Handbook | book-open
 ```
 
 ## 🦸 Champion page tabs
-Source: `SUB_TABS` in `plugin/src/pages/champions.ts`. The tab bar under a champion's banner.
+> [!info]+ Where it lives
+> Source: `SUB_TABS` in `plugin/src/pages/champions.ts`. The tab bar under a champion's banner.
 
 ```mn-icons
 Overview | id-card
@@ -140,7 +152,8 @@ Tips | lightbulb
 ```
 
 ## 🃏 Handbook cards
-Combo result chips (`RESULT_ICON` in `plugin/src/pages/cardkit.ts`), forms (`FORM_ICONS`) and ability stat boxes. The tip line is a short accent line with no icon.
+> [!note]+ Note
+> Combo result chips (`RESULT_ICON` in `plugin/src/pages/cardkit.ts`), forms (`FORM_ICONS`) and ability stat boxes. The tip line is a short accent line with no icon.
 
 ```mn-icons
 快 / 速 | zap

@@ -50,7 +50,8 @@ def texts():
 def main():
     found = texts()
     lines = ["---", "title: UI Text", "tags:", "  - morellonomicon", "  - dev-tools", "sticker: lucide//text-cursor-input", "---",
-             "The app's hint and tip texts, by the file they are in (made by `tools/list_ui_text.py`). Edit a text after its `·`; keep one text per line. "
+             "> [!abstract]+ The app's hint and tip texts",
+             "> By the file they are in (made by `tools/list_ui_text.py`). Edit a text after its `·`; keep one text per line. "
              "Then tell Claude **apply the UI Text note**: each changed line is changed in the code. `${…}` parts are filled in by the app (a number, a name): keep them.", ""]
     total = 0
     for path, items in found.items():
@@ -59,9 +60,9 @@ def main():
             if s in seen:
                 continue
             seen.add(s)
-            rows.append(f"- `{kind}` · {s}")
+            rows.append(f"> - `{kind}` · {s}")
         if rows:
-            lines += [f"## {path}", *rows, ""]
+            lines += [f"## {path}", "", f"> [!example]+ {len(rows)} texts", *rows, ""]   # one callout per file (the vault note format)
             total += len(rows)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text("\n".join(lines), encoding="utf-8")

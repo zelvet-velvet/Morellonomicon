@@ -5,15 +5,17 @@ tags:
   - layout
 sticker: lucide//layout-dashboard
 ---
-Every page of the app as a phone with its blocks, to design and point at problems without screenshots. Open it in **Reading view** (or Live Preview, tapping outside the code). Sizes are in phone px (390 × 844).
+> [!abstract]+ Every page as a phone
+> Every page of the app as a phone with its blocks, to design and point at problems without screenshots. Open it in **Reading view** (or Live Preview, tapping outside the code). Sizes are in phone px (390 × 844).
 
-- **Move** a block by dragging it, **resize** it by its corner; it snaps to 2 px.
-- **Tap** a block to rename it, change its kind (colour; pictures always sit at the back and floating parts in front), set exact x / y / w / h, write a note ("too much space here"), duplicate or delete it.
-- **Groups.** A page named `Home · linked` sits under the big title **Home** as *linked*; a page named just `Picks` is its group's main page. The **+** beside a big title adds a page to that group, and renaming the title renames all its pages.
-- **+ square** on a page adds a block, the bin deletes the page (tap twice), **+ Page** at the end adds one; the page name and its note are editable.
-- A page you changed since Claude last synced the layout has an **orange frame**; its **reset** takes it back to the synced layout (and clears the outline), and a sync by Claude clears it too.
-- A **light blue frame** is a **mock**: a layout Claude proposes that is not built yet. Several options for one choice sit under one big title that names the choice (e.g. `Liked page options · A portraits`, `… · B banners`). Pick one by tapping its flask (it turns into a real page) and saving, or tell Claude which; the others are deleted at the sync. Only real pages are built.
-- Each page has its own **back** and **forward** steps, **reset** and **save** (lit when the page has changes). Nothing is written into the note until you save that page; unsaved pages stay while Obsidian is open. Drag roughly: when you ask Claude to sync the layout, it tidies the sizes (edges, equal widths, margins, gaps) before applying them, and saves the tidied blocks back here.
+> [!tip]- How to use the editor
+> - **Move** a block by dragging it, **resize** it by its corner; it snaps to 2 px.
+> - **Tap** a block to rename it, change its kind (colour; pictures always sit at the back and floating parts in front), set exact x / y / w / h, write a note ("too much space here"), duplicate or delete it.
+> - **Groups.** A page named `Home · linked` sits under the big title **Home** as *linked*; a page named just `Picks` is its group's main page. The **+** beside a big title adds a page to that group, and renaming the title renames all its pages.
+> - **+ square** on a page adds a block, the bin deletes the page (tap twice), **+ Page** at the end adds one; the page name and its note are editable.
+> - A page you changed since Claude last synced the layout has an **orange frame**; its **reset** takes it back to the synced layout (and clears the outline), and a sync by Claude clears it too.
+> - A **light blue frame** is a **mock**: a layout Claude proposes that is not built yet. Several options for one choice sit under one big title that names the choice (e.g. `Liked page options · A portraits`, `… · B banners`). Pick one by tapping its flask (it turns into a real page) and saving, or tell Claude which; the others are deleted at the sync. Only real pages are built.
+> - Each page has its own **back** and **forward** steps, **reset** and **save** (lit when the page has changes). Nothing is written into the note until you save that page; unsaved pages stay while Obsidian is open. Drag roughly: when you ask Claude to sync the layout, it tidies the sizes (edges, equal widths, margins, gaps) before applying them, and saves the tidied blocks back here.
 
 ---
 ## 📐 Layout editor
@@ -41,12 +43,14 @@ Every page of the app as a phone with its blocks, to design and point at problem
 
 ---
 ## 🃏 Handbook card
-The one layout every Handbook card (`新手入門/`, one `## ` per card) follows. Chosen by Zaviel on 2026-10-28: frame **F2 with a whole-card stage**. A new card picks one stage template below and keeps to the text limits; `python3 -I tools/check_cards.py` lists the cards that do not. The frame is the **Handbook · card** page in the editor above.
+> [!abstract]+ One frame for every card
+> The one layout every Handbook card (`新手入門/`, one `## ` per card) follows. Chosen by Zaviel on 2026-10-28: frame **F2 with a whole-card stage**. A new card picks one stage template below and keeps to the text limits; `python3 -I tools/check_cards.py` lists the cards that do not. The frame is the **Handbook · card** page in the editor above.
 
-- **Words** have fixed rows (kicker, title, two body lines, the tip line), so they are the same height on every card and the kicker, dock and clip sit in the same place everywhere (updated 2026-10-28, Zaviel). Text longer than its row is cut with …; keep to the limits below. No scrolling.
-- **Dock** is always the 46 px band 4 px above the words, so tags and steps sit at the same distance from the text on every card.
-- **Stage** for a picture (splash, `img`, map) is the whole card behind the words. A clip ends at the top of the words, so its full height shows (Riot's clips keep the champion between 1/5 and 4/5 from the top), raised by its empty top 15% (`--mn-clip-lift` in `plugin/styles.css`); its lower edge fades into the words' dark in steps (no line).
-- Clips are cut at the sides to keep the part three quarters from the left (where Riot's clips have the champion).
+> [!note]+ Words · Dock · Stage · Clips
+> - **Words** have fixed rows (kicker, title, two body lines, the tip line), so they are the same height on every card and the kicker, dock and clip sit in the same place everywhere (updated 2026-10-28, Zaviel). Text longer than its row is cut with …; keep to the limits below. No scrolling.
+> - **Dock** is always the 46 px band 4 px above the words, so tags and steps sit at the same distance from the text on every card.
+> - **Stage** for a picture (splash, `img`, map) is the whole card behind the words. A clip ends at the top of the words, so its full height shows (Riot's clips keep the champion between 1/5 and 4/5 from the top), raised by its empty top 15% (`--mn-clip-lift` in `plugin/styles.css`); its lower edge fades into the words' dark in steps (no line).
+> - Clips are cut at the sides to keep the part three quarters from the left (where Riot's clips have the champion).
 
 ### ✏️ Text limits
 
@@ -56,7 +60,8 @@ The one layout every Handbook card (`新手入門/`, one `## ` per card) follows
 | body | ≤ 2 lines | ≤ 36 characters |
 | tip (`**小技巧：**`) | 1 line beside its label | ≤ 16 characters |
 
-Counted with full-width characters as 1 and ASCII as ½. Full-width punctuation (，。：) so lines break between phrases.
+> [!note]+ Counting
+> Counted with full-width characters as 1 and ASCII as ½. Full-width punctuation (，。：) so lines break between phrases.
 
 ### 🧩 Stage templates
 
@@ -68,7 +73,8 @@ Counted with full-width characters as 1 and ASCII as ½. Full-width punctuation 
 | ability | `ability Champ Key` | skill head, damage per rank, cooldown / cost / range | the ability's tags |
 | gallery | `champs …`, `items …`, `augs …` | icons in 2–3 columns, centred | optional |
 
-Other picture kinds (`img`, `splash`, `map`, `tree`, `counters`, `wards`, `style`, `radar`…) fill the stage the same way and leave the dock empty. A new template is added here first, then in `plugin/src/pages/cardkit.ts`.
+> [!note]+ Other picture kinds
+> Other picture kinds (`img`, `splash`, `map`, `tree`, `counters`, `wards`, `style`, `radar`…) fill the stage the same way and leave the dock empty. A new template is added here first, then in `plugin/src/pages/cardkit.ts`.
 
 ```mn-layout-synced
 [
