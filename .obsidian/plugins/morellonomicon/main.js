@@ -3496,17 +3496,42 @@ function skillStrip(parent, c, changes = [], opt = {}) {
   const show = (i) => {
     open = i;
     boxes.forEach((b, j) => b.toggleClass("is-on", j === i));
+    const shown = detail.querySelector(".mn-sd-video");
+    const prev = shown && shown.readyState >= 2 ? shown : null;
+    prev?.remove();
     detail.empty();
     detail.toggleClass("is-open", i >= 0);
     if (i < 0) return;
     const s = c.skills[i];
     const clip = () => {
       const clipBox = h(detail, "div", "mn-sd-clipbox");
-      const ph = h(clipBox, "div", "mn-sd-clipph");
-      ph.style.backgroundImage = `url("${s.icon}")`;
-      demo(clipBox, c, s, () => clipBox.remove());
-      clipBox.querySelector("video")?.addEventListener("loadeddata", () => window.setTimeout(() => ph.remove(), CLIP_FADE_MS), { once: true });
-      if (!clipBox.querySelector("video")) {
+      let stand;
+      if (prev) {
+        stand = prev;
+        clipBox.append(prev);
+        void prev.play().catch(() => void 0);
+      } else {
+        stand = h(clipBox, "div", "mn-sd-clipph");
+        stand.style.backgroundImage = `url("${s.icon}")`;
+      }
+      const letGo = () => {
+        stand.remove();
+        if (stand === prev) {
+          prev.pause();
+          prev.removeAttribute("src");
+          prev.replaceChildren();
+          prev.load();
+        }
+      };
+      demo(clipBox, c, s, () => {
+        letGo();
+        clipBox.remove();
+      });
+      const last = clipBox.lastElementChild;
+      const v = last instanceof HTMLVideoElement && last !== prev ? last : null;
+      v?.addEventListener("loadeddata", () => window.setTimeout(letGo, CLIP_FADE_MS), { once: true });
+      if (!v) {
+        letGo();
         clipBox.remove();
         return null;
       }

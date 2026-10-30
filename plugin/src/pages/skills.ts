@@ -28,6 +28,10 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
     const show = (i: number) => {
         open = i;
         boxes.forEach((b, j) => b.toggleClass("is-on", j === i));
+        // the clip on show (with a frame) stays as the new clip's stand-in, so a tapped ability goes from clip to clip, not via a picture
+        const shown = detail.querySelector<HTMLVideoElement>(".mn-sd-video");
+        const prev = shown && shown.readyState >= 2 ? shown : null;
+        prev?.remove();
         detail.empty();
         detail.toggleClass("is-open", i >= 0);
         if (i < 0) return;
@@ -38,11 +42,16 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
             const clipBox = h(detail, "div", "mn-sd-clipbox");
             // something to blur from the first moment, before the clip has a single frame: the skill's own picture, enlarged and blurred;
             // the clip covers it when it appears (and goes after the clip's own fade-in, so nothing shows through)
-            const ph = h(clipBox, "div", "mn-sd-clipph");
-            ph.style.backgroundImage = `url("${s.icon}")`;
-            demo(clipBox, c, s, () => clipBox.remove());
-            clipBox.querySelector("video")?.addEventListener("loadeddata", () => window.setTimeout(() => ph.remove(), CLIP_FADE_MS), { once: true });
-            if (!clipBox.querySelector("video")) { clipBox.remove(); return null; }   // no clip for this skill
+            // (the clip that was on show takes that place when there is one)
+            let stand: HTMLElement;
+            if (prev) { stand = prev; clipBox.append(prev); void prev.play().catch(() => undefined); }
+            else { stand = h(clipBox, "div", "mn-sd-clipph"); stand.style.backgroundImage = `url("${s.icon}")`; }
+            const letGo = () => { stand.remove(); if (stand === prev) { prev.pause(); prev.removeAttribute("src"); prev.replaceChildren(); prev.load(); } };
+            demo(clipBox, c, s, () => { letGo(); clipBox.remove(); });
+            const last = clipBox.lastElementChild;   // demo's new clip, after the stand-in
+            const v = last instanceof HTMLVideoElement && last !== prev ? last : null;
+            v?.addEventListener("loadeddata", () => window.setTimeout(letGo, CLIP_FADE_MS), { once: true });
+            if (!v) { letGo(); clipBox.remove(); return null; }   // no clip for this skill
             const loaded = whenMediaLoaded([clipBox], CLIP_WAIT_MS);
             blockUntil(clipBox, loaded);
             return loaded;
