@@ -1885,8 +1885,10 @@ var LIMIT = 40;
 var splitNames = (s) => (s ?? "").split(/[、,，]/).map((x) => x.trim()).filter(Boolean);
 var pic = (parent, c, cls) => {
   const box = parent.createSpan({ cls });
-  if (c?.img) box.createEl("img", { attr: { src: c.img, alt: "" } });
-  else if (c?.icon) {
+  if (c?.img) {
+    box.addClass("has-img");
+    box.style.backgroundImage = `url("${c.img}")`;
+  } else if (c?.icon) {
     (0, import_obsidian5.setIcon)(box, c.icon);
     if (c.color) box.style.color = c.color;
   }
@@ -2187,7 +2189,7 @@ function picksBlock(plugin, el, ctx) {
     chosen.set(ctx.sourcePath, c.id);
     const save = (values) => void setKeys(plugin, c.path, values).then(counted);
     const head2 = form.createDiv({ cls: "mn-pk-head" });
-    head2.createEl("img", { attr: { src: c.icon, alt: "" } });
+    pic(head2, { name: c.name, img: c.icon }, "mn-pk-face");
     const who = head2.createDiv();
     who.createDiv({ cls: "mn-inb-t", text: c.name });
     who.createDiv({ cls: "mn-inb-s", text: c.title });
@@ -2237,7 +2239,7 @@ function picksBlock(plugin, el, ctx) {
     for (const k of KEYS) {
       const s = c.skills.find((x) => x.key === k);
       const line = plain2.createDiv({ cls: "mn-pk-skill" });
-      if (s) line.createEl("img", { attr: { src: s.icon, alt: "" } });
+      pic(line, s ? { name: s.name, img: s.icon } : void 0, "mn-pk-skic");
       line.createSpan({ cls: "mn-pk-key", text: k });
       const input = line.createEl("input", { attr: { type: "text", placeholder: s?.name ?? "" } });
       input.value = c.plain[k] ?? "";

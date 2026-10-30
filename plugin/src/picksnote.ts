@@ -1,7 +1,7 @@
 import { MarkdownPostProcessorContext, TFile, setIcon } from "obsidian";
 import type MorellonomiconPlugin from "./main";
 import type { Champion } from "./data/store";
-import { picker } from "./pickers";
+import { pic, picker } from "./pickers";
 import { STAT_COLOR, STAT_ICON } from "./ui";
 
 // Inbox/速查卡片.md is an editor for the 速查 card text, which lives in each champion note's frontmatter: punch (一句話), stack (堆),
@@ -68,7 +68,7 @@ function picksBlock(plugin: MorellonomiconPlugin, el: HTMLElement, ctx: Markdown
         chosen.set(ctx.sourcePath, c.id);
         const save = (values: Record<string, unknown>) => void setKeys(plugin, c.path, values).then(counted);
         const head = form.createDiv({ cls: "mn-pk-head" });
-        head.createEl("img", { attr: { src: c.icon, alt: "" } });
+        pic(head, { name: c.name, img: c.icon }, "mn-pk-face");   // a square background (an <img> is stretched by the theme)
         const who = head.createDiv();
         who.createDiv({ cls: "mn-inb-t", text: c.name });
         who.createDiv({ cls: "mn-inb-s", text: c.title });
@@ -113,7 +113,7 @@ function picksBlock(plugin: MorellonomiconPlugin, el: HTMLElement, ctx: Markdown
         for (const k of KEYS) {
             const s = c.skills.find((x) => x.key === k);
             const line = plain.createDiv({ cls: "mn-pk-skill" });
-            if (s) line.createEl("img", { attr: { src: s.icon, alt: "" } });
+            pic(line, s ? { name: s.name, img: s.icon } : undefined, "mn-pk-skic");
             line.createSpan({ cls: "mn-pk-key", text: k });
             const input = line.createEl("input", { attr: { type: "text", placeholder: s?.name ?? "" } });
             input.value = c.plain[k] ?? "";

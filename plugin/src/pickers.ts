@@ -11,9 +11,10 @@ const LIMIT = 40;   // matches shown at once
 
 export const splitNames = (s: string | undefined): string[] => (s ?? "").split(/[、,，]/).map((x) => x.trim()).filter(Boolean);
 
-const pic = (parent: HTMLElement, c: Choice | undefined, cls: string): void => {
+export const pic = (parent: HTMLElement, c: Choice | undefined, cls: string): void => {
     const box = parent.createSpan({ cls });
-    if (c?.img) box.createEl("img", { attr: { src: c.img, alt: "" } });
+    // a background, not an <img>: the theme's rules for pictures in notes would stretch an <img> to the width of the line
+    if (c?.img) { box.addClass("has-img"); box.style.backgroundImage = `url("${c.img}")`; }
     else if (c?.icon) { setIcon(box, c.icon); if (c.color) box.style.color = c.color; }
 };
 
