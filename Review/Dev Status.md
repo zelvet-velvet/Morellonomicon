@@ -17,6 +17,8 @@ sticker: lucide//activity
 > - **Effect text like the game's**: values by level and scalings are pills with an icon in their stat's colour, with space around them; stat amounts and damage kinds are coloured (to check on the phone).
 > - **Champion page with tabs**: the big banner as before (no blank band under it), then Overview · Skills · Build · Augments · Tips as icon tabs that stay under the top bar; Skills shows one ability at a time with its clip first (to check on the phone).
 > - **Layouts editor**: its own heading at the top of [[Layouts]] (in the outline), note boxes four lines tall.
+> - **Champion Augments tab**: the augments that suit the champion by rarity, best first, each with why (pinned, Riot's tags, hand-written, a guess); the first six of each rarity, the rest folded (to check on the phone).
+> - **No orange bar, calmer cold open**: blocks no longer show Obsidian's orange loading bar; the tab bar is not rebuilt while the notes arrive and Home redraws in place when the Riot profile comes in (to check on the phone).
 > - **Pickers and the 速查卡片 editor**: champions and items in the inbox editors are picked from a list with icon and name; `Inbox/速查卡片` edits each champion's 速查 text in its note, with room counters and a 已驗證 count (to check on the phone).
 > - **Inbox editor**: both inboxes have an editor like the Layouts note: + 新增, cards with a status pill, a form per entry (to check on the phone).
 > - **Dev Tools in callouts**: Design Rules, Icons, Layouts and UI Text keep their headings, their text sits in callouts.
@@ -55,7 +57,7 @@ sticker: lucide//activity
 > - [!] **Item notes check**: 142 ARAM-only items (`77NNNN`) are linked to their base item; look at a few notes in Obsidian and confirm the ARAM copies are what the Mayhem shop sells. (waiting for Zaviel)
 > - [ ] **Offline images**: optional `tools/cache_images.py` into a gitignored folder.
 > - [>] **Augment numbers**: 247 augments have `effect` lines from the League wiki (待驗證: check a few in game, then mark 已驗證); `fetch_wiki_augments.py` lists the augments whose wiki text changed each patch, whose line then needs updating. 專精輔助 has no source. Arena's numbers (`augment-data.json`) are only used where no `effect` exists.
-> - [ ] **Augment picks per champion**: Riot's tags rule out champions for 29 augments; the champion page's Augments tab can list them, with `pinned` / `avoid` on top.
+> - [>] **Augment picks per champion**: the Augments tab lists them (pinned, Riot's tags, `fits`, a guess from the text); fill `pinned` / `avoid` on champion notes and `fits` on augments to sharpen it.
 > - [ ] **Augment fit**: `fits` (archetypes the augment suits), `tier`, `combos` on the augment notes; then the champion card's "Best augments" block matches them to a champion's archetypes.
 > - [?] **Statistics**: win / pick rates for Mayhem augments need either Match-V5 (developer key, queue for ARAM Mayhem, many matches) or a cited community source. Decide in phase 2.
 
