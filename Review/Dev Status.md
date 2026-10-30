@@ -9,7 +9,7 @@ sticker: lucide//activity
 > Read [[LLM Guide]] before any `CMD_` or status update. This note is kept by `CMD_SYNC` / `CMD_ROLLOVER` / `CMD_NOTES_SYNC`; the day notes in `Review/Log/` by `CMD_JOURNAL`.
 
 ## 🚀 Today's Progress (2026-10-30)
-- **Logo and opening screen options**: five logos (D and E after the Morellonomicon item; D now in detail) and three moving opening screens (C: a vivid start that settles into calm motion) in [[Brand]] and [[Layouts]] (to pick).
+- **Logo and opening screen options**: five logos (D redrawn after the item's picture: the tome in perspective in green fire) and three moving opening screens (C: a hard-hitting start that settles into calm motion) in [[Brand]] and [[Layouts]] (to pick).
 - **README like a public tool**: title with badges, feature table, install, FAQ, data sources; the logo and screenshots still to add.
 
 ## 📅 Yesterday's Progress (2026-10-29)
