@@ -5585,18 +5585,19 @@ var PAGES = [["overview", "\u6982\u89BD", "id-card"], ["skills", "\u6280\u80FD",
 function championCard(ctx) {
   const store = ctx.plugin.store;
   const c = store.champion(String(ctx.frame.params?.id ?? ""));
-  const el = h(null, "div", "mn-page mn-champ");
+  const el = h(null, "div", "mn-page mn-champ is-v3");
   if (!c) {
     empty(el, { icon: "user-x", title: "Champion not found" });
     return { title: "", el };
   }
+  fixedPage(el, ctx.component);
   const mayhem = ctx.plugin.settings.mode === "mayhem";
   const part = (p) => () => ctx.push({ key: "champpart", title: `${c.name} \xB7 ${PART_TITLE[p]}`, params: { id: c.id, part: p } });
   el.style.setProperty("--dc", DAMAGE_COLOR[c.damageType || c.skillDamage[0] || ""] ?? "var(--mn-accent)");
   const hero = h(el, "div", "mn-hero");
   const bg = h(hero, "div", "mn-hero-bg");
   bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
-  const head2 = h(hero, "div", "mn-card-head");
+  const head2 = h(el, "div", "mn-card-head");
   const im = h(head2, "img", "mn-card-img");
   im.src = c.icon;
   im.alt = "";
@@ -5632,14 +5633,15 @@ function championCard(ctx) {
   for (const ev of ["touchstart", "touchmove"]) track.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
   const cards = pages.map(([p, name]) => {
     const pg = h(track, "section", "mn-cpa-page");
+    const top = h(pg, "div", "mn-cpa-top");
+    h(top, "b", "mn-cpa-name", name);
+    if (p !== "tips" || c.tips.length) allButton(top, part(p));
     const body = h(pg, "div", "mn-cpa-body");
     if (p === "overview") overviewTop(body, c);
     else if (p === "skills") skillsTop(body, c);
     else if (p === "build") buildTop(body, c, ctx);
     else if (p === "augments") augmentTop(body, c, ctx);
     else tipsTop(body, c);
-    const count2 = p === "skills" ? c.skills.length : p === "augments" ? augmentPicks(store, c).length : p === "tips" ? c.tips.length : p === "build" ? c.builds.filter((x) => x.mode === ctx.plugin.settings.mode).length : 0;
-    if (p !== "tips" || c.tips.length) moreLink(pg, part(p), `\u5168\u90E8${name}`, count2);
     return pg;
   });
   const nav = h(el, "div", "mn-cpa-nav");
@@ -5671,24 +5673,14 @@ function championCard(ctx) {
   const startSub = lastSub.get(c.id);
   lastSub.delete(c.id);
   const start = Math.max(0, pages.findIndex(([p]) => p === startSub));
-  const fit = () => {
-    const scroll = el.closest(".mn-scroll");
-    if (!scroll || !box.isConnected) return;
-    const top = box.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
-    box.style.height = `${Math.max(280, scroll.clientHeight - top - nav.offsetHeight - CPA_BELOW)}px`;
-    go(start, false);
-  };
-  requestAnimationFrame(fit);
+  requestAnimationFrame(() => go(start, false));
   mark(start);
   return { title: "", el, ready: null };
 }
-var CPA_BELOW = 10;
-function moreLink(parent, go, label, count2) {
-  const b = h(parent, "button", "mn-cpa-more");
-  icon(b, "layout-list", "mn-cpa-more-ic");
-  h(b, "span", "mn-cpa-more-l", label);
-  if (count2) h(b, "span", "mn-cpa-more-n", String(count2));
-  icon(b, "chevron-right", "mn-cpa-more-go");
+function allButton(parent, go) {
+  const b = h(parent, "button", "mn-cpa-all");
+  h(b, "span", void 0, "\u5168\u90E8");
+  icon(b, "chevron-right");
   b.addEventListener("click", (e) => {
     e.preventDefault();
     go();
@@ -7013,7 +7005,7 @@ var cooldown = (s) => {
   const r = s.rows?.find((x) => x.label.startsWith("\u51B7\u537B"));
   return r ? r.vals[r.vals.length - 1] ?? "" : "";
 };
-function moreLink2(tab, go) {
+function moreLink(tab, go) {
   const b = h(tab, "button", "mn-qc-more");
   b.append("\u5168\u90E8");
   icon(b, "chevron-right");
@@ -7193,13 +7185,13 @@ function quickCard(ctx, c, face, o) {
     const cd = cooldown(s);
     if (cd) h(nums, "span", void 0, `${cd} \u79D2`);
   }
-  if (o.more?.skills) moreLink2(sk, o.more.skills);
+  if (o.more?.skills) moreLink(sk, o.more.skills);
   styleCard(h(tabs[3], "div", "mn-qc-style"), c, ctx.app);
-  if (o.more?.style) moreLink2(tabs[3], o.more.style);
+  if (o.more?.style) moreLink(tabs[3], o.more.style);
   (o.extra ?? []).forEach((x, i) => {
     const tab = tabs[QUICK_TABS.length + i];
     x.build(tab);
-    if (x.more) moreLink2(tab, x.more);
+    if (x.more) moreLink(tab, x.more);
   });
   show(Math.max(0, TABS.indexOf(o.start ?? "")));
   return skins;

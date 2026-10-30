@@ -177,26 +177,29 @@ export type SubTab = "overview" | "skills" | "build" | "augments" | "tips";
 const lastSub = new Map<string, SubTab>();
 export function rememberSub(id: string, sub: SubTab): void { lastSub.set(id, sub); }   // the page a link asks the champion card to open on
 
-// The champion page (v2, Zaviel 2026-10-30): a big splash banner with the name over its bottom, then the pages as cards that swipe
-// sideways (snapped; the next card peeks in at the edge), and icon chips under them (no text; tap to jump). The page never scrolls
-// down; each card shows its top picks, centred, and the 全部 bar opens the full list as a page of its own (championPart).
+// The champion page (v3, Zaviel 2026-10-30, Dev Tools/Layouts.md "Champion page v3"): the splash as one big rounded art card behind the
+// page (Back floats on it), the icon, name and chips over it; under them the pages swipe sideways (snapped), their content straight on
+// the art's fade with no card panel: the page's name at the top left, 全部 at the top right, the content at the bottom; five small icon
+// chips in one capsule float over the foot (the current one lit; tap to jump). The page never scrolls down.
 const PAGES: [Part, string, string][] = [["overview", "概覽", "id-card"], ["skills", "技能", "keyboard"], ["build", "出裝", "shopping-bag"], ["augments", "強化", "sparkles"], ["tips", "技巧", "lightbulb"]];
 export function championCard(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const c = store.champion(String(ctx.frame.params?.id ?? ""));
-    const el = h(null, "div", "mn-page mn-champ");
+    const el = h(null, "div", "mn-page mn-champ is-v3");
     if (!c) { empty(el, { icon: "user-x", title: "Champion not found" }); return { title: "", el }; }
+    fixedPage(el, ctx.component);   // one screen: the page fills the scroll area and does not scroll
     const mayhem = ctx.plugin.settings.mode === "mayhem";
     const part = (p: Part) => () => ctx.push({ key: "champpart", title: `${c.name} · ${PART_TITLE[p]}`, params: { id: c.id, part: p } });
-    el.style.setProperty("--dc", DAMAGE_COLOR[c.damageType || c.skillDamage[0] || ""] ?? "var(--mn-accent)");   // the cards' tint
+    el.style.setProperty("--dc", DAMAGE_COLOR[c.damageType || c.skillDamage[0] || ""] ?? "var(--mn-accent)");   // the page's tint
 
-    // the banner: the splash under the top bar (Back floats on it), the icon, name, title, roles and this patch's change over its foot
+    // the art card behind the page: the splash, fading out at its foot into the page
     const hero = h(el, "div", "mn-hero");
     const bg = h(hero, "div", "mn-hero-bg");
     bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
-    const head = h(hero, "div", "mn-card-head");
+    // the icon, name, title and chips over the art
+    const head = h(el, "div", "mn-card-head");
     const im = h(head, "img", "mn-card-img"); im.src = c.icon; im.alt = "";
-    // the banner loads as a block of its own: the splash picture (a CSS background, so it is fetched here) and the icon
+    // the art card loads as a block of its own: the splash picture (a CSS background, so it is fetched here) and the icon
     const splash = bg.style.backgroundImage.slice(5, -2);
     blockUntil(hero, Promise.all([new Promise<void>((r) => { const x = new Image(); x.onload = x.onerror = () => r(); x.src = splash; }), new Promise<void>((r) => { if (im.complete) r(); else { im.addEventListener("load", () => r(), { once: true }); im.addEventListener("error", () => r(), { once: true }); } })]).then(() => undefined), 200);   // (no loading look when the pictures come from the cache)
     const who = h(head, "div", "mn-card-who");
@@ -211,24 +214,25 @@ export function championCard(ctx: PageCtx): PageOut {
     if (badgeText(now)) chip(tags, badgeText(now), { color: badgeColor(now), onTap: part("overview") });
     else if (official) { const m = marker(entryDir(official.entry)); chip(tags, `${m.mark} ${official.patch}`, { color: m.color, onTap: part("overview") }); }
 
-    // the cards: one page each, snapped; the next card peeks in at the right edge; native sideways scrolling keeps the swipe smooth
+    // the pages: one each, snapped; native sideways scrolling keeps the swipe smooth
     const pages = PAGES.filter(([p]) => p !== "augments" || mayhem);
     const box = h(el, "div", "mn-cpa");
     const track = h(box, "div", "mn-cpa-track");
     for (const ev of ["touchstart", "touchmove"]) track.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });   // not Obsidian's edge swipes
     const cards = pages.map(([p, name]) => {
         const pg = h(track, "section", "mn-cpa-page");
-        const body = h(pg, "div", "mn-cpa-body");   // centred when it holds little (Design Rules: balance)
+        const top = h(pg, "div", "mn-cpa-top");
+        h(top, "b", "mn-cpa-name", name);
+        if (p !== "tips" || c.tips.length) allButton(top, part(p));
+        const body = h(pg, "div", "mn-cpa-body");   // the content at the bottom, just above the chips
         if (p === "overview") overviewTop(body, c);
         else if (p === "skills") skillsTop(body, c);
         else if (p === "build") buildTop(body, c, ctx);
         else if (p === "augments") augmentTop(body, c, ctx);
         else tipsTop(body, c);
-        const count = p === "skills" ? c.skills.length : p === "augments" ? augmentPicks(store, c).length : p === "tips" ? c.tips.length : p === "build" ? c.builds.filter((x) => x.mode === ctx.plugin.settings.mode).length : 0;
-        if (p !== "tips" || c.tips.length) moreLink(pg, part(p), `全部${name}`, count);
         return pg;
     });
-    // the page chips under the cards: icons only, the current one lit; a chip jumps to its page
+    // the page chips: small icons in one capsule floating over the foot, the current one lit; a chip jumps to its page
     const nav = h(el, "div", "mn-cpa-nav");
     const chips = pages.map(([, name, ic], i) => {
         const d = h(nav, "button", "mn-cpa-chip");
@@ -246,27 +250,16 @@ export function championCard(ctx: PageCtx): PageOut {
     const startSub = lastSub.get(c.id);
     lastSub.delete(c.id);
     const start = Math.max(0, pages.findIndex(([p]) => p === startSub));
-    // the cards fill the screen between the banner and the chips, down to the tab bar: nothing below to scroll to
-    const fit = () => {
-        const scroll = el.closest<HTMLElement>(".mn-scroll");
-        if (!scroll || !box.isConnected) return;
-        const top = box.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
-        box.style.height = `${Math.max(280, scroll.clientHeight - top - nav.offsetHeight - CPA_BELOW)}px`;
-        go(start, false);
-    };
-    requestAnimationFrame(fit);
+    requestAnimationFrame(() => go(start, false));
     mark(start);
-    return { title: "", el, ready: null };   // the name is in the banner; the blocks load on their own
+    return { title: "", el, ready: null };   // the name is over the art; the blocks load on their own
 }
-const CPA_BELOW = 10;   // px between the chips and the tab bar
 
-// 全部 at the foot of a card: a bar across it (a list icon, 全部技能, how many, a round arrow); the full list as a page of its own
-function moreLink(parent: HTMLElement, go: () => void, label: string, count?: number): void {
-    const b = h(parent, "button", "mn-cpa-more");
-    icon(b, "layout-list", "mn-cpa-more-ic");
-    h(b, "span", "mn-cpa-more-l", label);
-    if (count) h(b, "span", "mn-cpa-more-n", String(count));
-    icon(b, "chevron-right", "mn-cpa-more-go");
+// 全部 at the top right of a page: opens the full list as a page of its own
+function allButton(parent: HTMLElement, go: () => void): void {
+    const b = h(parent, "button", "mn-cpa-all");
+    h(b, "span", undefined, "全部");
+    icon(b, "chevron-right");
     b.addEventListener("click", (e) => { e.preventDefault(); go(); });
 }
 const DIFF_STEPS = 10;

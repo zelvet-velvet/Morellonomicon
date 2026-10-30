@@ -1019,33 +1019,37 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-deck .mn-sl-face { border-radius: 22px; }
 .mn-rq-deck .mn-qc-tab { padding-bottom: 104px; }
 .mn-rq-deck .mn-qc-tab.is-look { padding-bottom: 0; }
-/* the champion page (v2): a big splash banner with the name over its foot; the pages as cards that swipe sideways (snapped, the next
-   peeking in at the edge), tinted with the champion's damage colour (--dc); icon chips under them. A card centres what it holds. */
-.mn-app.is-overlay .mn-champ .mn-hero { min-height: calc(352px + var(--mn-safe-top)); }
-.mn-champ .mn-hero-bg { background-position: center 20%; }
-.mn-champ .mn-card-head { padding: 0 16px 8px; }
+/* the champion page (v3, champions.ts championCard): the splash as one big rounded art card behind the page (Back floats on it), fading
+   out at its foot; the icon, name and chips over it; under them the pages swipe sideways with no card panel, their name at the top left,
+   全部 at the top right and the content at the bottom; small icon chips in one capsule float over the foot. Tinted with --dc. */
+.mn-champ.is-v3 { position: relative; }
+.mn-champ.is-v3::before { content: ""; flex: 0 1 236px; min-height: 120px; }   /* the art shows above the name */
+.mn-app.is-overlay .mn-champ.is-v3::before { flex-basis: calc(236px + var(--mn-safe-top)); }
+.mn-champ.is-v3 .mn-hero { position: absolute; z-index: 0; top: 4px; left: 16px; right: 16px; height: 78%; min-height: 0; margin: 0; border-radius: 24px; display: block; }
+.mn-app.is-overlay .mn-champ.is-v3 .mn-hero { top: calc(var(--mn-safe-top) + 4px); min-height: 0; }
+.mn-champ.is-v3 .mn-hero-bg { top: 0; transform: none; background-position: center 20%; -webkit-mask-image: none; mask-image: none; }
+.mn-champ.is-v3 .mn-hero::after { background: linear-gradient(180deg, color-mix(in srgb, var(--mn-bg) 30%, transparent) 0, transparent 18%, transparent 34%, color-mix(in srgb, var(--mn-bg) 70%, transparent) 52%, var(--mn-bg) 74%); }
+.mn-champ.is-v3 > :not(.mn-hero) { position: relative; z-index: 1; }
+.mn-champ .mn-card-head { padding: 0 12px 4px; }
 .mn-champ .mn-card-img { width: 64px; height: 64px; }
 .mn-app .mn-champ .mn-card-who .mn-title { font-size: 30px; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6); }
-.mn-champ .mn-hero + .mn-cpa { margin-top: 4px; }
-.mn-cpa { position: relative; height: 300px; margin-right: -16px; }
-.mn-cpa-track { display: flex; gap: 8px; height: 100%; padding-right: 48px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
+.mn-champ.is-v3 > .mn-cpa { flex: 1 1 auto; min-height: 0; height: auto; margin: 8px -16px 0; }
+.mn-cpa-track { display: flex; height: 100%; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
 .mn-cpa-track::-webkit-scrollbar { display: none; }
-.mn-cpa-page { flex: 0 0 calc(100% - 48px); height: 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: 14px 14px 12px; scroll-snap-align: start; scroll-snap-stop: always; overflow: hidden;
-    border-radius: 22px; border: 1px solid color-mix(in srgb, var(--dc) 30%, var(--mn-line)); background: linear-gradient(160deg, color-mix(in srgb, var(--dc) 16%, var(--mn-card)), var(--mn-card) 60%); }
-.mn-cpa-body { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
-.mn-cpa-nav { display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; margin-top: 8px; }
-.mn-app .mn-cpa-chip { display: grid; place-items: center; width: 44px; height: 34px; min-height: 0; padding: 0; border-radius: 12px; border: 1px solid var(--mn-line); box-shadow: none; background: var(--mn-card); color: var(--mn-muted); transition: background 0.2s, color 0.2s; }
-.mn-app .mn-cpa-chip.is-on { background: var(--mn-accent); border-color: transparent; color: var(--text-on-accent, #fff); }
-.mn-cpa-chip svg { width: 18px; height: 18px; }
-/* 全部: a bar across the foot of a card, tinted with the accent: list icon, label, count, a round arrow */
-.mn-app .mn-cpa-more { flex: none; align-self: stretch; display: flex; align-items: center; gap: 10px; height: 46px; margin-top: 12px; padding: 0 7px 0 14px; border-radius: 15px; box-shadow: none;
-    border: 1px solid color-mix(in srgb, var(--mn-accent) 30%, transparent); background: color-mix(in srgb, var(--mn-accent) 10%, var(--mn-card-hi)); color: var(--mn-text); }
-.mn-cpa-more-ic { display: inline-flex; color: var(--mn-accent); }
-.mn-cpa-more-ic svg { width: 18px; height: 18px; }
-.mn-cpa-more-l { flex: 1; text-align: left; font-size: 15px; font-weight: 700; }
-.mn-cpa-more-n { font-size: 13px; font-weight: 700; color: var(--mn-muted); font-variant-numeric: tabular-nums; }
-.mn-cpa-more-go { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--mn-accent); color: var(--text-on-accent, #fff); }
-.mn-cpa-more-go svg { width: 18px; height: 18px; }
+.mn-cpa-page { flex: 0 0 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: 0 16px 66px; scroll-snap-align: start; scroll-snap-stop: always; overflow: hidden; }
+.mn-cpa-top { flex: none; display: flex; align-items: center; justify-content: space-between; height: 48px; }
+.mn-cpa-name { font-size: 20px; font-weight: 800; color: var(--mn-text); }
+.mn-app .mn-cpa-all { display: inline-flex; align-items: center; gap: 2px; height: 34px; padding: 0 8px 0 14px; border-radius: 17px; box-shadow: none; font-size: 14px; font-weight: 700;
+    border: 1px solid color-mix(in srgb, var(--mn-accent) 35%, transparent); background: color-mix(in srgb, var(--mn-accent) 12%, transparent); color: var(--mn-text); }
+.mn-cpa-all svg { width: 16px; height: 16px; color: var(--mn-accent); }
+.mn-cpa-all .mn-ic { display: flex; }
+.mn-cpa-body { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; }   /* the content at the bottom */
+.mn-champ.is-v3 > .mn-cpa-nav { position: absolute; z-index: 3; left: 50%; bottom: 12px; transform: translateX(-50%); display: flex; gap: 2px; height: auto; margin: 0; padding: 4px; border-radius: 18px;
+    background: color-mix(in srgb, var(--mn-bg) 72%, transparent); border: 1px solid var(--mn-line); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); }
+.mn-app .mn-cpa-chip { display: grid; place-items: center; width: 38px; height: 30px; min-height: 0; padding: 0; border-radius: 14px; border: 0; box-shadow: none; background: transparent; color: var(--mn-muted); transition: background 0.2s, color 0.2s; }
+.mn-app .mn-cpa-chip.is-on { background: var(--mn-accent); color: var(--text-on-accent, #fff); }
+.mn-cpa-chip svg { width: 17px; height: 17px; }
+.mn-cpa-chip .mn-ic { display: flex; }
 .mn-cpa-empty { margin: 0; text-align: center; font-size: 15px; line-height: 1.6; color: var(--mn-muted); }
 /* 概覽: three stat tiles, the tags two across */
 .mn-cv-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
