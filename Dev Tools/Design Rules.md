@@ -15,8 +15,17 @@ sticker: lucide//ruler
 > - **Blocks.** Every page is the blocks drawn in [[Layouts]] (phone px, 390 × 844). Sides keep 16 px margins, gaps and sizes go in 4 px steps, neighbours share edges and widths. A block that sits on the screen edge in the Layouts note does so in the app (Items' role tabs and stat rail).
 > - **Fixed pages with one scrolling list.** A page with a search or a filter bar on top does not scroll as a whole: the top stays and only its list scrolls (`fixedPage` and `.mn-rq-list`: Picks, Champions; Items does the same with its grid).
 > - **Title row.** A tab's first page has the big serif title with the palette and mode buttons; deeper pages have the top bar with Back. A page that opens with a banner picture (an item, an augment) puts it under the top bar, Back floating on it; the bar is clear until the page scrolls, and the banner ends close to what follows (no blank band).
-> - **One screen, top picks.** A page with several parts does not scroll down (the champion page): it is one card like the 速查 card (`quickCard`), its pages turned by tapping a half of the card or swiping sideways; each page shows only its top picks and a **全部 ›** that opens the full list as a page of its own.
+> - **One screen, top picks.** A page with several parts does not scroll down (the champion page): under its banner, one block swipes sideways between its pages (snapped, dots under it, a dot jumps); each page shows only its top picks and a **全部 ›** that opens the full list as a page of its own.
 > - **Moving between pages.** A page slides in from the side it comes from (push, back) or rises a little (tab); Back returns to where the page was scrolled.
+
+## ⚖️ Balance
+
+> [!note]+ No big empty space · Balance the screen · Few things sit in the middle
+> A rule from Zaviel (2026-10-30), checked with every new page or page change, like the picture check.
+>
+> - **No big empty space.** A screen is not left with a large blank area while its content sits bunched at the top or a side; the content takes the room it has (spread out, sized up) or the room is given to something else (a bigger picture, the next block).
+> - **Balance the screen.** Visual weight is spread across the screen: components are not crowded to one side or squeezed together while space is left elsewhere; gaps between neighbours are even.
+> - **Few things sit in the middle.** When a page or a block holds only one or a few components, they are centred (across, and down within the block), never left in a corner with empty space beside or below them (an empty state, a short list, a page of the champion swipe block).
 
 ## 🖼️ Pictures
 
@@ -36,7 +45,7 @@ sticker: lucide//ruler
 > - **The first screen first.** The pictures in view load before those further down or in a hidden tab (`loading="lazy"` only for those, and never for pictures a page redraws on every tap); heavy ones (splash, clips) do not hold up the small ones.
 > - **Cached pictures show at once.** A redraw or a page you come back to shows its cached pictures without the loading look (the 90 ms grace); nothing blinks.
 > - **A failure never leaves a hole.** A picture that fails is retried (CSS backgrounds) or its box is taken away or replaced by a plain tile; a clip that cannot play removes its frame; nothing waits forever (every wait has a time limit).
-> - **Say what was checked.** The report of the change names which pictures the page has, how each one loads (cache, preload, the loading look) and what the user sees on a slow connection; what could only be seen on the phone is said so.
+> - **Say what was checked.** The report of the change names which pictures the page has, whether the screen is balanced (see Balance), how each one loads (cache, preload, the loading look) and what the user sees on a slow connection; what could only be seen on the phone is said so.
 
 ## 🔍 Search capsule and keyboard
 

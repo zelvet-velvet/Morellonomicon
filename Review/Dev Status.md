@@ -16,7 +16,8 @@ sticker: lucide//activity
 > - **Wiki numbers for every augment**: 247 of 248 augments have a zh_TW effect line with the League wiki's Mayhem numbers (待驗證); the page shows it instead of Arena's numbers (which differed for 34 of 54) and keeps Riot's tags for 適合的英雄.
 > - **Effect text like the game's**: values by level and scalings are pills with an icon in their stat's colour, with space around them; stat amounts and damage kinds are coloured (to check on the phone).
 > - **Layouts editor**: its own heading at the top of [[Layouts]] (in the outline), note boxes four lines tall.
-> - **Champion page as one card (C)**: the 速查 card's frame and pages plus 出裝 · 強化 · 技巧, on one screen; tap or swipe sideways to turn, top picks only, 全部 › opens the full list (to check on the phone).
+> - **Champion page A**: the banner, then one block that swipes sideways between 概覽 · 技能 · 出裝 · 強化 · 技巧 with dots under it, no scrolling; top picks centred, 全部 › opens the full list (to check on the phone).
+> - **Balance rule**: [[Design Rules]] has Balance (no big empty space, weight spread, few components centred); the LLM Guide's check includes it.
 > - **Sharper card art**: the 速查 and champion cards use Riot's centered splash (1280 × 720) instead of the loading art (308 × 560) (to check on the phone).
 > - **Picture check rule**: [[Design Rules]] has a picture check after every page change (loading look on every picture block, fetch what comes next ahead, no empty page); the LLM Guide's workflow points to it.
 > - **Champion Augments tab**: the augments that suit the champion by rarity, best first, each with why (pinned, Riot's tags, hand-written, a guess); the first six of each rarity, the rest folded (to check on the phone).

@@ -139,15 +139,13 @@ Patch | newspaper
 Handbook | book-open
 ```
 
-## 🦸 Champion card pages
+## 🦸 Champion page pages
 > [!info]+ Where it lives
-> Source: `CHAMPION_TABS` in `plugin/src/pages/champions.ts`. The pages of the champion card (and the Handbook card that pictures them).
+> Source: `CHAMPION_TABS` in `plugin/src/pages/champions.ts`. The pages of the champion page's swipe block (and the Handbook card that pictures them).
 
 ```mn-icons
 概覽 | id-card
-玩法 | gamepad-2
 技能 | keyboard
-風格 | radar
 出裝 | shopping-bag
 強化 | sparkles
 技巧 | lightbulb

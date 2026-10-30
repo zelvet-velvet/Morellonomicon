@@ -82,7 +82,7 @@ CLAUDE.md              points here
 
 1. Read [[Dev Status]] and the notes or script you are about to change before editing.
 2. Make the smallest change that does the job; match the surrounding style.
-3. Check it (run the script, open the generated note, read the Chinese text) and say plainly what works, what could not be tested and what you were unsure about. After a new page or any change to a page, also do the **picture check** in [[Design Rules]] (every picture block has its loading look, what comes next is fetched ahead, the first screen first, no empty page) and say what was checked.
+3. Check it (run the script, open the generated note, read the Chinese text) and say plainly what works, what could not be tested and what you were unsure about. After a new page or any change to a page, also do the **picture check** and the **balance check** in [[Design Rules]] (every picture block has its loading look, what comes next is fetched ahead, no empty page; no big blank space, weight spread, few components centred) and say what was checked.
 4. Record it (see the commands below).
 5. **Commit and push every change** to `main`, following the regulation below.
 
