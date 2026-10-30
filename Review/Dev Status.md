@@ -12,6 +12,8 @@ sticker: lucide//activity
 - **Project logo**: a clean flat tome after the Morellonomicon item (purple cover, gold corner caps, three green claws, green flames sweeping up to the right), no background, a transparent PNG at the top of the README.
 - **README like a public tool**: logo, title with badges, feature table, install, FAQ, data sources; screenshots still to add.
 
+- **Augment page options**: three mocks in [[Layouts]] (A card, B numbers first, C like an ability), to pick.
+
 ## 📅 Yesterday's Progress (2026-10-29)
 - **Search capsule on the keyboard**: on Picks and Champions it rises with the keyboard from the tap and goes down the moment it closes, with no jumps (to check on the phone).
 - **Loading look for every block**: each Layouts block with pictures blurs with the band of light until they are in; a page's blocks load together (Home, Picks, Champions, Items) (to check on the phone).
@@ -42,7 +44,7 @@ sticker: lucide//activity
 - [ ] **On-hit list**: `onhit` is only set for 卡特蓮娜; draft it for other champions for review.
 - [ ] **Item notes check**: 142 ARAM-only items (`77NNNN`) are linked to their base item; look at a few notes in Obsidian and confirm the ARAM copies are what the Mayhem shop sells.
 - [ ] **Offline images**: optional `tools/cache_images.py` into a gitignored folder.
-- [ ] **Augment numbers**: find the game file with the augments' DataValues so the X placeholders can be filled.
+- [ ] **Augment numbers**: Arena's `map30.bin.json` (CommunityDragon) has numbers, levels (Lv1 / max) and scaling for 102 of 248 Mayhem augments, and `ChampionAugmentTags` (build and excluded tags per champion, also in map12); a fetch script into `_data/` is next. The 146 Mayhem-only ones have no numbers there.
 - [ ] **Augment fit**: `fits` (archetypes the augment suits), `tier`, `combos` on the augment notes; then the champion card's "Best augments" block matches them to a champion's archetypes.
 - [ ] **Statistics**: win / pick rates for Mayhem augments need either Match-V5 (developer key, queue for ARAM Mayhem, many matches) or a cited community source. Decide in phase 2.
 
