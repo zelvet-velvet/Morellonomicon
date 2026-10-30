@@ -256,7 +256,7 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
         }
         return;
     } else if (kind === "tabs") {
-        // the champion card's pages (概覽 … 技巧), as icons with their names
+        // the champion page's swipe pages (概覽 … 技巧), as icons with their names
         const seg = h(h(box, "div", "mn-sl-tabs mn-ctabs"), "div", "mn-seg");
         CHAMPION_TABS.forEach(([l, ic], i) => { const b = h(seg, "span", "mn-seg-b" + (i === 0 ? " is-on" : "")); icon(b, ic, "mn-ctab-ic"); h(b, "span", "mn-ctab-l", l); });
         return;
