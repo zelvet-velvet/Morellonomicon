@@ -17,6 +17,7 @@ sticker: lucide//activity
 > - **Effect text like the game's**: values by level and scalings are pills with an icon in their stat's colour, with space around them; stat amounts and damage kinds are coloured (to check on the phone).
 > - **Champion page with tabs**: the big banner as before (no blank band under it), then Overview · Skills · Build · Augments · Tips as icon tabs that stay under the top bar; Skills shows one ability at a time with its clip first (to check on the phone).
 > - **Layouts editor**: its own heading at the top of [[Layouts]] (in the outline), note boxes four lines tall.
+> - **Pickers and the 速查卡片 editor**: champions and items in the inbox editors are picked from a list with icon and name; `Inbox/速查卡片` edits each champion's 速查 text in its note, with room counters and a 已驗證 count (to check on the phone).
 > - **Inbox editor**: both inboxes have an editor like the Layouts note: + 新增, cards with a status pill, a form per entry (to check on the phone).
 > - **Dev Tools in callouts**: Design Rules, Icons, Layouts and UI Text keep their headings, their text sits in callouts.
 > - **Callout format**: [[LLM Guide]] has the vault note format (callouts by state); Dev Status areas and the inbox templates follow it, with waiting items marked `[!]` and decisions `[?]`.
@@ -63,9 +64,9 @@ sticker: lucide//activity
 > - [ ] **Stat codes**: only 0 (AP) and 2 (AD, formula 2 = bonus) are named; other stats show as "+其他加成" (66 rows) until their codes are confirmed.
 
 > [!warning]+ ✍️ Our own strategy
-> - [>] **速查 text for every champion**: `punch` / `soul` / `plain` in all 173 notes: 8 by Zaviel, 165 drafted by Claude on 2026-10-29 in the same style from each ability's game text (待驗證: proofread on the phone, fix in the note). `stack` (172, not 洛克) and `focus` (14) copied from `Inbox/速查卡片草稿.md` too.
+> - [>] **速查 text for every champion**: `punch` / `soul` / `plain` in all 173 notes: 8 by Zaviel, 165 drafted by Claude on 2026-10-29 in the same style from each ability's game text (待驗證: proofread in `Inbox/速查卡片.md`, which counts the 已驗證 ones). `stack` (172, not 洛克) and `focus` (14) copied from `Inbox/速查卡片草稿.md` too.
 > - [!] **Builds by play style (decided 2026-10-28, from Zaviel)**: not a hand-written build per champion. Zaviel lists the first three items (in buying order) for each play style, per mode (Mayhem and Rift apart), in `Inbox/玩法出裝收件匣.md`, from OP.GG and similar (their numbers are never copied, only items and a one-line reason with the source). The champion page's Build tab then shows the set of the champion's play style, labelled as recommended for that play style. The play style is read automatically from the champion's skill scaling (AP / AD / on-hit / tank, with the roles) and can be set by hand; wrong ones are fixed by changing a rule or a hand override, not the champion. Mayhem sets are about items only; augment pairings come later (augment `fits`, the Augments tab). Test champions: Katarina, Akali, Talon, Lux, Ahri (the five Zaviel plays best).
-> - [>] **Inbox**: Zaviel is tidying the first tricks into `Inbox/技巧收件匣.md`; then "process the inbox".
+> - [>] **Inbox**: Zaviel is tidying the first tricks into `Inbox/技巧.md`; then "process the inbox".
 > - [ ] **Easy way to record it**: tips, builds and combos are frontmatter lists today; add a command / form ("Add tip", "Add build") so they can be written on the phone in a few taps.
 > - [?] **Review**: the Handbook search is the quick way back to a detail; consider a short quiz / saved list if forgetting remains a problem.
 > - [ ] **First batch of content**: five champions you play often in Mayhem, with one alternative build and one trick each.
