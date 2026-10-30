@@ -11,7 +11,6 @@ sticker: lucide//activity
 ## 🚀 Today's Progress (2026-10-30)
 - **Project logo**: a clean flat tome after the Morellonomicon item (purple cover, gold corner caps, three green claws, green flames sweeping up to the right), no background, a transparent PNG at the top of the README.
 - **README like a public tool**: logo, title with badges, feature table, install, FAQ, data sources; screenshots still to add.
-
 - **Augment page options**: three mocks in [[Layouts]] (A card, B numbers first, C like an ability), to pick.
 
 ## 📅 Yesterday's Progress (2026-10-29)
