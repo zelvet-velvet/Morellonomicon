@@ -1514,6 +1514,7 @@ var W = 390;
 var H = 844;
 var SCALE = 0.78;
 var SNAP = 2;
+var MARGIN = 16;
 var TABBAR = 64;
 var STATUS = 47;
 var CARRIER = "\u4E2D\u83EF\u96FB\u4FE1";
@@ -1530,6 +1531,7 @@ var KINDS = {
 var LAYER = { hero: 0, float: 3 };
 var SYNCED = "mn-layout-synced";
 var memory = /* @__PURE__ */ new Map();
+var winAt = /* @__PURE__ */ new Map();
 var uid = () => Math.random().toString(36).slice(2, 8);
 var snap = (v) => Math.round(v / SNAP) * SNAP;
 var clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -1698,11 +1700,22 @@ function layoutBlock2(plugin, source, el, ctx) {
     const addB = head2.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": "Add a block" } });
     icon(addB, "square-plus");
     addB.addEventListener("click", () => {
-      const b = { id: uid(), label: "New block", kind: "list", x: 16, y: 120, w: W - 32, h: 80 };
-      page2.blocks.push(b);
-      selected = { page: page2, block: b };
-      changed(page2);
-      draw();
+      const open = fig.querySelector(".mn-lay-kinds.is-add");
+      if (open) {
+        open.remove();
+        return;
+      }
+      const pop = kindGrid(fig, "", (k) => {
+        pop.remove();
+        const low = page2.blocks.reduce((m, x) => Math.max(m, x.y + x.h), STATUS + 8);
+        const y = clamp(snap(low + 8), 0, H - TABBAR - 80);
+        const b = { id: uid(), label: `New ${KINDS[k].name.split(" / ")[0]}`, kind: k, x: MARGIN, y, w: W - 2 * MARGIN, h: 80 };
+        page2.blocks.push(b);
+        selected = { page: page2, block: b };
+        changed(page2);
+        draw();
+      });
+      pop.addClass("is-add");
     });
     const delP = head2.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": "Delete the page (tap twice)" } });
     icon(delP, "trash-2");
@@ -1808,63 +1821,207 @@ function layoutBlock2(plugin, source, el, ctx) {
     }
     if (selected?.page === page2) inspector(fig, page2, selected.block);
   };
-  const inspector = (fig, page2, b) => {
-    const box = fig.createDiv({ cls: "mn-lay-insp" });
-    const row2 = (label) => {
-      const r = box.createDiv({ cls: "mn-lay-row" });
-      r.createSpan({ text: label });
-      return r;
-    };
-    const lab = row2("Name").createEl("input", { attr: { value: b.label } });
-    lab.addEventListener("change", () => {
-      b.label = lab.value.trim() || b.label;
-      changed(page2);
-      draw();
-    });
-    const kind = row2("Kind").createEl("select");
-    for (const [k, v] of Object.entries(KINDS)) kind.createEl("option", { text: v.name, attr: { value: k } });
-    kind.value = b.kind;
-    kind.addEventListener("change", () => {
-      b.kind = kind.value;
-      changed(page2);
-      draw();
-    });
-    const nums = row2("x y w h");
-    for (const key of ["x", "y", "w", "h"]) {
-      const n = nums.createEl("input", { cls: "mn-lay-num", attr: { type: "number", value: String(b[key]), step: String(SNAP) } });
-      n.addEventListener("change", () => {
-        b[key] = Math.max(0, Number(n.value) || 0);
-        changed(page2);
-        draw();
+  const kindGrid = (parent, current, pick) => {
+    const g = parent.createDiv({ cls: "mn-lay-kinds" });
+    for (const [k, v] of Object.entries(KINDS)) {
+      const c = g.createEl("button", { cls: "mn-lay-kind" + (k === current ? " is-on" : "") });
+      const sw = c.createSpan({ cls: "mn-lay-sw" });
+      sw.style.setProperty("--c", v.color);
+      c.createSpan({ text: v.name });
+      c.addEventListener("click", (e) => {
+        e.stopPropagation();
+        pick(k);
       });
     }
-    const note = row2("Note").createEl("textarea", { attr: { rows: "4", placeholder: "What goes here, what is wrong" } });
-    note.value = b.note ?? "";
-    note.addEventListener("change", () => {
-      b.note = note.value.trim() || void 0;
+    return g;
+  };
+  const inspector = (fig, page2, b) => {
+    const win = fig.createDiv({ cls: "mn-lay-win" });
+    const phone = fig.querySelector(".mn-lay-phone");
+    const top = (phone?.offsetTop ?? 0) + (b.y + b.h) * SCALE + 8;
+    win.style.top = `${Math.min(top, (phone?.offsetTop ?? 0) + H * SCALE - 360)}px`;
+    const moved = winAt.get(page2.id);
+    if (moved) win.style.transform = `translate(${moved.x}px, ${moved.y}px)`;
+    const commit = () => {
       changed(page2);
       draw();
+    };
+    const head2 = win.createDiv({ cls: "mn-lay-winhead" });
+    const title = head2.createDiv({ cls: "mn-lay-wtitle", text: b.label });
+    const close = head2.createEl("button", { cls: "mn-lay-wbtn", attr: { "aria-label": "Close" } });
+    icon(close, "x");
+    close.addEventListener("click", () => {
+      selected = null;
+      winAt.delete(page2.id);
+      draw();
     });
-    const acts = box.createDiv({ cls: "mn-lay-acts" });
-    const dup = acts.createEl("button", { text: "Duplicate" });
+    title.addEventListener("dblclick", (e) => {
+      e.stopPropagation();
+      const input = createEl("input", { cls: "mn-lay-wtitle-in", attr: { value: b.label, spellcheck: "false" } });
+      title.replaceWith(input);
+      input.focus();
+      input.select();
+      const done = (keep) => {
+        if (keep) b.label = input.value.trim() || b.label;
+        commit();
+      };
+      input.addEventListener("keydown", (k) => {
+        if (k.key === "Enter") done(true);
+        if (k.key === "Escape") done(false);
+      });
+      input.addEventListener("blur", () => done(true));
+    });
+    head2.addEventListener("pointerdown", (e) => {
+      if (e.target.closest("input, button")) return;
+      const x0 = e.clientX, y0 = e.clientY, start = winAt.get(page2.id) ?? { x: 0, y: 0 };
+      let dragging = false;
+      head2.setPointerCapture(e.pointerId);
+      const move = (m) => {
+        if (!dragging && Math.abs(m.clientX - x0) + Math.abs(m.clientY - y0) < 4) return;
+        dragging = true;
+        const p = { x: start.x + m.clientX - x0, y: start.y + m.clientY - y0 };
+        winAt.set(page2.id, p);
+        win.style.transform = `translate(${p.x}px, ${p.y}px)`;
+      };
+      const up = () => {
+        head2.removeEventListener("pointermove", move);
+        head2.removeEventListener("pointerup", up);
+        head2.removeEventListener("pointercancel", up);
+      };
+      head2.addEventListener("pointermove", move);
+      head2.addEventListener("pointerup", up);
+      head2.addEventListener("pointercancel", up);
+    });
+    const kindRow = win.createDiv({ cls: "mn-lay-wrow" });
+    const kindBtn = kindRow.createEl("button", { cls: "mn-lay-kindbtn" });
+    const ks = kindBtn.createSpan({ cls: "mn-lay-sw" });
+    ks.style.setProperty("--c", KINDS[b.kind]?.color ?? "#9aa3b8");
+    kindBtn.createSpan({ text: KINDS[b.kind]?.name ?? b.kind });
+    icon(kindBtn, "chevron-down");
+    kindBtn.addEventListener("click", () => {
+      const open = win.querySelector(".mn-lay-kinds");
+      if (open) {
+        open.remove();
+        return;
+      }
+      kindRow.after(kindGrid(win, b.kind, (k) => {
+        b.kind = k;
+        commit();
+      }));
+    });
+    const SAFE_TOP = STATUS + 1, SAFE_BOTTOM = H - (page2.tabbar !== false ? TABBAR : 0);
+    const align = win.createDiv({ cls: "mn-lay-align" });
+    const al = (ic, label, act) => {
+      const btn = align.createEl("button", { cls: "mn-lay-wbtn", attr: { "aria-label": label, title: label } });
+      icon(btn, ic);
+      btn.addEventListener("click", () => {
+        act();
+        commit();
+      });
+    };
+    al("align-start-vertical", "Align left (16 px margin)", () => {
+      b.x = MARGIN;
+    });
+    al("align-center-vertical", "Centre across", () => {
+      b.x = Math.round((W - b.w) / 2);
+    });
+    al("align-end-vertical", "Align right (16 px margin)", () => {
+      b.x = W - MARGIN - b.w;
+    });
+    align.createSpan({ cls: "mn-lay-asep" });
+    al("align-start-horizontal", "Align top (under the status bar)", () => {
+      b.y = SAFE_TOP;
+    });
+    al("align-center-horizontal", "Centre down", () => {
+      b.y = Math.round((SAFE_TOP + SAFE_BOTTOM - b.h) / 2);
+    });
+    al("align-end-horizontal", "Align bottom (over the tab bar)", () => {
+      b.y = SAFE_BOTTOM - b.h;
+    });
+    align.createSpan({ cls: "mn-lay-asep" });
+    al("stretch-horizontal", "Full width (16 px margins)", () => {
+      b.x = MARGIN;
+      b.w = W - 2 * MARGIN;
+    });
+    al("layout-grid", "Snap every edge to 4 px", () => {
+      const r = (v) => Math.round(v / 4) * 4;
+      const x2 = r(b.x + b.w), y2 = r(b.y + b.h);
+      b.x = r(b.x);
+      b.y = r(b.y);
+      b.w = Math.max(4, x2 - b.x);
+      b.h = Math.max(4, y2 - b.y);
+    });
+    const geo = win.createDiv({ cls: "mn-lay-fields" });
+    const field = (lab, hint, get, set) => {
+      const f = geo.createDiv({ cls: "mn-lay-field", attr: { title: hint } });
+      const l = f.createSpan({ cls: "mn-lay-flab", text: lab });
+      const n = f.createEl("input", { cls: "mn-lay-num", attr: { type: "number", value: String(get()), step: String(SNAP), "aria-label": hint } });
+      n.addEventListener("change", () => {
+        set(Math.round(Number(n.value) || 0));
+        commit();
+      });
+      l.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        const x0 = e.clientX, v0 = get();
+        l.setPointerCapture(e.pointerId);
+        const move = (m) => {
+          set(snap(v0 + (m.clientX - x0)));
+          n.value = String(get());
+        };
+        const up = () => {
+          l.removeEventListener("pointermove", move);
+          l.removeEventListener("pointerup", up);
+          if (get() !== v0) commit();
+        };
+        l.addEventListener("pointermove", move);
+        l.addEventListener("pointerup", up);
+      });
+    };
+    field("X", "Left edge (x)", () => b.x, (v) => {
+      b.x = clamp(v, 0, W - b.w);
+    });
+    field("Y", "Top edge (y)", () => b.y, (v) => {
+      b.y = clamp(v, 0, H - b.h);
+    });
+    field("W", "Width", () => b.w, (v) => {
+      b.w = clamp(v, 8, W - b.x);
+    });
+    field("H", "Height", () => b.h, (v) => {
+      b.h = clamp(v, 8, H - b.y);
+    });
+    field("R", "Right edge (x + w)", () => b.x + b.w, (v) => {
+      b.w = clamp(v - b.x, 8, W - b.x);
+    });
+    field("B", "Bottom edge (y + h)", () => b.y + b.h, (v) => {
+      b.h = clamp(v - b.y, 8, H - b.y);
+    });
+    const note = win.createEl("textarea", { cls: "mn-lay-wnote", attr: { rows: "1", placeholder: "Note: what goes here, what is wrong" } });
+    note.value = b.note ?? "";
+    const grow = () => {
+      note.style.height = "auto";
+      note.style.height = `${note.scrollHeight + 2}px`;
+    };
+    note.addEventListener("input", grow);
+    requestAnimationFrame(grow);
+    note.addEventListener("change", () => {
+      b.note = note.value.trim() || void 0;
+      commit();
+    });
+    const acts = win.createDiv({ cls: "mn-lay-acts" });
+    const dup = acts.createEl("button", { cls: "mn-lay-wbtn", attr: { "aria-label": "Duplicate", title: "Duplicate" } });
+    icon(dup, "copy");
     dup.addEventListener("click", () => {
       const c = { ...b, id: uid(), y: clamp(b.y + 12, 0, H - b.h) };
       page2.blocks.push(c);
       selected = { page: page2, block: c };
-      changed(page2);
-      draw();
+      commit();
     });
-    const del = acts.createEl("button", { cls: "mod-warning", text: "Delete" });
+    const del = acts.createEl("button", { cls: "mn-lay-wbtn is-danger", attr: { "aria-label": "Delete", title: "Delete" } });
+    icon(del, "trash-2");
     del.addEventListener("click", () => {
       page2.blocks.splice(page2.blocks.indexOf(b), 1);
       selected = null;
-      changed(page2);
-      draw();
-    });
-    const done = acts.createEl("button", { text: "Done" });
-    done.addEventListener("click", () => {
-      selected = null;
-      draw();
+      commit();
     });
   };
   draw();
