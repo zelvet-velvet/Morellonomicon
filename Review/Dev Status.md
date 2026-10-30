@@ -12,6 +12,7 @@ sticker: lucide//activity
 - **Project logo**: a clean flat tome after the Morellonomicon item (purple cover, gold corner caps, three green claws, green flames sweeping up to the right), no background, a transparent PNG at the top of the README.
 - **README like a public tool**: logo, title with badges, feature table, install, FAQ, data sources; screenshots still to add.
 - **Augment page A**: a banner, a Lv1 / 最大 switch, stat chips with the shop icons, the effect with its numbers filled in and coloured by kind, the fitting champions as a sideways strip; numbers for 102 of 249 augments from the game data (to check on the phone).
+- **Wiki numbers for the Mayhem-only augments**: 145 augments have a zh_TW effect line with the League wiki's numbers (待驗證); Arena's game data turned out to differ from the wiki for 34 of 54 comparable augments.
 
 ## 📅 Yesterday's Progress (2026-10-29)
 - **Search capsule on the keyboard**: on Picks and Champions it rises with the keyboard from the tap and goes down the moment it closes, with no jumps (to check on the phone).
@@ -43,7 +44,7 @@ sticker: lucide//activity
 - [ ] **On-hit list**: `onhit` is only set for 卡特蓮娜; draft it for other champions for review.
 - [ ] **Item notes check**: 142 ARAM-only items (`77NNNN`) are linked to their base item; look at a few notes in Obsidian and confirm the ARAM copies are what the Mayhem shop sells.
 - [ ] **Offline images**: optional `tools/cache_images.py` into a gitignored folder.
-- [>] **Augment numbers**: `tools/fetch_augment_data.py` fills 102 of 249 from Arena's game data (29 still have an in-game-only X); check a few against the in-game tooltip, since Mayhem may tune them. The 147 Mayhem-only ones have no game data: numbers from the League wiki (cited) or by hand, still to decide.
+- [>] **Augment numbers**: 145 Mayhem-only augments have `effect` lines from the League wiki (待驗證, `fetch_wiki_augments.py` lists wiki changes each patch); the 102 shared with Arena show Arena's numbers, which differ from the wiki for 34 of 54: decide whether those switch to the wiki too. 專精輔助 has no source.
 - [ ] **Augment picks per champion**: Riot's tags rule out champions for 29 augments; the champion page's Augments tab can list them, with `pinned` / `avoid` on top.
 - [ ] **Augment fit**: `fits` (archetypes the augment suits), `tier`, `combos` on the augment notes; then the champion card's "Best augments" block matches them to a champion's archetypes.
 - [ ] **Statistics**: win / pick rates for Mayhem augments need either Match-V5 (developer key, queue for ARAM Mayhem, many matches) or a cited community source. Decide in phase 2.

@@ -93,6 +93,7 @@ Every patch the data is refreshed on GitHub automatically. Run **Obsidian Git: P
 | [Meraki Analytics](https://github.com/meraki-analytics) | 英雄常走的路線 |
 | Riot 繁中版本公告 | 版本更新摘要（附原文連結） |
 | Unicode Unihan | 速查的語音搜尋（字的讀音） |
+| [League of Legends Wiki](https://wiki.leagueoflegends.com/en-us/)（CC BY-SA 3.0） | 大混戰強化的數值（譯成中文，頁面上註明來源） |
 
 每筆資料都標示所屬版本。勝率、Tier 等統計不在本專案內（Riot 沒有公開大混戰對戰資料），App 內提供 OP.GG / U.GG 的連結。攻略文字（出裝、玩法、小技巧）由人撰寫和校對。
 
