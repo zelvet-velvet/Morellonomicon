@@ -44,10 +44,11 @@ UTIL_SHARE = 1.5            # utility's weight next to Riot's 1-10 ratings (squa
 SUPPORT_SHARE = 9.0         # the weight of healing / shielding allies, for champions that do (as a rating, squared)
 TOGGLE_CD = 2.0             # an ability with a shorter cooldown is a toggle or a stance (Jinx Q): one cast, haste does nothing
 CAST_S = 0.4                # seconds a cast takes out of attacking (so more casts cost an auto-attacker some attacks)
+MIN_CYCLE_S = 1.0           # no ability is cast more often than this, however much its cooldown is cut
+SETTLE_ROUNDS = 6           # rounds for casts and attacks that feed each other (祕術拳擊 on Master Yi's Q) to settle
 UTIL_POINT = 0.1            # one utility point (a dash, +10% speed...) counts as a 10% gain
-TIERS = [("S", 0.8), ("A", 0.6), ("B", 0.4), ("C", -1.0)]
-WITHIN, ACROSS = 0.6, 0.4
-TEST = ["Katarina", "Jinx", "Ezreal", "Malphite", "Soraka", "Darius", "MasterYi", "Lux", "Kaisa", "Garen", "Fiora"]
+TIERS = [("S", 0.75), ("A", 0.55), ("B", 0.35), ("C", -1.0)]
+TEST = ["Katarina", "Jinx", "Ezreal", "Malphite", "Soraka", "Darius", "MasterYi", "Lux", "Kaisa", "Garen", "Fiora", "Yasuo", "Yone"]
 
 ROW_TYPE = {"物理傷害": "physical", "魔法傷害": "magic", "真實傷害": "true"}
 SCALE = {"魔法攻擊": "ap", "額外物理攻擊": "bonus_ad", "物理攻擊": "ad"}
@@ -154,7 +155,8 @@ def play_styles(cid, note, dd, hand):
     default_autos = AUTOS["射手"] if "射手" in roles else AUTOS["melee"] if melee and ({"戰士", "坦克"} & set(roles)) else AUTOS["other"]
     base = {"name": "主流", "stack": note.get("stack", []), "autos": h.get("autos", default_autos), "resets": h.get("resets", 0.0),
             "onhit_hits": h.get("onhit_hits", {}), "use": h.get("use", {}), "extra": h.get("extra", {}), "auto_mult": h.get("auto_mult", 1.0),
-            "buff": h.get("buff", {}), "per_hit": h.get("per_hit", {}), "cd_per_attack": h.get("cd_per_attack", {})}
+            "buff": h.get("buff", {}), "per_hit": h.get("per_hit", {}), "cd_per_attack": h.get("cd_per_attack", {}),
+            "cd_as": h.get("cd_as", {}), "crit_mult": h.get("crit_mult", 1.0), "untargetable": h.get("untargetable", {}), "crits": h.get("crits", [])}
     out = {"main": base}
     for sid, st in h.get("styles", {}).items():
         out[sid] = {**base, **st}
@@ -174,7 +176,8 @@ def fight(ch, style, st, aug=None):
         v += part.get("self_maxhp", 0) * hp + part.get("target_maxhp", 0) * TARGET_HP
         return v
 
-    # how often each ability is cast; a cast takes CAST_S out of the fight, so the time left for basic attacks shrinks with casts
+    # how often each ability is cast by its cooldown alone; a cast takes CAST_S out of the fight, so the time left for basic attacks
+    # shrinks with casts
     plan = []
     for ab in ch["abilities"]:
         k = ab["key"]
@@ -187,41 +190,53 @@ def fight(ch, style, st, aug=None):
             haste = st["haste"] + (st["ult_haste"] if k == "R" else st["basic_haste"]) + aug.get("haste_key", {}).get(k, 0)
             haste += sum(v for tag, v in aug.get("haste_tag", {}).items() if tag in ab["tags"])
             cd = ab["cd"] / (1 + haste / 100) * (1 - aug.get("cdr", 0))
+            if k in style["cd_as"]:   # a cooldown that attack speed shortens (Yasuo and Yone's Q)
+                per, low = style["cd_as"][k]
+                cd = max(low, cd * (1 - st["as"] * per))
             n = 1 + (1 - style["resets"]) * FIGHT_S / cd + style["resets"] * RESET_CASTS
             n *= style["use"].get(k, 1.0)   # the share of its casts it really makes in a fight (an auto-attacker holds Jinx's W)
         plan.append([ab, n, cd])
+    alone = [row[1] for row in plan]
 
-    # attack speed, with self-buffs at their uptime (hand `buff`: Master Yi's R gives attack speed for 7 s a cast)
-    bonus_as = st["as"]
-    for ab, n, cd in plan:
-        b = style["buff"].get(ab["key"])
-        if b:
-            bonus_as += b.get("as", 0) * min(1.0, n * b["s"] / FIGHT_S)
-    a_s = min(AS_CAP, st["base_as"] * (1 + bonus_as))
+    def speed(plan):
+        """Attack speed, with self-buffs at their uptime (hand `buff`: Master Yi's R gives attack speed for 7 s a cast)."""
+        bonus = st["as"]
+        for ab, n, cd in plan:
+            b = style["buff"].get(ab["key"])
+            if b:
+                bonus += b.get("as", 0) * min(1.0, n * b["s"] / FIGHT_S)
+        return min(AS_CAP, st["base_as"] * (1 + bonus))
 
-    def attacking(plan):
-        """(basic attacks, attacks that count for 'on attack' effects: basic attacks, on-hit and empowered-attack abilities)"""
-        busy = sum(n * CAST_S for ab, n, cd in plan if cd is not None and (ab["dmg"] or "控場" in ab["tags"]))   # a self-buff takes no attack time
+    def attacking(plan, a_s):
+        """(basic attacks, attacks for 'on attack' effects: basic attacks and each hit of an on-hit or empowered-attack ability)"""
+        busy = sum(n * CAST_S for ab, n, cd in plan if cd is not None and (ab["dmg"] or "控場" in ab["tags"])
+                   and ab["key"] not in ch["onhit"])   # a self-buff takes no attack time, and an on-hit ability is an attack itself
         autos = a_s * max(0.0, FIGHT_S - busy) * style["autos"]
-        like = sum(n for ab, n, cd in plan if ab["key"] != "P" and (ab["key"] in ch["onhit"] or "強化普攻" in ab["tags"]))
+        like = sum(n * style["onhit_hits"].get(ab["key"], 1) for ab, n, cd in plan
+                   if ab["key"] != "P" and (ab["key"] in ch["onhit"] or "強化普攻" in ab["tags"]))
         return autos, autos + like
 
-    autos, attacks = attacking(plan)
-    for row in plan:   # an ability whose own cooldown each attack shortens (hand `cd_per_attack`: Master Yi's Q)
-        own = style["cd_per_attack"].get(row[0]["key"], 0)
-        if own and row[2] is not None:
-            row[1] += own * attacks / max(row[2], 1)
-    if aug.get("cd_per_auto"):   # each attack takes seconds off every cooldown (祕術拳擊): more casts, which cost attack time
-        for row in plan:
-            if row[2] is not None:
-                row[1] += aug["cd_per_auto"] * attacks / max(row[2], 1) * (1 - style["resets"]) * style["use"].get(row[0]["key"], 1.0)
-        autos, attacks = attacking(plan)
+    # attacks that shorten cooldowns (an ability's own: Master Yi's Q; every one: 祕術拳擊) give more casts, whose hits are attacks
+    # again (Master Yi's Q hits four times): worked out until it settles, no ability faster than once every MIN_CYCLE_S
+    a_s = speed(plan)
+    autos, attacks = attacking(plan, a_s)
+    for _ in range(SETTLE_ROUNDS):
+        for row, n0 in zip(plan, alone):
+            if row[2] is None:
+                continue
+            cut = style["cd_per_attack"].get(row[0]["key"], 0) + aug.get("cd_per_auto", 0) * (1 - style["resets"])
+            if cut:
+                row[1] = min(n0 + cut * attacks / max(row[2], 1) * style["use"].get(row[0]["key"], 1.0), FIGHT_S / MIN_CYCLE_S)
+        a_s = speed(plan)
+        autos, attacks = attacking(plan, a_s)
     casts, dmg_ab, dmg_ult, heal_self, shield_self, support = {}, 0.0, 0.0, 0.0, 0.0, 0.0
     counts = {"auto": autos, "attack": attacks, "onhit": autos, "ability_hit": 0.0, "cast": 0.0, "dash": 0.0, "cc": 0.0, "takedown": TAKEDOWNS, "ult": 0.0}
     for ab, n, cd in plan:
         k = ab["key"]
         casts[k] = n
         d = sum(value(p) * resist[p["type"]] for p in ab["dmg"] + style["extra"].get(k, [])) * n
+        if k in style["crits"]:   # an ability that crits like an attack (Yasuo and Yone's Q)
+            d *= 1 + min(1, st["crit"] * style["crit_mult"]) * (CRIT_DMG - 1)
         if k in style["per_hit"]:   # its damage lands on each attack while it lasts (Master Yi's E), not once a cast
             d *= a_s * min(style["per_hit"][k], FIGHT_S / max(n, 1))
         d *= 1 + aug.get("mult", {}).get(k, 0)
@@ -250,7 +265,7 @@ def fight(ch, style, st, aug=None):
     if aug.get("abilities_onhit"):
         counts["onhit"] += counts["ability_hit"]
     counts["onhit"] += aug.get("extra_onhit", 0)
-    auto_hit = ad * (1 + min(1, st["crit"]) * (CRIT_DMG - 1)) * resist["physical"]
+    auto_hit = ad * (1 + min(1, st["crit"] * style["crit_mult"]) * (CRIT_DMG - 1)) * resist["physical"]
     onhit_item = (ONHIT_ITEMS[0] + ONHIT_ITEMS[1] * st["ap"]) * resist["magic"] if "攻速" in style["stack"] else 0.0
     dmg_auto = autos * auto_hit * style["auto_mult"] * (1 + aug.get("mult", {}).get("auto", 0)) + counts["onhit"] * onhit_item
     total = (dmg_ab * (1 + aug.get("mult", {}).get("ability", 0)) + dmg_auto) * (1 + aug.get("mult", {}).get("all", 0))
@@ -258,6 +273,8 @@ def fight(ch, style, st, aug=None):
     heal_self = heal_self * (1 + st["heal_power"] + st["heal_received"]) + st["omnivamp"] * total + aug.get("extra_heal", 0)
     shield_self = shield_self * (1 + st["heal_power"] + st["heal_received"]) + aug.get("extra_shield", 0)
     ehp = (hp + heal_self + shield_self) * (1 + (st["armor"] + st["mr"]) / 200)
+    away = sum(n * style["untargetable"].get(ab["key"], 0) for ab, n, cd in plan)   # seconds it cannot be hit (Master Yi's Q)
+    ehp /= 1 - min(0.6, away / FIGHT_S)
     support = support * (1 + st["heal_power"] + aug.get("ally_power", 0))
     return {"damage": total, "ehp": ehp, "support": support, "counts": counts, "casts": casts, "autos": autos, "stats": stats,
             "auto_hit": auto_hit, "resist": resist, "value": value}
@@ -313,7 +330,7 @@ def apply(aug, ch, style, st0):
                 part = {k: at_level(v) for k, v in part.items() if k != "type"} | {"type": t[kind].get("type", "magic")}
                 v = base["value"](part) * n
                 if kind == "dmg":
-                    v *= base["resist"][part["type"]]
+                    v *= base["resist"][part["type"]] * t.get("hit", 1.0)   # a delayed or dodgeable hit lands this share of the time
                 extra["extra_" + kind] += v
         if "onhit" in t:
             extra["extra_onhit"] += t["onhit"] * n
@@ -360,12 +377,18 @@ def main():
                                  "counts": {k: round(v, 2) for k, v in f["counts"].items()}, "casts": {k: round(v, 2) for k, v in f["casts"].items()}}
         champs[cid] = ch
 
-    # every modelled augment on every play style
-    values = {}   # (cid, sid) -> {aug id: (value, reason)}
+    # every play style's fight without an augment; their medians are the yardstick for comparing champions in absolute terms
+    bases = {(cid, sid): fight(ch, s["style"], s["stats"]) for cid, ch in champs.items() for sid, s in ch["styles"].items()}
+    median = {k: sorted(b[k] for b in bases.values())[len(bases) // 2] or 1.0 for k in ("damage", "ehp")}
+    median["support"] = sorted(b["support"] for b in bases.values() if b["support"])[len([b for b in bases.values() if b["support"]]) // 2]
+
+    # every modelled augment on every play style: `value` (the gain as a share of its own fight: ranks augments within the champion)
+    # and `amount` (the gain against the median champion: ranks champions for an augment, so a small base does not look like a big gain)
+    values = {}   # (cid, sid) -> {aug id: (value, amount, reason part, its gain)}
     for cid, ch in champs.items():
         for sid, s in ch["styles"].items():
             style, st = s["style"], s["stats"]
-            base = fight(ch, style, st)
+            base = bases[(cid, sid)]
             ranged = st["range"] >= 300
             for a in augs:
                 only = next((t["only"] for t in a["terms"] if "only" in t), None)
@@ -382,30 +405,34 @@ def main():
                     "utility": util * UTIL_POINT,
                 }
                 v = sum(ch["weights"][k] * parts[k] for k in parts)
+                amount = (ch["weights"]["damage"] * (after["damage"] - base["damage"]) / median["damage"]
+                          + ch["weights"]["survival"] * (after["ehp"] - base["ehp"]) / median["ehp"]
+                          + ch["weights"]["support"] * (after["support"] - base["support"]) / median["support"]
+                          + ch["weights"]["utility"] * parts["utility"])
                 top = max(parts, key=lambda k: abs(ch["weights"][k] * parts[k]))
-                values.setdefault((cid, sid), {})[a["id"]] = (v, top, parts[top])
+                values.setdefault((cid, sid), {})[a["id"]] = (v, amount, top, parts[top])
 
     # tiers: rank within the play style and across all play styles
     across = {}
     for key, vals in values.items():
-        for aid, (v, _, _) in vals.items():
-            across.setdefault(aid, []).append(v)
+        for aid, (v, amount, _, _) in vals.items():
+            across.setdefault(aid, []).append(amount)
     for aid in across:
         across[aid].sort()
     WORD = {"damage": "輸出", "survival": "生存", "support": "輔助", "utility": "機動"}
     tiers = {}
     for (cid, sid), vals in values.items():
-        good = sorted(((v, aid) for aid, (v, _, _) in vals.items() if v > 0), reverse=True)
+        good = sorted(((v, aid) for aid, (v, _, _, _) in vals.items() if v > 0), reverse=True)
         rows = []
         for rank, (v, aid) in enumerate(good):
             within = 1 - rank / max(1, len(good) - 1) if len(good) > 1 else 1.0
             pool = across[aid]
-            acr = sum(1 for x in pool if x < v) / max(1, len(pool) - 1)
-            score = WITHIN * within + ACROSS * acr
+            acr = sum(1 for x in pool if x < vals[aid][1]) / max(1, len(pool) - 1)
+            score = math.sqrt(within * acr)   # both: one of its best augments, and one of the augment's best users
             tier = next(t for t, cut in TIERS if score >= cut)
-            _, top, part = vals[aid]
+            _, _, top, part = vals[aid]
             rows.append({"id": aid, "tier": tier, "value": round(v, 4), "score": round(score, 3), "reason": f"{WORD[top]} {part * 100:+.0f}%"})
-        bad = [{"id": aid, "value": round(v, 4)} for aid, (v, _, _) in vals.items() if v <= 0]
+        bad = [{"id": aid, "value": round(v, 4)} for aid, (v, _, _, _) in vals.items() if v <= 0]
         tiers.setdefault(cid, {})[sid] = {"name": champs[cid]["styles"][sid]["style"]["name"], "tiers": rows, "none": bad}
 
     OUT_MODEL.write_text(json.dumps({"level": LEVEL, "fight_s": FIGHT_S, "patch": version,

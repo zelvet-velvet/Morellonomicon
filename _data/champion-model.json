@@ -27,7 +27,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 754,
      "ehp": 7664,
@@ -101,7 +105,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1212,
      "ehp": 3356,
@@ -175,15 +183,19 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
-     "damage": 2342,
+     "damage": 2445,
      "ehp": 3334,
      "support": 0,
      "counts": {
-      "auto": 3.02,
-      "attack": 6.55,
-      "onhit": 6.55,
+      "auto": 3.97,
+      "attack": 7.5,
+      "onhit": 7.5,
       "ability_hit": 8.85,
       "cast": 8.85,
       "dash": 1.71,
@@ -249,7 +261,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1372,
      "ehp": 6015,
@@ -323,7 +339,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 486,
      "ehp": 6050,
@@ -397,7 +417,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1770,
      "ehp": 3626,
@@ -471,7 +495,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 718,
      "ehp": 3581,
@@ -545,7 +573,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1024,
      "ehp": 5016,
@@ -619,7 +651,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1836,
      "ehp": 3599,
@@ -693,7 +729,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1183,
      "ehp": 3202,
@@ -767,7 +807,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1733,
      "ehp": 3480,
@@ -841,7 +885,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 2015,
      "ehp": 4183,
@@ -915,7 +963,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1247,
      "ehp": 4597,
@@ -989,7 +1041,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1500,
      "ehp": 3479,
@@ -1063,7 +1119,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1200,
      "ehp": 4192,
@@ -1137,7 +1197,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1723,
      "ehp": 7337,
@@ -1211,7 +1275,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 4863,
      "ehp": 8297,
@@ -1285,7 +1353,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1429,
      "ehp": 3580,
@@ -1359,7 +1431,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1936,
      "ehp": 3404,
@@ -1433,7 +1509,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 168,
      "ehp": 3982,
@@ -1507,7 +1587,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 619,
      "ehp": 8953,
@@ -1581,7 +1665,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 694,
      "ehp": 3522,
@@ -1657,15 +1745,19 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
-     "damage": 2657,
+     "damage": 2666,
      "ehp": 3809,
      "support": 0,
      "counts": {
-      "auto": 1.22,
-      "attack": 3.68,
-      "onhit": 14.52,
+      "auto": 1.47,
+      "attack": 13.77,
+      "onhit": 14.77,
       "ability_hit": 8.11,
       "cast": 10.81,
       "dash": 2.8,
@@ -1722,15 +1814,19 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
-     "damage": 3210,
+     "damage": 3265,
      "ehp": 3809,
      "support": 0,
      "counts": {
-      "auto": 3.64,
-      "attack": 6.08,
-      "onhit": 16.86,
+      "auto": 4.37,
+      "attack": 16.59,
+      "onhit": 17.59,
       "ability_hit": 7.87,
       "cast": 10.49,
       "dash": 2.69,
@@ -1796,7 +1892,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1116,
      "ehp": 4061,
@@ -1870,7 +1970,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1341,
      "ehp": 5254,
@@ -1944,7 +2048,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1359,
      "ehp": 5681,
@@ -2018,7 +2126,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 969,
      "ehp": 6010,
@@ -2092,7 +2204,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 922,
      "ehp": 6036,
@@ -2166,7 +2282,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 2234,
      "ehp": 6075,
@@ -2240,7 +2360,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 583,
      "ehp": 7156,
@@ -2314,7 +2438,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 728,
      "ehp": 8837,
@@ -2388,7 +2516,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1245,
      "ehp": 3698,
@@ -2461,13 +2593,26 @@
        "W": 0.4,
        "E": 0.6
       },
-      "extra": {},
+      "extra": {
+       "R": [
+        {
+         "type": "physical",
+         "base": 300,
+         "bonus_ad": 1.2,
+         "target_maxhp": 0.15
+        }
+       ]
+      },
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
-     "damage": 1493,
+     "damage": 2009,
      "ehp": 3424,
      "support": 0,
      "counts": {
@@ -2539,7 +2684,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1264,
      "ehp": 4759,
@@ -2613,7 +2762,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1355,
      "ehp": 3713,
@@ -2687,7 +2840,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1333,
      "ehp": 3321,
@@ -2761,7 +2918,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1583,
      "ehp": 3878,
@@ -2835,7 +2996,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1166,
      "ehp": 3411,
@@ -2909,7 +3074,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1482,
      "ehp": 3255,
@@ -2983,7 +3152,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 361,
      "ehp": 6950,
@@ -3057,7 +3230,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1425,
      "ehp": 3827,
@@ -3131,7 +3308,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 913,
      "ehp": 7227,
@@ -3205,7 +3386,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1340,
      "ehp": 5682,
@@ -3279,7 +3464,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1625,
      "ehp": 5785,
@@ -3353,7 +3542,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 2198,
      "ehp": 4295,
@@ -3427,7 +3620,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 2711,
      "ehp": 3327,
@@ -3501,7 +3698,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1820,
      "ehp": 3461,
@@ -3575,7 +3776,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1403,
      "ehp": 2989,
@@ -3649,7 +3854,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1286,
      "ehp": 3764,
@@ -3723,7 +3932,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1463,
      "ehp": 3347,
@@ -3797,7 +4010,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1264,
      "ehp": 3176,
@@ -3871,7 +4088,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1344,
      "ehp": 4157,
@@ -3945,7 +4166,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1804,
      "ehp": 3472,
@@ -4019,7 +4244,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 2181,
      "ehp": 3128,
@@ -4093,7 +4322,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1227,
      "ehp": 5892,
@@ -4167,7 +4400,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 2142,
      "ehp": 3367,
@@ -4241,7 +4478,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1464,
      "ehp": 3492,
@@ -4315,7 +4556,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1542,
      "ehp": 3439,
@@ -4389,7 +4634,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 604,
      "ehp": 3536,
@@ -4463,7 +4712,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1592,
      "ehp": 5448,
@@ -4537,7 +4790,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1837,
      "ehp": 3330,
@@ -4611,7 +4868,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 590,
      "ehp": 7289,
@@ -4685,7 +4946,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 835,
      "ehp": 5818,
@@ -4759,7 +5024,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 2289,
      "ehp": 3431,
@@ -4833,7 +5102,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1935,
      "ehp": 5913,
@@ -4907,7 +5180,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1183,
      "ehp": 3722,
@@ -4981,7 +5258,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 4120,
      "ehp": 3382,
@@ -5055,7 +5336,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1932,
      "ehp": 6912,
@@ -5129,7 +5414,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1969,
      "ehp": 6496,
@@ -5203,7 +5492,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1250,
      "ehp": 3486,
@@ -5277,7 +5570,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 692,
      "ehp": 2550,
@@ -5351,7 +5648,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 277,
      "ehp": 6826,
@@ -5425,7 +5726,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1590,
      "ehp": 4265,
@@ -5499,7 +5804,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1693,
      "ehp": 3964,
@@ -5573,7 +5882,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 709,
      "ehp": 6993,
@@ -5647,7 +5960,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1573,
      "ehp": 3419,
@@ -5721,7 +6038,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 2208,
      "ehp": 5412,
@@ -5789,7 +6110,9 @@
       ],
       "autos": 0.85,
       "resets": 0.3,
-      "onhit_hits": {},
+      "onhit_hits": {
+       "Q": 4
+      },
       "use": {},
       "extra": {},
       "auto_mult": 1.12,
@@ -5804,25 +6127,31 @@
       },
       "cd_per_attack": {
        "Q": 1.0
-      }
+      },
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {
+       "Q": 0.9
+      },
+      "crits": []
      },
-     "damage": 3040,
-     "ehp": 5112,
+     "damage": 3598,
+     "ehp": 8065,
      "support": 0,
      "counts": {
-      "auto": 8.23,
-      "attack": 10.16,
-      "onhit": 10.77,
-      "ability_hit": 5.58,
-      "cast": 8.47,
-      "dash": 2.54,
+      "auto": 9.22,
+      "attack": 22.24,
+      "onhit": 22.24,
+      "ability_hit": 6.3,
+      "cast": 9.18,
+      "dash": 3.26,
       "cc": 0.0,
       "takedown": 1.5,
       "ult": 1.67
      },
      "casts": {
       "P": 1.0,
-      "Q": 2.54,
+      "Q": 3.26,
       "W": 2.22,
       "E": 2.04,
       "R": 1.67
@@ -5878,7 +6207,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 2221,
      "ehp": 3252,
@@ -5952,7 +6285,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 733,
      "ehp": 7381,
@@ -6026,7 +6363,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1441,
      "ehp": 5822,
@@ -6100,7 +6441,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1495,
      "ehp": 3504,
@@ -6174,7 +6519,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1481,
      "ehp": 3180,
@@ -6248,7 +6597,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1050,
      "ehp": 3469,
@@ -6322,7 +6675,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1196,
      "ehp": 4191,
@@ -6396,7 +6753,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 659,
      "ehp": 5741,
@@ -6470,7 +6831,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1543,
      "ehp": 6273,
@@ -6544,7 +6909,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1315,
      "ehp": 3551,
@@ -6618,7 +6987,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1644,
      "ehp": 3269,
@@ -6692,7 +7065,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1142,
      "ehp": 5792,
@@ -6766,7 +7143,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1041,
      "ehp": 3363,
@@ -6840,7 +7221,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 830,
      "ehp": 7242,
@@ -6914,7 +7299,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1291,
      "ehp": 4051,
@@ -6984,7 +7373,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 374,
      "ehp": 3943,
@@ -7058,7 +7451,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1117,
      "ehp": 3900,
@@ -7132,7 +7529,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 762,
      "ehp": 5363,
@@ -7206,7 +7607,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1985,
      "ehp": 3259,
@@ -7280,7 +7685,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1938,
      "ehp": 3866,
@@ -7354,7 +7763,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1038,
      "ehp": 8115,
@@ -7428,7 +7841,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 583,
      "ehp": 6196,
@@ -7502,7 +7919,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1215,
      "ehp": 5503,
@@ -7576,7 +7997,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 2761,
      "ehp": 3568,
@@ -7650,7 +8075,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1211,
      "ehp": 5885,
@@ -7724,25 +8153,36 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {
+       "Q": [
+        0.6,
+        1.33
+       ]
+      },
+      "crit_mult": 2.0,
+      "untargetable": {},
+      "crits": [
+       "Q"
+      ]
      },
-     "damage": 1379,
+     "damage": 3153,
      "ehp": 3665,
      "support": 0,
      "counts": {
-      "auto": 4.19,
-      "attack": 4.19,
-      "onhit": 4.19,
-      "ability_hit": 5.92,
-      "cast": 7.59,
-      "dash": 4.29,
-      "cc": 4.29,
+      "auto": 5.14,
+      "attack": 11.51,
+      "onhit": 11.51,
+      "ability_hit": 9.08,
+      "cast": 10.76,
+      "dash": 7.45,
+      "cc": 7.45,
       "takedown": 1.5,
       "ult": 1.09
      },
      "casts": {
       "P": 1.0,
-      "Q": 3.2,
+      "Q": 6.37,
       "W": 1.63,
       "E": 1.68,
       "R": 1.09
@@ -7798,25 +8238,36 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {
+       "Q": [
+        0.6,
+        1.33
+       ]
+      },
+      "crit_mult": 2.0,
+      "untargetable": {},
+      "crits": [
+       "Q"
+      ]
      },
-     "damage": 1756,
+     "damage": 3554,
      "ehp": 4377,
      "support": 0,
      "counts": {
-      "auto": 5.18,
-      "attack": 5.18,
-      "onhit": 5.18,
-      "ability_hit": 5.38,
-      "cast": 6.84,
-      "dash": 5.38,
-      "cc": 3.2,
+      "auto": 6.25,
+      "attack": 12.61,
+      "onhit": 12.61,
+      "ability_hit": 8.54,
+      "cast": 10.0,
+      "dash": 8.54,
+      "cc": 6.37,
       "takedown": 1.5,
       "ult": 1.18
      },
      "casts": {
       "P": 1.0,
-      "Q": 3.2,
+      "Q": 6.37,
       "W": 1.46,
       "E": 1.0,
       "R": 1.18
@@ -7872,7 +8323,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 758,
      "ehp": 3144,
@@ -7946,7 +8401,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1321,
      "ehp": 3178,
@@ -8020,7 +8479,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 815,
      "ehp": 6361,
@@ -8094,7 +8557,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 784,
      "ehp": 5122,
@@ -8168,7 +8635,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 2760,
      "ehp": 5833,
@@ -8242,7 +8713,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 732,
      "ehp": 3084,
@@ -8316,7 +8791,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 675,
      "ehp": 5952,
@@ -8390,7 +8869,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 829,
      "ehp": 7486,
@@ -8464,7 +8947,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 526,
      "ehp": 6616,
@@ -8538,7 +9025,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 729,
      "ehp": 3078,
@@ -8612,7 +9103,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 795,
      "ehp": 6257,
@@ -8686,7 +9181,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1054,
      "ehp": 3304,
@@ -8760,7 +9259,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 983,
      "ehp": 3776,
@@ -8834,7 +9337,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1435,
      "ehp": 3473,
@@ -8908,7 +9415,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 967,
      "ehp": 3078,
@@ -8982,7 +9493,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1445,
      "ehp": 5685,
@@ -9056,7 +9571,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 2232,
      "ehp": 3799,
@@ -9130,7 +9649,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1862,
      "ehp": 3400,
@@ -9204,7 +9727,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1016,
      "ehp": 7373,
@@ -9278,7 +9805,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 2140,
      "ehp": 3472,
@@ -9365,15 +9896,19 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
-     "damage": 1268,
+     "damage": 1327,
      "ehp": 5710,
      "support": 214,
      "counts": {
-      "auto": 2.97,
-      "attack": 8.02,
-      "onhit": 5.52,
+      "auto": 3.54,
+      "attack": 8.59,
+      "onhit": 6.09,
       "ability_hit": 4.17,
       "cast": 7.85,
       "dash": 0.0,
@@ -9439,7 +9974,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1007,
      "ehp": 3703,
@@ -9513,7 +10052,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1479,
      "ehp": 3589,
@@ -9587,7 +10130,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1435,
      "ehp": 3467,
@@ -9661,7 +10208,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 233,
      "ehp": 7997,
@@ -9735,7 +10286,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1143,
      "ehp": 7359,
@@ -9809,7 +10364,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1782,
      "ehp": 4285,
@@ -9883,7 +10442,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1370,
      "ehp": 6021,
@@ -9957,7 +10520,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1100,
      "ehp": 3470,
@@ -10031,7 +10598,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1331,
      "ehp": 7582,
@@ -10105,7 +10676,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1168,
      "ehp": 6339,
@@ -10179,7 +10754,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 795,
      "ehp": 7426,
@@ -10253,7 +10832,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 2166,
      "ehp": 3833,
@@ -10327,7 +10910,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1482,
      "ehp": 5682,
@@ -10401,7 +10988,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1730,
      "ehp": 8205,
@@ -10475,7 +11066,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 803,
      "ehp": 7299,
@@ -10549,7 +11144,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1068,
      "ehp": 5895,
@@ -10623,7 +11222,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1283,
      "ehp": 5965,
@@ -10697,7 +11300,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 2184,
      "ehp": 4454,
@@ -10771,7 +11378,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1070,
      "ehp": 5707,
@@ -10845,7 +11456,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1447,
      "ehp": 3407,
@@ -10919,7 +11534,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 247,
      "ehp": 5520,
@@ -10993,7 +11612,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 984,
      "ehp": 3453,
@@ -11067,7 +11690,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1787,
      "ehp": 3579,
@@ -11141,7 +11768,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1332,
      "ehp": 6480,
@@ -11215,7 +11846,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 691,
      "ehp": 7328,
@@ -11289,7 +11924,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 634,
      "ehp": 7096,
@@ -11363,7 +12002,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 713,
      "ehp": 5813,
@@ -11437,7 +12080,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1414,
      "ehp": 3992,
@@ -11511,7 +12158,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1006,
      "ehp": 6038,
@@ -11585,7 +12236,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1277,
      "ehp": 5849,
@@ -11659,7 +12314,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 925,
      "ehp": 6815,
@@ -11733,7 +12392,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1422,
      "ehp": 3313,
@@ -11807,7 +12470,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1766,
      "ehp": 4424,
@@ -11881,7 +12548,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 2073,
      "ehp": 7205,
@@ -11955,7 +12626,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 790,
      "ehp": 7207,
@@ -12029,7 +12704,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1453,
      "ehp": 4828,
@@ -12103,7 +12782,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1757,
      "ehp": 5562,
@@ -12177,7 +12860,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 43,
      "ehp": 5719,
@@ -12251,7 +12938,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1110,
      "ehp": 3643,
@@ -12325,7 +13016,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 951,
      "ehp": 4172,
@@ -12399,7 +13094,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1672,
      "ehp": 3640,
@@ -12473,7 +13172,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1454,
      "ehp": 3272,
@@ -12547,7 +13250,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1145,
      "ehp": 6453,
@@ -12621,7 +13328,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 440,
      "ehp": 5709,
@@ -12695,7 +13406,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 2171,
      "ehp": 4994,
@@ -12769,7 +13484,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 1679,
      "ehp": 6213,
@@ -12843,7 +13562,11 @@
       "auto_mult": 1.0,
       "buff": {},
       "per_hit": {},
-      "cd_per_attack": {}
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": []
      },
      "damage": 2014,
      "ehp": 3393,

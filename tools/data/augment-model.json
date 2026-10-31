@@ -27,6 +27,6 @@
 {"id": 1018, "name": "巨像之勇氣", "terms": [{"trigger": "cc", "icd": 5, "shield": {"base": [150, 450], "self_maxhp": 0.04}}]}
 {"id": 1323, "name": "殘忍", "terms": [{"trigger": "cc", "icd": 6, "dmg": {"type": "magic", "base": [50, 150], "ap": 0.4, "self_maxhp": 0.04}}]}
 {"id": 1315, "name": "又快又穩", "terms": [{"trigger": "dash", "icd": 5, "shield": {"base": [65, 290], "ad": 0.65, "ap": 0.26}}]}
-{"id": 1027, "name": "大地覺醒", "terms": [{"trigger": "dash", "dmg": {"type": "physical", "base": [90, 250], "bonus_ad": 1.25, "ap": 0.6}}]}
+{"id": 1027, "name": "大地覺醒", "terms": [{"trigger": "dash", "hit": 0.1, "dmg": {"type": "physical", "base": [90, 250], "bonus_ad": 1.25, "ap": 0.6}}]}
 {"id": 1073, "name": "飛影跑法", "terms": [{"trigger": "dash", "util": 0.5}]}
 {"id": 1141, "name": "全部都給你", "terms": [{"ally_power": 0.3}]}
