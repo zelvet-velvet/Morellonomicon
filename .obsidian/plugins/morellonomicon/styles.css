@@ -1745,6 +1745,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-cpa-page.is-skills .mn-cpa-body > .mn-skill-detail.is-open { flex: 1 0 auto; display: flex; flex-direction: column; }
 .mn-cpa-page.is-skills .mn-skill-detail > .mn-sd-clipbox { margin-top: auto; flex: none; }
 .mn-cpa-page.is-skills .mn-skill-detail > .mn-sd-desc + .mn-sd-clipbox, .mn-cpa-page.is-skills .mn-skill-detail > .mn-sd-clipbox { margin-bottom: 0; }
+/* the clip's loading look inside that faded box: no backdrop blur (on iOS a backdrop-filter layer ignores its parent's mask and shows as a
+   hard rectangle); the blurred stand-in under it (the ability's icon, or the clip that was on show) and the band of light are enough */
+:is(.mn-champ, .mn-part) .mn-sd-clipbox > .mn-blkveil, :is(.mn-champ, .mn-part) .mn-sd-clipbox > .mn-blkveil.is-in { left: 0; right: 0; border-radius: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
 /* a champion sub page's small header: the champion's face, its name, and the page's name in the accent colour */
 .mn-part-head { justify-content: flex-start; gap: 10px; }
 .mn-part-head img { flex: none; width: 34px; height: 34px; border-radius: 10px; }
