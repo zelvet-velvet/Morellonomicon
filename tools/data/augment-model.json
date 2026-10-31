@@ -33,3 +33,216 @@
 {"id": 1027, "name": "大地覺醒", "terms": [{"trigger": "dash", "hit": 0.1, "dmg": {"type": "physical", "base": [90, 250], "bonus_ad": 1.25, "ap": 0.6}}]}
 {"id": 1073, "name": "飛影跑法", "terms": [{"trigger": "dash", "util": 0.5}]}
 {"id": 1141, "name": "全部都給你", "terms": [{"ally_power": 0.3}]}
+{"id": 1214, "name": "一轉就贏", "terms": [{"stat": "haste", "value": 30}, {"mult": "best", "value": 0.3}, {"needs_text": "旋轉|旋風|迴旋"}], "note": "spin abilities only: the strongest basic stands in"}
+{"id": 3016, "name": "三度傷害", "terms": [{"trigger": "auto", "every": 3, "dmg": {"type": "true", "target_maxhp": 0.06, "ranged": {"type": "true", "target_maxhp": 0.03}}}]}
+{"id": 2054, "name": "三連射", "terms": [{"mult": "best", "value": 0.6, "hit": 0.5}, {"needs_text": "飛彈|投射|投擲"}], "note": "two more targets at 30% for repeats; in a team fight about one more hit"}
+{"id": 1149, "name": "不可通行", "terms": [{"needs": "控場"}, {"trigger": "cc", "icd": 20, "dmg": {"type": "magic", "base": [25, 120], "bonus_hp": 0.08}}, {"stat": "armor", "value": 20}, {"stat": "mr", "value": 20}]}
+{"id": 1332, "name": "不祥契約", "terms": [{"stat": "ap", "value": [40, 80]}, {"stat": "omnivamp", "value": 0.1}, {"stat": "hp_pct", "value": -0.05}, {"util": true, "value": 0.5}]}
+{"id": 1348, "name": "二次閃現", "terms": [{"util": true, "value": 1}]}
+{"id": 1361, "name": "伊卡西亞殞落", "special": "任務：道具"}
+{"id": 2115, "name": "伸縮手掌黏黏樂", "terms": [{"trigger": "fight", "dmg": {"type": "magic", "base": [50, 150], "bonus_hp": 0.15}}, {"trigger": "fight", "times": 2, "shield": {"base": [50, 200]}}, {"util": true, "value": 2}]}
+{"id": 1028, "name": "侵蝕裝甲", "terms": [{"stat": "pen", "value": 0.2}]}
+{"id": 1063, "name": "俠盜恆毅", "terms": [{"trigger": "dash", "max": 5, "stat": {"armor": 12, "mr": 12}}]}
+{"id": 1062, "name": "全能之魂", "terms": [{"mult": "all", "value": 0.08}, {"stat": "omnivamp", "value": 0.05}]}
+{"id": 3116, "name": "全面擊潰", "terms": [{"trigger": "hit", "every": 5, "dmg": {"type": "magic", "target_maxhp": 0.075, "ranged": {"type": "magic", "target_maxhp": 0.0375}}, "heal": {"target_maxhp": 0.05}}]}
+{"id": 2062, "name": "共鳴施放", "terms": [{"mult": "best", "value": 1.0, "hit": 0.7}]}
+{"id": 1026, "name": "別眨眼", "terms": [{"mult": "all", "value": 0.04}]}
+{"id": 2131, "name": "別轉台", "terms": [{"trigger": "ult", "times": 2, "shield": {"base": [50, 200], "ad": 0.5, "ap": 0.25, "bonus_hp": 0.1}}, {"needs_text": "引導"}], "note": "channelling champions; the ultimate stands in"}
+{"id": 1064, "name": "剛毅", "special": "目前停用"}
+{"id": 2129, "name": "劃地為王", "terms": [{"trigger": "fight", "times": 2, "dmg": {"type": "magic", "base": [20, 180], "ap": 0.2}}, {"needs_text": "地形|牆"}], "note": "terrain abilities only"}
+{"id": 1006, "name": "劍舞之心", "terms": [{"trigger": "fight", "dmg": {"type": "physical", "base": [240, 1200], "bonus_ad": 0.8, "ap": 0.48}}, {"trigger": "fight", "onhit": 4}, {"util": true, "value": 1}]}
+{"id": 1318, "name": "升級中婭沙漏", "special": "道具升級"}
+{"id": 1320, "name": "升級收藏家", "special": "道具升級"}
+{"id": 2157, "name": "升級死亡之舞", "special": "道具升級"}
+{"id": 1336, "name": "升級無盡之刃", "special": "道具升級"}
+{"id": 2140, "name": "升級狂怒九頭蛇", "special": "道具升級"}
+{"id": 1319, "name": "升級獻祭", "special": "道具升級"}
+{"id": 1379, "name": "升級破曉綻放之劍", "special": "道具升級"}
+{"id": 2143, "name": "升級突破天際", "special": "道具升級"}
+{"id": 1996, "name": "升級閃耀劍", "special": "道具升級"}
+{"id": 3150, "name": "升級雷霆風暴", "special": "道具升級"}
+{"id": 2136, "name": "可靠武器", "terms": [{"mult": "best", "value": 0.15}]}
+{"id": 2098, "name": "吃過路兵", "terms": [{"trigger": "hit", "icd": 3, "dmg": {"type": "true", "target_maxhp": 0.06}, "heal": {"base": [50, 200]}}, {"util": true, "value": 0.5}]}
+{"id": 1346, "name": "吸血迷信", "special": "目前停用"}
+{"id": 3081, "name": "命定武器", "terms": [{"items": [0, 0.5]}]}
+{"id": 1005, "name": "嗚咿嗚咿", "terms": [{"ally_power": 0.15}, {"util": true, "value": 1}]}
+{"id": 1067, "name": "回春", "terms": [{"trigger": "cast", "every": 3, "times": 1.2, "heal": {"base": [30, 100], "bonus_ad": 0.25, "ap": 0.15, "bonus_hp": 0.05}}]}
+{"id": 2004, "name": "因信得力", "terms": [{"needs": "隊友增益"}, {"trigger": "fight", "dmg": {"type": "magic", "base": [50, 300]}}]}
+{"id": 1056, "name": "因心成體", "terms": [{"needs": "mana"}, {"stat": "hp", "value": [300, 700]}]}
+{"id": 1150, "name": "土司和果醬", "terms": [{"haste_key": "W", "value": 100}]}
+{"id": 1151, "name": "土司和起司", "terms": [{"haste_key": "E", "value": 100}]}
+{"id": 1353, "name": "坦克引擎", "terms": [{"stat": "hp_pct", "value": [0, 0.5]}]}
+{"id": 1204, "name": "堆層暴龍", "special": "疊層英雄才有用"}
+{"id": 2102, "name": "壓力鍋", "terms": [{"trigger": "fight", "hit": 0.6, "dmg": {"type": "magic", "self_maxhp": 0.24}}]}
+{"id": 1104, "name": "士兵術師", "special": "召喚物英雄才有用"}
+{"id": 2055, "name": "多重射擊", "terms": [{"mult": "best", "value": 0.3}, {"needs_text": "飛彈|投射"}]}
+{"id": 3149, "name": "大家來抱抱", "terms": [{"needs": "隊友增益"}, {"ally_power": 0.6}]}
+{"id": 2127, "name": "大師鑄造", "terms": [{"mult": "all", "value": 0.06}]}
+{"id": 2087, "name": "大法師", "terms": [{"stat": "haste", "value": 35}]}
+{"id": 1349, "name": "大絕覺醒", "terms": [{"needs": "R"}, {"stat": "ult_haste", "value": 30}, {"stat": "basic_haste", "value": 120}]}
+{"id": 3004, "name": "大鬧一場", "special": "召喚師技能"}
+{"id": 1420, "name": "奏鳴曲", "terms": [{"trigger": "fight", "times": 0.8, "heal": {"base": 60, "ap": 0.6}, "shield": {"base": 80, "ap": 0.4}}, {"ally_power": 0.05}, {"util": true, "value": 1}]}
+{"id": 3118, "name": "奧術公理", "terms": [{"needs": "R"}, {"stat": "ult_haste", "value": 25}]}
+{"id": 1194, "name": "妖精魔法", "terms": [{"needs": "R"}, {"trigger": "ult", "util": 2}]}
+{"id": 3134, "name": "孤勇者", "terms": [{"stat": "as", "value": 0.45}, {"stat": "armor", "value": 30}, {"stat": "mr", "value": 30}]}
+{"id": 1034, "name": "守護面紗", "terms": [{"trigger": "fight", "shield": {"base": [150, 400]}}]}
+{"id": 1048, "name": "寶石手套", "terms": [{"ability_crit": 0.45}, {"stat": "crit", "value": 0.25}, {"stat": "crit", "from": "ap", "value": 0.00045}]}
+{"id": 3123, "name": "寶石手鍊", "terms": [{"ability_crit": 0.15}, {"stat": "crit", "value": 0.25}]}
+{"id": 1337, "name": "封我為王", "special": "地圖目標：隨機稜鏡"}
+{"id": 1170, "name": "射程強化改造", "terms": [{"util": true, "value": 1}]}
+{"id": 2108, "name": "專精輔助", "special": "沒有效果資料"}
+{"id": 1310, "name": "小丑學院", "terms": [{"trigger": "auto", "hit": 0.3, "dmg": {"type": "physical", "base": [20, 35], "bonus_ad": 0.5, "ap": 0.35}}, {"util": true, "value": 1}]}
+{"id": 2096, "name": "小小助力", "terms": [{"needs": "強化普攻"}, {"stat": "as", "value": 0.3}]}
+{"id": 2007, "name": "小惡魔在低語", "special": "目前停用"}
+{"id": 3131, "name": "屹立不退", "terms": [{"stat": "as", "value": 0.3}, {"stat": "omnivamp", "value": 0.08}]}
+{"id": 1041, "name": "巨人", "terms": [{"stat": "hp", "from": "bonus_hp", "value": 0.35}, {"stat": "ap", "from": "ap", "value": 0.15}, {"stat": "bonus_ad", "from": "bonus_ad", "value": 0.15}]}
+{"id": 1195, "name": "巨人殺手", "terms": [{"mult": "all", "value": 0.1}, {"util": true, "value": 2}]}
+{"id": 1314, "name": "巨大盾牌", "terms": [{"needs": "護盾"}, {"stat": "ap", "value": [20, 50]}, {"stat": "bonus_ad", "value": [12, 30]}]}
+{"id": 1329, "name": "巨無霸雪球", "special": "雪球"}
+{"id": 1389, "name": "巴龍之爪", "terms": [{"stat": "ap", "from": "ap", "value": 0.25}, {"stat": "bonus_ad", "from": "bonus_ad", "value": 0.25}]}
+{"id": 1331, "name": "幻焰之誓", "terms": [{"stat": "heal_power", "value": 0.15}, {"ally_power": 0.15}, {"trigger": "fight", "shield": {"base": [100, 250], "ap": 1.0, "bonus_hp": 0.1}}]}
+{"id": 2016, "name": "強化攻擊", "terms": [{"needs": "mana"}, {"trigger": "auto", "dmg": {"type": "magic", "base": [40, 100], "ranged": {"type": "magic", "base": [32, 80]}}}]}
+{"id": 1358, "name": "彈珠台", "special": "雪球"}
+{"id": 3048, "name": "彈跳蜜蜂", "terms": [{"trigger": "cast", "cap": "autos", "dmg": {"type": "physical", "auto_dmg": [0.5, 1.0]}}]}
+{"id": 3075, "name": "後座力", "terms": [{"mult": "best", "value": 0.25}, {"util": true, "value": 0.5}]}
+{"id": 1152, "name": "心鋼起來", "special": "任務：道具"}
+{"id": 2064, "name": "快步移動", "terms": [{"util": true, "value": 1.5}]}
+{"id": 1401, "name": "急遽成長", "terms": [{"stat": "hp", "value": [100, 400]}, {"util": true, "value": 1}]}
+{"id": 2065, "name": "恐懼", "terms": [{"trigger": "fight", "util": 3}]}
+{"id": 1327, "name": "意志堅定", "special": "目前停用"}
+{"id": 2133, "name": "慈悲之擊", "terms": [{"trigger": "cast", "every": 3, "cap": "autos", "dmg": {"type": "magic", "target_maxhp": 0.035}}]}
+{"id": 1079, "name": "戰爭交響曲", "terms": [{"stat": "as", "value": 0.35}, {"stat": "ap", "from": "ap", "value": 0.08}, {"stat": "bonus_ad", "from": "bonus_ad", "value": 0.08}, {"stat": "omnivamp", "value": 0.05}]}
+{"id": 1386, "name": "把我耍得團團轉", "terms": [{"trigger": "fight", "hit": 0.6, "dmg": {"type": "physical", "base": [150, 750], "ad": 1.5}}, {"util": true, "value": 1}]}
+{"id": 2137, "name": "拍拍鼓勵", "terms": [{"trigger": "fight", "shield": {"base": [50, 150]}}, {"util": true, "value": 0.5}]}
+{"id": 1134, "name": "拔劍吧", "terms": [{"only": "ranged"}, {"stat": "ad_pct", "value": 0.24}, {"stat": "as", "value": 0.2}, {"stat": "hp_pct", "value": 0.24}, {"stat": "omnivamp", "value": 0.15}, {"util": true, "value": -2}]}
+{"id": 3058, "name": "搔癢怪獸", "terms": [{"stat": "as", "from": "bonus_ad", "value": 0.0175}, {"stat": "bonus_ad", "from": "bonus_ad", "value": -1}, {"trigger": "auto", "dmg": {"type": "magic", "base": [5, 50]}}]}
+{"id": 1347, "name": "搗蛋鬼", "terms": [{"trigger": "fight", "shield": {"base": [100, 250]}}, {"util": true, "value": 1}]}
+{"id": 2026, "name": "收頭好手", "terms": [{"util": true, "value": 1}]}
+{"id": 3039, "name": "救贖", "terms": [{"trigger": "fight", "dmg": {"type": "magic", "base": [100, 500], "bonus_ad": 1.25, "ap": 0.75}, "heal": {"base": [200, 550], "bonus_ad": 2.0, "ap": 1.2}, "hit": 0.45}]}
+{"id": 1384, "name": "斗內", "terms": [{"items": 0.6}]}
+{"id": 2099, "name": "昇華儀式", "terms": [{"trigger": "takedown", "heal": {"base": [75, 300], "bonus_ad": 0.5, "ap": 0.25}}, {"stat": "basic_haste", "value": 20}, {"util": true, "value": 1}]}
+{"id": 1326, "name": "暗夜潛行", "terms": [{"util": true, "value": 1}]}
+{"id": 1118, "name": "暴擊治療", "terms": [{"stat": "heal_power", "value": 0.12}, {"ally_power": 0.12}, {"stat": "crit", "value": 0.25}]}
+{"id": 1328, "name": "暴擊節奏", "terms": [{"stat": "as", "value": 0.35}, {"stat": "crit", "value": 0.25}]}
+{"id": 1344, "name": "最終型態", "terms": [{"needs": "R"}, {"trigger": "ult", "shield": {"self_maxhp": 0.5}}, {"stat": "omnivamp", "value": 0.12}, {"util": true, "value": 1}]}
+{"id": 3121, "name": "果實化", "terms": [{"trigger": "takedown", "heal": {"self_maxhp": 0.12}}]}
+{"id": 2076, "name": "果斷", "terms": [{"stat": "armor", "value": [15, 40]}, {"stat": "mr", "value": [15, 40]}]}
+{"id": 1061, "name": "棒棒回力鏢", "terms": [{"trigger": "fight", "times": 0.8, "dmg": {"type": "magic", "base": [40, 200], "bonus_ad": 0.3, "ap": 0.2}}]}
+{"id": 1390, "name": "極度邪惡", "terms": [{"stat": "ap", "value": [40, 120]}]}
+{"id": 3079, "name": "死亡之舞", "special": "召喚師技能"}
+{"id": 1015, "name": "死亡循環", "terms": [{"heal_to_dmg": 0.7}]}
+{"id": 1211, "name": "殺戮時間", "terms": [{"needs": "R"}, {"mult": "all", "value": 0.2}]}
+{"id": 1080, "name": "毫髮無傷", "terms": [{"stat": "crit", "value": 0.25}, {"stat": "dr", "value": 0.07}]}
+{"id": 3132, "name": "沉重王冠", "terms": [{"stat": "bonus_ad", "value": 10}, {"stat": "ap", "value": 25}, {"stat": "ap", "from": "ap", "value": 0.15}, {"stat": "bonus_ad", "from": "bonus_ad", "value": 0.15}, {"stat": "as", "value": 0.1}, {"util": true, "value": -0.5}]}
+{"id": 3059, "name": "沒有魔力也沒問題", "terms": [{"needs": "mana"}, {"stat": "ap", "value": 30}, {"stat": "ap", "from": "ap", "value": 0.15}]}
+{"id": 2072, "name": "法術逬裂", "terms": [{"mult": "best", "value": 0.3, "hit": 0.5}, {"needs_text": "飛彈|投射"}]}
+{"id": 1001, "name": "泰坦的決意", "terms": [{"stat": "ap", "value": [25, 75]}, {"stat": "bonus_ad", "value": [15, 45]}, {"stat": "armor", "value": [10, 20]}, {"stat": "mr", "value": [10, 20]}]}
+{"id": 3085, "name": "活力流轉", "terms": [{"stat": "as", "value": [0.4, 0.8]}]}
+{"id": 1416, "name": "海克斯科技龍魂", "terms": [{"trigger": "fight", "times": 2, "dmg": {"type": "magic", "base": [40, 120]}}]}
+{"id": 1060, "name": "海洋之魂", "terms": [{"stat": "omnivamp", "value": 0.06}]}
+{"id": 1311, "name": "溢流", "terms": [{"needs": "mana"}, {"mult": "all", "value": 0.12}]}
+{"id": 1105, "name": "溫泉加速", "terms": [{"util": true, "value": 0.5}]}
+{"id": 3063, "name": "溺者贈禮", "terms": [{"stat": "pen_phys", "value": [0.12, 0.31]}, {"stat": "pen_phys", "from": "bonus_hp", "value": 0.0006}]}
+{"id": 12317, "name": "潘朵拉的寶盒", "special": "隨機稜鏡"}
+{"id": 1308, "name": "火狐", "terms": [{"trigger": "fight", "times": 1.15, "dmg": {"type": "magic", "base": [56, 256], "bonus_ad": 0.4, "ap": 0.4}}, {"util": true, "value": 0.3}]}
+{"id": 1072, "name": "灼熱黎明", "terms": [{"trigger": "ability_hit", "hit": 0.4, "dmg": {"type": "magic", "base": [40, 200]}}]}
+{"id": 1156, "name": "烏莉特的法帽", "special": "任務：道具"}
+{"id": 1112, "name": "無敵大絕", "terms": [{"needs": "R"}, {"util": true, "value": 1}]}
+{"id": 1011, "name": "無法掌握", "terms": [{"needs": "R"}, {"away_ult": 2}]}
+{"id": 2091, "name": "無盡屠滅", "terms": [{"trigger": "fight", "dmg": {"type": "physical", "base": [100, 400], "ad": 0.6, "ap": 0.4}, "heal": {"self_maxhp": 0.1}}]}
+{"id": 1388, "name": "無限循環", "terms": [{"stat": "haste", "value": [60, 90]}]}
+{"id": 1045, "name": "煉獄使者", "terms": [{"trigger": "ability_hit", "dmg": {"type": "magic", "base": [30, 90], "ap": 0.1}}, {"stat": "basic_haste", "value": 25}]}
+{"id": 1046, "name": "煉獄惡靈", "terms": [{"trigger": "hit", "icd": 3, "dmg": {"type": "magic", "base": [40, 120], "ap": 0.1}}]}
+{"id": 2083, "name": "牙仙", "terms": [{"stat": "pen", "value": [0, 0.15]}]}
+{"id": 3018, "name": "狂暴一擊", "terms": [{"stat": "crit_dmg", "from": "as", "value": 0.5}, {"stat": "as", "from": "as", "value": -0.75}, {"stat": "ad_pct", "value": 0.25}, {"stat": "crit_dmg", "value": 0.35}]}
+{"id": 1322, "name": "狂躁！", "terms": [{"stat": "as", "value": 0.08}, {"util": true, "value": 0.5}]}
+{"id": 1343, "name": "球鞋收藏家", "special": "目前停用"}
+{"id": 2111, "name": "當頭棒喝！", "terms": [{"needs": "強化普攻"}, {"trigger": "cast", "every": 3, "cap": "autos", "dmg": {"type": "physical", "auto_dmg": 0.5}}]}
+{"id": 2100, "name": "疾速追擊", "terms": [{"stat": "basic_haste", "value": 25}]}
+{"id": 1136, "name": "痛打一頓", "terms": [{"needs": "控場"}, {"stat": "ap", "value": [0, 60]}, {"stat": "bonus_ad", "value": [0, 36]}]}
+{"id": 1053, "name": "瘋狂科學家", "terms": [{"stat": "ap", "from": "ap", "value": 0.15}, {"stat": "bonus_ad", "from": "bonus_ad", "value": 0.15}, {"stat": "hp_pct", "value": 0.1}, {"stat": "haste", "value": 35}, {"util": true, "value": 2}]}
+{"id": 1392, "name": "神聖雪球", "special": "雪球"}
+{"id": 2141, "name": "究極九頭蛇", "special": "任務：道具"}
+{"id": 2018, "name": "純粹 - 法師", "terms": [{"stat": "haste", "from": "as", "value": 65}, {"stat": "as", "from": "as", "value": -1}, {"cdr": 0.1}]}
+{"id": 1088, "name": "終極革新", "terms": [{"needs": "R"}, {"mult": "R", "value": 0.9}]}
+{"id": 1074, "name": "縮小光線", "terms": [{"stat": "dr", "value": 0.06}]}
+{"id": 1373, "name": "縮小引擎", "terms": [{"stat": "haste", "value": [0, 60]}]}
+{"id": 1113, "name": "老練狙擊手", "terms": [{"only": "ranged"}, {"stat": "basic_haste", "value": 40}]}
+{"id": 1301, "name": "聖光顯靈", "terms": [{"stat": "dr", "value": 0.15}]}
+{"id": 1402, "name": "能力值堆堆堆起來！", "terms": [{"items": 0.8}]}
+{"id": 1403, "name": "能力值堆起來！", "terms": [{"items": 0.5}]}
+{"id": 1404, "name": "能力值！", "terms": [{"items": 0.25}]}
+{"id": 2144, "name": "能力強化", "terms": [{"needs": "護盾"}, {"ally_power": 0.25}, {"stat": "heal_power", "value": 0.2}]}
+{"id": 1098, "name": "腳程加速", "terms": [{"util": true, "value": 1}]}
+{"id": 1305, "name": "腿部訓練日", "terms": [{"util": true, "value": 1}]}
+{"id": 1038, "name": "自始至終", "terms": [{"mult": "all", "value": 0.08}]}
+{"id": 2043, "name": "自然治療", "terms": [{"trigger": "fight", "hit": 0.5, "heal": {"base": [40, 300]}}]}
+{"id": 1025, "name": "自爆炸彈客", "terms": [{"trigger": "fight", "dmg": {"type": "true", "target_maxhp": 0.2}, "hit": 0.3}]}
+{"id": 1421, "name": "舞會皇后", "terms": [{"util": true, "value": 2}]}
+{"id": 3051, "name": "藍色屏障", "terms": [{"needs": "mana"}, {"trigger": "cast", "shield": {"base": [120, 270]}}]}
+{"id": 2097, "name": "虛空衝刺", "special": "目前停用"}
+{"id": 2073, "name": "虹吸", "terms": [{"heal_from_best": 0.3}]}
+{"id": 1324, "name": "蛋白飲", "terms": [{"stat": "heal_power", "value": [0.25, 0.5]}]}
+{"id": 3088, "name": "血色鈷石", "terms": [{"trigger": "cast", "every": 3, "cap": "autos", "dmg": {"type": "magic", "base": [100, 250], "bonus_ad": 0.7, "ap": 0.35}}, {"stat": "basic_haste", "value": 30}]}
+{"id": 2132, "name": "術士果汁盒", "terms": [{"stat": "omnivamp", "value": 0.1}, {"stat": "omnivamp", "from": "ap", "value": 0.0003}]}
+{"id": 3053, "name": "衝撞怪獸", "terms": [{"needs": "R"}, {"stat": "hp", "value": [150, 375]}, {"util": true, "value": 1}]}
+{"id": 1057, "name": "裂地龍魂", "terms": [{"trigger": "fight", "shield": {"base": [100, 350]}}]}
+{"id": 3049, "name": "裝甲衝擊", "terms": [{"trigger": "cast", "every": 2, "cap": "autos", "dmg": {"type": "physical", "base": [50, 125], "bonus_armor": 2.5}}]}
+{"id": 1092, "name": "見縫插針", "terms": [{"stat": "crit", "value": 0.25}, {"mult": "all", "value": 0.04}]}
+{"id": 2005, "name": "觸發地獄火狂襲", "terms": [{"trigger": "fight", "times": 1.2, "hit": 0.6, "dmg": {"type": "physical", "base": [200, 400], "ad": 4.0, "ap": 2.5}}]}
+{"id": 2125, "name": "該出手了", "terms": [{"util": true, "value": 0.5}]}
+{"id": 3052, "name": "讓專業的來", "terms": [{"trigger": "auto", "hit": 0.5, "dmg": {"type": "physical", "bonus_ad": 0.15, "ap": 0.2}}]}
+{"id": 2139, "name": "豪豬", "terms": [{"trigger": "fight", "dmg": {"type": "physical", "base": [75, 200], "bonus_armor": 1.25, "bonus_mr": 1.25}}]}
+{"id": 2077, "name": "貪婪束縛", "terms": [{"needs": "控場"}, {"trigger": "cc", "dmg": {"type": "magic", "base": [15, 90], "ap": 0.1, "self_maxhp": 0.005}, "heal": {"base": [50, 200], "ap": 0.05, "bonus_hp": 0.1}}]}
+{"id": 1243, "name": "質變：大混亂", "special": "隨機增幅"}
+{"id": 1238, "name": "質變：稜鏡", "special": "隨機增幅"}
+{"id": 1237, "name": "質變：金級", "special": "隨機增幅"}
+{"id": 1180, "name": "超強大腦", "terms": [{"trigger": "fight", "shield": {"ap": 3.0}}]}
+{"id": 1071, "name": "超狙武器", "terms": [{"util": true, "value": 1.5}]}
+{"id": 2103, "name": "超遠射擊", "terms": [{"only": "ranged"}, {"trigger": "ability_hit", "icd": 8, "hit": 0.5, "dmg": {"type": "magic", "base": [75, 200], "bonus_ad": 0.5, "ap": 0.2}}]}
+{"id": 2109, "name": "躍回", "special": "目前停用"}
+{"id": 1081, "name": "輕舞飛揚", "terms": [{"stat": "as", "value": 0.45}, {"util": true, "value": 1}]}
+{"id": 2123, "name": "輸出超負荷", "terms": [{"mult": "best", "value": 0.8}]}
+{"id": 1206, "name": "轉換惡作劇", "terms": [{"stat": "bonus_ad", "from": "ap", "value": 0.6}, {"stat": "ap", "from": "ap", "value": -1}, {"stat": "ad_pct", "value": 0.15}]}
+{"id": 3078, "name": "轟鳴低音", "terms": [{"trigger": "cast", "cap": "autos", "dmg": {"type": "magic", "base": [50, 200], "bonus_ad": 0.5, "ap": 0.3, "ranged": {"type": "magic", "base": [25, 100], "bonus_ad": 0.25, "ap": 0.15}}}]}
+{"id": 3163, "name": "迷人蝶影", "terms": [{"needs": "隊友增益"}, {"trigger": "fight", "dmg": {"type": "magic", "base": [275, 550], "ap": 0.55}}]}
+{"id": 2116, "name": "追求力量", "terms": [{"mult": "best", "value": 0.25}]}
+{"id": 1333, "name": "逃跑計畫", "terms": [{"trigger": "fight", "hit": 0.5, "shield": {"self_maxhp": 0.65}}]}
+{"id": 2078, "name": "連鎖反應", "terms": [{"trigger": "cc", "hit": 0.3, "dmg": {"type": "magic", "base": [100, 400]}}, {"needs_text": "擊退"}]}
+{"id": 2119, "name": "過度延伸", "special": "只在屠夫之橋"}
+{"id": 2138, "name": "適性之護", "terms": [{"stat": "armor", "value": [10, 18]}, {"stat": "mr", "value": [10, 18]}]}
+{"id": 2126, "name": "重新載入", "special": "目前停用"}
+{"id": 1066, "name": "量子計算", "special": "目前停用"}
+{"id": 2135, "name": "針插", "terms": [{"trigger": "auto", "hit": 0.5, "dmg": {"type": "physical", "base": [20, 60]}}]}
+{"id": 3071, "name": "銅管爆破", "special": "召喚師技能"}
+{"id": 1116, "name": "閃光俠", "terms": [{"util": true, "value": 1}]}
+{"id": 1187, "name": "閃光彈", "terms": [{"trigger": "fight", "hit": 0.7, "dmg": {"type": "magic", "base": [70, 240], "ad": 0.7, "ap": 0.6}}]}
+{"id": 1154, "name": "阿福英雄", "special": "任務：道具"}
+{"id": 2088, "name": "降雪之日", "special": "雪球"}
+{"id": 2107, "name": "陰魂不散", "terms": [{"trigger": "fight", "hit": 0.5, "heal": {"self_maxhp": [0.35, 0.75]}}, {"stat": "omnivamp", "value": 0.08}]}
+{"id": 1413, "name": "隨我同困", "terms": [{"needs": "R"}, {"stat": "dr", "value": 0.1}, {"stat": "ult_haste", "value": 30}, {"util": true, "value": 2}]}
+{"id": 1054, "name": "雙修大師", "terms": [{"stat": "ap", "value": [18, 54]}, {"stat": "bonus_ad", "value": [9, 27]}]}
+{"id": 1225, "name": "雙刀流", "terms": [{"mult": "auto", "value": 0.4}, {"trigger": "auto", "onhit": 0.4}, {"stat": "as", "value": 0.1}]}
+{"id": 3036, "name": "雙招連擊", "terms": [{"needs": "mana"}, {"trigger": "cast", "every": 2, "icd": 4, "dmg": {"type": "magic", "base": [100, 150]}}]}
+{"id": 2010, "name": "雙重命中", "terms": [{"trigger": "auto", "onhit": 0.5}, {"stat": "crit", "value": 0.25}]}
+{"id": 2148, "name": "雙重打擊", "special": "目前停用"}
+{"id": 1415, "name": "雙響炮", "terms": [{"trigger": "ability_hit", "icd": 5, "dmg": {"type": "magic", "base": [20, 60], "bonus_ad": 0.14, "ap": 0.14}}, {"stat": "crit", "value": 0.25}]}
+{"id": 1044, "name": "雪地踱步", "terms": [{"needs": "緩速"}, {"util": true, "value": 1}]}
+{"id": 1334, "name": "雪球升級", "special": "目前停用"}
+{"id": 1205, "name": "靈活轉換", "terms": [{"stat": "ap", "from": "bonus_ad", "value": 1.667}, {"stat": "bonus_ad", "from": "bonus_ad", "value": -1}, {"stat": "ap", "from": "ap", "value": 0.15}]}
+{"id": 2104, "name": "靈魂炸彈", "terms": [{"needs": "隊友增益"}, {"ally_power": 0.25}]}
+{"id": 1077, "name": "靈魂虹吸", "terms": [{"stat": "crit", "value": 0.25}, {"stat": "omnivamp", "value": 0.05}]}
+{"id": 3025, "name": "音障", "terms": [{"needs": "護盾"}, {"util": true, "value": 0.5}]}
+{"id": 1002, "name": "頂尖發明家", "terms": [{"mult": "all", "value": 0.03}]}
+{"id": 1115, "name": "頂狙武器", "terms": [{"util": true, "value": 2}]}
+{"id": 1095, "name": "風語者的祝福", "terms": [{"needs": "隊友增益"}, {"ally_power": 0.15}, {"stat": "armor", "value": [10, 20]}, {"stat": "mr", "value": [10, 20]}]}
+{"id": 1087, "name": "颱風", "terms": [{"trigger": "auto", "dmg": {"type": "physical", "ad": 0.3}}, {"trigger": "auto", "onhit": 1}]}
+{"id": 1375, "name": "食魂者", "terms": [{"needs": "控場"}, {"stat": "hp", "value": [50, 400]}]}
+{"id": 1076, "name": "餘音震盪", "terms": [{"needs": "隊友增益"}, {"trigger": "ally", "dmg": {"type": "true", "base": [30, 150]}}]}
+{"id": 2134, "name": "高能量場域", "terms": [{"needs": "R"}, {"mult": "all", "value": 0.1}, {"stat": "haste", "value": 15}]}
+{"id": 1133, "name": "魔法導彈", "terms": [{"trigger": "ability_hit", "icd": 6, "dmg": {"type": "true", "target_maxhp": 0.02}}]}
+{"id": 3129, "name": "魔法樹液", "terms": [{"trigger": "fight", "times": 1.3, "dmg": {"type": "physical", "base": [80, 300], "bonus_hp": 0.05}, "heal": {"base": [50, 250], "self_maxhp": 0.08}}]}
+{"id": 2032, "name": "鯊魚誘餌", "terms": [{"trigger": "fight", "hit": 0.5, "shield": {"self_maxhp": 0.3}, "dmg": {"type": "magic", "base": [120, 350], "target_maxhp": 0.15}}]}
+{"id": 2034, "name": "鯊魚風暴", "special": "雪球"}
+{"id": 1020, "name": "黎明使者之決意", "terms": [{"trigger": "fight", "heal": {"self_maxhp": 0.3}, "hit": 0.8}]}
+{"id": 2080, "name": "雪爆", "special": "雪球"}

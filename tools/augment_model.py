@@ -32,6 +32,7 @@ OUT_REVIEW = ROOT / "Review" / "Augment Tiers.md"
 PICKS = [3, 7, 11, 15]
 LEVELS = [3, 7, 11, 15, 18]
 ITEMS = {3: 0.0, 7: 1.0, 11: 2.0, 15: 3.0, 18: 4.5}   # finished items by each level (STACK_BONUS is for three)
+LEVEL_WEIGHT = {3: 0.5, 7: 1.0, 11: 1.0, 15: 1.0, 18: 1.0}   # level 3 fights are short skirmishes: they count half
 SHOWN = 11                 # the level whose fight the review note shows
 LEVEL = SHOWN              # the level being worked out (set by set_level)
 BASIC_RANK, ULT_RANK = 3, 2
@@ -56,7 +57,7 @@ CAST_S = 0.4                # seconds a cast takes out of attacking (so more cas
 MIN_CYCLE_S = 1.0           # no ability is cast more often than this, however much its cooldown is cut
 SETTLE_ROUNDS = 6           # rounds for casts and attacks that feed each other (祕術拳擊 on Master Yi's Q) to settle
 UTIL_POINT = 0.1            # one utility point (a dash, +10% speed...) counts as a 10% gain
-TIERS = [("S", 0.75), ("A", 0.55), ("B", 0.35), ("C", -1.0)]
+TIERS = [("S", 0.82), ("A", 0.6), ("B", 0.4), ("C", -1.0)]   # about the top 2-3 of a rarity S, to about 10th A, to 20th B
 TEST = ["Katarina", "Jinx", "Ezreal", "Malphite", "Soraka", "Darius", "MasterYi", "Lux", "Kaisa", "Garen", "Fiora", "Yasuo", "Yone"]
 
 ROW_TYPE = {"物理傷害": "physical", "魔法傷害": "magic", "真實傷害": "true"}
@@ -130,7 +131,7 @@ def abilities(note):
             if key == "R" and ULT_RANK == 0:
                 continue   # no ultimate before level 6
             i = (ULT_RANK if key == "R" else BASIC_RANK) - 1
-        ab = {"key": key, "tags": s.get("tags", []), "cd": 0.0, "dmg": [], "heal": [], "shield": []}
+        ab = {"key": key, "tags": s.get("tags", []), "desc": s.get("desc", ""), "cd": 0.0, "dmg": [], "heal": [], "shield": []}
         best = {}
         for r in s.get("rows", []):
             label = re.sub(r"\d+$", "", r["label"])
@@ -163,6 +164,7 @@ def ref_stats(dd, stack):
         "armor": growth(st["armor"], st["armorperlevel"]) + bonus.get("armor", 0), "mr": growth(st["spellblock"], st["spellblockperlevel"]) + bonus.get("mr", 0),
         "ms": st["movespeed"] + bonus.get("ms", 0), "pen": bonus.get("pen", 0), "omnivamp": 0.0, "heal_power": 0.0, "heal_received": 0.0,
         "ad_pct": 0.0, "hp_pct": 0.0, "ms_pct": 0.0, "range": st["attackrange"],
+        "bonus_armor": bonus.get("armor", 0), "bonus_mr": bonus.get("mr", 0), "dr": 0.0, "crit_dmg": 0.0, "pen_phys": 0.0,
     }
 
 
@@ -189,11 +191,12 @@ def fight(ch, style, st, aug=None):
     aug = aug or {}
     ad = (st["base_ad"] + st["bonus_ad"]) * (1 + st["ad_pct"])
     hp = st["hp"] * (1 + st["hp_pct"])
-    stats = {**st, "ad": ad, "hp_total": hp}
-    resist = {"physical": 100 / (100 + TARGET_RES * (1 - st["pen"])), "magic": 100 / (100 + TARGET_RES * (1 - st["pen"])), "true": 1.0}
+    crit_dmg = CRIT_DMG + st["crit_dmg"]
+    stats = {**st, "ad": ad, "hp_total": hp, "auto_dmg": ad * (1 + min(1, st["crit"] * style["crit_mult"]) * (crit_dmg - 1))}
+    resist = {"physical": 100 / (100 + TARGET_RES * max(0.0, 1 - st["pen"] - st["pen_phys"])), "magic": 100 / (100 + TARGET_RES * (1 - st["pen"])), "true": 1.0}
 
     def value(part):
-        v = part.get("base", 0) + sum(part.get(k, 0) * stats.get(k, 0) for k in ("ap", "bonus_ad", "ad", "bonus_hp"))
+        v = part.get("base", 0) + sum(part.get(k, 0) * stats.get(k, 0) for k in ("ap", "bonus_ad", "ad", "bonus_hp", "bonus_armor", "bonus_mr", "auto_dmg"))
         v += part.get("self_maxhp", 0) * hp + part.get("target_maxhp", 0) * TARGET_HP
         return v
 
@@ -253,7 +256,9 @@ def fight(ch, style, st, aug=None):
         a_s = speed(plan)
         autos, attacks = attacking(plan, a_s)
     casts, dmg_ab, dmg_ult, heal_self, shield_self, support = {}, 0.0, 0.0, 0.0, 0.0, 0.0
-    counts = {"auto": autos, "attack": attacks, "onhit": autos, "ability_hit": 0.0, "cast": 0.0, "dash": 0.0, "cc": 0.0, "takedown": TAKEDOWNS, "ult": 0.0}
+    counts = {"auto": autos, "attack": attacks, "onhit": autos, "ability_hit": 0.0, "cast": 0.0, "dash": 0.0, "cc": 0.0, "takedown": TAKEDOWNS, "ult": 0.0,
+              "fight": 1.0, "ally": 0.0}
+    by_key = {}   # each ability's damage in the fight (for terms on its strongest basic ability)
     for ab, n, cd in plan:
         k = ab["key"]
         casts[k] = n
@@ -263,6 +268,9 @@ def fight(ch, style, st, aug=None):
         if k in style["per_hit"]:   # its damage lands on each attack while it lasts (Master Yi's E), not once a cast
             d *= a_s * min(style["per_hit"][k], FIGHT_S / max(n, 1))
         d *= 1 + aug.get("mult", {}).get(k, 0)
+        if aug.get("ability_crit") and k != "P":   # abilities that crit (寶石手套)
+            d *= 1 + min(1, st["crit"] * style["crit_mult"]) * aug["ability_crit"]
+        by_key[k] = d
         if k == "R":
             d *= 1 + aug.get("mult", {}).get("ult", 0)
             dmg_ult += d
@@ -282,51 +290,90 @@ def fight(ch, style, st, aug=None):
         out_shield = sum(value(p) for p in ab["shield"]) * n
         if "隊友增益" in ab["tags"]:
             support += out_heal + out_shield
+            counts["ally"] += n
         else:
             heal_self += out_heal
             shield_self += out_shield
     if aug.get("abilities_onhit"):
         counts["onhit"] += counts["ability_hit"]
     counts["onhit"] += aug.get("extra_onhit", 0)
-    auto_hit = ad * (1 + min(1, st["crit"] * style["crit_mult"]) * (CRIT_DMG - 1)) * resist["physical"]
+    counts["hit"] = counts["attack"] + counts["ability_hit"]
+    auto_hit = stats["auto_dmg"] * resist["physical"]
     onhit_item = (ONHIT_ITEMS[0] + ONHIT_ITEMS[1] * st["ap"]) * resist["magic"] if "攻速" in style["stack"] else 0.0
     dmg_auto = autos * auto_hit * style["auto_mult"] * (1 + aug.get("mult", {}).get("auto", 0)) + counts["onhit"] * onhit_item
     total = (dmg_ab * (1 + aug.get("mult", {}).get("ability", 0)) + dmg_auto) * (1 + aug.get("mult", {}).get("all", 0))
     total += aug.get("extra_dmg", 0)
+    basics = {k: v for k, v in by_key.items() if k in ("Q", "W", "E")}
+    best_basic = max(basics.values()) if basics else 0.0
     heal_self = heal_self * (1 + st["heal_power"] + st["heal_received"]) + st["omnivamp"] * total + aug.get("extra_heal", 0)
+    heal_self += aug.get("heal_from_best", 0) * best_basic   # 虹吸: a share of its strongest ability's damage
+    total += aug.get("heal_to_dmg", 0) * heal_self             # 死亡循環: a share of its healing as damage
     shield_self = shield_self * (1 + st["heal_power"] + st["heal_received"]) + aug.get("extra_shield", 0)
-    ehp = (hp + heal_self + shield_self) * (1 + (st["armor"] + st["mr"]) / 200)
+    ehp = (hp + heal_self + shield_self) * (1 + (st["armor"] + st["mr"]) / 200) / (1 - min(0.8, st["dr"]))
     away = sum(n * style["untargetable"].get(ab["key"], 0) for ab, n, cd in plan)   # seconds it cannot be hit (Master Yi's Q)
+    away += aug.get("away_ult", 0) * counts["ult"]
     ehp /= 1 - min(0.6, away / FIGHT_S)
     support = support * (1 + st["heal_power"] + aug.get("ally_power", 0))
+    best_key = max(basics, key=basics.get) if basics else None
     return {"damage": total, "ehp": ehp, "support": support, "counts": counts, "casts": casts, "autos": autos, "stats": stats,
-            "auto_hit": auto_hit, "resist": resist, "value": value}
+            "auto_hit": auto_hit, "resist": resist, "value": value, "best_key": best_key, "heal": heal_self}
 
 
 # ---- augments ------------------------------------------------------------------------------------------------------------
+
+def needs_met(aug, ch, st):
+    """An augment that needs something the champion lacks (crowd control, shields, mana, an ultimate) is worth nothing to it."""
+    for t in aug["terms"]:
+        need = t.get("needs")
+        if not need:
+            continue
+        if need == "R" and not any(a["key"] == "R" for a in ch["abilities"]):
+            return False
+        if need == "mana" and not ch["mana"]:
+            return False
+        if need not in ("R", "mana") and not any(need in a["tags"] for a in ch["abilities"]):
+            return False
+    for t in aug["terms"]:   # an ability of a kind no tag names (spinning, terrain, channelling, missiles), found in the ability text
+        if "needs_text" in t and not any(a["key"] != "P" and re.search(t["needs_text"], a["desc"]) for a in ch["abilities"]):
+            return False
+    return True
+
 
 def apply(aug, ch, style, st0):
     """The augment's terms on the play style: the fight again, and the utility points."""
     st = dict(st0)
     changes = {"mult": {}, "haste_key": {}, "haste_tag": {}}
     util = 0.0
+    ranged = st0["range"] >= 300
+    plain = fight(ch, style, st0)
     for t in aug["terms"]:
         if "trigger" in t:
             continue   # below, once the fight with the new stats is known
-        if "stat" in t and "from" in t:
-            src = {"ap": st["ap"], "bonus_hp": st["bonus_hp"], "bonus_ad": st["bonus_ad"]}[t["from"]]
+        if "items" in t:   # gold: this share of an item more, in the stats it builds
+            for name in style["stack"]:
+                if name in STACK_BONUS:
+                    k, v = STACK_BONUS[name]
+                    st[k] = st.get(k, 0) + v * at_level(t["items"]) / 3
+                    if k == "hp":
+                        st["bonus_hp"] += v * at_level(t["items"]) / 3
+        elif "stat" in t and "from" in t:
+            src = {"ap": st0["ap"], "bonus_hp": st0["bonus_hp"], "bonus_ad": st0["bonus_ad"], "as": st0["as"], "crit": st0["crit"]}[t["from"]]
             st[t["stat"]] = st.get(t["stat"], 0) + src * at_level(t["value"])
         elif "stat" in t:
-            st[t["stat"]] = st.get(t["stat"], 0) + at_level(t["value"])
+            v = at_level(t.get("ranged", t["value"]) if ranged else t["value"])
+            st[t["stat"]] = st.get(t["stat"], 0) + v
             if t["stat"] == "hp":
-                st["bonus_hp"] += at_level(t["value"])
+                st["bonus_hp"] += v
+            if t["stat"] in ("armor", "mr"):
+                st["bonus_" + t["stat"]] += v
         elif "haste_key" in t:
             changes["haste_key"][t["haste_key"]] = changes["haste_key"].get(t["haste_key"], 0) + t["value"]
         elif "haste_tag" in t:
             changes["haste_tag"][t["haste_tag"]] = t["value"]
         elif "mult" in t:
-            ranged = st0["range"] >= 300
-            changes["mult"][t["mult"]] = changes["mult"].get(t["mult"], 0) + at_level(t.get("ranged", t["value"]) if ranged else t["value"])
+            key = plain["best_key"] if t["mult"] == "best" else t["mult"]   # "best": its strongest basic ability (the one a player picks)
+            if key:
+                changes["mult"][key] = changes["mult"].get(key, 0) + at_level(t.get("ranged", t["value"]) if ranged else t["value"]) * t.get("hit", 1.0)
         elif "cd_per_auto" in t:
             changes["cd_per_auto"] = t["cd_per_auto"]
         elif "cdr" in t:
@@ -335,26 +382,42 @@ def apply(aug, ch, style, st0):
             changes["no_ult"] = True
         elif t.get("abilities_onhit"):
             changes["abilities_onhit"] = True
+        elif "ability_crit" in t:
+            changes["ability_crit"] = t["ability_crit"]
+        elif "heal_from_best" in t:
+            changes["heal_from_best"] = t["heal_from_best"]
+        elif "heal_to_dmg" in t:
+            changes["heal_to_dmg"] = t["heal_to_dmg"]
+        elif "away_ult" in t:
+            changes["away_ult"] = t["away_ult"]
         elif "util" in t:
             util += at_level(t["value"])
     # triggers need the fight with the new stats (their counts and the stats they scale with)
     base = fight(ch, style, st, changes)
     extra = {"extra_dmg": 0.0, "extra_heal": 0.0, "extra_shield": 0.0, "extra_onhit": 0.0, "ally_power": 0.0}
-    ranged = st0["range"] >= 300
+    gained = False
     for t in aug["terms"]:
         if "trigger" not in t:
             continue
-        n = base["counts"][t["trigger"]] / t.get("every", 1)
+        n = base["counts"][t["trigger"]] / t.get("every", 1) * t.get("times", 1)
         if t.get("icd"):
             n = min(n, 1 + FIGHT_S / at_level(t["icd"]))
+        if t.get("cap") == "autos":   # an effect on the next attack after a cast: no more than its attacks
+            n = min(n, base["autos"])
         for kind in ("dmg", "heal", "shield"):
             if kind in t:
                 part = t[kind].get("ranged", t[kind]) if ranged and "ranged" in t[kind] else t[kind]
-                part = {k: at_level(v) for k, v in part.items() if k != "type"} | {"type": t[kind].get("type", "magic")}
+                part = {k: at_level(v) for k, v in part.items() if k not in ("type", "ranged")} | {"type": t[kind].get("type", "magic")}
                 v = base["value"](part) * n
                 if kind == "dmg":
                     v *= base["resist"][part["type"]] * t.get("hit", 1.0)   # a delayed or dodgeable hit lands this share of the time
+                else:
+                    v *= t.get("hit", 1.0)
                 extra["extra_" + kind] += v
+        if "stat" in t:   # stats each trigger gives, up to `max` at once (俠盜恆毅)
+            for k, v in t["stat"].items():
+                st[k] = st.get(k, 0) + at_level(v) * min(n, t.get("max", n))
+            gained = True
         if "onhit" in t:
             extra["extra_onhit"] += t["onhit"] * n
         if "util" in t:
@@ -380,6 +443,8 @@ def main():
     listing = fetch_data.fetch(f"{fetch_data.DD}/cdn/{version}/data/{fetch_data.LOCALE}/champion.json", f"{version}/champion.json")["data"]
     hand = json.loads(CHAMPION_HAND.read_text(encoding="utf-8")) if CHAMPION_HAND.exists() else {}
     augs = [json.loads(line) for line in AUGMENT_MODEL.read_text(encoding="utf-8").splitlines() if line.strip().startswith("{")]
+    for a in augs:
+        a.setdefault("terms", [])
     fits = json.loads((ROOT / "_data" / "augment-data.json").read_text(encoding="utf-8"))["augments"]
 
     notes = []
@@ -401,7 +466,7 @@ def main():
         for note in notes:
             cid = note["id"]
             abil = abilities(note)
-            ch = {"id": cid, "name": note.get("name", cid), "abilities": abil, "onhit": note.get("onhit", []),
+            ch = {"id": cid, "name": note.get("name", cid), "abilities": abil, "onhit": note.get("onhit", []), "mana": note.get("resource") == "魔力",
                   "support": "輔助" in note.get("roles", []) and any("隊友增益" in a["tags"] and (a["heal"] or a["shield"]) for a in abil)}
             ch["styles"] = {}
             for sid, style in play_styles(cid, note, listing[cid], hand).items():
@@ -427,6 +492,8 @@ def main():
                 base = bases[(cid, sid)]
                 ranged = st["range"] >= 300
                 for a in augs:
+                    if a.get("special") or not needs_met(a, ch, st):
+                        continue
                     only = next((t["only"] for t in a["terms"] if "only" in t), None)
                     if only and (only == "ranged") != ranged:
                         continue
@@ -451,9 +518,9 @@ def main():
 
     # an augment's value at a pick: its average from that level on; its overall value: the average over the four picks
     def at_pick(key, aid, pick, i):
-        got = [by_level[lv][1].get(key, {}).get(aid) for lv in LEVELS if lv >= pick]
-        got = [g for g in got if g]
-        return sum(g[i] for g in got) / len(got) if got else 0.0
+        got = [(LEVEL_WEIGHT[lv], by_level[lv][1].get(key, {}).get(aid)) for lv in LEVELS if lv >= pick]
+        got = [(w, g) for w, g in got if g]
+        return sum(w * g[i] for w, g in got) / sum(w for w, g in got) if got else 0.0
 
     champs = by_level[SHOWN][0]
     set_level(SHOWN)

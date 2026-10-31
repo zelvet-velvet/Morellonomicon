@@ -21,6 +21,7 @@ How the app ranks ARAM Mayhem augments for each champion from the champion's own
 ## 🧮 The fight
 
 > [!info]+ Fixed assumptions (constants at the top of `tools/augment_model.py`)
+> - **Level 3 counts half** (`LEVEL_WEIGHT`): fights there are short skirmishes, so a flat bonus does not look bigger than it is.
 > - **The four picks.** Mayhem starts at level 3 with the first augment; the others come at 7, 11 and 15 ([League of Legends Wiki](https://wiki.leagueoflegends.com/en-us/ARAM:_Mayhem)). The fight is worked out at levels 3, 7, 11, 15 and 18 (`LEVELS`); an augment picked at a level is worth its average gain from that level on, and its value is the average over the four picks (`PICKS`). 前期強 / 後期強 marks one worth twice as much at the first pick as at the last, or the reverse (`EARLY_LATE`).
 > - **Ranks and items by level**: one ability point a level, the ultimate at 6 / 11 / 16 (no R at level 3), the basics evened out (rank 1 at 3, 2 at 7, 3 at 11, 4 at 15, 5 at 18); base stats grow with Riot's level curve; items: none at 3, one at 7, two at 11, three at 15, four and a half at 18.
 > - **An 8 second team fight** (`FIGHT_S`).
@@ -43,7 +44,7 @@ How the app ranks ARAM Mayhem augments for each champion from the champion's own
 ## 🧩 Data
 
 > [!example]+ Files
-> - `tools/data/augment-model.json` (hand): each augment as **terms** (below), one augment per line, with the wiki numbers at level 13.
+> - `tools/data/augment-model.json` (hand): every augment (248) as **terms** (below), one per line, from the wiki numbers; `special` (with the reason) for the 41 the model cannot value: quests, random ones (質變, 潘朵拉的寶盒), item upgrades (they depend on owning the item), snowball and summoner-spell swaps, map-only and disabled ones; `note` where a term stands in for something it cannot say.
 > - `tools/data/champion-model.json` (hand): what the rank rows cannot say, per champion: `resets`; `autos`; `use` (the share of an ability's casts really made: Jinx holds W); `extra` (damage the rows miss: Fiora's vitals); `auto_mult` (Master Yi's double strike); `buff` (a self-buff's stats and seconds: Master Yi's R attack speed); `per_hit` (an ability whose damage lands on each attack while it lasts: Master Yi's E); `cd_per_attack` (an ability whose cooldown each attack shortens: Master Yi's Q); `cd_as` (a cooldown attack speed shortens: Yasuo and Yone's Q); `crit_mult` (Yasuo and Yone's double crit chance); `crits` (abilities that crit: their Q); `untargetable` (seconds per cast it cannot be hit: Master Yi's Q); `onhit_hits` (hits per cast that count as attacks); `aa_reset` (extra attacks per cast: Fiora E 2, Garen Q, Darius W); `cast_s` (a longer wind-up: Jinx W 0.6 s); `ratings` in a play style (it weighs damage and survival otherwise: AP Malphite); `attack_hits` (hits that count as attacks when they differ from on-hit applications: Katarina's R is one); `land` (the share of an ability's damage that lands: Katarina's R channel is cut by crowd control, 0.7); and `styles` for more play styles (Katarina's 攻速特效).
 > - On-hit abilities are listed in the champion note's `onhit` (Katarina P R, Ezreal Q, Fiora Q, Master Yi Q, Yasuo Q, Yone Q).
 > - `_data/champion-model.json` (generated): every champion's play styles with their reference stats, damage per ability, trigger counts and weights.
@@ -58,11 +59,14 @@ How the app ranks ARAM Mayhem augments for each champion from the champion's own
 > | `haste_key` / `haste_tag` | `{"haste_tag": "位移", "value": 175}` | haste for one ability, or for abilities with a tag (衝鋒) |
 > | `abilities_onhit` | `{"abilities_onhit": true}` | abilities apply on-hit effects (幻影武器) |
 > | `ally_power` | `{"ally_power": 0.3}` | more healing and shields on allies (全部都給你) |
-> | `trigger` | `{"trigger": "auto", "every": 4, "dmg": {"base": [11, 80], "bonus_ad": 0.35, "ap": 0.19}}` | damage, shield or heal each time something happens: `auto`, `onhit`, `ability_hit`, `cast`, `dash`, `cc`, `takedown`, `ult`; `every` (every n-th), `icd` (seconds between), `hit` (the share that lands: 大地覺醒 explodes late, 0.1), `ranged` (other numbers when ranged) |
+> | `trigger` | `{"trigger": "auto", "every": 4, "dmg": {"base": [11, 80], "bonus_ad": 0.35, "ap": 0.19}}` | damage, shield or heal each time something happens: `auto`, `onhit`, `ability_hit`, `cast`, `dash`, `cc`, `takedown`, `ult`; `every` (every n-th), `times` (more per trigger), `icd` (seconds between), `cap` (`autos`: an effect on the next attack after a cast), `stat` (stats per trigger, up to `max`), more triggers: `hit` (attacks and ability hits), `fight` (once a fight: long-cooldown effects, with `hit` as the share of fights it fires in), `ally` (healing or shielding an ally), `hit` (the share that lands: 大地覺醒 explodes late, 0.1), `ranged` (other numbers when ranged) |
 > | `mult` | `{"mult": "ability", "value": 0.35}` | more damage: `ability`, `auto`, `ult`, `all`, or one ability (`Q`) |
 > | `cd_per_auto` | `{"cd_per_auto": 1.25}` | each basic attack takes seconds off every cooldown (祕術拳擊) |
 > | `no_ult` | `{"no_ult": true}` | the ultimate cannot be cast (基本功夫) |
 > | `only` | `{"only": "ranged"}` | offered or useful only to melee / ranged |
+> | `needs` / `needs_text` | `{"needs": "控場"}`, `{"needs_text": "旋轉"}` | worth nothing without an ability of that kind: an ability tag, `R`, `mana`, or words in the ability text (spinning, terrain, channelling, missiles, knock-backs) |
+> | `items` | `{"items": 0.6}` | gold, as this share of an item more in the stats it builds (斗內 1750 gold, the stat anvils) |
+> | `ability_crit`, `heal_from_best`, `heal_to_dmg`, `away_ult` | | abilities that crit (寶石手套), healing from its strongest ability's damage (虹吸), damage from its healing (死亡循環), untargetable seconds per ultimate (無法掌握) |
 > | `util` | `{"util": "mobility", "value": 1}` | utility the fight does not count in damage: `mobility`, `ms`, `cc` |
 >
 > `[low, high]` numbers grow with level (as the wiki's 20–80) and are read at `LEVEL`.
@@ -75,7 +79,7 @@ How the app ranks ARAM Mayhem augments for each champion from the champion's own
 > - Values ≤ 0 (or an augment not offered to the champion) are left out.
 > - `within` = the augment's gain against the play style's best augment (half as good: 0.5), the gain taken as a share of its own fight; `across` = its gain against the augment's best users (their 90th percentile), the gain taken against the median champion's fight, so a champion with little damage does not look like a big gainer and an augment most champions cannot use is not easy to win.
 > - score = √(within × across): S needs both, one of the champion's best augments and one of the augment's best users.
-> - **S** ≥ 0.75 · **A** ≥ 0.55 · **B** ≥ 0.35 · **C** below.
+> - **S** ≥ 0.82 · **A** ≥ 0.6 · **B** ≥ 0.4 · **C** below: about the top two or three of a rarity are S, to about the 10th A, to the 20th B.
 > - `pinned` / `avoid` in the champion note still win over the model.
 
 ---
@@ -98,6 +102,6 @@ How the app ranks ARAM Mayhem augments for each champion from the champion's own
 ## 🚧 Not yet
 
 > [!todo]+ Later steps
-> - [ ] All 248 augments as terms (the first 30 cover every kind of term).
+> - [x] All 248 augments as terms (41 left unrated with a reason).
 > - [ ] More hand play styles (champions with two builds).
 > - [ ] The tier page in the app (an OP.GG-like list: S / A / B / C rows of augment icons with the reason), drawn first as a mock in [[Layouts]].
