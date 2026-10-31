@@ -5459,10 +5459,11 @@ function rosterPage(ctx) {
   drawGrid();
   return { title: "\u901F\u67E5", el };
 }
-var CHOSEN_MS = 820;
+var CHOSEN_MS = 1050;
 var FLOOD_FADE_MS = 450;
-var WASH_AT_MS = 480;
-var CHOSEN_SPARKS = 8;
+var WASH_AT_MS = 560;
+var CHOSEN_SPARKS = 12;
+var CHOSEN_DOTS = 10;
 function swipePage(ctx) {
   const store = ctx.plugin.store;
   const el = h(null, "div", "mn-page mn-deckpage");
@@ -5637,36 +5638,61 @@ function swipePage(ctx) {
       press(true);
     });
   };
-  const choose = (grid, card, id) => {
+  const choose = (grid, card, c) => {
     if (grid.hasClass("is-choosing")) return;
     grid.addClass("is-choosing");
     card.addClass("is-chosen");
     const r = card.getBoundingClientRect();
-    const flood = h(document.body, "div", "mn-rq-flood");
-    flood.style.left = `${r.left + r.width / 2}px`;
-    flood.style.top = `${r.top + r.height * 0.42}px`;
-    icon(flood, "heart");
-    const wash = h(document.body, "div", "mn-rq-wash");
-    window.setTimeout(() => wash.addClass("is-in"), WASH_AT_MS);
+    const cx = r.left + r.width / 2, cy = r.top + r.height * 0.42;
+    const at2 = (el2) => {
+      el2.style.left = `${cx}px`;
+      el2.style.top = `${cy}px`;
+      return el2;
+    };
     const pop = h(card, "span", "mn-rq-pop");
     icon(pop, "heart", "mn-rq-pop-big");
     for (let k = 0; k < CHOSEN_SPARKS; k++) {
       const sp = h(pop, "span", "mn-rq-spark");
-      sp.style.setProperty("--a", `${360 / CHOSEN_SPARKS * k}deg`);
+      sp.style.setProperty("--a", `${360 / CHOSEN_SPARKS * k + (k % 2 ? 12 : -8)}deg`);
+      sp.style.setProperty("--d", `${48 + k * 37 % 46}px`);
+      sp.style.setProperty("--s", String(0.6 + k * 53 % 10 / 12));
+      sp.style.setProperty("--r", `${(k % 2 ? 1 : -1) * (30 + k * 29 % 60)}deg`);
       icon(sp, "heart");
     }
+    for (let k = 0; k < CHOSEN_DOTS; k++) {
+      const dot = h(pop, "span", "mn-rq-dot");
+      dot.style.setProperty("--a", `${360 / CHOSEN_DOTS * k + 20}deg`);
+      dot.style.setProperty("--d", `${70 + k * 41 % 50}px`);
+    }
+    at2(h(document.body, "div", "mn-rq-ring"));
+    const flood = at2(h(document.body, "div", "mn-rq-flood"));
+    icon(flood, "heart");
+    const wash = h(document.body, "div", "mn-rq-wash");
+    const who = h(document.body, "div", "mn-rq-who");
+    const face = h(who, "img");
+    face.src = c.icon;
+    face.alt = "";
+    h(who, "b", void 0, c.name);
+    h(who, "span", void 0, c.title);
+    window.setTimeout(() => {
+      wash.addClass("is-in");
+      who.addClass("is-in");
+    }, WASH_AT_MS);
     haptic();
     window.setTimeout(() => {
-      ctx.openChampion(id);
+      ctx.openChampion(c.id);
       grid.removeClass("is-choosing");
       card.removeClass("is-chosen");
       pop.remove();
       requestAnimationFrame(() => requestAnimationFrame(() => {
         flood.addClass("is-out");
         wash.addClass("is-out");
+        who.addClass("is-out");
         window.setTimeout(() => {
           flood.remove();
           wash.remove();
+          who.remove();
+          document.querySelectorAll(".mn-rq-ring").forEach((x) => x.remove());
         }, FLOOD_FADE_MS);
       }));
     }, CHOSEN_MS);
@@ -5687,7 +5713,7 @@ function swipePage(ctx) {
     b.style.setProperty("--i", String(g.childElementCount - 1));
     b.addEventListener("click", (e) => {
       e.preventDefault();
-      choose(g, b, c.id);
+      choose(g, b, c);
     });
     return b;
   };

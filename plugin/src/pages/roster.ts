@@ -327,10 +327,11 @@ export function rosterPage(ctx: PageCtx): PageOut {
     return { title: "速查", el };
 }
 
-const CHOSEN_MS = 820;    // the chosen animation covers the screen in this long; then the champion page opens under the cover
+const CHOSEN_MS = 1050;   // the chosen animation covers the screen (and shows the champion's name) in this long; then its page opens under the cover
 const FLOOD_FADE_MS = 450;   // the cover fades away over the champion page
-const WASH_AT_MS = 480;      // the solid layer behind the heart starts to come in, so the screen is fully covered by CHOSEN_MS
-const CHOSEN_SPARKS = 8;  // small hearts bursting out of the big one
+const WASH_AT_MS = 560;      // the solid layer behind the heart starts to come in, so the screen is fully covered by CHOSEN_MS
+const CHOSEN_SPARKS = 12; // small hearts bursting out of the big one
+const CHOSEN_DOTS = 10;   // sparkle dots between them
 // The swipe through the picked champions, as a page that fills the screen like a Handbook topic: the top card is dragged right
 // (like) or left (pass), or the ♥ / ✕ buttons are tapped; after the last card the liked champions are listed.
 export function swipePage(ctx: PageCtx): PageOut {
@@ -477,34 +478,52 @@ export function swipePage(ctx: PageCtx): PageOut {
     };
     // a liked champion chosen: its portrait grows a little, the others dim, a heart pops over it with small hearts bursting out, and
     // a tick; then its champion page opens
-    const choose = (grid: HTMLElement, card: HTMLElement, id: string) => {
+    // A liked champion chosen, in steps (Zaviel 2026-11-01): the portrait lifts with a pink glow while the others dim; a burst of small
+    // hearts and sparkles, and a ring spreading out; a big heart beats twice, then surges out until the screen is pink; the champion's
+    // face, name and title rise in the middle of it; the champion page is built under that cover, then everything fades away over it.
+    const choose = (grid: HTMLElement, card: HTMLElement, c: Champion) => {
         if (grid.hasClass("is-choosing")) return;
         grid.addClass("is-choosing");
         card.addClass("is-chosen");
-        // then the heart grows out of the card until it fills the screen, and the champion page opens under it as it fades
         const r = card.getBoundingClientRect();
-        const flood = h(document.body, "div", "mn-rq-flood");
-        flood.style.left = `${r.left + r.width / 2}px`;
-        flood.style.top = `${r.top + r.height * 0.42}px`;
-        icon(flood, "heart");
-        const wash = h(document.body, "div", "mn-rq-wash");   // a solid layer behind it, so every corner is covered when the page opens
-        window.setTimeout(() => wash.addClass("is-in"), WASH_AT_MS);
+        const cx = r.left + r.width / 2, cy = r.top + r.height * 0.42;
+        const at = (el: HTMLElement) => { el.style.left = `${cx}px`; el.style.top = `${cy}px`; return el; };
+        // on the card: the heart pops, small hearts of different sizes spin away at different distances, sparkle dots between them
         const pop = h(card, "span", "mn-rq-pop");
         icon(pop, "heart", "mn-rq-pop-big");
         for (let k = 0; k < CHOSEN_SPARKS; k++) {
             const sp = h(pop, "span", "mn-rq-spark");
-            sp.style.setProperty("--a", `${(360 / CHOSEN_SPARKS) * k}deg`);
+            sp.style.setProperty("--a", `${(360 / CHOSEN_SPARKS) * k + (k % 2 ? 12 : -8)}deg`);
+            sp.style.setProperty("--d", `${48 + (k * 37) % 46}px`);
+            sp.style.setProperty("--s", String(0.6 + ((k * 53) % 10) / 12));
+            sp.style.setProperty("--r", `${(k % 2 ? 1 : -1) * (30 + (k * 29) % 60)}deg`);
             icon(sp, "heart");
         }
+        for (let k = 0; k < CHOSEN_DOTS; k++) {
+            const dot = h(pop, "span", "mn-rq-dot");
+            dot.style.setProperty("--a", `${(360 / CHOSEN_DOTS) * k + 20}deg`);
+            dot.style.setProperty("--d", `${70 + (k * 41) % 50}px`);
+        }
+        // around it: a ring spreading out from the card
+        at(h(document.body, "div", "mn-rq-ring"));
+        // the big heart (it beats twice, then surges out), the solid layer behind it, and the champion in the middle of the pink
+        const flood = at(h(document.body, "div", "mn-rq-flood"));
+        icon(flood, "heart");
+        const wash = h(document.body, "div", "mn-rq-wash");
+        const who = h(document.body, "div", "mn-rq-who");   // over the heart, so the heart never hides it
+        const face = h(who, "img"); face.src = c.icon; face.alt = "";
+        h(who, "b", undefined, c.name);
+        h(who, "span", undefined, c.title);
+        window.setTimeout(() => { wash.addClass("is-in"); who.addClass("is-in"); }, WASH_AT_MS);
         haptic();
         // the page is built only once the screen is covered (building it while the heart grew made the heart stutter), then shown when
         // it has been drawn: the cover fades away over it
         window.setTimeout(() => {
-            ctx.openChampion(id);
+            ctx.openChampion(c.id);
             grid.removeClass("is-choosing"); card.removeClass("is-chosen"); pop.remove();   // as it was when you come back
             requestAnimationFrame(() => requestAnimationFrame(() => {
-                flood.addClass("is-out"); wash.addClass("is-out");
-                window.setTimeout(() => { flood.remove(); wash.remove(); }, FLOOD_FADE_MS);
+                flood.addClass("is-out"); wash.addClass("is-out"); who.addClass("is-out");
+                window.setTimeout(() => { flood.remove(); wash.remove(); who.remove(); document.querySelectorAll(".mn-rq-ring").forEach((x) => x.remove()); }, FLOOD_FADE_MS);
             }));
         }, CHOSEN_MS);
     };
@@ -521,7 +540,7 @@ export function swipePage(ctx: PageCtx): PageOut {
         h(who, "span", "mn-rq-ls", [c.roles[0], main && `${main}傷`, c.range ? (c.range >= 550 ? "遠程" : c.range >= 300 ? "中程" : "近戰") : ""].filter(Boolean).join(" · "));
         if (c.punch) h(who, "span", "mn-rq-lp", c.punch);
         b.style.setProperty("--i", String(g.childElementCount - 1));   // the order they rise in
-        b.addEventListener("click", (e) => { e.preventDefault(); choose(g, b, c.id); });
+        b.addEventListener("click", (e) => { e.preventDefault(); choose(g, b, c); });
         return b;
     };
     // after the last card: the liked champions two across, and a way to swipe again
