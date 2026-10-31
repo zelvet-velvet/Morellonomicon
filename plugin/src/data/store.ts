@@ -123,6 +123,7 @@ export class Store {
     augData: Record<string, AugmentData> = {};   // augment id -> numbers, levels, tags (tools/fetch_augment_data.py)
     augmentData(id: number): AugmentData | undefined { return this.augData[String(id)]; }
     augTiers: Record<string, Record<string, AugTierStyle>> = {};   // champion id -> play style -> the augment model's tiers (tools/augment_model.py)
+    augUnrated: Record<string, string> = {};   // augment id -> why the model cannot value it (a quest, random, an item upgrade...)
 
     // false until the data files (_data/*.json) have been read once after start-up
     ready = false;
@@ -152,8 +153,10 @@ export class Store {
         } catch { this.augData = {}; }
         try {
             const path = normalizePath("_data/augment-tiers.json");
-            this.augTiers = (await this.app.vault.adapter.exists(path)) ? ((JSON.parse(await this.app.vault.adapter.read(path)) as { champions: Record<string, Record<string, AugTierStyle>> }).champions ?? {}) : {};
-        } catch { this.augTiers = {}; }
+            const d = (await this.app.vault.adapter.exists(path)) ? JSON.parse(await this.app.vault.adapter.read(path)) as { champions?: Record<string, Record<string, AugTierStyle>>; unrated?: Record<string, string> } : {};
+            this.augTiers = d.champions ?? {};
+            this.augUnrated = d.unrated ?? {};
+        } catch { this.augTiers = {}; this.augUnrated = {}; }
         try {
             const path = normalizePath("_data/positions.json");
             this.positions = (await this.app.vault.adapter.exists(path)) ? JSON.parse(await this.app.vault.adapter.read(path)) : null;

@@ -1520,6 +1520,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-ag-kw { font-weight: 700; color: var(--mn-text); }
 .mn-ag-fx .mn-pn-src { margin-top: 6px; }
 .mn-chips.mn-ag-tags { margin-bottom: 4px; }
+.mn-ag-tier { margin: 10px 0 -2px; font-size: 15px; font-weight: 800; color: var(--mn-accent); }   /* S / A over a row of faces (the augment model) */
 .mn-ag-strip { display: flex; gap: 10px; margin: 8px -16px 0; padding: 4px 16px 6px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
 .mn-ag-strip::-webkit-scrollbar { display: none; }
 .mn-ag-strip .mn-tile { flex: none; width: 64px; }

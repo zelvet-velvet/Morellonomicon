@@ -270,7 +270,15 @@ export function augmentPage(ctx: PageCtx): PageOut {
         row(links, { icon: "external-link", title: "OP.GG 強化列表", chevron: true, onTap: () => window.open("https://op.gg/lol/modes/aram-mayhem") });
     }
 
-    // who it suits: Riot's own tags when they rule champions out, else the hand-written `fits`, else a guess from the wording
+    // who it suits: the augment model's best users (Dev Tools/Augment Model.md), the champions it is S for, then A
+    if (modelUsers(el, store, a, ctx)) {
+        if (history.length) {
+            h(el, "div", "mn-gh", "版本紀錄");
+            h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "新增於" : "移除於"} ${x.patch}`).join(" · "));
+        }
+        return { title: "", el };
+    }
+    // without the model's file: Riot's own tags when they rule champions out, else the hand-written `fits`, else a guess from the wording
     const all = store.champions();
     let tagList: string[] = [], list: Champion[] = [], label = "";
     if (data?.fits) {
@@ -305,6 +313,42 @@ export function augmentPage(ctx: PageCtx): PageOut {
         h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "新增於" : "移除於"} ${x.patch}`).join(" · "));
     }
     return { title: "", el };   // the name is already the big heading
+}
+
+// The augment model's best users of an augment: per champion its best play style's tier; the S ones, then the A ones, best first, as
+// rows of faces (a tap opens the champion's 強化). An augment the model cannot value says why. False when there is no model file.
+const USERS_SHOWN = 24;   // faces per tier row
+function modelUsers(el: HTMLElement, store: Store, a: Augment, ctx: PageCtx): boolean {
+    const champs = Object.entries(store.augTiers);
+    if (!champs.length) return false;
+    h(el, "div", "mn-gh", "適合的英雄");
+    const why = store.augUnrated[String(a.id)];
+    if (why) { h(el, "div", "mn-gf", `這個強化無法用數值估算（${why}），沒有排名。`); return true; }
+    const best = new Map<string, { tier: string; score: number }>();
+    for (const [cid, styles] of champs) {
+        for (const st of Object.values(styles)) {
+            const t = st.tiers.find((x) => x.id === a.id);
+            if (t && (!best.has(cid) || t.score > best.get(cid)!.score)) best.set(cid, { tier: t.tier, score: t.score });
+        }
+    }
+    let shown = 0;
+    for (const tier of ["S", "A"]) {
+        const list = [...best].filter(([, b]) => b.tier === tier).sort((x, y) => y[1].score - x[1].score).slice(0, USERS_SHOWN);
+        const faces = list.map(([cid]) => store.champion(cid)).filter((c): c is Champion => !!c);
+        if (!faces.length) continue;
+        shown += faces.length;
+        h(el, "div", "mn-ag-tier", tier);
+        const strip = layoutBlock(h(el, "div", "mn-ag-strip"));
+        for (const c of faces) {
+            const tile = h(strip, "button", "mn-tile");
+            const t = h(tile, "img"); t.src = c.icon; t.alt = "";
+            h(tile, "span", "mn-tile-n", c.name);
+            tile.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id, "augments"); });
+        }
+    }
+    h(el, "div", "mn-gf", shown ? "依英雄的技能數值估算：對這些英雄是 S 或 A（和同稀有度的其他強化比較，也和其他英雄比較）。不是勝率。"
+        : "依英雄的技能數值估算，沒有英雄特別適合這個強化。");
+    return true;
 }
 
 // An item's text, split for its page: the stats ("120 魔法攻擊"), then each passive or active with its name and text. Riot's text is one

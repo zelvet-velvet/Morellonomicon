@@ -571,7 +571,8 @@ def main():
                                                                     | {"weights": {k: round(x, 3) for k, x in s["weights"].items()}, "stats": {k: round(x, 2) for k, x in s["stats"].items()}}
                                                                     for sid, s in ch["styles"].items()}}
                                                    for cid, ch in champs.items()}}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-    OUT_TIERS.write_text(json.dumps({"picks": PICKS, "levels": LEVELS, "patch": version, "augments": len(augs), "champions": tiers}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    unrated = {str(a["id"]): a["special"] for a in augs if a.get("special")}   # the augments the model cannot value, with why
+    OUT_TIERS.write_text(json.dumps({"picks": PICKS, "levels": LEVELS, "patch": version, "augments": len(augs), "unrated": unrated, "champions": tiers}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     review(champs, tiers, {a["id"]: a for a in augs})
     print(f"{len(champs)} champions, {len(augs)} augments modelled -> {OUT_TIERS.relative_to(ROOT)}, {OUT_REVIEW.relative_to(ROOT)}")
 

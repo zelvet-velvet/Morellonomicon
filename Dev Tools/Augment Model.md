@@ -44,7 +44,7 @@ How the app ranks ARAM Mayhem augments for each champion from the champion's own
 ## 🧩 Data
 
 > [!example]+ Files
-> - `tools/data/augment-model.json` (hand): every augment (248) as **terms** (below), one per line, from the wiki numbers; `special` (with the reason) for the 41 the model cannot value: quests, random ones (質變, 潘朵拉的寶盒), item upgrades (they depend on owning the item), snowball and summoner-spell swaps, map-only and disabled ones; `note` where a term stands in for something it cannot say.
+> - `tools/data/augment-model.json` (hand): every augment (248) as **terms** (below), one per line, from the wiki numbers; `special` (with the reason) for the 44 the model cannot value: quests, random ones (質變, 潘朵拉的寶盒), item upgrades (they depend on owning the item), snowball and summoner-spell swaps, map-only and disabled ones; `note` where a term stands in for something it cannot say.
 > - `tools/data/champion-model.json` (hand): what the rank rows cannot say, per champion: `resets`; `autos`; `use` (the share of an ability's casts really made: Jinx holds W); `extra` (damage the rows miss: Fiora's vitals); `auto_mult` (Master Yi's double strike); `buff` (a self-buff's stats and seconds: Master Yi's R attack speed); `per_hit` (an ability whose damage lands on each attack while it lasts: Master Yi's E); `cd_per_attack` (an ability whose cooldown each attack shortens: Master Yi's Q); `cd_as` (a cooldown attack speed shortens: Yasuo and Yone's Q); `crit_mult` (Yasuo and Yone's double crit chance); `crits` (abilities that crit: their Q); `untargetable` (seconds per cast it cannot be hit: Master Yi's Q); `onhit_hits` (hits per cast that count as attacks); `aa_reset` (extra attacks per cast: Fiora E 2, Garen Q, Darius W); `cast_s` (a longer wind-up: Jinx W 0.6 s); `ratings` in a play style (it weighs damage and survival otherwise: AP Malphite); `attack_hits` (hits that count as attacks when they differ from on-hit applications: Katarina's R is one); `land` (the share of an ability's damage that lands: Katarina's R channel is cut by crowd control, 0.7); and `styles` for more play styles (Katarina's 攻速特效).
 > - On-hit abilities are listed in the champion note's `onhit` (Katarina P R, Ezreal Q, Fiora Q, Master Yi Q, Yasuo Q, Yone Q).
 > - `_data/champion-model.json` (generated): every champion's play styles with their reference stats, damage per ability, trigger counts and weights.
@@ -102,6 +102,6 @@ How the app ranks ARAM Mayhem augments for each champion from the champion's own
 ## 🚧 Not yet
 
 > [!todo]+ Later steps
-> - [x] All 248 augments as terms (41 left unrated with a reason).
+> - [x] All 248 augments as terms (44 left unrated with a reason).
 > - [ ] More hand play styles (champions with two builds).
 > - [ ] The tier page in the app (an OP.GG-like list: S / A / B / C rows of augment icons with the reason), drawn first as a mock in [[Layouts]].

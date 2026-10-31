@@ -170,6 +170,8 @@ var Store = class {
     this.augData = {};
     this.augTiers = {};
     // champion id -> play style -> the augment model's tiers (tools/augment_model.py)
+    this.augUnrated = {};
+    // augment id -> why the model cannot value it (a quest, random, an item upgrade...)
     // false until the data files (_data/*.json) have been read once after start-up
     this.ready = false;
   }
@@ -216,9 +218,12 @@ var Store = class {
     }
     try {
       const path = (0, import_obsidian.normalizePath)("_data/augment-tiers.json");
-      this.augTiers = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)).champions ?? {} : {};
+      const d = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)) : {};
+      this.augTiers = d.champions ?? {};
+      this.augUnrated = d.unrated ?? {};
     } catch {
       this.augTiers = {};
+      this.augUnrated = {};
     }
     try {
       const path = (0, import_obsidian.normalizePath)("_data/positions.json");
@@ -6109,6 +6114,13 @@ function augmentPage(ctx) {
     row(links, { icon: "external-link", title: "\u5728 League \u7DAD\u57FA\u67E5\u770B\u6548\u679C", chevron: true, onTap: () => window.open("https://wiki.leagueoflegends.com/en-us/ARAM_Mayhem/Augments") });
     row(links, { icon: "external-link", title: "OP.GG \u5F37\u5316\u5217\u8868", chevron: true, onTap: () => window.open("https://op.gg/lol/modes/aram-mayhem") });
   }
+  if (modelUsers(el, store, a, ctx)) {
+    if (history.length) {
+      h(el, "div", "mn-gh", "\u7248\u672C\u7D00\u9304");
+      h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "\u65B0\u589E\u65BC" : "\u79FB\u9664\u65BC"} ${x.patch}`).join(" \xB7 "));
+    }
+    return { title: "", el };
+  }
   const all = store.champions();
   let tagList = [], list2 = [], label = "";
   if (data?.fits) {
@@ -6151,6 +6163,46 @@ function augmentPage(ctx) {
     h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "\u65B0\u589E\u65BC" : "\u79FB\u9664\u65BC"} ${x.patch}`).join(" \xB7 "));
   }
   return { title: "", el };
+}
+var USERS_SHOWN = 24;
+function modelUsers(el, store, a, ctx) {
+  const champs = Object.entries(store.augTiers);
+  if (!champs.length) return false;
+  h(el, "div", "mn-gh", "\u9069\u5408\u7684\u82F1\u96C4");
+  const why = store.augUnrated[String(a.id)];
+  if (why) {
+    h(el, "div", "mn-gf", `\u9019\u500B\u5F37\u5316\u7121\u6CD5\u7528\u6578\u503C\u4F30\u7B97\uFF08${why}\uFF09\uFF0C\u6C92\u6709\u6392\u540D\u3002`);
+    return true;
+  }
+  const best = /* @__PURE__ */ new Map();
+  for (const [cid, styles] of champs) {
+    for (const st of Object.values(styles)) {
+      const t = st.tiers.find((x) => x.id === a.id);
+      if (t && (!best.has(cid) || t.score > best.get(cid).score)) best.set(cid, { tier: t.tier, score: t.score });
+    }
+  }
+  let shown = 0;
+  for (const tier of ["S", "A"]) {
+    const list2 = [...best].filter(([, b]) => b.tier === tier).sort((x, y) => y[1].score - x[1].score).slice(0, USERS_SHOWN);
+    const faces = list2.map(([cid]) => store.champion(cid)).filter((c) => !!c);
+    if (!faces.length) continue;
+    shown += faces.length;
+    h(el, "div", "mn-ag-tier", tier);
+    const strip2 = layoutBlock(h(el, "div", "mn-ag-strip"));
+    for (const c of faces) {
+      const tile2 = h(strip2, "button", "mn-tile");
+      const t = h(tile2, "img");
+      t.src = c.icon;
+      t.alt = "";
+      h(tile2, "span", "mn-tile-n", c.name);
+      tile2.addEventListener("click", (e) => {
+        e.preventDefault();
+        ctx.openChampion(c.id, "augments");
+      });
+    }
+  }
+  h(el, "div", "mn-gf", shown ? "\u4F9D\u82F1\u96C4\u7684\u6280\u80FD\u6578\u503C\u4F30\u7B97\uFF1A\u5C0D\u9019\u4E9B\u82F1\u96C4\u662F S \u6216 A\uFF08\u548C\u540C\u7A00\u6709\u5EA6\u7684\u5176\u4ED6\u5F37\u5316\u6BD4\u8F03\uFF0C\u4E5F\u548C\u5176\u4ED6\u82F1\u96C4\u6BD4\u8F03\uFF09\u3002\u4E0D\u662F\u52DD\u7387\u3002" : "\u4F9D\u82F1\u96C4\u7684\u6280\u80FD\u6578\u503C\u4F30\u7B97\uFF0C\u6C92\u6709\u82F1\u96C4\u7279\u5225\u9069\u5408\u9019\u500B\u5F37\u5316\u3002");
+  return true;
 }
 var STAT_CAT = {
   \u751F\u547D: "\u751F\u547D",
