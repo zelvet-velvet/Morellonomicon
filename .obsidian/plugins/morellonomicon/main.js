@@ -6657,6 +6657,7 @@ function championCard(ctx) {
     if (i === cur) return;
     cur = i;
     dots.forEach((d, k) => d.toggleClass("is-on", k === i));
+    ctx.frame.at = pages[i][0];
     el.toggleClass("is-deep", i > 0);
   };
   let pos = 0;
@@ -6712,7 +6713,7 @@ function championCard(ctx) {
     wheelAt = Date.now();
     go(pos + (e.deltaX > 0 ? 1 : -1));
   }, { passive: false });
-  const startSub = lastSub.get(c.id);
+  const startSub = ctx.frame.at ?? lastSub.get(c.id);
   lastSub.delete(c.id);
   const start = Math.max(0, pages.findIndex(([p]) => p === startSub));
   go(start, false);

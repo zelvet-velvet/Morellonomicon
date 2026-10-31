@@ -2,7 +2,7 @@ import type { App } from "obsidian";
 import type { TabId } from "./modes";
 
 // One page of a tab's stack. The tab's first page is { key: "root" }.
-export interface Frame { key: string; title: string; params?: Record<string, string | number> }
+export interface Frame { key: string; title: string; params?: Record<string, string | number>; at?: string }   // at: where the page was left (the champion page's swipe page), so Back returns there
 
 interface Saved { tab: TabId; stacks: Partial<Record<TabId, Frame[]>>; t: number; run?: string }
 const KEY = "morellonomicon-nav";

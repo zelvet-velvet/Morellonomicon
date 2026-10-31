@@ -253,6 +253,7 @@ export function championCard(ctx: PageCtx): PageOut {
         if (i === cur) return;
         cur = i;
         dots.forEach((d, k) => d.toggleClass("is-on", k === i));
+        ctx.frame.at = pages[i][0];   // kept with this page in the history: Back from 全部強化 or an augment returns here
         el.toggleClass("is-deep", i > 0);   // past 概覽 the art darkens, so the page's parts can use all of it
     };
     // The pages move with the finger (a transform), not by the browser's own sideways scrolling, which iOS left half way between two
@@ -301,8 +302,8 @@ export function championCard(ctx: PageCtx): PageOut {
         wheelAt = Date.now();
         go(pos + (e.deltaX > 0 ? 1 : -1));
     }, { passive: false });
-    // a link may ask for a page (once: the next visit starts on 概覽 again)
-    const startSub = lastSub.get(c.id);
+    // Back to this page: where it was left; else a link may ask for a page (once: the next visit starts on 概覽 again)
+    const startSub = ctx.frame.at ?? lastSub.get(c.id);
     lastSub.delete(c.id);
     const start = Math.max(0, pages.findIndex(([p]) => p === startSub));
     go(start, false);
