@@ -564,10 +564,11 @@ export const preloadRoleIcons = (): void => {
     const sheet = new Image(); sheet.src = SHOP_ROLE_SPRITE; preloaded.set(SHOP_ROLE_SPRITE, sheet);   // the shop's class tab icons
 };
 // The item shop's class tabs with the shop's own icons: one sprite sheet of the game (CommunityDragon, shown by address), each icon's
-// first (light) state, measured from the sheet as [x, y, width, height]; the order is the shop's (全部, then the six classes)
+// light state (the sheet has four states per icon, not in the same order for every icon), measured from the sheet as
+// [x, y, width, height]; the order is the shop's (全部, then the six classes)
 export const SHOP_ROLE_SPRITE = "https://raw.communitydragon.org/latest/game/assets/ux/itemshop/jade/itemshop_texture_atlas.png";
 const SHOP_ROLE_BOX: Record<string, [number, number, number, number]> = {
-    全部: [188, 95, 22, 22], 戰士: [870, 30, 23, 24], 射手: [870, 86, 27, 22], 刺客: [940, 149, 24, 21], 法師: [870, 60, 22, 21], 坦克: [876, 113, 17, 23], 輔助: [843, 216, 26, 22],
+    全部: [188, 131, 22, 19], 戰士: [898, 29, 23, 24], 射手: [900, 86, 27, 22], 刺客: [940, 232, 24, 21], 法師: [898, 61, 24, 20], 坦克: [906, 112, 16, 24], 輔助: [843, 244, 26, 22],
 };
 export const shopRoleIcon = (parent: HTMLElement, role: string): HTMLElement => {
     const s = h(parent, "span", "mn-shoprole-ic");

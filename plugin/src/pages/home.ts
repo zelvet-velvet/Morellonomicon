@@ -239,7 +239,7 @@ export function itemsPage(ctx: PageCtx): PageOut {
     const flag = MODES[ctx.plugin.settings.mode].itemFlag;
     const el = page("Items");
     const seen = new Set<string>();
-    const items = store.items().filter((i) => i[flag] && i.goldTotal > 0 && !seen.has(i.name) && seen.add(i.name));
+    const items = store.items().filter((i) => i[flag] && i.goldTotal > 0 && !i.reward && !seen.has(i.name) && seen.add(i.name));   // augment rewards are never sold
     const box = h(el, "div", "mn-search");
     icon(box, "search", "mn-search-ic");
     const search = h(box, "input");

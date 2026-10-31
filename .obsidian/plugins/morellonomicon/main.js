@@ -361,6 +361,7 @@ var Store = class {
         rift: fm.rift === true,
         icon: str(fm.icon),
         variantOf: typeof fm.variant_of === "string" ? fm.variant_of : void 0,
+        reward: fm.reward === true,
         path: file.path
       })).sort((a, b) => a.goldTotal - b.goldTotal || a.name.localeCompare(b.name, "zh-Hant"));
     }
@@ -1131,13 +1132,13 @@ var preloadRoleIcons = () => {
 };
 var SHOP_ROLE_SPRITE = "https://raw.communitydragon.org/latest/game/assets/ux/itemshop/jade/itemshop_texture_atlas.png";
 var SHOP_ROLE_BOX = {
-  \u5168\u90E8: [188, 95, 22, 22],
-  \u6230\u58EB: [870, 30, 23, 24],
-  \u5C04\u624B: [870, 86, 27, 22],
-  \u523A\u5BA2: [940, 149, 24, 21],
-  \u6CD5\u5E2B: [870, 60, 22, 21],
-  \u5766\u514B: [876, 113, 17, 23],
-  \u8F14\u52A9: [843, 216, 26, 22]
+  \u5168\u90E8: [188, 131, 22, 19],
+  \u6230\u58EB: [898, 29, 23, 24],
+  \u5C04\u624B: [900, 86, 27, 22],
+  \u523A\u5BA2: [940, 232, 24, 21],
+  \u6CD5\u5E2B: [898, 61, 24, 20],
+  \u5766\u514B: [906, 112, 16, 24],
+  \u8F14\u52A9: [843, 244, 26, 22]
 };
 var shopRoleIcon = (parent, role) => {
   const s = h(parent, "span", "mn-shoprole-ic");
@@ -7326,7 +7327,7 @@ function itemsPage(ctx) {
   const flag = MODES[ctx.plugin.settings.mode].itemFlag;
   const el = page("Items");
   const seen = /* @__PURE__ */ new Set();
-  const items = store.items().filter((i) => i[flag] && i.goldTotal > 0 && !seen.has(i.name) && seen.add(i.name));
+  const items = store.items().filter((i) => i[flag] && i.goldTotal > 0 && !i.reward && !seen.has(i.name) && seen.add(i.name));
   const box = h(el, "div", "mn-search");
   icon(box, "search", "mn-search-ic");
   const search = h(box, "input");

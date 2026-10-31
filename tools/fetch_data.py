@@ -341,7 +341,7 @@ def item_desc(it, limit=140):
     return text if len(text) <= limit else text[: limit - 1] + "…"
 
 
-def item_note(item_id, it, version, names, keep, everything=()):
+def item_note(item_id, it, version, names, keep, everything=(), shop_list=()):
     # `from` keeps repeats (死亡之帽 takes two 巨型魔棒); `into` lists each item once; both only items still in the shop
     maps = it.get("maps", {})
     gold = it["gold"]
@@ -360,6 +360,8 @@ def item_note(item_id, it, version, names, keep, everything=()):
     if base:
         fm["aram"] = True
         fm["variant_of"] = names[base]
+    if len(item_id) > 4 and item_id not in shop_list:
+        fm["reward"] = True   # an augment's reward (烏莉特的法帽, 黃金鍋鏟...): never sold, so not on the Items page
 
     link = lambda ids: [f"[[{names[i]}]]" for i in ids if i in names]
     lines = [f"![{it['name']}|48]({fm['icon']})", ""]
@@ -468,7 +470,7 @@ def main():
                 continue
             paths[0].rename(target)
         for i, it in keep.items():
-            fm, gen, tail = item_note(i, it, version, names, keep, items)
+            fm, gen, tail = item_note(i, it, version, names, keep, items, shop or ())
             changed += write_note(VAULT / folders.ITEMS / f"{names[i]}.md", fm, gen, tail)
         print(f"items: {len(keep)} (of {len(items)}; in the shop on Summoner's Rift or ARAM); {remove_stale_items(set(keep))} old item notes removed")
 
