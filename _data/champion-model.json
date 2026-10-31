@@ -4,12 +4,6 @@
  "patch": "16.21.1",
  "champions": {
   "Alistar": {
-   "weights": {
-    "damage": 0.302,
-    "survival": 0.679,
-    "support": 0.0,
-    "utility": 0.019
-   },
    "styles": {
     "main": {
      "style": {
@@ -19,7 +13,7 @@
        "護甲",
        "技能急速"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -31,15 +25,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 754,
+     "damage": 732,
      "ehp": 7664,
      "support": 0,
      "counts": {
-      "auto": 2.53,
-      "attack": 4.67,
-      "onhit": 2.53,
+      "auto": 1.9,
+      "attack": 1.9,
+      "onhit": 1.9,
       "ability_hit": 6.32,
       "cast": 7.44,
       "dash": 0.0,
@@ -53,6 +49,12 @@
       "W": 2.09,
       "E": 2.14,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.302,
+      "survival": 0.679,
+      "support": 0.0,
+      "utility": 0.019
      },
      "stats": {
       "hp": 3599.0,
@@ -82,12 +84,6 @@
    }
   },
   "Aphelios": {
-   "weights": {
-    "damage": 0.852,
-    "survival": 0.095,
-    "support": 0.0,
-    "utility": 0.053
-   },
    "styles": {
     "main": {
      "style": {
@@ -109,7 +105,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1212,
      "ehp": 3356,
@@ -131,6 +129,12 @@
       "W": 1.0,
       "E": 1.0,
       "R": 1.08
+     },
+     "weights": {
+      "damage": 0.852,
+      "survival": 0.095,
+      "support": 0.0,
+      "utility": 0.053
      },
      "stats": {
       "hp": 2116.9,
@@ -160,12 +164,6 @@
    }
   },
   "Ezreal": {
-   "weights": {
-    "damage": 0.887,
-    "survival": 0.072,
-    "support": 0.0,
-    "utility": 0.041
-   },
    "styles": {
     "main": {
      "style": {
@@ -187,7 +185,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 2445,
      "ehp": 3334,
@@ -209,6 +209,12 @@
       "W": 2.5,
       "E": 1.71,
       "R": 1.11
+     },
+     "weights": {
+      "damage": 0.887,
+      "survival": 0.072,
+      "support": 0.0,
+      "utility": 0.041
      },
      "stats": {
       "hp": 2116.9,
@@ -238,12 +244,6 @@
    }
   },
   "Irelia": {
-   "weights": {
-    "damage": 0.729,
-    "survival": 0.238,
-    "support": 0.0,
-    "utility": 0.033
-   },
    "styles": {
     "main": {
      "style": {
@@ -265,7 +265,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1372,
      "ehp": 6015,
@@ -287,6 +289,12 @@
       "W": 1.63,
       "E": 1.77,
       "R": 1.08
+     },
+     "weights": {
+      "damage": 0.729,
+      "survival": 0.238,
+      "support": 0.0,
+      "utility": 0.033
      },
      "stats": {
       "hp": 3489.25,
@@ -316,12 +324,6 @@
    }
   },
   "Illaoi": {
-   "weights": {
-    "damage": 0.626,
-    "survival": 0.352,
-    "support": 0.0,
-    "utility": 0.022
-   },
    "styles": {
     "main": {
      "style": {
@@ -343,14 +345,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 486,
      "ehp": 6050,
      "support": 0,
      "counts": {
       "auto": 2.84,
-      "attack": 6.84,
+      "attack": 2.84,
       "onhit": 2.84,
       "ability_hit": 5.13,
       "cast": 9.76,
@@ -365,6 +369,12 @@
       "W": 4.0,
       "E": 1.92,
       "R": 1.13
+     },
+     "weights": {
+      "damage": 0.626,
+      "survival": 0.352,
+      "support": 0.0,
+      "utility": 0.022
      },
      "stats": {
       "hp": 3515.25,
@@ -394,12 +404,6 @@
    }
   },
   "Evelynn": {
-   "weights": {
-    "damage": 0.887,
-    "survival": 0.072,
-    "support": 0.0,
-    "utility": 0.041
-   },
    "styles": {
     "main": {
      "style": {
@@ -421,14 +425,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1770,
      "ehp": 3626,
      "support": 0,
      "counts": {
       "auto": 1.17,
-      "attack": 4.37,
+      "attack": 1.17,
       "onhit": 1.17,
       "ability_hit": 8.12,
       "cast": 8.12,
@@ -443,6 +449,12 @@
       "W": 1.73,
       "E": 2.1,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.887,
+      "survival": 0.072,
+      "support": 0.0,
+      "utility": 0.041
      },
      "stats": {
       "hp": 2115.1,
@@ -472,12 +484,6 @@
    }
   },
   "Elise": {
-   "weights": {
-    "damage": 0.643,
-    "survival": 0.328,
-    "support": 0.0,
-    "utility": 0.03
-   },
    "styles": {
     "main": {
      "style": {
@@ -499,7 +505,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 718,
      "ehp": 3581,
@@ -521,6 +529,12 @@
       "W": 2.0,
       "E": 2.14,
       "R": 5.0
+     },
+     "weights": {
+      "damage": 0.643,
+      "survival": 0.328,
+      "support": 0.0,
+      "utility": 0.03
      },
      "stats": {
       "hp": 2213.55,
@@ -550,12 +564,6 @@
    }
   },
   "Kled": {
-   "weights": {
-    "damage": 0.911,
-    "survival": 0.057,
-    "support": 0.0,
-    "utility": 0.032
-   },
    "styles": {
     "main": {
      "style": {
@@ -577,14 +585,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1024,
      "ehp": 5016,
      "support": 723,
      "counts": {
       "auto": 2.49,
-      "attack": 4.69,
+      "attack": 2.49,
       "onhit": 2.49,
       "ability_hit": 8.0,
       "cast": 8.0,
@@ -599,6 +609,12 @@
       "W": 2.2,
       "E": 2.2,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.911,
+      "survival": 0.057,
+      "support": 0.0,
+      "utility": 0.032
      },
      "stats": {
       "hp": 2929.8,
@@ -628,12 +644,6 @@
    }
   },
   "Kalista": {
-   "weights": {
-    "damage": 0.911,
-    "survival": 0.057,
-    "support": 0.0,
-    "utility": 0.032
-   },
    "styles": {
     "main": {
      "style": {
@@ -655,7 +665,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1836,
      "ehp": 3599,
@@ -677,6 +689,12 @@
       "W": 1.29,
       "E": 1.0,
       "R": 1.06
+     },
+     "weights": {
+      "damage": 0.911,
+      "survival": 0.057,
+      "support": 0.0,
+      "utility": 0.032
      },
      "stats": {
       "hp": 2208.3,
@@ -706,12 +724,6 @@
    }
   },
   "Kayle": {
-   "weights": {
-    "damage": 0.562,
-    "survival": 0.413,
-    "support": 0.0,
-    "utility": 0.026
-   },
    "styles": {
     "main": {
      "style": {
@@ -733,14 +745,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1183,
      "ehp": 3202,
      "support": 346,
      "counts": {
       "auto": 5.14,
-      "attack": 7.99,
+      "attack": 5.14,
       "onhit": 5.14,
       "ability_hit": 7.28,
       "cast": 8.08,
@@ -755,6 +769,12 @@
       "W": 1.8,
       "E": 2.85,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.562,
+      "survival": 0.413,
+      "support": 0.0,
+      "utility": 0.026
      },
      "stats": {
       "hp": 2077.4,
@@ -784,12 +804,6 @@
    }
   },
   "Caitlyn": {
-   "weights": {
-    "damage": 0.911,
-    "survival": 0.057,
-    "support": 0.0,
-    "utility": 0.032
-   },
    "styles": {
     "main": {
      "style": {
@@ -811,7 +825,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1733,
      "ehp": 3480,
@@ -833,6 +849,12 @@
       "W": 1.0,
       "E": 1.88,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.911,
+      "survival": 0.057,
+      "support": 0.0,
+      "utility": 0.032
      },
      "stats": {
       "hp": 2151.65,
@@ -862,12 +884,6 @@
    }
   },
   "Kennen": {
-   "weights": {
-    "damage": 0.729,
-    "survival": 0.238,
-    "support": 0.0,
-    "utility": 0.033
-   },
    "styles": {
     "main": {
      "style": {
@@ -889,14 +905,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 2015,
      "ehp": 4183,
      "support": 0,
      "counts": {
       "auto": 1.04,
-      "attack": 3.59,
+      "attack": 1.04,
       "onhit": 1.04,
       "ability_hit": 9.89,
       "cast": 9.89,
@@ -911,6 +929,12 @@
       "W": 2.55,
       "E": 2.71,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.729,
+      "survival": 0.238,
+      "support": 0.0,
+      "utility": 0.033
      },
      "stats": {
       "hp": 2053.1,
@@ -940,12 +964,6 @@
    }
   },
   "Kaisa": {
-   "weights": {
-    "damage": 0.701,
-    "survival": 0.274,
-    "support": 0.0,
-    "utility": 0.025
-   },
    "styles": {
     "main": {
      "style": {
@@ -967,7 +985,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1247,
      "ehp": 4597,
@@ -989,6 +1009,12 @@
       "W": 1.57,
       "E": 1.77,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.701,
+      "survival": 0.274,
+      "support": 0.0,
+      "utility": 0.025
      },
      "stats": {
       "hp": 2156.9,
@@ -1018,12 +1044,6 @@
    }
   },
   "Xayah": {
-   "weights": {
-    "damage": 0.723,
-    "survival": 0.26,
-    "support": 0.0,
-    "utility": 0.016
-   },
    "styles": {
     "main": {
      "style": {
@@ -1045,14 +1065,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1500,
      "ehp": 3479,
      "support": 0,
      "counts": {
       "auto": 6.76,
-      "attack": 8.35,
+      "attack": 6.76,
       "onhit": 6.76,
       "ability_hit": 3.11,
       "cast": 6.67,
@@ -1067,6 +1089,12 @@
       "W": 1.59,
       "E": 1.98,
       "R": 1.07
+     },
+     "weights": {
+      "damage": 0.723,
+      "survival": 0.26,
+      "support": 0.0,
+      "utility": 0.016
      },
      "stats": {
       "hp": 2201.65,
@@ -1096,12 +1124,6 @@
    }
   },
   "Gangplank": {
-   "weights": {
-    "damage": 0.562,
-    "survival": 0.413,
-    "support": 0.0,
-    "utility": 0.026
-   },
    "styles": {
     "main": {
      "style": {
@@ -1123,7 +1145,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1200,
      "ehp": 4192,
@@ -1145,6 +1169,12 @@
       "W": 1.75,
       "E": 1.0,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.562,
+      "survival": 0.413,
+      "support": 0.0,
+      "utility": 0.026
      },
      "stats": {
       "hp": 2278.3,
@@ -1174,12 +1204,6 @@
    }
   },
   "Galio": {
-   "weights": {
-    "damage": 0.26,
-    "survival": 0.723,
-    "support": 0.0,
-    "utility": 0.016
-   },
    "styles": {
     "main": {
      "style": {
@@ -1189,7 +1213,7 @@
        "魔防",
        "生命"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -1201,15 +1225,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 1723,
+     "damage": 1705,
      "ehp": 7337,
      "support": 0,
      "counts": {
-      "auto": 2.3,
-      "attack": 4.4,
-      "onhit": 2.3,
+      "auto": 1.72,
+      "attack": 1.72,
+      "onhit": 1.72,
       "ability_hit": 7.84,
       "cast": 6.84,
       "dash": 3.16,
@@ -1223,6 +1249,12 @@
       "W": 1.59,
       "E": 2.1,
       "R": 1.05
+     },
+     "weights": {
+      "damage": 0.26,
+      "survival": 0.723,
+      "support": 0.0,
+      "utility": 0.016
      },
      "stats": {
       "hp": 3579.7,
@@ -1252,12 +1284,6 @@
    }
   },
   "Nunu": {
-   "weights": {
-    "damage": 0.562,
-    "survival": 0.413,
-    "support": 0.0,
-    "utility": 0.026
-   },
    "styles": {
     "main": {
      "style": {
@@ -1267,7 +1293,7 @@
        "法術強度",
        "技能急速"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -1279,15 +1305,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 4863,
+     "damage": 4843,
      "ehp": 8297,
      "support": 0,
      "counts": {
-      "auto": 2.38,
-      "attack": 2.38,
-      "onhit": 2.38,
+      "auto": 1.79,
+      "attack": 1.79,
+      "onhit": 1.79,
       "ability_hit": 8.27,
       "cast": 7.27,
       "dash": 0.0,
@@ -1301,6 +1329,12 @@
       "W": 1.86,
       "E": 2.09,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.562,
+      "survival": 0.413,
+      "support": 0.0,
+      "utility": 0.026
      },
      "stats": {
       "hp": 3195.5,
@@ -1330,12 +1364,6 @@
    }
   },
   "Zed": {
-   "weights": {
-    "damage": 0.928,
-    "survival": 0.046,
-    "support": 0.0,
-    "utility": 0.026
-   },
    "styles": {
     "main": {
      "style": {
@@ -1357,7 +1385,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1429,
      "ehp": 3580,
@@ -1379,6 +1409,12 @@
       "W": 1.71,
       "E": 4.43,
       "R": 1.11
+     },
+     "weights": {
+      "damage": 0.928,
+      "survival": 0.046,
+      "support": 0.0,
+      "utility": 0.026
      },
      "stats": {
       "hp": 2138.05,
@@ -1408,12 +1444,6 @@
    }
   },
   "Leblanc": {
-   "weights": {
-    "damage": 0.846,
-    "survival": 0.135,
-    "support": 0.0,
-    "utility": 0.019
-   },
    "styles": {
     "main": {
      "style": {
@@ -1435,7 +1465,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1936,
      "ehp": 3404,
@@ -1457,6 +1489,12 @@
       "W": 2.07,
       "E": 2.02,
       "R": 1.34
+     },
+     "weights": {
+      "damage": 0.846,
+      "survival": 0.135,
+      "support": 0.0,
+      "utility": 0.019
      },
      "stats": {
       "hp": 2180.6,
@@ -1486,12 +1524,6 @@
    }
   },
   "Khazix": {
-   "weights": {
-    "damage": 0.816,
-    "survival": 0.161,
-    "support": 0.0,
-    "utility": 0.023
-   },
    "styles": {
     "main": {
      "style": {
@@ -1513,7 +1545,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 168,
      "ehp": 3982,
@@ -1535,6 +1569,12 @@
       "W": 2.33,
       "E": 1.86,
       "R": 1.14
+     },
+     "weights": {
+      "damage": 0.816,
+      "survival": 0.161,
+      "support": 0.0,
+      "utility": 0.023
      },
      "stats": {
       "hp": 2127.05,
@@ -1564,12 +1604,6 @@
    }
   },
   "KSante": {
-   "weights": {
-    "damage": 0.491,
-    "survival": 0.491,
-    "support": 0.0,
-    "utility": 0.017
-   },
    "styles": {
     "main": {
      "style": {
@@ -1579,7 +1613,7 @@
        "護甲",
        "魔防"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -1591,15 +1625,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 619,
+     "damage": 593,
      "ehp": 8953,
      "support": 402,
      "counts": {
-      "auto": 2.86,
-      "attack": 2.86,
-      "onhit": 2.86,
+      "auto": 2.14,
+      "attack": 2.14,
+      "onhit": 2.14,
       "ability_hit": 6.4,
       "cast": 8.44,
       "dash": 4.92,
@@ -1613,6 +1649,12 @@
       "W": 1.8,
       "E": 2.04,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.491,
+      "survival": 0.491,
+      "support": 0.0,
+      "utility": 0.017
      },
      "stats": {
       "hp": 3539.0,
@@ -1642,12 +1684,6 @@
    }
   },
   "Karthus": {
-   "weights": {
-    "damage": 0.941,
-    "survival": 0.038,
-    "support": 0.0,
-    "utility": 0.021
-   },
    "styles": {
     "main": {
      "style": {
@@ -1669,7 +1705,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 694,
      "ehp": 3522,
@@ -1691,6 +1729,12 @@
       "W": 1.8,
       "E": 1.0,
       "R": 1.07
+     },
+     "weights": {
+      "damage": 0.941,
+      "survival": 0.038,
+      "support": 0.0,
+      "utility": 0.021
      },
      "stats": {
       "hp": 2224.5,
@@ -1720,12 +1764,6 @@
    }
   },
   "Katarina": {
-   "weights": {
-    "damage": 0.878,
-    "survival": 0.098,
-    "support": 0.0,
-    "utility": 0.024
-   },
    "styles": {
     "main": {
      "style": {
@@ -1749,7 +1787,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 2666,
      "ehp": 3809,
@@ -1771,6 +1811,12 @@
       "W": 2.7,
       "E": 2.8,
       "R": 2.46
+     },
+     "weights": {
+      "damage": 0.878,
+      "survival": 0.098,
+      "support": 0.0,
+      "utility": 0.024
      },
      "stats": {
       "hp": 2254.6,
@@ -1818,7 +1864,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 3265,
      "ehp": 3809,
@@ -1840,6 +1888,12 @@
       "W": 2.62,
       "E": 2.69,
       "R": 2.44
+     },
+     "weights": {
+      "damage": 0.878,
+      "survival": 0.098,
+      "support": 0.0,
+      "utility": 0.024
      },
      "stats": {
       "hp": 2254.6,
@@ -1869,12 +1923,6 @@
    }
   },
   "Karma": {
-   "weights": {
-    "damage": 0.326,
-    "survival": 0.25,
-    "support": 0.413,
-    "utility": 0.011
-   },
    "styles": {
     "main": {
      "style": {
@@ -1896,7 +1944,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1116,
      "ehp": 4061,
@@ -1918,6 +1968,12 @@
       "W": 2.0,
       "E": 2.41,
       "R": 1.32
+     },
+     "weights": {
+      "damage": 0.326,
+      "survival": 0.25,
+      "support": 0.413,
+      "utility": 0.011
      },
      "stats": {
       "hp": 2223.55,
@@ -1947,12 +2003,6 @@
    }
   },
   "Cassiopeia": {
-   "weights": {
-    "damage": 0.878,
-    "survival": 0.098,
-    "support": 0.0,
-    "utility": 0.024
-   },
    "styles": {
     "main": {
      "style": {
@@ -1974,7 +2024,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1341,
      "ehp": 5254,
@@ -1996,6 +2048,12 @@
       "W": 1.67,
       "E": 1.0,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.878,
+      "survival": 0.098,
+      "support": 0.0,
+      "utility": 0.024
      },
      "stats": {
       "hp": 3283.1,
@@ -2025,12 +2083,6 @@
    }
   },
   "Kassadin": {
-   "weights": {
-    "damage": 0.701,
-    "survival": 0.274,
-    "support": 0.0,
-    "utility": 0.025
-   },
    "styles": {
     "main": {
      "style": {
@@ -2052,14 +2104,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1359,
      "ehp": 5681,
      "support": 0,
      "counts": {
       "auto": 1.4,
-      "attack": 4.12,
+      "attack": 1.4,
       "onhit": 1.4,
       "ability_hit": 6.98,
       "cast": 11.41,
@@ -2074,6 +2128,12 @@
       "W": 2.71,
       "E": 1.67,
       "R": 4.43
+     },
+     "weights": {
+      "damage": 0.701,
+      "survival": 0.274,
+      "support": 0.0,
+      "utility": 0.025
      },
      "stats": {
       "hp": 2283.35,
@@ -2103,12 +2163,6 @@
    }
   },
   "Camille": {
-   "weights": {
-    "damage": 0.626,
-    "survival": 0.352,
-    "support": 0.0,
-    "utility": 0.022
-   },
    "styles": {
     "main": {
      "style": {
@@ -2130,14 +2184,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 969,
      "ehp": 6010,
      "support": 0,
      "counts": {
       "auto": 2.33,
-      "attack": 5.33,
+      "attack": 2.33,
       "onhit": 2.33,
       "ability_hit": 8.17,
       "cast": 8.17,
@@ -2152,6 +2208,12 @@
       "W": 2.14,
       "E": 1.92,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.626,
+      "survival": 0.352,
+      "support": 0.0,
+      "utility": 0.022
      },
      "stats": {
       "hp": 3334.05,
@@ -2181,12 +2243,6 @@
    }
   },
   "Aatrox": {
-   "weights": {
-    "damage": 0.778,
-    "survival": 0.195,
-    "support": 0.0,
-    "utility": 0.027
-   },
    "styles": {
     "main": {
      "style": {
@@ -2208,7 +2264,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 922,
      "ehp": 6036,
@@ -2230,6 +2288,12 @@
       "W": 1.89,
       "E": 3.0,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.778,
+      "survival": 0.195,
+      "support": 0.0,
+      "utility": 0.027
      },
      "stats": {
       "hp": 3498.3,
@@ -2259,12 +2323,6 @@
    }
   },
   "Gragas": {
-   "weights": {
-    "damage": 0.413,
-    "survival": 0.562,
-    "support": 0.0,
-    "utility": 0.026
-   },
    "styles": {
     "main": {
      "style": {
@@ -2286,14 +2344,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 2234,
      "ehp": 6075,
      "support": 0,
      "counts": {
       "auto": 2.14,
-      "attack": 5.54,
+      "attack": 2.14,
       "onhit": 2.14,
       "ability_hit": 9.22,
       "cast": 9.22,
@@ -2308,6 +2368,12 @@
       "W": 3.4,
       "E": 1.96,
       "R": 1.14
+     },
+     "weights": {
+      "damage": 0.413,
+      "survival": 0.562,
+      "support": 0.0,
+      "utility": 0.026
      },
      "stats": {
       "hp": 3499.25,
@@ -2337,12 +2403,6 @@
    }
   },
   "Skarner": {
-   "weights": {
-    "damage": 0.425,
-    "survival": 0.555,
-    "support": 0.0,
-    "utility": 0.02
-   },
    "styles": {
     "main": {
      "style": {
@@ -2352,7 +2412,7 @@
        "護甲",
        "技能急速"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -2364,15 +2424,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 583,
+     "damage": 566,
      "ehp": 7156,
      "support": 0,
      "counts": {
-      "auto": 1.96,
-      "attack": 5.78,
-      "onhit": 1.96,
+      "auto": 1.47,
+      "attack": 1.47,
+      "onhit": 1.47,
       "ability_hit": 9.28,
       "cast": 9.28,
       "dash": 1.63,
@@ -2386,6 +2448,12 @@
       "W": 2.71,
       "E": 1.63,
       "R": 1.11
+     },
+     "weights": {
+      "damage": 0.425,
+      "survival": 0.555,
+      "support": 0.0,
+      "utility": 0.02
      },
      "stats": {
       "hp": 3434.5,
@@ -2415,12 +2483,6 @@
    }
   },
   "Sejuani": {
-   "weights": {
-    "damage": 0.413,
-    "survival": 0.562,
-    "support": 0.0,
-    "utility": 0.026
-   },
    "styles": {
     "main": {
      "style": {
@@ -2430,7 +2492,7 @@
        "護甲",
        "魔防"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -2442,15 +2504,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 728,
+     "damage": 697,
      "ehp": 8837,
      "support": 0,
      "counts": {
-      "auto": 3.38,
-      "attack": 3.38,
-      "onhit": 3.38,
+      "auto": 2.53,
+      "attack": 2.53,
+      "onhit": 2.53,
       "ability_hit": 6.2,
       "cast": 6.2,
       "dash": 1.65,
@@ -2464,6 +2528,12 @@
       "W": 2.47,
       "E": 1.0,
       "R": 1.08
+     },
+     "weights": {
+      "damage": 0.413,
+      "survival": 0.562,
+      "support": 0.0,
+      "utility": 0.026
      },
      "stats": {
       "hp": 3478.3,
@@ -2493,12 +2563,6 @@
    }
   },
   "Smolder": {
-   "weights": {
-    "damage": 0.911,
-    "survival": 0.057,
-    "support": 0.0,
-    "utility": 0.032
-   },
    "styles": {
     "main": {
      "style": {
@@ -2520,7 +2584,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1245,
      "ehp": 3698,
@@ -2542,6 +2608,12 @@
       "W": 2.09,
       "E": 1.67,
       "R": 1.11
+     },
+     "weights": {
+      "damage": 0.911,
+      "survival": 0.057,
+      "support": 0.0,
+      "utility": 0.032
      },
      "stats": {
       "hp": 2070.0,
@@ -2571,12 +2643,6 @@
    }
   },
   "Jinx": {
-   "weights": {
-    "damage": 0.928,
-    "survival": 0.046,
-    "support": 0.0,
-    "utility": 0.026
-   },
    "styles": {
     "main": {
      "style": {
@@ -2610,15 +2676,19 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {
+       "W": 0.6
+      }
      },
-     "damage": 2009,
+     "damage": 1978,
      "ehp": 3424,
      "support": 0,
      "counts": {
-      "auto": 6.09,
-      "attack": 6.09,
-      "onhit": 6.09,
+      "auto": 5.89,
+      "attack": 5.89,
+      "onhit": 5.89,
       "ability_hit": 4.23,
       "cast": 4.23,
       "dash": 0.0,
@@ -2632,6 +2702,12 @@
       "W": 1.1,
       "E": 0.99,
       "R": 1.14
+     },
+     "weights": {
+      "damage": 0.928,
+      "survival": 0.046,
+      "support": 0.0,
+      "utility": 0.026
      },
      "stats": {
       "hp": 2159.75,
@@ -2661,12 +2737,6 @@
    }
   },
   "Gnar": {
-   "weights": {
-    "damage": 0.569,
-    "survival": 0.395,
-    "support": 0.0,
-    "utility": 0.036
-   },
    "styles": {
     "main": {
      "style": {
@@ -2688,14 +2758,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1264,
      "ehp": 4759,
      "support": 0,
      "counts": {
       "auto": 3.04,
-      "attack": 5.75,
+      "attack": 3.04,
       "onhit": 3.04,
       "ability_hit": 7.79,
       "cast": 7.79,
@@ -2710,6 +2782,12 @@
       "W": 2.71,
       "E": 1.83,
       "R": 1.2
+     },
+     "weights": {
+      "damage": 0.569,
+      "survival": 0.395,
+      "support": 0.0,
+      "utility": 0.036
      },
      "stats": {
       "hp": 3005.05,
@@ -2739,12 +2817,6 @@
    }
   },
   "JarvanIV": {
-   "weights": {
-    "damage": 0.352,
-    "survival": 0.626,
-    "support": 0.0,
-    "utility": 0.022
-   },
    "styles": {
     "main": {
      "style": {
@@ -2766,7 +2838,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1355,
      "ehp": 3713,
@@ -2788,6 +2862,12 @@
       "W": 2.33,
       "E": 2.14,
       "R": 1.11
+     },
+     "weights": {
+      "damage": 0.352,
+      "survival": 0.626,
+      "support": 0.0,
+      "utility": 0.022
      },
      "stats": {
       "hp": 2178.8,
@@ -2817,12 +2897,6 @@
    }
   },
   "Twitch": {
-   "weights": {
-    "damage": 0.928,
-    "survival": 0.046,
-    "support": 0.0,
-    "utility": 0.026
-   },
    "styles": {
     "main": {
      "style": {
@@ -2844,7 +2918,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1333,
      "ehp": 3321,
@@ -2866,6 +2942,12 @@
       "W": 1.88,
       "E": 1.98,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.928,
+      "survival": 0.046,
+      "support": 0.0,
+      "utility": 0.026
      },
      "stats": {
       "hp": 2103.1,
@@ -2895,12 +2977,6 @@
    }
   },
   "Akshan": {
-   "weights": {
-    "damage": 0.0,
-    "survival": 0.0,
-    "support": 0.0,
-    "utility": 1.0
-   },
    "styles": {
     "main": {
      "style": {
@@ -2922,7 +2998,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1583,
      "ehp": 3878,
@@ -2944,6 +3022,12 @@
       "W": 2.47,
       "E": 1.65,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.0,
+      "survival": 0.0,
+      "support": 0.0,
+      "utility": 1.0
      },
      "stats": {
       "hp": 2181.65,
@@ -2973,12 +3057,6 @@
    }
   },
   "Ivern": {
-   "weights": {
-    "damage": 0.312,
-    "survival": 0.159,
-    "support": 0.515,
-    "utility": 0.014
-   },
    "styles": {
     "main": {
      "style": {
@@ -3000,7 +3078,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1166,
      "ehp": 3411,
@@ -3022,6 +3102,12 @@
       "W": 1.0,
       "E": 2.5,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.312,
+      "survival": 0.159,
+      "support": 0.515,
+      "utility": 0.014
      },
      "stats": {
       "hp": 2114.05,
@@ -3051,12 +3137,6 @@
    }
   },
   "Taliyah": {
-   "weights": {
-    "damage": 0.555,
-    "survival": 0.425,
-    "support": 0.0,
-    "utility": 0.02
-   },
    "styles": {
     "main": {
      "style": {
@@ -3078,7 +3158,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1482,
      "ehp": 3255,
@@ -3100,6 +3182,12 @@
       "W": 2.26,
       "E": 1.86,
       "R": 1.08
+     },
+     "weights": {
+      "damage": 0.555,
+      "survival": 0.425,
+      "support": 0.0,
+      "utility": 0.02
      },
      "stats": {
       "hp": 2088.8,
@@ -3129,12 +3217,6 @@
    }
   },
   "Taric": {
-   "weights": {
-    "damage": 0.145,
-    "survival": 0.372,
-    "support": 0.47,
-    "utility": 0.013
-   },
    "styles": {
     "main": {
      "style": {
@@ -3156,14 +3238,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 361,
      "ehp": 6950,
      "support": 643,
      "counts": {
       "auto": 3.31,
-      "attack": 8.31,
+      "attack": 3.31,
       "onhit": 3.31,
       "ability_hit": 2.92,
       "cast": 9.8,
@@ -3178,6 +3262,12 @@
       "W": 1.8,
       "E": 1.92,
       "R": 1.08
+     },
+     "weights": {
+      "damage": 0.145,
+      "survival": 0.372,
+      "support": 0.47,
+      "utility": 0.013
      },
      "stats": {
       "hp": 3329.05,
@@ -3207,12 +3297,6 @@
    }
   },
   "Talon": {
-   "weights": {
-    "damage": 0.878,
-    "survival": 0.098,
-    "support": 0.0,
-    "utility": 0.024
-   },
    "styles": {
     "main": {
      "style": {
@@ -3234,7 +3318,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1425,
      "ehp": 3827,
@@ -3256,6 +3342,12 @@
       "W": 2.6,
       "E": 1.0,
       "R": 1.15
+     },
+     "weights": {
+      "damage": 0.878,
+      "survival": 0.098,
+      "support": 0.0,
+      "utility": 0.024
      },
      "stats": {
       "hp": 2251.55,
@@ -3285,12 +3377,6 @@
    }
   },
   "Malphite": {
-   "weights": {
-    "damage": 0.371,
-    "survival": 0.612,
-    "support": 0.0,
-    "utility": 0.017
-   },
    "styles": {
     "main": {
      "style": {
@@ -3300,7 +3386,7 @@
        "生命",
        "技能急速"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -3312,15 +3398,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 913,
+     "damage": 889,
      "ehp": 7227,
      "support": 0,
      "counts": {
-      "auto": 2.73,
-      "attack": 5.14,
-      "onhit": 2.73,
+      "auto": 2.05,
+      "attack": 2.05,
+      "onhit": 2.05,
       "ability_hit": 8.73,
       "cast": 8.73,
       "dash": 1.1,
@@ -3334,6 +3422,12 @@
       "W": 2.41,
       "E": 2.71,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.371,
+      "survival": 0.612,
+      "support": 0.0,
+      "utility": 0.017
      },
      "stats": {
       "hp": 3403.8,
@@ -3359,16 +3453,90 @@
       "ms_pct": 0.0,
       "range": 125
      }
+    },
+    "ap": {
+     "style": {
+      "name": "法術",
+      "stack": [
+       "法術強度",
+       "技能急速",
+       "生命"
+      ],
+      "autos": 0.45,
+      "resets": 0.0,
+      "onhit_hits": {},
+      "use": {},
+      "extra": {},
+      "auto_mult": 1.0,
+      "buff": {},
+      "per_hit": {},
+      "cd_per_attack": {},
+      "cd_as": {},
+      "crit_mult": 1.0,
+      "untargetable": {},
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {},
+      "ratings": {
+       "magic": 8,
+       "defense": 6
+      }
+     },
+     "damage": 1529,
+     "ehp": 5866,
+     "support": 0,
+     "counts": {
+      "auto": 2.05,
+      "attack": 2.05,
+      "onhit": 2.05,
+      "ability_hit": 8.73,
+      "cast": 8.73,
+      "dash": 1.1,
+      "cc": 1.1,
+      "takedown": 1.5,
+      "ult": 1.1
+     },
+     "casts": {
+      "P": 1.0,
+      "Q": 2.5,
+      "W": 2.41,
+      "E": 2.71,
+      "R": 1.1
+     },
+     "weights": {
+      "damage": 0.626,
+      "survival": 0.352,
+      "support": 0.0,
+      "utility": 0.022
+     },
+     "stats": {
+      "hp": 3403.8,
+      "bonus_hp": 1600.0,
+      "base_ad": 62.0,
+      "bonus_ad": 0,
+      "ap": 250.0,
+      "base_as": 0.74,
+      "as": 0.37,
+      "crit": 0,
+      "haste": 50.0,
+      "ult_haste": 0.0,
+      "basic_haste": 0.0,
+      "armor": 94.2,
+      "mr": 50.45,
+      "ms": 335,
+      "pen": 0,
+      "omnivamp": 0.0,
+      "heal_power": 0.0,
+      "heal_received": 0.0,
+      "ad_pct": 0.0,
+      "hp_pct": 0.0,
+      "ms_pct": 0.0,
+      "range": 125
+     }
     }
    }
   },
   "Nocturne": {
-   "weights": {
-    "damage": 0.748,
-    "survival": 0.231,
-    "support": 0.0,
-    "utility": 0.021
-   },
    "styles": {
     "main": {
      "style": {
@@ -3390,7 +3558,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1340,
      "ehp": 5682,
@@ -3412,6 +3582,12 @@
       "W": 1.86,
       "E": 2.0,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.748,
+      "survival": 0.231,
+      "support": 0.0,
+      "utility": 0.021
      },
      "stats": {
       "hp": 3433.55,
@@ -3441,12 +3617,6 @@
    }
   },
   "Nidalee": {
-   "weights": {
-    "damage": 0.729,
-    "survival": 0.238,
-    "support": 0.0,
-    "utility": 0.033
-   },
    "styles": {
     "main": {
      "style": {
@@ -3468,14 +3638,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1625,
      "ehp": 5785,
      "support": 0,
      "counts": {
       "auto": 1.53,
-      "attack": 4.53,
+      "attack": 1.53,
       "onhit": 1.53,
       "ability_hit": 5.2,
       "cast": 12.2,
@@ -3490,6 +3662,12 @@
       "W": 2.2,
       "E": 2.0,
       "R": 5.0
+     },
+     "weights": {
+      "damage": 0.729,
+      "survival": 0.238,
+      "support": 0.0,
+      "utility": 0.033
      },
      "stats": {
       "hp": 2203.55,
@@ -3519,12 +3697,6 @@
    }
   },
   "Orianna": {
-   "weights": {
-    "damage": 0.878,
-    "survival": 0.098,
-    "support": 0.0,
-    "utility": 0.024
-   },
    "styles": {
     "main": {
      "style": {
@@ -3546,7 +3718,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 2198,
      "ehp": 4295,
@@ -3568,6 +3742,12 @@
       "W": 2.71,
       "E": 2.33,
       "R": 1.13
+     },
+     "weights": {
+      "damage": 0.878,
+      "survival": 0.098,
+      "support": 0.0,
+      "utility": 0.024
      },
      "stats": {
       "hp": 2169.5,
@@ -3597,12 +3777,6 @@
    }
   },
   "MissFortune": {
-   "weights": {
-    "damage": 0.911,
-    "survival": 0.057,
-    "support": 0.0,
-    "utility": 0.032
-   },
    "styles": {
     "main": {
      "style": {
@@ -3624,7 +3798,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 2711,
      "ehp": 3327,
@@ -3646,6 +3822,12 @@
       "W": 1.73,
       "E": 1.59,
       "R": 1.08
+     },
+     "weights": {
+      "damage": 0.911,
+      "survival": 0.057,
+      "support": 0.0,
+      "utility": 0.032
      },
      "stats": {
       "hp": 2120.0,
@@ -3675,12 +3857,6 @@
    }
   },
   "Neeko": {
-   "weights": {
-    "damage": 0.961,
-    "survival": 0.012,
-    "support": 0.0,
-    "utility": 0.027
-   },
    "styles": {
     "main": {
      "style": {
@@ -3702,14 +3878,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1820,
      "ehp": 3461,
      "support": 0,
      "counts": {
       "auto": 1.27,
-      "attack": 3.19,
+      "attack": 1.27,
       "onhit": 1.27,
       "ability_hit": 7.78,
       "cast": 7.78,
@@ -3724,6 +3902,12 @@
       "W": 1.92,
       "E": 2.14,
       "R": 1.11
+     },
+     "weights": {
+      "damage": 0.961,
+      "survival": 0.012,
+      "support": 0.0,
+      "utility": 0.027
      },
      "stats": {
       "hp": 2148.8,
@@ -3753,12 +3937,6 @@
    }
   },
   "Senna": {
-   "weights": {
-    "damage": 0.36,
-    "survival": 0.029,
-    "support": 0.594,
-    "utility": 0.017
-   },
    "styles": {
     "main": {
      "style": {
@@ -3780,7 +3958,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1403,
      "ehp": 2989,
@@ -3802,6 +3982,12 @@
       "W": 2.09,
       "E": 1.56,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.36,
+      "survival": 0.029,
+      "support": 0.594,
+      "utility": 0.017
      },
      "stats": {
       "hp": 1904.55,
@@ -3831,12 +4017,6 @@
    }
   },
   "Qiyana": {
-   "weights": {
-    "damage": 0.719,
-    "survival": 0.18,
-    "support": 0.0,
-    "utility": 0.101
-   },
    "styles": {
     "main": {
      "style": {
@@ -3858,7 +4038,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1286,
      "ehp": 3764,
@@ -3880,6 +4062,12 @@
       "W": 2.71,
       "E": 2.5,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.719,
+      "survival": 0.18,
+      "support": 0.0,
+      "utility": 0.101
      },
      "stats": {
       "hp": 2249.25,
@@ -3909,12 +4097,6 @@
    }
   },
   "Velkoz": {
-   "weights": {
-    "damage": 0.941,
-    "survival": 0.038,
-    "support": 0.0,
-    "utility": 0.021
-   },
    "styles": {
     "main": {
      "style": {
@@ -3936,7 +4118,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1463,
      "ehp": 3347,
@@ -3958,6 +4142,12 @@
       "W": 1.0,
       "E": 2.14,
       "R": 1.13
+     },
+     "weights": {
+      "damage": 0.941,
+      "survival": 0.038,
+      "support": 0.0,
+      "utility": 0.021
      },
      "stats": {
       "hp": 2106.9,
@@ -3987,12 +4177,6 @@
    }
   },
   "Nami": {
-   "weights": {
-    "damage": 0.347,
-    "survival": 0.064,
-    "support": 0.573,
-    "utility": 0.016
-   },
    "styles": {
     "main": {
      "style": {
@@ -4014,7 +4198,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1264,
      "ehp": 3176,
@@ -4036,6 +4222,12 @@
       "W": 2.2,
       "E": 2.09,
       "R": 1.11
+     },
+     "weights": {
+      "damage": 0.347,
+      "survival": 0.064,
+      "support": 0.573,
+      "utility": 0.016
      },
      "stats": {
       "hp": 1923.6,
@@ -4065,12 +4257,6 @@
    }
   },
   "Naafiri": {
-   "weights": {
-    "damage": 0.748,
-    "survival": 0.231,
-    "support": 0.0,
-    "utility": 0.021
-   },
    "styles": {
     "main": {
      "style": {
@@ -4092,7 +4278,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1344,
      "ehp": 4157,
@@ -4114,6 +4302,12 @@
       "W": 1.6,
       "E": 2.5,
       "R": 1.13
+     },
+     "weights": {
+      "damage": 0.748,
+      "survival": 0.231,
+      "support": 0.0,
+      "utility": 0.021
      },
      "stats": {
       "hp": 2159.75,
@@ -4143,12 +4337,6 @@
    }
   },
   "Zeri": {
-   "weights": {
-    "damage": 0.701,
-    "survival": 0.274,
-    "support": 0.0,
-    "utility": 0.025
-   },
    "styles": {
     "main": {
      "style": {
@@ -4170,7 +4358,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1804,
      "ehp": 3472,
@@ -4192,6 +4382,12 @@
       "W": 1.98,
       "E": 1.45,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.701,
+      "survival": 0.274,
+      "support": 0.0,
+      "utility": 0.025
      },
      "stats": {
       "hp": 2204.5,
@@ -4221,12 +4417,6 @@
    }
   },
   "Annie": {
-   "weights": {
-    "damage": 0.52,
-    "survival": 0.047,
-    "support": 0.421,
-    "utility": 0.012
-   },
    "styles": {
     "main": {
      "style": {
@@ -4248,7 +4438,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 2181,
      "ehp": 3128,
@@ -4270,6 +4462,12 @@
       "W": 2.71,
       "E": 2.2,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.52,
+      "survival": 0.047,
+      "support": 0.421,
+      "utility": 0.012
      },
      "stats": {
       "hp": 2011.2,
@@ -4299,12 +4497,6 @@
    }
   },
   "Ambessa": {
-   "weights": {
-    "damage": 0.928,
-    "survival": 0.046,
-    "support": 0.0,
-    "utility": 0.026
-   },
    "styles": {
     "main": {
      "style": {
@@ -4326,7 +4518,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1227,
      "ehp": 5892,
@@ -4348,6 +4542,12 @@
       "W": 1.8,
       "E": 2.2,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.928,
+      "survival": 0.046,
+      "support": 0.0,
+      "utility": 0.026
      },
      "stats": {
       "hp": 3434.5,
@@ -4377,12 +4577,6 @@
    }
   },
   "KogMaw": {
-   "weights": {
-    "damage": 0.911,
-    "survival": 0.057,
-    "support": 0.0,
-    "utility": 0.032
-   },
    "styles": {
     "main": {
      "style": {
@@ -4404,7 +4598,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 2142,
      "ehp": 3367,
@@ -4426,6 +4622,12 @@
       "W": 1.52,
       "E": 1.73,
       "R": 1.0
+     },
+     "weights": {
+      "damage": 0.911,
+      "survival": 0.057,
+      "support": 0.0,
+      "utility": 0.032
      },
      "stats": {
       "hp": 2119.05,
@@ -4455,12 +4657,6 @@
    }
   },
   "Yunara": {
-   "weights": {
-    "damage": 0.928,
-    "survival": 0.046,
-    "support": 0.0,
-    "utility": 0.026
-   },
    "styles": {
     "main": {
      "style": {
@@ -4482,7 +4678,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1464,
      "ehp": 3492,
@@ -4504,6 +4702,12 @@
       "W": 1.88,
       "E": 1.98,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.928,
+      "survival": 0.046,
+      "support": 0.0,
+      "utility": 0.026
      },
      "stats": {
       "hp": 2194.5,
@@ -4533,12 +4737,6 @@
    }
   },
   "Tristana": {
-   "weights": {
-    "damage": 0.878,
-    "survival": 0.098,
-    "support": 0.0,
-    "utility": 0.024
-   },
    "styles": {
     "main": {
      "style": {
@@ -4560,7 +4758,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1542,
      "ehp": 3439,
@@ -4582,6 +4782,12 @@
       "W": 1.55,
       "E": 1.61,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.878,
+      "survival": 0.098,
+      "support": 0.0,
+      "utility": 0.024
      },
      "stats": {
       "hp": 2156.9,
@@ -4611,12 +4817,6 @@
    }
   },
   "Bard": {
-   "weights": {
-    "damage": 0.201,
-    "survival": 0.129,
-    "support": 0.652,
-    "utility": 0.018
-   },
    "styles": {
     "main": {
      "style": {
@@ -4638,7 +4838,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 604,
      "ehp": 3536,
@@ -4660,6 +4862,12 @@
       "W": 1.0,
       "E": 1.69,
       "R": 1.13
+     },
+     "weights": {
+      "damage": 0.201,
+      "survival": 0.129,
+      "support": 0.652,
+      "utility": 0.018
      },
      "stats": {
       "hp": 2157.85,
@@ -4689,12 +4897,6 @@
    }
   },
   "Briar": {
-   "weights": {
-    "damage": 0.748,
-    "survival": 0.231,
-    "support": 0.0,
-    "utility": 0.021
-   },
    "styles": {
     "main": {
      "style": {
@@ -4716,14 +4918,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1592,
      "ehp": 5448,
      "support": 0,
      "counts": {
       "auto": 2.42,
-      "attack": 4.51,
+      "attack": 2.42,
       "onhit": 2.42,
       "ability_hit": 7.16,
       "cast": 7.16,
@@ -4738,6 +4942,12 @@
       "W": 2.09,
       "E": 1.75,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.748,
+      "survival": 0.231,
+      "support": 0.0,
+      "utility": 0.021
      },
      "stats": {
       "hp": 3265.25,
@@ -4767,12 +4977,6 @@
    }
   },
   "Brand": {
-   "weights": {
-    "damage": 0.928,
-    "survival": 0.046,
-    "support": 0.0,
-    "utility": 0.026
-   },
    "styles": {
     "main": {
      "style": {
@@ -4794,7 +4998,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1837,
      "ehp": 3330,
@@ -4816,6 +5022,12 @@
       "W": 2.41,
       "E": 2.2,
       "R": 1.13
+     },
+     "weights": {
+      "damage": 0.928,
+      "survival": 0.046,
+      "support": 0.0,
+      "utility": 0.026
      },
      "stats": {
       "hp": 2119.75,
@@ -4845,12 +5057,6 @@
    }
   },
   "Braum": {
-   "weights": {
-    "damage": 0.161,
-    "survival": 0.816,
-    "support": 0.0,
-    "utility": 0.023
-   },
    "styles": {
     "main": {
      "style": {
@@ -4860,7 +5066,7 @@
        "護甲",
        "技能急速"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -4872,15 +5078,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 590,
+     "damage": 564,
      "ehp": 7289,
      "support": 0,
      "counts": {
-      "auto": 3.43,
-      "attack": 5.63,
-      "onhit": 3.43,
+      "auto": 2.57,
+      "attack": 2.57,
+      "onhit": 2.57,
       "ability_hit": 3.95,
       "cast": 8.48,
       "dash": 2.33,
@@ -4894,6 +5102,12 @@
       "W": 2.33,
       "E": 2.2,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.161,
+      "survival": 0.816,
+      "support": 0.0,
+      "utility": 0.023
      },
      "stats": {
       "hp": 3436.4,
@@ -4923,12 +5137,6 @@
    }
   },
   "Blitzcrank": {
-   "weights": {
-    "damage": 0.274,
-    "survival": 0.701,
-    "support": 0.0,
-    "utility": 0.025
-   },
    "styles": {
     "main": {
      "style": {
@@ -4938,7 +5146,7 @@
        "技能急速",
        "跑速"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -4950,15 +5158,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 835,
+     "damage": 815,
      "ehp": 5818,
      "support": 0,
      "counts": {
-      "auto": 2.33,
-      "attack": 5.51,
-      "onhit": 2.33,
+      "auto": 1.75,
+      "attack": 1.75,
+      "onhit": 1.75,
       "ability_hit": 6.19,
       "cast": 7.99,
       "dash": 0.0,
@@ -4972,6 +5182,12 @@
       "W": 1.8,
       "E": 3.18,
       "R": 1.3
+     },
+     "weights": {
+      "damage": 0.274,
+      "survival": 0.701,
+      "support": 0.0,
+      "utility": 0.025
      },
      "stats": {
       "hp": 3393.55,
@@ -5001,12 +5217,6 @@
    }
   },
   "Ziggs": {
-   "weights": {
-    "damage": 0.816,
-    "survival": 0.161,
-    "support": 0.0,
-    "utility": 0.023
-   },
    "styles": {
     "main": {
      "style": {
@@ -5028,7 +5238,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 2289,
      "ehp": 3431,
@@ -5050,6 +5262,12 @@
       "W": 1.86,
       "E": 1.75,
       "R": 1.13
+     },
+     "weights": {
+      "damage": 0.816,
+      "survival": 0.161,
+      "support": 0.0,
+      "utility": 0.023
      },
      "stats": {
       "hp": 2166.7,
@@ -5079,12 +5297,6 @@
    }
   },
   "Shyvana": {
-   "weights": {
-    "damage": 0.626,
-    "survival": 0.352,
-    "support": 0.0,
-    "utility": 0.022
-   },
    "styles": {
     "main": {
      "style": {
@@ -5106,14 +5318,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1935,
      "ehp": 5913,
      "support": 0,
      "counts": {
       "auto": 3.88,
-      "attack": 6.14,
+      "attack": 3.88,
       "onhit": 3.88,
       "ability_hit": 7.05,
       "cast": 7.05,
@@ -5128,6 +5342,12 @@
       "W": 1.82,
       "E": 1.98,
       "R": 1.0
+     },
+     "weights": {
+      "damage": 0.626,
+      "survival": 0.352,
+      "support": 0.0,
+      "utility": 0.022
      },
      "stats": {
       "hp": 3265.25,
@@ -5157,12 +5377,6 @@
    }
   },
   "Sivir": {
-   "weights": {
-    "damage": 0.878,
-    "survival": 0.098,
-    "support": 0.0,
-    "utility": 0.024
-   },
    "styles": {
     "main": {
      "style": {
@@ -5184,14 +5398,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1183,
      "ehp": 3722,
      "support": 0,
      "counts": {
       "auto": 6.89,
-      "attack": 8.62,
+      "attack": 6.89,
       "onhit": 6.89,
       "ability_hit": 1.73,
       "cast": 6.31,
@@ -5206,6 +5422,12 @@
       "W": 1.73,
       "E": 1.45,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.878,
+      "survival": 0.098,
+      "support": 0.0,
+      "utility": 0.024
      },
      "stats": {
       "hp": 2138.8,
@@ -5235,12 +5457,6 @@
    }
   },
   "Corki": {
-   "weights": {
-    "damage": 0.85,
-    "survival": 0.12,
-    "support": 0.0,
-    "utility": 0.03
-   },
    "styles": {
     "main": {
      "style": {
@@ -5262,7 +5478,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 4120,
      "ehp": 3382,
@@ -5284,6 +5502,12 @@
       "W": 1.63,
       "E": 1.73,
       "R": 5.4
+     },
+     "weights": {
+      "damage": 0.85,
+      "survival": 0.12,
+      "support": 0.0,
+      "utility": 0.03
      },
      "stats": {
       "hp": 2105.0,
@@ -5313,12 +5537,6 @@
    }
   },
   "Volibear": {
-   "weights": {
-    "damage": 0.489,
-    "survival": 0.489,
-    "support": 0.0,
-    "utility": 0.022
-   },
    "styles": {
     "main": {
      "style": {
@@ -5340,14 +5558,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1932,
      "ehp": 6912,
      "support": 0,
      "counts": {
       "auto": 2.12,
-      "attack": 4.27,
+      "attack": 2.12,
       "onhit": 2.12,
       "ability_hit": 9.38,
       "cast": 8.38,
@@ -5362,6 +5582,12 @@
       "W": 3.4,
       "E": 1.75,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.489,
+      "survival": 0.489,
+      "support": 0.0,
+      "utility": 0.022
      },
      "stats": {
       "hp": 3388.8,
@@ -5391,12 +5617,6 @@
    }
   },
   "Vladimir": {
-   "weights": {
-    "damage": 0.626,
-    "survival": 0.352,
-    "support": 0.0,
-    "utility": 0.022
-   },
    "styles": {
     "main": {
      "style": {
@@ -5418,7 +5638,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1969,
      "ehp": 6496,
@@ -5440,6 +5662,12 @@
       "W": 1.63,
       "E": 2.71,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.626,
+      "survival": 0.352,
+      "support": 0.0,
+      "utility": 0.022
      },
      "stats": {
       "hp": 3404.5,
@@ -5469,12 +5697,6 @@
    }
   },
   "MonkeyKing": {
-   "weights": {
-    "damage": 0.701,
-    "survival": 0.274,
-    "support": 0.0,
-    "utility": 0.025
-   },
    "styles": {
     "main": {
      "style": {
@@ -5496,14 +5718,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1250,
      "ehp": 3486,
      "support": 0,
      "counts": {
       "auto": 2.97,
-      "attack": 5.82,
+      "attack": 2.97,
       "onhit": 2.97,
       "ability_hit": 6.5,
       "cast": 8.14,
@@ -5518,6 +5742,12 @@
       "W": 1.63,
       "E": 2.55,
       "R": 1.11
+     },
+     "weights": {
+      "damage": 0.701,
+      "survival": 0.274,
+      "support": 0.0,
+      "utility": 0.025
      },
      "stats": {
       "hp": 2094.05,
@@ -5547,12 +5777,6 @@
    }
   },
   "Yuumi": {
-   "weights": {
-    "damage": 0.432,
-    "survival": 0.007,
-    "support": 0.546,
-    "utility": 0.015
-   },
    "styles": {
     "main": {
      "style": {
@@ -5574,7 +5798,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 692,
      "ehp": 2550,
@@ -5596,6 +5822,12 @@
       "W": 1.0,
       "E": 2.2,
       "R": 1.11
+     },
+     "weights": {
+      "damage": 0.432,
+      "survival": 0.007,
+      "support": 0.546,
+      "utility": 0.015
      },
      "stats": {
       "hp": 1655.55,
@@ -5625,12 +5857,6 @@
    }
   },
   "Shen": {
-   "weights": {
-    "damage": 0.098,
-    "survival": 0.878,
-    "support": 0.0,
-    "utility": 0.024
-   },
    "styles": {
     "main": {
      "style": {
@@ -5640,7 +5866,7 @@
        "技能急速",
        "護甲"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -5652,15 +5878,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 277,
+     "damage": 245,
      "ehp": 6826,
      "support": 610,
      "counts": {
-      "auto": 3.57,
-      "attack": 3.57,
-      "onhit": 3.57,
+      "auto": 2.68,
+      "attack": 2.68,
+      "onhit": 2.68,
       "ability_hit": 5.09,
       "cast": 8.2,
       "dash": 3.07,
@@ -5674,6 +5902,12 @@
       "W": 2.04,
       "E": 2.0,
       "R": 1.07
+     },
+     "weights": {
+      "damage": 0.098,
+      "survival": 0.878,
+      "support": 0.0,
+      "utility": 0.024
      },
      "stats": {
       "hp": 3294.05,
@@ -5703,12 +5937,6 @@
    }
   },
   "Kayn": {
-   "weights": {
-    "damage": 0.723,
-    "survival": 0.26,
-    "support": 0.0,
-    "utility": 0.016
-   },
    "styles": {
     "main": {
      "style": {
@@ -5730,7 +5958,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1590,
      "ehp": 4265,
@@ -5752,6 +5982,12 @@
       "W": 2.2,
       "E": 1.8,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.723,
+      "survival": 0.26,
+      "support": 0.0,
+      "utility": 0.016
      },
      "stats": {
       "hp": 2182.85,
@@ -5781,12 +6017,6 @@
    }
   },
   "Lux": {
-   "weights": {
-    "damage": 0.816,
-    "survival": 0.161,
-    "support": 0.0,
-    "utility": 0.023
-   },
    "styles": {
     "main": {
      "style": {
@@ -5808,7 +6038,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1693,
      "ehp": 3964,
@@ -5830,6 +6062,12 @@
       "W": 2.14,
       "E": 2.41,
       "R": 1.24
+     },
+     "weights": {
+      "damage": 0.816,
+      "survival": 0.161,
+      "support": 0.0,
+      "utility": 0.023
      },
      "stats": {
       "hp": 2064.05,
@@ -5859,12 +6097,6 @@
    }
   },
   "Rammus": {
-   "weights": {
-    "damage": 0.196,
-    "survival": 0.786,
-    "support": 0.0,
-    "utility": 0.018
-   },
    "styles": {
     "main": {
      "style": {
@@ -5874,7 +6106,7 @@
        "生命",
        "技能急速"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -5886,15 +6118,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 709,
+     "damage": 687,
      "ehp": 6993,
      "support": 0,
      "counts": {
-      "auto": 2.42,
-      "attack": 2.42,
-      "onhit": 2.42,
+      "auto": 1.81,
+      "attack": 1.81,
+      "onhit": 1.81,
       "ability_hit": 8.43,
       "cast": 8.43,
       "dash": 1.11,
@@ -5908,6 +6142,12 @@
       "W": 2.71,
       "E": 2.0,
       "R": 1.11
+     },
+     "weights": {
+      "damage": 0.196,
+      "survival": 0.786,
+      "support": 0.0,
+      "utility": 0.018
      },
      "stats": {
       "hp": 3340.0,
@@ -5937,12 +6177,6 @@
    }
   },
   "Teemo": {
-   "weights": {
-    "damage": 0.813,
-    "survival": 0.149,
-    "support": 0.0,
-    "utility": 0.037
-   },
    "styles": {
     "main": {
      "style": {
@@ -5964,7 +6198,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1573,
      "ehp": 3419,
@@ -5986,6 +6222,12 @@
       "W": 1.63,
       "E": 1.0,
       "R": 1.0
+     },
+     "weights": {
+      "damage": 0.813,
+      "survival": 0.149,
+      "support": 0.0,
+      "utility": 0.037
      },
      "stats": {
       "hp": 2153.8,
@@ -6015,12 +6257,6 @@
    }
   },
   "Swain": {
-   "weights": {
-    "damage": 0.679,
-    "survival": 0.302,
-    "support": 0.0,
-    "utility": 0.019
-   },
    "styles": {
     "main": {
      "style": {
@@ -6042,7 +6278,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 2208,
      "ehp": 5412,
@@ -6064,6 +6302,12 @@
       "W": 1.71,
       "E": 2.14,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.679,
+      "survival": 0.302,
+      "support": 0.0,
+      "utility": 0.019
      },
      "stats": {
       "hp": 3279.05,
@@ -6093,12 +6337,6 @@
    }
   },
   "MasterYi": {
-   "weights": {
-    "damage": 0.846,
-    "survival": 0.135,
-    "support": 0.0,
-    "utility": 0.019
-   },
    "styles": {
     "main": {
      "style": {
@@ -6133,7 +6371,9 @@
       "untargetable": {
        "Q": 0.9
       },
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 3598,
      "ehp": 8065,
@@ -6155,6 +6395,12 @@
       "W": 2.22,
       "E": 2.04,
       "R": 1.67
+     },
+     "weights": {
+      "damage": 0.846,
+      "survival": 0.135,
+      "support": 0.0,
+      "utility": 0.019
      },
      "stats": {
       "hp": 2189.75,
@@ -6184,12 +6430,6 @@
    }
   },
   "Syndra": {
-   "weights": {
-    "damage": 0.878,
-    "survival": 0.098,
-    "support": 0.0,
-    "utility": 0.024
-   },
    "styles": {
     "main": {
      "style": {
@@ -6211,7 +6451,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 2221,
      "ehp": 3252,
@@ -6233,6 +6475,12 @@
       "W": 2.2,
       "E": 1.8,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.878,
+      "survival": 0.098,
+      "support": 0.0,
+      "utility": 0.024
      },
      "stats": {
       "hp": 2078.0,
@@ -6262,12 +6510,6 @@
    }
   },
   "Zac": {
-   "weights": {
-    "damage": 0.489,
-    "survival": 0.489,
-    "support": 0.0,
-    "utility": 0.022
-   },
    "styles": {
     "main": {
      "style": {
@@ -6277,7 +6519,7 @@
        "技能急速",
        "護甲"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -6289,15 +6531,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 733,
+     "damage": 713,
      "ehp": 7381,
      "support": 0,
      "counts": {
-      "auto": 2.33,
-      "attack": 4.59,
-      "onhit": 2.33,
+      "auto": 1.75,
+      "attack": 1.75,
+      "onhit": 1.75,
       "ability_hit": 8.78,
       "cast": 8.78,
       "dash": 2.0,
@@ -6311,6 +6555,12 @@
       "W": 3.4,
       "E": 2.0,
       "R": 1.11
+     },
+     "weights": {
+      "damage": 0.489,
+      "survival": 0.489,
+      "support": 0.0,
+      "utility": 0.022
      },
      "stats": {
       "hp": 3478.55,
@@ -6340,12 +6590,6 @@
    }
   },
   "LeeSin": {
-   "weights": {
-    "damage": 0.701,
-    "survival": 0.274,
-    "support": 0.0,
-    "utility": 0.025
-   },
    "styles": {
     "main": {
      "style": {
@@ -6367,7 +6611,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1441,
      "ehp": 5822,
@@ -6389,6 +6635,12 @@
       "W": 2.5,
       "E": 2.5,
       "R": 1.14
+     },
+     "weights": {
+      "damage": 0.701,
+      "survival": 0.274,
+      "support": 0.0,
+      "utility": 0.025
      },
      "stats": {
       "hp": 3427.6,
@@ -6418,12 +6670,6 @@
    }
   },
   "Jayce": {
-   "weights": {
-    "damage": 0.778,
-    "survival": 0.195,
-    "support": 0.0,
-    "utility": 0.027
-   },
    "styles": {
     "main": {
      "style": {
@@ -6445,14 +6691,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1495,
      "ehp": 3504,
      "support": 0,
      "counts": {
       "auto": 4.08,
-      "attack": 9.28,
+      "attack": 4.08,
       "onhit": 4.08,
       "ability_hit": 6.26,
       "cast": 9.26,
@@ -6467,6 +6715,12 @@
       "W": 2.2,
       "E": 1.86,
       "R": 3.0
+     },
+     "weights": {
+      "damage": 0.778,
+      "survival": 0.195,
+      "support": 0.0,
+      "utility": 0.027
      },
      "stats": {
       "hp": 2183.55,
@@ -6496,12 +6750,6 @@
    }
   },
   "Zyra": {
-   "weights": {
-    "damage": 0.85,
-    "survival": 0.12,
-    "support": 0.0,
-    "utility": 0.03
-   },
    "styles": {
     "main": {
      "style": {
@@ -6523,7 +6771,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1481,
      "ehp": 3180,
@@ -6545,6 +6795,12 @@
       "W": 1.0,
       "E": 2.09,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.85,
+      "survival": 0.12,
+      "support": 0.0,
+      "utility": 0.03
      },
      "stats": {
       "hp": 1992.35,
@@ -6574,12 +6830,6 @@
    }
   },
   "Zoe": {
-   "weights": {
-    "damage": 0.555,
-    "survival": 0.425,
-    "support": 0.0,
-    "utility": 0.02
-   },
    "styles": {
     "main": {
      "style": {
@@ -6601,7 +6851,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1050,
      "ehp": 3469,
@@ -6623,6 +6875,12 @@
       "W": 1.0,
       "E": 1.8,
       "R": 2.5
+     },
+     "weights": {
+      "damage": 0.555,
+      "survival": 0.425,
+      "support": 0.0,
+      "utility": 0.02
      },
      "stats": {
       "hp": 2190.7,
@@ -6652,12 +6910,6 @@
    }
   },
   "Mel": {
-   "weights": {
-    "damage": 0.816,
-    "survival": 0.161,
-    "support": 0.0,
-    "utility": 0.023
-   },
    "styles": {
     "main": {
      "style": {
@@ -6679,7 +6931,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1196,
      "ehp": 4191,
@@ -6701,6 +6955,12 @@
       "W": 1.41,
       "E": 2.26,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.816,
+      "survival": 0.161,
+      "support": 0.0,
+      "utility": 0.023
      },
      "stats": {
       "hp": 2114.05,
@@ -6730,12 +6990,6 @@
    }
   },
   "Zilean": {
-   "weights": {
-    "damage": 0.701,
-    "survival": 0.274,
-    "support": 0.0,
-    "utility": 0.025
-   },
    "styles": {
     "main": {
      "style": {
@@ -6757,7 +7011,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 659,
      "ehp": 5741,
@@ -6779,6 +7035,12 @@
       "W": 2.5,
       "E": 1.8,
       "R": 1.13
+     },
+     "weights": {
+      "damage": 0.701,
+      "survival": 0.274,
+      "support": 0.0,
+      "utility": 0.025
      },
      "stats": {
       "hp": 2025.2,
@@ -6808,12 +7070,6 @@
    }
   },
   "Olaf": {
-   "weights": {
-    "damage": 0.748,
-    "survival": 0.231,
-    "support": 0.0,
-    "utility": 0.021
-   },
    "styles": {
     "main": {
      "style": {
@@ -6835,7 +7091,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1543,
      "ehp": 6273,
@@ -6857,6 +7115,12 @@
       "W": 1.92,
       "E": 2.5,
       "R": 1.13
+     },
+     "weights": {
+      "damage": 0.748,
+      "survival": 0.231,
+      "support": 0.0,
+      "utility": 0.021
      },
      "stats": {
       "hp": 3548.05,
@@ -6886,12 +7150,6 @@
    }
   },
   "Aurora": {
-   "weights": {
-    "damage": 0.778,
-    "survival": 0.195,
-    "support": 0.0,
-    "utility": 0.027
-   },
    "styles": {
     "main": {
      "style": {
@@ -6913,7 +7171,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1315,
      "ehp": 3551,
@@ -6935,6 +7195,12 @@
       "W": 1.63,
       "E": 2.0,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.778,
+      "survival": 0.195,
+      "support": 0.0,
+      "utility": 0.027
      },
      "stats": {
       "hp": 2211.5,
@@ -6964,12 +7230,6 @@
    }
   },
   "Vayne": {
-   "weights": {
-    "damage": 0.969,
-    "survival": 0.01,
-    "support": 0.0,
-    "utility": 0.022
-   },
    "styles": {
     "main": {
      "style": {
@@ -6991,14 +7251,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1644,
      "ehp": 3269,
      "support": 0,
      "counts": {
       "auto": 5.69,
-      "attack": 10.62,
+      "attack": 5.69,
       "onhit": 5.69,
       "ability_hit": 6.67,
       "cast": 7.67,
@@ -7013,6 +7275,12 @@
       "W": 1.0,
       "E": 1.63,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.969,
+      "survival": 0.01,
+      "support": 0.0,
+      "utility": 0.022
      },
      "stats": {
       "hp": 2053.1,
@@ -7042,12 +7310,6 @@
    }
   },
   "Warwick": {
-   "weights": {
-    "damage": 0.748,
-    "survival": 0.231,
-    "support": 0.0,
-    "utility": 0.021
-   },
    "styles": {
     "main": {
      "style": {
@@ -7069,7 +7331,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1142,
      "ehp": 5792,
@@ -7091,6 +7355,12 @@
       "W": 1.18,
       "E": 1.73,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.748,
+      "survival": 0.231,
+      "support": 0.0,
+      "utility": 0.021
      },
      "stats": {
       "hp": 3304.05,
@@ -7120,12 +7390,6 @@
    }
   },
   "Varus": {
-   "weights": {
-    "damage": 0.813,
-    "survival": 0.149,
-    "support": 0.0,
-    "utility": 0.037
-   },
    "styles": {
     "main": {
      "style": {
@@ -7147,7 +7411,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1041,
      "ehp": 3363,
@@ -7169,6 +7435,12 @@
       "W": 1.3,
       "E": 2.0,
       "R": 1.15
+     },
+     "weights": {
+      "damage": 0.813,
+      "survival": 0.149,
+      "support": 0.0,
+      "utility": 0.037
      },
      "stats": {
       "hp": 2149.75,
@@ -7198,12 +7470,6 @@
    }
   },
   "Poppy": {
-   "weights": {
-    "damage": 0.413,
-    "survival": 0.562,
-    "support": 0.0,
-    "utility": 0.026
-   },
    "styles": {
     "main": {
      "style": {
@@ -7213,7 +7479,7 @@
        "護甲",
        "技能急速"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -7225,15 +7491,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 830,
+     "damage": 811,
      "ehp": 7242,
      "support": 0,
      "counts": {
-      "auto": 2.32,
-      "attack": 2.32,
-      "onhit": 2.32,
+      "auto": 1.74,
+      "attack": 1.74,
+      "onhit": 1.74,
       "ability_hit": 9.45,
       "cast": 8.45,
       "dash": 3.95,
@@ -7247,6 +7515,12 @@
       "W": 1.86,
       "E": 2.09,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.413,
+      "survival": 0.562,
+      "support": 0.0,
+      "utility": 0.026
      },
      "stats": {
       "hp": 3414.5,
@@ -7276,12 +7550,6 @@
    }
   },
   "Tryndamere": {
-   "weights": {
-    "damage": 0.786,
-    "survival": 0.196,
-    "support": 0.0,
-    "utility": 0.018
-   },
    "styles": {
     "main": {
      "style": {
@@ -7303,7 +7571,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1291,
      "ehp": 4051,
@@ -7325,6 +7595,12 @@
       "W": 1.63,
       "E": 1.98,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.786,
+      "survival": 0.196,
+      "support": 0.0,
+      "utility": 0.018
      },
      "stats": {
       "hp": 2278.6,
@@ -7354,12 +7630,6 @@
    }
   },
   "Locke": {
-   "weights": {
-    "damage": 0.664,
-    "survival": 0.295,
-    "support": 0.0,
-    "utility": 0.041
-   },
    "styles": {
     "main": {
      "style": {
@@ -7377,14 +7647,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 374,
      "ehp": 3943,
      "support": 0,
      "counts": {
       "auto": 1.66,
-      "attack": 3.54,
+      "attack": 1.66,
       "onhit": 1.66,
       "ability_hit": 5.23,
       "cast": 6.81,
@@ -7399,6 +7671,12 @@
       "W": 1.59,
       "E": 1.88,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.664,
+      "survival": 0.295,
+      "support": 0.0,
+      "utility": 0.041
      },
      "stats": {
       "hp": 2213.55,
@@ -7428,12 +7706,6 @@
    }
   },
   "Pyke": {
-   "weights": {
-    "damage": 0.878,
-    "survival": 0.098,
-    "support": 0.0,
-    "utility": 0.024
-   },
    "styles": {
     "main": {
      "style": {
@@ -7455,7 +7727,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1117,
      "ehp": 3900,
@@ -7477,6 +7751,12 @@
       "W": 2.09,
       "E": 2.0,
       "R": 1.14
+     },
+     "weights": {
+      "damage": 0.878,
+      "survival": 0.098,
+      "support": 0.0,
+      "utility": 0.024
      },
      "stats": {
       "hp": 2274.5,
@@ -7506,12 +7786,6 @@
    }
   },
   "Nilah": {
-   "weights": {
-    "damage": 0.778,
-    "survival": 0.195,
-    "support": 0.0,
-    "utility": 0.027
-   },
    "styles": {
     "main": {
      "style": {
@@ -7533,7 +7807,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 762,
      "ehp": 5363,
@@ -7555,6 +7831,12 @@
       "W": 1.38,
       "E": 1.0,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.778,
+      "survival": 0.195,
+      "support": 0.0,
+      "utility": 0.027
      },
      "stats": {
       "hp": 3275.95,
@@ -7584,12 +7866,6 @@
    }
   },
   "Heimerdinger": {
-   "weights": {
-    "damage": 0.626,
-    "survival": 0.352,
-    "support": 0.0,
-    "utility": 0.022
-   },
    "styles": {
     "main": {
      "style": {
@@ -7611,14 +7887,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1985,
      "ehp": 3259,
      "support": 0,
      "counts": {
       "auto": 1.29,
-      "attack": 2.44,
+      "attack": 1.29,
       "onhit": 1.29,
       "ability_hit": 5.73,
       "cast": 6.73,
@@ -7633,6 +7911,12 @@
       "W": 2.5,
       "E": 2.09,
       "R": 1.14
+     },
+     "weights": {
+      "damage": 0.626,
+      "survival": 0.352,
+      "support": 0.0,
+      "utility": 0.022
      },
      "stats": {
       "hp": 2107.75,
@@ -7662,12 +7946,6 @@
    }
   },
   "Pantheon": {
-   "weights": {
-    "damage": 0.816,
-    "survival": 0.161,
-    "support": 0.0,
-    "utility": 0.023
-   },
    "styles": {
     "main": {
      "style": {
@@ -7689,14 +7967,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1938,
      "ehp": 3866,
      "support": 0,
      "counts": {
       "auto": 2.66,
-      "attack": 4.86,
+      "attack": 2.66,
       "onhit": 2.66,
       "ability_hit": 7.28,
       "cast": 7.28,
@@ -7711,6 +7991,12 @@
       "W": 2.2,
       "E": 1.63,
       "R": 1.07
+     },
+     "weights": {
+      "damage": 0.816,
+      "survival": 0.161,
+      "support": 0.0,
+      "utility": 0.023
      },
      "stats": {
       "hp": 2243.55,
@@ -7740,12 +8026,6 @@
    }
   },
   "Urgot": {
-   "weights": {
-    "damage": 0.701,
-    "survival": 0.274,
-    "support": 0.0,
-    "utility": 0.025
-   },
    "styles": {
     "main": {
      "style": {
@@ -7767,7 +8047,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1038,
      "ehp": 8115,
@@ -7789,6 +8071,12 @@
       "W": 3.93,
       "E": 1.61,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.701,
+      "survival": 0.274,
+      "support": 0.0,
+      "utility": 0.025
      },
      "stats": {
       "hp": 3371.9,
@@ -7818,12 +8106,6 @@
    }
   },
   "Udyr": {
-   "weights": {
-    "damage": 0.555,
-    "survival": 0.425,
-    "support": 0.0,
-    "utility": 0.02
-   },
    "styles": {
     "main": {
      "style": {
@@ -7845,14 +8127,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 583,
      "ehp": 6196,
      "support": 0,
      "counts": {
       "auto": 3.79,
-      "attack": 11.19,
+      "attack": 3.79,
       "onhit": 3.79,
       "ability_hit": 4.93,
       "cast": 9.87,
@@ -7867,6 +8151,12 @@
       "W": 2.47,
       "E": 2.47,
       "R": 2.47
+     },
+     "weights": {
+      "damage": 0.555,
+      "survival": 0.425,
+      "support": 0.0,
+      "utility": 0.02
      },
      "stats": {
       "hp": 3271.4,
@@ -7896,12 +8186,6 @@
    }
   },
   "Samira": {
-   "weights": {
-    "damage": 0.701,
-    "survival": 0.274,
-    "support": 0.0,
-    "utility": 0.025
-   },
    "styles": {
     "main": {
      "style": {
@@ -7923,7 +8207,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1215,
      "ehp": 5503,
@@ -7945,6 +8231,12 @@
       "W": 1.37,
       "E": 1.63,
       "R": 2.76
+     },
+     "weights": {
+      "damage": 0.701,
+      "survival": 0.274,
+      "support": 0.0,
+      "utility": 0.025
      },
      "stats": {
       "hp": 3412.6,
@@ -7974,12 +8266,6 @@
    }
   },
   "Jhin": {
-   "weights": {
-    "damage": 0.941,
-    "survival": 0.038,
-    "support": 0.0,
-    "utility": 0.021
-   },
    "styles": {
     "main": {
      "style": {
@@ -8001,7 +8287,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 2761,
      "ehp": 3568,
@@ -8023,6 +8311,12 @@
       "W": 1.73,
       "E": 5.4,
       "R": 1.08
+     },
+     "weights": {
+      "damage": 0.941,
+      "survival": 0.038,
+      "support": 0.0,
+      "utility": 0.021
      },
      "stats": {
       "hp": 2226.65,
@@ -8052,12 +8346,6 @@
    }
   },
   "Trundle": {
-   "weights": {
-    "damage": 0.562,
-    "survival": 0.413,
-    "support": 0.0,
-    "utility": 0.026
-   },
    "styles": {
     "main": {
      "style": {
@@ -8079,14 +8367,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1211,
      "ehp": 5885,
      "support": 0,
      "counts": {
       "auto": 4.27,
-      "attack": 7.79,
+      "attack": 4.27,
       "onhit": 4.27,
       "ability_hit": 4.6,
       "cast": 7.72,
@@ -8101,6 +8391,12 @@
       "W": 1.59,
       "E": 1.53,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.562,
+      "survival": 0.413,
+      "support": 0.0,
+      "utility": 0.026
      },
      "stats": {
       "hp": 3454.5,
@@ -8130,12 +8426,6 @@
    }
   },
   "Yone": {
-   "weights": {
-    "damage": 0.778,
-    "survival": 0.195,
-    "support": 0.0,
-    "utility": 0.027
-   },
    "styles": {
     "main": {
      "style": {
@@ -8164,7 +8454,9 @@
       "untargetable": {},
       "crits": [
        "Q"
-      ]
+      ],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 3153,
      "ehp": 3665,
@@ -8186,6 +8478,12 @@
       "W": 1.63,
       "E": 1.68,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.778,
+      "survival": 0.195,
+      "support": 0.0,
+      "utility": 0.027
      },
      "stats": {
       "hp": 2169.75,
@@ -8215,12 +8513,6 @@
    }
   },
   "Yasuo": {
-   "weights": {
-    "damage": 0.778,
-    "survival": 0.195,
-    "support": 0.0,
-    "utility": 0.027
-   },
    "styles": {
     "main": {
      "style": {
@@ -8249,7 +8541,9 @@
       "untargetable": {},
       "crits": [
        "Q"
-      ]
+      ],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 3554,
      "ehp": 4377,
@@ -8271,6 +8565,12 @@
       "W": 1.46,
       "E": 1.0,
       "R": 1.18
+     },
+     "weights": {
+      "damage": 0.778,
+      "survival": 0.195,
+      "support": 0.0,
+      "utility": 0.027
      },
      "stats": {
       "hp": 2194.5,
@@ -8300,12 +8600,6 @@
    }
   },
   "Janna": {
-   "weights": {
-    "damage": 0.312,
-    "survival": 0.159,
-    "support": 0.515,
-    "utility": 0.014
-   },
    "styles": {
     "main": {
      "style": {
@@ -8327,7 +8621,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 758,
      "ehp": 3144,
@@ -8349,6 +8645,12 @@
       "W": 2.85,
       "E": 1.92,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.312,
+      "survival": 0.159,
+      "support": 0.515,
+      "utility": 0.014
      },
      "stats": {
       "hp": 1955.5,
@@ -8378,12 +8680,6 @@
    }
   },
   "Seraphine": {
-   "weights": {
-    "damage": 0.0,
-    "survival": 0.0,
-    "support": 0.973,
-    "utility": 0.027
-   },
    "styles": {
     "main": {
      "style": {
@@ -8405,7 +8701,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1321,
      "ehp": 3178,
@@ -8427,6 +8725,12 @@
       "W": 1.55,
       "E": 2.09,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.0,
+      "survival": 0.0,
+      "support": 0.973,
+      "utility": 0.027
      },
      "stats": {
       "hp": 2010.25,
@@ -8456,12 +8760,6 @@
    }
   },
   "Thresh": {
-   "weights": {
-    "damage": 0.485,
-    "survival": 0.485,
-    "support": 0.0,
-    "utility": 0.03
-   },
    "styles": {
     "main": {
      "style": {
@@ -8483,7 +8781,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 815,
      "ehp": 6361,
@@ -8505,6 +8805,12 @@
       "W": 1.67,
       "E": 2.12,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.485,
+      "survival": 0.485,
+      "support": 0.0,
+      "utility": 0.03
      },
      "stats": {
       "hp": 3534.0,
@@ -8534,12 +8840,6 @@
    }
   },
   "Renata": {
-   "weights": {
-    "damage": 0.404,
-    "survival": 0.18,
-    "support": 0.404,
-    "utility": 0.011
-   },
    "styles": {
     "main": {
      "style": {
@@ -8561,7 +8861,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 784,
      "ehp": 5122,
@@ -8583,6 +8885,12 @@
       "W": 1.48,
       "E": 2.09,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.404,
+      "survival": 0.18,
+      "support": 0.404,
+      "utility": 0.011
      },
      "stats": {
       "hp": 3174.3,
@@ -8612,12 +8920,6 @@
    }
   },
   "Chogath": {
-   "weights": {
-    "damage": 0.489,
-    "survival": 0.489,
-    "support": 0.0,
-    "utility": 0.022
-   },
    "styles": {
     "main": {
      "style": {
@@ -8627,7 +8929,7 @@
        "法術強度",
        "技能急速"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -8639,15 +8941,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 2760,
+     "damage": 2742,
      "ehp": 5833,
      "support": 0,
      "counts": {
-      "auto": 1.86,
-      "attack": 5.26,
-      "onhit": 1.86,
+      "auto": 1.39,
+      "attack": 1.39,
+      "onhit": 1.39,
       "ability_hit": 7.57,
       "cast": 9.83,
       "dash": 0.0,
@@ -8661,6 +8965,12 @@
       "W": 2.26,
       "E": 3.4,
       "R": 1.17
+     },
+     "weights": {
+      "damage": 0.489,
+      "survival": 0.489,
+      "support": 0.0,
+      "utility": 0.022
      },
      "stats": {
       "hp": 3273.3,
@@ -8690,12 +9000,6 @@
    }
   },
   "Milio": {
-   "weights": {
-    "damage": 0.392,
-    "survival": 0.098,
-    "support": 0.496,
-    "utility": 0.014
-   },
    "styles": {
     "main": {
      "style": {
@@ -8717,7 +9021,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 732,
      "ehp": 3084,
@@ -8739,6 +9045,12 @@
       "W": 1.52,
       "E": 1.0,
       "R": 1.08
+     },
+     "weights": {
+      "damage": 0.392,
+      "survival": 0.098,
+      "support": 0.496,
+      "utility": 0.014
      },
      "stats": {
       "hp": 1923.6,
@@ -8768,12 +9080,6 @@
    }
   },
   "Yorick": {
-   "weights": {
-    "damage": 0.485,
-    "survival": 0.485,
-    "support": 0.0,
-    "utility": 0.03
-   },
    "styles": {
     "main": {
      "style": {
@@ -8795,14 +9101,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 675,
      "ehp": 5952,
      "support": 0,
      "counts": {
       "auto": 2.36,
-      "attack": 6.03,
+      "attack": 2.36,
       "onhit": 2.36,
       "ability_hit": 7.09,
       "cast": 8.95,
@@ -8817,6 +9125,12 @@
       "W": 1.86,
       "E": 2.33,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.485,
+      "survival": 0.485,
+      "support": 0.0,
+      "utility": 0.03
      },
      "stats": {
       "hp": 3498.3,
@@ -8846,12 +9160,6 @@
    }
   },
   "Nautilus": {
-   "weights": {
-    "damage": 0.485,
-    "survival": 0.485,
-    "support": 0.0,
-    "utility": 0.03
-   },
    "styles": {
     "main": {
      "style": {
@@ -8861,7 +9169,7 @@
        "護甲",
        "技能急速"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -8873,15 +9181,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 829,
+     "damage": 811,
      "ehp": 7486,
      "support": 0,
      "counts": {
-      "auto": 2.18,
-      "attack": 2.18,
-      "onhit": 2.18,
+      "auto": 1.64,
+      "attack": 1.64,
+      "onhit": 1.64,
       "ability_hit": 8.39,
       "cast": 8.39,
       "dash": 0.0,
@@ -8895,6 +9205,12 @@
       "W": 2.0,
       "E": 3.18,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.485,
+      "survival": 0.485,
+      "support": 0.0,
+      "utility": 0.03
      },
      "stats": {
       "hp": 3341.0,
@@ -8924,12 +9240,6 @@
    }
   },
   "Nasus": {
-   "weights": {
-    "damage": 0.643,
-    "survival": 0.328,
-    "support": 0.0,
-    "utility": 0.03
-   },
    "styles": {
     "main": {
      "style": {
@@ -8951,14 +9261,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 526,
      "ehp": 6616,
      "support": 0,
      "counts": {
       "auto": 3.57,
-      "attack": 7.24,
+      "attack": 3.57,
       "onhit": 3.57,
       "ability_hit": 3.12,
       "cast": 8.79,
@@ -8973,6 +9285,12 @@
       "W": 2.0,
       "E": 2.0,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.643,
+      "survival": 0.328,
+      "support": 0.0,
+      "utility": 0.03
      },
      "stats": {
       "hp": 3388.8,
@@ -9002,12 +9320,6 @@
    }
   },
   "Sona": {
-   "weights": {
-    "damage": 0.423,
-    "survival": 0.026,
-    "support": 0.536,
-    "utility": 0.015
-   },
    "styles": {
     "main": {
      "style": {
@@ -9029,14 +9341,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 729,
      "ehp": 3078,
      "support": 654,
      "counts": {
       "auto": 1.59,
-      "attack": 4.09,
+      "attack": 1.59,
       "onhit": 1.59,
       "ability_hit": 4.6,
       "cast": 7.66,
@@ -9051,6 +9365,12 @@
       "W": 2.2,
       "E": 1.86,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.423,
+      "survival": 0.026,
+      "support": 0.536,
+      "utility": 0.015
      },
      "stats": {
       "hp": 1946.45,
@@ -9080,12 +9400,6 @@
    }
   },
   "Soraka": {
-   "weights": {
-    "damage": 0.312,
-    "survival": 0.159,
-    "support": 0.515,
-    "utility": 0.014
-   },
    "styles": {
     "main": {
      "style": {
@@ -9107,7 +9421,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 795,
      "ehp": 6257,
@@ -9129,6 +9445,12 @@
       "W": 5.0,
       "E": 1.71,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.312,
+      "survival": 0.159,
+      "support": 0.515,
+      "utility": 0.014
      },
      "stats": {
       "hp": 3168.6,
@@ -9158,12 +9480,6 @@
    }
   },
   "Viktor": {
-   "weights": {
-    "damage": 0.846,
-    "survival": 0.135,
-    "support": 0.0,
-    "utility": 0.019
-   },
    "styles": {
     "main": {
      "style": {
@@ -9185,14 +9501,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1054,
      "ehp": 3304,
      "support": 0,
      "counts": {
       "auto": 1.14,
-      "attack": 4.14,
+      "attack": 1.14,
       "onhit": 1.14,
       "ability_hit": 6.45,
       "cast": 8.31,
@@ -9207,6 +9525,12 @@
       "W": 1.86,
       "E": 2.33,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.846,
+      "survival": 0.135,
+      "support": 0.0,
+      "utility": 0.019
      },
      "stats": {
       "hp": 2095.0,
@@ -9236,12 +9560,6 @@
    }
   },
   "Viego": {
-   "weights": {
-    "damage": 0.664,
-    "survival": 0.295,
-    "support": 0.0,
-    "utility": 0.041
-   },
    "styles": {
     "main": {
      "style": {
@@ -9263,14 +9581,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 983,
      "ehp": 3776,
      "support": 0,
      "counts": {
       "auto": 3.99,
-      "attack": 7.51,
+      "attack": 3.99,
       "onhit": 3.99,
       "ability_hit": 5.61,
       "cast": 8.8,
@@ -9285,6 +9605,12 @@
       "W": 2.1,
       "E": 2.1,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.664,
+      "survival": 0.295,
+      "support": 0.0,
+      "utility": 0.041
      },
      "stats": {
       "hp": 2223.55,
@@ -9314,12 +9640,6 @@
    }
   },
   "Veigar": {
-   "weights": {
-    "damage": 0.941,
-    "survival": 0.038,
-    "support": 0.0,
-    "utility": 0.021
-   },
    "styles": {
     "main": {
      "style": {
@@ -9341,7 +9661,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1435,
      "ehp": 3473,
@@ -9363,6 +9685,12 @@
       "W": 1.0,
       "E": 1.77,
       "R": 1.13
+     },
+     "weights": {
+      "damage": 0.941,
+      "survival": 0.038,
+      "support": 0.0,
+      "utility": 0.021
      },
      "stats": {
       "hp": 2162.6,
@@ -9392,12 +9720,6 @@
    }
   },
   "AurelionSol": {
-   "weights": {
-    "damage": 0.85,
-    "survival": 0.12,
-    "support": 0.0,
-    "utility": 0.03
-   },
    "styles": {
     "main": {
      "style": {
@@ -9419,7 +9741,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 967,
      "ehp": 3078,
@@ -9441,6 +9765,12 @@
       "W": 1.75,
       "E": 2.0,
       "R": 1.11
+     },
+     "weights": {
+      "damage": 0.85,
+      "survival": 0.12,
+      "support": 0.0,
+      "utility": 0.03
      },
      "stats": {
       "hp": 1985.5,
@@ -9470,12 +9800,6 @@
    }
   },
   "Ekko": {
-   "weights": {
-    "damage": 0.813,
-    "survival": 0.149,
-    "support": 0.0,
-    "utility": 0.037
-   },
    "styles": {
     "main": {
      "style": {
@@ -9497,14 +9821,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1445,
      "ehp": 5685,
      "support": 0,
      "counts": {
       "auto": 1.34,
-      "attack": 3.94,
+      "attack": 1.34,
       "onhit": 1.34,
       "ability_hit": 9.1,
       "cast": 8.1,
@@ -9519,6 +9845,12 @@
       "W": 1.75,
       "E": 2.6,
       "R": 1.15
+     },
+     "weights": {
+      "damage": 0.813,
+      "survival": 0.149,
+      "support": 0.0,
+      "utility": 0.037
      },
      "stats": {
       "hp": 2139.05,
@@ -9548,12 +9880,6 @@
    }
   },
   "Anivia": {
-   "weights": {
-    "damage": 0.846,
-    "survival": 0.135,
-    "support": 0.0,
-    "utility": 0.019
-   },
    "styles": {
     "main": {
      "style": {
@@ -9575,7 +9901,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 2232,
      "ehp": 3799,
@@ -9597,6 +9925,12 @@
       "W": 1.71,
       "E": 4.0,
       "R": 5.0
+     },
+     "weights": {
+      "damage": 0.846,
+      "survival": 0.135,
+      "support": 0.0,
+      "utility": 0.019
      },
      "stats": {
       "hp": 1957.4,
@@ -9626,12 +9960,6 @@
    }
   },
   "Ashe": {
-   "weights": {
-    "damage": 0.813,
-    "survival": 0.149,
-    "support": 0.0,
-    "utility": 0.037
-   },
    "styles": {
     "main": {
      "style": {
@@ -9653,7 +9981,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1862,
      "ehp": 3400,
@@ -9675,6 +10005,12 @@
       "W": 2.17,
       "E": 2.76,
       "R": 1.11
+     },
+     "weights": {
+      "damage": 0.813,
+      "survival": 0.149,
+      "support": 0.0,
+      "utility": 0.037
      },
      "stats": {
       "hp": 2115.95,
@@ -9704,12 +10040,6 @@
    }
   },
   "Maokai": {
-   "weights": {
-    "damage": 0.352,
-    "survival": 0.626,
-    "support": 0.0,
-    "utility": 0.022
-   },
    "styles": {
     "main": {
      "style": {
@@ -9719,7 +10049,7 @@
        "技能急速",
        "護甲"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -9731,15 +10061,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 1016,
+     "damage": 991,
      "ehp": 7373,
      "support": 0,
      "counts": {
-      "auto": 2.8,
-      "attack": 2.8,
-      "onhit": 2.8,
+      "auto": 2.1,
+      "attack": 2.1,
+      "onhit": 2.1,
       "ability_hit": 8.18,
       "cast": 8.18,
       "dash": 2.09,
@@ -9753,6 +10085,12 @@
       "W": 2.09,
       "E": 1.8,
       "R": 1.11
+     },
+     "weights": {
+      "damage": 0.352,
+      "survival": 0.626,
+      "support": 0.0,
+      "utility": 0.022
      },
      "stats": {
       "hp": 3458.55,
@@ -9782,12 +10120,6 @@
    }
   },
   "Lillia": {
-   "weights": {
-    "damage": 0.941,
-    "survival": 0.038,
-    "support": 0.0,
-    "utility": 0.021
-   },
    "styles": {
     "main": {
      "style": {
@@ -9809,7 +10141,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 2140,
      "ehp": 3472,
@@ -9831,6 +10165,12 @@
       "W": 2.09,
       "E": 2.0,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.941,
+      "survival": 0.038,
+      "support": 0.0,
+      "utility": 0.021
      },
      "stats": {
       "hp": 2154.75,
@@ -9860,12 +10200,6 @@
    }
   },
   "Fiora": {
-   "weights": {
-    "damage": 0.846,
-    "survival": 0.135,
-    "support": 0.0,
-    "utility": 0.019
-   },
    "styles": {
     "main": {
      "style": {
@@ -9900,14 +10234,18 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {
+       "E": 2
+      },
+      "cast_s": {}
      },
      "damage": 1327,
      "ehp": 5710,
      "support": 214,
      "counts": {
       "auto": 3.54,
-      "attack": 8.59,
+      "attack": 11.09,
       "onhit": 6.09,
       "ability_hit": 4.17,
       "cast": 7.85,
@@ -9922,6 +10260,12 @@
       "W": 1.67,
       "E": 2.5,
       "R": 1.13
+     },
+     "weights": {
+      "damage": 0.846,
+      "survival": 0.135,
+      "support": 0.0,
+      "utility": 0.019
      },
      "stats": {
       "hp": 3369.75,
@@ -9951,12 +10295,6 @@
    }
   },
   "Vi": {
-   "weights": {
-    "damage": 0.701,
-    "survival": 0.274,
-    "support": 0.0,
-    "utility": 0.025
-   },
    "styles": {
     "main": {
      "style": {
@@ -9978,14 +10316,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1007,
      "ehp": 3703,
      "support": 0,
      "counts": {
       "auto": 3.07,
-      "attack": 5.07,
+      "attack": 3.07,
       "onhit": 3.07,
       "ability_hit": 5.7,
       "cast": 5.7,
@@ -10000,6 +10340,12 @@
       "W": 1.0,
       "E": 1.0,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.701,
+      "survival": 0.274,
+      "support": 0.0,
+      "utility": 0.025
      },
      "stats": {
       "hp": 2204.75,
@@ -10029,12 +10375,6 @@
    }
   },
   "Graves": {
-   "weights": {
-    "damage": 0.701,
-    "survival": 0.274,
-    "support": 0.0,
-    "utility": 0.025
-   },
    "styles": {
     "main": {
      "style": {
@@ -10056,7 +10396,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1479,
      "ehp": 3589,
@@ -10078,6 +10420,12 @@
       "W": 1.6,
       "E": 1.92,
       "R": 1.15
+     },
+     "weights": {
+      "damage": 0.701,
+      "survival": 0.274,
+      "support": 0.0,
+      "utility": 0.025
      },
      "stats": {
       "hp": 2185.7,
@@ -10107,12 +10455,6 @@
    }
   },
   "Quinn": {
-   "weights": {
-    "damage": 0.816,
-    "survival": 0.161,
-    "support": 0.0,
-    "utility": 0.023
-   },
    "styles": {
     "main": {
      "style": {
@@ -10134,7 +10476,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1435,
      "ehp": 3467,
@@ -10156,6 +10500,12 @@
       "W": 1.25,
       "E": 1.98,
       "R": 3.93
+     },
+     "weights": {
+      "damage": 0.816,
+      "survival": 0.161,
+      "support": 0.0,
+      "utility": 0.023
      },
      "stats": {
       "hp": 2136.65,
@@ -10185,12 +10535,6 @@
    }
   },
   "DrMundo": {
-   "weights": {
-    "damage": 0.413,
-    "survival": 0.562,
-    "support": 0.0,
-    "utility": 0.026
-   },
    "styles": {
     "main": {
      "style": {
@@ -10200,7 +10544,7 @@
        "護甲",
        "技能急速"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -10212,15 +10556,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 233,
+     "damage": 204,
      "ehp": 7997,
      "support": 0,
      "counts": {
-      "auto": 3.38,
-      "attack": 6.16,
-      "onhit": 3.38,
+      "auto": 2.54,
+      "attack": 2.54,
+      "onhit": 2.54,
       "ability_hit": 4.55,
       "cast": 9.65,
       "dash": 0.0,
@@ -10234,6 +10580,12 @@
       "W": 1.77,
       "E": 2.78,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.413,
+      "survival": 0.562,
+      "support": 0.0,
+      "utility": 0.026
      },
      "stats": {
       "hp": 3367.85,
@@ -10263,12 +10615,6 @@
    }
   },
   "Garen": {
-   "weights": {
-    "damage": 0.489,
-    "survival": 0.489,
-    "support": 0.0,
-    "utility": 0.022
-   },
    "styles": {
     "main": {
      "style": {
@@ -10290,7 +10636,11 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {
+       "Q": 1
+      },
+      "cast_s": {}
      },
      "damage": 1143,
      "ehp": 7359,
@@ -10312,6 +10662,12 @@
       "W": 1.61,
       "E": 2.3,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.489,
+      "survival": 0.489,
+      "support": 0.0,
+      "utility": 0.022
      },
      "stats": {
       "hp": 3363.1,
@@ -10341,12 +10697,6 @@
    }
   },
   "Vex": {
-   "weights": {
-    "damage": 0.0,
-    "survival": 0.0,
-    "support": 0.0,
-    "utility": 1.0
-   },
    "styles": {
     "main": {
      "style": {
@@ -10368,7 +10718,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1782,
      "ehp": 4285,
@@ -10390,6 +10742,12 @@
       "W": 1.92,
       "E": 2.0,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.0,
+      "survival": 0.0,
+      "support": 0.0,
+      "utility": 1.0
      },
      "stats": {
       "hp": 2128.8,
@@ -10419,12 +10777,6 @@
    }
   },
   "Zaahen": {
-   "weights": {
-    "damage": 0.626,
-    "survival": 0.352,
-    "support": 0.0,
-    "utility": 0.022
-   },
    "styles": {
     "main": {
      "style": {
@@ -10446,14 +10798,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1370,
      "ehp": 6021,
      "support": 0,
      "counts": {
       "auto": 2.25,
-      "attack": 4.97,
+      "attack": 2.25,
       "onhit": 2.25,
       "ability_hit": 8.21,
       "cast": 8.21,
@@ -10468,6 +10822,12 @@
       "W": 1.96,
       "E": 2.41,
       "R": 1.13
+     },
+     "weights": {
+      "damage": 0.626,
+      "survival": 0.352,
+      "support": 0.0,
+      "utility": 0.022
      },
      "stats": {
       "hp": 3488.3,
@@ -10497,12 +10857,6 @@
    }
   },
   "Shaco": {
-   "weights": {
-    "damage": 0.778,
-    "survival": 0.195,
-    "support": 0.0,
-    "utility": 0.027
-   },
    "styles": {
     "main": {
      "style": {
@@ -10524,14 +10878,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1100,
      "ehp": 3470,
      "support": 0,
      "counts": {
       "auto": 1.49,
-      "attack": 3.25,
+      "attack": 1.49,
       "onhit": 1.49,
       "ability_hit": 7.55,
       "cast": 6.55,
@@ -10546,6 +10902,12 @@
       "W": 1.59,
       "E": 2.1,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.778,
+      "survival": 0.195,
+      "support": 0.0,
+      "utility": 0.027
      },
      "stats": {
       "hp": 2114.05,
@@ -10575,12 +10937,6 @@
    }
   },
   "Rumble": {
-   "weights": {
-    "damage": 0.626,
-    "survival": 0.352,
-    "support": 0.0,
-    "utility": 0.022
-   },
    "styles": {
     "main": {
      "style": {
@@ -10602,7 +10958,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1331,
      "ehp": 7582,
@@ -10624,6 +10982,12 @@
       "W": 2.47,
       "E": 1.0,
       "R": 1.08
+     },
+     "weights": {
+      "damage": 0.626,
+      "survival": 0.352,
+      "support": 0.0,
+      "utility": 0.022
      },
      "stats": {
       "hp": 3389.75,
@@ -10653,12 +11017,6 @@
    }
   },
   "Belveth": {
-   "weights": {
-    "damage": 0.887,
-    "survival": 0.072,
-    "support": 0.0,
-    "utility": 0.041
-   },
    "styles": {
     "main": {
      "style": {
@@ -10680,7 +11038,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1168,
      "ehp": 6339,
@@ -10702,6 +11062,12 @@
       "W": 1.98,
       "E": 1.59,
       "R": 1.0
+     },
+     "weights": {
+      "damage": 0.887,
+      "survival": 0.072,
+      "support": 0.0,
+      "utility": 0.041
      },
      "stats": {
       "hp": 3329.75,
@@ -10731,12 +11097,6 @@
    }
   },
   "TahmKench": {
-   "weights": {
-    "damage": 0.18,
-    "survival": 0.404,
-    "support": 0.404,
-    "utility": 0.011
-   },
    "styles": {
     "main": {
      "style": {
@@ -10746,7 +11106,7 @@
        "技能急速",
        "護甲"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -10758,15 +11118,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 795,
+     "damage": 771,
      "ehp": 7426,
      "support": 800,
      "counts": {
-      "auto": 3.05,
-      "attack": 3.05,
-      "onhit": 3.05,
+      "auto": 2.29,
+      "attack": 2.29,
+      "onhit": 2.29,
       "ability_hit": 5.85,
       "cast": 10.85,
       "dash": 0.0,
@@ -10780,6 +11142,12 @@
       "W": 1.67,
       "E": 5.0,
       "R": 1.0
+     },
+     "weights": {
+      "damage": 0.18,
+      "survival": 0.404,
+      "support": 0.404,
+      "utility": 0.011
      },
      "stats": {
       "hp": 3367.85,
@@ -10809,12 +11177,6 @@
    }
   },
   "Fiddlesticks": {
-   "weights": {
-    "damage": 0.878,
-    "survival": 0.098,
-    "support": 0.0,
-    "utility": 0.024
-   },
    "styles": {
     "main": {
      "style": {
@@ -10836,7 +11198,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 2166,
      "ehp": 3833,
@@ -10858,6 +11222,12 @@
       "W": 2.41,
       "E": 2.71,
       "R": 1.11
+     },
+     "weights": {
+      "damage": 0.878,
+      "survival": 0.098,
+      "support": 0.0,
+      "utility": 0.024
      },
      "stats": {
       "hp": 2210.7,
@@ -10887,12 +11257,6 @@
    }
   },
   "Jax": {
-   "weights": {
-    "damage": 0.643,
-    "survival": 0.328,
-    "support": 0.0,
-    "utility": 0.03
-   },
    "styles": {
     "main": {
      "style": {
@@ -10914,14 +11278,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1482,
      "ehp": 5682,
      "support": 0,
      "counts": {
       "auto": 3.49,
-      "attack": 7.78,
+      "attack": 3.49,
       "onhit": 3.49,
       "ability_hit": 8.44,
       "cast": 8.44,
@@ -10936,6 +11302,12 @@
       "W": 3.2,
       "E": 1.8,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.643,
+      "survival": 0.328,
+      "support": 0.0,
+      "utility": 0.03
      },
      "stats": {
       "hp": 3377.85,
@@ -10965,12 +11337,6 @@
    }
   },
   "Sylas": {
-   "weights": {
-    "damage": 0.778,
-    "survival": 0.195,
-    "support": 0.0,
-    "utility": 0.027
-   },
    "styles": {
     "main": {
      "style": {
@@ -10992,7 +11358,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1730,
      "ehp": 8205,
@@ -11014,6 +11382,12 @@
       "W": 2.6,
       "E": 2.2,
       "R": 1.22
+     },
+     "weights": {
+      "damage": 0.778,
+      "survival": 0.195,
+      "support": 0.0,
+      "utility": 0.027
      },
      "stats": {
       "hp": 3535.9,
@@ -11043,12 +11417,6 @@
    }
   },
   "Sion": {
-   "weights": {
-    "damage": 0.231,
-    "survival": 0.748,
-    "support": 0.0,
-    "utility": 0.021
-   },
    "styles": {
     "main": {
      "style": {
@@ -11058,7 +11426,7 @@
        "護甲",
        "技能急速"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -11070,15 +11438,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 803,
+     "damage": 782,
      "ehp": 7299,
      "support": 0,
      "counts": {
-      "auto": 2.2,
-      "attack": 2.2,
-      "onhit": 2.2,
+      "auto": 1.65,
+      "attack": 1.65,
+      "onhit": 1.65,
       "ability_hit": 8.17,
       "cast": 8.17,
       "dash": 1.12,
@@ -11092,6 +11462,12 @@
       "W": 2.0,
       "E": 2.33,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.231,
+      "survival": 0.748,
+      "support": 0.0,
+      "utility": 0.021
      },
      "stats": {
       "hp": 3295.25,
@@ -11121,12 +11497,6 @@
    }
   },
   "Sett": {
-   "weights": {
-    "damage": 0.701,
-    "survival": 0.274,
-    "support": 0.0,
-    "utility": 0.025
-   },
    "styles": {
     "main": {
      "style": {
@@ -11148,7 +11518,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1068,
      "ehp": 5895,
@@ -11170,6 +11542,12 @@
       "W": 1.89,
       "E": 2.04,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.701,
+      "survival": 0.274,
+      "support": 0.0,
+      "utility": 0.025
      },
      "stats": {
       "hp": 3518.3,
@@ -11199,12 +11577,6 @@
    }
   },
   "Hecarim": {
-   "weights": {
-    "damage": 0.626,
-    "survival": 0.352,
-    "support": 0.0,
-    "utility": 0.022
-   },
    "styles": {
     "main": {
      "style": {
@@ -11226,14 +11598,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1283,
      "ehp": 5965,
      "support": 0,
      "counts": {
       "auto": 2.58,
-      "attack": 4.09,
+      "attack": 2.58,
       "onhit": 2.58,
       "ability_hit": 7.42,
       "cast": 7.42,
@@ -11248,6 +11622,12 @@
       "W": 1.63,
       "E": 1.52,
       "R": 1.07
+     },
+     "weights": {
+      "damage": 0.626,
+      "survival": 0.352,
+      "support": 0.0,
+      "utility": 0.022
      },
      "stats": {
       "hp": 3385.7,
@@ -11277,12 +11657,6 @@
    }
   },
   "Hwei": {
-   "weights": {
-    "damage": 0.952,
-    "survival": 0.015,
-    "support": 0.0,
-    "utility": 0.033
-   },
    "styles": {
     "main": {
      "style": {
@@ -11304,14 +11678,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 2184,
      "ehp": 4454,
      "support": 0,
      "counts": {
       "auto": 1.3,
-      "attack": 3.02,
+      "attack": 1.3,
       "onhit": 1.3,
       "ability_hit": 8.7,
       "cast": 7.7,
@@ -11326,6 +11702,12 @@
       "W": 1.73,
       "E": 2.14,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.952,
+      "survival": 0.015,
+      "support": 0.0,
+      "utility": 0.033
      },
      "stats": {
       "hp": 2173.55,
@@ -11355,12 +11737,6 @@
    }
   },
   "XinZhao": {
-   "weights": {
-    "damage": 0.626,
-    "survival": 0.352,
-    "support": 0.0,
-    "utility": 0.022
-   },
    "styles": {
     "main": {
      "style": {
@@ -11382,14 +11758,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1070,
      "ehp": 5707,
      "support": 0,
      "counts": {
       "auto": 3.85,
-      "attack": 7.53,
+      "attack": 3.85,
       "onhit": 3.85,
       "ability_hit": 7.46,
       "cast": 7.46,
@@ -11404,6 +11782,12 @@
       "W": 1.98,
       "E": 1.8,
       "R": 1.08
+     },
+     "weights": {
+      "damage": 0.626,
+      "survival": 0.352,
+      "support": 0.0,
+      "utility": 0.022
      },
      "stats": {
       "hp": 3380.7,
@@ -11433,12 +11817,6 @@
    }
   },
   "Lucian": {
-   "weights": {
-    "damage": 0.701,
-    "survival": 0.274,
-    "support": 0.0,
-    "utility": 0.025
-   },
    "styles": {
     "main": {
      "style": {
@@ -11460,7 +11838,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1447,
      "ehp": 3407,
@@ -11482,6 +11862,12 @@
       "W": 2.09,
       "E": 1.83,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.701,
+      "survival": 0.274,
+      "support": 0.0,
+      "utility": 0.025
      },
      "stats": {
       "hp": 2136.0,
@@ -11511,12 +11897,6 @@
    }
   },
   "Singed": {
-   "weights": {
-    "damage": 0.425,
-    "survival": 0.555,
-    "support": 0.0,
-    "utility": 0.02
-   },
    "styles": {
     "main": {
      "style": {
@@ -11526,7 +11906,7 @@
        "技能急速",
        "跑速"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -11538,15 +11918,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 247,
+     "damage": 219,
      "ehp": 5520,
      "support": 0,
      "counts": {
-      "auto": 3.19,
-      "attack": 3.19,
-      "onhit": 3.19,
+      "auto": 2.39,
+      "attack": 2.39,
+      "onhit": 2.39,
       "ability_hit": 3.41,
       "cast": 6.39,
       "dash": 0.0,
@@ -11560,6 +11942,12 @@
       "W": 1.86,
       "E": 2.41,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.425,
+      "survival": 0.555,
+      "support": 0.0,
+      "utility": 0.02
      },
      "stats": {
       "hp": 3301.2,
@@ -11589,12 +11977,6 @@
    }
   },
   "TwistedFate": {
-   "weights": {
-    "damage": 0.852,
-    "survival": 0.095,
-    "support": 0.0,
-    "utility": 0.053
-   },
    "styles": {
     "main": {
      "style": {
@@ -11616,14 +11998,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 984,
      "ehp": 3453,
      "support": 0,
      "counts": {
       "auto": 3.71,
-      "attack": 7.71,
+      "attack": 3.71,
       "onhit": 3.71,
       "ability_hit": 4.29,
       "cast": 8.37,
@@ -11638,6 +12022,12 @@
       "W": 3.0,
       "E": 1.0,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.852,
+      "survival": 0.095,
+      "support": 0.0,
+      "utility": 0.053
      },
      "stats": {
       "hp": 2186.6,
@@ -11667,12 +12057,6 @@
    }
   },
   "Draven": {
-   "weights": {
-    "damage": 0.878,
-    "survival": 0.098,
-    "support": 0.0,
-    "utility": 0.024
-   },
    "styles": {
     "main": {
      "style": {
@@ -11694,14 +12078,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1787,
      "ehp": 3579,
      "support": 0,
      "counts": {
       "auto": 6.67,
-      "attack": 8.65,
+      "attack": 6.67,
       "onhit": 6.67,
       "ability_hit": 4.75,
       "cast": 6.49,
@@ -11716,6 +12102,12 @@
       "W": 1.73,
       "E": 1.68,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.878,
+      "survival": 0.098,
+      "support": 0.0,
+      "utility": 0.024
      },
      "stats": {
       "hp": 2213.8,
@@ -11745,12 +12137,6 @@
    }
   },
   "Darius": {
-   "weights": {
-    "damage": 0.748,
-    "survival": 0.231,
-    "support": 0.0,
-    "utility": 0.021
-   },
    "styles": {
     "main": {
      "style": {
@@ -11772,7 +12158,11 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {
+       "W": 1
+      },
+      "cast_s": {}
      },
      "damage": 1332,
      "ehp": 6480,
@@ -11794,6 +12184,12 @@
       "W": 3.32,
       "E": 1.92,
       "R": 1.5
+     },
+     "weights": {
+      "damage": 0.748,
+      "survival": 0.231,
+      "support": 0.0,
+      "utility": 0.021
      },
      "stats": {
       "hp": 3500.3,
@@ -11823,12 +12219,6 @@
    }
   },
   "Ornn": {
-   "weights": {
-    "damage": 0.231,
-    "survival": 0.748,
-    "support": 0.0,
-    "utility": 0.021
-   },
    "styles": {
     "main": {
      "style": {
@@ -11838,7 +12228,7 @@
        "護甲",
        "技能急速"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -11850,15 +12240,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 691,
+     "damage": 670,
      "ehp": 7328,
      "support": 0,
      "counts": {
-      "auto": 2.23,
-      "attack": 2.23,
-      "onhit": 2.23,
+      "auto": 1.67,
+      "attack": 1.67,
+      "onhit": 1.67,
       "ability_hit": 7.8,
       "cast": 7.8,
       "dash": 5.2,
@@ -11872,6 +12264,12 @@
       "W": 2.14,
       "E": 1.96,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.231,
+      "survival": 0.748,
+      "support": 0.0,
+      "utility": 0.021
      },
      "stats": {
       "hp": 3453.55,
@@ -11901,12 +12299,6 @@
    }
   },
   "Rell": {
-   "weights": {
-    "damage": 0.0,
-    "survival": 0.0,
-    "support": 0.0,
-    "utility": 1.0
-   },
    "styles": {
     "main": {
      "style": {
@@ -11916,7 +12308,7 @@
        "護甲",
        "技能急速"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -11928,15 +12320,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 634,
+     "damage": 617,
      "ehp": 7096,
      "support": 0,
      "counts": {
-      "auto": 2.25,
-      "attack": 4.34,
-      "onhit": 2.25,
+      "auto": 1.69,
+      "attack": 1.69,
+      "onhit": 1.69,
       "ability_hit": 7.67,
       "cast": 7.67,
       "dash": 2.09,
@@ -11950,6 +12344,12 @@
       "W": 2.2,
       "E": 2.09,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.0,
+      "survival": 0.0,
+      "support": 0.0,
+      "utility": 1.0
      },
      "stats": {
       "hp": 3358.8,
@@ -11979,12 +12379,6 @@
    }
   },
   "Rakan": {
-   "weights": {
-    "damage": 0.392,
-    "survival": 0.098,
-    "support": 0.496,
-    "utility": 0.014
-   },
    "styles": {
     "main": {
      "style": {
@@ -12006,7 +12400,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 713,
      "ehp": 5813,
@@ -12028,6 +12424,12 @@
       "W": 2.09,
       "E": 1.0,
       "R": 1.11
+     },
+     "weights": {
+      "damage": 0.392,
+      "survival": 0.098,
+      "support": 0.496,
+      "utility": 0.014
      },
      "stats": {
       "hp": 3294.05,
@@ -12057,12 +12459,6 @@
    }
   },
   "Kindred": {
-   "weights": {
-    "damage": 0.911,
-    "survival": 0.057,
-    "support": 0.0,
-    "utility": 0.032
-   },
    "styles": {
     "main": {
      "style": {
@@ -12084,14 +12480,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1414,
      "ehp": 3992,
      "support": 0,
      "counts": {
       "auto": 6.93,
-      "attack": 10.44,
+      "attack": 6.93,
       "onhit": 6.93,
       "ability_hit": 3.56,
       "cast": 6.55,
@@ -12106,6 +12504,12 @@
       "W": 1.59,
       "E": 1.93,
       "R": 1.06
+     },
+     "weights": {
+      "damage": 0.911,
+      "survival": 0.057,
+      "support": 0.0,
+      "utility": 0.032
      },
      "stats": {
       "hp": 2133.8,
@@ -12135,12 +12539,6 @@
    }
   },
   "Gwen": {
-   "weights": {
-    "damage": 0.729,
-    "survival": 0.238,
-    "support": 0.0,
-    "utility": 0.033
-   },
    "styles": {
     "main": {
      "style": {
@@ -12162,7 +12560,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1006,
      "ehp": 6038,
@@ -12184,6 +12584,12 @@
       "W": 1.46,
       "E": 1.77,
       "R": 1.09
+     },
+     "weights": {
+      "damage": 0.729,
+      "survival": 0.238,
+      "support": 0.0,
+      "utility": 0.033
      },
      "stats": {
       "hp": 3479.25,
@@ -12213,12 +12619,6 @@
    }
   },
   "Akali": {
-   "weights": {
-    "damage": 0.85,
-    "survival": 0.12,
-    "support": 0.0,
-    "utility": 0.03
-   },
    "styles": {
     "main": {
      "style": {
@@ -12240,7 +12640,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1277,
      "ehp": 5849,
@@ -12262,6 +12664,12 @@
       "W": 1.52,
       "E": 1.77,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.85,
+      "survival": 0.12,
+      "support": 0.0,
+      "utility": 0.03
      },
      "stats": {
       "hp": 3503.05,
@@ -12291,12 +12699,6 @@
    }
   },
   "Amumu": {
-   "weights": {
-    "damage": 0.626,
-    "survival": 0.352,
-    "support": 0.0,
-    "utility": 0.022
-   },
    "styles": {
     "main": {
      "style": {
@@ -12306,7 +12708,7 @@
        "魔防",
        "技能急速"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -12318,15 +12720,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 925,
+     "damage": 906,
      "ehp": 6815,
      "support": 0,
      "counts": {
-      "auto": 2.39,
-      "attack": 2.39,
-      "onhit": 2.39,
+      "auto": 1.79,
+      "attack": 1.79,
+      "onhit": 1.79,
       "ability_hit": 10.1,
       "cast": 10.1,
       "dash": 0.0,
@@ -12340,6 +12744,12 @@
       "W": 1.0,
       "E": 3.0,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.626,
+      "survival": 0.352,
+      "support": 0.0,
+      "utility": 0.022
      },
      "stats": {
       "hp": 3314.3,
@@ -12369,12 +12779,6 @@
    }
   },
   "Ahri": {
-   "weights": {
-    "damage": 0.778,
-    "survival": 0.195,
-    "support": 0.0,
-    "utility": 0.027
-   },
    "styles": {
     "main": {
      "style": {
@@ -12396,7 +12800,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1422,
      "ehp": 3313,
@@ -12418,6 +12824,12 @@
       "W": 3.0,
       "E": 2.0,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.778,
+      "survival": 0.195,
+      "support": 0.0,
+      "utility": 0.027
      },
      "stats": {
       "hp": 2128.8,
@@ -12447,12 +12859,6 @@
    }
   },
   "Azir": {
-   "weights": {
-    "damage": 0.85,
-    "survival": 0.12,
-    "support": 0.0,
-    "utility": 0.03
-   },
    "styles": {
     "main": {
      "style": {
@@ -12474,7 +12880,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1766,
      "ehp": 4424,
@@ -12496,6 +12904,12 @@
       "W": 1.0,
       "E": 1.69,
       "R": 1.11
+     },
+     "weights": {
+      "damage": 0.85,
+      "survival": 0.12,
+      "support": 0.0,
+      "utility": 0.03
      },
      "stats": {
       "hp": 2157.6,
@@ -12525,12 +12939,6 @@
    }
   },
   "Renekton": {
-   "weights": {
-    "damage": 0.701,
-    "survival": 0.274,
-    "support": 0.0,
-    "utility": 0.025
-   },
    "styles": {
     "main": {
      "style": {
@@ -12552,14 +12960,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 2073,
      "ehp": 7205,
      "support": 0,
      "counts": {
       "auto": 2.48,
-      "attack": 4.68,
+      "attack": 2.48,
       "onhit": 2.48,
       "ability_hit": 8.08,
       "cast": 8.08,
@@ -12574,6 +12984,12 @@
       "W": 2.2,
       "E": 2.04,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.701,
+      "survival": 0.274,
+      "support": 0.0,
+      "utility": 0.025
      },
      "stats": {
       "hp": 3475.45,
@@ -12603,12 +13019,6 @@
    }
   },
   "Leona": {
-   "weights": {
-    "damage": 0.195,
-    "survival": 0.778,
-    "support": 0.0,
-    "utility": 0.027
-   },
    "styles": {
     "main": {
      "style": {
@@ -12618,7 +13028,7 @@
        "護甲",
        "技能急速"
       ],
-      "autos": 0.6,
+      "autos": 0.45,
       "resets": 0.0,
       "onhit_hits": {},
       "use": {},
@@ -12630,15 +13040,17 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
-     "damage": 790,
+     "damage": 773,
      "ehp": 7207,
      "support": 0,
      "counts": {
-      "auto": 2.12,
-      "attack": 5.52,
-      "onhit": 2.12,
+      "auto": 1.59,
+      "attack": 1.59,
+      "onhit": 1.59,
       "ability_hit": 9.25,
       "cast": 9.25,
       "dash": 2.6,
@@ -12652,6 +13064,12 @@
       "W": 2.09,
       "E": 2.6,
       "R": 1.16
+     },
+     "weights": {
+      "damage": 0.195,
+      "survival": 0.778,
+      "support": 0.0,
+      "utility": 0.027
      },
      "stats": {
       "hp": 3351.95,
@@ -12681,12 +13099,6 @@
    }
   },
   "Riven": {
-   "weights": {
-    "damage": 0.701,
-    "survival": 0.274,
-    "support": 0.0,
-    "utility": 0.025
-   },
    "styles": {
     "main": {
      "style": {
@@ -12708,7 +13120,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1453,
      "ehp": 4828,
@@ -12730,6 +13144,12 @@
       "W": 2.5,
       "E": 2.71,
       "R": 1.13
+     },
+     "weights": {
+      "damage": 0.701,
+      "survival": 0.274,
+      "support": 0.0,
+      "utility": 0.025
      },
      "stats": {
       "hp": 2125.0,
@@ -12759,12 +13179,6 @@
    }
   },
   "RekSai": {
-   "weights": {
-    "damage": 0.701,
-    "survival": 0.274,
-    "support": 0.0,
-    "utility": 0.025
-   },
    "styles": {
     "main": {
      "style": {
@@ -12786,14 +13200,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1757,
      "ehp": 5562,
      "support": 0,
      "counts": {
       "auto": 1.19,
-      "attack": 6.99,
+      "attack": 1.19,
       "onhit": 1.19,
       "ability_hit": 9.92,
       "cast": 13.92,
@@ -12808,6 +13224,12 @@
       "W": 4.0,
       "E": 3.0,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.701,
+      "survival": 0.274,
+      "support": 0.0,
+      "utility": 0.025
      },
      "stats": {
       "hp": 3284.05,
@@ -12837,12 +13259,6 @@
    }
   },
   "Ryze": {
-   "weights": {
-    "damage": 0.941,
-    "survival": 0.038,
-    "support": 0.0,
-    "utility": 0.021
-   },
    "styles": {
     "main": {
      "style": {
@@ -12864,7 +13280,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 43,
      "ehp": 5719,
@@ -12886,6 +13304,12 @@
       "W": 2.26,
       "E": 5.36,
       "R": 1.07
+     },
+     "weights": {
+      "damage": 0.941,
+      "survival": 0.038,
+      "support": 0.0,
+      "utility": 0.021
      },
      "stats": {
       "hp": 3577.8,
@@ -12915,12 +13339,6 @@
    }
   },
   "Rengar": {
-   "weights": {
-    "damage": 0.729,
-    "survival": 0.238,
-    "support": 0.0,
-    "utility": 0.033
-   },
    "styles": {
     "main": {
      "style": {
@@ -12942,14 +13360,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1110,
      "ehp": 3643,
      "support": 0,
      "counts": {
       "auto": 4.01,
-      "attack": 6.15,
+      "attack": 4.01,
       "onhit": 4.01,
       "ability_hit": 4.13,
       "cast": 4.13,
@@ -12964,6 +13384,12 @@
       "W": 1.0,
       "E": 1.0,
       "R": 1.13
+     },
+     "weights": {
+      "damage": 0.729,
+      "survival": 0.238,
+      "support": 0.0,
+      "utility": 0.033
      },
      "stats": {
       "hp": 2128.8,
@@ -12993,12 +13419,6 @@
    }
   },
   "Lulu": {
-   "weights": {
-    "damage": 0.312,
-    "survival": 0.159,
-    "support": 0.515,
-    "utility": 0.014
-   },
    "styles": {
     "main": {
      "style": {
@@ -13020,7 +13440,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 951,
      "ehp": 4172,
@@ -13042,6 +13464,12 @@
       "W": 1.67,
       "E": 2.41,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.312,
+      "survival": 0.159,
+      "support": 0.515,
+      "utility": 0.014
      },
      "stats": {
       "hp": 1972.4,
@@ -13071,12 +13499,6 @@
    }
   },
   "Fizz": {
-   "weights": {
-    "damage": 0.729,
-    "survival": 0.238,
-    "support": 0.0,
-    "utility": 0.033
-   },
    "styles": {
     "main": {
      "style": {
@@ -13098,14 +13520,16 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1672,
      "ehp": 3640,
      "support": 0,
      "counts": {
       "auto": 2.08,
-      "attack": 6.08,
+      "attack": 2.08,
       "onhit": 2.08,
       "ability_hit": 10.17,
       "cast": 10.17,
@@ -13120,6 +13544,12 @@
       "W": 4.0,
       "E": 2.2,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.729,
+      "survival": 0.238,
+      "support": 0.0,
+      "utility": 0.033
      },
      "stats": {
       "hp": 2200.7,
@@ -13149,12 +13579,6 @@
    }
   },
   "Malzahar": {
-   "weights": {
-    "damage": 0.928,
-    "survival": 0.046,
-    "support": 0.0,
-    "utility": 0.026
-   },
    "styles": {
     "main": {
      "style": {
@@ -13176,7 +13600,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1454,
      "ehp": 3272,
@@ -13198,6 +13624,12 @@
       "W": 2.5,
       "E": 2.5,
       "R": 1.11
+     },
+     "weights": {
+      "damage": 0.928,
+      "survival": 0.046,
+      "support": 0.0,
+      "utility": 0.026
      },
      "stats": {
       "hp": 2085.95,
@@ -13227,12 +13659,6 @@
    }
   },
   "Morgana": {
-   "weights": {
-    "damage": 0.626,
-    "survival": 0.352,
-    "support": 0.0,
-    "utility": 0.022
-   },
    "styles": {
     "main": {
      "style": {
@@ -13254,7 +13680,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1145,
      "ehp": 6453,
@@ -13276,6 +13704,12 @@
       "W": 2.0,
       "E": 1.65,
       "R": 1.11
+     },
+     "weights": {
+      "damage": 0.626,
+      "survival": 0.352,
+      "support": 0.0,
+      "utility": 0.022
      },
      "stats": {
       "hp": 3368.8,
@@ -13305,12 +13739,6 @@
    }
   },
   "Mordekaiser": {
-   "weights": {
-    "damage": 0.562,
-    "survival": 0.413,
-    "support": 0.0,
-    "utility": 0.026
-   },
    "styles": {
     "main": {
      "style": {
@@ -13332,7 +13760,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 440,
      "ehp": 5709,
@@ -13354,6 +13784,12 @@
       "W": 2.33,
       "E": 2.2,
       "R": 1.11
+     },
+     "weights": {
+      "damage": 0.562,
+      "survival": 0.413,
+      "support": 0.0,
+      "utility": 0.026
      },
      "stats": {
       "hp": 3383.8,
@@ -13383,12 +13819,6 @@
    }
   },
   "Lissandra": {
-   "weights": {
-    "damage": 0.701,
-    "survival": 0.274,
-    "support": 0.0,
-    "utility": 0.025
-   },
    "styles": {
     "main": {
      "style": {
@@ -13410,7 +13840,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 2171,
      "ehp": 4994,
@@ -13432,6 +13864,12 @@
       "W": 2.41,
       "E": 1.8,
       "R": 1.12
+     },
+     "weights": {
+      "damage": 0.701,
+      "survival": 0.274,
+      "support": 0.0,
+      "utility": 0.025
      },
      "stats": {
       "hp": 2224.5,
@@ -13461,12 +13899,6 @@
    }
   },
   "Diana": {
-   "weights": {
-    "damage": 0.626,
-    "survival": 0.352,
-    "support": 0.0,
-    "utility": 0.022
-   },
    "styles": {
     "main": {
      "style": {
@@ -13488,7 +13920,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 1679,
      "ehp": 6213,
@@ -13510,6 +13944,12 @@
       "W": 1.84,
       "E": 1.55,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.626,
+      "survival": 0.352,
+      "support": 0.0,
+      "utility": 0.022
      },
      "stats": {
       "hp": 3433.55,
@@ -13539,12 +13979,6 @@
    }
   },
   "Xerath": {
-   "weights": {
-    "damage": 0.899,
-    "survival": 0.081,
-    "support": 0.0,
-    "utility": 0.02
-   },
    "styles": {
     "main": {
      "style": {
@@ -13566,7 +14000,9 @@
       "cd_as": {},
       "crit_mult": 1.0,
       "untargetable": {},
-      "crits": []
+      "crits": [],
+      "aa_reset": {},
+      "cast_s": {}
      },
      "damage": 2014,
      "ehp": 3393,
@@ -13588,6 +14024,12 @@
       "W": 2.09,
       "E": 2.04,
       "R": 1.1
+     },
+     "weights": {
+      "damage": 0.899,
+      "survival": 0.081,
+      "support": 0.0,
+      "utility": 0.02
      },
      "stats": {
       "hp": 2135.7,

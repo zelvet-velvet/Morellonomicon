@@ -1,9 +1,11 @@
 {
  "Katarina": {"resets": 0.7, "onhit_hits": {"R": 5}, "styles": {"onhit": {"name": "攻速特效", "stack": ["攻速", "法術強度"], "autos": 0.6}}},
  "MasterYi": {"resets": 0.3, "autos": 0.85, "auto_mult": 1.12, "onhit_hits": {"Q": 4}, "cd_per_attack": {"Q": 1.0}, "untargetable": {"Q": 0.9}, "per_hit": {"E": 5}, "buff": {"R": {"as": 0.35, "s": 7}}},
- "Darius": {"resets": 0.2},
- "Jinx": {"use": {"W": 0.4, "E": 0.6}, "extra": {"R": [{"type": "physical", "base": 300, "bonus_ad": 1.2, "target_maxhp": 0.15}]}},
- "Fiora": {"extra": {"Q": [{"type": "true", "target_maxhp": 0.084}], "P": [{"type": "true", "target_maxhp": 0.084}]}},
+ "Darius": {"resets": 0.2, "aa_reset": {"W": 1}},
+ "Jinx": {"use": {"W": 0.4, "E": 0.6}, "cast_s": {"W": 0.6}, "extra": {"R": [{"type": "physical", "base": 300, "bonus_ad": 1.2, "target_maxhp": 0.15}]}},
+ "Fiora": {"aa_reset": {"E": 2}, "extra": {"Q": [{"type": "true", "target_maxhp": 0.084}], "P": [{"type": "true", "target_maxhp": 0.084}]}},
+ "Malphite": {"styles": {"ap": {"name": "法術", "stack": ["法術強度", "技能急速", "生命"], "ratings": {"magic": 8, "defense": 6}}}},
+ "Garen": {"aa_reset": {"Q": 1}},
  "Yasuo": {"cd_as": {"Q": [0.6, 1.33]}, "crit_mult": 2.0, "crits": ["Q"]},
  "Yone": {"cd_as": {"Q": [0.6, 1.33]}, "crit_mult": 2.0, "crits": ["Q"]}
 }

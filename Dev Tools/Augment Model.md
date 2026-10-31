@@ -31,8 +31,8 @@ How the app ranks ARAM Mayhem augments for each champion from the champion's own
 > - **Damage per cast** from its rank rows: base + AP ratio × AP + AD ratios × AD (the biggest row of each damage type).
 > - **Casting costs attack time**: each cast of an ability that hits or controls takes 0.4 s (`CAST_S`) out of the fight's attacking time, so extra casts (haste, 祕術拳擊) cost an auto-attacker some attacks; a self-buff costs none, and neither does an on-hit ability (it is an attack itself).
 > - **Attacks that shorten cooldowns feed back**: 祕術拳擊 (every cooldown) or an ability's own cut (Master Yi's Q) give more casts, whose hits are attacks again (his Q hits four times); this is worked out until it settles, no ability faster than once a second (`MIN_CYCLE_S`).
-> - **Basic attacks**: `(FIGHT_S − casting time) × attack speed × autos`, where `autos` (0–1) is how much of the fight it spends attacking: 0.85 for a marksman, 0.6 for a melee fighter or tank, 0.3 for the others (hand-set per play style when wrong). Each deals total AD (crits at 175%).
-> - **Triggers counted per fight**: basic attacks; attacks for 'on attack' effects (basic attacks plus casts of on-hit and empowered-attack abilities: the `onhit` list and the 強化普攻 tag); on-hit applications (basic attacks + casts of the abilities in `onhit`); ability hits; casts; dashes (casts of abilities tagged 位移); crowd control (casts tagged 控場); takedowns (`TAKEDOWNS`, 1.5 per fight).
+> - **Basic attacks**: `(FIGHT_S − casting time) × attack speed × autos`, where `autos` (0–1) is how much of the fight it spends attacking: 0.85 for a marksman, 0.6 for a melee fighter or tank, 0.45 for a melee champion whose first role is 坦克, 0.3 for the others (hand-set per play style when wrong). Each deals total AD (crits at 175%).
+> - **Triggers counted per fight**: basic attacks; attacks for 'on attack' effects (basic attacks, each hit of an on-hit ability, and the extra attacks of an attack-reset ability: hand `aa_reset`; an ability that only empowers the next attack, like Malphite's W, adds none); on-hit applications (basic attacks + casts of the abilities in `onhit`); ability hits; casts; dashes (casts of abilities tagged 位移); crowd control (casts tagged 控場); takedowns (`TAKEDOWNS`, 1.5 per fight).
 > - **Survival** is effective health: total HP × (1 + average resist / 100), plus shields and healing over the fight.
 
 > [!info]+ Weights
@@ -43,7 +43,7 @@ How the app ranks ARAM Mayhem augments for each champion from the champion's own
 
 > [!example]+ Files
 > - `tools/data/augment-model.json` (hand): each augment as **terms** (below), one augment per line, with the wiki numbers at level 13.
-> - `tools/data/champion-model.json` (hand): what the rank rows cannot say, per champion: `resets`; `autos`; `use` (the share of an ability's casts really made: Jinx holds W); `extra` (damage the rows miss: Fiora's vitals); `auto_mult` (Master Yi's double strike); `buff` (a self-buff's stats and seconds: Master Yi's R attack speed); `per_hit` (an ability whose damage lands on each attack while it lasts: Master Yi's E); `cd_per_attack` (an ability whose cooldown each attack shortens: Master Yi's Q); `cd_as` (a cooldown attack speed shortens: Yasuo and Yone's Q); `crit_mult` (Yasuo and Yone's double crit chance); `crits` (abilities that crit: their Q); `untargetable` (seconds per cast it cannot be hit: Master Yi's Q); `onhit_hits` (hits per cast that count as attacks); and `styles` for more play styles (Katarina's 攻速特效).
+> - `tools/data/champion-model.json` (hand): what the rank rows cannot say, per champion: `resets`; `autos`; `use` (the share of an ability's casts really made: Jinx holds W); `extra` (damage the rows miss: Fiora's vitals); `auto_mult` (Master Yi's double strike); `buff` (a self-buff's stats and seconds: Master Yi's R attack speed); `per_hit` (an ability whose damage lands on each attack while it lasts: Master Yi's E); `cd_per_attack` (an ability whose cooldown each attack shortens: Master Yi's Q); `cd_as` (a cooldown attack speed shortens: Yasuo and Yone's Q); `crit_mult` (Yasuo and Yone's double crit chance); `crits` (abilities that crit: their Q); `untargetable` (seconds per cast it cannot be hit: Master Yi's Q); `onhit_hits` (hits per cast that count as attacks); `aa_reset` (extra attacks per cast: Fiora E 2, Garen Q, Darius W); `cast_s` (a longer wind-up: Jinx W 0.6 s); `ratings` in a play style (it weighs damage and survival otherwise: AP Malphite); and `styles` for more play styles (Katarina's 攻速特效).
 > - On-hit abilities are listed in the champion note's `onhit` (Katarina P R, Ezreal Q, Fiora Q, Master Yi Q, Yasuo Q, Yone Q).
 > - `_data/champion-model.json` (generated): every champion's play styles with their reference stats, damage per ability, trigger counts and weights.
 > - `_data/augment-tiers.json` (generated): per play style, each modelled augment's value, tier and reason. Committed, so every change of tier shows in git.
@@ -71,7 +71,7 @@ How the app ranks ARAM Mayhem augments for each champion from the champion's own
 
 > [!info]+ From value to tier
 > - Values ≤ 0 (or an augment not offered to the champion) are left out.
-> - `within` = the augment's rank among this play style's augments by its gain as a share of its own fight (0–1); `across` = this play style's rank among all champions for this augment by its gain against the median champion's fight (0–1), so a champion with little damage does not look like a big gainer.
+> - `within` = the augment's gain against the play style's best augment (half as good: 0.5), the gain taken as a share of its own fight; `across` = its gain against the augment's best users (their 90th percentile), the gain taken against the median champion's fight, so a champion with little damage does not look like a big gainer and an augment most champions cannot use is not easy to win.
 > - score = √(within × across): S needs both, one of the champion's best augments and one of the augment's best users.
 > - **S** ≥ 0.75 · **A** ≥ 0.55 · **B** ≥ 0.35 · **C** below.
 > - `pinned` / `avoid` in the champion note still win over the model.
@@ -87,7 +87,8 @@ How the app ranks ARAM Mayhem augments for each champion from the champion's own
 > - [ ] Soraka: heal and shield power (急救箱) rank high; damage augments low.
 > - [ ] Lux: ability haste and AP rank high (long cooldowns, big AP ratios).
 > - [ ] 祕術拳擊 (Zaviel, 2026-10-31) suits champions that trigger it often, whose abilities count as attacks or reset them: Master Yi (his Q hits four times: Q spam, untargetable), Yasuo, Yone (broken with it), Fiora, Ezreal high; Malphite and Jinx (an attack-speed marksman) lower.
-> - [ ] Marksmen want on-attack augments (attack speed, every-n-th attack, extra damage on attack); 基本功夫 low for Jinx.
+> - [ ] Marksmen want on-attack augments (attack speed, every-n-th attack, extra damage on attack); 基本功夫 low for Jinx; 祕術拳擊 low for Jinx (casting and attacking get in each other's way).
+> - [ ] Malphite: haste (靈光一閃, 循環利用) above 祕術拳擊.
 > - [ ] Augments that deal damage late or unreliably rank low: 大地覺醒 (explodes 0.75 s later, rarely hits) is weak for everyone.
 
 ---

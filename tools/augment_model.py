@@ -36,7 +36,7 @@ TARGET_HP, TARGET_RES = 2500.0, 80.0   # the enemy hit: health, armor and magic 
 BASE_BONUS = {"hp": 400.0, "haste": 10.0}   # runes and boots, for everyone
 STACK_BONUS = {"法術強度": ("ap", 250.0), "攻擊力": ("bonus_ad", 120.0), "攻速": ("as", 0.6), "暴擊": ("crit", 0.5), "生命": ("hp", 1200.0),
                "護甲": ("armor", 80.0), "魔防": ("mr", 80.0), "技能急速": ("haste", 40.0), "跑速": ("ms", 40.0), "穿透": ("pen", 0.18)}
-AUTOS = {"射手": 0.85, "melee": 0.6, "other": 0.3}   # share of the fight spent attacking, by default
+AUTOS = {"射手": 0.85, "melee": 0.6, "tank": 0.45, "other": 0.3}   # share of the fight spent attacking, by default
 CRIT_DMG = 1.75
 AS_CAP = 2.5
 ONHIT_ITEMS = (40.0, 0.15)  # an on-hit build's item damage per hit: base, AP ratio (Nashor's, Wit's End...)
@@ -152,11 +152,13 @@ def play_styles(cid, note, dd, hand):
     h = hand.get(cid, {})
     melee = dd["stats"]["attackrange"] < 300
     roles = note.get("roles", [])
-    default_autos = AUTOS["射手"] if "射手" in roles else AUTOS["melee"] if melee and ({"戰士", "坦克"} & set(roles)) else AUTOS["other"]
+    default_autos = (AUTOS["射手"] if "射手" in roles else AUTOS["tank"] if melee and roles[:1] == ["坦克"]
+                     else AUTOS["melee"] if melee and ({"戰士", "坦克"} & set(roles)) else AUTOS["other"])
     base = {"name": "主流", "stack": note.get("stack", []), "autos": h.get("autos", default_autos), "resets": h.get("resets", 0.0),
             "onhit_hits": h.get("onhit_hits", {}), "use": h.get("use", {}), "extra": h.get("extra", {}), "auto_mult": h.get("auto_mult", 1.0),
             "buff": h.get("buff", {}), "per_hit": h.get("per_hit", {}), "cd_per_attack": h.get("cd_per_attack", {}),
-            "cd_as": h.get("cd_as", {}), "crit_mult": h.get("crit_mult", 1.0), "untargetable": h.get("untargetable", {}), "crits": h.get("crits", [])}
+            "cd_as": h.get("cd_as", {}), "crit_mult": h.get("crit_mult", 1.0), "untargetable": h.get("untargetable", {}), "crits": h.get("crits", []),
+            "aa_reset": h.get("aa_reset", {}), "cast_s": h.get("cast_s", {})}
     out = {"main": base}
     for sid, st in h.get("styles", {}).items():
         out[sid] = {**base, **st}
@@ -208,12 +210,13 @@ def fight(ch, style, st, aug=None):
         return min(AS_CAP, st["base_as"] * (1 + bonus))
 
     def attacking(plan, a_s):
-        """(basic attacks, attacks for 'on attack' effects: basic attacks and each hit of an on-hit or empowered-attack ability)"""
-        busy = sum(n * CAST_S for ab, n, cd in plan if cd is not None and (ab["dmg"] or "控場" in ab["tags"])
+        """(basic attacks, attacks for 'on attack' effects: basic attacks, each hit of an on-hit ability, and the extra attacks an
+        attack-reset ability gives (hand `aa_reset`: Fiora's E, Garen's Q); an ability that only empowers the next attack adds none)"""
+        busy = sum(n * style["cast_s"].get(ab["key"], CAST_S) for ab, n, cd in plan if cd is not None and (ab["dmg"] or "控場" in ab["tags"])
                    and ab["key"] not in ch["onhit"])   # a self-buff takes no attack time, and an on-hit ability is an attack itself
         autos = a_s * max(0.0, FIGHT_S - busy) * style["autos"]
-        like = sum(n * style["onhit_hits"].get(ab["key"], 1) for ab, n, cd in plan
-                   if ab["key"] != "P" and (ab["key"] in ch["onhit"] or "強化普攻" in ab["tags"]))
+        like = sum(n * style["onhit_hits"].get(ab["key"], 1) for ab, n, cd in plan if ab["key"] != "P" and ab["key"] in ch["onhit"])
+        like += sum(n * style["aa_reset"].get(ab["key"], 0) for ab, n, cd in plan)
         return autos, autos + like
 
     # attacks that shorten cooldowns (an ability's own: Master Yi's Q; every one: 祕術拳擊) give more casts, whose hits are attacks
@@ -342,8 +345,8 @@ def apply(aug, ch, style, st0):
     return fight(ch, style, st, {**changes, **extra}), util
 
 
-def weights(dd, ch):
-    info = dd["info"]
+def weights(dd, ch, style):
+    info = {**dd["info"], **style.get("ratings", {})}   # a play style may rate itself otherwise (AP Malphite: more magic, less defense)
     off, dfn = max(info["attack"], info["magic"]) ** 2, info["defense"] ** 2   # squared: the side a champion is built for counts most
     sup = SUPPORT_SHARE ** 2 if ch["support"] else 0.0
     util = UTIL_SHARE ** 2
@@ -368,12 +371,11 @@ def main():
         abil = abilities(note)
         ch = {"id": cid, "name": note.get("name", cid), "abilities": abil, "onhit": note.get("onhit", []),
               "support": "輔助" in note.get("roles", []) and any("隊友增益" in a["tags"] and (a["heal"] or a["shield"]) for a in abil)}
-        ch["weights"] = weights(listing[cid], ch)
         ch["styles"] = {}
         for sid, style in play_styles(cid, note, listing[cid], hand).items():
             st = ref_stats(listing[cid], style["stack"])
             f = fight(ch, style, st)
-            ch["styles"][sid] = {"style": style, "stats": st, "damage": round(f["damage"]), "ehp": round(f["ehp"]), "support": round(f["support"]),
+            ch["styles"][sid] = {"style": style, "weights": weights(listing[cid], ch, style), "stats": st, "damage": round(f["damage"]), "ehp": round(f["ehp"]), "support": round(f["support"]),
                                  "counts": {k: round(v, 2) for k, v in f["counts"].items()}, "casts": {k: round(v, 2) for k, v in f["casts"].items()}}
         champs[cid] = ch
 
@@ -404,12 +406,13 @@ def main():
                     "support": (after["support"] - base["support"]) / max(base["support"], 1) if base["support"] else 0.0,
                     "utility": util * UTIL_POINT,
                 }
-                v = sum(ch["weights"][k] * parts[k] for k in parts)
-                amount = (ch["weights"]["damage"] * (after["damage"] - base["damage"]) / median["damage"]
-                          + ch["weights"]["survival"] * (after["ehp"] - base["ehp"]) / median["ehp"]
-                          + ch["weights"]["support"] * (after["support"] - base["support"]) / median["support"]
-                          + ch["weights"]["utility"] * parts["utility"])
-                top = max(parts, key=lambda k: abs(ch["weights"][k] * parts[k]))
+                w = s["weights"]
+                v = sum(w[k] * parts[k] for k in parts)
+                amount = (w["damage"] * (after["damage"] - base["damage"]) / median["damage"]
+                          + w["survival"] * (after["ehp"] - base["ehp"]) / median["ehp"]
+                          + w["support"] * (after["support"] - base["support"]) / median["support"]
+                          + w["utility"] * parts["utility"])
+                top = max(parts, key=lambda k: abs(w[k] * parts[k]))
                 values.setdefault((cid, sid), {})[a["id"]] = (v, amount, top, parts[top])
 
     # tiers: rank within the play style and across all play styles
@@ -417,17 +420,19 @@ def main():
     for key, vals in values.items():
         for aid, (v, amount, _, _) in vals.items():
             across.setdefault(aid, []).append(amount)
+    top_user = {}   # the augment's best users' gain (90th percentile, so one outlier does not set the bar)
     for aid in across:
         across[aid].sort()
+        top_user[aid] = across[aid][int(0.9 * (len(across[aid]) - 1))] or 1.0
     WORD = {"damage": "輸出", "survival": "生存", "support": "輔助", "utility": "機動"}
     tiers = {}
     for (cid, sid), vals in values.items():
         good = sorted(((v, aid) for aid, (v, _, _, _) in vals.items() if v > 0), reverse=True)
         rows = []
-        for rank, (v, aid) in enumerate(good):
-            within = 1 - rank / max(1, len(good) - 1) if len(good) > 1 else 1.0
-            pool = across[aid]
-            acr = sum(1 for x in pool if x < vals[aid][1]) / max(1, len(pool) - 1)
+        best = good[0][0] if good else 1.0
+        for v, aid in good:
+            within = v / best   # how close it comes to the play style's best augment (half as good: 0.5)
+            acr = max(0.0, min(1.0, vals[aid][1] / top_user[aid]))   # how close it comes to the augment's best users
             score = math.sqrt(within * acr)   # both: one of its best augments, and one of the augment's best users
             tier = next(t for t, cut in TIERS if score >= cut)
             _, _, top, part = vals[aid]
@@ -436,8 +441,8 @@ def main():
         tiers.setdefault(cid, {})[sid] = {"name": champs[cid]["styles"][sid]["style"]["name"], "tiers": rows, "none": bad}
 
     OUT_MODEL.write_text(json.dumps({"level": LEVEL, "fight_s": FIGHT_S, "patch": version,
-                                     "champions": {cid: {"weights": {k: round(v, 3) for k, v in ch["weights"].items()},
-                                                         "styles": {sid: {k: v for k, v in s.items() if k != "stats"} | {"stats": {k: round(x, 2) for k, x in s["stats"].items()}}
+                                     "champions": {cid: {"styles": {sid: {k: v for k, v in s.items() if k not in ("stats", "weights")}
+                                                                    | {"weights": {k: round(x, 3) for k, x in s["weights"].items()}, "stats": {k: round(x, 2) for k, x in s["stats"].items()}}
                                                                     for sid, s in ch["styles"].items()}}
                                                    for cid, ch in champs.items()}}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     OUT_TIERS.write_text(json.dumps({"level": LEVEL, "patch": version, "augments": len(augs), "champions": tiers}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
@@ -457,7 +462,7 @@ def review(champs, tiers, augs):
         for sid, s in ch["styles"].items():
             t = tiers[cid][sid]
             c = s["counts"]
-            w = ch["weights"]
+            w = s["weights"]
             out += [f"## {ch['name']} · {s['style']['name']}", "",
                     f"Fight: {s['damage']} damage, {s['ehp']} effective health" + (f", {s['support']} healing / shields for allies" if s["support"] else "")
                     + f"; {c['auto']:.1f} attacks, {c['cast']:.1f} casts, {c['dash']:.1f} dashes, {c['cc']:.1f} crowd control, {c['onhit']:.1f} on-hit. "
