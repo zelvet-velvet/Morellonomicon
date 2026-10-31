@@ -432,7 +432,16 @@ export const augIcon = (parent: HTMLElement, src: string, rarity: string, cls = 
     return box;
 };
 
-export interface RowSpec { icon?: string; image?: string; rarity?: string; title: string; sub?: string; value?: string; chevron?: boolean; muted?: boolean; clamp?: boolean; onTap?: () => void }
+export interface RowSpec { icon?: string; image?: string; rarity?: string; title: string; sub?: string; value?: string; faces?: string[]; chevron?: boolean; muted?: boolean; clamp?: boolean; onTap?: () => void }   // faces: small round pictures before the value (the augment list's best champions)
+// A page whose content is shorter than the screen: everything after its first `keep` children (its title row or banner) goes into one
+// body that is centred down the screen (Design Rules, balance); a longer page still starts at the top
+export const centreBelow = (el: HTMLElement, keep: number): HTMLElement => {
+    const body = h(null, "div", "mn-centre-body");
+    while (el.children.length > keep) body.append(el.children[keep]);
+    el.append(body);
+    el.addClass("is-centred");
+    return body;
+};
 export const row = (parent: HTMLElement, r: RowSpec): HTMLElement => {
     const el = h(parent, "div", "mn-row" + (r.onTap ? " is-tap" : "") + (r.muted ? " is-muted" : ""));
     if (r.image && r.rarity && AUG_CLASS[r.rarity]) augIcon(el, r.image, r.rarity, "mn-row-aug");
@@ -441,6 +450,7 @@ export const row = (parent: HTMLElement, r: RowSpec): HTMLElement => {
     const main = h(el, "div", "mn-row-main");
     h(main, "div", "mn-row-t", r.title);
     if (r.sub) h(main, "div", "mn-row-s" + (r.clamp ? " is-clamp" : ""), r.sub);
+    if (r.faces?.length) { const f = h(el, "div", "mn-row-faces"); for (const src of r.faces) { const im = h(f, "img"); im.src = src; im.alt = ""; } }
     if (r.value) h(el, "div", "mn-row-v", r.value);
     if (r.chevron) icon(el, "chevron-right", "mn-row-chev");
     if (r.onTap) { const fn = r.onTap; el.addEventListener("click", (e) => { e.preventDefault(); fn(); }); }

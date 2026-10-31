@@ -1705,3 +1705,26 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-ag-for-t b { font-size: 15px; color: var(--mn-text); }
 .mn-ag-for-t span { font-size: 13px; color: var(--mn-muted); }
 .mn-ag-for-tier { --t: var(--mn-muted); color: var(--t); font-weight: 800; }
+
+/* a page shorter than the screen: its body centred down the room under its title or banner (centreBelow in ui.ts) */
+.mn-page.is-centred > .mn-centre-body { flex: 1 0 auto; display: flex; flex-direction: column; justify-content: center; }
+.mn-app.is-float .mn-scroll > .mn-page.is-centred { min-height: 100%; }
+/* an empty state centred in the room it has, not stuck near the top (Design Rules, balance) */
+.mn-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 34vh; box-sizing: border-box; }
+.mn-centre-body > .mn-empty { min-height: 0; }
+/* the augment list: the champions an augment suits best, small faces before its rarity */
+.mn-row-faces { flex: none; display: flex; }
+.mn-row-faces img { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--mn-card); margin-left: -6px; }
+.mn-row-faces img:first-child { margin-left: 0; }
+/* the champion page family has no panels (Design Rules): its ability card, builds, tips and the patch changes float bare, a thin line
+   between neighbours where one is needed; Live stats are accent links */
+:is(.mn-champ, .mn-part) .mn-skill-detail { background: none; border: 0; border-radius: 0; padding: 0; }
+:is(.mn-champ, .mn-part) .mn-skill-detail .mn-sd-clipbox:first-child { margin: 0 0 12px; border-radius: 14px; clip-path: inset(0 round 14px); width: 100%; }
+:is(.mn-champ, .mn-part) .mn-skill-detail .mn-sd-clipbox { width: 100%; margin: 12px 0 0; border-radius: 14px; clip-path: inset(0 round 14px); }
+:is(.mn-champ, .mn-part) .mn-set { background: none; border: 0; border-radius: 0; padding: 12px 0; margin: 0; }
+:is(.mn-champ, .mn-part) .mn-set + .mn-set { border-top: 1px solid var(--mn-line); }
+:is(.mn-champ, .mn-part) .mn-tip { background: none; border: 0; border-radius: 0; padding: 12px 0; margin: 0; }
+:is(.mn-champ, .mn-part) .mn-tip + .mn-tip { border-top: 1px solid var(--mn-line); }
+:is(.mn-champ, .mn-part) .mn-chg { background: none; border: 0; border-radius: 0; }
+:is(.mn-champ, .mn-part) .mn-chg-diff { background: none; padding: 0 0 0 10px; border-left: 2px solid var(--mn-line); border-radius: 0; }
+.mn-bt-links { display: flex; justify-content: center; gap: 18px; }

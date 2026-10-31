@@ -350,7 +350,7 @@ const PART_TITLE: Record<Part, string> = { overview: "概覽", skills: "技能",
 export function championPart(ctx: PageCtx): PageOut {
     const c = ctx.plugin.store.champion(String(ctx.frame.params?.id ?? ""));
     const p = String(ctx.frame.params?.part ?? "") as Part;
-    const el = h(null, "div", "mn-page");
+    const el = h(null, "div", "mn-page mn-part");   // mn-part: the champion page family (Design Rules: no panels)
     if (!c) { empty(el, { icon: "user-x", title: "Champion not found" }); return { title: "", el }; }
     h(h(el, "div", "mn-title-row"), "h1", "mn-title", `${c.name} · ${PART_TITLE[p] ?? ""}`);
     if (p === "overview") overviewAll(el, c, ctx);

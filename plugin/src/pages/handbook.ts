@@ -35,7 +35,7 @@ export function handbookPage(ctx: PageCtx): PageOut {
     icon(box, "search", "mn-search-ic");
     const search = h(box, "input");
     search.type = "search";
-    search.placeholder = "Search anything you read here";
+    search.placeholder = "搜尋手冊裡的內容";
     const chips = h(el, "div", "mn-keys");
     const out = h(el, "div");
     const notes = store.guideNotes();

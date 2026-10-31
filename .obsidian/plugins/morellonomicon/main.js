@@ -973,6 +973,13 @@ var augIcon = (parent, src, rarity, cls = "") => {
   }
   return box;
 };
+var centreBelow = (el, keep) => {
+  const body = h(null, "div", "mn-centre-body");
+  while (el.children.length > keep) body.append(el.children[keep]);
+  el.append(body);
+  el.addClass("is-centred");
+  return body;
+};
 var row = (parent, r) => {
   const el = h(parent, "div", "mn-row" + (r.onTap ? " is-tap" : "") + (r.muted ? " is-muted" : ""));
   if (r.image && r.rarity && AUG_CLASS[r.rarity]) augIcon(el, r.image, r.rarity, "mn-row-aug");
@@ -984,6 +991,14 @@ var row = (parent, r) => {
   const main = h(el, "div", "mn-row-main");
   h(main, "div", "mn-row-t", r.title);
   if (r.sub) h(main, "div", "mn-row-s" + (r.clamp ? " is-clamp" : ""), r.sub);
+  if (r.faces?.length) {
+    const f = h(el, "div", "mn-row-faces");
+    for (const src of r.faces) {
+      const im = h(f, "img");
+      im.src = src;
+      im.alt = "";
+    }
+  }
   if (r.value) h(el, "div", "mn-row-v", r.value);
   if (r.chevron) icon(el, "chevron-right", "mn-row-chev");
   if (r.onTap) {
@@ -2923,6 +2938,7 @@ var patchNo2 = (p) => {
 var SORT_DIR = { rarity: -1, name: 1, new: -1 };
 var sortBy = "rarity";
 var sortDir = -1;
+var BEST_SHOWN = 3;
 function augmentsPage(ctx) {
   const store = ctx.plugin.store;
   const el = page("Augments");
@@ -2934,11 +2950,20 @@ function augmentsPage(ctx) {
   let query = "", rarity = "";
   const latest = store.riotNotes[0]?.patch ?? "";
   const addedIn = new Map(all.map((a) => [a.id, store.augmentHistory(a.name).find((x) => x.what === "added")?.patch ?? ""]));
+  const best = /* @__PURE__ */ new Map();
+  for (const [cid, styles] of Object.entries(store.augTiers)) {
+    const c = store.champion(cid);
+    if (!c) continue;
+    const top = /* @__PURE__ */ new Map();
+    for (const st of Object.values(styles)) for (const t of st.tiers) if (t.tier === "S" && t.score > (top.get(t.id) ?? -1)) top.set(t.id, t.score);
+    for (const [id, score2] of top) best.set(id, [...best.get(id) ?? [], { score: score2, icon: c.icon }]);
+  }
+  const facesOf = (id) => (best.get(id) ?? []).sort((x, y) => y.score - x.score).slice(0, BEST_SHOWN).map((x) => x.icon);
   const box = h(el, "div", "mn-search");
   icon(box, "search", "mn-search-ic");
   const search = h(box, "input");
   search.type = "search";
-  search.placeholder = "Search";
+  search.placeholder = "\u641C\u5C0B\u5F37\u5316";
   const sortHost = h(el, "div", "mn-aug-sort");
   const chips = h(el, "div", "mn-chips mn-aug-rar");
   const list2 = h(el, "div", "mn-blk");
@@ -2957,7 +2982,7 @@ function augmentsPage(ctx) {
     const g = group(list2);
     for (const a of hits) {
       const isNew = !!latest && addedIn.get(a.id) === latest;
-      row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || void 0, value: isNew ? `${a.rarity} \xB7 \u65B0` : a.rarity, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
+      row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || void 0, faces: facesOf(a.id), value: isNew ? `${a.rarity} \xB7 \u65B0` : a.rarity, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
     }
     if (!hits.length) empty(list2, { icon: "search-x", title: "No match" });
     blockLoad(list2);
@@ -3369,9 +3394,9 @@ var OPGG_SLUG = { MonkeyKing: "wukong" };
 function liveStats(body, c) {
   const slug = OPGG_SLUG[c.id] ?? c.id.toLowerCase();
   section(body, "Live stats");
-  const g = group(body);
-  row(g, { icon: "external-link", title: "OP.GG Mayhem build", chevron: true, onTap: () => window.open(`https://op.gg/lol/modes/aram-mayhem/${slug}/build`) });
-  row(g, { icon: "external-link", title: "Mobalytics Mayhem builds", chevron: true, onTap: () => window.open(`https://mobalytics.gg/lol/champions/${slug}/mayhem-builds`) });
+  const links = h(body, "div", "mn-bt-links");
+  moreLink(links, "OP.GG", () => window.open(`https://op.gg/lol/modes/aram-mayhem/${slug}/build`));
+  moreLink(links, "Mobalytics", () => window.open(`https://mobalytics.gg/lol/champions/${slug}/mayhem-builds`));
 }
 function section(body, title) {
   h(body, "div", "mn-gh", title);
@@ -4203,7 +4228,7 @@ function handbookPage(ctx) {
   icon(box, "search", "mn-search-ic");
   const search = h(box, "input");
   search.type = "search";
-  search.placeholder = "Search anything you read here";
+  search.placeholder = "\u641C\u5C0B\u624B\u518A\u88E1\u7684\u5167\u5BB9";
   const chips = h(el, "div", "mn-keys");
   const out = h(el, "div");
   const notes = store.guideNotes();
@@ -6222,6 +6247,7 @@ function augmentPage(ctx) {
       h(el, "div", "mn-gh", "\u7248\u672C\u7D00\u9304");
       h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "\u65B0\u589E\u65BC" : "\u79FB\u9664\u65BC"} ${x.patch}`).join(" \xB7 "));
     }
+    centreBelow(el, 1);
     return { title: "", el };
   }
   const all = store.champions();
@@ -6265,6 +6291,7 @@ function augmentPage(ctx) {
     h(el, "div", "mn-gh", "\u7248\u672C\u7D00\u9304");
     h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "\u65B0\u589E\u65BC" : "\u79FB\u9664\u65BC"} ${x.patch}`).join(" \xB7 "));
   }
+  centreBelow(el, 1);
   return { title: "", el };
 }
 function forChampion(el, store, a, cid) {
@@ -6844,7 +6871,7 @@ var PART_TITLE = { overview: "\u6982\u89BD", skills: "\u6280\u80FD", build: "\u5
 function championPart(ctx) {
   const c = ctx.plugin.store.champion(String(ctx.frame.params?.id ?? ""));
   const p = String(ctx.frame.params?.part ?? "");
-  const el = h(null, "div", "mn-page");
+  const el = h(null, "div", "mn-page mn-part");
   if (!c) {
     empty(el, { icon: "user-x", title: "Champion not found" });
     return { title: "", el };
@@ -7309,6 +7336,7 @@ function homePage(ctx) {
     const list2 = layoutBlock(h(el, "div", "mn-home-games"));
     for (const g of prof.games.slice(0, HOME_GAMES)) gameRow(ctx, list2, g, false);
   }
+  centreBelow(el, 1);
   return { title: "Home", el };
 }
 var inFlight = null;
@@ -7349,7 +7377,8 @@ function gamesPage(ctx) {
   const el = page("\u6700\u8FD1\u5C0D\u6230");
   const prof = cachedProfile(ctx.app, ctx.plugin.settings.riotId);
   if (!prof?.games.length) {
-    h(el, "p", "mn-home-sub", "\u9084\u6C92\u6709\u5C0D\u6230\u8CC7\u6599:\u5728 Home \u9023\u7D50 Riot ID \u4E26\u8A2D\u5B9A\u91D1\u9470\u3002");
+    empty(el, { icon: "swords", title: "\u9084\u6C92\u6709\u5C0D\u6230\u8CC7\u6599", text: "\u5728 Home \u9023\u7D50 Riot ID\uFF0C\u4E26\u5728\u8A2D\u5B9A\u586B Riot API \u91D1\u9470\u3002" });
+    centreBelow(el, 1);
     return { title: "\u6700\u8FD1\u5C0D\u6230", el };
   }
   const wins = prof.games.filter((g) => g.win).length;

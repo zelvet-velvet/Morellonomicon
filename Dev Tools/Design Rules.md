@@ -41,6 +41,7 @@ sticker: lucide//ruler
 > - **No big empty space.** A screen is not left with a large blank area while its content sits bunched at the top or a side; the content takes the room it has (spread out, sized up) or the room is given to something else (a bigger picture, the next block).
 > - **Balance the screen.** Visual weight is spread across the screen: components are not crowded to one side or squeezed together while space is left elsewhere; gaps between neighbours are even.
 > - **Few things sit in the middle.** When a page or a block holds only one or a few components, they are centred (across, and down within the block), never left in a corner with empty space beside or below them (an empty state, a short list, a page of the champion swipe block).
+> - **How:** a page shorter than the screen keeps its title row or banner at the top and centres the rest down the room under it with `centreBelow(el, n)` (`ui.ts`: Home, 最近對戰, the augment page; the item page and 全部概覽 do the same); an empty state (`empty()`) is centred in the room it has.
 
 ## 🖼️ Pictures
 

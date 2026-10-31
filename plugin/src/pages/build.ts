@@ -1,5 +1,5 @@
 import type { Champion } from "../data/store";
-import { chip, empty, group, h, row } from "../ui";
+import { chip, empty, h, moreLink } from "../ui";
 import { metaLine } from "./fresh";
 import type { PageCtx } from "./index";
 
@@ -48,9 +48,10 @@ const OPGG_SLUG: Record<string, string> = { MonkeyKing: "wukong" };   // ids tha
 function liveStats(body: HTMLElement, c: Champion): void {
     const slug = OPGG_SLUG[c.id] ?? c.id.toLowerCase();
     section(body, "Live stats");
-    const g = group(body);
-    row(g, { icon: "external-link", title: "OP.GG Mayhem build", chevron: true, onTap: () => window.open(`https://op.gg/lol/modes/aram-mayhem/${slug}/build`) });
-    row(g, { icon: "external-link", title: "Mobalytics Mayhem builds", chevron: true, onTap: () => window.open(`https://mobalytics.gg/lol/champions/${slug}/mayhem-builds`) });
+    // accent links, no panel (Design Rules, champion page family)
+    const links = h(body, "div", "mn-bt-links");
+    moreLink(links, "OP.GG", () => window.open(`https://op.gg/lol/modes/aram-mayhem/${slug}/build`));
+    moreLink(links, "Mobalytics", () => window.open(`https://mobalytics.gg/lol/champions/${slug}/mayhem-builds`));
 }
 
 function section(body: HTMLElement, title: string): void { h(body, "div", "mn-gh", title); }

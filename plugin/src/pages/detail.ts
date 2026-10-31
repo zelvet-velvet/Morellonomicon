@@ -1,6 +1,6 @@
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { AugTier, Augment, Champion, Item, Store } from "../data/store";
-import { ITEM_CAT_COLOR, ITEM_CATS, TIER_COLOR, augIcon, chip, empty, group, h, icon, layoutBlock, row, shopIcon, slideSeg } from "../ui";
+import { ITEM_CAT_COLOR, ITEM_CATS, TIER_COLOR, augIcon, chip, empty, group, h, icon, layoutBlock, row, shopIcon, slideSeg, centreBelow } from "../ui";
 import { RARITY_COLOR } from "./augments";
 import { officialBlock } from "./changes";
 import { deckPage, itemTree } from "./deck";
@@ -279,6 +279,7 @@ export function augmentPage(ctx: PageCtx): PageOut {
             h(el, "div", "mn-gh", "版本紀錄");
             h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "新增於" : "移除於"} ${x.patch}`).join(" · "));
         }
+        centreBelow(el, 1);   // under the banner, centred when short (an unrated augment)
         return { title: "", el };
     }
     // without the model's file: Riot's own tags when they rule champions out, else the hand-written `fits`, else a guess from the wording
@@ -315,6 +316,7 @@ export function augmentPage(ctx: PageCtx): PageOut {
         h(el, "div", "mn-gh", "版本紀錄");
         h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "新增於" : "移除於"} ${x.patch}`).join(" · "));
     }
+    centreBelow(el, 1);
     return { title: "", el };   // the name is already the big heading
 }
 

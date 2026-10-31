@@ -1,6 +1,6 @@
 import { mapUrl } from "./handbook";
 import type { PageCtx, PageOut } from "./index";
-import { ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, shopRoleIcon, h, holdTip, icon, page, warmPictures } from "../ui";
+import { ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, shopRoleIcon, h, holdTip, icon, page, warmPictures, centreBelow, empty } from "../ui";
 import { MODES } from "../modes";
 import { PROFILE_FRESH, QUEUE, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, type Profile } from "../data/riot";
 
@@ -169,6 +169,7 @@ export function homePage(ctx: PageCtx): PageOut {
         const list = layoutBlock(h(el, "div", "mn-home-games"));
         for (const g of prof.games.slice(0, HOME_GAMES)) gameRow(ctx, list, g, false);
     }
+    centreBelow(el, 1);   // the title row stays at the top; the profile and the ways in are centred in the room under it
     return { title: "Home", el };
 }
 
@@ -204,7 +205,11 @@ function gameRow(ctx: PageCtx, parent: HTMLElement, g: Profile["games"][number],
 export function gamesPage(ctx: PageCtx): PageOut {
     const el = page("最近對戰");
     const prof = cachedProfile(ctx.app, ctx.plugin.settings.riotId);
-    if (!prof?.games.length) { h(el, "p", "mn-home-sub", "還沒有對戰資料:在 Home 連結 Riot ID 並設定金鑰。"); return { title: "最近對戰", el }; }
+    if (!prof?.games.length) {
+        empty(el, { icon: "swords", title: "還沒有對戰資料", text: "在 Home 連結 Riot ID，並在設定填 Riot API 金鑰。" });
+        centreBelow(el, 1);
+        return { title: "最近對戰", el };
+    }
     const wins = prof.games.filter((g) => g.win).length;
     h(el, "div", "mn-home-sub", `最近 ${prof.games.length} 場 · ${wins} 勝 ${prof.games.length - wins} 敗 · ${ago(prof.fetched)}更新`);
     const list = layoutBlock(h(el, "div", "mn-home-games"));
