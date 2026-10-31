@@ -1712,10 +1712,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* an empty state centred in the room it has, not stuck near the top (Design Rules, balance) */
 .mn-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 34vh; box-sizing: border-box; }
 .mn-centre-body > .mn-empty { min-height: 0; }
-/* the augment list: the champions an augment suits best, small faces before its rarity */
-.mn-row-faces { flex: none; display: flex; }
-.mn-row-faces img { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--mn-card); margin-left: -6px; }
-.mn-row-faces img:first-child { margin-left: 0; }
 /* the champion page family has no panels (Design Rules): its ability card, builds, tips and the patch changes float bare, a thin line
    between neighbours where one is needed; Live stats are accent links */
 :is(.mn-champ, .mn-part) .mn-skill-detail { background: none; border: 0; border-radius: 0; padding: 0; }
@@ -1728,3 +1724,26 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 :is(.mn-champ, .mn-part) .mn-chg { background: none; border: 0; border-radius: 0; }
 :is(.mn-champ, .mn-part) .mn-chg-diff { background: none; padding: 0 0 0 10px; border-left: 2px solid var(--mn-line); border-radius: 0; }
 .mn-bt-links { display: flex; justify-content: center; gap: 18px; }
+
+/* 速查: the end view waits soft and dim behind the last card while it is dragged, then comes up sharp */
+.mn-rq-under.is-preview.is-in { opacity: 0.5; transform: scale(0.96); filter: blur(6px) saturate(0.8); }
+.mn-rq-under { transition: opacity 0.32s ease-out, transform 0.32s ease-out, filter 0.32s ease-out; }
+/* a liked champion chosen: after the burst on its card, a heart grows out of it until it fills the screen, then fades over the
+   champion page (roster.ts choose) */
+.mn-rq-flood { position: fixed; z-index: 50; width: 80px; height: 80px; margin: -40px 0 0 -40px; pointer-events: none; color: #ff4d6d; filter: drop-shadow(0 0 24px rgba(255, 77, 109, 0.6));
+    animation: mn-rq-flood 0.62s cubic-bezier(0.55, 0, 0.3, 1) 0.18s both; transition: opacity 0.4s ease-out; }
+.mn-rq-flood svg { display: block; width: 100%; height: 100%; fill: currentColor; stroke: none; }
+.mn-rq-flood.is-out { opacity: 0; }
+@keyframes mn-rq-flood { 0% { transform: scale(0.4); } 35% { transform: scale(1.4); } 100% { transform: scale(30); } }
+/* the champion page's ability page: the clip on top fades out at its edges (no frame), the numbers and text under it, the bar below */
+:is(.mn-champ, .mn-part) .mn-skill-detail .mn-sd-clipbox, :is(.mn-champ, .mn-part) .mn-skill-detail .mn-sd-clipbox:first-child { border-radius: 0; clip-path: none; background: none;
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 14%, #000 78%, transparent), linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    mask-image: linear-gradient(180deg, transparent, #000 14%, #000 78%, transparent), linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    -webkit-mask-composite: source-in; mask-composite: intersect; }
+:is(.mn-champ, .mn-part) .mn-skill-detail + .mn-skills { margin-top: 14px; }
+/* a champion sub page's small header: the champion's face, its name, and the page's name in the accent colour */
+.mn-part-head { justify-content: flex-start; gap: 10px; }
+.mn-part-head img { flex: none; width: 34px; height: 34px; border-radius: 10px; }
+.mn-part-head div { display: flex; flex-direction: column; line-height: 1.15; }
+.mn-part-who { font-size: 12px; font-weight: 600; color: var(--mn-muted); }
+.mn-part-what { font-size: 18px; font-weight: 800; color: var(--mn-accent); }

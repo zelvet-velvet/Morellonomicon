@@ -13,7 +13,6 @@ let sortBy = "rarity", sortDir: 1 | -1 = -1;   // kept while the app is open
 
 // ARAM Mayhem augments: search, a rarity filter, a sort (rarity, name, newest), one row each (the effect line shows when there is one).
 // An augment added in the latest patch carries a 新 tag.
-const BEST_SHOWN = 3;   // faces of the champions an augment suits best, in its row
 export function augmentsPage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const el = page("Augments");
@@ -22,16 +21,6 @@ export function augmentsPage(ctx: PageCtx): PageOut {
     let query = "", rarity = "";
     const latest = store.riotNotes[0]?.patch ?? "";
     const addedIn = new Map(all.map((a) => [a.id, store.augmentHistory(a.name).find((x) => x.what === "added")?.patch ?? ""]));
-    // each augment's best users from the augment model (Dev Tools/Augment Model.md): the champions it is S for, best first
-    const best = new Map<number, { score: number; icon: string }[]>();
-    for (const [cid, styles] of Object.entries(store.augTiers)) {
-        const c = store.champion(cid);
-        if (!c) continue;
-        const top = new Map<number, number>();
-        for (const st of Object.values(styles)) for (const t of st.tiers) if (t.tier === "S" && t.score > (top.get(t.id) ?? -1)) top.set(t.id, t.score);
-        for (const [id, score] of top) best.set(id, [...(best.get(id) ?? []), { score, icon: c.icon }]);
-    }
-    const facesOf = (id: number) => (best.get(id) ?? []).sort((x, y) => y.score - x.score).slice(0, BEST_SHOWN).map((x) => x.icon);
     const box = h(el, "div", "mn-search");
     icon(box, "search", "mn-search-ic");
     const search = h(box, "input");
@@ -57,7 +46,7 @@ export function augmentsPage(ctx: PageCtx): PageOut {
         const g = group(list);
         for (const a of hits) {
             const isNew = !!latest && addedIn.get(a.id) === latest;
-            row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || undefined, faces: facesOf(a.id), value: isNew ? `${a.rarity} · 新` : a.rarity, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
+            row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || undefined, value: isNew ? `${a.rarity} · 新` : a.rarity, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
         }
         if (!hits.length) empty(list, { icon: "search-x", title: "No match" });
         blockLoad(list);

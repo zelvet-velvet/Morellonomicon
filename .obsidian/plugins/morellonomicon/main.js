@@ -2938,7 +2938,6 @@ var patchNo2 = (p) => {
 var SORT_DIR = { rarity: -1, name: 1, new: -1 };
 var sortBy = "rarity";
 var sortDir = -1;
-var BEST_SHOWN = 3;
 function augmentsPage(ctx) {
   const store = ctx.plugin.store;
   const el = page("Augments");
@@ -2950,15 +2949,6 @@ function augmentsPage(ctx) {
   let query = "", rarity = "";
   const latest = store.riotNotes[0]?.patch ?? "";
   const addedIn = new Map(all.map((a) => [a.id, store.augmentHistory(a.name).find((x) => x.what === "added")?.patch ?? ""]));
-  const best = /* @__PURE__ */ new Map();
-  for (const [cid, styles] of Object.entries(store.augTiers)) {
-    const c = store.champion(cid);
-    if (!c) continue;
-    const top = /* @__PURE__ */ new Map();
-    for (const st of Object.values(styles)) for (const t of st.tiers) if (t.tier === "S" && t.score > (top.get(t.id) ?? -1)) top.set(t.id, t.score);
-    for (const [id, score2] of top) best.set(id, [...best.get(id) ?? [], { score: score2, icon: c.icon }]);
-  }
-  const facesOf = (id) => (best.get(id) ?? []).sort((x, y) => y.score - x.score).slice(0, BEST_SHOWN).map((x) => x.icon);
   const box = h(el, "div", "mn-search");
   icon(box, "search", "mn-search-ic");
   const search = h(box, "input");
@@ -2982,7 +2972,7 @@ function augmentsPage(ctx) {
     const g = group(list2);
     for (const a of hits) {
       const isNew = !!latest && addedIn.get(a.id) === latest;
-      row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || void 0, faces: facesOf(a.id), value: isNew ? `${a.rarity} \xB7 \u65B0` : a.rarity, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
+      row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || void 0, value: isNew ? `${a.rarity} \xB7 \u65B0` : a.rarity, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
     }
     if (!hits.length) empty(list2, { icon: "search-x", title: "No match" });
     blockLoad(list2);
@@ -3578,6 +3568,7 @@ function skillStrip(parent, c, changes = [], opt = {}) {
   if (!c.skills.length) return;
   const strip2 = h(parent, "div", "mn-skills");
   const detail = h(parent, "div", "mn-skill-detail");
+  if (opt.barBelow) parent.append(strip2);
   let open = -1;
   const shelf = opt.shelf;
   const held = /* @__PURE__ */ new Map();
@@ -5485,12 +5476,25 @@ function swipePage(ctx) {
       return;
     }
     let under = null;
-    const bridge = () => {
+    const bridge = (preview) => {
+      if (under && !preview) {
+        under.empty();
+        likedGrid(under);
+        under.removeClass("is-preview");
+        under.addClass("is-bridged");
+        return;
+      }
       under?.remove();
-      under = h(results, "div", "mn-rq-end mn-rq-under is-bridged");
-      under.style.height = wrap.style.height || `${wrap.offsetHeight}px`;
+      under = h(results, "div", "mn-rq-end mn-rq-under" + (preview ? " is-preview" : " is-bridged"));
+      const fitUnder = () => {
+        if (under) under.style.height = wrap.style.height || `${wrap.offsetHeight}px`;
+      };
+      fitUnder();
       likedGrid(under);
-      requestAnimationFrame(() => under?.addClass("is-in"));
+      requestAnimationFrame(() => {
+        fitUnder();
+        under?.addClass("is-in");
+      });
     };
     const wrap = h(results, "div", "mn-deckwrap mn-rq-deck");
     const pager = h(wrap, "div", "mn-pager");
@@ -5526,6 +5530,7 @@ function swipePage(ctx) {
           c.style.visibility = i >= cur - 1 && i <= cur + 2 ? "" : "hidden";
         });
         warmSkins(cur);
+        if (cur === sec.length - 1 && !under) bridge(true);
       },
       onDrag: (dx, w) => {
         const st = stamps[pile?.cur ?? 0];
@@ -5549,7 +5554,7 @@ function swipePage(ctx) {
         armed = false;
         btns.removeClass("is-left", "is-right");
         if (like) swipeLiked = liked = [...liked, ids[i]];
-        if (at >= picks.length) bridge();
+        if (at >= picks.length) bridge(false);
       },
       onEnd: () => {
         if (!under) {
@@ -5601,6 +5606,13 @@ function swipePage(ctx) {
     if (grid.hasClass("is-choosing")) return;
     grid.addClass("is-choosing");
     card.addClass("is-chosen");
+    const r = card.getBoundingClientRect();
+    const flood = h(document.body, "div", "mn-rq-flood");
+    flood.style.left = `${r.left + r.width / 2}px`;
+    flood.style.top = `${r.top + r.height * 0.42}px`;
+    icon(flood, "heart");
+    window.setTimeout(() => flood.addClass("is-out"), CHOSEN_MS + 120);
+    window.setTimeout(() => flood.remove(), CHOSEN_MS + 520);
     const pop = h(card, "span", "mn-rq-pop");
     icon(pop, "heart", "mn-rq-pop-big");
     for (let k = 0; k < CHOSEN_SPARKS; k++) {
@@ -6755,7 +6767,7 @@ function championCard(ctx) {
     const pg = h(track, "section", "mn-cpa-page is-" + p);
     const body = h(pg, "div", "mn-cpa-body");
     if (p === "overview") tagLine = overviewTop(body, c, part("overview"));
-    else if (p === "skills") skillStrip(body, c, now, { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false, shelf });
+    else if (p === "skills") skillStrip(body, c, now, { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false, shelf, barBelow: true });
     else if (p === "build") buildTab(body, c, ctx);
     else if (p === "augments") augmentsTop(body, c, ctx, part("augments"));
     else tips(body, c, ctx);
@@ -6876,9 +6888,15 @@ function championPart(ctx) {
     empty(el, { icon: "user-x", title: "Champion not found" });
     return { title: "", el };
   }
-  h(h(el, "div", "mn-title-row"), "h1", "mn-title", `${c.name} \xB7 ${PART_TITLE[p] ?? ""}`);
+  const head2 = h(el, "div", "mn-title-row mn-part-head");
+  const face = h(head2, "img");
+  face.src = c.icon;
+  face.alt = "";
+  const words = h(head2, "div");
+  h(words, "span", "mn-part-who", c.name);
+  h(words, "b", "mn-part-what", `\u5168\u90E8${PART_TITLE[p] ?? ""}`);
   if (p === "overview") overviewAll(el, c, ctx);
-  else if (p === "skills") skillStrip(el, c, ctx.plugin.store.currentChanges(c.id), { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false });
+  else if (p === "skills") skillStrip(el, c, ctx.plugin.store.currentChanges(c.id), { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false, barBelow: true });
   else if (p === "build") buildTab(el, c, ctx);
   else if (p === "augments") augmentsAll(el, c, ctx);
   else tips(el, c, ctx);

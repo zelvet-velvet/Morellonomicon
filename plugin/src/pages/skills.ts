@@ -9,11 +9,12 @@ const CLIP_FADE_MS = 350;   // a clip fades in over 0.3 s (styles.css, .mn-app v
 // opt.open: open this skill at once and keep one always open (the champion page's Skills tab); opt.clipFirst: the clip above the
 // numbers; opt.scroll false: never scroll the page to the card (the tab already shows it); opt.shelf: a tiny holder on the screen where
 // every ability's clip loads ahead (iOS loads a clip only while it is on the screen), so a tap shows a clip that is already there
-export interface StripOpts { open?: number; clipFirst?: boolean; scroll?: boolean; shelf?: HTMLElement }
+export interface StripOpts { open?: number; clipFirst?: boolean; scroll?: boolean; shelf?: HTMLElement; barBelow?: boolean }   // barBelow: the P Q W E R bar under the card (the champion page: clip, numbers and text on top, the buttons at the thumb)
 export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] = [], opt: StripOpts = {}): void {
     if (!c.skills.length) return;
     const strip = h(parent, "div", "mn-skills");
     const detail = h(parent, "div", "mn-skill-detail");
+    if (opt.barBelow) parent.append(strip);
     let open = -1;
     // every ability's clip, loading ahead in the shelf; one that has its first frame waits there paused until its ability is shown
     const shelf = opt.shelf;

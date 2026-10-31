@@ -364,13 +364,23 @@ export function swipePage(ctx: PageCtx): PageOut {
         }
         // the end view, built under the deck as the last card is decided: it rises in while the card flies off, so there is no empty
         // moment between the last card and the liked champions (the bridge); when the card has gone the deck is simply taken away
+        // While the last card is on top it is already there, soft and dim behind the card (so dragging the last card never shows an empty
+        // page); deciding it brings it up sharp with the last choice in it.
         let under: HTMLElement | null = null;
-        const bridge = () => {
+        const bridge = (preview: boolean) => {
+            if (under && !preview) {   // the waiting view sharpens where it is, now with the last choice in it
+                under.empty();
+                likedGrid(under);
+                under.removeClass("is-preview");
+                under.addClass("is-bridged");
+                return;
+            }
             under?.remove();
-            under = h(results, "div", "mn-rq-end mn-rq-under is-bridged");   // is-bridged: the portraits rise in (kept after the deck goes)
-            under.style.height = wrap.style.height || `${wrap.offsetHeight}px`;
+            under = h(results, "div", "mn-rq-end mn-rq-under" + (preview ? " is-preview" : " is-bridged"));   // is-bridged: the portraits rise in (kept after the deck goes)
+            const fitUnder = () => { if (under) under.style.height = wrap.style.height || `${wrap.offsetHeight}px`; };
+            fitUnder();
             likedGrid(under);
-            requestAnimationFrame(() => under?.addClass("is-in"));
+            requestAnimationFrame(() => { fitUnder(); under?.addClass("is-in"); });
         };
         // the picked champions as the Handbook's pile of cards (pile.ts, judge mode): swipe the top one right (or ♥) to like it,
         // left (or ✕) to pass; a 喜歡 / 略過 stamp shows on it while dragged
@@ -405,7 +415,11 @@ export function swipePage(ctx: PageCtx): PageOut {
         const pile = cardPile(pager, sec, {
             judge: true,
             flat: true,
-            onLayout: (cur) => { sec.forEach((c, i) => { c.style.visibility = i >= cur - 1 && i <= cur + 2 ? "" : "hidden"; }); warmSkins(cur); },
+            onLayout: (cur) => {
+                sec.forEach((c, i) => { c.style.visibility = i >= cur - 1 && i <= cur + 2 ? "" : "hidden"; });
+                warmSkins(cur);
+                if (cur === sec.length - 1 && !under) bridge(true);   // the last card: the end view waits behind it
+            },
             onDrag: (dx, w) => {
                 const st = stamps[pile?.cur ?? 0];
                 if (!st) return;
@@ -423,7 +437,7 @@ export function swipePage(ctx: PageCtx): PageOut {
             onJudge: (i, like) => {
                 at = ++swipeAt; armed = false; btns.removeClass("is-left", "is-right");
                 if (like) swipeLiked = liked = [...liked, ids[i]];
-                if (at >= picks.length) bridge();   // the last card: the end view comes up under it now
+                if (at >= picks.length) bridge(false);   // the last card decided: the end view comes up sharp, with it
             },
             onEnd: () => {
                 if (!under) { drawResults(); return; }
@@ -458,6 +472,14 @@ export function swipePage(ctx: PageCtx): PageOut {
         if (grid.hasClass("is-choosing")) return;
         grid.addClass("is-choosing");
         card.addClass("is-chosen");
+        // then the heart grows out of the card until it fills the screen, and the champion page opens under it as it fades
+        const r = card.getBoundingClientRect();
+        const flood = h(document.body, "div", "mn-rq-flood");
+        flood.style.left = `${r.left + r.width / 2}px`;
+        flood.style.top = `${r.top + r.height * 0.42}px`;
+        icon(flood, "heart");
+        window.setTimeout(() => flood.addClass("is-out"), CHOSEN_MS + 120);
+        window.setTimeout(() => flood.remove(), CHOSEN_MS + 520);
         const pop = h(card, "span", "mn-rq-pop");
         icon(pop, "heart", "mn-rq-pop-big");
         for (let k = 0; k < CHOSEN_SPARKS; k++) {
