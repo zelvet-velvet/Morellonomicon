@@ -1,0 +1,32 @@
+{"id": 1097, "name": "女巫思維", "terms": [{"stat": "ap", "value": [20, 80]}]}
+{"id": 3094, "name": "巫妖思維", "terms": [{"stat": "ap", "value": 30}, {"stat": "ap", "from": "bonus_hp", "value": 0.04}]}
+{"id": 1068, "name": "循環利用", "terms": [{"stat": "haste", "value": 60}]}
+{"id": 1030, "name": "靈光一閃", "terms": [{"stat": "haste", "from": "ap", "value": 0.3}]}
+{"id": 1019, "name": "衝鋒", "terms": [{"haste_tag": "位移", "value": 175}]}
+{"id": 3055, "name": "大絕循環", "terms": [{"stat": "ult_haste", "value": 50}]}
+{"id": 1103, "name": "土司和奶油", "terms": [{"haste_key": "Q", "value": 100}]}
+{"id": 3170, "name": "重金屬", "terms": [{"haste_key": "Q", "value": 20}, {"mult": "Q", "value": 0.1}]}
+{"id": 1004, "name": "基本功夫", "terms": [{"mult": "ability", "value": 0.35}, {"stat": "haste", "value": 70}, {"no_ult": true}, {"stat": "heal_received", "value": 0.35}]}
+{"id": 1022, "name": "手腳麻利", "terms": [{"stat": "as", "value": 0.6}]}
+{"id": 2009, "name": "狂戰士", "terms": [{"stat": "as", "value": 0.35}, {"stat": "as", "from": "ap", "value": 0.0005}, {"stat": "crit", "value": 0.25}, {"stat": "crit", "from": "ap", "value": 0.0005}]}
+{"id": 1007, "name": "蠻力重擊", "terms": [{"stat": "ad_pct", "value": 0.2}]}
+{"id": 1047, "name": "痛恨一擊", "terms": [{"stat": "crit", "value": 0.5}]}
+{"id": 1084, "name": "穿針引線", "terms": [{"stat": "pen", "value": 0.18}]}
+{"id": 1325, "name": "玻璃大砲", "terms": [{"mult": "all", "value": 0.25, "ranged": 0.15}, {"stat": "hp_pct", "value": -0.3}]}
+{"id": 1013, "name": "天界之身", "terms": [{"stat": "hp", "value": 1500}, {"mult": "all", "value": -0.1}]}
+{"id": 1138, "name": "飲血", "terms": [{"stat": "omnivamp", "value": 0.15}]}
+{"id": 1037, "name": "急救箱", "terms": [{"stat": "heal_power", "value": 0.2}]}
+{"id": 1129, "name": "射手法師", "terms": [{"trigger": "auto", "dmg": {"type": "physical", "ap": 0.75}}]}
+{"id": 1029, "name": "幻影武器", "terms": [{"abilities_onhit": true}]}
+{"id": 1058, "name": "祕術拳擊", "terms": [{"cd_per_auto": 1.25}]}
+{"id": 1181, "name": "重型打手", "terms": [{"trigger": "auto", "dmg": {"type": "physical", "self_maxhp": 0.035}}]}
+{"id": 1036, "name": "煽風點火", "terms": [{"trigger": "auto", "dmg": {"type": "magic", "target_maxhp": 0.016}}]}
+{"id": 1051, "name": "亮起來！", "terms": [{"trigger": "auto", "every": 4, "dmg": {"type": "magic", "base": [44, 320], "bonus_ad": 1.4, "ap": 0.76}}]}
+{"id": 3086, "name": "蜜蜂來襲！！！", "terms": [{"trigger": "ability_hit", "icd": [15, 10], "dmg": {"type": "magic", "base": [75, 200], "bonus_ad": 1.5, "ap": 0.7}, "onhit": 1.6}]}
+{"id": 1335, "name": "黃金撕裂", "terms": [{"trigger": "ability_hit", "icd": 30, "dmg": {"type": "magic", "base": [50, 150], "bonus_ad": 0.4, "ap": 0.2}, "util": 0.3}]}
+{"id": 1018, "name": "巨像之勇氣", "terms": [{"trigger": "cc", "icd": 5, "shield": {"base": [150, 450], "self_maxhp": 0.04}}]}
+{"id": 1323, "name": "殘忍", "terms": [{"trigger": "cc", "icd": 6, "dmg": {"type": "magic", "base": [50, 150], "ap": 0.4, "self_maxhp": 0.04}}]}
+{"id": 1315, "name": "又快又穩", "terms": [{"trigger": "dash", "icd": 5, "shield": {"base": [65, 290], "ad": 0.65, "ap": 0.26}}]}
+{"id": 1027, "name": "大地覺醒", "terms": [{"trigger": "dash", "dmg": {"type": "physical", "base": [90, 250], "bonus_ad": 1.25, "ap": 0.6}}]}
+{"id": 1073, "name": "飛影跑法", "terms": [{"trigger": "dash", "util": 0.5}]}
+{"id": 1141, "name": "全部都給你", "terms": [{"ally_power": 0.3}]}

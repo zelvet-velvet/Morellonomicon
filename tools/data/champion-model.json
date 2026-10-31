@@ -1,0 +1,6 @@
+{
+ "Katarina": {"resets": 0.7, "onhit_hits": {"R": 5}, "styles": {"onhit": {"name": "攻速特效", "stack": ["攻速", "法術強度"], "autos": 0.6}}},
+ "MasterYi": {"resets": 0.5, "autos": 0.85},
+ "Darius": {"resets": 0.2},
+ "Jinx": {"resets": 0.2}
+}
