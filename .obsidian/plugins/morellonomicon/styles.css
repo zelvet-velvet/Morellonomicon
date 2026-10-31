@@ -1051,6 +1051,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-cpa-page.is-overview .mn-cpa-body { justify-content: flex-end; overflow: visible; }   /* just above the name */
 .mn-cpa-body > * { flex: none; }
 .mn-bt-main { display: flex; flex-direction: column; gap: 14px; }
+.mn-cv-augs { display: flex; flex-direction: column; gap: 10px; }   /* the augment tiers: a heading (稜鏡級 / S) over each row of tiles */
 .mn-cpa-page.is-build .mn-cpa-body > .mn-bt-main { flex: 1 0 auto; justify-content: center; }   /* 出裝: the builds centred down the page, Live stats at its foot */
 .mn-cv-look, .mn-cv-tags { cursor: pointer; }   /* 概覽: just above the name, the art above it */
 .mn-cpa-empty { margin: 0; text-align: center; font-size: 15px; line-height: 1.6; color: var(--mn-muted); }

@@ -168,6 +168,8 @@ var Store = class {
     this.gameText = {};
     // augment id -> the game's own description (tools/fetch_augment_text.py)
     this.augData = {};
+    this.augTiers = {};
+    // champion id -> play style -> the augment model's tiers (tools/augment_model.py)
     // false until the data files (_data/*.json) have been read once after start-up
     this.ready = false;
   }
@@ -211,6 +213,12 @@ var Store = class {
       this.augs = null;
     } catch {
       this.augData = {};
+    }
+    try {
+      const path = (0, import_obsidian.normalizePath)("_data/augment-tiers.json");
+      this.augTiers = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)).champions ?? {} : {};
+    } catch {
+      this.augTiers = {};
     }
     try {
       const path = (0, import_obsidian.normalizePath)("_data/positions.json");
@@ -6530,7 +6538,7 @@ function championCard(ctx) {
     if (p === "overview") tagLine = overviewTop(body, c, part("overview"));
     else if (p === "skills") skillStrip(body, c, now, { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false, shelf });
     else if (p === "build") buildTab(body, c, ctx);
-    else if (p === "augments") augmentsTab(body, c, ctx);
+    else if (p === "augments") augmentsTop(body, c, ctx, part("augments"));
     else tips(body, c, ctx);
     return pg;
   });
@@ -6647,7 +6655,7 @@ function championPart(ctx) {
   if (p === "overview") overview(el, c, ctx);
   else if (p === "skills") skillStrip(el, c, ctx.plugin.store.currentChanges(c.id), { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false });
   else if (p === "build") buildTab(el, c, ctx);
-  else if (p === "augments") augmentsTab(el, c, ctx);
+  else if (p === "augments") augmentsAll(el, c, ctx);
   else tips(el, c, ctx);
   return { title: `${c.name} \xB7 ${PART_TITLE[p] ?? ""}`, el };
 }
@@ -6656,6 +6664,87 @@ function overview(body, c, ctx) {
   championProfile(body, c, ctx.app);
   if (c.video) row(group(body), { icon: "play-circle", title: "Combo video", chevron: true, onTap: () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video)}`) });
   return changesBlock(body, c, ctx);
+}
+var RARITIES2 = [["\u7A1C\u93E1", "\u7A1C\u93E1\u7D1A"], ["\u91D1", "\u91D1\u7D1A"], ["\u9280", "\u9280\u7D1A"], ["\u4E94\u6BBA", "\u4E94\u6BBA\u91D1\u5C6C"]];
+var MODEL_NOTE = "\u4F9D\u82F1\u96C4\u7684\u6280\u80FD\u6578\u503C\u4F30\u7B97\uFF1A\u5728\u7B2C 3\u30017\u300111\u300115 \u7D1A\u9078\u5230\u6642\uFF0C\u8B93\u9019\u4F4D\u82F1\u96C4\u8B8A\u5F37\u591A\u5C11\u7684\u5E73\u5747\uFF0C\u548C\u540C\u4E00\u7A00\u6709\u5EA6\u7684\u5176\u4ED6\u5F37\u5316\u6BD4\u8F03\u3002\u4E0D\u662F\u52DD\u7387\u3002\u7F6E\u9802\u548C\u907F\u958B\u662F\u82F1\u96C4\u7B46\u8A18\u7684 pinned / avoid\u3002";
+function tierPicks(store, c, style) {
+  const out = [];
+  for (const name of c.pinned) {
+    const a = store.augments().find((x) => x.name === name);
+    if (a) out.push({ a, why: "\u7F6E\u9802", score: 100, group: a.rarity, tier: "S" });
+  }
+  for (const t of style.tiers) {
+    const a = store.augment(t.id);
+    if (!a || c.avoid.includes(a.name) || c.pinned.includes(a.name)) continue;
+    out.push({ a, why: t.when ? `${t.reason} \xB7 ${t.when}` : t.reason, score: t.score, group: t.group, tier: t.tier });
+  }
+  return out;
+}
+function styleChips(body, styles, draw) {
+  if (styles.length < 2) return;
+  const seg = segmented(body, styles.map((s, i) => [String(i), s.name]), "0", (id) => {
+    seg.querySelectorAll(".mn-seg-b").forEach((b, i) => b.toggleClass("is-on", String(i) === id));
+    draw(styles[Number(id)]);
+  });
+}
+function augmentsTop(body, c, ctx, more) {
+  const styles = Object.values(ctx.plugin.store.augTiers[c.id] ?? {});
+  if (!styles.length) {
+    augmentsTab(body, c, ctx);
+    return;
+  }
+  const chips = h(body, "div");
+  const box = h(body, "div", "mn-cv-augs");
+  const draw = (style) => {
+    box.empty();
+    const picks = tierPicks(ctx.plugin.store, c, style).filter((p) => p.tier === "S");
+    for (const [g, label] of RARITIES2) {
+      const these = picks.filter((p) => p.group === g);
+      if (!these.length) continue;
+      h(box, "div", "mn-gh", label);
+      augmentTiles(box, these, ctx);
+    }
+    if (!picks.length) h(box, "p", "mn-cpa-empty", "\u6C92\u6709\u7279\u5225\u9069\u5408\u7684\u5F37\u5316\u3002");
+  };
+  styleChips(chips, styles, draw);
+  draw(styles[0]);
+  row(group(body), { icon: "list", title: "\u5168\u90E8\u5F37\u5316", chevron: true, onTap: more });
+  h(body, "div", "mn-gf", MODEL_NOTE);
+}
+function augmentsAll(body, c, ctx) {
+  const store = ctx.plugin.store;
+  const styles = Object.values(store.augTiers[c.id] ?? {});
+  if (!styles.length) {
+    augmentsTab(body, c, ctx);
+    return;
+  }
+  let style = styles[0];
+  let rarity = "\u7A1C\u93E1";
+  styleChips(body, styles, (s) => {
+    style = s;
+    draw();
+  });
+  const opts = RARITIES2.filter(([g]) => g !== "\u4E94\u6BBA" || styles.some((s) => s.tiers.some((t) => t.group === g)));
+  const tabs = segmented(body, opts, rarity, (id) => {
+    tabs.querySelectorAll(".mn-seg-b").forEach((b, i) => b.toggleClass("is-on", opts[i][0] === id));
+    rarity = id;
+    draw();
+  });
+  const box = h(body, "div", "mn-cv-augs");
+  const draw = () => {
+    box.empty();
+    const picks = tierPicks(store, c, style).filter((p) => p.group === rarity);
+    for (const tier of ["S", "A", "B", "C"]) {
+      const these = picks.filter((p) => p.tier === tier);
+      if (!these.length) continue;
+      h(box, "div", "mn-gh", tier);
+      augmentTiles(box, these, ctx);
+    }
+    const none = style.none.map((n) => store.augment(n.id)).filter((a) => !!a && a.rarity === rarity && !c.pinned.includes(a.name));
+    if (none.length) h(box, "div", "mn-gf", `\u6C92\u7528\uFF1A${none.map((a) => a.name).join("\u3001")}`);
+  };
+  draw();
+  h(body, "div", "mn-gf", MODEL_NOTE);
 }
 function augmentsTab(body, c, ctx) {
   const picks = augmentPicks(ctx.plugin.store, c);

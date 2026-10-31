@@ -44,6 +44,11 @@ function withOnHit(skills: Skill[], keys: string[]): Skill[] {
 }
 
 export interface Skill { key: string; name: string; damage: string[]; tags: string[]; icon: string; desc: string; upgrade: string; range: string; rows: SkillRow[]; levels: number[] }   // levels: a passive's numbers are by champion level (Lv 1, 6, 11 ...), not by rank
+// One play style's augment tiers from the augment model (Dev Tools/Augment Model.md): per rarity (`group`; 五殺 is the Pentakill
+// band's set), S / A / B / C, the reason (輸出 +23%) and 前期強 / 後期強
+export interface AugTier { id: number; group: string; tier: string; value: number; score: number; when: string; reason: string }
+export interface AugTierStyle { name: string; tiers: AugTier[]; none: { id: number; value: number }[] }
+
 export interface Augment {
     id: number; name: string; rarity: string; icon: string; effect: string; partial: boolean; fits: string[]; tier: string; path: string;
     hand: boolean;   // `effect` is hand-written on the note (it wins over the game data's numbers)
@@ -117,6 +122,7 @@ export class Store {
     gameText: Record<string, { text: string; partial: boolean }> = {};   // augment id -> the game's own description (tools/fetch_augment_text.py)
     augData: Record<string, AugmentData> = {};   // augment id -> numbers, levels, tags (tools/fetch_augment_data.py)
     augmentData(id: number): AugmentData | undefined { return this.augData[String(id)]; }
+    augTiers: Record<string, Record<string, AugTierStyle>> = {};   // champion id -> play style -> the augment model's tiers (tools/augment_model.py)
 
     // false until the data files (_data/*.json) have been read once after start-up
     ready = false;
@@ -144,6 +150,10 @@ export class Store {
             this.augData = (await this.app.vault.adapter.exists(path)) ? ((JSON.parse(await this.app.vault.adapter.read(path)) as { augments: Record<string, AugmentData> }).augments ?? {}) : {};
             this.augs = null;
         } catch { this.augData = {}; }
+        try {
+            const path = normalizePath("_data/augment-tiers.json");
+            this.augTiers = (await this.app.vault.adapter.exists(path)) ? ((JSON.parse(await this.app.vault.adapter.read(path)) as { champions: Record<string, Record<string, AugTierStyle>> }).champions ?? {}) : {};
+        } catch { this.augTiers = {}; }
         try {
             const path = normalizePath("_data/positions.json");
             this.positions = (await this.app.vault.adapter.exists(path)) ? JSON.parse(await this.app.vault.adapter.read(path)) : null;
