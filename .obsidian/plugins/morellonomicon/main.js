@@ -5416,6 +5416,8 @@ function rosterPage(ctx) {
   drawGrid();
   return { title: "\u901F\u67E5", el };
 }
+var CHOSEN_MS = 560;
+var CHOSEN_SPARKS = 8;
 function swipePage(ctx) {
   const store = ctx.plugin.store;
   const el = h(null, "div", "mn-page mn-deckpage");
@@ -5428,6 +5430,7 @@ function swipePage(ctx) {
     swipeLiked = [];
   }
   let at = swipeAt, liked = swipeLiked;
+  void warmPictures(picks.map((id) => loading(id)));
   const results = h(el, "div", "mn-rq-results");
   const restart = () => {
     at = swipeAt = 0;
@@ -5453,6 +5456,14 @@ function swipePage(ctx) {
       requestAnimationFrame(fitEnd);
       return;
     }
+    let under = null;
+    const bridge = () => {
+      under?.remove();
+      under = h(results, "div", "mn-rq-end mn-rq-under is-bridged");
+      under.style.height = wrap.style.height || `${wrap.offsetHeight}px`;
+      likedGrid(under);
+      requestAnimationFrame(() => under?.addClass("is-in"));
+    };
     const wrap = h(results, "div", "mn-deckwrap mn-rq-deck");
     const pager = h(wrap, "div", "mn-pager");
     for (const ev of ["touchstart", "touchmove"]) pager.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
@@ -5510,8 +5521,16 @@ function swipePage(ctx) {
         armed = false;
         btns.removeClass("is-left", "is-right");
         if (like) swipeLiked = liked = [...liked, ids[i]];
+        if (at >= picks.length) bridge();
       },
-      onEnd: () => drawResults()
+      onEnd: () => {
+        if (!under) {
+          drawResults();
+          return;
+        }
+        wrap.remove();
+        under.removeClass("mn-rq-under");
+      }
     });
     pile.layout(false);
     const fit = () => {
@@ -5550,6 +5569,25 @@ function swipePage(ctx) {
       press(true);
     });
   };
+  const choose = (grid, card, id) => {
+    if (grid.hasClass("is-choosing")) return;
+    grid.addClass("is-choosing");
+    card.addClass("is-chosen");
+    const pop = h(card, "span", "mn-rq-pop");
+    icon(pop, "heart", "mn-rq-pop-big");
+    for (let k = 0; k < CHOSEN_SPARKS; k++) {
+      const sp = h(pop, "span", "mn-rq-spark");
+      sp.style.setProperty("--a", `${360 / CHOSEN_SPARKS * k}deg`);
+      icon(sp, "heart");
+    }
+    haptic();
+    window.setTimeout(() => {
+      ctx.openChampion(id);
+      grid.removeClass("is-choosing");
+      card.removeClass("is-chosen");
+      pop.remove();
+    }, CHOSEN_MS);
+  };
   const likedGrid = (box) => {
     const head2 = h(box, "div", "mn-rq-endhead");
     h(head2, "b", void 0, "Pick Me Up!");
@@ -5570,9 +5608,10 @@ function swipePage(ctx) {
         const main = c.damageType || c.skillDamage[0] || "";
         h(who, "span", "mn-rq-ls", [c.roles[0], main && `${main}\u50B7`, c.range ? c.range >= 550 ? "\u9060\u7A0B" : c.range >= 300 ? "\u4E2D\u7A0B" : "\u8FD1\u6230" : ""].filter(Boolean).join(" \xB7 "));
         if (c.punch) h(who, "span", "mn-rq-lp", c.punch);
+        b.style.setProperty("--i", String(g.childElementCount - 1));
         b.addEventListener("click", (e) => {
           e.preventDefault();
-          ctx.openChampion(c.id);
+          choose(g, b, c.id);
         });
       }
     } else empty(list2, { icon: "heart-off", title: "\u4E00\u500B\u90FD\u6C92\u559C\u6B61" });
