@@ -1741,6 +1741,10 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
     mask-image: linear-gradient(180deg, transparent, #000 14%, #000 78%, transparent), linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
     -webkit-mask-composite: source-in; mask-composite: intersect; }
 :is(.mn-champ, .mn-part) .mn-skill-detail + .mn-skills { margin-top: 14px; }
+/* 技能 (Zaviel 2026-11-01): the ability's name, numbers and text at the top; the clip sinks to the bottom, just above the P Q W E R bar */
+.mn-cpa-page.is-skills .mn-cpa-body > .mn-skill-detail.is-open { flex: 1 0 auto; display: flex; flex-direction: column; }
+.mn-cpa-page.is-skills .mn-skill-detail > .mn-sd-clipbox { margin-top: auto; flex: none; }
+.mn-cpa-page.is-skills .mn-skill-detail > .mn-sd-desc + .mn-sd-clipbox, .mn-cpa-page.is-skills .mn-skill-detail > .mn-sd-clipbox { margin-bottom: 0; }
 /* a champion sub page's small header: the champion's face, its name, and the page's name in the accent colour */
 .mn-part-head { justify-content: flex-start; gap: 10px; }
 .mn-part-head img { flex: none; width: 34px; height: 34px; border-radius: 10px; }

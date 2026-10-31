@@ -6767,7 +6767,7 @@ function championCard(ctx) {
     const pg = h(track, "section", "mn-cpa-page is-" + p);
     const body = h(pg, "div", "mn-cpa-body");
     if (p === "overview") tagLine = overviewTop(body, c, part("overview"));
-    else if (p === "skills") skillStrip(body, c, now, { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false, shelf, barBelow: true });
+    else if (p === "skills") skillStrip(body, c, now, { open: c.skills.findIndex((s) => s.key === "Q"), scroll: false, shelf, barBelow: true });
     else if (p === "build") buildTab(body, c, ctx);
     else if (p === "augments") augmentsTop(body, c, ctx, part("augments"));
     else tips(body, c, ctx);
@@ -6896,7 +6896,7 @@ function championPart(ctx) {
   h(words, "span", "mn-part-who", c.name);
   h(words, "b", "mn-part-what", `\u5168\u90E8${PART_TITLE[p] ?? ""}`);
   if (p === "overview") overviewAll(el, c, ctx);
-  else if (p === "skills") skillStrip(el, c, ctx.plugin.store.currentChanges(c.id), { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false, barBelow: true });
+  else if (p === "skills") skillStrip(el, c, ctx.plugin.store.currentChanges(c.id), { open: c.skills.findIndex((s) => s.key === "Q"), scroll: false, barBelow: true });
   else if (p === "build") buildTab(el, c, ctx);
   else if (p === "augments") augmentsAll(el, c, ctx);
   else tips(el, c, ctx);
