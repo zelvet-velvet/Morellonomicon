@@ -343,6 +343,10 @@ export function championPart(ctx: PageCtx): PageOut {
     const p = String(ctx.frame.params?.part ?? "") as Part;
     const el = h(null, "div", "mn-page");
     if (!c) { empty(el, { icon: "user-x", title: "Champion not found" }); return { title: "", el }; }
+    // the champion page family: its sub pages sit on the same darkened splash as the swipe pages (Design Rules); the picture is the
+    // one the champion page just showed, so it comes from the cache
+    el.addClass("mn-part");
+    h(el, "div", "mn-part-bg").style.backgroundImage = `url("${cardArt(c.id)}")`;
     h(h(el, "div", "mn-title-row"), "h1", "mn-title", `${c.name} · ${PART_TITLE[p] ?? ""}`);
     if (p === "overview") overview(el, c, ctx);
     else if (p === "skills") skillStrip(el, c, ctx.plugin.store.currentChanges(c.id), { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false });
@@ -363,11 +367,12 @@ function overview(body: HTMLElement, c: Champion, ctx: PageCtx): { el: HTMLEleme
 }
 
 // The augment model's tiers (Dev Tools/Augment Model.md), in the champion page family's style (Design Rules): one ranking by tier,
-// then score, rarity only in the icon's frame; bare tiles; the play style as words. The 強化 page lists the S augments, 全部強化
-// every tier. The champion note's `pinned` come first as 置頂, its `avoid` are left out. Without the model's file, the augments
-// matched by their effect text (augmentsTab) stand in.
+// then score, rarity only in the icon's frame; icon grids with names only (the reason is on the augment's page); the play style as
+// words. The 強化 page is a glance (its S augments, as many whole rows as fit, no scrolling); 全部強化 has every tier. The champion
+// note's `pinned` come first, its `avoid` are left out. Without the model's file, the augments matched by their effect text stand in.
 const TIER_ORDER = ["S", "A", "B", "C"];
-const MODEL_NOTE = "依英雄的技能數值估算：在第 3、7、11、15 級選到時，讓這位英雄變強多少，和同稀有度的其他強化比較。不是勝率。";
+const AUG_COLS = 4;   // icons per row in the champion page family's augment grid
+const MODEL_NOTE = "依英雄的技能數值估算：在第 3、7、11、15 級選到時，讓這位英雄變強多少，和同稀有度的其他強化比較。不是勝率。點強化看原因。";
 function tierPicks(store: Store, c: Champion, style: AugTierStyle): (AugmentPick & { tier: string })[] {
     const out: (AugmentPick & { tier: string })[] = [];
     for (const name of c.pinned) {
@@ -378,7 +383,7 @@ function tierPicks(store: Store, c: Champion, style: AugTierStyle): (AugmentPick
     for (const t of rows) {
         const a = store.augment(t.id);
         if (!a || c.avoid.includes(a.name) || c.pinned.includes(a.name)) continue;
-        out.push({ a, why: t.when ? `${t.reason} · ${t.when}` : t.reason, score: t.score, tier: t.tier });
+        out.push({ a, why: t.reason, score: t.score, tier: t.tier });
     }
     return out;
 }
@@ -386,30 +391,36 @@ function tierPicks(store: Store, c: Champion, style: AugTierStyle): (AugmentPick
 function styleSwitch(body: HTMLElement, styles: AugTierStyle[], draw: (s: AugTierStyle) => void): void {
     if (styles.length > 1) textSwitch(body, styles.map((s, i) => [String(i), s.name]), "0", (id) => draw(styles[Number(id)]));
 }
-// 強化 (the champion page): its S augments, best first
+// 強化 (the champion page): a glance at its S augments. One screen: as many whole rows as fit between the switch and 全部強化 ›
 function augmentsTop(body: HTMLElement, c: Champion, ctx: PageCtx, more: () => void): void {
     const styles = Object.values(ctx.plugin.store.augTiers[c.id] ?? {});
     if (!styles.length) { augmentsTab(body, c, ctx); return; }
-    const top = h(body, "div");
-    const box = h(body, "div", "mn-cv-augs");
+    body.addClass("is-glance");
+    styleSwitch(body, styles, (s) => draw(s));
+    const box = h(body, "div", "mn-cv-glance");
     const draw = (style: AugTierStyle) => {
         box.empty();
         const picks = tierPicks(ctx.plugin.store, c, style).filter((p) => p.tier === "S");
-        if (picks.length) augmentTiles(box, picks, ctx, { bare: true });
-        else h(box, "p", "mn-cpa-empty", "沒有特別適合的強化。");
+        if (!picks.length) { h(box, "p", "mn-cpa-empty", "沒有特別適合的強化。"); return; }
+        const grid = augmentTiles(box, picks, ctx, { bare: true, champ: c.id });
+        // whole rows only: the last row goes while the grid does not fit (laid out even while the page is off to the side)
+        requestAnimationFrame(() => {
+            while (box.scrollHeight > box.clientHeight + 1 && grid.childElementCount > AUG_COLS) {
+                const last = ((grid.childElementCount - 1) % AUG_COLS) + 1;
+                for (let i = 0; i < last; i++) grid.lastElementChild?.remove();
+            }
+        });
     };
-    styleSwitch(top, styles, draw);
     draw(styles[0]);
     moreLink(body, "全部強化", more);
-    h(body, "div", "mn-gf", MODEL_NOTE);
 }
-// 全部強化: every tier, S to C, then the augments that do nothing for it
+// 全部強化: every tier, S to C, each a coloured letter over its icons; then the augments that do nothing for it
 function augmentsAll(body: HTMLElement, c: Champion, ctx: PageCtx): void {
     const store = ctx.plugin.store;
     const styles = Object.values(store.augTiers[c.id] ?? {});
     if (!styles.length) { augmentsTab(body, c, ctx); return; }
-    const top = h(body, "div");
-    const box = h(body, "div", "mn-cv-augs");
+    styleSwitch(body, styles, (s) => draw(s));
+    const box = h(body, "div", "mn-cv-tiers");
     const draw = (style: AugTierStyle) => {
         box.empty();
         const picks = tierPicks(store, c, style);
@@ -417,12 +428,11 @@ function augmentsAll(body: HTMLElement, c: Champion, ctx: PageCtx): void {
             const these = picks.filter((p) => p.tier === tier);
             if (!these.length) continue;
             tierHead(box, tier);
-            augmentTiles(box, these, ctx, { bare: true });
+            augmentTiles(box, these, ctx, { bare: true, champ: c.id });
         }
         const none = style.none.map((n) => store.augment(n.id)).filter((a): a is Augment => !!a && !c.pinned.includes(a.name));
-        if (none.length) h(box, "div", "mn-gf", `沒用：${none.map((a) => a.name).join("、")}`);
+        if (none.length) h(box, "div", "mn-cv-none", `沒有幫助：${none.map((a) => a.name).join("、")}`);
     };
-    styleSwitch(top, styles, draw);
     draw(styles[0]);
     h(body, "div", "mn-gf", MODEL_NOTE);
 }

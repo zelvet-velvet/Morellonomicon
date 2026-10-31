@@ -23,10 +23,12 @@ sticker: lucide//ruler
 > [!note]+ One look for the champion page, its swipe pages and their sub pages · No panels · Words for switches · Tier order
 > A rule from Zaviel (2026-10-31): the champion page's swipe pages (概覽, 技能, 出裝, 強化, 技巧) and the pages they open (全部概覽, 全部強化 …) share one style, so a sub page reads as the same page opened further, not another app.
 >
-> - **The same few parts.** Both are built from the same parts and helpers; a sub page differs only in sitting on the plain page under the top bar instead of on the art.
+> - **The same few parts, the same art.** Both are built from the same parts and helpers; a sub page sits on the same darkened splash as the swipe pages past 概覽 (`.mn-part`, the picture from the cache), under the usual top bar.
+> - **A glance page fits one screen.** A swipe page that has a 全部 page does not scroll: it shows as many whole rows as fit, centred in the room it has, with its 全部 › link always in view at the foot; everything else is the 全部 page's job.
+> - **Icons and names only on a glance.** An icon grid shows the icon and its name, nothing more; numbers, reasons and marks (輸出 +23%, 前期強) are on the detail page it opens (an augment opened from a champion says how it fits that champion).
 > - **No panels.** Parts float with no tile, card or pill background: an icon with its name under it and one small muted line (the bare tiles: `augmentTiles(…, { bare: true })`, `.mn-aug-tiles.is-bare`). A reason or tag is coloured text, not a filled pill.
-> - **Headings, not boxes.** A section is a short heading over its row: a tier letter in its colour (S / A / B / C, `tierHead`) or a word; never a boxed header.
-> - **Switches are words.** A choice between two or three (a play style) is the words side by side, the chosen one in the accent colour (`textSwitch`), not a segmented capsule; segmented bars stay for the app's main tabs and filters.
+> - **Headings, not boxes.** A section is a short heading over its row: a tier letter in its colour with a thin line after it (S / A / B / C, `tierHead`) or a word; never a boxed header.
+> - **Switches are words, at the top.** A choice between two or three (a play style) is the words side by side at the top of the content, just under the page hint; the chosen one is the accent colour with a short line under it, never a box, even while pressed (`textSwitch`); segmented bars stay for the app's main tabs and filters.
 > - **Links are accent text** with a chevron (全部強化 ›), never a list row in a panel.
 > - **One order: what matters most.** A list is ranked once (augments by tier, then score); no grouping the player does not choose by (rarity shows in the icon's frame colour).
 

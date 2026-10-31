@@ -1,6 +1,6 @@
 import { MarkdownRenderer, TFile } from "obsidian";
-import type { Augment, Champion, Item, Store } from "../data/store";
-import { ITEM_CAT_COLOR, ITEM_CATS, augIcon, chip, empty, group, h, icon, layoutBlock, row, shopIcon, slideSeg } from "../ui";
+import type { AugTier, Augment, Champion, Item, Store } from "../data/store";
+import { ITEM_CAT_COLOR, ITEM_CATS, TIER_COLOR, augIcon, chip, empty, group, h, icon, layoutBlock, row, shopIcon, slideSeg } from "../ui";
 import { RARITY_COLOR } from "./augments";
 import { officialBlock } from "./changes";
 import { deckPage, itemTree } from "./deck";
@@ -92,15 +92,17 @@ const PICKS_SHOWN = 6;   // on the champion page; the full page shows them all
 export { PICKS_SHOWN };
 // The picks as tiles three across, all the same size so they line up: the icon in its rarity frame, the name (two lines at most), the
 // reason as a small chip; the tile is tinted in its rarity's colour. Tap: the augment's page.
-export function augmentTiles(parent: HTMLElement, picks: AugmentPick[], ctx: PageCtx, opt: { bare?: boolean } = {}): HTMLElement {
-    const grid = h(parent, "div", "mn-aug-tiles" + (opt.bare ? " is-bare" : ""));   // bare: no panel under the icons (champion page family)
+// opt.bare: the champion page family's icon grid (Design Rules): no panel, the icon and its name only (the reason is on the augment's
+// page); opt.champ: the champion it is shown for, so the augment's page can say how it fits that champion
+export function augmentTiles(parent: HTMLElement, picks: AugmentPick[], ctx: PageCtx, opt: { bare?: boolean; champ?: string } = {}): HTMLElement {
+    const grid = h(parent, "div", "mn-aug-tiles" + (opt.bare ? " is-bare" : ""));
     for (const p of picks) {
         const t = h(grid, "button", "mn-aug-tile");
         t.style.setProperty("--r", RARITY_COLOR[p.a.rarity] ?? "var(--mn-muted)");
         augIcon(t, p.a.icon, p.a.rarity, "mn-aug-tic");
         h(t, "span", "mn-aug-tn", p.a.name);
-        h(t, "span", "mn-aug-tw", p.why);
-        t.addEventListener("click", (e) => { e.preventDefault(); ctx.openAugment(p.a.id); });
+        if (!opt.bare) h(t, "span", "mn-aug-tw", p.why);
+        t.addEventListener("click", (e) => { e.preventDefault(); ctx.openAugment(p.a.id, opt.champ); });
     }
     return grid;
 }
@@ -211,6 +213,7 @@ export function augmentPage(ctx: PageCtx): PageOut {
     const rar = h(tags, "span", "mn-ag-rar", a.rarity);
     rar.style.setProperty("--c", RARITY_COLOR[a.rarity] ?? "var(--mn-muted)");
     if (history[0]?.what === "added" && history[0].patch === store.riotNotes[0]?.patch) h(tags, "span", "mn-ag-new", "新");
+    forChampion(el, store, a, String(ctx.frame.params?.champ ?? ""));
 
     // the numbers: a Lv1 / 最大 switch when it levels up; chips and the effect card follow it
     const levels = nums?.levels ?? [];
@@ -313,6 +316,28 @@ export function augmentPage(ctx: PageCtx): PageOut {
         h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "新增於" : "移除於"} ${x.patch}`).join(" · "));
     }
     return { title: "", el };   // the name is already the big heading
+}
+
+// Opened from a champion's 強化: how the augment fits that champion (its face, the tier in its colour, the reason, 前期強 / 後期強),
+// the detail its icon grid leaves out
+function forChampion(el: HTMLElement, store: Store, a: Augment, cid: string): void {
+    const c = cid ? store.champion(cid) : undefined;
+    if (!c) return;
+    let best: AugTier | undefined;
+    for (const st of Object.values(store.augTiers[cid] ?? {})) {
+        const t = st.tiers.find((x) => x.id === a.id);
+        if (t && (!best || t.score > best.score)) best = t;
+    }
+    const line = h(el, "div", "mn-ag-for");
+    const im = h(line, "img"); im.src = c.icon; im.alt = "";
+    const tx = h(line, "div", "mn-ag-for-t");
+    if (c.pinned.includes(a.name)) { h(tx, "b", undefined, `${c.name} · 置頂`); return; }
+    if (!best) { h(tx, "b", undefined, `${c.name} · 沒有幫助`); return; }
+    const head = h(tx, "b");
+    head.append(`${c.name} · `);
+    const tier = h(head, "span", "mn-ag-for-tier", best.tier);
+    tier.style.setProperty("--t", TIER_COLOR[best.tier] ?? "var(--mn-muted)");
+    h(tx, "span", undefined, [best.reason, best.when].filter(Boolean).join(" · "));
 }
 
 // The augment model's best users of an augment: per champion its best play style's tier; the S ones, then the A ones, best first, as

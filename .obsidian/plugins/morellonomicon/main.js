@@ -5926,10 +5926,10 @@ function augmentTiles(parent, picks, ctx, opt = {}) {
     t.style.setProperty("--r", RARITY_COLOR[p.a.rarity] ?? "var(--mn-muted)");
     augIcon(t, p.a.icon, p.a.rarity, "mn-aug-tic");
     h(t, "span", "mn-aug-tn", p.a.name);
-    h(t, "span", "mn-aug-tw", p.why);
+    if (!opt.bare) h(t, "span", "mn-aug-tw", p.why);
     t.addEventListener("click", (e) => {
       e.preventDefault();
-      ctx.openAugment(p.a.id);
+      ctx.openAugment(p.a.id, opt.champ);
     });
   }
   return grid;
@@ -6082,6 +6082,7 @@ function augmentPage(ctx) {
   const rar = h(tags2, "span", "mn-ag-rar", a.rarity);
   rar.style.setProperty("--c", RARITY_COLOR[a.rarity] ?? "var(--mn-muted)");
   if (history[0]?.what === "added" && history[0].patch === store.riotNotes[0]?.patch) h(tags2, "span", "mn-ag-new", "\u65B0");
+  forChampion(el, store, a, String(ctx.frame.params?.champ ?? ""));
   const levels = nums?.levels ?? [];
   let at = 0;
   const seg = levels.length > 1 ? h(el, "div", "mn-seg is-sm mn-ag-lv") : null;
@@ -6191,6 +6192,33 @@ function augmentPage(ctx) {
     h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "\u65B0\u589E\u65BC" : "\u79FB\u9664\u65BC"} ${x.patch}`).join(" \xB7 "));
   }
   return { title: "", el };
+}
+function forChampion(el, store, a, cid) {
+  const c = cid ? store.champion(cid) : void 0;
+  if (!c) return;
+  let best;
+  for (const st of Object.values(store.augTiers[cid] ?? {})) {
+    const t = st.tiers.find((x) => x.id === a.id);
+    if (t && (!best || t.score > best.score)) best = t;
+  }
+  const line = h(el, "div", "mn-ag-for");
+  const im = h(line, "img");
+  im.src = c.icon;
+  im.alt = "";
+  const tx = h(line, "div", "mn-ag-for-t");
+  if (c.pinned.includes(a.name)) {
+    h(tx, "b", void 0, `${c.name} \xB7 \u7F6E\u9802`);
+    return;
+  }
+  if (!best) {
+    h(tx, "b", void 0, `${c.name} \xB7 \u6C92\u6709\u5E6B\u52A9`);
+    return;
+  }
+  const head2 = h(tx, "b");
+  head2.append(`${c.name} \xB7 `);
+  const tier = h(head2, "span", "mn-ag-for-tier", best.tier);
+  tier.style.setProperty("--t", TIER_COLOR[best.tier] ?? "var(--mn-muted)");
+  h(tx, "span", void 0, [best.reason, best.when].filter(Boolean).join(" \xB7 "));
 }
 var USERS_SHOWN = 24;
 function modelUsers(el, store, a, ctx) {
@@ -6731,6 +6759,8 @@ function championPart(ctx) {
     empty(el, { icon: "user-x", title: "Champion not found" });
     return { title: "", el };
   }
+  el.addClass("mn-part");
+  h(el, "div", "mn-part-bg").style.backgroundImage = `url("${cardArt(c.id)}")`;
   h(h(el, "div", "mn-title-row"), "h1", "mn-title", `${c.name} \xB7 ${PART_TITLE[p] ?? ""}`);
   if (p === "overview") overview(el, c, ctx);
   else if (p === "skills") skillStrip(el, c, ctx.plugin.store.currentChanges(c.id), { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false });
@@ -6746,7 +6776,8 @@ function overview(body, c, ctx) {
   return changesBlock(body, c, ctx);
 }
 var TIER_ORDER = ["S", "A", "B", "C"];
-var MODEL_NOTE = "\u4F9D\u82F1\u96C4\u7684\u6280\u80FD\u6578\u503C\u4F30\u7B97\uFF1A\u5728\u7B2C 3\u30017\u300111\u300115 \u7D1A\u9078\u5230\u6642\uFF0C\u8B93\u9019\u4F4D\u82F1\u96C4\u8B8A\u5F37\u591A\u5C11\uFF0C\u548C\u540C\u7A00\u6709\u5EA6\u7684\u5176\u4ED6\u5F37\u5316\u6BD4\u8F03\u3002\u4E0D\u662F\u52DD\u7387\u3002";
+var AUG_COLS = 4;
+var MODEL_NOTE = "\u4F9D\u82F1\u96C4\u7684\u6280\u80FD\u6578\u503C\u4F30\u7B97\uFF1A\u5728\u7B2C 3\u30017\u300111\u300115 \u7D1A\u9078\u5230\u6642\uFF0C\u8B93\u9019\u4F4D\u82F1\u96C4\u8B8A\u5F37\u591A\u5C11\uFF0C\u548C\u540C\u7A00\u6709\u5EA6\u7684\u5176\u4ED6\u5F37\u5316\u6BD4\u8F03\u3002\u4E0D\u662F\u52DD\u7387\u3002\u9EDE\u5F37\u5316\u770B\u539F\u56E0\u3002";
 function tierPicks(store, c, style) {
   const out = [];
   for (const name of c.pinned) {
@@ -6757,7 +6788,7 @@ function tierPicks(store, c, style) {
   for (const t of rows) {
     const a = store.augment(t.id);
     if (!a || c.avoid.includes(a.name) || c.pinned.includes(a.name)) continue;
-    out.push({ a, why: t.when ? `${t.reason} \xB7 ${t.when}` : t.reason, score: t.score, tier: t.tier });
+    out.push({ a, why: t.reason, score: t.score, tier: t.tier });
   }
   return out;
 }
@@ -6770,18 +6801,26 @@ function augmentsTop(body, c, ctx, more) {
     augmentsTab(body, c, ctx);
     return;
   }
-  const top = h(body, "div");
-  const box = h(body, "div", "mn-cv-augs");
+  body.addClass("is-glance");
+  styleSwitch(body, styles, (s) => draw(s));
+  const box = h(body, "div", "mn-cv-glance");
   const draw = (style) => {
     box.empty();
     const picks = tierPicks(ctx.plugin.store, c, style).filter((p) => p.tier === "S");
-    if (picks.length) augmentTiles(box, picks, ctx, { bare: true });
-    else h(box, "p", "mn-cpa-empty", "\u6C92\u6709\u7279\u5225\u9069\u5408\u7684\u5F37\u5316\u3002");
+    if (!picks.length) {
+      h(box, "p", "mn-cpa-empty", "\u6C92\u6709\u7279\u5225\u9069\u5408\u7684\u5F37\u5316\u3002");
+      return;
+    }
+    const grid = augmentTiles(box, picks, ctx, { bare: true, champ: c.id });
+    requestAnimationFrame(() => {
+      while (box.scrollHeight > box.clientHeight + 1 && grid.childElementCount > AUG_COLS) {
+        const last = (grid.childElementCount - 1) % AUG_COLS + 1;
+        for (let i = 0; i < last; i++) grid.lastElementChild?.remove();
+      }
+    });
   };
-  styleSwitch(top, styles, draw);
   draw(styles[0]);
   moreLink(body, "\u5168\u90E8\u5F37\u5316", more);
-  h(body, "div", "mn-gf", MODEL_NOTE);
 }
 function augmentsAll(body, c, ctx) {
   const store = ctx.plugin.store;
@@ -6790,8 +6829,8 @@ function augmentsAll(body, c, ctx) {
     augmentsTab(body, c, ctx);
     return;
   }
-  const top = h(body, "div");
-  const box = h(body, "div", "mn-cv-augs");
+  styleSwitch(body, styles, (s) => draw(s));
+  const box = h(body, "div", "mn-cv-tiers");
   const draw = (style) => {
     box.empty();
     const picks = tierPicks(store, c, style);
@@ -6799,12 +6838,11 @@ function augmentsAll(body, c, ctx) {
       const these = picks.filter((p) => p.tier === tier);
       if (!these.length) continue;
       tierHead(box, tier);
-      augmentTiles(box, these, ctx, { bare: true });
+      augmentTiles(box, these, ctx, { bare: true, champ: c.id });
     }
     const none = style.none.map((n) => store.augment(n.id)).filter((a) => !!a && !c.pinned.includes(a.name));
-    if (none.length) h(box, "div", "mn-gf", `\u6C92\u7528\uFF1A${none.map((a) => a.name).join("\u3001")}`);
+    if (none.length) h(box, "div", "mn-cv-none", `\u6C92\u6709\u5E6B\u52A9\uFF1A${none.map((a) => a.name).join("\u3001")}`);
   };
-  styleSwitch(top, styles, draw);
   draw(styles[0]);
   h(body, "div", "mn-gf", MODEL_NOTE);
 }
@@ -7902,7 +7940,7 @@ var MnView = class extends import_obsidian15.ItemView {
           if (sub) rememberSub(id2, sub);
           this.push({ key: "champion", title: store.champion(id2)?.name ?? id2, params: { id: id2 } });
         },
-        openAugment: (id2) => this.push({ key: "augment", title: store.augment(id2)?.name ?? "Augment", params: { id: id2 } }),
+        openAugment: (id2, champ) => this.push({ key: "augment", title: store.augment(id2)?.name ?? "Augment", params: champ ? { id: id2, champ } : { id: id2 } }),
         openItem: (id2) => this.push({ key: "item", title: store.item(id2)?.name ?? "Item", params: { id: id2 } }),
         openNote: (path) => this.push({ key: "note", title: path.split("/").pop()?.replace(/\.md$/, "") ?? "Note", params: { path } })
       });

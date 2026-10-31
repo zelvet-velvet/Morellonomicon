@@ -325,7 +325,7 @@ export class MnView extends ItemView {
                     if (sub) rememberSub(id, sub);
                     this.push({ key: "champion", title: store.champion(id)?.name ?? id, params: { id } });
                 },
-                openAugment: (id) => this.push({ key: "augment", title: store.augment(id)?.name ?? "Augment", params: { id } }),
+                openAugment: (id, champ) => this.push({ key: "augment", title: store.augment(id)?.name ?? "Augment", params: champ ? { id, champ } : { id } }),
                 openItem: (id) => this.push({ key: "item", title: store.item(id)?.name ?? "Item", params: { id } }),
                 openNote: (path) => this.push({ key: "note", title: path.split("/").pop()?.replace(/\.md$/, "") ?? "Note", params: { path } }),
             });
