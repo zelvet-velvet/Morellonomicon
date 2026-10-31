@@ -2966,7 +2966,7 @@ function profileAxes(c) {
     { label: "\u5766\u5EA6", value: c.defense },
     { label: "\u63A7\u5834", value: score(count(c, "\u63A7\u5834")) },
     { label: "\u4F4D\u79FB", value: score(count(c, "\u4F4D\u79FB")) },
-    { label: "\u8F14\u52A9", value: score(count(c, "\u6CBB\u7642", "\u8B77\u76FE")) },
+    { label: "\u8F14\u52A9", value: score(count(c, "\u968A\u53CB\u589E\u76CA")) },
     { label: "\u5C04\u7A0B", value: Math.min(10, Math.round(c.range / 65)) }
   ];
 }
@@ -3264,10 +3264,6 @@ function styleCard(parent, c, app) {
   });
   styleChart(card, c);
   if (OFF_CHART.some((x) => hasTag(c, x))) tagRow(h(card, "div", "mn-style-f"), c, OFF_CHART, true);
-}
-function championProfile(parent, c, app) {
-  factsStrip(parent, c);
-  styleCard(parent, c, app);
 }
 
 // src/pages/fresh.ts
@@ -6589,6 +6585,8 @@ var FLICK_PX_MS = 0.35;
 var EDGE_PULL = 0.3;
 var WHEEL_PX = 12;
 var WHEEL_GAP_MS = 450;
+var TAP_SIDE = 0.22;
+var TAP_AFTER_SWIPE_MS = 350;
 var PAGES = [["overview", "\u6982\u89BD", "id-card"], ["skills", "\u6280\u80FD", "keyboard"], ["build", "\u51FA\u88DD", "shopping-bag"], ["augments", "\u5F37\u5316", "sparkles"], ["tips", "\u6280\u5DE7", "lightbulb"]];
 function championCard(ctx) {
   const store = ctx.plugin.store;
@@ -6695,17 +6693,27 @@ function championCard(ctx) {
     dx = edge ? mx * EDGE_PULL : mx;
     place(dx, false);
   }, { passive: false });
+  let swiped = 0;
   const end = () => {
     if (axis !== "x") {
       axis = "";
       return;
     }
     axis = "";
+    swiped = Date.now();
     const w = track.clientWidth || 1;
     const flick = Math.abs(dx) / Math.max(1, Date.now() - t0) > FLICK_PX_MS && Math.abs(dx) > AXIS_PX * 2;
     go(pos + (Math.abs(dx) > w * TURN_PART || flick ? dx < 0 ? 1 : -1 : 0));
   };
   for (const ev of ["touchend", "touchcancel"]) track.addEventListener(ev, end, { passive: true });
+  track.addEventListener("click", (e) => {
+    if (e.target.closest("button, a, input, select, textarea, video, img, .mn-tsw, .mn-skills, .mn-items")) return;
+    if (Date.now() - swiped < TAP_AFTER_SWIPE_MS) return;
+    const r = box.getBoundingClientRect();
+    const at = (e.clientX - r.left) / (r.width || 1);
+    if (at < TAP_SIDE) go(pos - 1);
+    else if (at > 1 - TAP_SIDE) go(pos + 1);
+  });
   let wheelAt = 0;
   track.addEventListener("wheel", (e) => {
     if (Math.abs(e.deltaX) <= Math.abs(e.deltaY) || Math.abs(e.deltaX) < WHEEL_PX) return;
@@ -6725,22 +6733,7 @@ var TAGS_SHOWN = 4;
 function overviewTop(body, c, more) {
   const row2 = h(body, "div", "mn-cv-look");
   profileRadar(h(row2, "div", "mn-cv-radar"), profileAxes(c), DAMAGE_COLOR[c.damageType || c.skillDamage[0] || ""] ?? "var(--mn-accent)");
-  const tiles = h(row2, "div", "mn-cv-stats");
-  const tile2 = (iconName, color, big, small) => {
-    const t2 = h(tiles, "div", "mn-cv-stat");
-    t2.style.setProperty("--c", color);
-    icon(t2, iconName, "mn-cv-sic");
-    h(t2, "b", void 0, big);
-    h(t2, "span", void 0, small);
-    return t2;
-  };
-  const main = c.damageType || c.skillDamage[0] || "";
-  if (main) tile2(DAMAGE_ICON[main] ?? "flame", DAMAGE_COLOR[main] ?? "var(--mn-muted)", main === "\u7269\u7406" ? "\u7269\u653B" : main === "\u9B54\u6CD5" ? "\u9B54\u653B" : main, "\u50B7\u5BB3");
-  const reach = reachOf(c) || (c.range >= 550 ? "\u9060\u7A0B" : c.range >= 300 ? "\u4E2D\u7A0B" : "\u8FD1\u6230");
-  tile2("ruler", "var(--mn-dash)", reach, c.range ? `\u5C04\u7A0B ${c.range}` : "\u8DDD\u96E2");
-  const d = tile2("gauge", "var(--mn-accent)", `${c.difficulty}`, "\u96E3\u5EA6");
-  const bar = h(d, "div", "mn-cv-bar");
-  for (let i = 0; i < DIFF_STEPS; i++) h(bar, "i", i < c.difficulty ? "is-on" : "");
+  statTiles(row2, c);
   const t = tagRow(body, c, void 0, true);
   t.addClass("mn-cv-tags");
   Array.from(t.children).slice(TAGS_SHOWN).forEach((x) => x.remove());
@@ -6749,6 +6742,25 @@ function overviewTop(body, c, more) {
     more();
   });
   return t;
+}
+function statTiles(parent, c) {
+  const tiles = h(parent, "div", "mn-cv-stats");
+  const tile2 = (iconName, color, big, small) => {
+    const t = h(tiles, "div", "mn-cv-stat");
+    t.style.setProperty("--c", color);
+    icon(t, iconName, "mn-cv-sic");
+    h(t, "b", void 0, big);
+    h(t, "span", void 0, small);
+    return t;
+  };
+  const main = c.damageType || c.skillDamage[0] || "";
+  if (main) tile2(DAMAGE_ICON[main] ?? "flame", DAMAGE_COLOR[main] ?? "var(--mn-muted)", main === "\u7269\u7406" ? "\u7269\u653B" : main === "\u9B54\u6CD5" ? "\u9B54\u653B" : main, "\u50B7\u5BB3");
+  const reach = reachOf(c) || (c.range >= 550 ? "\u9060\u7A0B" : c.range >= 300 ? "\u4E2D\u7A0B" : "\u8FD1\u6230");
+  tile2("ruler", "var(--mn-dash)", reach, c.range ? `\u5C04\u7A0B ${c.range}` : "\u8DDD\u96E2");
+  const d = tile2("gauge", "var(--mn-accent)", `${c.difficulty}`, "\u96E3\u5EA6");
+  const bar = h(d, "div", "mn-cv-bar");
+  for (let i = 0; i < DIFF_STEPS; i++) h(bar, "i", i < c.difficulty ? "is-on" : "");
+  return tiles;
 }
 var PART_TITLE = { overview: "\u6982\u89BD", skills: "\u6280\u80FD", build: "\u51FA\u88DD", augments: "\u5F37\u5316", tips: "\u6280\u5DE7" };
 function championPart(ctx) {
@@ -6759,21 +6771,35 @@ function championPart(ctx) {
     empty(el, { icon: "user-x", title: "Champion not found" });
     return { title: "", el };
   }
-  el.addClass("mn-part");
-  h(el, "div", "mn-part-bg").style.backgroundImage = `url("${cardArt(c.id)}")`;
   h(h(el, "div", "mn-title-row"), "h1", "mn-title", `${c.name} \xB7 ${PART_TITLE[p] ?? ""}`);
-  if (p === "overview") overview(el, c, ctx);
+  if (p === "overview") overviewAll(el, c, ctx);
   else if (p === "skills") skillStrip(el, c, ctx.plugin.store.currentChanges(c.id), { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false });
   else if (p === "build") buildTab(el, c, ctx);
   else if (p === "augments") augmentsAll(el, c, ctx);
   else tips(el, c, ctx);
-  return { title: `${c.name} \xB7 ${PART_TITLE[p] ?? ""}`, el };
+  return { title: `${c.name} \xB7 ${PART_TITLE[p] ?? ""}`, el, art: cardArt(c.id) };
 }
 var CHAMPION_TABS = [["\u6982\u89BD", "id-card"], ["\u6280\u80FD", "keyboard"], ["\u51FA\u88DD", "shopping-bag"], ["\u5F37\u5316", "sparkles"], ["\u6280\u5DE7", "lightbulb"]];
-function overview(body, c, ctx) {
-  championProfile(body, c, ctx.app);
-  if (c.video) row(group(body), { icon: "play-circle", title: "Combo video", chevron: true, onTap: () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video)}`) });
-  return changesBlock(body, c, ctx);
+function overviewAll(body, c, ctx) {
+  const look = h(body, "div", "mn-ov");
+  profileRadar(h(look, "div", "mn-ov-radar"), profileAxes(c), DAMAGE_COLOR[c.damageType || c.skillDamage[0] || ""] ?? "var(--mn-accent)");
+  statTiles(look, c).addClass("mn-ov-stats");
+  tagRow(look, c, void 0, true).addClass("mn-ov-tags");
+  const lines = damageLines(c);
+  if (lines.length) {
+    tierHead(look, "\u6280\u80FD\u50B7\u5BB3");
+    const list2 = h(look, "div", "mn-ov-dl");
+    for (const d of lines) {
+      h(list2, "b", "mn-ov-key", d.key);
+      const name = h(list2, "span", "mn-ov-name", d.name);
+      if (d.onHit) h(name, "small", void 0, "\u89F8\u767C\u653B\u64CA\u7279\u6548");
+      h(list2, "span", "mn-ov-kind", d.kind).style.color = DAMAGE_COLOR[d.kind] ?? "inherit";
+      const scale = [d.ad ? `\u7269\u653B ${Math.round(d.ad)}%` : "", d.ap ? `\u9B54\u653B ${Math.round(d.ap)}%` : ""].filter(Boolean).join(" \xB7 ");
+      h(list2, "span", "mn-ov-scale", scale || "\u2014");
+    }
+  }
+  if (c.video) moreLink(look, "\u9023\u62DB\u5F71\u7247", () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video)}`));
+  changesBlock(body, c, ctx);
 }
 var TIER_ORDER = ["S", "A", "B", "C"];
 var AUG_COLS = 4;
@@ -6841,7 +6867,7 @@ function augmentsAll(body, c, ctx) {
       augmentTiles(box, these, ctx, { bare: true, champ: c.id });
     }
     const none = style.none.map((n) => store.augment(n.id)).filter((a) => !!a && !c.pinned.includes(a.name));
-    if (none.length) h(box, "div", "mn-cv-none", `\u6C92\u6709\u5E6B\u52A9\uFF1A${none.map((a) => a.name).join("\u3001")}`);
+    if (none.length) h(box, "div", "mn-gf", `\u6C92\u6709\u5E6B\u52A9\uFF1A${none.map((a) => a.name).join("\u3001")}`);
   };
   draw(styles[0]);
   h(body, "div", "mn-gf", MODEL_NOTE);
@@ -7630,6 +7656,7 @@ var MnView = class extends import_obsidian15.ItemView {
       this.modeMenu(e);
     });
     this.modeBtn = modeBtn;
+    this.artEl = h(app, "div", "mn-page-art");
     this.scrollEl = h(app, "div", "mn-scroll");
     const vv = window.visualViewport;
     let kbEvent = 0;
@@ -7957,6 +7984,8 @@ var MnView = class extends import_obsidian15.ItemView {
       this.topEl.removeClass("is-scrolled");
       releaseVideos(this.scrollEl);
       this.scrollEl.replaceChildren(page2.el);
+      this.artEl.style.backgroundImage = page2.art ? `url("${page2.art}")` : "";
+      this.artEl.toggleClass("is-on", !!page2.art);
       this.shown = key;
       const fresh = anim === "push" || OVERLAY_PAGES.has(f.key);
       if (fresh) this.scrolls.delete(key);

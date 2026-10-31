@@ -1652,11 +1652,27 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-cpa-body.is-glance { overflow: hidden; gap: 12px; }
 .mn-cpa-body.is-glance > .mn-cv-glance { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
 .mn-cv-tiers { display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
-.mn-cv-none { font-size: 13px; line-height: 1.6; color: var(--mn-muted); }
-/* a champion sub page sits on the darkened splash, like the swipe pages past 概覽 */
-.mn-page.mn-part { position: relative; }
-.mn-part-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; background-size: cover; background-position: center 30%; filter: brightness(0.35) saturate(0.85) blur(2px); }
-.mn-page.mn-part > :not(.mn-part-bg) { position: relative; z-index: 1; }
+/* a page's art (view.ts): the darkened splash behind a champion sub page, the app's own layer under the scrolling area, so it never moves */
+.mn-page-art { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 0.25s ease-out; background-size: cover; background-position: center 30%; filter: brightness(0.35) saturate(0.85) blur(2px); transform: scale(1.04); }
+.mn-page-art.is-on { opacity: 1; }
+.mn-app > .mn-scroll { position: relative; z-index: 1; }
+/* 全部概覽: the chart large, the stats in a row, the tags, each damaging ability in one line; no panels */
+.mn-ov { display: flex; flex-direction: column; gap: 16px; margin-top: 4px; }
+.mn-ov-radar { align-self: center; width: min(320px, 100%); }
+.mn-ov-radar svg { display: block; width: 100%; height: auto; }
+.mn-ov-radar .mn-rd-label { font-size: 13px; }
+.mn-ov-radar .mn-rd-val { font-size: 14px; }
+.mn-ov .mn-ov-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.mn-ov .mn-cv-stat { padding: 4px; border: 0; border-radius: 0; background: none; }
+.mn-ov .mn-cv-stat b { font-size: 18px; }
+.mn-tgs.mn-ov-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; }
+.mn-app .mn-ov-tags .mn-tg { border: 0; background: none; padding: 6px 4px; font-size: 14px; }
+.mn-ov-dl { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto auto; align-items: baseline; gap: 8px 10px; font-size: 14px; }
+.mn-ov-key { color: var(--mn-accent); font-weight: 800; }
+.mn-ov-name { color: var(--mn-text); font-weight: 600; min-width: 0; }
+.mn-ov-name small { display: block; font-size: 11px; font-weight: 600; color: var(--mn-onhit); }
+.mn-ov-kind { font-size: 13px; font-weight: 700; }
+.mn-ov-scale { font-size: 13px; color: var(--mn-muted); text-align: right; white-space: nowrap; }
 /* the augment page opened from a champion: how it fits that champion */
 .mn-ag-for { display: flex; align-items: center; gap: 10px; margin: 4px 0 10px; }
 .mn-ag-for img { flex: none; width: 36px; height: 36px; border-radius: 10px; }

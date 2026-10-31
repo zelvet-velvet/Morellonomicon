@@ -35,6 +35,7 @@ export class MnView extends ItemView {
     private backEl!: HTMLButtonElement;
     private titleEl!: HTMLElement;
     private scrollEl!: HTMLElement;
+    private artEl!: HTMLElement;
     private tabsEl!: HTMLElement;
     private scrolls = new Map<string, number>();
     private shown = "";
@@ -72,6 +73,9 @@ export class MnView extends ItemView {
         modeBtn.setAttribute("aria-label", "Mode");
         modeBtn.addEventListener("click", (e) => { e.preventDefault(); this.modeMenu(e); });
         this.modeBtn = modeBtn;
+        // a picture behind the page that does not scroll with it (a page's `art`: the champion's darkened splash behind its sub pages);
+        // the app's own layer, so no scrolling or sliding page moves it
+        this.artEl = h(app, "div", "mn-page-art");
         this.scrollEl = h(app, "div", "mn-scroll");
         // the phone's keyboard and the floating search capsule (Picks, Champions). Obsidian (iOS) shrinks its page only once the keyboard
         // has finished opening and grows it only once it has closed, and sends no keyboard event we can catch (screen recording,
@@ -345,6 +349,8 @@ export class MnView extends ItemView {
             this.topEl.removeClass("is-scrolled");
             releaseVideos(this.scrollEl);   // the clips of the page being left give back their decoders
             this.scrollEl.replaceChildren(page.el);
+            this.artEl.style.backgroundImage = page.art ? `url("${page.art}")` : "";
+            this.artEl.toggleClass("is-on", !!page.art);
             this.shown = key;
             // a page opened on top of another, and a champion page (its splash sits under the top bar) always start at the top; the
             // others (a tab, a page you come back to) are where you left them

@@ -1,6 +1,6 @@
 import type { AugTierStyle, Augment, Champion, Item, Store } from "../data/store";
 import { DAMAGE_COLOR, DAMAGE_ICON, augIcon, scalingParts, warmPictures, blockUntil, layoutBlock, chip, empty, fgrid, group, h, icon, moreLink, page, row, segmented, roleChip, LANES, laneChip, slideSeg, textSwitch, tierHead, tip, fixedPage } from "../ui";
-import { TAG_GROUPS, championProfile, iconFilter, profileAxes, profileRadar, reachOf, tagFilter, tagRow } from "./profile";
+import { TAG_GROUPS, damageLines, iconFilter, profileAxes, profileRadar, reachOf, tagFilter, tagRow } from "./profile";
 import { buildTab } from "./build";
 import { cardArt } from "./roster";
 import type { PageCtx, PageOut } from "./index";
@@ -188,7 +188,9 @@ const AXIS_PX = 8;          // a touch's first move this far picks its direction
 const TURN_PART = 0.22;     // a swipe past this part of the width turns the page
 const FLICK_PX_MS = 0.35;   // or a quick flick (px per ms)
 const EDGE_PULL = 0.3;      // past the first or last page the pages follow the finger this much
-const WHEEL_PX = 12, WHEEL_GAP_MS = 450;   // a trackpad swipe: its least move, and the pause before the next one turns a page
+const WHEEL_PX = 12, WHEEL_GAP_MS = 450;
+const TAP_SIDE = 0.22;      // a tap within this share of the width from a side turns the page that way
+const TAP_AFTER_SWIPE_MS = 350;   // a click this soon after a swipe is the swipe's, not a tap   // a trackpad swipe: its least move, and the pause before the next one turns a page
 const PAGES: [Part, string, string][] = [["overview", "概覽", "id-card"], ["skills", "技能", "keyboard"], ["build", "出裝", "shopping-bag"], ["augments", "強化", "sparkles"], ["tips", "技巧", "lightbulb"]];
 export function championCard(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
@@ -281,14 +283,25 @@ export function championCard(ctx: PageCtx): PageOut {
         dx = edge ? mx * EDGE_PULL : mx;
         place(dx, false);
     }, { passive: false });
+    let swiped = 0;
     const end = () => {
         if (axis !== "x") { axis = ""; return; }
         axis = "";
+        swiped = Date.now();
         const w = track.clientWidth || 1;
         const flick = Math.abs(dx) / Math.max(1, Date.now() - t0) > FLICK_PX_MS && Math.abs(dx) > AXIS_PX * 2;
         go(pos + (Math.abs(dx) > w * TURN_PART || flick ? (dx < 0 ? 1 : -1) : 0));
     };
     for (const ev of ["touchend", "touchcancel"]) track.addEventListener(ev, end, { passive: true });
+    // a tap on the left or right side of the page (not on something tappable) goes to the page before or after, like stories
+    track.addEventListener("click", (e) => {
+        if ((e.target as HTMLElement).closest("button, a, input, select, textarea, video, img, .mn-tsw, .mn-skills, .mn-items")) return;
+        if (Date.now() - swiped < TAP_AFTER_SWIPE_MS) return;   // the click a finished swipe may still send
+        const r = box.getBoundingClientRect();   // the window the pages show in (the track itself is moved)
+        const at = (e.clientX - r.left) / (r.width || 1);
+        if (at < TAP_SIDE) go(pos - 1);
+        else if (at > 1 - TAP_SIDE) go(pos + 1);
+    });
     // a trackpad's sideways swipe on a computer: one page per swipe
     let wheelAt = 0;
     track.addEventListener("wheel", (e) => {
@@ -313,7 +326,16 @@ function overviewTop(body: HTMLElement, c: Champion, more: () => void): HTMLElem
     // the style chart (radar) on the left, the three stat tiles stacked on its right, the tags under them
     const row = h(body, "div", "mn-cv-look");
     profileRadar(h(row, "div", "mn-cv-radar"), profileAxes(c), DAMAGE_COLOR[c.damageType || c.skillDamage[0] || ""] ?? "var(--mn-accent)");
-    const tiles = h(row, "div", "mn-cv-stats");
+    statTiles(row, c);
+    const t = tagRow(body, c, undefined, true);
+    t.addClass("mn-cv-tags");
+    Array.from(t.children).slice(TAGS_SHOWN).forEach((x) => x.remove());
+    for (const x of [row, t]) x.addEventListener("click", (e) => { e.preventDefault(); more(); });   // the chart, the tiles and the tags open the page of its own
+    return t;   // placed under the name by the caller
+}
+// the three stats: damage kind, reach, difficulty (a 10-step bar); each an icon, a value and what it is
+function statTiles(parent: HTMLElement, c: Champion): HTMLElement {
+    const tiles = h(parent, "div", "mn-cv-stats");
     const tile = (iconName: string, color: string, big: string, small: string) => {
         const t = h(tiles, "div", "mn-cv-stat");
         t.style.setProperty("--c", color);
@@ -329,11 +351,7 @@ function overviewTop(body: HTMLElement, c: Champion, more: () => void): HTMLElem
     const d = tile("gauge", "var(--mn-accent)", `${c.difficulty}`, "難度");
     const bar = h(d, "div", "mn-cv-bar");
     for (let i = 0; i < DIFF_STEPS; i++) h(bar, "i", i < c.difficulty ? "is-on" : "");
-    const t = tagRow(body, c, undefined, true);
-    t.addClass("mn-cv-tags");
-    Array.from(t.children).slice(TAGS_SHOWN).forEach((x) => x.remove());
-    for (const x of [row, t]) x.addEventListener("click", (e) => { e.preventDefault(); more(); });   // the chart, the tiles and the tags open the page of its own
-    return t;   // placed under the name by the caller
+    return tiles;
 }
 // 概覽's page of its own (the chart in full, the combo video, this patch's changes), opened from its chart, tiles or tags
 type Part = "overview" | "skills" | "build" | "augments" | "tips";
@@ -343,27 +361,44 @@ export function championPart(ctx: PageCtx): PageOut {
     const p = String(ctx.frame.params?.part ?? "") as Part;
     const el = h(null, "div", "mn-page");
     if (!c) { empty(el, { icon: "user-x", title: "Champion not found" }); return { title: "", el }; }
-    // the champion page family: its sub pages sit on the same darkened splash as the swipe pages (Design Rules); the picture is the
-    // one the champion page just showed, so it comes from the cache
-    el.addClass("mn-part");
-    h(el, "div", "mn-part-bg").style.backgroundImage = `url("${cardArt(c.id)}")`;
     h(h(el, "div", "mn-title-row"), "h1", "mn-title", `${c.name} · ${PART_TITLE[p] ?? ""}`);
-    if (p === "overview") overview(el, c, ctx);
+    if (p === "overview") overviewAll(el, c, ctx);
     else if (p === "skills") skillStrip(el, c, ctx.plugin.store.currentChanges(c.id), { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false });
     else if (p === "build") buildTab(el, c, ctx);
     else if (p === "augments") augmentsAll(el, c, ctx);
     else tips(el, c, ctx);
-    return { title: `${c.name} · ${PART_TITLE[p] ?? ""}`, el };
+    // the champion page family: its sub pages sit on the same darkened splash as the swipe pages (Design Rules); the picture is the
+    // one the champion page just showed, so it comes from the cache
+    return { title: `${c.name} · ${PART_TITLE[p] ?? ""}`, el, art: cardArt(c.id) };
 }
 
 // The champion page's swipe pages, for the Handbook card that pictures them (label, icon; the Champion page pages in the Icons note)
 export const CHAMPION_TABS = [["概覽", "id-card"], ["技能", "keyboard"], ["出裝", "shopping-bag"], ["強化", "sparkles"], ["技巧", "lightbulb"]] as const;
 
 // Overview: reach, damage kind, difficulty and the style chart, then the combo video and this patch's changes
-function overview(body: HTMLElement, c: Champion, ctx: PageCtx): { el: HTMLElement; open(): void } | null {
-    championProfile(body, c, ctx.app);
-    if (c.video) row(group(body), { icon: "play-circle", title: "Combo video", chevron: true, onTap: () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video!)}`) });
-    return changesBlock(body, c, ctx);
+// 全部概覽 (opened from 概覽's chart, stats or tags), in the champion page family's style (Design Rules): no panels, about one screen.
+// The style chart large, the three stats in a row, every ability tag with its keys, each damaging ability's damage kind and scaling,
+// then the combo video as a link and this patch's changes.
+function overviewAll(body: HTMLElement, c: Champion, ctx: PageCtx): void {
+    const look = h(body, "div", "mn-ov");
+    profileRadar(h(look, "div", "mn-ov-radar"), profileAxes(c), DAMAGE_COLOR[c.damageType || c.skillDamage[0] || ""] ?? "var(--mn-accent)");
+    statTiles(look, c).addClass("mn-ov-stats");
+    tagRow(look, c, undefined, true).addClass("mn-ov-tags");
+    const lines = damageLines(c);
+    if (lines.length) {
+        tierHead(look, "技能傷害");
+        const list = h(look, "div", "mn-ov-dl");
+        for (const d of lines) {
+            h(list, "b", "mn-ov-key", d.key);
+            const name = h(list, "span", "mn-ov-name", d.name);
+            if (d.onHit) h(name, "small", undefined, "觸發攻擊特效");
+            h(list, "span", "mn-ov-kind", d.kind).style.color = DAMAGE_COLOR[d.kind] ?? "inherit";
+            const scale = [d.ad ? `物攻 ${Math.round(d.ad)}%` : "", d.ap ? `魔攻 ${Math.round(d.ap)}%` : ""].filter(Boolean).join(" · ");
+            h(list, "span", "mn-ov-scale", scale || "—");
+        }
+    }
+    if (c.video) moreLink(look, "連招影片", () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video!)}`));
+    changesBlock(body, c, ctx);
 }
 
 // The augment model's tiers (Dev Tools/Augment Model.md), in the champion page family's style (Design Rules): one ranking by tier,
@@ -431,7 +466,7 @@ function augmentsAll(body: HTMLElement, c: Champion, ctx: PageCtx): void {
             augmentTiles(box, these, ctx, { bare: true, champ: c.id });
         }
         const none = style.none.map((n) => store.augment(n.id)).filter((a): a is Augment => !!a && !c.pinned.includes(a.name));
-        if (none.length) h(box, "div", "mn-cv-none", `沒有幫助：${none.map((a) => a.name).join("、")}`);
+        if (none.length) h(box, "div", "mn-gf", `沒有幫助：${none.map((a) => a.name).join("、")}`);   // the same line style as the note under it
     };
     draw(styles[0]);
     h(body, "div", "mn-gf", MODEL_NOTE);

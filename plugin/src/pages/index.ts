@@ -11,7 +11,7 @@ import { patchPage } from "./patch";
 import { rosterPage, swipePage } from "./roster";
 
 // `ready`: a page that knows better than the default (the first pictures) what it waits for before it shows
-export interface PageOut { title: string; el: HTMLElement; ready?: Promise<void> | null; immersive?: boolean }   // immersive: full screen, no top bar
+export interface PageOut { title: string; el: HTMLElement; ready?: Promise<void> | null; immersive?: boolean; art?: string }   // immersive: full screen, no top bar; art: a picture behind the page, darkened, that does not scroll (the champion page family's sub pages)
 export interface PageCtx {
     app: App;
     plugin: MorellonomiconPlugin;

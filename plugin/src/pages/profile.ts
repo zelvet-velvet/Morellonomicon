@@ -5,7 +5,8 @@ import { DAMAGE_COLOR, h, holdTip, icon, svg, SHOP_ROW, shopIcon } from "../ui";
 
 // A champion at a glance: what it can do, drawn as a profile chart, plus the abilities it has. Every axis comes from data we have:
 //   輸出 = its stronger damage rating (Riot, 1-10)        坦度 = Riot's defence rating
-//   控場 / 位移 / 輔助 = how many of its Q W E R do crowd control / move the champion / heal or shield (read from the skill text)
+//   控場 / 位移 = how many of its Q W E R do crowd control / move the champion (read from the skill text)
+//   輔助 = how many of them help teammates (heal, shield or speed an ally: the 隊友增益 tag); healing only itself (Briar's W) does not count
 //   射程 = attack range (650 = full)
 export interface Axis { label: string; value: number }
 const SKILL_STEPS = [0, 4, 7, 9, 10];   // 0, 1, 2, 3, 4 skills -> a score out of 10
@@ -19,7 +20,7 @@ export function profileAxes(c: Champion): Axis[] {
         { label: "坦度", value: c.defense },
         { label: "控場", value: score(count(c, "控場")) },
         { label: "位移", value: score(count(c, "位移")) },
-        { label: "輔助", value: score(count(c, "治療", "護盾")) },
+        { label: "輔助", value: score(count(c, "隊友增益")) },
         { label: "射程", value: Math.min(10, Math.round(c.range / 65)) },
     ];
 }
