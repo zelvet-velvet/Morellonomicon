@@ -33,7 +33,9 @@ GEN_START = "<!-- generated:start (rewritten by tools/fetch_data.py; write your 
 GEN_END = "<!-- generated:end -->"
 HAND_KEYS = ("video", "archetypes_extra", "features_extra", "onhit", "aliases", "pinned", "avoid", "effect", "effect_source", "effect_patch", "effect_status", "fits", "tier", "combos", "builds", "tips", "punch", "soul", "plain", "stack", "focus", "picks_status", "face")   # kept when a note is regenerated
 ARAM_MAP = "12"          # Howling Abyss; ARAM Mayhem uses its item list
-ARAM_TWIN_PREFIX = "77"  # id 77NNNN is the ARAM-only copy of item NNNN (other price/stats)
+ARAM_TWIN_PREFIX = "77"  # id 77NNNN: an old ARAM copy of item NNNN that Data Dragon still lists for map 12, with old recipes and art;
+                         # the shop shows the normal item instead (CommunityDragon: displayInItemSets false), so these are left out
+CDRAGON_ITEMS = "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/{loc}/v1/items.json"   # what the shop shows
 RIFT_DUPLICATE_PREFIXES = ("32", "66")   # 32NNNN / 66NNNN: Summoner's Rift variants of item NNNN, not needed here
 RIFT_MAP = "11"
 
@@ -340,13 +342,14 @@ def item_desc(it, limit=140):
 
 
 def item_note(item_id, it, version, names, keep, everything=()):
+    # `from` keeps repeats (死亡之帽 takes two 巨型魔棒); `into` lists each item once; both only items still in the shop
     maps = it.get("maps", {})
     gold = it["gold"]
     base = twin_of(item_id, keep)
     has_twin = ARAM_TWIN_PREFIX + item_id in keep
     fm = {
         "type": "item", "id": int(item_id), "name": it["name"], "tags": it.get("tags", []),
-        "desc": item_desc(it), "from": [int(i) for i in dict.fromkeys(it.get("from", []))], "into": [int(i) for i in dict.fromkeys(it.get("into", []))], "gold_total": gold["total"], "gold_base": gold["base"],
+        "desc": item_desc(it), "from": [int(i) for i in it.get("from", []) if i in keep], "into": [int(i) for i in dict.fromkeys(it.get("into", [])) if i in keep], "gold_total": gold["total"], "gold_base": gold["base"],
         "aram": bool(maps.get(ARAM_MAP)) and not has_twin, "rift": bool(maps.get(RIFT_MAP)),
         "icon": f"{DD}/cdn/{version}/img/item/{it['image']['full']}", "patch": version, "generated": True,
     }
@@ -374,11 +377,46 @@ def item_note(item_id, it, version, names, keep, everything=()):
     return fm, "\n".join(lines), "\n\n## 使用心得\n\n"
 
 
-def wanted_item(item_id, it):
+def wanted_item(item_id, it, shop=None, normal_names=()):
+    """An item the shop really sells on Summoner's Rift or ARAM. Data Dragon also lists old copies (77NNNN, 32NNNN, 66NNNN) and
+    items the shop no longer shows; `shop` is CommunityDragon's ids that the shop shows (None when it could not be fetched). A
+    longer id with no normal item of its name is kept: the Mayhem augments' reward items (殞落之祭, 烏莉特的法帽, 黃金鍋鏟...)."""
     maps = it.get("maps", {})
-    if len(item_id) == 6 and item_id.startswith(RIFT_DUPLICATE_PREFIXES):
+    if not (it["gold"].get("purchasable") and (maps.get(ARAM_MAP) or maps.get(RIFT_MAP)) and it["name"].strip()):
         return False
-    return it["gold"].get("purchasable") and (maps.get(ARAM_MAP) or maps.get(RIFT_MAP)) and it["name"].strip()
+    if len(item_id) > 4:
+        return not item_id.startswith((ARAM_TWIN_PREFIX,) + RIFT_DUPLICATE_PREFIXES) and it["name"] not in normal_names
+    return shop is None or item_id in shop
+
+
+def shop_ids():
+    """The item ids the shop shows today (CommunityDragon's game data), or None when it cannot be fetched (then nothing is left out)."""
+    try:
+        req = urllib.request.Request(CDRAGON_ITEMS.format(loc=LOCALE.lower()), headers={"User-Agent": "Morellonomicon/0.1 (+https://github.com/zelvet-velvet/Morellonomicon)"})
+        with urllib.request.urlopen(req, timeout=60) as r:
+            return {str(x["id"]) for x in json.loads(r.read()) if x.get("displayInItemSets")}
+    except Exception as e:
+        print(f"! CommunityDragon items: {e} (no item is left out for being off the shop)", file=sys.stderr)
+        return None
+
+
+def remove_stale_items(keep_ids):
+    """Delete the generated item notes of items no longer kept, unless someone wrote their own notes under them."""
+    removed, kept_hand = 0, []
+    for path in (VAULT / folders.ITEMS).glob("*.md"):
+        fm, body = split_note(path.read_text(encoding="utf-8"))
+        idl = next((l for l in fm if l.startswith("id: ")), None)
+        if not idl or "generated: true" not in fm or idl[4:].strip().strip('"') in keep_ids:
+            continue
+        tail = body.split(GEN_END, 1)[1] if GEN_END in body else body
+        if re.sub(r"##\s*使用心得|\s", "", tail):
+            kept_hand.append(path.name)   # hand-written notes: left for a person to move
+            continue
+        path.unlink()
+        removed += 1
+    if kept_hand:
+        print(f"! not removed (they have notes of their own): {', '.join(kept_hand)}", file=sys.stderr)
+    return removed
 
 
 def main():
@@ -409,17 +447,30 @@ def main():
 
     if not args.no_items:
         items = fetch(f"{DD}/cdn/{version}/data/{LOCALE}/item.json", f"{version}/item.json")["data"]
-        keep = {i: it for i, it in items.items() if wanted_item(i, it)}
+        shop = shop_ids()
+        normal_names = {it["name"] for i, it in items.items() if len(i) <= 4 and (shop is None or i in shop)}
+        keep = {i: it for i, it in items.items() if wanted_item(i, it, shop, normal_names)}
         def file_name(i, it):
             if twin_of(i, keep):
                 return safe_name(it["name"]) + " (ARAM)"
             n = sum(1 for j, o in keep.items() if o["name"] == it["name"] and not twin_of(j, keep))
             return safe_name(it["name"]) + (f" ({i})" if n > 1 else "")
         names = {i: file_name(i, it) for i, it in keep.items()}
+        # an item whose note name changed (it no longer shares its name with another): move its note, so notes written under it move too
+        by_id = {}
+        for path in (VAULT / folders.ITEMS).glob("*.md"):
+            m = re.search(r"^id: (\d+)$", path.read_text(encoding="utf-8"), re.M)
+            if m:
+                by_id.setdefault(m.group(1), []).append(path)
+        for i, paths in by_id.items():
+            target = VAULT / folders.ITEMS / f"{names.get(i, '')}.md"
+            if i not in names or target in paths:
+                continue
+            paths[0].rename(target)
         for i, it in keep.items():
             fm, gen, tail = item_note(i, it, version, names, keep, items)
             changed += write_note(VAULT / folders.ITEMS / f"{names[i]}.md", fm, gen, tail)
-        print(f"items: {len(keep)} (of {len(items)}; purchasable on Summoner's Rift or ARAM)")
+        print(f"items: {len(keep)} (of {len(items)}; in the shop on Summoner's Rift or ARAM); {remove_stale_items(set(keep))} old item notes removed")
 
     print(f"{changed} notes written or changed")
 
