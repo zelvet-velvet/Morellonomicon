@@ -188,9 +188,8 @@ const AXIS_PX = 8;          // a touch's first move this far picks its direction
 const TURN_PART = 0.22;     // a swipe past this part of the width turns the page
 const FLICK_PX_MS = 0.35;   // or a quick flick (px per ms)
 const EDGE_PULL = 0.3;      // past the first or last page the pages follow the finger this much
-const WHEEL_PX = 12, WHEEL_GAP_MS = 450;
-const TAP_SIDE = 0.22;      // a tap within this share of the width from a side turns the page that way
-const TAP_AFTER_SWIPE_MS = 350;   // a click this soon after a swipe is the swipe's, not a tap   // a trackpad swipe: its least move, and the pause before the next one turns a page
+const WHEEL_PX = 12, WHEEL_GAP_MS = 450;   // a trackpad swipe: its least move, and the pause before the next one turns a page
+const TAP_SIDE = 0.22;      // a tap within this share of the width from a side switches the play style that way (強化, 全部強化)
 const PAGES: [Part, string, string][] = [["overview", "概覽", "id-card"], ["skills", "技能", "keyboard"], ["build", "出裝", "shopping-bag"], ["augments", "強化", "sparkles"], ["tips", "技巧", "lightbulb"]];
 export function championCard(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
@@ -285,25 +284,14 @@ export function championCard(ctx: PageCtx): PageOut {
         dx = edge ? mx * EDGE_PULL : mx;
         place(dx, false);
     }, { passive: false });
-    let swiped = 0;
     const end = () => {
         if (axis !== "x") { axis = ""; return; }
         axis = "";
-        swiped = Date.now();
         const w = track.clientWidth || 1;
         const flick = Math.abs(dx) / Math.max(1, Date.now() - t0) > FLICK_PX_MS && Math.abs(dx) > AXIS_PX * 2;
         go(pos + (Math.abs(dx) > w * TURN_PART || flick ? (dx < 0 ? 1 : -1) : 0));
     };
     for (const ev of ["touchend", "touchcancel"]) track.addEventListener(ev, end, { passive: true });
-    // a tap on the left or right side of the page (not on something tappable) goes to the page before or after, like stories
-    track.addEventListener("click", (e) => {
-        if ((e.target as HTMLElement).closest("button, a, input, select, textarea, video, img, .mn-tsw, .mn-skills, .mn-items")) return;
-        if (Date.now() - swiped < TAP_AFTER_SWIPE_MS) return;   // the click a finished swipe may still send
-        const r = box.getBoundingClientRect();   // the window the pages show in (the track itself is moved)
-        const at = (e.clientX - r.left) / (r.width || 1);
-        if (at < TAP_SIDE) go(pos - 1);
-        else if (at > 1 - TAP_SIDE) go(pos + 1);
-    });
     // a trackpad's sideways swipe on a computer: one page per swipe
     let wheelAt = 0;
     track.addEventListener("wheel", (e) => {
@@ -425,9 +413,20 @@ function tierPicks(store: Store, c: Champion, style: AugTierStyle): (AugmentPick
     }
     return out;
 }
-// the play style as words (only when there is more than one); `draw` redraws with the chosen one
+// the play style as words (only when there is more than one); `draw` redraws with the chosen one. A tap on the left or right side of
+// the page (not on an augment) switches to the style before or after, like turning a story
 function styleSwitch(body: HTMLElement, styles: AugTierStyle[], draw: (s: AugTierStyle) => void): void {
-    if (styles.length > 1) textSwitch(body, styles.map((s, i) => [String(i), s.name]), "0", (id) => draw(styles[Number(id)]));
+    if (styles.length < 2) return;
+    let at = 0;
+    const words = textSwitch(body, styles.map((s, i) => [String(i), s.name]), "0", (id) => { at = Number(id); draw(styles[at]); });
+    body.addEventListener("click", (e) => {
+        if ((e.target as HTMLElement).closest("button, a, input, video, img, .mn-tsw")) return;
+        const r = body.getBoundingClientRect();
+        const x = (e.clientX - r.left) / (r.width || 1);
+        const to = x < TAP_SIDE ? at - 1 : x > 1 - TAP_SIDE ? at + 1 : at;
+        if (to === at || to < 0 || to >= styles.length) return;
+        (words.children[to] as HTMLElement | undefined)?.click();   // the word's own tap: it marks itself and redraws
+    });
 }
 // 強化 (the champion page): a glance at its S augments. One screen: as many whole rows as fit between the switch and 全部強化 ›
 function augmentsTop(body: HTMLElement, c: Champion, ctx: PageCtx, more: () => void): void {

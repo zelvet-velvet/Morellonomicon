@@ -6586,7 +6586,6 @@ var EDGE_PULL = 0.3;
 var WHEEL_PX = 12;
 var WHEEL_GAP_MS = 450;
 var TAP_SIDE = 0.22;
-var TAP_AFTER_SWIPE_MS = 350;
 var PAGES = [["overview", "\u6982\u89BD", "id-card"], ["skills", "\u6280\u80FD", "keyboard"], ["build", "\u51FA\u88DD", "shopping-bag"], ["augments", "\u5F37\u5316", "sparkles"], ["tips", "\u6280\u5DE7", "lightbulb"]];
 function championCard(ctx) {
   const store = ctx.plugin.store;
@@ -6694,27 +6693,17 @@ function championCard(ctx) {
     dx = edge ? mx * EDGE_PULL : mx;
     place(dx, false);
   }, { passive: false });
-  let swiped = 0;
   const end = () => {
     if (axis !== "x") {
       axis = "";
       return;
     }
     axis = "";
-    swiped = Date.now();
     const w = track.clientWidth || 1;
     const flick = Math.abs(dx) / Math.max(1, Date.now() - t0) > FLICK_PX_MS && Math.abs(dx) > AXIS_PX * 2;
     go(pos + (Math.abs(dx) > w * TURN_PART || flick ? dx < 0 ? 1 : -1 : 0));
   };
   for (const ev of ["touchend", "touchcancel"]) track.addEventListener(ev, end, { passive: true });
-  track.addEventListener("click", (e) => {
-    if (e.target.closest("button, a, input, select, textarea, video, img, .mn-tsw, .mn-skills, .mn-items")) return;
-    if (Date.now() - swiped < TAP_AFTER_SWIPE_MS) return;
-    const r = box.getBoundingClientRect();
-    const at = (e.clientX - r.left) / (r.width || 1);
-    if (at < TAP_SIDE) go(pos - 1);
-    else if (at > 1 - TAP_SIDE) go(pos + 1);
-  });
   let wheelAt = 0;
   track.addEventListener("wheel", (e) => {
     if (Math.abs(e.deltaX) <= Math.abs(e.deltaY) || Math.abs(e.deltaX) < WHEEL_PX) return;
@@ -6821,7 +6810,20 @@ function tierPicks(store, c, style) {
   return out;
 }
 function styleSwitch(body, styles, draw) {
-  if (styles.length > 1) textSwitch(body, styles.map((s, i) => [String(i), s.name]), "0", (id) => draw(styles[Number(id)]));
+  if (styles.length < 2) return;
+  let at = 0;
+  const words = textSwitch(body, styles.map((s, i) => [String(i), s.name]), "0", (id) => {
+    at = Number(id);
+    draw(styles[at]);
+  });
+  body.addEventListener("click", (e) => {
+    if (e.target.closest("button, a, input, video, img, .mn-tsw")) return;
+    const r = body.getBoundingClientRect();
+    const x = (e.clientX - r.left) / (r.width || 1);
+    const to = x < TAP_SIDE ? at - 1 : x > 1 - TAP_SIDE ? at + 1 : at;
+    if (to === at || to < 0 || to >= styles.length) return;
+    words.children[to]?.click();
+  });
 }
 function augmentsTop(body, c, ctx, more) {
   const styles = Object.values(ctx.plugin.store.augTiers[c.id] ?? {});
