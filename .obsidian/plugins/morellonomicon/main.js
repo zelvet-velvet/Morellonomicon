@@ -3190,7 +3190,8 @@ function styleAxes(c) {
     { label: "\u5766\u5EA6", icon: "shield", color: "var(--mn-tank)", value: c.defense, sub: tough },
     { label: "\u63A7\u5834", icon: "lock", color: "var(--mn-cc)", value: score(count(c, "\u63A7\u5834")), sub: keysOf(c, "\u63A7\u5834"), tag: "\u63A7\u5834" },
     { label: "\u4F4D\u79FB", icon: "arrow-big-right-dash", color: "var(--mn-dash)", value: score(count(c, "\u4F4D\u79FB")), sub: keysOf(c, "\u4F4D\u79FB"), tag: "\u4F4D\u79FB" },
-    { label: "\u8F14\u52A9", icon: "heart-pulse", color: "var(--mn-heal)", value: score(count(c, "\u6CBB\u7642", "\u8B77\u76FE")), sub: keysOf(c, "\u6CBB\u7642", "\u8B77\u76FE"), tag: "\u6CBB\u7642" },
+    { label: "\u8F14\u52A9", icon: "heart-pulse", color: "var(--mn-heal)", value: score(count(c, "\u968A\u53CB\u589E\u76CA")), sub: keysOf(c, "\u968A\u53CB\u589E\u76CA"), tag: "\u968A\u53CB\u589E\u76CA" },
+    // only help for teammates (profileAxes)
     { label: "\u5C04\u7A0B", icon: "target", color: "var(--mn-range)", value: Math.min(10, Math.round(c.range / 65)), sub: [reachOf(c), String(c.range)].filter(Boolean).join(" \xB7 ") }
   ];
 }
@@ -6773,20 +6774,21 @@ function championPart(ctx) {
 var CHAMPION_TABS = [["\u6982\u89BD", "id-card"], ["\u6280\u80FD", "keyboard"], ["\u51FA\u88DD", "shopping-bag"], ["\u5F37\u5316", "sparkles"], ["\u6280\u5DE7", "lightbulb"]];
 function overviewAll(body, c, ctx) {
   const look = h(body, "div", "mn-ov");
-  profileRadar(h(look, "div", "mn-ov-radar"), profileAxes(c), DAMAGE_COLOR[c.damageType || c.skillDamage[0] || ""] ?? "var(--mn-accent)");
+  styleChart(h(look, "div", "mn-ov-chart"), c);
   statTiles(look, c).addClass("mn-ov-stats");
   tagRow(look, c, void 0, true).addClass("mn-ov-tags");
   const lines = damageLines(c);
   if (lines.length) {
     tierHead(look, "\u6280\u80FD\u50B7\u5BB3");
     const list2 = h(look, "div", "mn-ov-dl");
+    for (const t of ["", "", "", "\u7269\u653B", "\u9B54\u653B"]) h(list2, "span", "mn-ov-col", t);
     for (const d of lines) {
       h(list2, "b", "mn-ov-key", d.key);
       const name = h(list2, "span", "mn-ov-name", d.name);
       if (d.onHit) h(name, "small", void 0, "\u89F8\u767C\u653B\u64CA\u7279\u6548");
       h(list2, "span", "mn-ov-kind", d.kind).style.color = DAMAGE_COLOR[d.kind] ?? "inherit";
-      const scale = [d.ad ? `\u7269\u653B ${Math.round(d.ad)}%` : "", d.ap ? `\u9B54\u653B ${Math.round(d.ap)}%` : ""].filter(Boolean).join(" \xB7 ");
-      h(list2, "span", "mn-ov-scale", scale || "\u2014");
+      h(list2, "span", "mn-ov-pct", d.ad ? `${Math.round(d.ad)}%` : "\u2014").style.color = d.ad ? DAMAGE_COLOR["\u7269\u7406"] : "";
+      h(list2, "span", "mn-ov-pct", d.ap ? `${Math.round(d.ap)}%` : "\u2014").style.color = d.ap ? DAMAGE_COLOR["\u9B54\u6CD5"] : "";
     }
   }
   if (c.video) moreLink(look, "\u9023\u62DB\u5F71\u7247", () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video)}`));

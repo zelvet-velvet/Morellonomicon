@@ -1,6 +1,6 @@
 import type { AugTierStyle, Augment, Champion, Item, Store } from "../data/store";
 import { DAMAGE_COLOR, DAMAGE_ICON, augIcon, scalingParts, warmPictures, blockUntil, layoutBlock, chip, empty, fgrid, group, h, icon, moreLink, page, row, segmented, roleChip, LANES, laneChip, slideSeg, textSwitch, tierHead, tip, fixedPage } from "../ui";
-import { TAG_GROUPS, damageLines, iconFilter, profileAxes, profileRadar, reachOf, tagFilter, tagRow } from "./profile";
+import { TAG_GROUPS, damageLines, iconFilter, profileAxes, profileRadar, reachOf, styleChart, tagFilter, tagRow } from "./profile";
 import { buildTab } from "./build";
 import { cardArt } from "./roster";
 import type { PageCtx, PageOut } from "./index";
@@ -372,20 +372,22 @@ export const CHAMPION_TABS = [["概覽", "id-card"], ["技能", "keyboard"], ["�
 // then the combo video as a link and this patch's changes.
 function overviewAll(body: HTMLElement, c: Champion, ctx: PageCtx): void {
     const look = h(body, "div", "mn-ov");
-    profileRadar(h(look, "div", "mn-ov-radar"), profileAxes(c), DAMAGE_COLOR[c.damageType || c.skillDamage[0] || ""] ?? "var(--mn-accent)");
+    styleChart(h(look, "div", "mn-ov-chart"), c);   // the detailed chart (as on 速查): each corner says what it is made of
     statTiles(look, c).addClass("mn-ov-stats");
     tagRow(look, c, undefined, true).addClass("mn-ov-tags");
     const lines = damageLines(c);
     if (lines.length) {
         tierHead(look, "技能傷害");
+        // 物攻 and 魔攻 in columns of their own, so the numbers line up
         const list = h(look, "div", "mn-ov-dl");
+        for (const t of ["", "", "", "物攻", "魔攻"]) h(list, "span", "mn-ov-col", t);
         for (const d of lines) {
             h(list, "b", "mn-ov-key", d.key);
             const name = h(list, "span", "mn-ov-name", d.name);
             if (d.onHit) h(name, "small", undefined, "觸發攻擊特效");
             h(list, "span", "mn-ov-kind", d.kind).style.color = DAMAGE_COLOR[d.kind] ?? "inherit";
-            const scale = [d.ad ? `物攻 ${Math.round(d.ad)}%` : "", d.ap ? `魔攻 ${Math.round(d.ap)}%` : ""].filter(Boolean).join(" · ");
-            h(list, "span", "mn-ov-scale", scale || "—");
+            h(list, "span", "mn-ov-pct", d.ad ? `${Math.round(d.ad)}%` : "—").style.color = d.ad ? DAMAGE_COLOR["物理"] : "";
+            h(list, "span", "mn-ov-pct", d.ap ? `${Math.round(d.ap)}%` : "—").style.color = d.ap ? DAMAGE_COLOR["魔法"] : "";
         }
     }
     if (c.video) moreLink(look, "連招影片", () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video!)}`));
