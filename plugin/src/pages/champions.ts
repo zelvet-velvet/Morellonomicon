@@ -398,7 +398,8 @@ function overviewAll(body: HTMLElement, c: Champion, ctx: PageCtx): void {
         }
     }
     if (c.video) moreLink(look, "連招影片", () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video!)}`));
-    changesBlock(body, c, ctx);
+    changesBlock(look, c, ctx);
+    body.addClass("is-centred");   // a few parts: centred down the screen under the title (Design Rules, balance)
 }
 
 // The augment model's tiers (Dev Tools/Augment Model.md), in the champion page family's style (Design Rules): one ranking by tier,

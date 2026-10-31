@@ -1656,7 +1656,10 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-page-art { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 0.25s ease-out; background-size: cover; background-position: center 30%; filter: brightness(0.35) saturate(0.85) blur(2px); transform: scale(1.04); }
 .mn-page-art.is-on { opacity: 1; }
 .mn-app > .mn-scroll { position: relative; z-index: 1; }
-/* 全部概覽: the chart large, the stats in a row, the tags, each damaging ability in one line; no panels */
+/* 全部概覽: the chart large, the stats in a row, the tags, each damaging ability in one line; no panels; the whole centred down the
+   screen under the title when it is shorter than the screen */
+.mn-scroll > .mn-page.is-centred { box-sizing: border-box; min-height: 100%; display: flex; flex-direction: column; }
+.mn-page.is-centred > .mn-ov { flex: 1 0 auto; justify-content: center; }
 .mn-ov { display: flex; flex-direction: column; gap: 16px; margin-top: 4px; }
 .mn-ov-radar { align-self: center; width: min(320px, 100%); }
 .mn-ov-radar svg { display: block; width: 100%; height: auto; }

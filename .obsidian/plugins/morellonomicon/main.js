@@ -6799,7 +6799,8 @@ function overviewAll(body, c, ctx) {
     }
   }
   if (c.video) moreLink(look, "\u9023\u62DB\u5F71\u7247", () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video)}`));
-  changesBlock(body, c, ctx);
+  changesBlock(look, c, ctx);
+  body.addClass("is-centred");
 }
 var TIER_ORDER = ["S", "A", "B", "C"];
 var AUG_COLS = 4;
