@@ -1,6 +1,7 @@
 {
  "Katarina": {"resets": 0.7, "onhit_hits": {"R": 5}, "styles": {"onhit": {"name": "攻速特效", "stack": ["攻速", "法術強度"], "autos": 0.6}}},
- "MasterYi": {"resets": 0.5, "autos": 0.85},
+ "MasterYi": {"resets": 0.3, "cd_per_attack": {"Q": 1.0}, "autos": 0.85, "auto_mult": 1.12, "per_hit": {"E": 5}, "buff": {"R": {"as": 0.35, "s": 7}}},
  "Darius": {"resets": 0.2},
- "Jinx": {"resets": 0.2}
+ "Jinx": {"use": {"W": 0.4, "E": 0.6}},
+ "Fiora": {"extra": {"Q": [{"type": "true", "target_maxhp": 0.084}], "P": [{"type": "true", "target_maxhp": 0.084}]}}
 }

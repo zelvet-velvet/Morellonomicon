@@ -29,19 +29,21 @@ How the app ranks ARAM Mayhem augments for each champion from the champion's own
 > [!info]+ What the champion does in it
 > - **Casts.** Each ability with a cooldown is cast `1 + (1 − resets) × FIGHT_S × (1 + haste / 100) / cooldown + resets × RESET_CASTS` times. `resets` (0–1, hand) is how much its cooldowns come back by takedowns or resets instead of time (Katarina, Darius R, Master Yi): haste matters less for it. An ability with a cooldown under 2 s (`TOGGLE_CD`: a toggle or stance, Jinx Q) counts as one cast and gains nothing from haste.
 > - **Damage per cast** from its rank rows: base + AP ratio × AP + AD ratios × AD (the biggest row of each damage type).
-> - **Basic attacks**: `FIGHT_S × attack speed × autos`, where `autos` (0–1) is how much of the fight it spends attacking: 0.85 for a marksman, 0.6 for a melee fighter or tank, 0.3 for the others (hand-set per play style when wrong). Each deals total AD (crits at 175%).
-> - **Triggers counted per fight**: basic attacks; on-hit applications (basic attacks + casts of the abilities in `onhit`); ability hits; casts; dashes (casts of abilities tagged 位移); crowd control (casts tagged 控場); takedowns (`TAKEDOWNS`, 1.5 per fight).
+> - **Casting costs attack time**: each cast of an ability that hits or controls takes 0.4 s (`CAST_S`) out of the fight's attacking time, so extra casts (haste, 祕術拳擊) cost an auto-attacker some attacks; a self-buff costs none.
+> - **Basic attacks**: `(FIGHT_S − casting time) × attack speed × autos`, where `autos` (0–1) is how much of the fight it spends attacking: 0.85 for a marksman, 0.6 for a melee fighter or tank, 0.3 for the others (hand-set per play style when wrong). Each deals total AD (crits at 175%).
+> - **Triggers counted per fight**: basic attacks; attacks for 'on attack' effects (basic attacks plus casts of on-hit and empowered-attack abilities: the `onhit` list and the 強化普攻 tag); on-hit applications (basic attacks + casts of the abilities in `onhit`); ability hits; casts; dashes (casts of abilities tagged 位移); crowd control (casts tagged 控場); takedowns (`TAKEDOWNS`, 1.5 per fight).
 > - **Survival** is effective health: total HP × (1 + average resist / 100), plus shields and healing over the fight.
 
 > [!info]+ Weights
-> - Damage, survival, support and utility are weighed from Riot's champion ratings (攻擊 / 魔法 / 防禦, 1–10), **squared** so the side a champion is built for counts most: damage = the larger of attack and magic, survival = defense, support = 9 for champions that heal or shield allies, utility 1.5. A tank values a health augment more than an assassin does, from the same numbers.
+> - Damage, survival, support and utility are weighed from Riot's champion ratings (攻擊 / 魔法 / 防禦, 1–10), **squared** so the side a champion is built for counts most: damage = the larger of attack and magic, survival = defense, support = 9 for champions in the 輔助 role that heal or shield allies (Fiora's R heals allies but she is no support), utility 1.5. A tank values a health augment more than an assassin does, from the same numbers.
 
 ---
 ## 🧩 Data
 
 > [!example]+ Files
 > - `tools/data/augment-model.json` (hand): each augment as **terms** (below), one augment per line, with the wiki numbers at level 13.
-> - `tools/data/champion-model.json` (hand): corrections and extra play styles per champion: `resets`, `autos`, `onhit_hits`, `stack` for a second play style (Katarina's on-hit build).
+> - `tools/data/champion-model.json` (hand): what the rank rows cannot say, per champion: `resets`; `autos`; `use` (the share of an ability's casts really made: Jinx holds W); `extra` (damage the rows miss: Fiora's vitals); `auto_mult` (Master Yi's double strike); `buff` (a self-buff's stats and seconds: Master Yi's R attack speed); `per_hit` (an ability whose damage lands on each attack while it lasts: Master Yi's E); `cd_per_attack` (an ability whose cooldown each attack shortens: Master Yi's Q); `onhit_hits`; and `styles` for more play styles (Katarina's 攻速特效).
+> - On-hit abilities are listed in the champion note's `onhit` (Katarina P R, Ezreal Q, Fiora Q, Master Yi Q).
 > - `_data/champion-model.json` (generated): every champion's play styles with their reference stats, damage per ability, trigger counts and weights.
 > - `_data/augment-tiers.json` (generated): per play style, each modelled augment's value, tier and reason. Committed, so every change of tier shows in git.
 > - `Review/Augment Tiers.md` (generated): the tiers of the test champions, for review.
@@ -82,6 +84,8 @@ How the app ranks ARAM Mayhem augments for each champion from the champion's own
 > - [ ] Malphite: health and crowd-control augments (巨像之勇氣, 殘忍) rank high; attack speed low.
 > - [ ] Soraka: heal and shield power (急救箱) rank high; damage augments low.
 > - [ ] Lux: ability haste and AP rank high (long cooldowns, big AP ratios).
+> - [ ] 祕術拳擊 (Zaviel, 2026-10-31) suits champions whose abilities count as attacks or reset them, with abilities that matter: Fiora, Master Yi, Ezreal high; Jinx (an attack-speed marksman) low.
+> - [ ] 基本功夫 is worth a look on Jinx (a marksman who leans on basic attacks, little on R).
 
 ---
 ## 🚧 Not yet
