@@ -63,12 +63,20 @@ export function homePage(ctx: PageCtx): PageOut {
         h(hero, "div", "mn-home-name").append(prof?.name ?? name ?? "", h(null, "small", undefined, `#${prof?.tag ?? tag ?? ""}`));
         const where = SERVERS.find((x) => x[0] === s.riotServer)?.[1] ?? s.riotServer;
         const sub = h(hero, "div", "mn-home-sub", prof ? `${where} · ${ago(prof.fetched)}更新` : s.riotKey ? `${where} · 讀取中…` : `${where} · 設定裡填 Riot API 金鑰後顯示頭像、牌位、對戰`);
-        // fetch when there is nothing yet or it is old; the page redraws itself once it has the new one
+        // fetch when there is nothing yet or it is old. One fetch at a time: at start-up Home is drawn several times while the data
+        // arrives, and each drawing used to start its own fetch (a dozen Riot calls each), whose answers then redrew the page one after
+        // another once it was on screen (the cold-open glitch). The page redraws in place only when what Riot sent differs from what
+        // it shows; otherwise only the "updated" line changes.
         const refresh = () => {
             sub.textContent = `${where} · 讀取中…`;
-            fetchProfile(ctx.app, s.riotId, s.riotServer, s.riotKey)
-                .then(() => { if (el.isConnected) ctx.redraw(); })   // in place: opening Home again would replay its arrival (a glitch on a cold open)
-                .catch((err) => { sub.textContent = err instanceof RiotError ? err.message : "連不上 Riot,稍後再試"; sub.addClass("is-err"); });
+            sub.removeClass("is-err");
+            profileFetch(ctx)
+                .then((p) => {
+                    if (!el.isConnected) return;
+                    if (sameProfile(p, prof)) sub.textContent = `${where} · ${ago(p.fetched)}更新`;
+                    else ctx.redraw();   // in place: opening Home again would replay its arrival
+                })
+                .catch((err) => { if (!el.isConnected) return; sub.textContent = err instanceof RiotError ? err.message : "連不上 Riot,稍後再試"; sub.addClass("is-err"); });
         };
         if (s.riotKey && (!prof || Date.now() - prof.fetched > PROFILE_FRESH)) refresh();
         const menu = h(hero, "div", "mn-home-menu is-hidden");
@@ -163,6 +171,16 @@ export function homePage(ctx: PageCtx): PageOut {
     }
     return { title: "Home", el };
 }
+
+// The profile fetch in flight, shared by every drawing of Home (see refresh in homePage); a tap on 重新整理 while one runs waits for it
+let inFlight: Promise<Profile> | null = null;
+function profileFetch(ctx: PageCtx): Promise<Profile> {
+    const s = ctx.plugin.settings;
+    inFlight ??= fetchProfile(ctx.app, s.riotId, s.riotServer, s.riotKey).finally(() => { inFlight = null; });
+    return inFlight;
+}
+// The same as what Home shows, apart from when it was fetched
+const sameProfile = (a: Profile, b: Profile | null): boolean => !!b && JSON.stringify({ ...a, fetched: 0 }) === JSON.stringify({ ...b, fetched: 0 });
 
 const HOME_GAMES = 4;   // rows on Home; the rest are on the recent games page
 

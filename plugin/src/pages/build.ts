@@ -8,7 +8,9 @@ const TOP_ITEMS = 8;
 const pct = (wins: number, games: number) => (games ? Math.round((wins / games) * 100) : 0);
 
 // The Build sub-tab: what people really build (counted from matches), our own picks, fun alternatives, and builds for playing with a teammate.
-export function buildTab(body: HTMLElement, c: Champion, ctx: PageCtx): void {
+export function buildTab(page: HTMLElement, c: Champion, ctx: PageCtx): void {
+    // the builds in one part (the champion page centres it down the page), the Live stats links after it (at the page's foot)
+    const body = h(page, "div", "mn-bt-main");
     const store = ctx.plugin.store;
     const mode = ctx.plugin.settings.mode;
     const stats = store.stats?.champions[c.id];
@@ -38,7 +40,7 @@ export function buildTab(body: HTMLElement, c: Champion, ctx: PageCtx): void {
     if (alt.length) { section(body, "有趣替代"); for (const b of alt) setCard(body, c, ctx, b); }
     if (synergy.length) { section(body, "搭配"); for (const b of synergy) setCard(body, c, ctx, b); }
     if (!stats && !mine.length) empty(body, { icon: "package-open", title: "No builds of ours yet", text: "Our own builds and ideas for this champion will appear here." });
-    if (mode === "mayhem") liveStats(body, c);
+    if (mode === "mayhem") liveStats(h(page, "div", "mn-bt-live"), c);
 }
 
 // Live win rates and builds live on other sites; we only link to them (their terms do not allow copying their numbers).

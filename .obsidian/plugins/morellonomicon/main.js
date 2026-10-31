@@ -3251,7 +3251,8 @@ function metaLine(parent, m, now) {
 var TOP_SETS = 3;
 var TOP_ITEMS = 8;
 var pct = (wins, games) => games ? Math.round(wins / games * 100) : 0;
-function buildTab(body, c, ctx) {
+function buildTab(page2, c, ctx) {
+  const body = h(page2, "div", "mn-bt-main");
   const store = ctx.plugin.store;
   const mode = ctx.plugin.settings.mode;
   const stats2 = store.stats?.champions[c.id];
@@ -3286,7 +3287,7 @@ function buildTab(body, c, ctx) {
     for (const b of synergy) setCard(body, c, ctx, b);
   }
   if (!stats2 && !mine.length) empty(body, { icon: "package-open", title: "No builds of ours yet", text: "Our own builds and ideas for this champion will appear here." });
-  if (mode === "mayhem") liveStats(body, c);
+  if (mode === "mayhem") liveStats(h(page2, "div", "mn-bt-live"), c);
 }
 var OPGG_SLUG = { MonkeyKing: "wukong" };
 function liveStats(body, c) {
@@ -6858,9 +6859,13 @@ function homePage(ctx) {
     const sub = h(hero, "div", "mn-home-sub", prof ? `${where} \xB7 ${ago(prof.fetched)}\u66F4\u65B0` : s.riotKey ? `${where} \xB7 \u8B80\u53D6\u4E2D\u2026` : `${where} \xB7 \u8A2D\u5B9A\u88E1\u586B Riot API \u91D1\u9470\u5F8C\u986F\u793A\u982D\u50CF\u3001\u724C\u4F4D\u3001\u5C0D\u6230`);
     const refresh = () => {
       sub.textContent = `${where} \xB7 \u8B80\u53D6\u4E2D\u2026`;
-      fetchProfile(ctx.app, s.riotId, s.riotServer, s.riotKey).then(() => {
-        if (el.isConnected) ctx.redraw();
+      sub.removeClass("is-err");
+      profileFetch(ctx).then((p) => {
+        if (!el.isConnected) return;
+        if (sameProfile(p, prof)) sub.textContent = `${where} \xB7 ${ago(p.fetched)}\u66F4\u65B0`;
+        else ctx.redraw();
       }).catch((err) => {
+        if (!el.isConnected) return;
         sub.textContent = err instanceof RiotError ? err.message : "\u9023\u4E0D\u4E0A Riot,\u7A0D\u5F8C\u518D\u8A66";
         sub.addClass("is-err");
       });
@@ -6998,6 +7003,15 @@ function homePage(ctx) {
   }
   return { title: "Home", el };
 }
+var inFlight = null;
+function profileFetch(ctx) {
+  const s = ctx.plugin.settings;
+  inFlight ?? (inFlight = fetchProfile(ctx.app, s.riotId, s.riotServer, s.riotKey).finally(() => {
+    inFlight = null;
+  }));
+  return inFlight;
+}
+var sameProfile = (a, b) => !!b && JSON.stringify({ ...a, fetched: 0 }) === JSON.stringify({ ...b, fetched: 0 });
 var HOME_GAMES = 4;
 function gameRow(ctx, parent, g, full) {
   const c = ctx.plugin.store.champions().find((x) => x.id.toLowerCase() === g.champion.toLowerCase());
