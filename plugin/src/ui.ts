@@ -510,6 +510,9 @@ const shopMask = (sheet: HTMLImageElement, row: number): string => {
 };
 export const shopIcon = (parent: HTMLElement, row: number, lit: boolean, cls = "mn-shopic"): HTMLElement => {
     const el = h(parent, "span", cls);
+    const ready = shopMasks.get(row);
+    // its sharp shape already made (at start-up): drawn from that alone, with no picture to wait for, so it shows at once
+    if (ready) { el.style.setProperty("--mask", `url("${ready}")`); el.classList.add("is-sharp"); return el; }
     const im = h(el, "img");   // the plain picture: what the loading look waits for, and the fallback
     im.crossOrigin = "anonymous";
     im.src = SHOP_SPRITE; im.alt = ""; im.draggable = false;
@@ -520,9 +523,7 @@ export const shopIcon = (parent: HTMLElement, row: number, lit: boolean, cls = "
         el.style.setProperty("--mask", `url("${url}")`);
         el.classList.add("is-sharp");
     };
-    const ready = shopMasks.get(row);
-    if (ready) { el.style.setProperty("--mask", `url("${ready}")`); el.classList.add("is-sharp"); }
-    else void loadShopSheet().then(sharpen);
+    void loadShopSheet().then(sharpen);
     return el;
 };
 // The rail's colour for each filter when it is on (the Icons note's colours; 魔力 and 法術穿透 chosen by Claude, see Dev Tools/Icons.md)

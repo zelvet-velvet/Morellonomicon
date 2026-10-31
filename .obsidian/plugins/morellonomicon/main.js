@@ -1057,6 +1057,12 @@ var shopMask = (sheet, row2) => {
 };
 var shopIcon = (parent, row2, lit, cls = "mn-shopic") => {
   const el = h(parent, "span", cls);
+  const ready = shopMasks.get(row2);
+  if (ready) {
+    el.style.setProperty("--mask", `url("${ready}")`);
+    el.classList.add("is-sharp");
+    return el;
+  }
   const im = h(el, "img");
   im.crossOrigin = "anonymous";
   im.src = SHOP_SPRITE;
@@ -1069,11 +1075,7 @@ var shopIcon = (parent, row2, lit, cls = "mn-shopic") => {
     el.style.setProperty("--mask", `url("${url}")`);
     el.classList.add("is-sharp");
   };
-  const ready = shopMasks.get(row2);
-  if (ready) {
-    el.style.setProperty("--mask", `url("${ready}")`);
-    el.classList.add("is-sharp");
-  } else void loadShopSheet().then(sharpen);
+  void loadShopSheet().then(sharpen);
   return el;
 };
 var ITEM_CAT_COLOR = {
