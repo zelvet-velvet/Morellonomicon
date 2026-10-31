@@ -1031,12 +1031,11 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-champ.is-v3 .mn-hero::after { background: linear-gradient(180deg, transparent 40%, color-mix(in srgb, var(--mn-bg) 55%, transparent) 100%); }   /* a little darker where the parts and the name sit */
 .mn-champ.is-v3 > :not(.mn-hero) { position: relative; z-index: 1; }
 .mn-app .mn-champ.is-v3 .mn-card-head { padding: 4px 4px 12px; justify-content: center; }   /* the icon and name centred over the tags (beats the overlay's 4 px) */
-.mn-champ.is-v3 > .mn-cv-foot { flex: none; padding-bottom: 24px; }   /* 概覽's tags under the name, clear of the tab bar */
-.mn-champ.is-v3.is-deep > .mn-cv-foot { display: none; }
+.mn-champ.is-v3 .mn-cv-foot { flex: none; padding-bottom: 16px; }   /* 概覽's tags under the name, clear of the tab bar (inside the page, so they swipe with it) */
+.mn-champ.is-v3 .mn-cpa-page.is-overview > .mn-card-head { flex: none; }
 /* the clips loading ahead (champions.ts): on the screen, so iOS loads them, but 4 px and almost clear */
 .mn-champ.is-v3 > .mn-clip-shelf { position: absolute; z-index: 0; left: 0; top: 0; width: 4px; height: 4px; overflow: hidden; opacity: 0.01; pointer-events: none; }
 .mn-clip-shelf .mn-sd-video { width: 4px; height: 4px; margin: 0; border-radius: 0; }
-.mn-champ.is-v3.is-deep .mn-card-head { display: none; }   /* the name, title and roles only on 概覽 */
 .mn-champ .mn-card-img { width: 64px; height: 64px; }
 .mn-app .mn-champ .mn-card-who .mn-title { font-size: 30px; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6); }
 .mn-champ.is-v3 > .mn-cpa { flex: 1 1 auto; min-height: 0; height: auto; margin: 0 -16px; overflow: hidden; }

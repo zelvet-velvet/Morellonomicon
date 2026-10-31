@@ -242,8 +242,10 @@ export function championCard(ctx: PageCtx): PageOut {
         else tips(body, c, ctx);
         return pg;
     });
-    el.append(head);   // the name at the foot
-    if (tagLine) h(el, "div", "mn-cv-foot").append(tagLine);   // the tags under it (only on 概覽, like the name)
+    // the name, title and roles, then the tags, at the foot of 概覽 itself, so they slide away with it when the pages swipe
+    const look = cards[pages.findIndex(([p]) => p === "overview")] ?? el;
+    look.append(head);
+    if (tagLine) h(look, "div", "mn-cv-foot").append(tagLine);
     // the page hint at the top middle: a dot per page, the current one lit (a hint only; the pages swipe)
     const hint = h(el, "div", "mn-cpa-hint");
     const dots = pages.map(() => h(hint, "i"));

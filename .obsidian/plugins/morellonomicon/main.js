@@ -6648,8 +6648,9 @@ function championCard(ctx) {
     else tips(body, c, ctx);
     return pg;
   });
-  el.append(head2);
-  if (tagLine) h(el, "div", "mn-cv-foot").append(tagLine);
+  const look = cards[pages.findIndex(([p]) => p === "overview")] ?? el;
+  look.append(head2);
+  if (tagLine) h(look, "div", "mn-cv-foot").append(tagLine);
   const hint = h(el, "div", "mn-cpa-hint");
   const dots = pages.map(() => h(hint, "i"));
   let cur = -1;
