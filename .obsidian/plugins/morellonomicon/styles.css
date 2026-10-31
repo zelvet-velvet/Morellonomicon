@@ -49,7 +49,6 @@ body.is-mobile:not(.mn-on) .mn-home svg { width: 24px; height: 24px; }
 .mn-btn .mn-ic { display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; }
 .mn-btn svg { display: block; width: 100%; height: 100%; }
 .mn-acts.is-hidden { display: none; }
-.mn-btn:active { background: var(--mn-card-hi); }
 .mn-back { justify-self: start; visibility: hidden; }
 .mn-top.has-back .mn-back { visibility: visible; }
 .mn-top-title { font-size: 16px; font-weight: 600; opacity: 0; transition: opacity 0.15s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60vw; }
@@ -920,8 +919,14 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
    own keep that fill. (button + class + state outranks Obsidian's button:not(.clickable-icon):hover.) */
 .mn-app button { -webkit-tap-highlight-color: transparent; }
 .mn-app button:not(.mn-seg-b.is-on):is(:hover, :active, :focus, :focus-visible) { box-shadow: none; outline: none; }   /* a chosen segment keeps its own shadow */
-.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face),
-.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face):is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }
+.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face, .mn-btn, .mn-more-link, .mn-aug-tile, .mn-tsw-b),
+.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face, .mn-btn, .mn-more-link, .mn-aug-tile, .mn-tsw-b):is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }
+/* the press look of an icon button or a text link (Back, the palette and mode buttons, 全部 ›, an augment): it fades and shrinks a
+   little while held, never a grey disc that sticks after the tap and covers the title next to it (Design Rules, Controls) */
+.mn-app button:is(.mn-btn, .mn-more-link, .mn-aug-tile) { transition: opacity 0.12s, transform 0.12s; }
+.mn-app button:is(.mn-btn, .mn-more-link, .mn-aug-tile):active { opacity: 0.5; transform: scale(0.92); }
+/* Back on a splash keeps its dark disc (it is part of its look there), the same while pressed */
+.mn-app.is-overlay .mn-top:not(.is-scrolled) button.mn-back:is(:hover, :active, :focus, :focus-visible) { background: rgba(0, 0, 0, 0.38); }
 .mn-app button:is(.mn-rc, .mn-key, .mn-tg.is-on, .mn-rq-no, .mn-rq-yes):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card); }
 .mn-app button:is(.mn-with-b, .mn-rq-lk):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card-hi); }
 .mn-app button.mn-hb-tile:is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }   /* its fill is a gradient image, the colour under it stays clear */

@@ -75,6 +75,7 @@ sticker: lucide//ruler
 > [!note]+ Icons, not words · The chosen one is marked by colour or a short line under it · Single or several · Segmented bars · Swipes
 > - **Icons, not words,** for filters (lanes, roles, damage kinds, shop stats); the word shows in a bubble when held (`holdTip`). One idea has one icon everywhere, taken from the maps in [[Icons]].
 > - **The chosen one is marked by colour or a short line under it,** never a circle or ring around a Lucide icon.
+> - **A press fades, never a disc** (Zaviel, 2026-10-31). An icon button or text link (Back, the palette and mode buttons, 全部 ›, an augment, a face) shows it is held by fading and shrinking a little; it never gets a grey disc or box, which on a phone stays after the tap and covered the title next to Back. Obsidian's own hover / press / focus fill is cleared for every button in the app; a button with a fill of its own keeps it, and Back on a splash keeps its dark disc, unchanged when pressed.
 > - **Single or several.** A lane (Picks, Champions) and a role tab on Items is one at a time (tap again to clear); filters that narrow together (Champions' filter sheet, Items' stat rail) can be several, with a clear button.
 > - **Segmented bars** slide their highlight to the new option and can be dragged along (`slideSeg`).
 > - **Swipes** read the same everywhere (the `SWIPE` numbers in `ui.ts`): Handbook cards, the tip stack, 速查 cards.
