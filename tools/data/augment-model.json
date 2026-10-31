@@ -6,6 +6,9 @@
 {"id": 3055, "name": "大絕循環", "terms": [{"stat": "ult_haste", "value": 50}]}
 {"id": 1103, "name": "土司和奶油", "terms": [{"haste_key": "Q", "value": 100}]}
 {"id": 3170, "name": "重金屬", "terms": [{"haste_key": "Q", "value": 20}, {"mult": "Q", "value": 0.1}]}
+{"id": 3171, "name": "力量金屬", "terms": [{"haste_key": "W", "value": 20}, {"mult": "W", "value": 0.1}]}
+{"id": 3172, "name": "鞭擊金屬", "terms": [{"haste_key": "E", "value": 20}, {"mult": "E", "value": 0.1}]}
+{"id": 3173, "name": "末日金屬", "terms": [{"haste_key": "R", "value": 20}, {"mult": "R", "value": 0.1}]}
 {"id": 1004, "name": "基本功夫", "terms": [{"mult": "ability", "value": 0.35}, {"stat": "haste", "value": 70}, {"no_ult": true}, {"stat": "heal_received", "value": 0.35}]}
 {"id": 1022, "name": "手腳麻利", "terms": [{"stat": "as", "value": 0.6}]}
 {"id": 2009, "name": "狂戰士", "terms": [{"stat": "as", "value": 0.35}, {"stat": "as", "from": "ap", "value": 0.0005}, {"stat": "crit", "value": 0.25}, {"stat": "crit", "from": "ap", "value": 0.0005}]}

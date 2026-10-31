@@ -1,5 +1,5 @@
 {
- "Katarina": {"resets": 0.7, "onhit_hits": {"R": 5}, "styles": {"onhit": {"name": "攻速特效", "stack": ["攻速", "法術強度"], "autos": 0.6}}},
+ "Katarina": {"resets": 0.7, "onhit_hits": {"R": 5}, "attack_hits": {"R": 1}, "land": {"R": 0.7}, "styles": {"onhit": {"name": "攻速特效", "stack": ["攻速", "法術強度"], "autos": 0.6}}},
  "MasterYi": {"resets": 0.3, "autos": 0.85, "auto_mult": 1.12, "onhit_hits": {"Q": 4}, "cd_per_attack": {"Q": 1.0}, "untargetable": {"Q": 0.9}, "per_hit": {"E": 5}, "buff": {"R": {"as": 0.35, "s": 7}}},
  "Darius": {"resets": 0.2, "aa_reset": {"W": 1}},
  "Jinx": {"use": {"W": 0.4, "E": 0.6}, "cast_s": {"W": 0.6}, "extra": {"R": [{"type": "physical", "base": 300, "bonus_ad": 1.2, "target_maxhp": 0.15}]}},
