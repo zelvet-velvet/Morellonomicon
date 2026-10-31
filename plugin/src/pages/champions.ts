@@ -1,5 +1,5 @@
 import type { AugTierStyle, Augment, Champion, Item, Store } from "../data/store";
-import { DAMAGE_COLOR, DAMAGE_ICON, augIcon, scalingParts, warmPictures, blockUntil, layoutBlock, chip, empty, fgrid, group, h, icon, page, row, segmented, roleChip, LANES, laneChip, slideSeg, tip, fixedPage } from "../ui";
+import { DAMAGE_COLOR, DAMAGE_ICON, augIcon, scalingParts, warmPictures, blockUntil, layoutBlock, chip, empty, fgrid, group, h, icon, moreLink, page, row, segmented, roleChip, LANES, laneChip, slideSeg, textSwitch, tierHead, tip, fixedPage } from "../ui";
 import { TAG_GROUPS, championProfile, iconFilter, profileAxes, profileRadar, reachOf, tagFilter, tagRow } from "./profile";
 import { buildTab } from "./build";
 import { cardArt } from "./roster";
@@ -362,82 +362,68 @@ function overview(body: HTMLElement, c: Champion, ctx: PageCtx): { el: HTMLEleme
     return changesBlock(body, c, ctx);
 }
 
-// The augment model's tiers (Dev Tools/Augment Model.md): the 強化 page lists the S augments of each rarity, 全部強化 every tier of
-// one rarity at a time. The champion note's `pinned` come first as 置頂, its `avoid` are left out. Without the model's file, the
-// augments matched by their effect text (augmentsTab) stand in.
-const RARITIES: [string, string][] = [["稜鏡", "稜鏡級"], ["金", "金級"], ["銀", "銀級"], ["五殺", "五殺金屬"]];
-const MODEL_NOTE = "依英雄的技能數值估算：在第 3、7、11、15 級選到時，讓這位英雄變強多少的平均，和同一稀有度的其他強化比較。不是勝率。置頂和避開是英雄筆記的 pinned / avoid。";
-function tierPicks(store: Store, c: Champion, style: AugTierStyle): (AugmentPick & { group: string; tier: string })[] {
-    const out: (AugmentPick & { group: string; tier: string })[] = [];
+// The augment model's tiers (Dev Tools/Augment Model.md), in the champion page family's style (Design Rules): one ranking by tier,
+// then score, rarity only in the icon's frame; bare tiles; the play style as words. The 強化 page lists the S augments, 全部強化
+// every tier. The champion note's `pinned` come first as 置頂, its `avoid` are left out. Without the model's file, the augments
+// matched by their effect text (augmentsTab) stand in.
+const TIER_ORDER = ["S", "A", "B", "C"];
+const MODEL_NOTE = "依英雄的技能數值估算：在第 3、7、11、15 級選到時，讓這位英雄變強多少，和同稀有度的其他強化比較。不是勝率。";
+function tierPicks(store: Store, c: Champion, style: AugTierStyle): (AugmentPick & { tier: string })[] {
+    const out: (AugmentPick & { tier: string })[] = [];
     for (const name of c.pinned) {
         const a = store.augments().find((x) => x.name === name);
-        if (a) out.push({ a, why: "置頂", score: 100, group: a.rarity, tier: "S" });
+        if (a) out.push({ a, why: "置頂", score: 100, tier: "S" });
     }
-    for (const t of style.tiers) {
+    const rows = [...style.tiers].sort((x, y) => TIER_ORDER.indexOf(x.tier) - TIER_ORDER.indexOf(y.tier) || y.score - x.score);
+    for (const t of rows) {
         const a = store.augment(t.id);
         if (!a || c.avoid.includes(a.name) || c.pinned.includes(a.name)) continue;
-        out.push({ a, why: t.when ? `${t.reason} · ${t.when}` : t.reason, score: t.score, group: t.group, tier: t.tier });
+        out.push({ a, why: t.when ? `${t.reason} · ${t.when}` : t.reason, score: t.score, tier: t.tier });
     }
     return out;
 }
-// play style chips (only when there is more than one), redrawing `draw` with the chosen one
-function styleChips(body: HTMLElement, styles: AugTierStyle[], draw: (s: AugTierStyle) => void): void {
-    if (styles.length < 2) return;
-    const seg = segmented(body, styles.map((s, i) => [String(i), s.name]), "0", (id) => {
-        seg.querySelectorAll(".mn-seg-b").forEach((b, i) => b.toggleClass("is-on", String(i) === id));
-        draw(styles[Number(id)]);
-    });
+// the play style as words (only when there is more than one); `draw` redraws with the chosen one
+function styleSwitch(body: HTMLElement, styles: AugTierStyle[], draw: (s: AugTierStyle) => void): void {
+    if (styles.length > 1) textSwitch(body, styles.map((s, i) => [String(i), s.name]), "0", (id) => draw(styles[Number(id)]));
 }
-// 強化 (the champion page): the S augments of each rarity
+// 強化 (the champion page): its S augments, best first
 function augmentsTop(body: HTMLElement, c: Champion, ctx: PageCtx, more: () => void): void {
     const styles = Object.values(ctx.plugin.store.augTiers[c.id] ?? {});
     if (!styles.length) { augmentsTab(body, c, ctx); return; }
-    const chips = h(body, "div");
+    const top = h(body, "div");
     const box = h(body, "div", "mn-cv-augs");
     const draw = (style: AugTierStyle) => {
         box.empty();
         const picks = tierPicks(ctx.plugin.store, c, style).filter((p) => p.tier === "S");
-        for (const [g, label] of RARITIES) {
-            const these = picks.filter((p) => p.group === g);
-            if (!these.length) continue;
-            h(box, "div", "mn-gh", label);
-            augmentTiles(box, these, ctx);
-        }
-        if (!picks.length) h(box, "p", "mn-cpa-empty", "沒有特別適合的強化。");
+        if (picks.length) augmentTiles(box, picks, ctx, { bare: true });
+        else h(box, "p", "mn-cpa-empty", "沒有特別適合的強化。");
     };
-    styleChips(chips, styles, draw);
+    styleSwitch(top, styles, draw);
     draw(styles[0]);
-    row(group(body), { icon: "list", title: "全部強化", chevron: true, onTap: more });
+    moreLink(body, "全部強化", more);
     h(body, "div", "mn-gf", MODEL_NOTE);
 }
-// 全部強化: one rarity at a time (a selection screen's three offers share one), its augments in S / A / B / C rows, then those with no gain
+// 全部強化: every tier, S to C, then the augments that do nothing for it
 function augmentsAll(body: HTMLElement, c: Champion, ctx: PageCtx): void {
     const store = ctx.plugin.store;
     const styles = Object.values(store.augTiers[c.id] ?? {});
     if (!styles.length) { augmentsTab(body, c, ctx); return; }
-    let style = styles[0];
-    let rarity = "稜鏡";
-    styleChips(body, styles, (s) => { style = s; draw(); });
-    const opts = RARITIES.filter(([g]) => g !== "五殺" || styles.some((s) => s.tiers.some((t) => t.group === g)));   // 五殺 only when it has some
-    const tabs = segmented(body, opts, rarity, (id) => {
-        tabs.querySelectorAll(".mn-seg-b").forEach((b, i) => b.toggleClass("is-on", opts[i][0] === id));
-        rarity = id;
-        draw();
-    });
+    const top = h(body, "div");
     const box = h(body, "div", "mn-cv-augs");
-    const draw = () => {
+    const draw = (style: AugTierStyle) => {
         box.empty();
-        const picks = tierPicks(store, c, style).filter((p) => p.group === rarity);
-        for (const tier of ["S", "A", "B", "C"]) {
+        const picks = tierPicks(store, c, style);
+        for (const tier of TIER_ORDER) {
             const these = picks.filter((p) => p.tier === tier);
             if (!these.length) continue;
-            h(box, "div", "mn-gh", tier);
-            augmentTiles(box, these, ctx);
+            tierHead(box, tier);
+            augmentTiles(box, these, ctx, { bare: true });
         }
-        const none = style.none.map((n) => store.augment(n.id)).filter((a): a is Augment => !!a && a.rarity === rarity && !c.pinned.includes(a.name));
+        const none = style.none.map((n) => store.augment(n.id)).filter((a): a is Augment => !!a && !c.pinned.includes(a.name));
         if (none.length) h(box, "div", "mn-gf", `沒用：${none.map((a) => a.name).join("、")}`);
     };
-    draw();
+    styleSwitch(top, styles, draw);
+    draw(styles[0]);
     h(body, "div", "mn-gf", MODEL_NOTE);
 }
 

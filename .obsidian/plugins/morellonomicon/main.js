@@ -1181,6 +1181,34 @@ var empty = (parent, o) => {
   if (o.text) h(box, "div", "mn-empty-s", o.text);
   return box;
 };
+var textSwitch = (parent, options, value, onChange) => {
+  const box = h(parent, "div", "mn-tsw");
+  for (const [id, label] of options) {
+    const b = h(box, "button", "mn-tsw-b" + (id === value ? " is-on" : ""), label);
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      box.querySelectorAll(".mn-tsw-b").forEach((x) => x.toggleClass("is-on", x === b));
+      onChange(id);
+    });
+  }
+  return box;
+};
+var TIER_COLOR = { S: "var(--color-orange)", A: "var(--color-yellow)", B: "var(--color-green)", C: "var(--mn-muted)" };
+var tierHead = (parent, label) => {
+  const el = h(parent, "div", "mn-tier-h", label);
+  if (TIER_COLOR[label]) el.style.setProperty("--t", TIER_COLOR[label]);
+  return el;
+};
+var moreLink = (parent, label, go) => {
+  const b = h(parent, "button", "mn-more-link");
+  h(b, "span", void 0, label);
+  icon(b, "chevron-right");
+  b.addEventListener("click", (e) => {
+    e.preventDefault();
+    go();
+  });
+  return b;
+};
 var segmented = (parent, options, value, onChange, cls = "") => {
   const seg = h(parent, "div", "mn-seg " + cls);
   for (const [id, label] of options) {
@@ -5539,7 +5567,7 @@ var cooldown = (s) => {
   const r = s.rows?.find((x) => x.label.startsWith("\u51B7\u537B"));
   return r ? r.vals[r.vals.length - 1] ?? "" : "";
 };
-function moreLink(tab, go) {
+function moreLink2(tab, go) {
   const b = h(tab, "button", "mn-qc-more");
   b.append("\u5168\u90E8");
   icon(b, "chevron-right");
@@ -5719,13 +5747,13 @@ function quickCard(ctx, c, face, o) {
     const cd = cooldown(s);
     if (cd) h(nums, "span", void 0, `${cd} \u79D2`);
   }
-  if (o.more?.skills) moreLink(sk, o.more.skills);
+  if (o.more?.skills) moreLink2(sk, o.more.skills);
   styleCard(h(tabs[3], "div", "mn-qc-style"), c, ctx.app);
-  if (o.more?.style) moreLink(tabs[3], o.more.style);
+  if (o.more?.style) moreLink2(tabs[3], o.more.style);
   (o.extra ?? []).forEach((x, i) => {
     const tab = tabs[QUICK_TABS.length + i];
     x.build(tab);
-    if (x.more) moreLink(tab, x.more);
+    if (x.more) moreLink2(tab, x.more);
   });
   show(Math.max(0, TABS.indexOf(o.start ?? "")));
   return skins;
@@ -5891,8 +5919,8 @@ var NEEDS = [
   { re: /魔力/, fit: (c) => c.resource === "\u9B54\u529B" ? 0.8 : 0, why: () => "\u7528\u9B54\u529B" },
   { re: /大絕/, fit: () => 0.6, why: () => "\u5927\u7D55\u5F37\u5316" }
 ];
-function augmentTiles(parent, picks, ctx) {
-  const grid = h(parent, "div", "mn-aug-tiles");
+function augmentTiles(parent, picks, ctx, opt = {}) {
+  const grid = h(parent, "div", "mn-aug-tiles" + (opt.bare ? " is-bare" : ""));
   for (const p of picks) {
     const t = h(grid, "button", "mn-aug-tile");
     t.style.setProperty("--r", RARITY_COLOR[p.a.rarity] ?? "var(--mn-muted)");
@@ -6717,27 +6745,24 @@ function overview(body, c, ctx) {
   if (c.video) row(group(body), { icon: "play-circle", title: "Combo video", chevron: true, onTap: () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video)}`) });
   return changesBlock(body, c, ctx);
 }
-var RARITIES2 = [["\u7A1C\u93E1", "\u7A1C\u93E1\u7D1A"], ["\u91D1", "\u91D1\u7D1A"], ["\u9280", "\u9280\u7D1A"], ["\u4E94\u6BBA", "\u4E94\u6BBA\u91D1\u5C6C"]];
-var MODEL_NOTE = "\u4F9D\u82F1\u96C4\u7684\u6280\u80FD\u6578\u503C\u4F30\u7B97\uFF1A\u5728\u7B2C 3\u30017\u300111\u300115 \u7D1A\u9078\u5230\u6642\uFF0C\u8B93\u9019\u4F4D\u82F1\u96C4\u8B8A\u5F37\u591A\u5C11\u7684\u5E73\u5747\uFF0C\u548C\u540C\u4E00\u7A00\u6709\u5EA6\u7684\u5176\u4ED6\u5F37\u5316\u6BD4\u8F03\u3002\u4E0D\u662F\u52DD\u7387\u3002\u7F6E\u9802\u548C\u907F\u958B\u662F\u82F1\u96C4\u7B46\u8A18\u7684 pinned / avoid\u3002";
+var TIER_ORDER = ["S", "A", "B", "C"];
+var MODEL_NOTE = "\u4F9D\u82F1\u96C4\u7684\u6280\u80FD\u6578\u503C\u4F30\u7B97\uFF1A\u5728\u7B2C 3\u30017\u300111\u300115 \u7D1A\u9078\u5230\u6642\uFF0C\u8B93\u9019\u4F4D\u82F1\u96C4\u8B8A\u5F37\u591A\u5C11\uFF0C\u548C\u540C\u7A00\u6709\u5EA6\u7684\u5176\u4ED6\u5F37\u5316\u6BD4\u8F03\u3002\u4E0D\u662F\u52DD\u7387\u3002";
 function tierPicks(store, c, style) {
   const out = [];
   for (const name of c.pinned) {
     const a = store.augments().find((x) => x.name === name);
-    if (a) out.push({ a, why: "\u7F6E\u9802", score: 100, group: a.rarity, tier: "S" });
+    if (a) out.push({ a, why: "\u7F6E\u9802", score: 100, tier: "S" });
   }
-  for (const t of style.tiers) {
+  const rows = [...style.tiers].sort((x, y) => TIER_ORDER.indexOf(x.tier) - TIER_ORDER.indexOf(y.tier) || y.score - x.score);
+  for (const t of rows) {
     const a = store.augment(t.id);
     if (!a || c.avoid.includes(a.name) || c.pinned.includes(a.name)) continue;
-    out.push({ a, why: t.when ? `${t.reason} \xB7 ${t.when}` : t.reason, score: t.score, group: t.group, tier: t.tier });
+    out.push({ a, why: t.when ? `${t.reason} \xB7 ${t.when}` : t.reason, score: t.score, tier: t.tier });
   }
   return out;
 }
-function styleChips(body, styles, draw) {
-  if (styles.length < 2) return;
-  const seg = segmented(body, styles.map((s, i) => [String(i), s.name]), "0", (id) => {
-    seg.querySelectorAll(".mn-seg-b").forEach((b, i) => b.toggleClass("is-on", String(i) === id));
-    draw(styles[Number(id)]);
-  });
+function styleSwitch(body, styles, draw) {
+  if (styles.length > 1) textSwitch(body, styles.map((s, i) => [String(i), s.name]), "0", (id) => draw(styles[Number(id)]));
 }
 function augmentsTop(body, c, ctx, more) {
   const styles = Object.values(ctx.plugin.store.augTiers[c.id] ?? {});
@@ -6745,22 +6770,17 @@ function augmentsTop(body, c, ctx, more) {
     augmentsTab(body, c, ctx);
     return;
   }
-  const chips = h(body, "div");
+  const top = h(body, "div");
   const box = h(body, "div", "mn-cv-augs");
   const draw = (style) => {
     box.empty();
     const picks = tierPicks(ctx.plugin.store, c, style).filter((p) => p.tier === "S");
-    for (const [g, label] of RARITIES2) {
-      const these = picks.filter((p) => p.group === g);
-      if (!these.length) continue;
-      h(box, "div", "mn-gh", label);
-      augmentTiles(box, these, ctx);
-    }
-    if (!picks.length) h(box, "p", "mn-cpa-empty", "\u6C92\u6709\u7279\u5225\u9069\u5408\u7684\u5F37\u5316\u3002");
+    if (picks.length) augmentTiles(box, picks, ctx, { bare: true });
+    else h(box, "p", "mn-cpa-empty", "\u6C92\u6709\u7279\u5225\u9069\u5408\u7684\u5F37\u5316\u3002");
   };
-  styleChips(chips, styles, draw);
+  styleSwitch(top, styles, draw);
   draw(styles[0]);
-  row(group(body), { icon: "list", title: "\u5168\u90E8\u5F37\u5316", chevron: true, onTap: more });
+  moreLink(body, "\u5168\u90E8\u5F37\u5316", more);
   h(body, "div", "mn-gf", MODEL_NOTE);
 }
 function augmentsAll(body, c, ctx) {
@@ -6770,32 +6790,22 @@ function augmentsAll(body, c, ctx) {
     augmentsTab(body, c, ctx);
     return;
   }
-  let style = styles[0];
-  let rarity = "\u7A1C\u93E1";
-  styleChips(body, styles, (s) => {
-    style = s;
-    draw();
-  });
-  const opts = RARITIES2.filter(([g]) => g !== "\u4E94\u6BBA" || styles.some((s) => s.tiers.some((t) => t.group === g)));
-  const tabs = segmented(body, opts, rarity, (id) => {
-    tabs.querySelectorAll(".mn-seg-b").forEach((b, i) => b.toggleClass("is-on", opts[i][0] === id));
-    rarity = id;
-    draw();
-  });
+  const top = h(body, "div");
   const box = h(body, "div", "mn-cv-augs");
-  const draw = () => {
+  const draw = (style) => {
     box.empty();
-    const picks = tierPicks(store, c, style).filter((p) => p.group === rarity);
-    for (const tier of ["S", "A", "B", "C"]) {
+    const picks = tierPicks(store, c, style);
+    for (const tier of TIER_ORDER) {
       const these = picks.filter((p) => p.tier === tier);
       if (!these.length) continue;
-      h(box, "div", "mn-gh", tier);
-      augmentTiles(box, these, ctx);
+      tierHead(box, tier);
+      augmentTiles(box, these, ctx, { bare: true });
     }
-    const none = style.none.map((n) => store.augment(n.id)).filter((a) => !!a && a.rarity === rarity && !c.pinned.includes(a.name));
+    const none = style.none.map((n) => store.augment(n.id)).filter((a) => !!a && !c.pinned.includes(a.name));
     if (none.length) h(box, "div", "mn-gf", `\u6C92\u7528\uFF1A${none.map((a) => a.name).join("\u3001")}`);
   };
-  draw();
+  styleSwitch(top, styles, draw);
+  draw(styles[0]);
   h(body, "div", "mn-gf", MODEL_NOTE);
 }
 function augmentsTab(body, c, ctx) {

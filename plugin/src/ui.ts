@@ -646,6 +646,36 @@ export const empty = (parent: HTMLElement, o: { icon: string; title: string; tex
 };
 
 // A row of equal-width choices (one is on). Used for sub-tabs, reach and sort.
+// A choice between two or three, as the words side by side, the chosen one in the accent colour (Design Rules, champion page
+// family: switches are words, not a segmented capsule)
+export const textSwitch = (parent: HTMLElement, options: [string, string][], value: string, onChange: (id: string) => void): HTMLElement => {
+    const box = h(parent, "div", "mn-tsw");
+    for (const [id, label] of options) {
+        const b = h(box, "button", "mn-tsw-b" + (id === value ? " is-on" : ""), label);
+        b.addEventListener("click", (e) => {
+            e.preventDefault();
+            box.querySelectorAll(".mn-tsw-b").forEach((x) => x.toggleClass("is-on", x === b));
+            onChange(id);
+        });
+    }
+    return box;
+};
+// A section heading of the champion page family: a tier letter in its colour (S / A / B / C), or a word
+export const TIER_COLOR: Record<string, string> = { S: "var(--color-orange)", A: "var(--color-yellow)", B: "var(--color-green)", C: "var(--mn-muted)" };
+export const tierHead = (parent: HTMLElement, label: string): HTMLElement => {
+    const el = h(parent, "div", "mn-tier-h", label);
+    if (TIER_COLOR[label]) el.style.setProperty("--t", TIER_COLOR[label]);
+    return el;
+};
+// An accent text link with a chevron (全部強化 ›): the champion page family's way to open more, never a row in a panel
+export const moreLink = (parent: HTMLElement, label: string, go: () => void): HTMLElement => {
+    const b = h(parent, "button", "mn-more-link");
+    h(b, "span", undefined, label);
+    icon(b, "chevron-right");
+    b.addEventListener("click", (e) => { e.preventDefault(); go(); });
+    return b;
+};
+
 export const segmented = (parent: HTMLElement, options: [string, string][], value: string, onChange: (id: string) => void, cls = ""): HTMLElement => {
     const seg = h(parent, "div", "mn-seg " + cls);
     for (const [id, label] of options) {

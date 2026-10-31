@@ -1633,3 +1633,14 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-cv-look .mn-cv-stat b, .mn-cv-look .mn-cv-stat span:not(.mn-cv-sic), .mn-cv-look .mn-cv-bar { grid-column: 2; }
 .mn-cpa-page.is-overview .mn-cpa-body { gap: 20px; padding-bottom: 20px; }
 .mn-champ.is-v3 .mn-tgs.mn-cv-tags { justify-content: center; }   /* centred, under the name */
+/* the champion page family (Design Rules): words for a switch, tier headings, an accent link, bare augment tiles (no panel) */
+.mn-tsw { display: flex; justify-content: center; gap: 18px; }
+.mn-app .mn-tsw-b { height: 32px; padding: 0 2px; border: 0; border-radius: 0; background: none; box-shadow: none; font-size: 15px; font-weight: 700; color: var(--mn-muted); }
+.mn-app .mn-tsw-b.is-on { color: var(--mn-accent); }
+.mn-tier-h { --t: var(--mn-muted); margin-top: 6px; font-size: 22px; font-weight: 800; line-height: 1; color: var(--t); }
+.mn-app .mn-more-link { align-self: center; display: inline-flex; align-items: center; gap: 2px; height: 36px; padding: 0 6px; border: 0; background: none; box-shadow: none; font-size: 15px; font-weight: 700; color: var(--mn-accent); }
+.mn-more-link svg { width: 16px; height: 16px; }
+.mn-more-link .mn-ic { display: flex; }
+.mn-app .mn-aug-tiles.is-bare .mn-aug-tile { border: 0; background: none; padding: 4px 2px 6px; gap: 4px; }
+.mn-aug-tiles.is-bare .mn-aug-tn { font-size: 13px; }
+.mn-aug-tiles.is-bare .mn-aug-tw { padding: 0; background: none; font-size: 11px; font-weight: 600; color: var(--mn-muted); white-space: normal; text-align: center; }

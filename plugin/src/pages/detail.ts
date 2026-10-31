@@ -92,8 +92,8 @@ const PICKS_SHOWN = 6;   // on the champion page; the full page shows them all
 export { PICKS_SHOWN };
 // The picks as tiles three across, all the same size so they line up: the icon in its rarity frame, the name (two lines at most), the
 // reason as a small chip; the tile is tinted in its rarity's colour. Tap: the augment's page.
-export function augmentTiles(parent: HTMLElement, picks: AugmentPick[], ctx: PageCtx): HTMLElement {
-    const grid = h(parent, "div", "mn-aug-tiles");
+export function augmentTiles(parent: HTMLElement, picks: AugmentPick[], ctx: PageCtx, opt: { bare?: boolean } = {}): HTMLElement {
+    const grid = h(parent, "div", "mn-aug-tiles" + (opt.bare ? " is-bare" : ""));   // bare: no panel under the icons (champion page family)
     for (const p of picks) {
         const t = h(grid, "button", "mn-aug-tile");
         t.style.setProperty("--r", RARITY_COLOR[p.a.rarity] ?? "var(--mn-muted)");

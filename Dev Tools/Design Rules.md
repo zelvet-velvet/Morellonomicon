@@ -18,6 +18,18 @@ sticker: lucide//ruler
 > - **One screen, own pages.** A page with several parts does not scroll down (the champion page, v3): Riot's centered splash fills the whole page behind it, fading out under the status bar and at its foot; the name, title and roles sit at the foot of the first page only, clear of the tab bar; above it the pages swipe sideways (they follow the finger and land on a page: `championCard`'s pager, not the browser's snapping, which iOS left half way) with their parts floating on the art, no frames, no page titles and no 全部 button; the first page keeps the art bright with its parts just above the name, and tapping its chart, tiles or tags opens its full page; the others darken the art and show their whole detail in the page (scrolling inside when long); a small page hint (a dot per page, the current one lit) floats at the top middle.
 > - **Moving between pages.** A page slides in from the side it comes from (push, back) or rises a little (tab); Back returns to where the page was scrolled.
 
+## 🦸 Champion page family
+
+> [!note]+ One look for the champion page, its swipe pages and their sub pages · No panels · Words for switches · Tier order
+> A rule from Zaviel (2026-10-31): the champion page's swipe pages (概覽, 技能, 出裝, 強化, 技巧) and the pages they open (全部概覽, 全部強化 …) share one style, so a sub page reads as the same page opened further, not another app.
+>
+> - **The same few parts.** Both are built from the same parts and helpers; a sub page differs only in sitting on the plain page under the top bar instead of on the art.
+> - **No panels.** Parts float with no tile, card or pill background: an icon with its name under it and one small muted line (the bare tiles: `augmentTiles(…, { bare: true })`, `.mn-aug-tiles.is-bare`). A reason or tag is coloured text, not a filled pill.
+> - **Headings, not boxes.** A section is a short heading over its row: a tier letter in its colour (S / A / B / C, `tierHead`) or a word; never a boxed header.
+> - **Switches are words.** A choice between two or three (a play style) is the words side by side, the chosen one in the accent colour (`textSwitch`), not a segmented capsule; segmented bars stay for the app's main tabs and filters.
+> - **Links are accent text** with a chevron (全部強化 ›), never a list row in a panel.
+> - **One order: what matters most.** A list is ranked once (augments by tier, then score); no grouping the player does not choose by (rarity shows in the icon's frame colour).
+
 ## ⚖️ Balance
 
 > [!note]+ No big empty space · Balance the screen · Few things sit in the middle
