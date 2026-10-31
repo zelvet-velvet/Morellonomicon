@@ -419,9 +419,12 @@ export function itemPage(ctx: PageCtx): PageOut {
     const tags = h(who, "div", "mn-it-tags");
     h(tags, "span", "mn-it-gold", `${item.goldTotal} 金`);
     if (item.variantOf) h(tags, "span", "mn-it-aram", "ARAM 版本");
+    // everything under the banner, centred down the screen when it is shorter than the screen (Design Rules, balance)
+    el.addClass("is-centred");
+    const body = h(el, "div", "mn-it-body");
     const { stats, effects } = splitItemText(item.desc);
     if (stats.length) {
-        const row = h(el, "div", "mn-it-stats");
+        const row = h(body, "div", "mn-it-stats");
         for (const s of stats) {
             const cat = STAT_CAT[s.name];
             const k = cat ? ITEM_CATS.findIndex(([n]) => n === cat) : -1;
@@ -433,24 +436,29 @@ export function itemPage(ctx: PageCtx): PageOut {
         }
     }
     for (const fx of effects) {
-        const card = h(el, "div", "mn-it-fx" + (fx.active ? " is-active" : ""));
+        const card = h(body, "div", "mn-it-fx" + (fx.active ? " is-active" : ""));
         if (fx.active) h(card, "span", "mn-it-fxk", "主動");   // Riot's text marks an active only sometimes, so a card without it has no label
         if (fx.name) h(card, "b", "mn-it-fxn", fx.name.replace(/^主動\s*[─-]\s*/, ""));
         if (fx.text) h(card, "p", "mn-it-fxt", fx.text);
     }
-    if (item.variantOf) h(el, "div", "mn-gf", "價格與數值和一般版本不同。");
-    // what it is made of, drawn like the shop's tree; then what it builds into; Riot's changes last
-    if (item.from.length) { h(el, "div", "mn-gh", "合成材料"); itemTree(h(el, "div", "mn-panel mn-itree"), ctx, item.id); }
-    recipe(el, ctx, "可合成", item.into.map((id) => store.item(id)).filter((i): i is Item => !!i));
+    if (item.variantOf) h(body, "div", "mn-gf", "價格與數值和一般版本不同。");
+    // its route: what it is made of, drawn like the shop's tree; then what it builds into, in two rows: 升級 (straight into) and 最終
+    // (the legendaries they lead to), so a base item shows its whole path instead of a short page with blank space under it
+    if (item.from.length) { h(body, "div", "mn-gh", "合成材料"); itemTree(h(body, "div", "mn-itree"), ctx, item.id); }
+    const next = item.into.map((id) => store.item(id)).filter((i): i is Item => !!i && !i.reward);
+    const finals = new Map<number, Item>();
+    for (const i of next) for (const id of i.into) { const f = store.item(id); if (f && !f.reward && !next.includes(f)) finals.set(f.id, f); }
+    recipe(body, ctx, "升級", next);
+    recipe(body, ctx, "最終", [...finals.values()].sort((x, y) => x.goldTotal - y.goldTotal));
     const official = store.officialFor("items", item.name);
-    if (official.length) { h(el, "div", "mn-gh", "版本調整"); officialBlock(el, official); }
+    if (official.length) { h(body, "div", "mn-gh", "版本調整"); officialBlock(body, official); }
     return { title: "", el };
 }
 
 function recipe(el: HTMLElement, ctx: PageCtx, title: string, items: Item[]): void {
     if (!items.length) return;
     h(el, "div", "mn-gh", title);
-    const grid = h(el, "div", "mn-recipe");
+    const grid = layoutBlock(h(el, "div", "mn-recipe"));
     for (const i of items) {
         const b = h(grid, "button", "mn-rc");
         const im = h(b, "img"); im.src = i.icon; im.alt = "";

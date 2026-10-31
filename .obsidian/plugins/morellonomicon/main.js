@@ -6401,9 +6401,11 @@ function itemPage(ctx) {
   const tags2 = h(who, "div", "mn-it-tags");
   h(tags2, "span", "mn-it-gold", `${item.goldTotal} \u91D1`);
   if (item.variantOf) h(tags2, "span", "mn-it-aram", "ARAM \u7248\u672C");
+  el.addClass("is-centred");
+  const body = h(el, "div", "mn-it-body");
   const { stats: stats2, effects } = splitItemText(item.desc);
   if (stats2.length) {
-    const row2 = h(el, "div", "mn-it-stats");
+    const row2 = h(body, "div", "mn-it-stats");
     for (const s of stats2) {
       const cat = STAT_CAT[s.name];
       const k = cat ? ITEM_CATS.findIndex(([n]) => n === cat) : -1;
@@ -6415,28 +6417,35 @@ function itemPage(ctx) {
     }
   }
   for (const fx of effects) {
-    const card = h(el, "div", "mn-it-fx" + (fx.active ? " is-active" : ""));
+    const card = h(body, "div", "mn-it-fx" + (fx.active ? " is-active" : ""));
     if (fx.active) h(card, "span", "mn-it-fxk", "\u4E3B\u52D5");
     if (fx.name) h(card, "b", "mn-it-fxn", fx.name.replace(/^主動\s*[─-]\s*/, ""));
     if (fx.text) h(card, "p", "mn-it-fxt", fx.text);
   }
-  if (item.variantOf) h(el, "div", "mn-gf", "\u50F9\u683C\u8207\u6578\u503C\u548C\u4E00\u822C\u7248\u672C\u4E0D\u540C\u3002");
+  if (item.variantOf) h(body, "div", "mn-gf", "\u50F9\u683C\u8207\u6578\u503C\u548C\u4E00\u822C\u7248\u672C\u4E0D\u540C\u3002");
   if (item.from.length) {
-    h(el, "div", "mn-gh", "\u5408\u6210\u6750\u6599");
-    itemTree(h(el, "div", "mn-panel mn-itree"), ctx, item.id);
+    h(body, "div", "mn-gh", "\u5408\u6210\u6750\u6599");
+    itemTree(h(body, "div", "mn-itree"), ctx, item.id);
   }
-  recipe(el, ctx, "\u53EF\u5408\u6210", item.into.map((id) => store.item(id)).filter((i) => !!i));
+  const next = item.into.map((id) => store.item(id)).filter((i) => !!i && !i.reward);
+  const finals = /* @__PURE__ */ new Map();
+  for (const i of next) for (const id of i.into) {
+    const f = store.item(id);
+    if (f && !f.reward && !next.includes(f)) finals.set(f.id, f);
+  }
+  recipe(body, ctx, "\u5347\u7D1A", next);
+  recipe(body, ctx, "\u6700\u7D42", [...finals.values()].sort((x, y) => x.goldTotal - y.goldTotal));
   const official = store.officialFor("items", item.name);
   if (official.length) {
-    h(el, "div", "mn-gh", "\u7248\u672C\u8ABF\u6574");
-    officialBlock(el, official);
+    h(body, "div", "mn-gh", "\u7248\u672C\u8ABF\u6574");
+    officialBlock(body, official);
   }
   return { title: "", el };
 }
 function recipe(el, ctx, title, items) {
   if (!items.length) return;
   h(el, "div", "mn-gh", title);
-  const grid = h(el, "div", "mn-recipe");
+  const grid = layoutBlock(h(el, "div", "mn-recipe"));
   for (const i of items) {
     const b = h(grid, "button", "mn-rc");
     const im = h(b, "img");

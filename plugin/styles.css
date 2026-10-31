@@ -314,10 +314,11 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-dwho .mn-chips { margin: 6px 0 0; }
 .mn-dpanel { padding: 14px 16px; }
 .mn-dtext { margin: 0; font-size: 15px; line-height: 1.65; -webkit-user-select: text; user-select: text; }
-.mn-recipe { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; }
-.mn-app .mn-rc { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 6px; border-radius: 14px; background: var(--mn-card); border: 1px solid var(--mn-line); }
+.mn-recipe { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 6px; }   /* bare tiles four across: icon, name, price */
+.mn-app .mn-rc { display: flex; flex-direction: column; align-items: center; gap: 3px; height: auto; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; transition: opacity 0.12s, transform 0.12s; }
+.mn-app .mn-rc:active { opacity: 0.5; transform: scale(0.92); }
 .mn-rc img { width: 44px; height: 44px; border-radius: 10px; }
-.mn-rc-n { font-size: 12px; text-align: center; line-height: 1.25; }
+.mn-rc-n { max-width: 100%; font-size: 12px; text-align: center; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mn-rc-g { font-size: 11px; color: var(--color-yellow); font-variant-numeric: tabular-nums; }
 .mn-off { margin: 10px 0 4px; padding: 10px 12px; border-radius: 12px; background: var(--mn-card-hi); }
 .mn-off-h { display: flex; justify-content: space-between; align-items: center; }
@@ -945,7 +946,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app button:is(.mn-btn, .mn-more-link, .mn-aug-tile):active { opacity: 0.5; transform: scale(0.92); }
 /* Back on a splash keeps its dark disc (it is part of its look there), the same while pressed */
 .mn-app.is-overlay .mn-top:not(.is-scrolled) button.mn-back:is(:hover, :active, :focus, :focus-visible) { background: rgba(0, 0, 0, 0.38); }
-.mn-app button:is(.mn-rc, .mn-key, .mn-tg.is-on, .mn-rq-no, .mn-rq-yes):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card); }
+.mn-app button:is(.mn-key, .mn-tg.is-on, .mn-rq-no, .mn-rq-yes):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card); }
+.mn-app button.mn-rc:is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }   /* bare: a press fades (Design Rules) */
 .mn-app button:is(.mn-with-b, .mn-rq-lk):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card-hi); }
 .mn-app button.mn-hb-tile:is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }   /* its fill is a gradient image, the colour under it stays clear */
 
@@ -1681,6 +1683,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
    screen under the title when it is shorter than the screen */
 .mn-scroll > .mn-page.is-centred { box-sizing: border-box; min-height: 100%; display: flex; flex-direction: column; }
 .mn-page.is-centred > .mn-ov { flex: 1 0 auto; justify-content: center; }
+.mn-page.is-centred > .mn-it-body { flex: 1 0 auto; display: flex; flex-direction: column; justify-content: center; }   /* the item page: under its banner */
 .mn-ov { display: flex; flex-direction: column; gap: 16px; margin-top: 4px; }
 .mn-ov-chart { align-self: center; width: min(360px, 100%); }
 .mn-ov .mn-ov-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
