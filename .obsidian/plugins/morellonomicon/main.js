@@ -3564,7 +3564,7 @@ function changesBlock(parent, c, ctx) {
 // src/pages/skills.ts
 var import_obsidian10 = require("obsidian");
 var CLIP_FADE_MS = 350;
-var WAKE_MAX_MS = 700;
+var STAGE_DPR = 2;
 function skillStrip(parent, c, changes = [], opt = {}) {
   if (!c.skills.length) return;
   const strip2 = h(parent, "div", "mn-skills");
@@ -3573,6 +3573,7 @@ function skillStrip(parent, c, changes = [], opt = {}) {
   let open = -1;
   const shelf = opt.shelf;
   const held = /* @__PURE__ */ new Map();
+  let active = null;
   if (shelf) c.skills.forEach((s, i) => {
     demo(shelf, c, s, () => {
       held.delete(i);
@@ -3582,14 +3583,65 @@ function skillStrip(parent, c, changes = [], opt = {}) {
     if (!(v instanceof HTMLVideoElement)) return;
     held.set(i, v);
     v.addEventListener("loadeddata", () => {
-      if (v.parentElement === shelf) v.pause();
+      if (v !== active) v.pause();
     }, { once: true });
   });
-  const isHeld = (v) => [...held.values()].includes(v);
-  const shelve = (v) => {
-    v.pause();
+  let stage = null, canvas = null, ph = null;
+  let painted = false, raf = 0;
+  const paint = () => {
+    raf = 0;
+    if (!stage?.isConnected || !canvas) {
+      active?.pause();
+      return;
+    }
+    const v = active;
+    const w = canvas.clientWidth, ht = canvas.clientHeight;
+    if (v && v.readyState >= 2 && v.videoWidth && w && ht) {
+      const dpr = Math.min(STAGE_DPR, window.devicePixelRatio || 1);
+      if (canvas.width !== Math.round(w * dpr)) {
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(ht * dpr);
+      }
+      const g = canvas.getContext("2d");
+      if (g) {
+        const k = Math.max(canvas.width / v.videoWidth, canvas.height / v.videoHeight);
+        const sw = canvas.width / k, sh = canvas.height / k;
+        g.drawImage(v, (v.videoWidth - sw) / 2, (v.videoHeight - sh) / 2, sw, sh, 0, 0, canvas.width, canvas.height);
+        if (!painted) {
+          painted = true;
+          window.setTimeout(() => ph?.remove(), CLIP_FADE_MS);
+          canvas.addClass("is-on");
+        }
+      }
+    }
+    raf = requestAnimationFrame(paint);
+  };
+  const stageClip = (i, s) => {
+    const v = held.get(i);
+    if (!v) return null;
+    if (!stage) {
+      stage = h(null, "div", "mn-sd-clipbox mn-sd-stage");
+      canvas = h(stage, "canvas", "mn-sd-canvas");
+    }
+    detail.append(stage);
+    if (!painted) {
+      ph?.remove();
+      ph = h(null, "div", "mn-sd-clipph");
+      ph.style.backgroundImage = `url("${s.icon}")`;
+      stage.prepend(ph);
+    }
+    if (active && active !== v) active.pause();
+    active = v;
     v.currentTime = 0;
-    shelf?.append(v);
+    void v.play().catch(() => void 0);
+    if (!raf) raf = requestAnimationFrame(paint);
+    if (v.readyState >= 2) return Promise.resolve();
+    const loaded = new Promise((done) => {
+      v.addEventListener("loadeddata", () => done(), { once: true });
+      window.setTimeout(done, CLIP_WAIT_MS);
+    });
+    if (!painted) blockUntil(stage, loaded);
+    return loaded;
   };
   const boxes = c.skills.map((s, i) => {
     const box = h(strip2, "button", "mn-skill-box");
@@ -3619,10 +3671,6 @@ function skillStrip(parent, c, changes = [], opt = {}) {
     const dropPrev = () => {
       if (!prev || dropped) return;
       dropped = true;
-      if (isHeld(prev)) {
-        shelve(prev);
-        return;
-      }
       prev.remove();
       prev.pause();
       prev.removeAttribute("src");
@@ -3635,34 +3683,8 @@ function skillStrip(parent, c, changes = [], opt = {}) {
     }
     const s = c.skills[i];
     const clip = () => {
+      if (shelf) return stageClip(i, s);
       const clipBox = h(detail, "div", "mn-sd-clipbox");
-      const ready = held.get(i);
-      if (shelf && !ready) {
-        dropPrev();
-        clipBox.remove();
-        return null;
-      }
-      if (ready && ready.readyState >= 2) {
-        const stay = prev && prev !== ready ? prev : null;
-        if (stay) {
-          clipBox.append(stay);
-          void stay.play().catch(() => void 0);
-        }
-        clipBox.append(ready);
-        ready.classList.add("is-waking");
-        let shown2 = false;
-        const show2 = () => {
-          if (shown2) return;
-          shown2 = true;
-          ready.classList.remove("is-waking");
-          if (stay) window.setTimeout(dropPrev, CLIP_FADE_MS);
-          else dropPrev();
-        };
-        ready.addEventListener("playing", () => requestAnimationFrame(() => requestAnimationFrame(show2)), { once: true });
-        window.setTimeout(show2, WAKE_MAX_MS);
-        void ready.play().catch(() => void 0);
-        return Promise.resolve();
-      }
       let stand;
       if (prev) {
         stand = prev;
@@ -3676,33 +3698,19 @@ function skillStrip(parent, c, changes = [], opt = {}) {
         if (stand === prev) dropPrev();
         else stand.remove();
       };
-      let v = null;
-      if (ready) {
-        v = ready;
-        ready.addEventListener("loadeddata", () => {
-          if (open !== i || !clipBox.isConnected) return;
-          clipBox.append(ready);
-          void ready.play().catch(() => void 0);
-        }, { once: true });
-      } else {
-        demo(clipBox, c, s, () => {
-          letGo();
-          clipBox.remove();
-        });
-        const last = clipBox.lastElementChild;
-        v = last instanceof HTMLVideoElement && last !== prev ? last : null;
-      }
+      demo(clipBox, c, s, () => {
+        letGo();
+        clipBox.remove();
+      });
+      const last = clipBox.lastElementChild;
+      const v = last instanceof HTMLVideoElement && last !== prev ? last : null;
       v?.addEventListener("loadeddata", () => window.setTimeout(letGo, CLIP_FADE_MS), { once: true });
       if (!v) {
         letGo();
         clipBox.remove();
         return null;
       }
-      const wait = v;
-      const loaded2 = ready ? new Promise((done) => {
-        wait.addEventListener("loadeddata", () => done(), { once: true });
-        window.setTimeout(done, CLIP_WAIT_MS);
-      }) : whenMediaLoaded([clipBox], CLIP_WAIT_MS);
+      const loaded2 = whenMediaLoaded([clipBox], CLIP_WAIT_MS);
       blockUntil(clipBox, loaded2);
       return loaded2;
     };

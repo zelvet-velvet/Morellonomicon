@@ -1747,9 +1747,9 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-cpa-page.is-skills .mn-skill-detail > .mn-sd-desc + .mn-sd-clipbox, .mn-cpa-page.is-skills .mn-skill-detail > .mn-sd-clipbox { margin-bottom: 0; }
 /* the clip's loading look inside that faded box: no backdrop blur (on iOS a backdrop-filter layer ignores its parent's mask and shows as a
    hard rectangle); the blurred stand-in under it (the ability's icon, or the clip that was on show) and the band of light are enough */
-/* a clip moved in from the shelf stays clear until it is playing and painted (skills.ts), then fades in over the one it replaces */
-.mn-sd-video { transition: opacity 0.3s ease-out; }
-.mn-app .mn-sd-video.is-waking { opacity: 0; }
+/* the champion page's clip: a canvas drawn from the shelf's playing clip (skills.ts), inside the faded box; it fades in on its first frame */
+.mn-sd-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 0.3s ease-out; }
+.mn-sd-canvas.is-on { opacity: 1; }
 :is(.mn-champ, .mn-part) .mn-sd-clipbox > .mn-blkveil, :is(.mn-champ, .mn-part) .mn-sd-clipbox > .mn-blkveil.is-in { left: 0; right: 0; border-radius: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
 /* a champion sub page's small header: the champion's face, its name, and the page's name in the accent colour */
 .mn-part-head { justify-content: flex-start; gap: 10px; }
