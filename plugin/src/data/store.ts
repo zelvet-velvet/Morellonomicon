@@ -124,6 +124,7 @@ export class Store {
     augmentData(id: number): AugmentData | undefined { return this.augData[String(id)]; }
     augTiers: Record<string, Record<string, AugTierStyle>> = {};   // champion id -> play style -> the augment model's tiers (tools/augment_model.py)
     augUnrated: Record<string, string> = {};   // augment id -> why the model cannot value it (a quest, random, an item upgrade...)
+    itemRoles: Record<string, string[]> | null = null;   // item id -> the shop's class tabs it is under (_data/item-roles.json, the League wiki)
 
     // false until the data files (_data/*.json) have been read once after start-up
     ready = false;
@@ -157,6 +158,10 @@ export class Store {
             this.augTiers = d.champions ?? {};
             this.augUnrated = d.unrated ?? {};
         } catch { this.augTiers = {}; this.augUnrated = {}; }
+        try {
+            const path = normalizePath("_data/item-roles.json");
+            this.itemRoles = (await this.app.vault.adapter.exists(path)) ? ((JSON.parse(await this.app.vault.adapter.read(path)) as { items: Record<string, string[]> }).items ?? null) : null;
+        } catch { this.itemRoles = null; }
         try {
             const path = normalizePath("_data/positions.json");
             this.positions = (await this.app.vault.adapter.exists(path)) ? JSON.parse(await this.app.vault.adapter.read(path)) : null;

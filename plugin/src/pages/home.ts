@@ -1,6 +1,6 @@
 import { mapUrl } from "./handbook";
 import type { PageCtx, PageOut } from "./index";
-import { ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, h, holdTip, icon, page, roleArt } from "../ui";
+import { ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, shopRoleIcon, h, holdTip, icon, page } from "../ui";
 import { MODES } from "../modes";
 import { PROFILE_FRESH, QUEUE, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, type Profile } from "../data/riot";
 
@@ -217,7 +217,8 @@ export function gamesPage(ctx: PageCtx): PageOut {
 const TIERS = ["起始", "鞋子", "基本", "史詩", "傳說"];
 const tierOf = (i: { tags: string[]; from: number[]; into: number[]; goldTotal: number }): string =>
     i.tags.includes("Boots") ? "鞋子" : !i.from.length && !i.into.length ? "起始" : !i.from.length ? "基本" : i.into.length ? "史詩" : "傳說";
-// The shop's role tabs: Data Dragon gives items no roles, so each is read from the item's stats (a guess, close to the shop's own)
+// The shop's class tabs, in its order. Which items each lists comes from _data/item-roles.json (the League wiki's copy of the shop's
+// menus, tools/fetch_item_roles.py); without that file, a guess from the item's stats stands in
 type ItemLike = { tags: string[] };
 const has = (i: ItemLike, ...tags: string[]) => tags.some((x) => i.tags.includes(x));
 const ITEM_ROLES: [string, (i: ItemLike) => boolean][] = [
@@ -252,14 +253,14 @@ export function itemsPage(ctx: PageCtx): PageOut {
     const drawRoles = () => {
         roles.empty();
         const all = h(roles, "button", "mn-shop-role" + (!itemRole ? " is-on" : ""));
-        icon(all, "layout-grid");
+        shopRoleIcon(all, "全部");
         all.setAttribute("aria-label", "全部");
         all.addEventListener("click", (e) => { e.preventDefault(); itemRole = ""; drawRoles(); draw(); });
         // the six roles centred between 全部 (above the stat rail) and the sort button
         const mid = h(roles, "div", "mn-shop-rolemid");
         for (const [r] of ITEM_ROLES) {
             const b = h(mid, "button", "mn-shop-role" + (itemRole === r ? " is-on" : ""));
-            roleArt(b, r);
+            shopRoleIcon(b, r);
             holdTip(b, r);
             b.addEventListener("click", (e) => { e.preventDefault(); itemRole = itemRole === r ? "" : r; drawRoles(); draw(); });
         }
@@ -301,13 +302,16 @@ export function itemsPage(ctx: PageCtx): PageOut {
     const draw = () => {
         host.empty();
         const q = search.value.trim();
-        const role = ITEM_ROLES.find(([r]) => r === itemRole)?.[1];
+        const shopRoles = store.itemRoles;
+        const role = !itemRole ? undefined
+            : shopRoles ? (i: { id: number }) => (shopRoles[String(i.id)] ?? []).includes(itemRole)
+            : ITEM_ROLES.find(([r]) => r === itemRole)?.[1];
         const need = ITEM_CATS.filter(([n]) => itemStats.has(n)).map(([, , tags]) => tags);
         let list = items.filter((i) => (!q || i.name.includes(q)) && (!role || role(i)) && need.every((tags) => i.tags.some((x) => tags.includes(x))));
         if (!list.length) { h(host, "p", "mn-home-sub", "沒有符合的裝備"); return; }
         if (itemSort === "tier") {
             for (const tier of TIERS) {
-                const part = list.filter((i) => tierOf(i) === tier);
+                const part = list.filter((i) => tierOf(i) === tier).sort((x, y) => x.goldTotal - y.goldTotal);   // cheapest first, like the shop
                 if (!part.length) continue;
                 h(host, "div", "mn-shop-tier", tier);
                 const grid = h(host, "div", "mn-items");

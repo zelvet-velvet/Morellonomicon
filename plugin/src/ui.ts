@@ -561,6 +561,23 @@ const preloaded = new Map<string, HTMLImageElement>();
 export const preloadRoleIcons = (): void => {
     if (preloaded.size) return;
     for (const file of [...Object.values(ROLE_FILE), ...Object.values(LANE_FILE)]) { const im = new Image(); im.src = ROLE_WIKI + file; preloaded.set(file, im); }
+    const sheet = new Image(); sheet.src = SHOP_ROLE_SPRITE; preloaded.set(SHOP_ROLE_SPRITE, sheet);   // the shop's class tab icons
+};
+// The item shop's class tabs with the shop's own icons: one sprite sheet of the game (CommunityDragon, shown by address), each icon's
+// first (light) state, measured from the sheet as [x, y, width, height]; the order is the shop's (全部, then the six classes)
+export const SHOP_ROLE_SPRITE = "https://raw.communitydragon.org/latest/game/assets/ux/itemshop/jade/itemshop_texture_atlas.png";
+const SHOP_ROLE_BOX: Record<string, [number, number, number, number]> = {
+    全部: [188, 95, 22, 22], 戰士: [870, 30, 23, 24], 射手: [870, 86, 27, 22], 刺客: [940, 149, 24, 21], 法師: [870, 60, 22, 21], 坦克: [876, 113, 17, 23], 輔助: [843, 216, 26, 22],
+};
+export const shopRoleIcon = (parent: HTMLElement, role: string): HTMLElement => {
+    const s = h(parent, "span", "mn-shoprole-ic");
+    const b = SHOP_ROLE_BOX[role];
+    if (!b) { icon(s, ROLE_ICON[role] ?? "layout-grid"); return s; }
+    s.style.width = `${b[2]}px`;
+    s.style.height = `${b[3]}px`;
+    s.style.backgroundImage = `url("${SHOP_ROLE_SPRITE}")`;
+    s.style.backgroundPosition = `-${b[0]}px -${b[1]}px`;
+    return s;
 };
 
 // An icon-only filter chip with the game's icon (drawn at once when cached, else fading in; a look-alike if it fails to load).

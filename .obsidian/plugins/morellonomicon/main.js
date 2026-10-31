@@ -172,6 +172,8 @@ var Store = class {
     // champion id -> play style -> the augment model's tiers (tools/augment_model.py)
     this.augUnrated = {};
     // augment id -> why the model cannot value it (a quest, random, an item upgrade...)
+    this.itemRoles = null;
+    // item id -> the shop's class tabs it is under (_data/item-roles.json, the League wiki)
     // false until the data files (_data/*.json) have been read once after start-up
     this.ready = false;
   }
@@ -224,6 +226,12 @@ var Store = class {
     } catch {
       this.augTiers = {};
       this.augUnrated = {};
+    }
+    try {
+      const path = (0, import_obsidian.normalizePath)("_data/item-roles.json");
+      this.itemRoles = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)).items ?? null : null;
+    } catch {
+      this.itemRoles = null;
     }
     try {
       const path = (0, import_obsidian.normalizePath)("_data/positions.json");
@@ -1117,6 +1125,32 @@ var preloadRoleIcons = () => {
     im.src = ROLE_WIKI + file;
     preloaded.set(file, im);
   }
+  const sheet = new Image();
+  sheet.src = SHOP_ROLE_SPRITE;
+  preloaded.set(SHOP_ROLE_SPRITE, sheet);
+};
+var SHOP_ROLE_SPRITE = "https://raw.communitydragon.org/latest/game/assets/ux/itemshop/jade/itemshop_texture_atlas.png";
+var SHOP_ROLE_BOX = {
+  \u5168\u90E8: [188, 95, 22, 22],
+  \u6230\u58EB: [870, 30, 23, 24],
+  \u5C04\u624B: [870, 86, 27, 22],
+  \u523A\u5BA2: [940, 149, 24, 21],
+  \u6CD5\u5E2B: [870, 60, 22, 21],
+  \u5766\u514B: [876, 113, 17, 23],
+  \u8F14\u52A9: [843, 216, 26, 22]
+};
+var shopRoleIcon = (parent, role) => {
+  const s = h(parent, "span", "mn-shoprole-ic");
+  const b = SHOP_ROLE_BOX[role];
+  if (!b) {
+    icon(s, ROLE_ICON[role] ?? "layout-grid");
+    return s;
+  }
+  s.style.width = `${b[2]}px`;
+  s.style.height = `${b[3]}px`;
+  s.style.backgroundImage = `url("${SHOP_ROLE_SPRITE}")`;
+  s.style.backgroundPosition = `-${b[0]}px -${b[1]}px`;
+  return s;
 };
 var iconChip = (parent, label, file, fallback, o) => {
   const el = chip(parent, "", { on: o.on, onTap: o.onTap });
@@ -7306,7 +7340,7 @@ function itemsPage(ctx) {
   const drawRoles = () => {
     roles.empty();
     const all = h(roles, "button", "mn-shop-role" + (!itemRole ? " is-on" : ""));
-    icon(all, "layout-grid");
+    shopRoleIcon(all, "\u5168\u90E8");
     all.setAttribute("aria-label", "\u5168\u90E8");
     all.addEventListener("click", (e) => {
       e.preventDefault();
@@ -7317,7 +7351,7 @@ function itemsPage(ctx) {
     const mid = h(roles, "div", "mn-shop-rolemid");
     for (const [r] of ITEM_ROLES) {
       const b = h(mid, "button", "mn-shop-role" + (itemRole === r ? " is-on" : ""));
-      roleArt(b, r);
+      shopRoleIcon(b, r);
       holdTip(b, r);
       b.addEventListener("click", (e) => {
         e.preventDefault();
@@ -7387,7 +7421,8 @@ function itemsPage(ctx) {
   const draw = () => {
     host.empty();
     const q = search.value.trim();
-    const role = ITEM_ROLES.find(([r]) => r === itemRole)?.[1];
+    const shopRoles = store.itemRoles;
+    const role = !itemRole ? void 0 : shopRoles ? (i) => (shopRoles[String(i.id)] ?? []).includes(itemRole) : ITEM_ROLES.find(([r]) => r === itemRole)?.[1];
     const need = ITEM_CATS.filter(([n]) => itemStats.has(n)).map(([, , tags2]) => tags2);
     let list2 = items.filter((i) => (!q || i.name.includes(q)) && (!role || role(i)) && need.every((tags2) => i.tags.some((x) => tags2.includes(x))));
     if (!list2.length) {
@@ -7396,7 +7431,7 @@ function itemsPage(ctx) {
     }
     if (itemSort === "tier") {
       for (const tier of TIERS) {
-        const part = list2.filter((i) => tierOf(i) === tier);
+        const part = list2.filter((i) => tierOf(i) === tier).sort((x, y) => x.goldTotal - y.goldTotal);
         if (!part.length) continue;
         h(host, "div", "mn-shop-tier", tier);
         const grid = h(host, "div", "mn-items");

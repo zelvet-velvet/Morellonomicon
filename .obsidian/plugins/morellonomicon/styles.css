@@ -1304,6 +1304,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-shop-role svg { width: 26px; height: 26px; }
 .mn-shop-role img { width: 32px; height: 32px; }
 .mn-shop-role:not(.is-on) img { opacity: 0.55; }
+.mn-shoprole-ic { display: block; background-repeat: no-repeat; transform: scale(1.15); transition: opacity 0.15s; }   /* the shop's own class icon (a sprite) */
+.mn-shop-role:not(.is-on) .mn-shoprole-ic { opacity: 0.45; }
 .mn-app .mn-shop-sortbtn { flex: none; margin-left: auto; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 10px; border: 0; background: none; box-shadow: none; color: var(--mn-accent); }
 .mn-shop-sortbtn svg { width: 28px; height: 28px; }   /* about the size of the role icons beside it */
 .mn-shop-sortwrap { display: none; justify-content: flex-end; gap: 6px; margin: 8px 0 0; }
