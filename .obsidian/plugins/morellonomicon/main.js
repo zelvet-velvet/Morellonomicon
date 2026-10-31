@@ -5459,7 +5459,9 @@ function rosterPage(ctx) {
   drawGrid();
   return { title: "\u901F\u67E5", el };
 }
-var CHOSEN_MS = 560;
+var CHOSEN_MS = 820;
+var FLOOD_FADE_MS = 450;
+var WASH_AT_MS = 480;
 var CHOSEN_SPARKS = 8;
 function swipePage(ctx) {
   const store = ctx.plugin.store;
@@ -5502,10 +5504,19 @@ function swipePage(ctx) {
     let under = null;
     const bridge = (preview) => {
       if (under && !preview) {
-        under.empty();
-        likedGrid(under);
-        under.removeClass("is-preview");
-        under.addClass("is-bridged");
+        const view = under;
+        const count2 = view.querySelector(".mn-rq-endhead span");
+        if (count2) count2.textContent = `${liked.length} / ${picks.length} \u4F4D`;
+        const last = liked[liked.length - 1];
+        const lastIsNew = last && last === picks[picks.length - 1];
+        const grid = view.querySelector(".mn-rq-liked");
+        if (lastIsNew && grid) likedTile(grid, last)?.addClass("is-new");
+        else if (lastIsNew) {
+          view.empty();
+          likedGrid(view);
+          view.addClass("is-bridged");
+        }
+        view.removeClass("is-preview");
         return;
       }
       under?.remove();
@@ -5635,8 +5646,8 @@ function swipePage(ctx) {
     flood.style.left = `${r.left + r.width / 2}px`;
     flood.style.top = `${r.top + r.height * 0.42}px`;
     icon(flood, "heart");
-    window.setTimeout(() => flood.addClass("is-out"), CHOSEN_MS + 120);
-    window.setTimeout(() => flood.remove(), CHOSEN_MS + 520);
+    const wash = h(document.body, "div", "mn-rq-wash");
+    window.setTimeout(() => wash.addClass("is-in"), WASH_AT_MS);
     const pop = h(card, "span", "mn-rq-pop");
     icon(pop, "heart", "mn-rq-pop-big");
     for (let k = 0; k < CHOSEN_SPARKS; k++) {
@@ -5650,7 +5661,35 @@ function swipePage(ctx) {
       grid.removeClass("is-choosing");
       card.removeClass("is-chosen");
       pop.remove();
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        flood.addClass("is-out");
+        wash.addClass("is-out");
+        window.setTimeout(() => {
+          flood.remove();
+          wash.remove();
+        }, FLOOD_FADE_MS);
+      }));
     }, CHOSEN_MS);
+  };
+  const likedTile = (g, id) => {
+    const c = all.find((x) => x.id === id);
+    if (!c) return null;
+    const b = h(g, "button", "mn-rq-lk");
+    const im = h(b, "img");
+    im.src = loading(c.id);
+    im.alt = "";
+    if (c.face) im.style.objectPosition = c.face;
+    const who = h(b, "span", "mn-rq-lw");
+    h(who, "b", void 0, c.name);
+    const main = c.damageType || c.skillDamage[0] || "";
+    h(who, "span", "mn-rq-ls", [c.roles[0], main && `${main}\u50B7`, c.range ? c.range >= 550 ? "\u9060\u7A0B" : c.range >= 300 ? "\u4E2D\u7A0B" : "\u8FD1\u6230" : ""].filter(Boolean).join(" \xB7 "));
+    if (c.punch) h(who, "span", "mn-rq-lp", c.punch);
+    b.style.setProperty("--i", String(g.childElementCount - 1));
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      choose(g, b, c.id);
+    });
+    return b;
   };
   const likedGrid = (box) => {
     const head2 = h(box, "div", "mn-rq-endhead");
@@ -5659,25 +5698,7 @@ function swipePage(ctx) {
     const list2 = h(box, "div", "mn-rq-endlist");
     if (liked.length) {
       const g = h(list2, "div", "mn-rq-liked");
-      for (const id of liked) {
-        const c = all.find((x) => x.id === id);
-        if (!c) continue;
-        const b = h(g, "button", "mn-rq-lk");
-        const im = h(b, "img");
-        im.src = loading(c.id);
-        im.alt = "";
-        if (c.face) im.style.objectPosition = c.face;
-        const who = h(b, "span", "mn-rq-lw");
-        h(who, "b", void 0, c.name);
-        const main = c.damageType || c.skillDamage[0] || "";
-        h(who, "span", "mn-rq-ls", [c.roles[0], main && `${main}\u50B7`, c.range ? c.range >= 550 ? "\u9060\u7A0B" : c.range >= 300 ? "\u4E2D\u7A0B" : "\u8FD1\u6230" : ""].filter(Boolean).join(" \xB7 "));
-        if (c.punch) h(who, "span", "mn-rq-lp", c.punch);
-        b.style.setProperty("--i", String(g.childElementCount - 1));
-        b.addEventListener("click", (e) => {
-          e.preventDefault();
-          choose(g, b, c.id);
-        });
-      }
+      for (const id of liked) likedTile(g, id);
     } else empty(list2, { icon: "heart-off", title: "\u4E00\u500B\u90FD\u6C92\u559C\u6B61" });
     const foot = h(box, "div", "mn-rq-endfoot");
     const back = h(foot, "button", "mn-rq-back", "\u91CD\u65B0\u6311\u9078");

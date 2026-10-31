@@ -327,7 +327,9 @@ export function rosterPage(ctx: PageCtx): PageOut {
     return { title: "速查", el };
 }
 
-const CHOSEN_MS = 560;    // the chosen animation plays this long before the champion page opens
+const CHOSEN_MS = 820;    // the chosen animation covers the screen in this long; then the champion page opens under the cover
+const FLOOD_FADE_MS = 450;   // the cover fades away over the champion page
+const WASH_AT_MS = 480;      // the solid layer behind the heart starts to come in, so the screen is fully covered by CHOSEN_MS
 const CHOSEN_SPARKS = 8;  // small hearts bursting out of the big one
 // The swipe through the picked champions, as a page that fills the screen like a Handbook topic: the top card is dragged right
 // (like) or left (pass), or the ♥ / ✕ buttons are tapped; after the last card the liked champions are listed.
@@ -368,11 +370,18 @@ export function swipePage(ctx: PageCtx): PageOut {
         // page); deciding it brings it up sharp with the last choice in it.
         let under: HTMLElement | null = null;
         const bridge = (preview: boolean) => {
-            if (under && !preview) {   // the waiting view sharpens where it is, now with the last choice in it
-                under.empty();
-                likedGrid(under);
-                under.removeClass("is-preview");
-                under.addClass("is-bridged");
+            if (under && !preview) {
+                // the waiting view sharpens where it is: its portraits stay, the count changes, and the last card (when liked) is added and
+                // rises in alone; only when nothing was liked before is the list made anew
+                const view = under;
+                const count = view.querySelector(".mn-rq-endhead span");
+                if (count) count.textContent = `${liked.length} / ${picks.length} 位`;
+                const last = liked[liked.length - 1];
+                const lastIsNew = last && last === picks[picks.length - 1];
+                const grid = view.querySelector<HTMLElement>(".mn-rq-liked");
+                if (lastIsNew && grid) likedTile(grid, last)?.addClass("is-new");
+                else if (lastIsNew) { view.empty(); likedGrid(view); view.addClass("is-bridged"); }
+                view.removeClass("is-preview");
                 return;
             }
             under?.remove();
@@ -478,8 +487,8 @@ export function swipePage(ctx: PageCtx): PageOut {
         flood.style.left = `${r.left + r.width / 2}px`;
         flood.style.top = `${r.top + r.height * 0.42}px`;
         icon(flood, "heart");
-        window.setTimeout(() => flood.addClass("is-out"), CHOSEN_MS + 120);
-        window.setTimeout(() => flood.remove(), CHOSEN_MS + 520);
+        const wash = h(document.body, "div", "mn-rq-wash");   // a solid layer behind it, so every corner is covered when the page opens
+        window.setTimeout(() => wash.addClass("is-in"), WASH_AT_MS);
         const pop = h(card, "span", "mn-rq-pop");
         icon(pop, "heart", "mn-rq-pop-big");
         for (let k = 0; k < CHOSEN_SPARKS; k++) {
@@ -488,12 +497,34 @@ export function swipePage(ctx: PageCtx): PageOut {
             icon(sp, "heart");
         }
         haptic();
+        // the page is built only once the screen is covered (building it while the heart grew made the heart stutter), then shown when
+        // it has been drawn: the cover fades away over it
         window.setTimeout(() => {
             ctx.openChampion(id);
             grid.removeClass("is-choosing"); card.removeClass("is-chosen"); pop.remove();   // as it was when you come back
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                flood.addClass("is-out"); wash.addClass("is-out");
+                window.setTimeout(() => { flood.remove(); wash.remove(); }, FLOOD_FADE_MS);
+            }));
         }, CHOSEN_MS);
     };
-    // after the last card: the liked champions two across (picture, name, overview line), and a way to swipe again
+    // one liked champion's portrait (picture, name, overview line); a tap chooses it
+    const likedTile = (g: HTMLElement, id: string): HTMLElement | null => {
+        const c = all.find((x) => x.id === id);
+        if (!c) return null;
+        const b = h(g, "button", "mn-rq-lk");
+        const im = h(b, "img"); im.src = loading(c.id); im.alt = "";
+        if (c.face) im.style.objectPosition = c.face;
+        const who = h(b, "span", "mn-rq-lw");
+        h(who, "b", undefined, c.name);
+        const main = c.damageType || c.skillDamage[0] || "";
+        h(who, "span", "mn-rq-ls", [c.roles[0], main && `${main}傷`, c.range ? (c.range >= 550 ? "遠程" : c.range >= 300 ? "中程" : "近戰") : ""].filter(Boolean).join(" · "));
+        if (c.punch) h(who, "span", "mn-rq-lp", c.punch);
+        b.style.setProperty("--i", String(g.childElementCount - 1));   // the order they rise in
+        b.addEventListener("click", (e) => { e.preventDefault(); choose(g, b, c.id); });
+        return b;
+    };
+    // after the last card: the liked champions two across, and a way to swipe again
     const likedGrid = (box: HTMLElement) => {
         const head = h(box, "div", "mn-rq-endhead");
         h(head, "b", undefined, "Pick Me Up!");
@@ -501,20 +532,7 @@ export function swipePage(ctx: PageCtx): PageOut {
         const list = h(box, "div", "mn-rq-endlist");   // only this part scrolls
         if (liked.length) {
             const g = h(list, "div", "mn-rq-liked");
-            for (const id of liked) {
-                const c = all.find((x) => x.id === id);
-                if (!c) continue;
-                const b = h(g, "button", "mn-rq-lk");
-                const im = h(b, "img"); im.src = loading(c.id); im.alt = "";
-                if (c.face) im.style.objectPosition = c.face;
-                const who = h(b, "span", "mn-rq-lw");
-                h(who, "b", undefined, c.name);
-                const main = c.damageType || c.skillDamage[0] || "";
-                h(who, "span", "mn-rq-ls", [c.roles[0], main && `${main}傷`, c.range ? (c.range >= 550 ? "遠程" : c.range >= 300 ? "中程" : "近戰") : ""].filter(Boolean).join(" · "));
-                if (c.punch) h(who, "span", "mn-rq-lp", c.punch);
-                b.style.setProperty("--i", String(g.childElementCount - 1));   // the order they rise in
-                b.addEventListener("click", (e) => { e.preventDefault(); choose(g, b, c.id); });
-            }
+            for (const id of liked) likedTile(g, id);
         } else empty(list, { icon: "heart-off", title: "一個都沒喜歡" });
         // the two actions float over the portraits in one row (no panel behind them)
         const foot = h(box, "div", "mn-rq-endfoot");
