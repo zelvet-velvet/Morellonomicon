@@ -1129,6 +1129,9 @@ var preloadRoleIcons = () => {
   const sheet = new Image();
   sheet.src = SHOP_ROLE_SPRITE;
   preloaded.set(SHOP_ROLE_SPRITE, sheet);
+  void loadShopSheet().then((s) => {
+    if (s) SHOP_ICON_Y.forEach((_, row2) => shopMask(s, row2));
+  });
 };
 var SHOP_ROLE_SPRITE = "https://raw.communitydragon.org/latest/game/assets/ux/itemshop/jade/itemshop_texture_atlas.png";
 var SHOP_ROLE_BOX = {
@@ -7359,7 +7362,7 @@ var ITEM_ROLES = [
 ];
 var RAIL_BREAKS = /* @__PURE__ */ new Set(["\u6CD5\u8853\u5F37\u5EA6", "\u751F\u547D", "\u6280\u80FD\u6025\u901F"]);
 var itemRole = "";
-var itemSort = "tier";
+var itemFlip = false;
 var itemStats = /* @__PURE__ */ new Set();
 function itemsPage(ctx) {
   const store = ctx.plugin.store;
@@ -7373,7 +7376,6 @@ function itemsPage(ctx) {
   search.type = "search";
   search.placeholder = "\u641C\u5C0B\u88DD\u5099";
   const roles = layoutBlock(h(el, "div", "mn-shop-roles"), true);
-  const sortWrap = h(el, "div", "mn-shop-sortwrap");
   const body = h(el, "div", "mn-shop");
   const rail = layoutBlock(h(body, "div", "mn-shop-rail"), true);
   const host = layoutBlock(h(body, "div", "mn-shop-list"), true);
@@ -7400,26 +7402,16 @@ function itemsPage(ctx) {
         draw();
       });
     }
-    const sb = h(roles, "button", "mn-shop-sortbtn");
-    icon(sb, "arrow-up-down");
-    sb.setAttribute("aria-label", "\u6392\u5E8F");
+    const sb = h(roles, "button", "mn-shop-sortbtn" + (itemFlip ? " is-on" : ""));
+    icon(sb, itemFlip ? "arrow-up-wide-narrow" : "arrow-down-wide-narrow");
+    sb.setAttribute("aria-label", itemFlip ? "\u50B3\u8AAA\u5728\u524D" : "\u8D77\u59CB\u5728\u524D");
+    holdTip(sb, itemFlip ? "\u50B3\u8AAA\u5728\u524D" : "\u8D77\u59CB\u5728\u524D");
     sb.addEventListener("click", (e) => {
       e.preventDefault();
-      sortWrap.toggleClass("is-open", !sortWrap.hasClass("is-open"));
+      itemFlip = !itemFlip;
+      drawRoles();
+      draw();
     });
-  };
-  const drawSort = () => {
-    sortWrap.empty();
-    for (const [id, name] of [["tier", "\u4F9D\u968E\u7D1A"], ["up", "\u50F9\u683C \u4F4E \u2192 \u9AD8"], ["down", "\u50F9\u683C \u9AD8 \u2192 \u4F4E"]]) {
-      const b = h(sortWrap, "button", "mn-shop-sort" + (itemSort === id ? " is-on" : ""), name);
-      b.addEventListener("click", (e) => {
-        e.preventDefault();
-        itemSort = id;
-        sortWrap.removeClass("is-open");
-        drawSort();
-        draw();
-      });
-    }
   };
   const drawRail = () => {
     rail.empty();
@@ -7469,23 +7461,18 @@ function itemsPage(ctx) {
       h(host, "p", "mn-home-sub", "\u6C92\u6709\u7B26\u5408\u7684\u88DD\u5099");
       return;
     }
-    if (itemSort === "tier") {
-      for (const tier of TIERS) {
-        const part = list2.filter((i) => tierOf(i) === tier).sort((x, y) => x.goldTotal - y.goldTotal);
-        if (!part.length) continue;
-        h(host, "div", "mn-shop-tier", tier);
-        const grid = h(host, "div", "mn-items");
-        for (const it of part) tile2(grid, it);
-      }
-    } else {
-      list2 = [...list2].sort((x, y) => (itemSort === "up" ? 1 : -1) * (x.goldTotal - y.goldTotal));
+    for (const tier of itemFlip ? [...TIERS].reverse() : TIERS) {
+      const part = list2.filter((i) => tierOf(i) === tier).sort((x, y) => x.goldTotal - y.goldTotal);
+      if (!part.length) continue;
+      h(host, "div", "mn-shop-tier", tier);
       const grid = h(host, "div", "mn-items");
-      for (const it of list2) tile2(grid, it);
+      for (const it of part) tile2(grid, it);
     }
+    host.scrollTop = 0;
   };
   search.addEventListener("input", draw);
+  void warmPictures(items.map((i) => i.icon));
   drawRoles();
-  drawSort();
   drawRail();
   draw();
   const fit = () => {
@@ -7494,8 +7481,6 @@ function itemsPage(ctx) {
     body.style.height = `${Math.max(240, scroll.getBoundingClientRect().bottom - body.getBoundingClientRect().top - 8)}px`;
   };
   requestAnimationFrame(fit);
-  sortWrap.addEventListener("transitionend", fit);
-  new ResizeObserver(fit).observe(sortWrap);
   return { title: "Items", el };
 }
 
@@ -8187,7 +8172,7 @@ var MorellonomiconPlugin = class extends import_obsidian16.Plugin {
         this.lastChange = Date.now();
         this.views().forEach((v) => v.refresh());
       });
-      void this.whenBooted().then(() => warmPictures([...this.store.champions().map((c) => c.icon), ...this.store.augments().map((a) => a.icon)]));
+      void this.whenBooted().then(() => warmPictures([...this.store.champions().map((c) => c.icon), ...this.store.augments().map((a) => a.icon), ...this.store.items().map((i) => i.icon)]));
       if (this.settings.openOnStartup) void this.activate(true);
       this.updateBody();
     });

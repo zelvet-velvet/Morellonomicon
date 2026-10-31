@@ -562,6 +562,9 @@ export const preloadRoleIcons = (): void => {
     if (preloaded.size) return;
     for (const file of [...Object.values(ROLE_FILE), ...Object.values(LANE_FILE)]) { const im = new Image(); im.src = ROLE_WIKI + file; preloaded.set(file, im); }
     const sheet = new Image(); sheet.src = SHOP_ROLE_SPRITE; preloaded.set(SHOP_ROLE_SPRITE, sheet);   // the shop's class tab icons
+    // the shop's stat icons (Items' rail, the stat chips): the sheet fetched and every icon's sharp shape made now, so the rail is
+    // drawn sharp at once instead of blurred, then blocky, then sharp
+    void loadShopSheet().then((s) => { if (s) SHOP_ICON_Y.forEach((_, row) => shopMask(s, row)); });
 };
 // The item shop's class tabs with the shop's own icons: one sprite sheet of the game (CommunityDragon, shown by address), each icon's
 // light state (the sheet has four states per icon, not in the same order for every icon), measured from the sheet as

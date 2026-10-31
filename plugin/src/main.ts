@@ -74,7 +74,7 @@ export default class MorellonomiconPlugin extends Plugin {
         this.app.workspace.onLayoutReady(() => {
             void this.store.loadStats().then(() => { this.lastChange = Date.now(); this.views().forEach((v) => v.refresh()); });
             // once start-up is over, the champion and augment icons are fetched in the background so their lists show them at once
-            void this.whenBooted().then(() => warmPictures([...this.store.champions().map((c) => c.icon), ...this.store.augments().map((a) => a.icon)]));
+            void this.whenBooted().then(() => warmPictures([...this.store.champions().map((c) => c.icon), ...this.store.augments().map((a) => a.icon), ...this.store.items().map((i) => i.icon)]));
             if (this.settings.openOnStartup) void this.activate(true);
             this.updateBody();
         });

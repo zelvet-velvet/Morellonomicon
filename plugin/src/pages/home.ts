@@ -1,6 +1,6 @@
 import { mapUrl } from "./handbook";
 import type { PageCtx, PageOut } from "./index";
-import { ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, shopRoleIcon, h, holdTip, icon, page } from "../ui";
+import { ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, shopRoleIcon, h, holdTip, icon, page, warmPictures } from "../ui";
 import { MODES } from "../modes";
 import { PROFILE_FRESH, QUEUE, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, type Profile } from "../data/riot";
 
@@ -230,7 +230,7 @@ const ITEM_ROLES: [string, (i: ItemLike) => boolean][] = [
     ["輔助", (i) => has(i, "GoldPer", "Aura") || (has(i, "Active") && !has(i, "Damage", "SpellDamage"))],
 ];
 const RAIL_BREAKS = new Set(["法術強度", "生命", "技能急速"]);   // a line before each group of the stat rail, like the shop
-let itemRole = "", itemSort = "tier";   // kept while the app is open
+let itemRole = "", itemFlip = false;   // kept while the app is open; itemFlip: the tier blocks the other way up (傳說 first)
 const itemStats = new Set<string>();
 // Items, laid out like the game's shop: the search, the role tabs with the sort button, the stat filters as a rail on the left
 // (several can be on: an item must have them all), and a tight grid of icons with their price. A tap opens the item.
@@ -246,7 +246,6 @@ export function itemsPage(ctx: PageCtx): PageOut {
     search.type = "search";
     search.placeholder = "搜尋裝備";
     const roles = layoutBlock(h(el, "div", "mn-shop-roles"), true);   // the three blocks each load on their own
-    const sortWrap = h(el, "div", "mn-shop-sortwrap");
     const body = h(el, "div", "mn-shop");
     const rail = layoutBlock(h(body, "div", "mn-shop-rail"), true);
     const host = layoutBlock(h(body, "div", "mn-shop-list"), true);   // one loading look for the whole list
@@ -264,18 +263,12 @@ export function itemsPage(ctx: PageCtx): PageOut {
             holdTip(b, r);
             b.addEventListener("click", (e) => { e.preventDefault(); itemRole = itemRole === r ? "" : r; drawRoles(); draw(); });
         }
-        // the sort button at the right end; its choices drop down under it
-        const sb = h(roles, "button", "mn-shop-sortbtn");
-        icon(sb, "arrow-up-down");
-        sb.setAttribute("aria-label", "排序");
-        sb.addEventListener("click", (e) => { e.preventDefault(); sortWrap.toggleClass("is-open", !sortWrap.hasClass("is-open")); });
-    };
-    const drawSort = () => {
-        sortWrap.empty();
-        for (const [id, name] of [["tier", "依階級"], ["up", "價格 低 → 高"], ["down", "價格 高 → 低"]]) {
-            const b = h(sortWrap, "button", "mn-shop-sort" + (itemSort === id ? " is-on" : ""), name);
-            b.addEventListener("click", (e) => { e.preventDefault(); itemSort = id; sortWrap.removeClass("is-open"); drawSort(); draw(); });
-        }
+        // the sort button at the right end: it turns the tier blocks upside down (起始 → 傳說, or 傳說 → 起始); its arrow shows which way
+        const sb = h(roles, "button", "mn-shop-sortbtn" + (itemFlip ? " is-on" : ""));
+        icon(sb, itemFlip ? "arrow-up-wide-narrow" : "arrow-down-wide-narrow");
+        sb.setAttribute("aria-label", itemFlip ? "傳說在前" : "起始在前");
+        holdTip(sb, itemFlip ? "傳說在前" : "起始在前");
+        sb.addEventListener("click", (e) => { e.preventDefault(); itemFlip = !itemFlip; drawRoles(); draw(); });
     };
     const drawRail = () => {
         rail.empty();
@@ -309,22 +302,19 @@ export function itemsPage(ctx: PageCtx): PageOut {
         const need = ITEM_CATS.filter(([n]) => itemStats.has(n)).map(([, , tags]) => tags);
         let list = items.filter((i) => (!q || i.name.includes(q)) && (!role || role(i)) && need.every((tags) => i.tags.some((x) => tags.includes(x))));
         if (!list.length) { h(host, "p", "mn-home-sub", "沒有符合的裝備"); return; }
-        if (itemSort === "tier") {
-            for (const tier of TIERS) {
-                const part = list.filter((i) => tierOf(i) === tier).sort((x, y) => x.goldTotal - y.goldTotal);   // cheapest first, like the shop
-                if (!part.length) continue;
-                h(host, "div", "mn-shop-tier", tier);
-                const grid = h(host, "div", "mn-items");
-                for (const it of part) tile(grid, it);
-            }
-        } else {
-            list = [...list].sort((x, y) => (itemSort === "up" ? 1 : -1) * (x.goldTotal - y.goldTotal));
+        for (const tier of itemFlip ? [...TIERS].reverse() : TIERS) {
+            const part = list.filter((i) => tierOf(i) === tier).sort((x, y) => x.goldTotal - y.goldTotal);   // cheapest first, like the shop
+            if (!part.length) continue;
+            h(host, "div", "mn-shop-tier", tier);
             const grid = h(host, "div", "mn-items");
-            for (const it of list) tile(grid, it);
+            for (const it of part) tile(grid, it);
         }
+        host.scrollTop = 0;
     };
     search.addEventListener("input", draw);
-    drawRoles(); drawSort(); drawRail(); draw();
+    // every item's icon, fetched now: a role or stat filter then shows its items at once (Design Rules: ready before it shows)
+    void warmPictures(items.map((i) => i.icon));
+    drawRoles(); drawRail(); draw();
     // only the item grid scrolls: the shop fills the screen down to the tab bar, the search, role tabs and rail stay put
     const fit = () => {
         const scroll = el.closest<HTMLElement>(".mn-scroll");
@@ -332,7 +322,5 @@ export function itemsPage(ctx: PageCtx): PageOut {
         body.style.height = `${Math.max(240, scroll.getBoundingClientRect().bottom - body.getBoundingClientRect().top - 8)}px`;
     };
     requestAnimationFrame(fit);
-    sortWrap.addEventListener("transitionend", fit);
-    new ResizeObserver(fit).observe(sortWrap);
     return { title: "Items", el };
 }

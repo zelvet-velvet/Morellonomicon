@@ -1326,10 +1326,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-shop-role:not(.is-on) .mn-shoprole-ic { opacity: 0.45; }
 .mn-app .mn-shop-sortbtn { flex: none; margin-left: auto; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 10px; border: 0; background: none; box-shadow: none; color: var(--mn-accent); }
 .mn-shop-sortbtn svg { width: 28px; height: 28px; }   /* about the size of the role icons beside it */
-.mn-shop-sortwrap { display: none; justify-content: flex-end; gap: 6px; margin: 8px 0 0; }
-.mn-shop-sortwrap.is-open { display: flex; }
-.mn-app .mn-shop-sort { height: 30px; padding: 0 12px; border-radius: 15px; border: 1px solid var(--mn-line); background: var(--mn-card); box-shadow: none; font-size: 12.5px; color: var(--mn-muted); }
-.mn-app .mn-shop-sort.is-on { color: var(--mn-accent); border-color: var(--mn-accent); }
+.mn-app .mn-shop-sortbtn.is-on { color: var(--mn-accent); }   /* the tiers turned upside down (傳說 first) */
 .mn-shop { display: flex; align-items: stretch; gap: 4px; margin: 4px 0 0 -16px; min-height: 0; }
 .mn-scroll:has(.mn-shop) { overflow-y: hidden; }   /* the page stays; only the item grid scrolls */
 .mn-shop-rail { flex: none; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; align-items: center; gap: 0; width: 56px; padding: 2px 0; border-right: 1px solid var(--mn-line); }
