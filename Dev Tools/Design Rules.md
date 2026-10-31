@@ -24,7 +24,7 @@ sticker: lucide//ruler
 > A rule from Zaviel (2026-10-31): the champion page's swipe pages (概覽, 技能, 出裝, 強化, 技巧) and the pages they open (全部概覽, 全部強化 …) share one style, so a sub page reads as the same page opened further, not another app.
 >
 > - **The same few parts, the same art.** Both are built from the same parts and helpers; a sub page sits on the same darkened splash as the swipe pages past 概覽: the page gives it as `art` and the app draws it on its own layer under the scrolling area (`.mn-page-art`), so scrolling or a page sliding in never moves it (a picture inside the page glitched); it comes from the cache.
-> - **Tap a side to turn the page.** Besides swiping, a tap on the left or right fifth of the swipe pages (not on something tappable) goes to the page before or after.
+> - **Tap a side to switch the play style.** On a page with play style words (強化, 全部強化), a tap on the left or right fifth of the page (not on an augment) switches to the style before or after, like turning a story; the pages themselves only swipe.
 > - **A glance page fits one screen.** A swipe page that has a 全部 page does not scroll: it shows as many whole rows as fit, centred in the room it has, with its 全部 › link always in view at the foot; everything else is the 全部 page's job.
 > - **Icons and names only on a glance.** An icon grid shows the icon and its name, nothing more; numbers, reasons and marks (輸出 +23%, 前期強) are on the detail page it opens (an augment opened from a champion says how it fits that champion).
 > - **No panels.** Parts float with no tile, card or pill background: an icon with its name under it and one small muted line (the bare tiles: `augmentTiles(…, { bare: true })`, `.mn-aug-tiles.is-bare`). A reason or tag is coloured text, not a filled pill.
