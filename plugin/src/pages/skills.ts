@@ -2,7 +2,8 @@ import { requestUrl } from "obsidian";
 import type { Champion, Change, Skill } from "../data/store";
 import { DIR_COLOR } from "./changes";
 import { DAMAGE_COLOR, blockUntil, chip, h, icon, scalingParts, whenMediaLoaded } from "../ui";
-const CLIP_FADE_MS = 350;   // a clip fades in over 0.3 s (styles.css, .mn-app video); its stand-in stays under it that long
+const CLIP_FADE_MS = 350;
+const WAKE_MAX_MS = 700;    // a clip moved in from the shelf shows after its first painted frame, or after this long at most   // a clip fades in over 0.3 s (styles.css, .mn-app video); its stand-in stays under it that long
 
 // Passive + Q W E R as icons; the frame colour is the damage type of the skill (orange physical, blue magic, yellow true).
 // Tap an icon to open its details right below (tap again to close); no new page.
@@ -64,9 +65,23 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
             const clipBox = h(detail, "div", "mn-sd-clipbox");
             const ready = held.get(i);
             if (shelf && !ready) { dropPrev(); clipBox.remove(); return null; }   // its clip could not play: no box
-            if (ready && ready.readyState >= 2) {   // loaded ahead: straight in, no stand-in and no loading look
-                dropPrev();
+            if (ready && ready.readyState >= 2) {
+                // loaded ahead: straight in, no loading look. It shows only once it is playing and has painted: after a few switches iOS
+                // has let go of a shelved clip's decoder, and a clip starting up again paints its first frame as a hard rectangle that
+                // ignores the box's fade. Until then the clip that was on show stays, inside the fade.
+                const stay = prev && prev !== ready ? prev : null;
+                if (stay) { clipBox.append(stay); void stay.play().catch(() => undefined); }
                 clipBox.append(ready);
+                ready.classList.add("is-waking");
+                let shown = false;
+                const show = () => {
+                    if (shown) return;
+                    shown = true;
+                    ready.classList.remove("is-waking");
+                    if (stay) window.setTimeout(dropPrev, CLIP_FADE_MS); else dropPrev();
+                };
+                ready.addEventListener("playing", () => requestAnimationFrame(() => requestAnimationFrame(show)), { once: true });
+                window.setTimeout(show, WAKE_MAX_MS);
                 void ready.play().catch(() => undefined);
                 return Promise.resolve();
             }

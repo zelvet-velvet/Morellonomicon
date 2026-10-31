@@ -3564,6 +3564,7 @@ function changesBlock(parent, c, ctx) {
 // src/pages/skills.ts
 var import_obsidian10 = require("obsidian");
 var CLIP_FADE_MS = 350;
+var WAKE_MAX_MS = 700;
 function skillStrip(parent, c, changes = [], opt = {}) {
   if (!c.skills.length) return;
   const strip2 = h(parent, "div", "mn-skills");
@@ -3642,8 +3643,23 @@ function skillStrip(parent, c, changes = [], opt = {}) {
         return null;
       }
       if (ready && ready.readyState >= 2) {
-        dropPrev();
+        const stay = prev && prev !== ready ? prev : null;
+        if (stay) {
+          clipBox.append(stay);
+          void stay.play().catch(() => void 0);
+        }
         clipBox.append(ready);
+        ready.classList.add("is-waking");
+        let shown2 = false;
+        const show2 = () => {
+          if (shown2) return;
+          shown2 = true;
+          ready.classList.remove("is-waking");
+          if (stay) window.setTimeout(dropPrev, CLIP_FADE_MS);
+          else dropPrev();
+        };
+        ready.addEventListener("playing", () => requestAnimationFrame(() => requestAnimationFrame(show2)), { once: true });
+        window.setTimeout(show2, WAKE_MAX_MS);
         void ready.play().catch(() => void 0);
         return Promise.resolve();
       }
