@@ -27,14 +27,14 @@ How the app ranks ARAM Mayhem augments for each champion from the champion's own
 > - **A reference target**: 2500 HP, 80 armor and magic resist (for % health effects and resistances).
 
 > [!info]+ What the champion does in it
-> - **Casts.** Each ability with a cooldown is cast `1 + (1 − resets) × FIGHT_S × (1 + haste / 100) / cooldown + resets × RESET_CASTS` times. `resets` (0–1, hand) is how much its cooldowns come back by takedowns or resets instead of time (Katarina, Darius R, Master Yi): haste matters less for it.
+> - **Casts.** Each ability with a cooldown is cast `1 + (1 − resets) × FIGHT_S × (1 + haste / 100) / cooldown + resets × RESET_CASTS` times. `resets` (0–1, hand) is how much its cooldowns come back by takedowns or resets instead of time (Katarina, Darius R, Master Yi): haste matters less for it. An ability with a cooldown under 2 s (`TOGGLE_CD`: a toggle or stance, Jinx Q) counts as one cast and gains nothing from haste.
 > - **Damage per cast** from its rank rows: base + AP ratio × AP + AD ratios × AD (the biggest row of each damage type).
 > - **Basic attacks**: `FIGHT_S × attack speed × autos`, where `autos` (0–1) is how much of the fight it spends attacking: 0.85 for a marksman, 0.6 for a melee fighter or tank, 0.3 for the others (hand-set per play style when wrong). Each deals total AD (crits at 175%).
 > - **Triggers counted per fight**: basic attacks; on-hit applications (basic attacks + casts of the abilities in `onhit`); ability hits; casts; dashes (casts of abilities tagged 位移); crowd control (casts tagged 控場); takedowns (`TAKEDOWNS`, 1.5 per fight).
 > - **Survival** is effective health: total HP × (1 + average resist / 100), plus shields and healing over the fight.
 
 > [!info]+ Weights
-> - Damage, survival and utility are weighed from Riot's champion ratings (攻擊 / 魔法 / 防禦, 1–10): damage = the larger of attack and magic, survival = defense, utility a small fixed share. A tank values a health augment more than an assassin does, from the same numbers.
+> - Damage, survival, support and utility are weighed from Riot's champion ratings (攻擊 / 魔法 / 防禦, 1–10), **squared** so the side a champion is built for counts most: damage = the larger of attack and magic, survival = defense, support = 9 for champions that heal or shield allies, utility 1.5. A tank values a health augment more than an assassin does, from the same numbers.
 
 ---
 ## 🧩 Data
@@ -50,11 +50,12 @@ How the app ranks ARAM Mayhem augments for each champion from the champion's own
 > [!example]+ Augment terms
 > | Term | Example | Means |
 > | --- | --- | --- |
-> | `stat` | `{"stat": "ap", "value": 50}` | a stat change: `ap`, `ad`, `ad_pct`, `bonus_ad`, `as`, `crit`, `haste`, `ult_haste`, `basic_haste`, `hp`, `hp_pct`, `armor`, `mr`, `ms_pct`, `omnivamp`, `heal_power`, `heal_received`, `pen` |
+> | `stat` | `{"stat": "ap", "value": 50}`, `{"stat": "haste", "from": "ap", "value": 0.3}` | a stat change (or one made from another stat: 靈光一閃, 巫妖思維): `ap`, `ad`, `ad_pct`, `bonus_ad`, `as`, `crit`, `haste`, `ult_haste`, `basic_haste`, `hp`, `hp_pct`, `armor`, `mr`, `ms_pct`, `omnivamp`, `heal_power`, `heal_received`, `pen` |
 > | `haste_key` / `haste_tag` | `{"haste_tag": "位移", "value": 175}` | haste for one ability, or for abilities with a tag (衝鋒) |
-> | `haste_from` | `{"haste_from": "ap", "value": 0.3}` | haste from another stat (靈光一閃) |
+> | `abilities_onhit` | `{"abilities_onhit": true}` | abilities apply on-hit effects (幻影武器) |
+> | `ally_power` | `{"ally_power": 0.3}` | more healing and shields on allies (全部都給你) |
 > | `trigger` | `{"trigger": "auto", "every": 4, "dmg": {"base": [11, 80], "bonus_ad": 0.35, "ap": 0.19}}` | damage, shield or heal each time something happens: `auto`, `onhit`, `ability_hit`, `cast`, `dash`, `cc`, `takedown`, `ult`; `every` (every n-th), `icd` (seconds between), `ranged` (other numbers when ranged) |
-> | `mult` | `{"mult": "ability", "value": 0.35}` | more damage: `ability`, `auto`, `ult`, `all` |
+> | `mult` | `{"mult": "ability", "value": 0.35}` | more damage: `ability`, `auto`, `ult`, `all`, or one ability (`Q`) |
 > | `cd_per_auto` | `{"cd_per_auto": 1.25}` | each basic attack takes seconds off every cooldown (祕術拳擊) |
 > | `no_ult` | `{"no_ult": true}` | the ultimate cannot be cast (基本功夫) |
 > | `only` | `{"only": "ranged"}` | offered or useful only to melee / ranged |
