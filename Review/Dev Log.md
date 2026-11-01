@@ -1,7 +1,7 @@
 ---
 title: Morellonomicon - Dev Log
 date: 2026-10-27
-updated: 2026-11-01
+updated: 2026-11-02
 tags:
   - dev-log
   - morellonomicon
@@ -12,8 +12,8 @@ What changed and when, in short: **one note per day** in `Log/` (newest first), 
 ## 📆 Days
 
 ### 2026
-- [[2026-11-01]]: Items sort flips the tiers, item and rail icons ready before a filter
-- [[2026-10-31]]: Command palette pins (clone, commit-and-sync, reload); the Layouts block window opens at the right on PC
+- [[2026-11-01]]: 速查 heart animation and end view, 技能 order and clip, balance and bare pages, item route, Items flip and icons ready ahead
+- [[2026-10-31]]: the augment model (tiers from champion numbers) and the 強化 tab, champion page rework and its design rule, items only from the shop with its class tabs, Home cold open, command palette pins
 - [[2026-10-30]]: project logo and README; augment page with game and wiki numbers; champion page v2 (big banner, swipe cards) and augment picks per champion; inbox, 速查卡片 and Layouts editors; callouts by state, picture and balance rules
 - [[2026-10-29]]: search capsule on the keyboard, the loading look for every block, [[Design Rules]], Handbook topics full screen, Items like the shop, 速查 text for every champion, new glossary and item pages
 - [[2026-10-28]]: loading screen tips, one Handbook card layout ([[Card Layout]]), [[Icons]], Malphite's ult by level, item recipe tree, 速查 overview cards and swipe

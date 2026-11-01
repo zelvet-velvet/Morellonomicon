@@ -8,67 +8,31 @@ sticker: lucide//activity
 > [!important] For AI assistants
 > Read [[LLM Guide]] before any `CMD_` or status update. This note is kept by `CMD_SYNC` / `CMD_ROLLOVER` / `CMD_NOTES_SYNC`; the day notes in `Review/Log/` by `CMD_JOURNAL`.
 
-## 🚀 Today's Progress (2026-10-30)
+## 🚀 Today's Progress (2026-11-02)
 > [!abstract]+ Today
-> - **Project logo**: a clean flat tome after the Morellonomicon item (purple cover, gold corner caps, three green claws, green flames sweeping up to the right), no background, a transparent PNG at the top of the README.
-> - **README like a public tool**: logo, title with badges, feature table, install, FAQ, data sources; screenshots still to add.
-> - **Augment page A**: a banner, a Lv1 / 最大 switch, stat chips with the shop icons, the effect with its numbers filled in and coloured by kind, the fitting champions as a sideways strip; numbers for 102 of 249 augments from the game data (to check on the phone).
-> - **Wiki numbers for every augment**: 247 of 248 augments have a zh_TW effect line with the League wiki's Mayhem numbers (待驗證); the page shows it instead of Arena's numbers (which differed for 34 of 54) and keeps Riot's tags for 適合的英雄.
-> - **Effect text like the game's**: values by level and scalings are pills with an icon in their stat's colour, with space around them; stat amounts and damage kinds are coloured (to check on the phone).
-> - **Layouts editor**: its own heading at the top of [[Layouts]] (in the outline), note boxes four lines tall.
-> - **Augment picks as tiles**: the champion's best augments overall (scored against what it does), tiles three across with a reason chip; a new 全部 bar (to check on the phone).
-> - **Champion page, full splash**: the splash over the whole page with the name at the foot, no page titles, a dot page hint at the top; 概覽 with the radar beside the stat tiles; the other pages darken the art and use the whole page (to check on the phone).
-> - **Block window for the phone**: the name is a box you tap to type in (wraps and grows), position and size as a box diagram (the gap to each screen edge around the block, W × H inside; tap a number, then − / + in 4 px or type it), every text box 16 px so iOS does not zoom (to check on the phone).
-> - **Layouts editor like a design tool**: + block opens a grid of kinds; a tapped block opens a floating window (drag its top bar to move it, double-tap the name to rename) with alignment buttons, X Y W H and the right / bottom edges (drag a letter to scrub), a note that grows, duplicate and delete icons (to check on the PC and phone).
-> - **Champion page v3 built**: the splash as one big rounded art card behind the page with the name over it; the five pages swipe sideways on its fade with no panel, each with its name and 全部 at the top and its top picks at the bottom; small icon chips float in one capsule over the foot (to check on the phone).
-> - **Champion page v3 mocks**: Zaviel's v3 outline tidied into five mock pages in [[Layouts]] (a big art card, the content on its fade with no panel, 全部 top right, a small chip strip), to adjust before it is built.
-> - **Champion page v2 built**: a big banner with the name over it, the pages as cards with the next peeking in, icon-only chips; 概覽 stat tiles and tags, 技能 HUD bar, 出裝 1 → 2 → 3, 強化 best three, 技巧 first tip; every page and 全部 page in [[Layouts]] (to check on the phone).
-> - **Champion page A**: the banner, then one block that swipes sideways between 概覽 · 技能 · 出裝 · 強化 · 技巧 with dots under it, no scrolling; top picks centred, 全部 › opens the full list (to check on the phone).
-> - **Balance rule**: [[Design Rules]] has Balance (no big empty space, weight spread, few components centred); the LLM Guide's check includes it.
-> - **Sharper card art**: the 速查 and champion cards use Riot's centered splash (1280 × 720) instead of the loading art (308 × 560) (to check on the phone).
-> - **Picture check rule**: [[Design Rules]] has a picture check after every page change (loading look on every picture block, fetch what comes next ahead, no empty page); the LLM Guide's workflow points to it.
-> - **Champion Augments tab**: the augments that suit the champion by rarity, best first, each with why (pinned, Riot's tags, hand-written, a guess); the first six of each rarity, the rest folded (to check on the phone).
-> - **No orange bar, calmer cold open**: blocks no longer show Obsidian's orange loading bar; the tab bar is not rebuilt while the notes arrive and Home redraws in place when the Riot profile comes in (to check on the phone).
-> - **Pickers and the 速查卡片 editor**: champions and items in the inbox editors are picked from a list with icon and name; `Inbox/速查卡片` edits each champion's 速查 text in its note, with room counters and a 已驗證 count (to check on the phone).
-> - **Inbox editor**: both inboxes have an editor like the Layouts note: + 新增, cards with a status pill, a form per entry (to check on the phone).
-> - **Dev Tools in callouts**: Design Rules, Icons, Layouts and UI Text keep their headings, their text sits in callouts.
-> - **Callout format**: [[LLM Guide]] has the vault note format (callouts by state); Dev Status areas and the inbox templates follow it, with waiting items marked `[!]` and decisions `[?]`.
-> - **Augment and item banners**: under the top bar with Back floating on the art, little space under them (to check on the phone).
+> - Nothing yet. Next: review the augment recommendations on the 強化 tab and `Review/Augment Tiers.md` (see Ongoing → Data).
 
-## 📅 Yesterday's Progress (2026-10-29)
-> [!abstract]- Yesterday
-> - **Search capsule on the keyboard**: on Picks and Champions it rises with the keyboard from the tap and goes down the moment it closes, with no jumps (to check on the phone).
-> - **Loading look for every block**: each Layouts block with pictures blurs with the band of light until they are in; a page's blocks load together (Home, Picks, Champions, Items) (to check on the phone).
-> - **Design Rules note**: [[Design Rules]] holds how every page looks and behaves; the LLM Guide points to it.
-> - **Layouts editor**: pages grouped under big titles (Home: not linked, linked…), phones with the notch status bar and tab icons, an orange frame on changed pages; the Card Layout rules live in [[Layouts]].
-> - **Handbook topics full screen**: the Picks card's size, Back and the glossary's i floating on the card, no title or progress bars (to check on the phone).
-> - **Items like the Layouts note**: role tabs and stat rail on the left edge, bigger role, sort and stat icons (to check on the phone).
-> - **Picks card skins ahead**: the top card's and the next card's tab 2 to 4 skins download while you read, so switching tabs shows them at once (to check on the phone).
-> - **Picks card 玩法 / 技能**: 玩法 in the middle with bigger lines on a dark panel; 技能 rows show the game's ability pictures, spread evenly (to check on the phone).
-> - **Liked champions page**: portraits two across, the actions pinned at the bottom (to check on the phone).
-> - **Mock layouts**: proposals are light blue pages in [[Layouts]]; new and changed layouts are shown and picked there (rule in the LLM Guide).
-> - **Items blocks load on their own**: role tabs, stat rail and list each with their loading look; the rail's sprite retried and kept (to check on the phone).
-> - **Sharp shop icons**: the game's stat icons sharpened on the device and painted in the Icons note's colours (to check on the phone).
-> - **速查 text for every champion**: one-line overview, 玩法 line and each ability in plain words drafted for the other 165 champions, in the style of the 8 Zaviel wrote (to proofread).
-> - **Loading blocks stay put**: the blur stays over the visible part while scrolling, blocks taps and scrolling, and does not come back on a redraw (to check on the phone).
-> - **No more blinking pictures**: cached pictures show at once on redraws, slow small ones show a placeholder, clips fade in instead of a black box (to check on the phone).
-> - **New glossary and item pages**: 名詞表 as a grouped list with icons and search (B); the item page as a banner, stat chips and effect cards (A) (to check on the phone).
-> - **Picks lanes**: bigger lane icons, one lane at a time, and Champions' lanes too (to check on the phone).
-> - **Tidy-up**: about 80 unused style rules and a few unused bits of code removed.
-
----
+## 📅 Yesterday's Progress (2026-11-01)
+> [!abstract]- Yesterday (2026-10-31 and 2026-11-01: [[2026-10-31]], [[2026-11-01]])
+> - **Augment model**: every Mayhem augment ranked per champion play style from the champion's own numbers (fight at levels 3 / 7 / 11 / 15 / 18, per rarity, the Pentakill set apart), 204 modelled and 44 unrated with a reason; design in [[Augment Model]], tiers for test champions in [[Augment Tiers]] (to review).
+> - **Champion page reworked**: 概覽 with stats, chart and tags on one axis and the name sliding with it; 技能 with the text on top, the clip (drawn on a canvas, faded edges) and the ability bar below; 出裝 builds centred with Live stats links; 強化 a one-screen glance of S augments, 全部強化 every tier; 全部概覽 with the detailed chart; small sub page headers; Back returns to the page left (to check on the phone).
+> - **Champion page family rule**: no panels, word switches, accent links, tier order, glance pages fit one screen, a press fades instead of a grey disc ([[Design Rules]]).
+> - **速查 end**: the liked champions wait behind the last card and sharpen in place; choosing one plays a heart burst, a double heartbeat and the champion's name on a pink screen, then opens its page.
+> - **Items**: only what the shop sells (the old 77NNNN ARAM copies dropped, 216 items, current recipes with repeated parts), the shop's class tabs with its own icons and the wiki's class lists, a flip button for the tiers, icons and the stat rail ready before a tap; the item page shows its whole route (parts, upgrades, the legendaries they lead to).
+> - **Balance**: short pages centred (Home, 最近對戰, the augment and item pages, 全部概覽), empty states centred, zh_TW search boxes.
+> - **Smoother**: Home fetches the Riot profile once (no cold-open glitch), the champion pages follow the finger (no stuck swipe), clips load ahead in an on-screen holder.
 
 ## ⏳ Ongoing
 
-> [!warning]+ 📦 Data
+> [!question]+ 📦 Data
 > - [ ] **洛克's lane**: newer than Meraki's lane data (16.3); add `positions` to his note by hand. Current lane data needs the ranked count with a Riot key.
 > - [>] **Nicknames**: the `aliases` key works in 速查 (text and sound); 布里茨 (機器人) and 犽宿 (亞索) are in, fill the rest by hand (to check on the phone).
-> - [ ] **On-hit list**: `onhit` is only set for 卡特蓮娜; draft it for other champions for review.
-> - [!] **Item notes check**: 142 ARAM-only items (`77NNNN`) are linked to their base item; look at a few notes in Obsidian and confirm the ARAM copies are what the Mayhem shop sells. (waiting for Zaviel)
+> - [>] **On-hit list**: `onhit` is set for 卡特蓮娜, 伊澤瑞爾, 菲歐拉, 易大師, 犽宿, 犽凝; draft it for the other champions for review.
+> - [x] **Item notes check**: the `77NNNN` copies were old leftovers with old recipes and art; item notes are now what the shop sells (CommunityDragon's shop list), 216 items, plus the Mayhem augment rewards.
 > - [ ] **Offline images**: optional `tools/cache_images.py` into a gitignored folder.
 > - [>] **Augment numbers**: 247 augments have `effect` lines from the League wiki (待驗證: check a few in game, then mark 已驗證); `fetch_wiki_augments.py` lists the augments whose wiki text changed each patch, whose line then needs updating. 專精輔助 has no source. Arena's numbers (`augment-data.json`) are only used where no `effect` exists.
-> - [>] **Augment picks per champion**: the Augments tab lists them (pinned, Riot's tags, `fits`, a guess from the text); fill `pinned` / `avoid` on champion notes and `fits` on augments to sharpen it.
-> - [ ] **Augment fit**: `fits` (archetypes the augment suits), `tier`, `combos` on the augment notes; then the champion card's "Best augments" block matches them to a champion's archetypes.
+> - [>] **Augment model**: tiers per champion play style from the champions' own numbers ([[Augment Model]], `tools/augment_model.py`); the 強化 tab and the augment page use it. Next: Zaviel reviews the recommendations (強化 tab, [[Augment Tiers]]) and names wrong ones; fixes go into the model (hand data in `tools/data/`), never the tier. `pinned` / `avoid` still win.
+> - [-] **Augment fit by archetype tags**: replaced by the augment model (numbers instead of hand tags); `combos` may come back later.
 > - [?] **Statistics**: win / pick rates for Mayhem augments need either Match-V5 (developer key, queue for ARAM Mayhem, many matches) or a cited community source. Decide in phase 2.
 
 > [!todo]+ 🔢 Skill numbers
@@ -91,7 +55,7 @@ sticker: lucide//activity
 > - [ ] **Augment effects before 26.19**: only augments introduced in the last 3 patches have Riot's effect text; run `fetch_patch_notes.py --patches 12` to reach further back, or write `effect` by hand.
 
 > [!warning]+ 🧮 Match data
-> - [!] ~~First real run~~ (Rift only): needs a Riot key in `.env` (`RIOT_API_KEY=RGAPI-...`) and a seed Riot ID; `python3 tools/fetch_builds.py --seed "Name#TW2" --matches 300`. A development key expires every 24 hours; a personal key does not. Check that the augment ids in the matches match the notes' ids and that final items include the ARAM `77NNNN` ids. (waiting for a Riot key)
+> - [!] ~~First real run~~ (Rift only): needs a Riot key in `.env` (`RIOT_API_KEY=RGAPI-...`) and a seed Riot ID; `python3 tools/fetch_builds.py --seed "Name#TW2" --matches 300`. A development key expires every 24 hours; a personal key does not. Check that the augment ids in the matches match the notes' ids. (waiting for a Riot key)
 > - [ ] **Hand-written builds and tips**: `builds` (kind meta / alt / synergy, mode, name, items, note, with) and `tips` (title, text, video) in a champion note's frontmatter; none written yet.
 > - [ ] **Augments sub-tab**: use the counted augment picks (and `fits`) once there is data.
 
@@ -112,11 +76,12 @@ sticker: lucide//activity
 > - [?] **True damage icon**: `gem` for 真實 was chosen by Claude (see [[Icons]]); `crosshair` and `sword` each mean two things there. (Zaviel to confirm)
 > - [x] **Champion page v3**: built from its mocks after the adjustment (the content down to the tab bar, the chips floating over it) (to check on the phone).
 > - [ ] **Rift slot**: `plugin/src/modes.ts` has Rift (disabled); to open it set `enabled`, give `home.ts` and the champion card's "Build" block real content, and fill the `rift` item flag.
-> - [ ] **Mayhem advisor**: augment data first, then the card's "Best augments" block (augments declare which archetypes they suit; champions pin / avoid).
+> - [x] **Mayhem advisor**: the champion page's 強化 tab shows the augment model's S augments, 全部強化 every tier (to check on the phone).
+> - [!] **Phone checks**: 技能's clip canvas after a dozen switches (no rectangle, smooth, not warm); the Items rail on a cold start; an unrated augment's page (潘朵拉的寶盒, 質變：稜鏡). (waiting for Zaviel)
 > - [ ] **Sheets and settings panel** when a flow needs them (the skeleton has a bottom sheet to copy).
 
 > [!todo]+ 📖 Content
-> - [ ] **ARAM Mayhem**: augment tiers (silver / gold / prismatic), which champion archetypes fit which augment types, overpowered combos. First version: a few popular champions as examples, then fill in.
+> - [>] **ARAM Mayhem**: augment tiers per champion now come from the augment model; still to write: overpowered combos and a few hand notes on popular champions.
 > - [ ] **Modes**: item-pick differences for Normal, Ranked and ARAM.
 
 > [!warning]+ 🎨 Vault look
