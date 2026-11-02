@@ -9,7 +9,7 @@ import { augmentNeeds, augmentPage, itemNeeds, itemPage, noteNeeds, notePage } f
 import { handbookNeeds, handbookNext, handbookPage } from "./handbook";
 import { gamesPage, homeNeeds, homePage, itemsPage } from "./home";
 import { patchPage } from "./patch";
-import { rosterPage, swipeNeeds, swipePage } from "./roster";
+import { picksNeeds, rosterPage, swipeNeeds, swipePage } from "./roster";
 
 // `ready`: a page that knows better than the default (the first pictures) what it waits for before it shows
 export interface PageOut { title: string; el: HTMLElement; ready?: Promise<void> | null; immersive?: boolean; art?: string }   // immersive: full screen, no top bar; art: a picture behind the page, darkened, that does not scroll (the champion page family's sub pages)
@@ -45,7 +45,7 @@ export type PageKey = TabId | DetailKey;
 export const ROUTES: Record<PageKey, Route> = {
     home: { render: homePage, needs: homeNeeds },
     champions: { render: championsPage, needs: none },   // the champion icons: start-up
-    picks: { render: rosterPage, needs: none },          // 速查: pick the champions the game gave you, then swipe through them (it fetches each pick's art as it is picked)
+    picks: { render: rosterPage, needs: picksNeeds },     // 速查: your hand's portraits; a new pick's portrait comes on touch, its card art on pick
     augments: { render: augmentsPage, needs: none },
     patch: { render: patchPage, needs: none },           // the patch notes' pictures load lazily, further down the page
     handbook: { render: handbookPage, needs: handbookNeeds, next: handbookNext },
@@ -54,7 +54,7 @@ export const ROUTES: Record<PageKey, Route> = {
     augment: { render: augmentPage, needs: augmentNeeds },
     item: { render: itemPage, needs: itemNeeds },
     note: { render: notePage, needs: noteNeeds },
-    roster: { render: rosterPage, needs: none },
+    roster: { render: rosterPage, needs: picksNeeds },
     championlist: { render: championsPage, needs: none },
     games: { render: gamesPage, needs: none },
     itemlist: { render: itemsPage, needs: none },        // the Items page, opened from Home

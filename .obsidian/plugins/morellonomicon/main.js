@@ -3641,6 +3641,9 @@ var fetchCard = (c) => {
   }
 };
 var loading = (id) => art.loading(id);
+function picksNeeds({ plugin }) {
+  return plugin.settings.roster.filter((id) => plugin.store.champion(id)).slice(0, MAX_PICKS).map((id) => loading(id));
+}
 function rosterPage(ctx) {
   const store = ctx.plugin.store;
   const el = page("Picks");
@@ -3698,29 +3701,44 @@ function rosterPage(ctx) {
     if (ms && ms.level >= 5) h(parent, "span", cls + (ms.level >= 10 ? " is-high" : ""), String(ms.level));
     return ms?.level ?? 0;
   };
+  const minis = /* @__PURE__ */ new Map();
   const drawCount = () => {
     handN.textContent = `\u4F60\u7684\u724C \xB7 ${picks.length} / ${MAX_PICKS}`;
     clearAll.toggleClass("is-hidden", !picks.length);
     go.toggleClass("is-off", !picks.length);
-    shelf.empty();
+    for (const [id, card] of minis) if (!picks.includes(id)) {
+      card.remove();
+      minis.delete(id);
+    }
+    shelf.querySelector(".is-add")?.remove();
     for (const id of picks) {
-      const c = all.find((x2) => x2.id === id);
+      const c = all.find((x) => x.id === id);
       if (!c) continue;
-      const card = h(shelf, "div", "mn-rq-mini");
-      const im = h(card, "img");
-      im.src = loading(c.id);
-      im.alt = "";
-      const ms = store.masteryOf(c.id);
-      if (ms && ms.level >= 5) h(card, "span", "mn-rq-mtag" + (ms.level >= 10 ? " is-high" : ""), `\u719F\u7DF4 ${ms.level}`);
-      h(card, "b", void 0, c.name);
-      const x = h(card, "button", "mn-rq-mx");
-      icon(x, "x");
-      x.setAttribute("aria-label", "\u79FB\u9664");
-      x.addEventListener("click", (e) => {
-        e.preventDefault();
-        toggle(c.id);
-        if (query) drawSuggest();
-      });
+      let card = minis.get(id);
+      if (!card) {
+        card = h(shelf, "div", "mn-rq-mini");
+        card.style.backgroundImage = `url("${c.icon}")`;
+        const im = h(card, "img");
+        im.alt = "";
+        if (!isWarm(loading(c.id))) {
+          im.addClass("is-coming");
+          im.addEventListener("load", () => im.removeClass("is-coming"), { once: true });
+        }
+        im.src = loading(c.id);
+        const ms = store.masteryOf(c.id);
+        if (ms && ms.level >= 5) h(card, "span", "mn-rq-mtag" + (ms.level >= 10 ? " is-high" : ""), `\u719F\u7DF4 ${ms.level}`);
+        h(card, "b", void 0, c.name);
+        const x = h(card, "button", "mn-rq-mx");
+        icon(x, "x");
+        x.setAttribute("aria-label", "\u79FB\u9664");
+        x.addEventListener("click", (e) => {
+          e.preventDefault();
+          toggle(c.id);
+          if (query) drawSuggest();
+        });
+        minis.set(id, card);
+      }
+      shelf.appendChild(card);
     }
     if (picks.length < MAX_PICKS) {
       const add = h(shelf, "button", "mn-rq-mini is-add");
@@ -3818,6 +3836,9 @@ function rosterPage(ctx) {
           e.preventDefault();
           pickFromSearch(c.id);
         });
+        r.addEventListener("pointerdown", () => {
+          if (!picks.includes(c.id)) void warm([loading(c.id)], "now");
+        });
         continue;
       }
       const t = h(grid, "button", "mn-face" + (on ? " is-pick" : ""));
@@ -3830,6 +3851,9 @@ function rosterPage(ctx) {
       t.addEventListener("click", (e) => {
         e.preventDefault();
         pickFromSearch(c.id);
+      });
+      t.addEventListener("pointerdown", () => {
+        if (!picks.includes(c.id)) void warm([loading(c.id)], "now");
       });
     }
     if (!list3.length) empty(grid, { icon: "search-x", title: "\u627E\u4E0D\u5230\u9019\u500B\u540D\u5B57", text: "\u63DB\u500B\u8AAA\u6CD5\u518D\u8A66,\u6216\u770B\u4E0B\u9762\u7684\u300C\u4F60\u662F\u4E0D\u662F\u5728\u627E\u300D\u3002" });
@@ -6460,8 +6484,8 @@ var ROUTES = {
   home: { render: homePage, needs: homeNeeds },
   champions: { render: championsPage, needs: none },
   // the champion icons: start-up
-  picks: { render: rosterPage, needs: none },
-  // 速查: pick the champions the game gave you, then swipe through them (it fetches each pick's art as it is picked)
+  picks: { render: rosterPage, needs: picksNeeds },
+  // 速查: your hand's portraits; a new pick's portrait comes on touch, its card art on pick
   augments: { render: augmentsPage, needs: none },
   patch: { render: patchPage, needs: none },
   // the patch notes' pictures load lazily, further down the page
@@ -6471,7 +6495,7 @@ var ROUTES = {
   augment: { render: augmentPage, needs: augmentNeeds },
   item: { render: itemPage, needs: itemNeeds },
   note: { render: notePage, needs: noteNeeds },
-  roster: { render: rosterPage, needs: none },
+  roster: { render: rosterPage, needs: picksNeeds },
   championlist: { render: championsPage, needs: none },
   games: { render: gamesPage, needs: none },
   itemlist: { render: itemsPage, needs: none },

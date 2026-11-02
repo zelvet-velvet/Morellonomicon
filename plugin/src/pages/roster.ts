@@ -8,7 +8,7 @@ import { keyBadge } from "./cardkit";
 import { DECK_BELOW } from "./deck";
 import { cardPile } from "./pile";
 import { damageLines, reachOf, styleCard } from "./profile";
-import { art, warm, type Need } from "../media";
+import { art, isWarm, warm, type Need } from "../media";
 
 const MAX_PICKS = 15;   // a Mayhem game can hand you a lot of champions
 const SPLIT = /[\s,，、;；和跟與及]+/;
@@ -162,6 +162,11 @@ const fetchCard = (c: Champion | undefined) => { if (c) { const [base, ...skins]
 // a champion's loading screen art: a small portrait (your hand, the liked page)
 const loading = (id: string) => art.loading(id);
 
+// What the Picks tab shows from the network (its route in pages/index.ts): the portraits of the cards already in your hand
+export function picksNeeds({ plugin }: NeedCtx): Need[] {
+    return plugin.settings.roster.filter((id) => plugin.store.champion(id)).slice(0, MAX_PICKS).map((id) => loading(id));
+}
+
 // Quick Look: pick the champions the game gave you (up to 15) and see right away what each one is and can do.
 export function rosterPage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
@@ -212,23 +217,35 @@ export function rosterPage(ctx: PageCtx): PageOut {
         if (ms && ms.level >= 5) h(parent, "span", cls + (ms.level >= 10 ? " is-high" : ""), String(ms.level));
         return ms?.level ?? 0;
     };
+    const minis = new Map<string, HTMLElement>();   // the hand's cards by champion
     const drawCount = () => {
         handN.textContent = `你的牌 · ${picks.length} / ${MAX_PICKS}`;
         clearAll.toggleClass("is-hidden", !picks.length);
         go.toggleClass("is-off", !picks.length);
-        shelf.empty();
+        // the cards already in the hand are kept (not drawn again), so a pick only adds its own card and the others never blink
+        for (const [id, card] of minis) if (!picks.includes(id)) { card.remove(); minis.delete(id); }
+        shelf.querySelector(".is-add")?.remove();
         for (const id of picks) {
             const c = all.find((x) => x.id === id);
             if (!c) continue;
-            const card = h(shelf, "div", "mn-rq-mini");
-            const im = h(card, "img"); im.src = loading(c.id); im.alt = "";   // not lazy: the hand is redrawn on every pick, and a lazy picture blinks even from the cache
-            const ms = store.masteryOf(c.id);
-            if (ms && ms.level >= 5) h(card, "span", "mn-rq-mtag" + (ms.level >= 10 ? " is-high" : ""), `熟練 ${ms.level}`);
-            h(card, "b", undefined, c.name);
-            const x = h(card, "button", "mn-rq-mx");
-            icon(x, "x");
-            x.setAttribute("aria-label", "移除");
-            x.addEventListener("click", (e) => { e.preventDefault(); toggle(c.id); if (query) drawSuggest(); });
+            let card = minis.get(id);
+            if (!card) {
+                card = h(shelf, "div", "mn-rq-mini");
+                // the champion's icon (already on screen in the grid) fills the card at once; the portrait covers it when it is in
+                card.style.backgroundImage = `url("${c.icon}")`;
+                const im = h(card, "img"); im.alt = "";
+                if (!isWarm(loading(c.id))) { im.addClass("is-coming"); im.addEventListener("load", () => im.removeClass("is-coming"), { once: true }); }
+                im.src = loading(c.id);
+                const ms = store.masteryOf(c.id);
+                if (ms && ms.level >= 5) h(card, "span", "mn-rq-mtag" + (ms.level >= 10 ? " is-high" : ""), `熟練 ${ms.level}`);
+                h(card, "b", undefined, c.name);
+                const x = h(card, "button", "mn-rq-mx");
+                icon(x, "x");
+                x.setAttribute("aria-label", "移除");
+                x.addEventListener("click", (e) => { e.preventDefault(); toggle(c.id); if (query) drawSuggest(); });
+                minis.set(id, card);
+            }
+            shelf.appendChild(card);   // in pick order (moving a card does not load its picture again)
         }
         // the empty card at the end: tap to type the next name
         if (picks.length < MAX_PICKS) {
@@ -307,6 +324,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
                 masteryTag(r, c.id, "mn-rq-rm");
                 icon(r, on ? "check" : "plus", "mn-rq-radd");
                 r.addEventListener("click", (e) => { e.preventDefault(); pickFromSearch(c.id); });
+                r.addEventListener("pointerdown", () => { if (!picks.includes(c.id)) void warm([loading(c.id)], "now"); });
                 continue;
             }
             const t = h(grid, "button", "mn-face" + (on ? " is-pick" : ""));
@@ -315,6 +333,8 @@ export function rosterPage(ctx: PageCtx): PageOut {
             if (masteryTag(t, c.id, "mn-face-m") >= 10) t.addClass("is-m10");
             holdTip(t, c.name);
             t.addEventListener("click", (e) => { e.preventDefault(); pickFromSearch(c.id); });
+            // the hand card's portrait starts coming when the finger touches the face, before the tap ends
+            t.addEventListener("pointerdown", () => { if (!picks.includes(c.id)) void warm([loading(c.id)], "now"); });
         }
         if (!list.length) empty(grid, { icon: "search-x", title: "找不到這個名字", text: "換個說法再試,或看下面的「你是不是在找」。" });
     };
