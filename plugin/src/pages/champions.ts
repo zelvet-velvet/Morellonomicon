@@ -2,7 +2,7 @@ import type { AugTierStyle, Augment, Champion, Item, Store } from "../data/store
 import { DAMAGE_COLOR, DAMAGE_ICON, augIcon, scalingParts, warmPictures, blockUntil, layoutBlock, chip, empty, fgrid, group, h, icon, moreLink, page, row, segmented, roleChip, LANES, laneChip, slideSeg, textSwitch, tierHead, tip, fixedPage, goes } from "../ui";
 import { TAG_GROUPS, damageLines, iconFilter, profileAxes, profileRadar, reachOf, styleChart, tagFilter, tagRow } from "./profile";
 import { buildTab } from "./build";
-import { cardArt } from "./roster";
+import { cardArt, cardPictures } from "./roster";
 import type { NeedCtx, PageCtx, PageOut } from "./index";
 import type { Frame } from "../router";
 import { warm, type Need } from "../media";
@@ -220,7 +220,8 @@ export function championCard(ctx: PageCtx): PageOut {
     const im = h(head, "img", "mn-card-img"); im.src = c.icon; im.alt = "";
     // the art card loads as a block of its own: the splash picture (a CSS background, so it is fetched here) and the icon
     const splash = bg.style.backgroundImage.slice(5, -2);
-    blockUntil(hero, Promise.all([warm([splash], "now"), new Promise<void>((r) => { if (im.complete) r(); else { im.addEventListener("load", () => r(), { once: true }); im.addEventListener("error", () => r(), { once: true }); } })]).then(() => undefined), 200);   // (no loading look when the pictures come from the cache)
+    const artReady = Promise.all([warm([splash], "now"), new Promise<void>((r) => { if (im.complete) r(); else { im.addEventListener("load", () => r(), { once: true }); im.addEventListener("error", () => r(), { once: true }); } })]).then(() => undefined);
+    blockUntil(hero, artReady, 200);   // (no loading look when the pictures come from the cache)
     const who = h(head, "div", "mn-card-who");
     h(who, "h1", "mn-title", c.name);
     h(who, "div", "mn-card-sub", c.title);
@@ -235,6 +236,17 @@ export function championCard(ctx: PageCtx): PageOut {
 
     // the pages: one each, side by side; they follow the finger (below)
     const pages = PAGES.filter(([p]) => p !== "augments" || mayhem);
+    // past 概覽 each page has a skin of its own behind it, like the 速查 card's tabs (the same skins, newest first): a layer over the
+    // base splash that fades in once its picture is in; the skins are fetched once the base splash has shown
+    const pics = cardPictures(c, pages.length);
+    const skinLayers = pics.map((u, i) => (i === 0 || u === pics[0] ? null : h(hero, "div", "mn-hero-bg is-skin")));
+    const showSkin = (i: number) => {
+        skinLayers.forEach((L, k) => L?.toggleClass("is-on", k === i && !!L.style.backgroundImage));
+        const L = skinLayers[i];
+        if (!L || L.style.backgroundImage) return;
+        void warm([pics[i]], "now").then(() => { L.style.backgroundImage = `url("${pics[i]}")`; if (cur === i) L.addClass("is-on"); });
+    };
+    void artReady.then(() => warm(pics.slice(1), "soon"));
     const box = h(el, "div", "mn-cpa");
     const track = h(box, "div", "mn-cpa-track");
     let tagLine: HTMLElement | null = null;   // 概覽's tags: under the name, at the very foot
@@ -264,6 +276,7 @@ export function championCard(ctx: PageCtx): PageOut {
         dots.forEach((d, k) => d.toggleClass("is-on", k === i));
         ctx.frame.at = pages[i][0];   // kept with this page in the history: Back from 全部強化 or an augment returns here
         el.toggleClass("is-deep", i > 0);   // past 概覽 the art darkens, so the page's parts can use all of it
+        showSkin(i);
     };
     // The pages move with the finger (a transform), not by the browser's own sideways scrolling, which iOS left half way between two
     // pages when a page's own up-down scrolling took the swipe over. A touch picks its direction in its first AXIS_PX: sideways moves

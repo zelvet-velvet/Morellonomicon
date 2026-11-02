@@ -1060,6 +1060,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-app.is-overlay .mn-champ.is-v3 .mn-hero { min-height: 0; }
 .mn-champ.is-v3 .mn-hero-bg { top: 0; transform: none; background-size: cover; background-position: center 30%; -webkit-mask-image: none; mask-image: none; transition: filter 0.35s ease-out; }
 .mn-champ.is-v3.is-deep .mn-hero-bg { filter: brightness(0.35) saturate(0.85) blur(2px); }
+.mn-champ.is-v3 .mn-hero-bg.is-skin { opacity: 0; transition: filter 0.35s ease-out, opacity 0.3s ease-out; }   /* a swipe page's own skin over the base splash */
+.mn-champ.is-v3 .mn-hero-bg.is-skin.is-on { opacity: 1; }
 .mn-champ.is-v3 .mn-hero::after { background: linear-gradient(180deg, transparent 40%, color-mix(in srgb, var(--mn-bg) 55%, transparent) 100%); }   /* a little darker where the parts and the name sit */
 .mn-champ.is-v3 > :not(.mn-hero) { position: relative; z-index: 1; }
 .mn-app .mn-champ.is-v3 .mn-card-head { padding: 4px 4px 12px; justify-content: center; }   /* the icon and name centred over the tags (beats the overlay's 4 px) */

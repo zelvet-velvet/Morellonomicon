@@ -3645,9 +3645,9 @@ function finder(all, sounds) {
   return { score: score2, within };
 }
 var cardArt = (id, skin = 0) => art.centered(id, skin);
-function cardPictures(c) {
-  const others = c.skins.filter((n) => n !== 0).sort((a, b) => b - a);
-  return [0, ...[0, 1, 2].map((k) => others.length ? others[k % others.length] : 0)].map((n) => cardArt(c.id, n));
+function cardPictures(c, n = 4) {
+  const others = c.skins.filter((k) => k !== 0).sort((a, b) => b - a);
+  return [0, ...Array.from({ length: n - 1 }, (_, k) => others.length ? others[k % others.length] : 0)].map((k) => cardArt(c.id, k));
 }
 var fetchCard = (c) => {
   if (c) {
@@ -5269,13 +5269,14 @@ function championCard(ctx) {
   im.src = c.icon;
   im.alt = "";
   const splash = bg.style.backgroundImage.slice(5, -2);
-  blockUntil(hero, Promise.all([warm([splash], "now"), new Promise((r) => {
+  const artReady = Promise.all([warm([splash], "now"), new Promise((r) => {
     if (im.complete) r();
     else {
       im.addEventListener("load", () => r(), { once: true });
       im.addEventListener("error", () => r(), { once: true });
     }
-  })]).then(() => void 0), 200);
+  })]).then(() => void 0);
+  blockUntil(hero, artReady, 200);
   const who = h(head2, "div", "mn-card-who");
   h(who, "h1", "mn-title", c.name);
   h(who, "div", "mn-card-sub", c.title);
@@ -5291,6 +5292,18 @@ function championCard(ctx) {
     chip(tags2, `${m.mark} ${official.patch}`, { color: m.color, onTap: part("overview") });
   }
   const pages = PAGES.filter(([p]) => p !== "augments" || mayhem);
+  const pics = cardPictures(c, pages.length);
+  const skinLayers = pics.map((u, i) => i === 0 || u === pics[0] ? null : h(hero, "div", "mn-hero-bg is-skin"));
+  const showSkin = (i) => {
+    skinLayers.forEach((L2, k) => L2?.toggleClass("is-on", k === i && !!L2.style.backgroundImage));
+    const L = skinLayers[i];
+    if (!L || L.style.backgroundImage) return;
+    void warm([pics[i]], "now").then(() => {
+      L.style.backgroundImage = `url("${pics[i]}")`;
+      if (cur === i) L.addClass("is-on");
+    });
+  };
+  void artReady.then(() => warm(pics.slice(1), "soon"));
   const box = h(el, "div", "mn-cpa");
   const track = h(box, "div", "mn-cpa-track");
   let tagLine = null;
@@ -5317,6 +5330,7 @@ function championCard(ctx) {
     dots.forEach((d, k) => d.toggleClass("is-on", k === i));
     ctx.frame.at = pages[i][0];
     el.toggleClass("is-deep", i > 0);
+    showSkin(i);
   };
   let pos = 0;
   const place = (px, animate) => {

@@ -151,11 +151,11 @@ export function finder(all: Champion[], sounds: Sounds | null) {
 
 // the art of a 速查 card (and the champion card page): Riot's centered splash, cut to the card's shape
 export const cardArt = (id: string, skin = 0) => art.centered(id, skin);
-// a 速查 card's four pictures: tab 1 the base splash, tabs 2 to 4 the newest skins, newest first (a higher skin number is a later
-// skin); quickCard draws from this and a pick fetches it, so both ask for the same addresses
-export function cardPictures(c: Champion): string[] {
-    const others = c.skins.filter((n) => n !== 0).sort((a, b) => b - a);
-    return [0, ...[0, 1, 2].map((k) => (others.length ? others[k % others.length] : 0))].map((n) => cardArt(c.id, n));
+// a 速查 card's pictures (and the champion page's, one per swipe page): the first the base splash, the others the newest skins, newest
+// first (a higher skin number is a later skin); the card, the champion page and a pick all ask for the same addresses
+export function cardPictures(c: Champion, n = 4): string[] {
+    const others = c.skins.filter((k) => k !== 0).sort((a, b) => b - a);
+    return [0, ...Array.from({ length: n - 1 }, (_, k) => (others.length ? others[k % others.length] : 0))].map((k) => cardArt(c.id, k));
 }
 // a champion just picked: its card's art starts coming at once (the base splash first), so the swipe shows every tab sharp
 const fetchCard = (c: Champion | undefined) => { if (c) { const [base, ...skins] = cardPictures(c); void warm([base], "soon"); void warm(skins, "idle"); } };
