@@ -16,7 +16,7 @@ sticker: lucide//activity
 ## 📅 Yesterday's Progress (2026-11-01)
 > [!abstract]- Yesterday (2026-10-31 and 2026-11-01: [[2026-10-31]], [[2026-11-01]])
 > - **Augment model**: every Mayhem augment ranked per champion play style from the champion's own numbers (fight at levels 3 / 7 / 11 / 15 / 18, per rarity, the Pentakill set apart), 204 modelled and 44 unrated with a reason; design in [[Augment Model]], tiers for test champions in [[Augment Tiers]] (to review).
-> - **Champion page reworked**: 概覽 with stats, chart and tags on one axis and the name sliding with it; 技能 with the text on top, the clip (drawn on a canvas, faded edges) and the ability bar below; 出裝 builds centred with Live stats links; 強化 a one-screen glance of S augments, 全部強化 every tier; 全部概覽 with the detailed chart; small sub page headers; Back returns to the page left (to check on the phone).
+> - **Champion page reworked**: 概覽 with stats, chart and tags on one axis and the name sliding with it; 技能 with the text on top, the clip (drawn on a canvas, faded edges) and the ability bar below; 出裝 builds centred with Live stats links; 強化 a one-screen glance of S augments, 全部強化 every tier; 全部概覽 with the detailed chart; small sub page headers; Back returns to the page left.
 > - **Champion page family rule**: no panels, word switches, accent links, tier order, glance pages fit one screen, a press fades instead of a grey disc ([[Design Rules]]).
 > - **速查 end**: the liked champions wait behind the last card and sharpen in place; choosing one plays a heart burst, a double heartbeat and the champion's name on a pink screen, then opens its page.
 > - **Items**: only what the shop sells (the old 77NNNN ARAM copies dropped, 216 items, current recipes with repeated parts), the shop's class tabs with its own icons and the wiki's class lists, a flip button for the tiers, icons and the stat rail ready before a tap; the item page shows its whole route (parts, upgrades, the legendaries they lead to).
@@ -27,7 +27,7 @@ sticker: lucide//activity
 
 > [!question]+ 📦 Data
 > - [ ] **洛克's lane**: newer than Meraki's lane data (16.3); add `positions` to his note by hand. Current lane data needs the ranked count with a Riot key.
-> - [>] **Nicknames**: the `aliases` key works in 速查 (text and sound); 布里茨 (機器人) and 犽宿 (亞索) are in, fill the rest by hand (to check on the phone).
+> - [>] **Nicknames**: the `aliases` key works in 速查 (text and sound); 布里茨 (機器人) and 犽宿 (亞索) are in, fill the rest by hand.
 > - [>] **On-hit list**: `onhit` is set for 卡特蓮娜, 伊澤瑞爾, 菲歐拉, 易大師, 犽宿, 犽凝; draft it for the other champions for review.
 > - [x] **Item notes check**: the `77NNNN` copies were old leftovers with old recipes and art; item notes are now what the shop sells (CommunityDragon's shop list), 216 items, plus the Mayhem augment rewards.
 > - [ ] **Offline images**: optional `tools/cache_images.py` into a gitignored folder.
@@ -75,9 +75,9 @@ sticker: lucide//activity
 > - [x] **Items list**: the Items page (from Home) lists every item of the mode like the shop: role tabs, stat rail, tiers or price.
 > - [!] **速查 swipe on the phone**: check the pile height with the ✕ / ♥ buttons, the big ♥ / ✕ while dragging, no scrollbar; liked champions are not kept after leaving the page. (waiting for Zaviel's check on the phone)
 > - [?] **True damage icon**: `gem` for 真實 was chosen by Claude (see [[Icons]]); `crosshair` and `sword` each mean two things there. (Zaviel to confirm)
-> - [x] **Champion page v3**: built from its mocks after the adjustment (the content down to the tab bar, the chips floating over it) (to check on the phone).
+> - [x] **Champion page v3**: built from its mocks after the adjustment (the content down to the tab bar, the chips floating over it).
 > - [ ] **Rift slot**: `plugin/src/modes.ts` has Rift (disabled); to open it set `enabled`, give `home.ts` and the champion card's "Build" block real content, and fill the `rift` item flag.
-> - [x] **Mayhem advisor**: the champion page's 強化 tab shows the augment model's S augments, 全部強化 every tier (to check on the phone).
+> - [x] **Mayhem advisor**: the champion page's 強化 tab shows the augment model's S augments, 全部強化 every tier.
 > - [!] **Phone checks**: 技能's clip canvas after a dozen switches (no rectangle, smooth, not warm); the Items rail on a cold start; an unrated augment's page (潘朵拉的寶盒, 質變：稜鏡). (waiting for Zaviel)
 > - [ ] **Sheets and settings panel** when a flow needs them (the skeleton has a bottom sheet to copy).
 

@@ -67,7 +67,7 @@ plugin/       the Morellonomicon Obsidian plugin (TypeScript, esbuild)
 - **Plugins are not in git** (`.obsidian/plugins/` is ignored), except Morellonomicon and **Obsidian Git** (committed so a fresh clone, e.g. on a phone, has it; its `data.json` settings stay per device; update it by replacing its three files with a newer release). `tools/install_plugins.py` downloads the others from each plugin's GitHub release; the list is `community-plugins.json`.
 - **Design Rules.** After a new page or a page change, its picture loading is reviewed (the picture check in Design Rules) before committing. How every page looks and behaves (layout, the loading look, the search capsule on the keyboard, controls, words and colour) is in [[Design Rules]] (`Dev Tools/Design Rules.md`); read it before any UI change, reuse the shared helper it names instead of building a page's own version, and write a new shared behaviour there first. Icons: one idea has one icon everywhere, from the maps in [[Icons]]; a new idea gets its icon in the map and in [[Icons]] first.
 - **Layouts first.** A new or changed page layout is proposed in `Dev Tools/Layouts.md` and picked by Zaviel before it is built (skill `mn-layouts`).
-- **Testing needs the user's eyes** for Obsidian on a phone and on PC. Say what could not be tested and what the user must look at.
+- **Testing needs the user's eyes** for Obsidian on a phone and on PC. Say in the chat what could not be tested; do not mark items in notes as "to check on the phone" (Zaviel is the only developer and tests everything).
 
 ---
 ## 🔁 Workflow
