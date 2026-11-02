@@ -3184,6 +3184,9 @@ function deckPage(ctx, file) {
     };
     const pile = cardPile(pager, sec, {
       scroll: ".mn-sl-words",
+      // full screen leaves no room under the card for a pile: tilted or lowered, the cards under it only showed as thin slivers
+      // beside the top card's lower corners, cut flat by the screen edge; so they lie straight, right under the top card
+      flat: true,
       // only the cards near the top are painted, and only the ones in view play their clip: a topic with many clips otherwise
       // has them all running under the top card, which makes some swipes smooth and others not
       onLayout: (cur) => {
