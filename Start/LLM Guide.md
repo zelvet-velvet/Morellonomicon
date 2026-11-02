@@ -51,7 +51,7 @@ plugin/       the Morellonomicon Obsidian plugin (TypeScript, esbuild)
 .claude/      skills/ (mn-* command and task skills)
 ```
 
-**Read only what you need.** Grep first, then read the matching section, in the large notes: `Review/Tag Audit.md` (130 KB, generated: never read whole), `Dev Tools/Layouts.md` (60 KB of JSON), the day notes in `Review/Log/` (up to 20 KB), `Review/Dev Status.md`, [[Design Rules]].
+**Read only what you need.** Grep first, then read the matching section, in the large notes: `Review/Tag Audit.md` and `Review/Augment Tiers.md` (130–140 KB each, generated: never read whole), `Dev Tools/Layouts.md` (about 50 KB of JSON), the day notes in `Review/Log/` (up to 50 KB), `Review/Dev Status.md`, [[Design Rules]].
 
 ---
 ## ⚠️ Rules that prevent breakage

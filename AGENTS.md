@@ -6,7 +6,7 @@
 - Shared rules: `Start/LLM Guide.md` (read it before editing notes, scripts or the plugin). Progress: `python3 -I tools/vault_status.py show`, then only the part of `Review/Dev Status.md` you need.
 - Task rules are skills in `.claude/skills/<name>/SKILL.md`: Claude Code loads them by itself; any other agent opens the file when the task matches the table below.
 - Read a note right before editing it: Zaviel edits in Obsidian at the same time and may have rolled something back; never put it back.
-- Large notes: grep first, read the matching section. Never read `Review/Tag Audit.md` whole (generated, 130 KB); `Dev Tools/Layouts.md` is 60 KB of JSON.
+- Large notes: grep first, read the matching section. Never read `Review/Tag Audit.md` or `Review/Augment Tiers.md` whole (generated, 130–140 KB each); `Dev Tools/Layouts.md` is about 50 KB of JSON.
 - Vault content for readers is Traditional Chinese; workflow notes stay English. Reply in the language Zaviel writes in.
 
 ## Commands and skills
