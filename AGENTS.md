@@ -21,7 +21,7 @@
 | (Layouts or UI Text note, a new layout, the look) | `mn-layouts` | Apply / sync the layout, mock pages, UI Text, visual changes |
 | (scripts, `_data/`, new patch) | `mn-data` | What each fetch script does, sources, Riot key |
 
-The `cmd-*` skills in `~/.claude/skills/` belong to another vault (S11_Obs); in this repo `CMD_*` always means the `mn-*` skill.
+Workflow adapted from [agent-worklog-vault](https://github.com/zelvet-velvet/agent-worklog-vault) @ `60512b0` (an in-repo vault: skills committed here, English day notes, `tools/vault_status.py`); diff the template from that commit to port later improvements.
 
 ## Repo regulation
 Solo project, owner **Zaviel** (GitHub `zelvet-velvet`); no branches or pull requests.
