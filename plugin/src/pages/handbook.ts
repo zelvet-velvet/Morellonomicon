@@ -56,7 +56,7 @@ export function handbookPage(ctx: PageCtx): PageOut {
         if (!notes.length) { empty(out, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." }); return null; }
         const triviaHost = h(out, "div");   // the tip stack loads as a block of its own
         const tipsReady = trivia(triviaHost);
-        if (tipsReady) blockUntil(triviaHost, tipsReady);
+        if (tipsReady) blockUntil(triviaHost, tipsReady);   // a veil only if its pictures are not there yet (they are fetched at start-up)
         const decks = notes.filter((n) => n.layout === "deck");
         const block = (name: string, list: typeof decks) => {
             if (!list.length) return;

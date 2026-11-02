@@ -168,10 +168,11 @@ function lift(host: HTMLElement, state: { veil: HTMLElement; since: number; open
         endBand(state.veil);
     }, Math.max(0, BLOCK_MIN_MS - (Date.now() - state.since)));
 }
-// The same for a block that waits for something that is not a plain <img> (a CSS background, a promise): veil until `until` settles
-// With `delay`, the veil only appears if `until` has not settled after that many ms (a picture from the cache is there before it, and
-// shows no loading look at all).
-export function blockUntil(host: HTMLElement, until: Promise<void>, delay = 0): void {
+// The same for a block that waits for something that is not a plain <img> (a CSS background, a promise): veil until `until` settles.
+// Only a real load shows the look (Design Rules, "Loading look"): the veil appears only if `until` has not settled after `delay` ms
+// (BLOCK_DELAY_MS by default), so a picture already there (cached, fetched ahead) shows no loading look at all; once shown, the veil
+// stays at least BLOCK_MIN_MS. Pass 0 only for a wait known to be long.
+export function blockUntil(host: HTMLElement, until: Promise<void>, delay = BLOCK_DELAY_MS): void {
     if (delay > 0 && !blockState.get(host)) {
         let done = false;
         void until.then(() => { done = true; });

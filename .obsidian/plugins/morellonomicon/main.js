@@ -873,7 +873,7 @@ function lift(host, state) {
     endBand(state.veil);
   }, Math.max(0, BLOCK_MIN_MS - (Date.now() - state.since)));
 }
-function blockUntil(host, until, delay = 0) {
+function blockUntil(host, until, delay = BLOCK_DELAY_MS) {
   if (delay > 0 && !blockState.get(host)) {
     let done = false;
     void until.then(() => {
