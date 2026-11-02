@@ -1,0 +1,7 @@
+{
+  "pinned": [
+    "obsidian-git:push",
+    "app:reload",
+    "obsidian-git:clone-repo"
+  ]
+}

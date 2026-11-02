@@ -111,6 +111,7 @@ other scaling (+其他加成) | plus | --mn-muted | #c4beb4
 ## 🛡️ Roles and lanes
 > [!info]+ Where it lives
 > Source: `ROLE_FILE` / `ROLE_ICON` and `LANE_FILE` / `LANE_ICON` in `plugin/src/ui.ts`. The game's own class and position icons (from the League of Legends Wiki, shown by address); the Lucide name is only the fallback when a file does not load.
+> The Items page's class tabs (全部, 戰士, 射手, 刺客, 法師, 坦克, 輔助, in the shop's order) use the item shop's own icons instead: `SHOP_ROLE_BOX` in `ui.ts`, cut from the shop's sprite sheet (CommunityDragon, `itemshop/jade/itemshop_texture_atlas.png`): grid, axe, crossbow, dagger, book, shield, the winged figure.
 
 ```mn-icons
 戰士 (Fighter) | swords

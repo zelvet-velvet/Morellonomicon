@@ -1,7 +1,7 @@
 import { Notice } from "obsidian";
 import type { Champion } from "../data/store";
 import { findSaid, type Said, type Sounds, soundScore } from "../data/sound";
-import { DAMAGE_COLOR, DAMAGE_ICON, REACH_ICON, fixedPage, layoutBlock, SHOP_ROW, STAT_COLOR, STAT_ICON, SWIPE, shopIcon, chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, roleArt, tip, warmPictures } from "../ui";
+import { DAMAGE_COLOR, DAMAGE_ICON, REACH_ICON, fixedPage, haptic, layoutBlock, SHOP_ROW, STAT_COLOR, STAT_ICON, SWIPE, shopIcon, chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, roleArt, tip, warmPictures } from "../ui";
 import { entryDir, marker } from "./changes";
 import type { PageCtx, PageOut } from "./index";
 import { keyBadge } from "./cardkit";
@@ -327,6 +327,11 @@ export function rosterPage(ctx: PageCtx): PageOut {
     return { title: "速查", el };
 }
 
+const CHOSEN_MS = 1050;   // the chosen animation covers the screen (and shows the champion's name) in this long; then its page opens under the cover
+const FLOOD_FADE_MS = 450;   // the cover fades away over the champion page
+const WASH_AT_MS = 560;      // the solid layer behind the heart starts to come in, so the screen is fully covered by CHOSEN_MS
+const CHOSEN_SPARKS = 12; // small hearts bursting out of the big one
+const CHOSEN_DOTS = 10;   // sparkle dots between them
 // The swipe through the picked champions, as a page that fills the screen like a Handbook topic: the top card is dragged right
 // (like) or left (pass), or the ♥ / ✕ buttons are tapped; after the last card the liked champions are listed.
 export function swipePage(ctx: PageCtx): PageOut {
@@ -337,6 +342,8 @@ export function swipePage(ctx: PageCtx): PageOut {
     const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)] as const));
     if (swipeSig !== picks.join(",")) { swipeSig = picks.join(","); swipeAt = 0; swipeLiked = []; }
     let at = swipeAt, liked = swipeLiked;
+    // the end view's portraits, fetched now, so the liked champions show the moment the last card goes (Design Rules: ready before it shows)
+    void warmPictures(picks.map((id) => loading(id)));
     // full screen like Tinder: no title or Back (the Champions tab button goes back), the card reaches the tab bar
     const results = h(el, "div", "mn-rq-results");
     const restart = () => { at = swipeAt = 0; liked = swipeLiked = []; drawResults(); };
@@ -358,6 +365,33 @@ export function swipePage(ctx: PageCtx): PageOut {
             requestAnimationFrame(fitEnd);
             return;
         }
+        // the end view, built under the deck as the last card is decided: it rises in while the card flies off, so there is no empty
+        // moment between the last card and the liked champions (the bridge); when the card has gone the deck is simply taken away
+        // While the last card is on top it is already there, soft and dim behind the card (so dragging the last card never shows an empty
+        // page); deciding it brings it up sharp with the last choice in it.
+        let under: HTMLElement | null = null;
+        const bridge = (preview: boolean) => {
+            if (under && !preview) {
+                // the waiting view sharpens where it is: its portraits stay, the count changes, and the last card (when liked) is added and
+                // rises in alone; only when nothing was liked before is the list made anew
+                const view = under;
+                const count = view.querySelector(".mn-rq-endhead span");
+                if (count) count.textContent = `${liked.length} / ${picks.length} 位`;
+                const last = liked[liked.length - 1];
+                const lastIsNew = last && last === picks[picks.length - 1];
+                const grid = view.querySelector<HTMLElement>(".mn-rq-liked");
+                if (lastIsNew && grid) likedTile(grid, last)?.addClass("is-new");
+                else if (lastIsNew) { view.empty(); likedGrid(view); view.addClass("is-bridged"); }
+                view.removeClass("is-preview");
+                return;
+            }
+            under?.remove();
+            under = h(results, "div", "mn-rq-end mn-rq-under" + (preview ? " is-preview" : " is-bridged"));   // is-bridged: the portraits rise in (kept after the deck goes)
+            const fitUnder = () => { if (under) under.style.height = wrap.style.height || `${wrap.offsetHeight}px`; };
+            fitUnder();
+            likedGrid(under);
+            requestAnimationFrame(() => { fitUnder(); under?.addClass("is-in"); });
+        };
         // the picked champions as the Handbook's pile of cards (pile.ts, judge mode): swipe the top one right (or ♥) to like it,
         // left (or ✕) to pass; a 喜歡 / 略過 stamp shows on it while dragged
         const wrap = h(results, "div", "mn-deckwrap mn-rq-deck");   // the ✕ / ♥ buttons float on the card's lower edge (inside wrap)
@@ -391,7 +425,11 @@ export function swipePage(ctx: PageCtx): PageOut {
         const pile = cardPile(pager, sec, {
             judge: true,
             flat: true,
-            onLayout: (cur) => { sec.forEach((c, i) => { c.style.visibility = i >= cur - 1 && i <= cur + 2 ? "" : "hidden"; }); warmSkins(cur); },
+            onLayout: (cur) => {
+                sec.forEach((c, i) => { c.style.visibility = i >= cur - 1 && i <= cur + 2 ? "" : "hidden"; });
+                warmSkins(cur);
+                if (cur === sec.length - 1 && !under) bridge(true);   // the last card: the end view waits behind it
+            },
             onDrag: (dx, w) => {
                 const st = stamps[pile?.cur ?? 0];
                 if (!st) return;
@@ -406,8 +444,16 @@ export function swipePage(ctx: PageCtx): PageOut {
                 btns.toggleClass("is-left", dx < 0);
                 btns.toggleClass("is-right", dx > 0);
             },
-            onJudge: (i, like) => { at = ++swipeAt; armed = false; btns.removeClass("is-left", "is-right"); if (like) swipeLiked = liked = [...liked, ids[i]]; },
-            onEnd: () => drawResults(),
+            onJudge: (i, like) => {
+                at = ++swipeAt; armed = false; btns.removeClass("is-left", "is-right");
+                if (like) swipeLiked = liked = [...liked, ids[i]];
+                if (at >= picks.length) bridge(false);   // the last card decided: the end view comes up sharp, with it
+            },
+            onEnd: () => {
+                if (!under) { drawResults(); return; }
+                wrap.remove();   // the end view is already there: keep it, in the deck's place
+                under.removeClass("mn-rq-under");
+            },
         });
         pile.layout(false);
         // the pile fills the screen down to the tab bar, like a Handbook topic
@@ -430,7 +476,74 @@ export function swipePage(ctx: PageCtx): PageOut {
         no.addEventListener("click", (e) => { e.preventDefault(); press(false); });
         yes.addEventListener("click", (e) => { e.preventDefault(); press(true); });
     };
-    // after the last card: the liked champions two across (picture, name, overview line), and a way to swipe again
+    // a liked champion chosen: its portrait grows a little, the others dim, a heart pops over it with small hearts bursting out, and
+    // a tick; then its champion page opens
+    // A liked champion chosen, in steps (Zaviel 2026-11-01): the portrait lifts with a pink glow while the others dim; a burst of small
+    // hearts and sparkles, and a ring spreading out; a big heart beats twice, then surges out until the screen is pink; the champion's
+    // face, name and title rise in the middle of it; the champion page is built under that cover, then everything fades away over it.
+    const choose = (grid: HTMLElement, card: HTMLElement, c: Champion) => {
+        if (grid.hasClass("is-choosing")) return;
+        grid.addClass("is-choosing");
+        card.addClass("is-chosen");
+        const r = card.getBoundingClientRect();
+        const cx = r.left + r.width / 2, cy = r.top + r.height * 0.42;
+        const at = (el: HTMLElement) => { el.style.left = `${cx}px`; el.style.top = `${cy}px`; return el; };
+        // on the card: the heart pops, small hearts of different sizes spin away at different distances, sparkle dots between them
+        const pop = h(card, "span", "mn-rq-pop");
+        icon(pop, "heart", "mn-rq-pop-big");
+        for (let k = 0; k < CHOSEN_SPARKS; k++) {
+            const sp = h(pop, "span", "mn-rq-spark");
+            sp.style.setProperty("--a", `${(360 / CHOSEN_SPARKS) * k + (k % 2 ? 12 : -8)}deg`);
+            sp.style.setProperty("--d", `${48 + (k * 37) % 46}px`);
+            sp.style.setProperty("--s", String(0.6 + ((k * 53) % 10) / 12));
+            sp.style.setProperty("--r", `${(k % 2 ? 1 : -1) * (30 + (k * 29) % 60)}deg`);
+            icon(sp, "heart");
+        }
+        for (let k = 0; k < CHOSEN_DOTS; k++) {
+            const dot = h(pop, "span", "mn-rq-dot");
+            dot.style.setProperty("--a", `${(360 / CHOSEN_DOTS) * k + 20}deg`);
+            dot.style.setProperty("--d", `${70 + (k * 41) % 50}px`);
+        }
+        // around it: a ring spreading out from the card
+        at(h(document.body, "div", "mn-rq-ring"));
+        // the big heart (it beats twice, then surges out), the solid layer behind it, and the champion in the middle of the pink
+        const flood = at(h(document.body, "div", "mn-rq-flood"));
+        icon(flood, "heart");
+        const wash = h(document.body, "div", "mn-rq-wash");
+        const who = h(document.body, "div", "mn-rq-who");   // over the heart, so the heart never hides it
+        const face = h(who, "img"); face.src = c.icon; face.alt = "";
+        h(who, "b", undefined, c.name);
+        h(who, "span", undefined, c.title);
+        window.setTimeout(() => { wash.addClass("is-in"); who.addClass("is-in"); }, WASH_AT_MS);
+        haptic();
+        // the page is built only once the screen is covered (building it while the heart grew made the heart stutter), then shown when
+        // it has been drawn: the cover fades away over it
+        window.setTimeout(() => {
+            ctx.openChampion(c.id);
+            grid.removeClass("is-choosing"); card.removeClass("is-chosen"); pop.remove();   // as it was when you come back
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                flood.addClass("is-out"); wash.addClass("is-out"); who.addClass("is-out");
+                window.setTimeout(() => { flood.remove(); wash.remove(); who.remove(); document.querySelectorAll(".mn-rq-ring").forEach((x) => x.remove()); }, FLOOD_FADE_MS);
+            }));
+        }, CHOSEN_MS);
+    };
+    // one liked champion's portrait (picture, name, overview line); a tap chooses it
+    const likedTile = (g: HTMLElement, id: string): HTMLElement | null => {
+        const c = all.find((x) => x.id === id);
+        if (!c) return null;
+        const b = h(g, "button", "mn-rq-lk");
+        const im = h(b, "img"); im.src = loading(c.id); im.alt = "";
+        if (c.face) im.style.objectPosition = c.face;
+        const who = h(b, "span", "mn-rq-lw");
+        h(who, "b", undefined, c.name);
+        const main = c.damageType || c.skillDamage[0] || "";
+        h(who, "span", "mn-rq-ls", [c.roles[0], main && `${main}傷`, c.range ? (c.range >= 550 ? "遠程" : c.range >= 300 ? "中程" : "近戰") : ""].filter(Boolean).join(" · "));
+        if (c.punch) h(who, "span", "mn-rq-lp", c.punch);
+        b.style.setProperty("--i", String(g.childElementCount - 1));   // the order they rise in
+        b.addEventListener("click", (e) => { e.preventDefault(); choose(g, b, c); });
+        return b;
+    };
+    // after the last card: the liked champions two across, and a way to swipe again
     const likedGrid = (box: HTMLElement) => {
         const head = h(box, "div", "mn-rq-endhead");
         h(head, "b", undefined, "Pick Me Up!");
@@ -438,19 +551,7 @@ export function swipePage(ctx: PageCtx): PageOut {
         const list = h(box, "div", "mn-rq-endlist");   // only this part scrolls
         if (liked.length) {
             const g = h(list, "div", "mn-rq-liked");
-            for (const id of liked) {
-                const c = all.find((x) => x.id === id);
-                if (!c) continue;
-                const b = h(g, "button", "mn-rq-lk");
-                const im = h(b, "img"); im.src = loading(c.id); im.alt = "";
-                if (c.face) im.style.objectPosition = c.face;
-                const who = h(b, "span", "mn-rq-lw");
-                h(who, "b", undefined, c.name);
-                const main = c.damageType || c.skillDamage[0] || "";
-                h(who, "span", "mn-rq-ls", [c.roles[0], main && `${main}傷`, c.range ? (c.range >= 550 ? "遠程" : c.range >= 300 ? "中程" : "近戰") : ""].filter(Boolean).join(" · "));
-                if (c.punch) h(who, "span", "mn-rq-lp", c.punch);
-                b.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); });
-            }
+            for (const id of liked) likedTile(g, id);
         } else empty(list, { icon: "heart-off", title: "一個都沒喜歡" });
         // the two actions float over the portraits in one row (no panel behind them)
         const foot = h(box, "div", "mn-rq-endfoot");

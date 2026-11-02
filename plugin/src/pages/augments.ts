@@ -25,7 +25,7 @@ export function augmentsPage(ctx: PageCtx): PageOut {
     icon(box, "search", "mn-search-ic");
     const search = h(box, "input");
     search.type = "search";
-    search.placeholder = "Search";
+    search.placeholder = "搜尋強化";
     const sortHost = h(el, "div", "mn-aug-sort");
     const chips = h(el, "div", "mn-chips mn-aug-rar");
     const list = h(el, "div", "mn-blk");

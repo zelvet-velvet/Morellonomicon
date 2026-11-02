@@ -1,6 +1,6 @@
 import { mapUrl } from "./handbook";
 import type { PageCtx, PageOut } from "./index";
-import { ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, h, holdTip, icon, page, roleArt } from "../ui";
+import { ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, shopRoleIcon, h, holdTip, icon, page, warmPictures, centreBelow, empty } from "../ui";
 import { MODES } from "../modes";
 import { PROFILE_FRESH, QUEUE, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, type Profile } from "../data/riot";
 
@@ -63,12 +63,20 @@ export function homePage(ctx: PageCtx): PageOut {
         h(hero, "div", "mn-home-name").append(prof?.name ?? name ?? "", h(null, "small", undefined, `#${prof?.tag ?? tag ?? ""}`));
         const where = SERVERS.find((x) => x[0] === s.riotServer)?.[1] ?? s.riotServer;
         const sub = h(hero, "div", "mn-home-sub", prof ? `${where} · ${ago(prof.fetched)}更新` : s.riotKey ? `${where} · 讀取中…` : `${where} · 設定裡填 Riot API 金鑰後顯示頭像、牌位、對戰`);
-        // fetch when there is nothing yet or it is old; the page redraws itself once it has the new one
+        // fetch when there is nothing yet or it is old. One fetch at a time: at start-up Home is drawn several times while the data
+        // arrives, and each drawing used to start its own fetch (a dozen Riot calls each), whose answers then redrew the page one after
+        // another once it was on screen (the cold-open glitch). The page redraws in place only when what Riot sent differs from what
+        // it shows; otherwise only the "updated" line changes.
         const refresh = () => {
             sub.textContent = `${where} · 讀取中…`;
-            fetchProfile(ctx.app, s.riotId, s.riotServer, s.riotKey)
-                .then(() => { if (el.isConnected) ctx.redraw(); })   // in place: opening Home again would replay its arrival (a glitch on a cold open)
-                .catch((err) => { sub.textContent = err instanceof RiotError ? err.message : "連不上 Riot,稍後再試"; sub.addClass("is-err"); });
+            sub.removeClass("is-err");
+            profileFetch(ctx)
+                .then((p) => {
+                    if (!el.isConnected) return;
+                    if (sameProfile(p, prof)) sub.textContent = `${where} · ${ago(p.fetched)}更新`;
+                    else ctx.redraw();   // in place: opening Home again would replay its arrival
+                })
+                .catch((err) => { if (!el.isConnected) return; sub.textContent = err instanceof RiotError ? err.message : "連不上 Riot,稍後再試"; sub.addClass("is-err"); });
         };
         if (s.riotKey && (!prof || Date.now() - prof.fetched > PROFILE_FRESH)) refresh();
         const menu = h(hero, "div", "mn-home-menu is-hidden");
@@ -161,8 +169,19 @@ export function homePage(ctx: PageCtx): PageOut {
         const list = layoutBlock(h(el, "div", "mn-home-games"));
         for (const g of prof.games.slice(0, HOME_GAMES)) gameRow(ctx, list, g, false);
     }
+    centreBelow(el, 1);   // the title row stays at the top; the profile and the ways in are centred in the room under it
     return { title: "Home", el };
 }
+
+// The profile fetch in flight, shared by every drawing of Home (see refresh in homePage); a tap on 重新整理 while one runs waits for it
+let inFlight: Promise<Profile> | null = null;
+function profileFetch(ctx: PageCtx): Promise<Profile> {
+    const s = ctx.plugin.settings;
+    inFlight ??= fetchProfile(ctx.app, s.riotId, s.riotServer, s.riotKey).finally(() => { inFlight = null; });
+    return inFlight;
+}
+// The same as what Home shows, apart from when it was fetched
+const sameProfile = (a: Profile, b: Profile | null): boolean => !!b && JSON.stringify({ ...a, fetched: 0 }) === JSON.stringify({ ...b, fetched: 0 });
 
 const HOME_GAMES = 4;   // rows on Home; the rest are on the recent games page
 
@@ -186,7 +205,11 @@ function gameRow(ctx: PageCtx, parent: HTMLElement, g: Profile["games"][number],
 export function gamesPage(ctx: PageCtx): PageOut {
     const el = page("最近對戰");
     const prof = cachedProfile(ctx.app, ctx.plugin.settings.riotId);
-    if (!prof?.games.length) { h(el, "p", "mn-home-sub", "還沒有對戰資料:在 Home 連結 Riot ID 並設定金鑰。"); return { title: "最近對戰", el }; }
+    if (!prof?.games.length) {
+        empty(el, { icon: "swords", title: "還沒有對戰資料", text: "在 Home 連結 Riot ID，並在設定填 Riot API 金鑰。" });
+        centreBelow(el, 1);
+        return { title: "最近對戰", el };
+    }
     const wins = prof.games.filter((g) => g.win).length;
     h(el, "div", "mn-home-sub", `最近 ${prof.games.length} 場 · ${wins} 勝 ${prof.games.length - wins} 敗 · ${ago(prof.fetched)}更新`);
     const list = layoutBlock(h(el, "div", "mn-home-games"));
@@ -199,7 +222,8 @@ export function gamesPage(ctx: PageCtx): PageOut {
 const TIERS = ["起始", "鞋子", "基本", "史詩", "傳說"];
 const tierOf = (i: { tags: string[]; from: number[]; into: number[]; goldTotal: number }): string =>
     i.tags.includes("Boots") ? "鞋子" : !i.from.length && !i.into.length ? "起始" : !i.from.length ? "基本" : i.into.length ? "史詩" : "傳說";
-// The shop's role tabs: Data Dragon gives items no roles, so each is read from the item's stats (a guess, close to the shop's own)
+// The shop's class tabs, in its order. Which items each lists comes from _data/item-roles.json (the League wiki's copy of the shop's
+// menus, tools/fetch_item_roles.py); without that file, a guess from the item's stats stands in
 type ItemLike = { tags: string[] };
 const has = (i: ItemLike, ...tags: string[]) => tags.some((x) => i.tags.includes(x));
 const ITEM_ROLES: [string, (i: ItemLike) => boolean][] = [
@@ -211,7 +235,7 @@ const ITEM_ROLES: [string, (i: ItemLike) => boolean][] = [
     ["輔助", (i) => has(i, "GoldPer", "Aura") || (has(i, "Active") && !has(i, "Damage", "SpellDamage"))],
 ];
 const RAIL_BREAKS = new Set(["法術強度", "生命", "技能急速"]);   // a line before each group of the stat rail, like the shop
-let itemRole = "", itemSort = "tier";   // kept while the app is open
+let itemRole = "", itemFlip = false;   // kept while the app is open; itemFlip: the tier blocks the other way up (傳說 first)
 const itemStats = new Set<string>();
 // Items, laid out like the game's shop: the search, the role tabs with the sort button, the stat filters as a rail on the left
 // (several can be on: an item must have them all), and a tight grid of icons with their price. A tap opens the item.
@@ -220,43 +244,36 @@ export function itemsPage(ctx: PageCtx): PageOut {
     const flag = MODES[ctx.plugin.settings.mode].itemFlag;
     const el = page("Items");
     const seen = new Set<string>();
-    const items = store.items().filter((i) => i[flag] && i.goldTotal > 0 && !seen.has(i.name) && seen.add(i.name));
+    const items = store.items().filter((i) => i[flag] && i.goldTotal > 0 && !i.reward && !seen.has(i.name) && seen.add(i.name));   // augment rewards are never sold
     const box = h(el, "div", "mn-search");
     icon(box, "search", "mn-search-ic");
     const search = h(box, "input");
     search.type = "search";
     search.placeholder = "搜尋裝備";
     const roles = layoutBlock(h(el, "div", "mn-shop-roles"), true);   // the three blocks each load on their own
-    const sortWrap = h(el, "div", "mn-shop-sortwrap");
     const body = h(el, "div", "mn-shop");
     const rail = layoutBlock(h(body, "div", "mn-shop-rail"), true);
     const host = layoutBlock(h(body, "div", "mn-shop-list"), true);   // one loading look for the whole list
     const drawRoles = () => {
         roles.empty();
         const all = h(roles, "button", "mn-shop-role" + (!itemRole ? " is-on" : ""));
-        icon(all, "layout-grid");
+        shopRoleIcon(all, "全部");
         all.setAttribute("aria-label", "全部");
         all.addEventListener("click", (e) => { e.preventDefault(); itemRole = ""; drawRoles(); draw(); });
         // the six roles centred between 全部 (above the stat rail) and the sort button
         const mid = h(roles, "div", "mn-shop-rolemid");
         for (const [r] of ITEM_ROLES) {
             const b = h(mid, "button", "mn-shop-role" + (itemRole === r ? " is-on" : ""));
-            roleArt(b, r);
+            shopRoleIcon(b, r);
             holdTip(b, r);
             b.addEventListener("click", (e) => { e.preventDefault(); itemRole = itemRole === r ? "" : r; drawRoles(); draw(); });
         }
-        // the sort button at the right end; its choices drop down under it
-        const sb = h(roles, "button", "mn-shop-sortbtn");
-        icon(sb, "arrow-up-down");
-        sb.setAttribute("aria-label", "排序");
-        sb.addEventListener("click", (e) => { e.preventDefault(); sortWrap.toggleClass("is-open", !sortWrap.hasClass("is-open")); });
-    };
-    const drawSort = () => {
-        sortWrap.empty();
-        for (const [id, name] of [["tier", "依階級"], ["up", "價格 低 → 高"], ["down", "價格 高 → 低"]]) {
-            const b = h(sortWrap, "button", "mn-shop-sort" + (itemSort === id ? " is-on" : ""), name);
-            b.addEventListener("click", (e) => { e.preventDefault(); itemSort = id; sortWrap.removeClass("is-open"); drawSort(); draw(); });
-        }
+        // the sort button at the right end: it turns the tier blocks upside down (起始 → 傳說, or 傳說 → 起始); its arrow shows which way
+        const sb = h(roles, "button", "mn-shop-sortbtn" + (itemFlip ? " is-on" : ""));
+        icon(sb, itemFlip ? "arrow-up-wide-narrow" : "arrow-down-wide-narrow");
+        sb.setAttribute("aria-label", itemFlip ? "傳說在前" : "起始在前");
+        holdTip(sb, itemFlip ? "傳說在前" : "起始在前");
+        sb.addEventListener("click", (e) => { e.preventDefault(); itemFlip = !itemFlip; drawRoles(); draw(); });
     };
     const drawRail = () => {
         rail.empty();
@@ -283,26 +300,26 @@ export function itemsPage(ctx: PageCtx): PageOut {
     const draw = () => {
         host.empty();
         const q = search.value.trim();
-        const role = ITEM_ROLES.find(([r]) => r === itemRole)?.[1];
+        const shopRoles = store.itemRoles;
+        const role = !itemRole ? undefined
+            : shopRoles ? (i: { id: number }) => (shopRoles[String(i.id)] ?? []).includes(itemRole)
+            : ITEM_ROLES.find(([r]) => r === itemRole)?.[1];
         const need = ITEM_CATS.filter(([n]) => itemStats.has(n)).map(([, , tags]) => tags);
         let list = items.filter((i) => (!q || i.name.includes(q)) && (!role || role(i)) && need.every((tags) => i.tags.some((x) => tags.includes(x))));
         if (!list.length) { h(host, "p", "mn-home-sub", "沒有符合的裝備"); return; }
-        if (itemSort === "tier") {
-            for (const tier of TIERS) {
-                const part = list.filter((i) => tierOf(i) === tier);
-                if (!part.length) continue;
-                h(host, "div", "mn-shop-tier", tier);
-                const grid = h(host, "div", "mn-items");
-                for (const it of part) tile(grid, it);
-            }
-        } else {
-            list = [...list].sort((x, y) => (itemSort === "up" ? 1 : -1) * (x.goldTotal - y.goldTotal));
+        for (const tier of itemFlip ? [...TIERS].reverse() : TIERS) {
+            const part = list.filter((i) => tierOf(i) === tier).sort((x, y) => x.goldTotal - y.goldTotal);   // cheapest first, like the shop
+            if (!part.length) continue;
+            h(host, "div", "mn-shop-tier", tier);
             const grid = h(host, "div", "mn-items");
-            for (const it of list) tile(grid, it);
+            for (const it of part) tile(grid, it);
         }
+        host.scrollTop = 0;
     };
     search.addEventListener("input", draw);
-    drawRoles(); drawSort(); drawRail(); draw();
+    // every item's icon, fetched now: a role or stat filter then shows its items at once (Design Rules: ready before it shows)
+    void warmPictures(items.map((i) => i.icon));
+    drawRoles(); drawRail(); draw();
     // only the item grid scrolls: the shop fills the screen down to the tab bar, the search, role tabs and rail stay put
     const fit = () => {
         const scroll = el.closest<HTMLElement>(".mn-scroll");
@@ -310,7 +327,5 @@ export function itemsPage(ctx: PageCtx): PageOut {
         body.style.height = `${Math.max(240, scroll.getBoundingClientRect().bottom - body.getBoundingClientRect().top - 8)}px`;
     };
     requestAnimationFrame(fit);
-    sortWrap.addEventListener("transitionend", fit);
-    new ResizeObserver(fit).observe(sortWrap);
     return { title: "Items", el };
 }

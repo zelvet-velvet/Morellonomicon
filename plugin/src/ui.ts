@@ -114,7 +114,9 @@ function placeVeil(veil: HTMLElement): void {
 }
 // While a block loads it takes no taps and does not scroll: the veil catches them
 function holdBlock(veil: HTMLElement): void {
-    const stop = (e: Event) => { e.preventDefault(); e.stopPropagation(); };
+    // a loading block stops its own scrolling; on the champion page's pages it leaves the swipe alone (a clip loading on 技能 would
+    // otherwise catch a sideways swipe that starts on it)
+    const stop = (e: Event) => { if (veil.closest(".mn-cpa-track")) return; e.preventDefault(); e.stopPropagation(); };
     for (const ev of ["touchmove", "wheel"]) veil.addEventListener(ev, stop, { passive: false });
     for (const ev of ["click", "pointerdown", "touchstart", "mousedown"]) veil.addEventListener(ev, (e) => e.stopPropagation());
     veil.addEventListener("click", (e) => e.preventDefault());
@@ -430,7 +432,16 @@ export const augIcon = (parent: HTMLElement, src: string, rarity: string, cls = 
     return box;
 };
 
-export interface RowSpec { icon?: string; image?: string; rarity?: string; title: string; sub?: string; value?: string; chevron?: boolean; muted?: boolean; clamp?: boolean; onTap?: () => void }
+export interface RowSpec { icon?: string; image?: string; rarity?: string; title: string; sub?: string; value?: string; faces?: string[]; chevron?: boolean; muted?: boolean; clamp?: boolean; onTap?: () => void }   // faces: small round pictures before the value (the augment list's best champions)
+// A page whose content is shorter than the screen: everything after its first `keep` children (its title row or banner) goes into one
+// body that is centred down the screen (Design Rules, balance); a longer page still starts at the top
+export const centreBelow = (el: HTMLElement, keep: number): HTMLElement => {
+    const body = h(null, "div", "mn-centre-body");
+    while (el.children.length > keep) body.append(el.children[keep]);
+    el.append(body);
+    el.addClass("is-centred");
+    return body;
+};
 export const row = (parent: HTMLElement, r: RowSpec): HTMLElement => {
     const el = h(parent, "div", "mn-row" + (r.onTap ? " is-tap" : "") + (r.muted ? " is-muted" : ""));
     if (r.image && r.rarity && AUG_CLASS[r.rarity]) augIcon(el, r.image, r.rarity, "mn-row-aug");
@@ -439,6 +450,7 @@ export const row = (parent: HTMLElement, r: RowSpec): HTMLElement => {
     const main = h(el, "div", "mn-row-main");
     h(main, "div", "mn-row-t", r.title);
     if (r.sub) h(main, "div", "mn-row-s" + (r.clamp ? " is-clamp" : ""), r.sub);
+    if (r.faces?.length) { const f = h(el, "div", "mn-row-faces"); for (const src of r.faces) { const im = h(f, "img"); im.src = src; im.alt = ""; } }
     if (r.value) h(el, "div", "mn-row-v", r.value);
     if (r.chevron) icon(el, "chevron-right", "mn-row-chev");
     if (r.onTap) { const fn = r.onTap; el.addEventListener("click", (e) => { e.preventDefault(); fn(); }); }
@@ -498,6 +510,9 @@ const shopMask = (sheet: HTMLImageElement, row: number): string => {
 };
 export const shopIcon = (parent: HTMLElement, row: number, lit: boolean, cls = "mn-shopic"): HTMLElement => {
     const el = h(parent, "span", cls);
+    const ready = shopMasks.get(row);
+    // its sharp shape already made (at start-up): drawn from that alone, with no picture to wait for, so it shows at once
+    if (ready) { el.style.setProperty("--mask", `url("${ready}")`); el.classList.add("is-sharp"); return el; }
     const im = h(el, "img");   // the plain picture: what the loading look waits for, and the fallback
     im.crossOrigin = "anonymous";
     im.src = SHOP_SPRITE; im.alt = ""; im.draggable = false;
@@ -508,9 +523,7 @@ export const shopIcon = (parent: HTMLElement, row: number, lit: boolean, cls = "
         el.style.setProperty("--mask", `url("${url}")`);
         el.classList.add("is-sharp");
     };
-    const ready = shopMasks.get(row);
-    if (ready) { el.style.setProperty("--mask", `url("${ready}")`); el.classList.add("is-sharp"); }
-    else void loadShopSheet().then(sharpen);
+    void loadShopSheet().then(sharpen);
     return el;
 };
 // The rail's colour for each filter when it is on (the Icons note's colours; 魔力 and 法術穿透 chosen by Claude, see Dev Tools/Icons.md)
@@ -559,6 +572,27 @@ const preloaded = new Map<string, HTMLImageElement>();
 export const preloadRoleIcons = (): void => {
     if (preloaded.size) return;
     for (const file of [...Object.values(ROLE_FILE), ...Object.values(LANE_FILE)]) { const im = new Image(); im.src = ROLE_WIKI + file; preloaded.set(file, im); }
+    const sheet = new Image(); sheet.src = SHOP_ROLE_SPRITE; preloaded.set(SHOP_ROLE_SPRITE, sheet);   // the shop's class tab icons
+    // the shop's stat icons (Items' rail, the stat chips): the sheet fetched and every icon's sharp shape made now, so the rail is
+    // drawn sharp at once instead of blurred, then blocky, then sharp
+    void loadShopSheet().then((s) => { if (s) SHOP_ICON_Y.forEach((_, row) => shopMask(s, row)); });
+};
+// The item shop's class tabs with the shop's own icons: one sprite sheet of the game (CommunityDragon, shown by address), each icon's
+// light state (the sheet has four states per icon, not in the same order for every icon), measured from the sheet as
+// [x, y, width, height]; the order is the shop's (全部, then the six classes)
+export const SHOP_ROLE_SPRITE = "https://raw.communitydragon.org/latest/game/assets/ux/itemshop/jade/itemshop_texture_atlas.png";
+const SHOP_ROLE_BOX: Record<string, [number, number, number, number]> = {
+    全部: [188, 131, 22, 19], 戰士: [898, 29, 23, 24], 射手: [900, 86, 27, 22], 刺客: [940, 232, 24, 21], 法師: [898, 61, 24, 20], 坦克: [906, 112, 16, 24], 輔助: [843, 244, 26, 22],
+};
+export const shopRoleIcon = (parent: HTMLElement, role: string): HTMLElement => {
+    const s = h(parent, "span", "mn-shoprole-ic");
+    const b = SHOP_ROLE_BOX[role];
+    if (!b) { icon(s, ROLE_ICON[role] ?? "layout-grid"); return s; }
+    s.style.width = `${b[2]}px`;
+    s.style.height = `${b[3]}px`;
+    s.style.backgroundImage = `url("${SHOP_ROLE_SPRITE}")`;
+    s.style.backgroundPosition = `-${b[0]}px -${b[1]}px`;
+    return s;
 };
 
 // An icon-only filter chip with the game's icon (drawn at once when cached, else fading in; a look-alike if it fails to load).
@@ -644,6 +678,36 @@ export const empty = (parent: HTMLElement, o: { icon: string; title: string; tex
 };
 
 // A row of equal-width choices (one is on). Used for sub-tabs, reach and sort.
+// A choice between two or three, as the words side by side, the chosen one in the accent colour (Design Rules, champion page
+// family: switches are words, not a segmented capsule)
+export const textSwitch = (parent: HTMLElement, options: [string, string][], value: string, onChange: (id: string) => void): HTMLElement => {
+    const box = h(parent, "div", "mn-tsw");
+    for (const [id, label] of options) {
+        const b = h(box, "button", "mn-tsw-b" + (id === value ? " is-on" : ""), label);
+        b.addEventListener("click", (e) => {
+            e.preventDefault();
+            box.querySelectorAll(".mn-tsw-b").forEach((x) => x.toggleClass("is-on", x === b));
+            onChange(id);
+        });
+    }
+    return box;
+};
+// A section heading of the champion page family: a tier letter in its colour (S / A / B / C), or a word
+export const TIER_COLOR: Record<string, string> = { S: "var(--color-orange)", A: "var(--color-yellow)", B: "var(--color-green)", C: "var(--mn-muted)" };
+export const tierHead = (parent: HTMLElement, label: string): HTMLElement => {
+    const el = h(parent, "div", "mn-tier-h", label);
+    if (TIER_COLOR[label]) el.style.setProperty("--t", TIER_COLOR[label]);
+    return el;
+};
+// An accent text link with a chevron (全部強化 ›): the champion page family's way to open more, never a row in a panel
+export const moreLink = (parent: HTMLElement, label: string, go: () => void): HTMLElement => {
+    const b = h(parent, "button", "mn-more-link");
+    h(b, "span", undefined, label);
+    icon(b, "chevron-right");
+    b.addEventListener("click", (e) => { e.preventDefault(); go(); });
+    return b;
+};
+
 export const segmented = (parent: HTMLElement, options: [string, string][], value: string, onChange: (id: string) => void, cls = ""): HTMLElement => {
     const seg = h(parent, "div", "mn-seg " + cls);
     for (const [id, label] of options) {

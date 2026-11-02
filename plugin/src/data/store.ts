@@ -44,6 +44,11 @@ function withOnHit(skills: Skill[], keys: string[]): Skill[] {
 }
 
 export interface Skill { key: string; name: string; damage: string[]; tags: string[]; icon: string; desc: string; upgrade: string; range: string; rows: SkillRow[]; levels: number[] }   // levels: a passive's numbers are by champion level (Lv 1, 6, 11 ...), not by rank
+// One play style's augment tiers from the augment model (Dev Tools/Augment Model.md): per rarity (`group`; 五殺 is the Pentakill
+// band's set), S / A / B / C, the reason (輸出 +23%) and 前期強 / 後期強
+export interface AugTier { id: number; group: string; tier: string; value: number; score: number; when: string; reason: string }
+export interface AugTierStyle { name: string; tiers: AugTier[]; none: { id: number; value: number }[] }
+
 export interface Augment {
     id: number; name: string; rarity: string; icon: string; effect: string; partial: boolean; fits: string[]; tier: string; path: string;
     hand: boolean;   // `effect` is hand-written on the note (it wins over the game data's numbers)
@@ -56,6 +61,7 @@ export interface AugmentData {
 }
 export interface Item {
     id: number; name: string; tags: string[]; desc: string; from: number[]; into: number[]; goldTotal: number; aram: boolean; rift: boolean; icon: string; variantOf?: string; path: string;
+    reward: boolean;   // an augment's reward item (烏莉特的法帽, 黃金鍋鏟...): never sold in the shop
 }
 
 // "26.21" and "16.21" are the same patch (Riot's 2026 numbering is 26.x, Data Dragon's is 16.x); compare as minor numbers
@@ -117,6 +123,9 @@ export class Store {
     gameText: Record<string, { text: string; partial: boolean }> = {};   // augment id -> the game's own description (tools/fetch_augment_text.py)
     augData: Record<string, AugmentData> = {};   // augment id -> numbers, levels, tags (tools/fetch_augment_data.py)
     augmentData(id: number): AugmentData | undefined { return this.augData[String(id)]; }
+    augTiers: Record<string, Record<string, AugTierStyle>> = {};   // champion id -> play style -> the augment model's tiers (tools/augment_model.py)
+    augUnrated: Record<string, string> = {};   // augment id -> why the model cannot value it (a quest, random, an item upgrade...)
+    itemRoles: Record<string, string[]> | null = null;   // item id -> the shop's class tabs it is under (_data/item-roles.json, the League wiki)
 
     // false until the data files (_data/*.json) have been read once after start-up
     ready = false;
@@ -144,6 +153,16 @@ export class Store {
             this.augData = (await this.app.vault.adapter.exists(path)) ? ((JSON.parse(await this.app.vault.adapter.read(path)) as { augments: Record<string, AugmentData> }).augments ?? {}) : {};
             this.augs = null;
         } catch { this.augData = {}; }
+        try {
+            const path = normalizePath("_data/augment-tiers.json");
+            const d = (await this.app.vault.adapter.exists(path)) ? JSON.parse(await this.app.vault.adapter.read(path)) as { champions?: Record<string, Record<string, AugTierStyle>>; unrated?: Record<string, string> } : {};
+            this.augTiers = d.champions ?? {};
+            this.augUnrated = d.unrated ?? {};
+        } catch { this.augTiers = {}; this.augUnrated = {}; }
+        try {
+            const path = normalizePath("_data/item-roles.json");
+            this.itemRoles = (await this.app.vault.adapter.exists(path)) ? ((JSON.parse(await this.app.vault.adapter.read(path)) as { items: Record<string, string[]> }).items ?? null) : null;
+        } catch { this.itemRoles = null; }
         try {
             const path = normalizePath("_data/positions.json");
             this.positions = (await this.app.vault.adapter.exists(path)) ? JSON.parse(await this.app.vault.adapter.read(path)) : null;
@@ -219,7 +238,7 @@ export class Store {
         if (!this.its) {
             this.its = this.notes(this.s.itemFolder).filter((n) => n.fm.type === "item").map(({ file, fm }) => ({
                 id: num(fm.id), name: str(fm.name, file.basename), tags: list(fm.tags), desc: str(fm.desc), from: numList(fm.from), into: numList(fm.into), goldTotal: num(fm.gold_total), aram: fm.aram === true,
-                rift: fm.rift === true, icon: str(fm.icon), variantOf: typeof fm.variant_of === "string" ? fm.variant_of : undefined, path: file.path,
+                rift: fm.rift === true, icon: str(fm.icon), variantOf: typeof fm.variant_of === "string" ? fm.variant_of : undefined, reward: fm.reward === true, path: file.path,
             })).sort((a, b) => a.goldTotal - b.goldTotal || a.name.localeCompare(b.name, "zh-Hant"));
         }
         return this.its;

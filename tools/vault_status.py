@@ -100,7 +100,8 @@ def sections(s):
 
 
 def items(body):
-    return [l for l in body.split('\n') if ITEM.match(l)]
+    """The list items of a section, without a placeholder line ('- Nothing yet…')."""
+    return [l for l in body.split('\n') if ITEM.match(l) and not l.startswith('> - Nothing yet')]
 
 
 def cmd_show(a):

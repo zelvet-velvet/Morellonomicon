@@ -2,18 +2,76 @@ import { requestUrl } from "obsidian";
 import type { Champion, Change, Skill } from "../data/store";
 import { DIR_COLOR } from "./changes";
 import { DAMAGE_COLOR, blockUntil, chip, h, icon, scalingParts, whenMediaLoaded } from "../ui";
-const CLIP_FADE_MS = 350;   // a clip fades in over 0.3 s (styles.css, .mn-app video); its stand-in stays under it that long
+const CLIP_FADE_MS = 350;
+const STAGE_DPR = 2;        // the champion page's clip canvas is drawn at most at this pixel density (enough on a phone, half the work of 3x)   // a clip fades in over 0.3 s (styles.css, .mn-app video); its stand-in stays under it that long
 
 // Passive + Q W E R as icons; the frame colour is the damage type of the skill (orange physical, blue magic, yellow true).
 // Tap an icon to open its details right below (tap again to close); no new page.
 // opt.open: open this skill at once and keep one always open (the champion page's Skills tab); opt.clipFirst: the clip above the
-// numbers; opt.scroll false: never scroll the page to the card (the tab already shows it)
-export interface StripOpts { open?: number; clipFirst?: boolean; scroll?: boolean }
+// numbers; opt.scroll false: never scroll the page to the card (the tab already shows it); opt.shelf: a tiny holder on the screen where
+// every ability's clip loads ahead (iOS loads a clip only while it is on the screen), so a tap shows a clip that is already there
+export interface StripOpts { open?: number; clipFirst?: boolean; scroll?: boolean; shelf?: HTMLElement; barBelow?: boolean }   // barBelow: the P Q W E R bar under the card (the champion page: clip, numbers and text on top, the buttons at the thumb)
 export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] = [], opt: StripOpts = {}): void {
     if (!c.skills.length) return;
     const strip = h(parent, "div", "mn-skills");
     const detail = h(parent, "div", "mn-skill-detail");
+    if (opt.barBelow) parent.append(strip);
     let open = -1;
+    // The champion page (opt.shelf): every ability's clip loads ahead in the shelf and never leaves it; the clip box shows the playing
+    // one on a canvas, frame by frame. iOS draws a <video> on a layer of its own, and a clip moved around the page a few times came out
+    // as a smaller hard rectangle that ignored the box's fade and size; a canvas is ordinary drawing, so the fade always holds. The canvas
+    // keeps the last frame until the next clip has one, so a switch goes from clip to clip with nothing in between.
+    const shelf = opt.shelf;
+    const held = new Map<number, HTMLVideoElement>();
+    let active: HTMLVideoElement | null = null;
+    if (shelf) c.skills.forEach((s, i) => {
+        demo(shelf, c, s, () => { held.delete(i); if (open === i) detail.querySelector(".mn-sd-clipbox")?.remove(); });
+        const v = shelf.lastElementChild;
+        if (!(v instanceof HTMLVideoElement)) return;
+        held.set(i, v);
+        v.addEventListener("loadeddata", () => { if (v !== active) v.pause(); }, { once: true });   // loaded: it waits, paused, until shown
+    });
+    let stage: HTMLElement | null = null, canvas: HTMLCanvasElement | null = null, ph: HTMLElement | null = null;
+    let painted = false, raf = 0;
+    const paint = () => {
+        raf = 0;
+        if (!stage?.isConnected || !canvas) { active?.pause(); return; }   // the page was left: the clip stops
+        const v = active;
+        const w = canvas.clientWidth, ht = canvas.clientHeight;
+        if (v && v.readyState >= 2 && v.videoWidth && w && ht) {
+            const dpr = Math.min(STAGE_DPR, window.devicePixelRatio || 1);
+            if (canvas.width !== Math.round(w * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(ht * dpr); }
+            const g = canvas.getContext("2d");
+            if (g) {   // the clip covers the box (as object-fit: cover), its middle kept
+                const k = Math.max(canvas.width / v.videoWidth, canvas.height / v.videoHeight);
+                const sw = canvas.width / k, sh = canvas.height / k;
+                g.drawImage(v, (v.videoWidth - sw) / 2, (v.videoHeight - sh) / 2, sw, sh, 0, 0, canvas.width, canvas.height);
+                if (!painted) { painted = true; window.setTimeout(() => ph?.remove(), CLIP_FADE_MS); canvas.addClass("is-on"); }
+            }
+        }
+        raf = requestAnimationFrame(paint);
+    };
+    const stageClip = (i: number, s: Skill): Promise<void> | null => {
+        const v = held.get(i);
+        if (!v) return null;   // its clip could not play: no box
+        if (!stage) { stage = h(null, "div", "mn-sd-clipbox mn-sd-stage"); canvas = h(stage, "canvas", "mn-sd-canvas"); }
+        detail.append(stage);
+        if (!painted) {   // nothing drawn yet: the skill's own picture, enlarged and blurred, under the canvas
+            ph?.remove();
+            ph = h(null, "div", "mn-sd-clipph");
+            ph.style.backgroundImage = `url("${s.icon}")`;
+            stage.prepend(ph);
+        }
+        if (active && active !== v) active.pause();
+        active = v;
+        v.currentTime = 0;
+        void v.play().catch(() => undefined);
+        if (!raf) raf = requestAnimationFrame(paint);
+        if (v.readyState >= 2) return Promise.resolve();
+        const loaded = new Promise<void>((done) => { v.addEventListener("loadeddata", () => done(), { once: true }); window.setTimeout(done, CLIP_WAIT_MS); });
+        if (!painted) blockUntil(stage, loaded);
+        return loaded;
+    };
     const boxes = c.skills.map((s, i) => {
         const box = h(strip, "button", "mn-skill-box");
         box.setAttribute("aria-label", `${s.key} ${s.name}`);
@@ -28,21 +86,37 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
     const show = (i: number) => {
         open = i;
         boxes.forEach((b, j) => b.toggleClass("is-on", j === i));
+        // the clip on show (with a frame) stays as the new clip's stand-in, so a tapped ability goes from clip to clip, not via a picture
+        const shown = detail.querySelector<HTMLVideoElement>(".mn-sd-video");
+        const prev = shown && shown.readyState >= 2 ? shown : null;
+        prev?.remove();
         detail.empty();
         detail.toggleClass("is-open", i >= 0);
-        if (i < 0) return;
+        // the clip that was on show (another strip's own clip, not the champion page's): let go once the new one is in
+        let dropped = false;
+        const dropPrev = () => {
+            if (!prev || dropped) return;
+            dropped = true;
+            prev.remove(); prev.pause(); prev.removeAttribute("src"); prev.replaceChildren(); prev.load();
+        };
+        if (i < 0) { dropPrev(); return; }
         const s = c.skills[i];
         const clip = () => {
+            if (shelf) return stageClip(i, s);   // the champion page: the canvas over the shelf's clip
             // The clip has its room from the start (a box of the clip's shape) and loads as a block of its own, with the blur and the band
             // of light. A clip that cannot play takes its box away.
             const clipBox = h(detail, "div", "mn-sd-clipbox");
-            // something to blur from the first moment, before the clip has a single frame: the skill's own picture, enlarged and blurred;
-            // the clip covers it when it appears (and goes after the clip's own fade-in, so nothing shows through)
-            const ph = h(clipBox, "div", "mn-sd-clipph");
-            ph.style.backgroundImage = `url("${s.icon}")`;
-            demo(clipBox, c, s, () => clipBox.remove());
-            clipBox.querySelector("video")?.addEventListener("loadeddata", () => window.setTimeout(() => ph.remove(), CLIP_FADE_MS), { once: true });
-            if (!clipBox.querySelector("video")) { clipBox.remove(); return null; }   // no clip for this skill
+            // something to blur from the first moment, before the clip has a single frame: the clip that was on show, or else the skill's
+            // own picture, enlarged and blurred; the clip covers it when it appears (and goes after the clip's own fade-in)
+            let stand: HTMLElement;
+            if (prev) { stand = prev; clipBox.append(prev); void prev.play().catch(() => undefined); }
+            else { stand = h(clipBox, "div", "mn-sd-clipph"); stand.style.backgroundImage = `url("${s.icon}")`; }
+            const letGo = () => { if (stand === prev) dropPrev(); else stand.remove(); };
+            demo(clipBox, c, s, () => { letGo(); clipBox.remove(); });
+            const last = clipBox.lastElementChild;   // demo's new clip, after the stand-in
+            const v = last instanceof HTMLVideoElement && last !== prev ? last : null;
+            v?.addEventListener("loadeddata", () => window.setTimeout(letGo, CLIP_FADE_MS), { once: true });
+            if (!v) { letGo(); clipBox.remove(); return null; }   // no clip for this skill
             const loaded = whenMediaLoaded([clipBox], CLIP_WAIT_MS);
             blockUntil(clipBox, loaded);
             return loaded;
@@ -95,7 +169,9 @@ const clipAddress = (c: Champion, key: string): string => {
     // "Q" is the ability's first clip; "Q2" the second one (the other form of Jayce, Nidalee, Elise… where Riot made one)
     return `${DEMO_BASE}/${k}/ability_${k}_${/\d$/.test(key) ? key : `${key}1`}`;
 };
-// Clips downloaded ahead of time (see preloadClip): clip address -> a local address of the whole file, which plays at once
+// Clips downloaded ahead of time (see preloadClip): clip address -> a local address of the whole file, which plays at once. Only the
+// last CLIP_CACHE are kept (oldest first out), so browsing many champions does not fill the phone's memory
+const CLIP_CACHE = 15;
 const downloaded = new Map<string, string>();
 const webmOnly = new Set<string>();   // clips Riot has only as WebM: a phone decodes those in software, so only the clip in view should play
 const downloading = new Map<string, Promise<void>>();
@@ -110,7 +186,15 @@ export function preloadClip(c: Champion, key: string): Promise<void> {
         for (const ext of ["mp4", "webm"]) {
             try {
                 const r = await requestUrl({ url: `${url}.${ext}`, throw: false });
-                if (r.status === 200) { if (ext === "webm") webmOnly.add(url); downloaded.set(url, URL.createObjectURL(new Blob([r.arrayBuffer], { type: `video/${ext}` }))); return; }
+                if (r.status === 200) {
+                    if (ext === "webm") webmOnly.add(url);
+                    downloaded.set(url, URL.createObjectURL(new Blob([r.arrayBuffer], { type: `video/${ext}` })));
+                    for (const [old, local] of downloaded) {
+                        if (downloaded.size <= CLIP_CACHE) break;
+                        URL.revokeObjectURL(local); downloaded.delete(old); downloading.delete(old);
+                    }
+                    return;
+                }
             } catch { /* try the next format */ }
         }
     })();

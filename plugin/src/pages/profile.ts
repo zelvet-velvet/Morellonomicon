@@ -5,7 +5,8 @@ import { DAMAGE_COLOR, h, holdTip, icon, svg, SHOP_ROW, shopIcon } from "../ui";
 
 // A champion at a glance: what it can do, drawn as a profile chart, plus the abilities it has. Every axis comes from data we have:
 //   輸出 = its stronger damage rating (Riot, 1-10)        坦度 = Riot's defence rating
-//   控場 / 位移 / 輔助 = how many of its Q W E R do crowd control / move the champion / heal or shield (read from the skill text)
+//   控場 / 位移 = how many of its Q W E R do crowd control / move the champion (read from the skill text)
+//   輔助 = how many of them help teammates (heal, shield or speed an ally: the 隊友增益 tag); healing only itself (Briar's W) does not count
 //   射程 = attack range (650 = full)
 export interface Axis { label: string; value: number }
 const SKILL_STEPS = [0, 4, 7, 9, 10];   // 0, 1, 2, 3, 4 skills -> a score out of 10
@@ -19,7 +20,7 @@ export function profileAxes(c: Champion): Axis[] {
         { label: "坦度", value: c.defense },
         { label: "控場", value: score(count(c, "控場")) },
         { label: "位移", value: score(count(c, "位移")) },
-        { label: "輔助", value: score(count(c, "治療", "護盾")) },
+        { label: "輔助", value: score(count(c, "隊友增益")) },
         { label: "射程", value: Math.min(10, Math.round(c.range / 65)) },
     ];
 }
@@ -236,7 +237,7 @@ function styleAxes(c: Champion): StyleAxis[] {
         { label: "坦度", icon: "shield", color: "var(--mn-tank)", value: c.defense, sub: tough },
         { label: "控場", icon: "lock", color: "var(--mn-cc)", value: score(count(c, "控場")), sub: keysOf(c, "控場"), tag: "控場" },
         { label: "位移", icon: "arrow-big-right-dash", color: "var(--mn-dash)", value: score(count(c, "位移")), sub: keysOf(c, "位移"), tag: "位移" },
-        { label: "輔助", icon: "heart-pulse", color: "var(--mn-heal)", value: score(count(c, "治療", "護盾")), sub: keysOf(c, "治療", "護盾"), tag: "治療" },
+        { label: "輔助", icon: "heart-pulse", color: "var(--mn-heal)", value: score(count(c, "隊友增益")), sub: keysOf(c, "隊友增益"), tag: "隊友增益" },   // only help for teammates (profileAxes)
         { label: "射程", icon: "target", color: "var(--mn-range)", value: Math.min(10, Math.round(c.range / 65)), sub: [reachOf(c), String(c.range)].filter(Boolean).join(" · ") },
     ];
 }
@@ -244,7 +245,7 @@ function styleAxes(c: Champion): StyleAxis[] {
 // The style chart: a hexagon whose corners are labelled with coloured chips (icon, name, value, the skills or a hint).
 // A corner at zero gets a dashed chip. The shape is tinted with the champion's main damage colour.
 const SW = 350, SH = 356, SCX = 175, SCY = 180, SR = 96, CHIP_R = 140;
-function styleChart(parent: HTMLElement, c: Champion): void {
+export function styleChart(parent: HTMLElement, c: Champion): void {
     const axes = styleAxes(c);
     const n = axes.length;
     const pt = (i: number, r: number): [number, number] => { const a = -Math.PI / 2 + (i * 2 * Math.PI) / n; return [SCX + r * Math.cos(a), SCY + r * Math.sin(a)]; };

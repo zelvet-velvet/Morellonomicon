@@ -1,5 +1,5 @@
 import type { Champion } from "../data/store";
-import { chip, empty, group, h, row } from "../ui";
+import { chip, empty, h, moreLink } from "../ui";
 import { metaLine } from "./fresh";
 import type { PageCtx } from "./index";
 
@@ -8,7 +8,9 @@ const TOP_ITEMS = 8;
 const pct = (wins: number, games: number) => (games ? Math.round((wins / games) * 100) : 0);
 
 // The Build sub-tab: what people really build (counted from matches), our own picks, fun alternatives, and builds for playing with a teammate.
-export function buildTab(body: HTMLElement, c: Champion, ctx: PageCtx): void {
+export function buildTab(page: HTMLElement, c: Champion, ctx: PageCtx): void {
+    // the builds in one part (the champion page centres it down the page), the Live stats links after it (at the page's foot)
+    const body = h(page, "div", "mn-bt-main");
     const store = ctx.plugin.store;
     const mode = ctx.plugin.settings.mode;
     const stats = store.stats?.champions[c.id];
@@ -38,7 +40,7 @@ export function buildTab(body: HTMLElement, c: Champion, ctx: PageCtx): void {
     if (alt.length) { section(body, "有趣替代"); for (const b of alt) setCard(body, c, ctx, b); }
     if (synergy.length) { section(body, "搭配"); for (const b of synergy) setCard(body, c, ctx, b); }
     if (!stats && !mine.length) empty(body, { icon: "package-open", title: "No builds of ours yet", text: "Our own builds and ideas for this champion will appear here." });
-    if (mode === "mayhem") liveStats(body, c);
+    if (mode === "mayhem") liveStats(h(page, "div", "mn-bt-live"), c);
 }
 
 // Live win rates and builds live on other sites; we only link to them (their terms do not allow copying their numbers).
@@ -46,9 +48,10 @@ const OPGG_SLUG: Record<string, string> = { MonkeyKing: "wukong" };   // ids tha
 function liveStats(body: HTMLElement, c: Champion): void {
     const slug = OPGG_SLUG[c.id] ?? c.id.toLowerCase();
     section(body, "Live stats");
-    const g = group(body);
-    row(g, { icon: "external-link", title: "OP.GG Mayhem build", chevron: true, onTap: () => window.open(`https://op.gg/lol/modes/aram-mayhem/${slug}/build`) });
-    row(g, { icon: "external-link", title: "Mobalytics Mayhem builds", chevron: true, onTap: () => window.open(`https://mobalytics.gg/lol/champions/${slug}/mayhem-builds`) });
+    // accent links, no panel (Design Rules, champion page family)
+    const links = h(body, "div", "mn-bt-links");
+    moreLink(links, "OP.GG", () => window.open(`https://op.gg/lol/modes/aram-mayhem/${slug}/build`));
+    moreLink(links, "Mobalytics", () => window.open(`https://mobalytics.gg/lol/champions/${slug}/mayhem-builds`));
 }
 
 function section(body: HTMLElement, title: string): void { h(body, "div", "mn-gh", title); }

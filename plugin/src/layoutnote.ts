@@ -1,4 +1,4 @@
-import { MarkdownPostProcessorContext, Notice, TFile } from "obsidian";
+import { MarkdownPostProcessorContext, MarkdownRenderChild, Notice, Platform, TFile } from "obsidian";
 import type MorellonomiconPlugin from "./main";
 import { MODES, TAB_ICON, TAB_LABEL } from "./modes";
 import { icon } from "./ui";
@@ -27,9 +27,13 @@ interface Block { id: string; label: string; kind: string; x: number; y: number;
 interface Page { id: string; name: string; note?: string; tabbar?: boolean; mock?: boolean; blocks: Block[] }   // mock: a proposal by Claude, not built yet (a light blue frame)
 
 // each page's unsaved state and steps, by note and page id: kept here so a redraw of the note (after a save) does not lose them
-interface Steps { past: string[]; future: string[]; last: string }
+interface Steps { past: string[]; future: string[]; last: string; home: string }   // home: the mn-layout block the page belongs to
 const memory = new Map<string, Map<string, Steps>>();
 const winAt = new Map<string, { x: number; y: number }>();   // where a page's block window was dragged to (kept across redraws)
+type Metric = "top" | "left" | "right" | "bottom" | "w" | "h";
+let metricAt: Metric = "left";   // the number chosen in the box diagram (kept across redraws)
+const STEP = 4;                  // px a − / + tap moves (Design Rules: 4 px steps)
+const REPEAT_MS = 110;           // a held − / + repeats this often
 const uid = () => Math.random().toString(36).slice(2, 8);
 const snap = (v: number) => Math.round(v / SNAP) * SNAP;
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -44,9 +48,12 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
     const steps = memory.get(ctx.sourcePath) ?? new Map<string, Steps>();
     memory.set(ctx.sourcePath, steps);
     // what is shown: each saved page, or its unsaved state; then pages added but not saved yet
-    const pages: Page[] = saved.map((p) => (steps.has(p.id) ? (JSON.parse(steps.get(p.id)!.last) as Page) : p));
-    for (const [id, s] of steps) if (!saved.some((p) => p.id === id)) pages.push(JSON.parse(s.last) as Page);
+    // The note may hold several mn-layout blocks (one per group, each under its own heading so it shows in the outline): a block's
+    // key is its first saved page, and an unsaved page belongs to the block it was added in
     const info = ctx.getSectionInfo(el);
+    const home = saved[0]?.id ?? `@${info?.lineStart ?? 0}`;
+    const pages: Page[] = saved.map((p) => (steps.has(p.id) ? (JSON.parse(steps.get(p.id)!.last) as Page) : p));
+    for (const [id, s] of steps) if (s.home === home && !saved.some((p) => p.id === id)) pages.push(JSON.parse(s.last) as Page);
     const root = el.createDiv({ cls: "mn-lay" });
     if (source.trim() && !saved.length) { root.createDiv({ cls: "mn-lay-err", text: "The layout data could not be read (JSON). Fix it in the source view." }); return; }
     // the saved pages are written into the note (the lines between the fences)
@@ -65,13 +72,16 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
     if (file0 instanceof TFile) void plugin.app.vault.cachedRead(file0).then((text) => {
         const m = new RegExp("```" + SYNCED + "\\n([\\s\\S]*?)\\n```").exec(text);
         synced = new Map(parse(m?.[1] ?? "").map((p) => [p.id, JSON.stringify(p)]));
+        // the colour legend shows once, over the note's first layout block
+        const first = text.split("\n").findIndex((l) => l.trim() === "```mn-layout");
+        legend.toggleClass("is-hidden", !!info && first >= 0 && first !== info.lineStart);
         draw();
     });
     const changedSinceSync = (page: Page) => synced.size > 0 && synced.get(page.id) !== savedJson(page.id);
     const savedJson = (id: string) => { const p = saved.find((x) => x.id === id); return p ? JSON.stringify(p) : ""; };
     const stepsOf = (page: Page): Steps => {
         let s = steps.get(page.id);
-        if (!s) { s = { past: [], future: [], last: savedJson(page.id) || JSON.stringify(page) }; steps.set(page.id, s); }
+        if (!s) { s = { past: [], future: [], last: savedJson(page.id) || JSON.stringify(page), home }; steps.set(page.id, s); }
         return s;
     };
     // after any change to a page: the state before it becomes a step back
@@ -95,6 +105,11 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
     for (const v of Object.values(KINDS)) { const s = legend.createSpan(); s.createEl("i").style.borderColor = v.color; s.append(v.name); }
     const wall = root.createDiv({ cls: "mn-lay-groups" });
     let selected: { page: Page; block: Block } | null = null;
+    let openWin: HTMLElement | null = null;
+    // when Obsidian redraws or closes the note, the window on the body goes with this block
+    const life = new MarkdownRenderChild(el);
+    life.onunload = () => { openWin?.remove(); openWin = null; };
+    ctx.addChild(life);
 
     // pages are grouped by the part of their name before " · ": the group is a big title (Home), its pages sit under it by the rest
     // of their name (not linked, linked); a page named just "Picks" is the group's main page
@@ -108,6 +123,8 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
     };
     const draw = () => {
         wall.empty();
+        openWin?.remove();   // the chosen block's window lives on the body; drawn again below when a block is still chosen
+        openWin = null;
         const groups = new Map<string, Page[]>();
         for (const p of pages) groups.set(groupOf(p), [...(groups.get(groupOf(p)) ?? []), p]);
         for (const [group, list] of groups) {
@@ -272,32 +289,44 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
     // phone's top left; X and Y are the block's top-left corner; an edge keeps the opposite edge where it is. Then the note (it grows
     // with its text) and the duplicate and delete icons.
     const inspector = (fig: HTMLElement, page: Page, b: Block) => {
-        const win = fig.createDiv({ cls: "mn-lay-win" });
-        const phone = fig.querySelector<HTMLElement>(".mn-lay-phone");
-        // under the block if there is room on the phone, else over its lower part; where it was dragged to wins
-        const top = (phone?.offsetTop ?? 0) + (b.y + b.h) * SCALE + 8;
-        win.style.top = `${Math.min(top, (phone?.offsetTop ?? 0) + H * SCALE - 360)}px`;
-        const moved = winAt.get(page.id);
-        if (moved) win.style.transform = `translate(${moved.x}px, ${moved.y}px)`;
+        // the window floats at the right side of the screen on a computer, in the middle on a phone (on the document body, so no
+        // parent's scrolling or transform moves it); where it was dragged to wins. It closes when the note scrolls, unless you are typing in it.
+        openWin?.remove();
+        const win = document.body.createDiv({ cls: "mn-lay-win" });
+        openWin = win;
+        const place = (p: { x: number; y: number }) => { win.style.transform = `translate(calc(${Platform.isMobile ? "-50%" : `50vw - ${MARGIN}px - 100%`} + ${p.x}px), calc(-50% + ${p.y}px))`; };
+        place(winAt.get(page.id) ?? { x: 0, y: 0 });
+        const shut = () => { selected = null; winAt.delete(page.id); draw(); };
+        const onScroll = (e: Event) => {
+            if (!win.isConnected) { document.removeEventListener("scroll", onScroll, true); return; }
+            if (e.target instanceof Node && win.contains(e.target)) return;   // the window's own scrolling
+            if (win.contains(document.activeElement)) return;   // typing: the keyboard scrolls the note to the box
+            document.removeEventListener("scroll", onScroll, true);
+            shut();
+        };
+        document.addEventListener("scroll", onScroll, true);
+        for (const ev of ["pointerdown", "mousedown", "click", "touchstart"]) win.addEventListener(ev, (e) => e.stopPropagation());   // as inside the editor: not Live Preview's
         const commit = () => { changed(page); draw(); };
 
         // top bar: the name as text, left; double-tap to rename it in place; the rest of the bar drags the window
         const head = win.createDiv({ cls: "mn-lay-winhead" });
-        const title = head.createDiv({ cls: "mn-lay-wtitle", text: b.label });
+        // the top bar is the window's handle: an empty stretch to drag it by, and ✕ (nothing to type in, so a drag never
+        // starts typing); the name box is the first row under it
+        head.createSpan({ cls: "mn-lay-wspace" });
+        // the name: a box you tap to type in; it wraps and grows with its text (16 px, so iOS does not zoom in on it)
+        const nameRow = win.createDiv({ cls: "mn-lay-wrow" });
+        const title = nameRow.createEl("textarea", { cls: "mn-lay-wtitle-in", attr: { rows: "1", spellcheck: "false", "aria-label": "Block name" } });
+        title.value = b.label;
+        const growTitle = () => { title.style.height = "auto"; title.style.height = `${title.scrollHeight}px`; };
+        title.addEventListener("input", growTitle);
+        requestAnimationFrame(growTitle);
+        title.addEventListener("keydown", (k) => { if (k.key === "Enter") { k.preventDefault(); title.blur(); } });
+        title.addEventListener("change", () => { b.label = title.value.replace(/\s+/g, " ").trim() || b.label; commit(); });
         const close = head.createEl("button", { cls: "mn-lay-wbtn", attr: { "aria-label": "Close" } });
         icon(close, "x");
-        close.addEventListener("click", () => { selected = null; winAt.delete(page.id); draw(); });
-        title.addEventListener("dblclick", (e) => {
-            e.stopPropagation();
-            const input = createEl("input", { cls: "mn-lay-wtitle-in", attr: { value: b.label, spellcheck: "false" } });
-            title.replaceWith(input);
-            input.focus(); input.select();
-            const done = (keep: boolean) => { if (keep) b.label = input.value.trim() || b.label; commit(); };
-            input.addEventListener("keydown", (k) => { if (k.key === "Enter") done(true); if (k.key === "Escape") done(false); });
-            input.addEventListener("blur", () => done(true));
-        });
+        close.addEventListener("click", shut);
         head.addEventListener("pointerdown", (e) => {
-            if ((e.target as HTMLElement).closest("input, button")) return;
+            if ((e.target as HTMLElement).closest("input, textarea, button")) return;
             const x0 = e.clientX, y0 = e.clientY, start = winAt.get(page.id) ?? { x: 0, y: 0 };
             let dragging = false;
             head.setPointerCapture(e.pointerId);
@@ -306,7 +335,7 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
                 dragging = true;
                 const p = { x: start.x + m.clientX - x0, y: start.y + m.clientY - y0 };
                 winAt.set(page.id, p);
-                win.style.transform = `translate(${p.x}px, ${p.y}px)`;
+                place(p);
             };
             const up = () => { head.removeEventListener("pointermove", move); head.removeEventListener("pointerup", up); head.removeEventListener("pointercancel", up); };
             head.addEventListener("pointermove", move);
@@ -346,29 +375,53 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
         al("stretch-horizontal", "Full width (16 px margins)", () => { b.x = MARGIN; b.w = W - 2 * MARGIN; });
         al("layout-grid", "Snap every edge to 4 px", () => { const r = (v: number) => Math.round(v / 4) * 4; const x2 = r(b.x + b.w), y2 = r(b.y + b.h); b.x = r(b.x); b.y = r(b.y); b.w = Math.max(4, x2 - b.x); b.h = Math.max(4, y2 - b.y); });
 
-        // position and size: labelled fields two across; drag a label sideways to scrub the value
-        const geo = win.createDiv({ cls: "mn-lay-fields" });
-        const field = (lab: string, hint: string, get: () => number, set: (v: number) => void) => {
-            const f = geo.createDiv({ cls: "mn-lay-field", attr: { title: hint } });
-            const l = f.createSpan({ cls: "mn-lay-flab", text: lab });
-            const n = f.createEl("input", { cls: "mn-lay-num", attr: { type: "number", value: String(get()), step: String(SNAP), "aria-label": hint } });
-            n.addEventListener("change", () => { set(Math.round(Number(n.value) || 0)); commit(); });
-            l.addEventListener("pointerdown", (e) => {
-                e.preventDefault();
-                const x0 = e.clientX, v0 = get();
-                l.setPointerCapture(e.pointerId);
-                const move = (m: PointerEvent) => { set(snap(v0 + (m.clientX - x0))); n.value = String(get()); };
-                const up = () => { l.removeEventListener("pointermove", move); l.removeEventListener("pointerup", up); if (get() !== v0) commit(); };
-                l.addEventListener("pointermove", move);
-                l.addEventListener("pointerup", up);
-            });
+        // position and size as a box diagram (like a browser's box model): the screen's outline with the block in it, its distance to each
+        // screen edge on the four sides and its size inside; tap a number to choose it, then change it with − / + (4 px a tap, held to
+        // repeat) or type it. A distance moves the block (its size stays); W and H resize it from its top-left corner.
+        const get: Record<Metric, () => number> = { top: () => b.y, left: () => b.x, right: () => W - b.x - b.w, bottom: () => H - b.y - b.h, w: () => b.w, h: () => b.h };
+        const put: Record<Metric, (v: number) => void> = {
+            top: (v) => { b.y = clamp(v, 0, H - b.h); }, left: (v) => { b.x = clamp(v, 0, W - b.w); },
+            right: (v) => { b.x = clamp(W - v - b.w, 0, W - b.w); }, bottom: (v) => { b.y = clamp(H - v - b.h, 0, H - b.h); },
+            w: (v) => { b.w = clamp(v, 8, W - b.x); }, h: (v) => { b.h = clamp(v, 8, H - b.y); },
         };
-        field("X", "Left edge (x)", () => b.x, (v) => { b.x = clamp(v, 0, W - b.w); });
-        field("Y", "Top edge (y)", () => b.y, (v) => { b.y = clamp(v, 0, H - b.h); });
-        field("W", "Width", () => b.w, (v) => { b.w = clamp(v, 8, W - b.x); });
-        field("H", "Height", () => b.h, (v) => { b.h = clamp(v, 8, H - b.y); });
-        field("R", "Right edge (x + w)", () => b.x + b.w, (v) => { b.w = clamp(v - b.x, 8, W - b.x); });
-        field("B", "Bottom edge (y + h)", () => b.y + b.h, (v) => { b.h = clamp(v - b.y, 8, H - b.y); });
+        const NAME: Record<Metric, string> = { top: "Top gap", left: "Left gap", right: "Right gap", bottom: "Bottom gap", w: "Width", h: "Height" };
+        const boxEl = win.createDiv({ cls: "mn-lay-box" });
+        const nums = new Map<Metric, HTMLElement>();
+        const num = (m: Metric, parent: HTMLElement, cls: string) => {
+            const btn = parent.createEl("button", { cls: "mn-lay-bnum " + cls + (m === metricAt ? " is-on" : ""), text: String(get[m]()), attr: { "aria-label": NAME[m] } });
+            btn.addEventListener("click", () => { metricAt = m; nums.forEach((x, k) => x.toggleClass("is-on", k === m)); showStep(); });
+            nums.set(m, btn);
+        };
+        num("top", boxEl, "is-top");
+        num("left", boxEl, "is-left");
+        const blockEl = boxEl.createDiv({ cls: "mn-lay-bblock" });
+        blockEl.style.setProperty("--c", KINDS[b.kind]?.color ?? "#9aa3b8");
+        num("w", blockEl, "is-w");
+        blockEl.createSpan({ cls: "mn-lay-bx", text: "×" });
+        num("h", blockEl, "is-h");
+        num("right", boxEl, "is-right");
+        num("bottom", boxEl, "is-bottom");
+        // the chosen number's stepper
+        const step = win.createDiv({ cls: "mn-lay-step" });
+        const stepName = step.createSpan({ cls: "mn-lay-sname" });
+        const minus = step.createEl("button", { cls: "mn-lay-sbtn", attr: { "aria-label": "Less" } });
+        icon(minus, "minus");
+        const input = step.createEl("input", { cls: "mn-lay-sin", attr: { type: "number", inputmode: "numeric", step: String(STEP) } });
+        const plus = step.createEl("button", { cls: "mn-lay-sbtn", attr: { "aria-label": "More" } });
+        icon(plus, "plus");
+        const showStep = () => { stepName.setText(NAME[metricAt]); input.value = String(get[metricAt]()); };
+        const refresh = () => { nums.forEach((x, k) => x.setText(String(get[k]()))); input.value = String(get[metricAt]()); };
+        const nudge = (d: number) => { put[metricAt](get[metricAt]() + d); refresh(); };
+        let held = 0, nudged = false;
+        const hold = (btn: HTMLElement, d: number) => {
+            btn.addEventListener("pointerdown", (e) => { e.preventDefault(); nudge(d); nudged = true; held = window.setInterval(() => nudge(d), REPEAT_MS); });
+            const stop = () => { window.clearInterval(held); held = 0; if (nudged) { nudged = false; commit(); } };
+            for (const ev of ["pointerup", "pointercancel", "pointerleave"]) btn.addEventListener(ev, stop);
+        };
+        hold(minus, -STEP);
+        hold(plus, STEP);
+        input.addEventListener("change", () => { put[metricAt](Math.round(Number(input.value) || 0)); commit(); });
+        showStep();
 
         // the note grows with its text
         const note = win.createEl("textarea", { cls: "mn-lay-wnote", attr: { rows: "1", placeholder: "Note: what goes here, what is wrong" } });

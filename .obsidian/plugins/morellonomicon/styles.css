@@ -49,7 +49,6 @@ body.is-mobile:not(.mn-on) .mn-home svg { width: 24px; height: 24px; }
 .mn-btn .mn-ic { display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; }
 .mn-btn svg { display: block; width: 100%; height: 100%; }
 .mn-acts.is-hidden { display: none; }
-.mn-btn:active { background: var(--mn-card-hi); }
 .mn-back { justify-self: start; visibility: hidden; }
 .mn-top.has-back .mn-back { visibility: visible; }
 .mn-top-title { font-size: 16px; font-weight: 600; opacity: 0; transition: opacity 0.15s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60vw; }
@@ -315,10 +314,11 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-dwho .mn-chips { margin: 6px 0 0; }
 .mn-dpanel { padding: 14px 16px; }
 .mn-dtext { margin: 0; font-size: 15px; line-height: 1.65; -webkit-user-select: text; user-select: text; }
-.mn-recipe { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; }
-.mn-app .mn-rc { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 6px; border-radius: 14px; background: var(--mn-card); border: 1px solid var(--mn-line); }
+.mn-recipe { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 6px; }   /* bare tiles four across: icon, name, price */
+.mn-app .mn-rc { display: flex; flex-direction: column; align-items: center; gap: 3px; height: auto; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; transition: opacity 0.12s, transform 0.12s; }
+.mn-app .mn-rc:active { opacity: 0.5; transform: scale(0.92); }
 .mn-rc img { width: 44px; height: 44px; border-radius: 10px; }
-.mn-rc-n { font-size: 12px; text-align: center; line-height: 1.25; }
+.mn-rc-n { max-width: 100%; font-size: 12px; text-align: center; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mn-rc-g { font-size: 11px; color: var(--color-yellow); font-variant-numeric: tabular-nums; }
 .mn-off { margin: 10px 0 4px; padding: 10px 12px; border-radius: 12px; background: var(--mn-card-hi); }
 .mn-off-h { display: flex; justify-content: space-between; align-items: center; }
@@ -708,6 +708,30 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* the big ♥ / ✕ over the middle of a dragged 速查 card (outside the face, so the card's scrolling never moves it) */
 /* after the last card: the liked champions two across */
 .mn-rq-liked { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+/* the bridge: the end view rises in under the last card as it flies off (roster.ts), the portraits one after another */
+.mn-rq-results { position: relative; }
+.mn-rq-under { position: absolute; z-index: 0; left: 0; right: 0; top: 0; opacity: 0; transform: translateY(14px) scale(0.98); transition: opacity 0.32s ease-out, transform 0.32s ease-out; }
+.mn-rq-under.is-in { opacity: 1; transform: none; }
+.mn-rq-results > .mn-deckwrap { position: relative; z-index: 1; }
+.mn-rq-end.is-bridged .mn-rq-lk { animation: mn-rq-rise 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) both; animation-delay: calc(120ms + var(--i, 0) * 55ms); }
+@keyframes mn-rq-rise { from { opacity: 0; transform: translateY(18px) scale(0.94); } to { opacity: 1; transform: none; } }
+/* a liked champion chosen: it grows, the others dim, a heart pops with small hearts bursting out */
+.mn-rq-liked.is-choosing .mn-rq-lk { transition: opacity 0.25s, transform 0.25s; }
+.mn-rq-liked.is-choosing .mn-rq-lk:not(.is-chosen) { opacity: 0.35; transform: scale(0.97); }
+.mn-app .mn-rq-liked .mn-rq-lk.is-chosen { z-index: 2; transform: scale(1.06) translateY(-4px); animation: mn-rq-glow 0.6s ease-out both; }
+@keyframes mn-rq-glow { 0% { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 0 0 rgba(255, 77, 109, 0.7); } 100% { box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5), 0 0 0 14px rgba(255, 77, 109, 0); } }
+.mn-rq-pop { position: absolute; z-index: 3; left: 50%; top: 42%; width: 0; height: 0; pointer-events: none; }
+.mn-rq-pop-big { position: absolute; left: -36px; top: -36px; display: flex; width: 72px; height: 72px; color: #ff4d6d; filter: drop-shadow(0 4px 14px rgba(255, 77, 109, 0.55)); animation: mn-rq-heart 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+.mn-rq-pop-big svg { width: 100%; height: 100%; fill: currentColor; }
+@keyframes mn-rq-heart { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.25); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+.mn-rq-spark { position: absolute; left: -8px; top: -8px; display: flex; width: 16px; height: 16px; color: #ff8fa3; animation: mn-rq-spark 0.6s cubic-bezier(0.15, 0.7, 0.3, 1) 0.06s both; }
+.mn-rq-spark svg { width: 100%; height: 100%; fill: currentColor; }
+@keyframes mn-rq-spark { 0% { transform: rotate(var(--a)) translateY(0) scale(0.3) rotate(0); opacity: 0; } 25% { opacity: 1; } 100% { transform: rotate(var(--a)) translateY(calc(-1 * var(--d, 62px))) scale(var(--s, 0.9)) rotate(var(--r, 0deg)); opacity: 0; } }
+.mn-rq-dot { position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px 2px rgba(255, 220, 230, 0.9); animation: mn-rq-dot 0.55s ease-out 0.12s both; }
+@keyframes mn-rq-dot { 0% { transform: rotate(var(--a)) translateY(0) scale(0); opacity: 0; } 40% { opacity: 1; transform: rotate(var(--a)) translateY(calc(-0.6 * var(--d))) scale(1); } 100% { transform: rotate(var(--a)) translateY(calc(-1 * var(--d))) scale(0.2); opacity: 0; } }
+/* a ring spreading out from the chosen card */
+.mn-rq-ring { position: fixed; z-index: 49; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; border: 3px solid rgba(255, 143, 163, 0.9); pointer-events: none; animation: mn-rq-ring 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) 0.05s both; }
+@keyframes mn-rq-ring { 0% { transform: scale(0.3); opacity: 0.9; } 100% { transform: scale(9); opacity: 0; border-width: 1px; } }
 .mn-app .mn-rq-lk { position: relative; display: block; aspect-ratio: 3 / 5; height: auto; padding: 0; overflow: hidden; border-radius: 18px; background: var(--mn-card); border: 1px solid var(--mn-line); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35); text-align: left; white-space: normal; }
 .mn-app .mn-rq-lk:active { transform: scale(0.97); }
 .mn-rq-lk img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
@@ -920,9 +944,16 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
    own keep that fill. (button + class + state outranks Obsidian's button:not(.clickable-icon):hover.) */
 .mn-app button { -webkit-tap-highlight-color: transparent; }
 .mn-app button:not(.mn-seg-b.is-on):is(:hover, :active, :focus, :focus-visible) { box-shadow: none; outline: none; }   /* a chosen segment keeps its own shadow */
-.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face),
-.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face):is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }
-.mn-app button:is(.mn-rc, .mn-key, .mn-tg.is-on, .mn-rq-no, .mn-rq-yes):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card); }
+.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face, .mn-btn, .mn-more-link, .mn-aug-tile, .mn-tsw-b),
+.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face, .mn-btn, .mn-more-link, .mn-aug-tile, .mn-tsw-b):is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }
+/* the press look of an icon button or a text link (Back, the palette and mode buttons, 全部 ›, an augment): it fades and shrinks a
+   little while held, never a grey disc that sticks after the tap and covers the title next to it (Design Rules, Controls) */
+.mn-app button:is(.mn-btn, .mn-more-link, .mn-aug-tile) { transition: opacity 0.12s, transform 0.12s; }
+.mn-app button:is(.mn-btn, .mn-more-link, .mn-aug-tile):active { opacity: 0.5; transform: scale(0.92); }
+/* Back on a splash keeps its dark disc (it is part of its look there), the same while pressed */
+.mn-app.is-overlay .mn-top:not(.is-scrolled) button.mn-back:is(:hover, :active, :focus, :focus-visible) { background: rgba(0, 0, 0, 0.38); }
+.mn-app button:is(.mn-key, .mn-tg.is-on, .mn-rq-no, .mn-rq-yes):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card); }
+.mn-app button.mn-rc:is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }   /* bare: a press fades (Design Rules) */
 .mn-app button:is(.mn-with-b, .mn-rq-lk):is(:hover, :active, :focus, :focus-visible) { background-color: var(--mn-card-hi); }
 .mn-app button.mn-hb-tile:is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }   /* its fill is a gradient image, the colour under it stays clear */
 
@@ -1019,33 +1050,40 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-rq-deck .mn-sl-face { border-radius: 22px; }
 .mn-rq-deck .mn-qc-tab { padding-bottom: 104px; }
 .mn-rq-deck .mn-qc-tab.is-look { padding-bottom: 0; }
-/* the champion page (v2): a big splash banner with the name over its foot; the pages as cards that swipe sideways (snapped, the next
-   peeking in at the edge), tinted with the champion's damage colour (--dc); icon chips under them. A card centres what it holds. */
-.mn-app.is-overlay .mn-champ .mn-hero { min-height: calc(352px + var(--mn-safe-top)); }
-.mn-champ .mn-hero-bg { background-position: center 20%; }
-.mn-champ .mn-card-head { padding: 0 16px 8px; }
+/* the champion page (v3, champions.ts championCard): the centered splash fills the whole page behind it, fading out under the status
+   bar and at its foot; the pages (no titles, 全部 at the top right) float on it with no frames, the name at the foot; past 概覽 the
+   art darkens so a page's parts can use all of it; a page hint (dots) floats at the top middle. Tinted with --dc. */
+.mn-champ.is-v3 { position: relative; }
+.mn-champ.is-v3 .mn-hero { position: absolute; z-index: 0; top: 0; left: 0; right: 0; bottom: 0; height: auto; min-height: 0; margin: 0; display: block; border-radius: 0;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--mn-safe-top, 0px) + 64px), #000 70%, transparent 100%); mask-image: linear-gradient(180deg, transparent 0, #000 calc(var(--mn-safe-top, 0px) + 64px), #000 70%, transparent 100%); }
+.mn-app.is-overlay .mn-champ.is-v3 .mn-hero { min-height: 0; }
+.mn-champ.is-v3 .mn-hero-bg { top: 0; transform: none; background-size: cover; background-position: center 30%; -webkit-mask-image: none; mask-image: none; transition: filter 0.35s ease-out; }
+.mn-champ.is-v3.is-deep .mn-hero-bg { filter: brightness(0.35) saturate(0.85) blur(2px); }
+.mn-champ.is-v3 .mn-hero::after { background: linear-gradient(180deg, transparent 40%, color-mix(in srgb, var(--mn-bg) 55%, transparent) 100%); }   /* a little darker where the parts and the name sit */
+.mn-champ.is-v3 > :not(.mn-hero) { position: relative; z-index: 1; }
+.mn-app .mn-champ.is-v3 .mn-card-head { padding: 4px 4px 12px; justify-content: center; }   /* the icon and name centred over the tags (beats the overlay's 4 px) */
+.mn-champ.is-v3 .mn-cv-foot { flex: none; padding-bottom: 16px; }   /* 概覽's tags under the name, clear of the tab bar (inside the page, so they swipe with it) */
+.mn-champ.is-v3 .mn-cpa-page.is-overview > .mn-card-head { flex: none; }
+/* the clips loading ahead (champions.ts): on the screen, so iOS loads them, but 4 px and almost clear */
+.mn-champ.is-v3 > .mn-clip-shelf { position: absolute; z-index: 0; left: 0; top: 0; width: 4px; height: 4px; overflow: hidden; opacity: 0.01; pointer-events: none; }
+.mn-clip-shelf .mn-sd-video { width: 4px; height: 4px; margin: 0; border-radius: 0; }
 .mn-champ .mn-card-img { width: 64px; height: 64px; }
 .mn-app .mn-champ .mn-card-who .mn-title { font-size: 30px; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6); }
-.mn-champ .mn-hero + .mn-cpa { margin-top: 4px; }
-.mn-cpa { position: relative; height: 300px; margin-right: -16px; }
-.mn-cpa-track { display: flex; gap: 8px; height: 100%; padding-right: 48px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
-.mn-cpa-track::-webkit-scrollbar { display: none; }
-.mn-cpa-page { flex: 0 0 calc(100% - 48px); height: 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: 14px 14px 12px; scroll-snap-align: start; scroll-snap-stop: always; overflow: hidden;
-    border-radius: 22px; border: 1px solid color-mix(in srgb, var(--dc) 30%, var(--mn-line)); background: linear-gradient(160deg, color-mix(in srgb, var(--dc) 16%, var(--mn-card)), var(--mn-card) 60%); }
-.mn-cpa-body { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
-.mn-cpa-nav { display: flex; align-items: center; justify-content: center; gap: 8px; height: 40px; margin-top: 8px; }
-.mn-app .mn-cpa-chip { display: grid; place-items: center; width: 44px; height: 34px; min-height: 0; padding: 0; border-radius: 12px; border: 1px solid var(--mn-line); box-shadow: none; background: var(--mn-card); color: var(--mn-muted); transition: background 0.2s, color 0.2s; }
-.mn-app .mn-cpa-chip.is-on { background: var(--mn-accent); border-color: transparent; color: var(--text-on-accent, #fff); }
-.mn-cpa-chip svg { width: 18px; height: 18px; }
-/* 全部: a bar across the foot of a card, tinted with the accent: list icon, label, count, a round arrow */
-.mn-app .mn-cpa-more { flex: none; align-self: stretch; display: flex; align-items: center; gap: 10px; height: 46px; margin-top: 12px; padding: 0 7px 0 14px; border-radius: 15px; box-shadow: none;
-    border: 1px solid color-mix(in srgb, var(--mn-accent) 30%, transparent); background: color-mix(in srgb, var(--mn-accent) 10%, var(--mn-card-hi)); color: var(--mn-text); }
-.mn-cpa-more-ic { display: inline-flex; color: var(--mn-accent); }
-.mn-cpa-more-ic svg { width: 18px; height: 18px; }
-.mn-cpa-more-l { flex: 1; text-align: left; font-size: 15px; font-weight: 700; }
-.mn-cpa-more-n { font-size: 13px; font-weight: 700; color: var(--mn-muted); font-variant-numeric: tabular-nums; }
-.mn-cpa-more-go { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--mn-accent); color: var(--text-on-accent, #fff); }
-.mn-cpa-more-go svg { width: 18px; height: 18px; }
+.mn-champ.is-v3 > .mn-cpa { flex: 1 1 auto; min-height: 0; height: auto; margin: 0 -16px; overflow: hidden; }
+.mn-champ.is-v3 > .mn-cpa-hint { position: absolute; z-index: 3; top: calc(var(--mn-safe-top, 0px) + 20px); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 6px; pointer-events: none; }
+.mn-cpa-hint i { width: 6px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.45); transition: width 0.25s, background 0.25s; }
+.mn-cpa-hint i.is-on { width: 18px; background: var(--mn-accent); }
+.mn-cpa-track { display: flex; height: 100%; touch-action: pan-y; will-change: transform; }   /* moved by champions.ts (a transform), not scrolled */
+.mn-cpa-track.is-settling { transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.mn-cpa-page { flex: 0 0 100%; box-sizing: border-box; display: flex; flex-direction: column; padding: calc(var(--mn-safe-top, 0px) + 48px) 16px 8px; overflow: hidden; }   /* the content starts just under the page hint */
+.mn-cpa-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding-bottom: 8px; }   /* the other pages: their whole detail, scrolling inside the page when long */
+.mn-cpa-body::-webkit-scrollbar { display: none; }
+.mn-cpa-page.is-overview .mn-cpa-body { justify-content: flex-end; overflow: visible; }   /* just above the name */
+.mn-cpa-body > * { flex: none; }
+.mn-bt-main { display: flex; flex-direction: column; gap: 14px; }
+.mn-cv-augs { display: flex; flex-direction: column; gap: 10px; }   /* the augment tiers: a heading (稜鏡級 / S) over each row of tiles */
+.mn-cpa-page.is-build .mn-cpa-body > .mn-bt-main { flex: 1 0 auto; justify-content: center; }   /* 出裝: the builds centred down the page, Live stats at its foot */
+.mn-cv-look, .mn-cv-tags { cursor: pointer; }   /* 概覽: just above the name, the art above it */
 .mn-cpa-empty { margin: 0; text-align: center; font-size: 15px; line-height: 1.6; color: var(--mn-muted); }
 /* 概覽: three stat tiles, the tags two across */
 .mn-cv-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
@@ -1057,7 +1095,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-cv-bar { display: flex; gap: 2px; margin-top: 2px; }
 .mn-cv-bar i { width: 6px; height: 4px; border-radius: 1px; background: var(--mn-line); }
 .mn-cv-bar i.is-on { background: var(--c); }
-.mn-tgs.mn-cv-tags { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mn-tgs.mn-cv-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; }   /* one centred row, a second when there are many */
 .mn-cv-tags .mn-tg { justify-content: center; }
 /* 技能: the HUD bar and the chosen ability */
 .mn-cv-hud { display: flex; justify-content: space-between; gap: 6px; }
@@ -1292,12 +1330,11 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-shop-role svg { width: 26px; height: 26px; }
 .mn-shop-role img { width: 32px; height: 32px; }
 .mn-shop-role:not(.is-on) img { opacity: 0.55; }
+.mn-shoprole-ic { display: block; background-repeat: no-repeat; transform: scale(1.15); transition: opacity 0.15s; }   /* the shop's own class icon (a sprite) */
+.mn-shop-role:not(.is-on) .mn-shoprole-ic { opacity: 0.45; }
 .mn-app .mn-shop-sortbtn { flex: none; margin-left: auto; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 10px; border: 0; background: none; box-shadow: none; color: var(--mn-accent); }
 .mn-shop-sortbtn svg { width: 28px; height: 28px; }   /* about the size of the role icons beside it */
-.mn-shop-sortwrap { display: none; justify-content: flex-end; gap: 6px; margin: 8px 0 0; }
-.mn-shop-sortwrap.is-open { display: flex; }
-.mn-app .mn-shop-sort { height: 30px; padding: 0 12px; border-radius: 15px; border: 1px solid var(--mn-line); background: var(--mn-card); box-shadow: none; font-size: 12.5px; color: var(--mn-muted); }
-.mn-app .mn-shop-sort.is-on { color: var(--mn-accent); border-color: var(--mn-accent); }
+.mn-app .mn-shop-sortbtn.is-on { color: var(--mn-accent); }   /* the tiers turned upside down (傳說 first) */
 .mn-shop { display: flex; align-items: stretch; gap: 4px; margin: 4px 0 0 -16px; min-height: 0; }
 .mn-scroll:has(.mn-shop) { overflow-y: hidden; }   /* the page stays; only the item grid scrolls */
 .mn-shop-rail { flex: none; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; align-items: center; gap: 0; width: 56px; padding: 2px 0; border-right: 1px solid var(--mn-line); }
@@ -1433,7 +1470,6 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay-row { display: flex; align-items: center; gap: 8px; }
 .mn-lay-row > span { flex: none; width: 52px; font-size: 12px; color: var(--text-muted); }
 .mn-lay-row input, .mn-lay-row select, .mn-lay-row textarea { flex: 1; min-width: 0; }
-.mn-lay input.mn-lay-num { width: 0; }
 .mn-lay-acts { display: flex; gap: 6px; justify-content: flex-end; }
 .mn-lay button.mn-lay-addpage { align-self: flex-start; display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 16px; }
 .mn-lay button.mn-lay-btn { width: 28px; height: 30px; flex: none; }
@@ -1513,6 +1549,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-ag-kw { font-weight: 700; color: var(--mn-text); }
 .mn-ag-fx .mn-pn-src { margin-top: 6px; }
 .mn-chips.mn-ag-tags { margin-bottom: 4px; }
+.mn-ag-tier { margin: 10px 0 -2px; font-size: 15px; font-weight: 800; color: var(--mn-accent); }   /* S / A over a row of faces (the augment model) */
 .mn-ag-strip { display: flex; gap: 10px; margin: 8px -16px 0; padding: 4px 16px 6px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
 .mn-ag-strip::-webkit-scrollbar { display: none; }
 .mn-ag-strip .mn-tile { flex: none; width: 64px; }
@@ -1545,12 +1582,13 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
    drag the bar to move the window), the kind, an alignment row, labelled fields two across. Sizes in px: the vault's large base font
    would blow up em sizes. */
 .mn-lay-page { position: relative; }
-.mn-lay-win { position: absolute; z-index: 20; left: 4px; right: 4px; display: flex; flex-direction: column; gap: 10px; padding: 8px 10px 10px; border-radius: 14px; font-size: 13px; line-height: 1.3;
+.mn-lay-win { position: fixed; z-index: 60; left: 50%; top: 50%; box-sizing: border-box; width: min(360px, calc(100vw - 24px)); max-height: 80vh; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 10px; padding: 8px 10px 10px; border-radius: 14px; font-size: 13px; line-height: 1.3;
     background: var(--background-primary); border: 1px solid var(--background-modifier-border); box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45); }
-.mn-lay-win input, .mn-lay-win button, .mn-lay-win textarea, .mn-lay-kinds button { font-size: 13px; }
+.mn-lay-win input, .mn-lay-win textarea { font-size: 16px; }   /* 16 px: iOS zooms in on a smaller box when it is tapped */
+.mn-lay-win button, .mn-lay-kinds button { font-size: 13px; }
 .mn-lay-winhead { display: flex; align-items: center; gap: 8px; min-height: 30px; margin: -2px -2px 0; padding: 0 2px 6px 4px; border-bottom: 1px solid var(--background-modifier-border); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
-.mn-lay-wtitle { flex: 1; min-width: 0; text-align: left; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mn-lay-wtitle-in { flex: 1; min-width: 0; height: 28px; font-weight: 700; }
+.mn-app .mn-lay-wtitle-in, .mn-lay-wtitle-in { flex: 1; min-width: 0; height: auto; min-height: 32px; padding: 4px 8px; resize: none; overflow: hidden; font-weight: 700; line-height: 1.35; white-space: pre-wrap; overflow-wrap: anywhere; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); box-shadow: none; }
+.mn-lay-wtitle-in:focus { border-color: var(--interactive-accent); }
 .mn-lay-wbtn { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border-radius: 8px; background: transparent; box-shadow: none; color: var(--text-muted); }
 .mn-lay-wbtn:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
 .mn-lay-wbtn svg { width: 16px; height: 16px; }
@@ -1567,10 +1605,174 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay-kind.is-on { box-shadow: inset 0 0 0 2px var(--interactive-accent); }
 .mn-lay-align { display: flex; align-items: center; justify-content: space-between; padding: 2px; border-radius: 10px; background: var(--background-secondary); }
 .mn-lay-asep { width: 1px; height: 18px; background: var(--background-modifier-border); }
-.mn-lay-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.mn-lay-field { display: flex; align-items: center; height: 30px; border-radius: 8px; background: var(--background-secondary); border: 1px solid transparent; }
-.mn-lay-field:focus-within { border-color: var(--interactive-accent); }
-.mn-lay-flab { flex: none; width: 26px; text-align: center; font-size: 12px; font-weight: 700; color: var(--text-muted); cursor: ew-resize; user-select: none; -webkit-user-select: none; touch-action: none; }
-.mn-lay-win input.mn-lay-num { flex: 1; min-width: 0; width: auto; height: 28px; padding: 0 6px 0 0; border: 0; background: transparent; box-shadow: none; font-size: 13px; font-variant-numeric: tabular-nums; }
-.mn-lay-wnote { width: 100%; min-height: 30px; resize: none; overflow: hidden; font-size: 13px; line-height: 1.4; }
+.mn-lay-wnote { box-sizing: border-box; width: 100%; max-width: 100%; min-height: 34px; resize: none; overflow: hidden; font-size: 16px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
 .mn-lay-win .mn-lay-acts { display: flex; justify-content: flex-end; gap: 4px; }
+
+/* champion page v3: the parts float on the art's fade with no frames (no tile, panel or pill backgrounds or borders) */
+.mn-champ.is-v3 .mn-cv-stat { padding: 4px; border: 0; border-radius: 0; background: none; }
+.mn-champ.is-v3 .mn-cv-stat b { font-size: 20px; }
+.mn-champ.is-v3 .mn-cv-stat span { font-size: 12px; }
+.mn-app .mn-champ.is-v3 .mn-cv-tags .mn-tg { border: 0; background: none; padding: 6px 4px; font-size: 14px; }
+.mn-champ.is-v3 .mn-cv-sk { padding: 4px 2px 0; border-radius: 0; background: none; }
+.mn-champ.is-v3 .mn-cv-tip { padding: 4px 2px; border-radius: 0; background: none; }
+.mn-app .mn-champ.is-v3 .mn-aug-tile { border: 0; background: none; padding: 4px; }
+
+/* Layouts editor: the block window's box diagram (layoutnote.ts): the screen's outline with the block in it, the gap to each edge on the
+   four sides and its size inside; the chosen number is lit and has its − / + stepper under the diagram */
+.mn-lay-box { position: relative; height: 150px; border-radius: 12px; border: 1.5px dashed var(--background-modifier-border); background: var(--background-secondary); }
+.mn-lay-bblock { --c: #9aa3b8; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 2px; padding: 10px 12px; border-radius: 10px;
+    border: 2px solid var(--c); background: color-mix(in srgb, var(--c) 22%, var(--background-primary)); }
+.mn-lay-bx { color: var(--text-muted); font-weight: 700; }
+.mn-lay-win .mn-lay-bnum { min-width: 44px; height: 34px; padding: 0 8px; border-radius: 9px; border: 1px solid transparent; background: transparent; box-shadow: none; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-normal); }
+.mn-lay-win .mn-lay-bnum.is-on { border-color: var(--interactive-accent); background: color-mix(in srgb, var(--interactive-accent) 18%, transparent); color: var(--interactive-accent); }
+.mn-lay-bnum.is-top, .mn-lay-bnum.is-bottom { position: absolute; left: 50%; transform: translateX(-50%); }
+.mn-lay-bnum.is-top { top: 4px; }
+.mn-lay-bnum.is-bottom { bottom: 4px; }
+.mn-lay-bnum.is-left, .mn-lay-bnum.is-right { position: absolute; top: 50%; transform: translateY(-50%); }
+.mn-lay-bnum.is-left { left: 4px; }
+.mn-lay-bnum.is-right { right: 4px; }
+.mn-lay-box::before, .mn-lay-box::after { content: ""; position: absolute; background: var(--background-modifier-border); }   /* the guide lines from the edges to the block */
+.mn-lay-box::before { left: 50%; top: 38px; bottom: 38px; width: 1px; }
+.mn-lay-box::after { top: 50%; left: 52px; right: 52px; height: 1px; }
+.mn-lay-bblock { z-index: 1; }
+.mn-lay-step { display: flex; align-items: center; gap: 8px; }
+.mn-lay-sname { flex: 1; min-width: 0; font-size: 13px; font-weight: 700; color: var(--text-muted); }
+.mn-lay-win .mn-lay-sbtn { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 12px; box-shadow: none; background: var(--background-secondary); }
+.mn-lay-sbtn svg { width: 18px; height: 18px; }
+.mn-lay-win input.mn-lay-sin { flex: none; box-sizing: border-box; width: 84px; height: 44px; padding: 0 8px; text-align: center; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; border-radius: 12px; }
+.mn-lay-wspace { flex: 1; align-self: stretch; }   /* the empty part of the top bar: drag the window by it */
+.mn-lay-wbtn .mn-ic, .mn-lay-sbtn .mn-ic { display: flex; }   /* the icon box is just the icon, so it sits in the middle of its button */
+/* the block window's note box keeps its frame too, like the name box (accent while typing) */
+.mn-app .mn-lay-wnote, .mn-lay-wnote { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); box-shadow: none; }
+.mn-lay-wnote:focus { border-color: var(--interactive-accent); }
+.mn-lay-legend.is-hidden { display: none; }
+/* 概覽, one left axis with the name (Zaviel 2026-10-31): the three stats stacked on the 16 px margin (icon, then value and what, left-aligned),
+   the style chart on the right, the tags in a row on the same margin; even 20 px gaps down to the name */
+.mn-cv-look { display: grid; grid-template-columns: minmax(0, 1fr) 240px; align-items: center; gap: 8px; }
+.mn-cv-look .mn-cv-stats { order: 1; }
+.mn-cv-look .mn-cv-radar { order: 2; }
+.mn-cv-radar svg { display: block; width: 100%; height: auto; }
+.mn-cv-look .mn-cv-radar { transform: translateX(40px); }   /* the chart's labels leave ~40 px blank at its sides: its drawing ends on the right margin */
+.mn-cv-radar .mn-rd-label { font-size: 14px; }   /* the chart is drawn at 0.8 of its 300 px viewBox: about 11 px on screen */
+.mn-cv-radar .mn-rd-val { font-size: 15px; }
+.mn-cv-look .mn-cv-stats { grid-template-columns: 1fr; gap: 12px; }
+.mn-champ.is-v3 .mn-cv-look .mn-cv-stat { display: grid; grid-template-columns: 26px 1fr; grid-template-rows: auto auto; column-gap: 10px; align-items: center; justify-items: start; text-align: left; padding: 0; }
+.mn-cv-look .mn-cv-stat .mn-cv-sic { grid-row: 1 / span 2; }
+.mn-champ.is-v3 .mn-cv-look .mn-cv-stat b { font-size: 18px; line-height: 1.2; }
+.mn-cv-look .mn-cv-stat b, .mn-cv-look .mn-cv-stat span:not(.mn-cv-sic), .mn-cv-look .mn-cv-bar { grid-column: 2; }
+.mn-cpa-page.is-overview .mn-cpa-body { gap: 20px; padding-bottom: 20px; }
+.mn-champ.is-v3 .mn-tgs.mn-cv-tags { justify-content: center; }   /* centred, under the name */
+/* the champion page family (Design Rules): words for a switch, tier headings, an accent link, the icon grid (no panel) */
+.mn-tsw { flex: none; display: flex; justify-content: center; gap: 22px; }
+.mn-app .mn-tsw-b, .mn-app .mn-tsw-b:hover, .mn-app .mn-tsw-b:active, .mn-app .mn-tsw-b:focus { position: relative; height: 30px; padding: 0 2px; border: 0; border-radius: 0; background: none; box-shadow: none; outline: none; font-size: 15px; font-weight: 700; color: var(--mn-muted); }
+.mn-app .mn-tsw-b.is-on { color: var(--mn-accent); }
+.mn-tsw-b.is-on::after { content: ""; position: absolute; left: 50%; bottom: 0; width: 16px; height: 2px; margin-left: -8px; border-radius: 1px; background: var(--mn-accent); }   /* the chosen one: colour and a short line under it */
+.mn-tier-h { --t: var(--mn-muted); display: flex; align-items: center; gap: 10px; margin-top: 4px; font-size: 20px; font-weight: 800; line-height: 1; color: var(--t); }
+.mn-tier-h::after { content: ""; flex: 1; height: 1px; background: color-mix(in srgb, var(--t) 35%, transparent); }   /* a thin line after the letter */
+.mn-app .mn-more-link { flex: none; align-self: center; display: inline-flex; align-items: center; gap: 2px; height: 36px; padding: 0 6px; border: 0; background: none; box-shadow: none; font-size: 15px; font-weight: 700; color: var(--mn-accent); }
+.mn-more-link svg { width: 16px; height: 16px; }
+.mn-more-link .mn-ic { display: flex; }
+/* the icon grid: four across, the icon in its rarity frame, its name in one line under it; nothing else (the reason is on the augment's page) */
+.mn-aug-tiles.is-bare { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px 6px; }
+.mn-app .mn-aug-tiles.is-bare .mn-aug-tile, .mn-app .mn-champ.is-v3 .mn-aug-tiles.is-bare .mn-aug-tile { border: 0; background: none; padding: 0; gap: 6px; }
+.mn-aug-tiles.is-bare .mn-aug-tic { width: 56px; height: 56px; }
+.mn-aug-tiles.is-bare .mn-aug-tn { display: block; height: auto; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--mn-text); }
+/* 強化: one screen; the switch at the top, the grid centred in the room left, 全部強化 › at the foot */
+.mn-cpa-body.is-glance { overflow: hidden; gap: 12px; }
+.mn-cpa-body.is-glance > .mn-cv-glance { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+.mn-cv-tiers { display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
+/* a page's art (view.ts): the darkened splash behind a champion sub page, the app's own layer under the scrolling area, so it never moves */
+.mn-page-art { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 0.25s ease-out; background-size: cover; background-position: center 30%; filter: brightness(0.35) saturate(0.85) blur(2px); transform: scale(1.04); }
+.mn-page-art.is-on { opacity: 1; }
+.mn-app > .mn-scroll { position: relative; z-index: 1; }
+/* 全部概覽: the chart large, the stats in a row, the tags, each damaging ability in one line; no panels; the whole centred down the
+   screen under the title when it is shorter than the screen */
+.mn-scroll > .mn-page.is-centred { box-sizing: border-box; min-height: 100%; display: flex; flex-direction: column; }
+.mn-page.is-centred > .mn-ov { flex: 1 0 auto; justify-content: center; }
+.mn-page.is-centred > .mn-it-body { flex: 1 0 auto; display: flex; flex-direction: column; justify-content: center; }   /* the item page: under its banner */
+.mn-ov { display: flex; flex-direction: column; gap: 16px; margin-top: 4px; }
+.mn-ov-chart { align-self: center; width: min(360px, 100%); }
+.mn-ov .mn-ov-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.mn-ov .mn-cv-stat { padding: 4px; border: 0; border-radius: 0; background: none; }
+.mn-ov .mn-cv-stat b { font-size: 18px; }
+.mn-tgs.mn-ov-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; }
+.mn-app .mn-ov-tags .mn-tg { border: 0; background: none; padding: 6px 4px; font-size: 14px; }
+.mn-ov-dl { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto 52px 52px; align-items: baseline; gap: 8px 10px; font-size: 14px; }
+.mn-ov-col { font-size: 11px; color: var(--mn-muted); text-align: right; }
+.mn-ov-pct { font-size: 13px; font-weight: 700; color: var(--mn-muted); text-align: right; font-variant-numeric: tabular-nums; }
+.mn-ov-key { color: var(--mn-accent); font-weight: 800; }
+.mn-ov-name { color: var(--mn-text); font-weight: 600; min-width: 0; }
+.mn-ov-name small { display: block; font-size: 11px; font-weight: 600; color: var(--mn-onhit); }
+.mn-ov-kind { font-size: 13px; font-weight: 700; }
+/* the augment page opened from a champion: how it fits that champion */
+.mn-ag-for { display: flex; align-items: center; gap: 10px; margin: 4px 0 10px; }
+.mn-ag-for img { flex: none; width: 36px; height: 36px; border-radius: 10px; }
+.mn-ag-for-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.mn-ag-for-t b { font-size: 15px; color: var(--mn-text); }
+.mn-ag-for-t span { font-size: 13px; color: var(--mn-muted); }
+.mn-ag-for-tier { --t: var(--mn-muted); color: var(--t); font-weight: 800; }
+
+/* a page shorter than the screen: its body centred down the room under its title or banner (centreBelow in ui.ts) */
+.mn-page.is-centred > .mn-centre-body { flex: 1 0 auto; display: flex; flex-direction: column; justify-content: center; }
+.mn-app.is-float .mn-scroll > .mn-page.is-centred { min-height: 100%; }
+/* an empty state centred in the room it has, not stuck near the top (Design Rules, balance) */
+.mn-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 34vh; box-sizing: border-box; }
+.mn-centre-body > .mn-empty { min-height: 0; }
+/* the champion page family has no panels (Design Rules): its ability card, builds, tips and the patch changes float bare, a thin line
+   between neighbours where one is needed; Live stats are accent links */
+:is(.mn-champ, .mn-part) .mn-skill-detail { background: none; border: 0; border-radius: 0; padding: 0; }
+:is(.mn-champ, .mn-part) .mn-skill-detail .mn-sd-clipbox:first-child { margin: 0 0 12px; border-radius: 14px; clip-path: inset(0 round 14px); width: 100%; }
+:is(.mn-champ, .mn-part) .mn-skill-detail .mn-sd-clipbox { width: 100%; margin: 12px 0 0; border-radius: 14px; clip-path: inset(0 round 14px); }
+:is(.mn-champ, .mn-part) .mn-set { background: none; border: 0; border-radius: 0; padding: 12px 0; margin: 0; }
+:is(.mn-champ, .mn-part) .mn-set + .mn-set { border-top: 1px solid var(--mn-line); }
+:is(.mn-champ, .mn-part) .mn-tip { background: none; border: 0; border-radius: 0; padding: 12px 0; margin: 0; }
+:is(.mn-champ, .mn-part) .mn-tip + .mn-tip { border-top: 1px solid var(--mn-line); }
+:is(.mn-champ, .mn-part) .mn-chg { background: none; border: 0; border-radius: 0; }
+:is(.mn-champ, .mn-part) .mn-chg-diff { background: none; padding: 0 0 0 10px; border-left: 2px solid var(--mn-line); border-radius: 0; }
+.mn-bt-links { display: flex; justify-content: center; gap: 18px; }
+
+/* 速查: the end view waits soft and dim behind the last card while it is dragged, then comes up sharp */
+.mn-rq-under.is-preview.is-in { opacity: 0.5; transform: scale(0.96); filter: blur(6px) saturate(0.8); }
+.mn-rq-under { transition: opacity 0.32s ease-out, transform 0.32s ease-out, filter 0.32s ease-out; }
+/* a liked champion chosen: after the burst on its card, a heart grows out of it until it fills the screen, then fades over the
+   champion page (roster.ts choose) */
+.mn-rq-flood { position: fixed; z-index: 51; width: 80px; height: 80px; margin: -40px 0 0 -40px; pointer-events: none; color: #ff4d6d; will-change: transform, opacity;
+    animation: mn-rq-flood 0.85s cubic-bezier(0.55, 0, 0.3, 1) 0.16s both; transition: opacity 0.45s ease-out; }
+.mn-rq-wash { position: fixed; z-index: 50; inset: 0; pointer-events: none; background: #ff4d6d; opacity: 0; will-change: opacity; transition: opacity 0.3s ease-in; }
+.mn-rq-wash.is-in { opacity: 1; }
+.mn-rq-wash.is-out { opacity: 0; transition: opacity 0.45s ease-out; }
+/* the champion in the middle of the pink: its face, name and title rise in (its own layer over the heart), then fade with the cover */
+.mn-rq-who { position: fixed; z-index: 52; left: 0; right: 0; top: 50%; display: flex; flex-direction: column; align-items: center; gap: 6px; color: #fff; pointer-events: none;
+    opacity: 0; transform: translateY(calc(-50% + 18px)) scale(0.94); transition: opacity 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) 0.12s, transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) 0.12s; }
+.mn-rq-who.is-in { opacity: 1; transform: translateY(-50%) scale(1); }
+.mn-rq-who.is-out { opacity: 0; transition: opacity 0.4s ease-out; }
+.mn-rq-who img { width: 84px; height: 84px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.9); box-shadow: 0 8px 24px rgba(120, 0, 30, 0.35); }
+.mn-rq-who b { margin-top: 6px; font-size: 30px; font-weight: 800; letter-spacing: 0.04em; }
+.mn-rq-who span { font-size: 15px; font-weight: 600; opacity: 0.85; }
+/* the last card's portrait, added to the waiting view when it is decided: it rises in alone */
+.mn-rq-lk.is-new { animation: mn-rq-rise 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both; }
+.mn-rq-flood svg { display: block; width: 100%; height: 100%; fill: currentColor; stroke: none; }
+.mn-rq-flood.is-out { opacity: 0; }
+@keyframes mn-rq-flood { 0% { transform: scale(0.4); } 18% { transform: scale(1.35); } 28% { transform: scale(1.05); } 42% { transform: scale(1.55); } 52% { transform: scale(1.3); } 100% { transform: scale(30); } }   /* two beats, then the surge */
+/* the champion page's ability page: the clip on top fades out at its edges (no frame), the numbers and text under it, the bar below */
+:is(.mn-champ, .mn-part) .mn-skill-detail .mn-sd-clipbox, :is(.mn-champ, .mn-part) .mn-skill-detail .mn-sd-clipbox:first-child { border-radius: 0; clip-path: none; background: none;
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 14%, #000 78%, transparent), linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    mask-image: linear-gradient(180deg, transparent, #000 14%, #000 78%, transparent), linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    -webkit-mask-composite: source-in; mask-composite: intersect; }
+:is(.mn-champ, .mn-part) .mn-skill-detail + .mn-skills { margin-top: 14px; }
+/* 技能 (Zaviel 2026-11-01): the ability's name, numbers and text at the top; the clip sinks to the bottom, just above the P Q W E R bar */
+.mn-cpa-page.is-skills .mn-cpa-body > .mn-skill-detail.is-open { flex: 1 0 auto; display: flex; flex-direction: column; }
+.mn-cpa-page.is-skills .mn-skill-detail > .mn-sd-clipbox { margin-top: auto; flex: none; }
+.mn-cpa-page.is-skills .mn-skill-detail > .mn-sd-desc + .mn-sd-clipbox, .mn-cpa-page.is-skills .mn-skill-detail > .mn-sd-clipbox { margin-bottom: 0; }
+/* the clip's loading look inside that faded box: no backdrop blur (on iOS a backdrop-filter layer ignores its parent's mask and shows as a
+   hard rectangle); the blurred stand-in under it (the ability's icon, or the clip that was on show) and the band of light are enough */
+/* the champion page's clip: a canvas drawn from the shelf's playing clip (skills.ts), inside the faded box; it fades in on its first frame */
+.mn-sd-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 0.3s ease-out; }
+.mn-sd-canvas.is-on { opacity: 1; }
+:is(.mn-champ, .mn-part) .mn-sd-clipbox > .mn-blkveil, :is(.mn-champ, .mn-part) .mn-sd-clipbox > .mn-blkveil.is-in { left: 0; right: 0; border-radius: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+/* a champion sub page's small header: the champion's face, its name, and the page's name in the accent colour */
+.mn-part-head { justify-content: flex-start; gap: 10px; }
+.mn-part-head img { flex: none; width: 34px; height: 34px; border-radius: 10px; }
+.mn-part-head div { display: flex; flex-direction: column; line-height: 1.15; }
+.mn-part-who { font-size: 12px; font-weight: 600; color: var(--mn-muted); }
+.mn-part-what { font-size: 18px; font-weight: 800; color: var(--mn-accent); }

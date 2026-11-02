@@ -35,6 +35,7 @@ export class MnView extends ItemView {
     private backEl!: HTMLButtonElement;
     private titleEl!: HTMLElement;
     private scrollEl!: HTMLElement;
+    private artEl!: HTMLElement;
     private tabsEl!: HTMLElement;
     private scrolls = new Map<string, number>();
     private shown = "";
@@ -72,6 +73,9 @@ export class MnView extends ItemView {
         modeBtn.setAttribute("aria-label", "Mode");
         modeBtn.addEventListener("click", (e) => { e.preventDefault(); this.modeMenu(e); });
         this.modeBtn = modeBtn;
+        // a picture behind the page that does not scroll with it (a page's `art`: the champion's darkened splash behind its sub pages);
+        // the app's own layer, so no scrolling or sliding page moves it
+        this.artEl = h(app, "div", "mn-page-art");
         this.scrollEl = h(app, "div", "mn-scroll");
         // the phone's keyboard and the floating search capsule (Picks, Champions). Obsidian (iOS) shrinks its page only once the keyboard
         // has finished opening and grows it only once it has closed, and sends no keyboard event we can catch (screen recording,
@@ -321,8 +325,11 @@ export class MnView extends ItemView {
             out = renderPage(this.router.tab, {
                 app: this.app, plugin: this.plugin, component: this, frame: f, push: (x) => this.push(x), pop: () => this.back(), goTab: (id) => this.goTab(id),
                 redraw: () => { if (this.router.top() === f) this.draw(); },   // the same page again, in place: no animation, the scroll kept
-                openChampion: (id, sub) => { if (sub) rememberSub(id, sub); this.push({ key: "champion", title: store.champion(id)?.name ?? id, params: { id } }); },
-                openAugment: (id) => this.push({ key: "augment", title: store.augment(id)?.name ?? "Augment", params: { id } }),
+                openChampion: (id, sub) => {
+                    if (sub) rememberSub(id, sub);
+                    this.push({ key: "champion", title: store.champion(id)?.name ?? id, params: { id } });
+                },
+                openAugment: (id, champ) => this.push({ key: "augment", title: store.augment(id)?.name ?? "Augment", params: champ ? { id, champ } : { id } }),
                 openItem: (id) => this.push({ key: "item", title: store.item(id)?.name ?? "Item", params: { id } }),
                 openNote: (path) => this.push({ key: "note", title: path.split("/").pop()?.replace(/\.md$/, "") ?? "Note", params: { path } }),
             });
@@ -342,6 +349,8 @@ export class MnView extends ItemView {
             this.topEl.removeClass("is-scrolled");
             releaseVideos(this.scrollEl);   // the clips of the page being left give back their decoders
             this.scrollEl.replaceChildren(page.el);
+            this.artEl.style.backgroundImage = page.art ? `url("${page.art}")` : "";
+            this.artEl.toggleClass("is-on", !!page.art);
             this.shown = key;
             // a page opened on top of another, and a champion page (its splash sits under the top bar) always start at the top; the
             // others (a tab, a page you come back to) are where you left them

@@ -1,6 +1,6 @@
 import { MarkdownRenderer, TFile } from "obsidian";
-import type { Augment, Champion, Item, Store } from "../data/store";
-import { ITEM_CAT_COLOR, ITEM_CATS, augIcon, chip, empty, group, h, icon, layoutBlock, row, shopIcon, slideSeg } from "../ui";
+import type { AugTier, Augment, Champion, Item, Store } from "../data/store";
+import { ITEM_CAT_COLOR, ITEM_CATS, TIER_COLOR, augIcon, chip, empty, group, h, icon, layoutBlock, row, shopIcon, slideSeg, centreBelow } from "../ui";
 import { RARITY_COLOR } from "./augments";
 import { officialBlock } from "./changes";
 import { deckPage, itemTree } from "./deck";
@@ -92,15 +92,17 @@ const PICKS_SHOWN = 6;   // on the champion page; the full page shows them all
 export { PICKS_SHOWN };
 // The picks as tiles three across, all the same size so they line up: the icon in its rarity frame, the name (two lines at most), the
 // reason as a small chip; the tile is tinted in its rarity's colour. Tap: the augment's page.
-export function augmentTiles(parent: HTMLElement, picks: AugmentPick[], ctx: PageCtx): HTMLElement {
-    const grid = h(parent, "div", "mn-aug-tiles");
+// opt.bare: the champion page family's icon grid (Design Rules): no panel, the icon and its name only (the reason is on the augment's
+// page); opt.champ: the champion it is shown for, so the augment's page can say how it fits that champion
+export function augmentTiles(parent: HTMLElement, picks: AugmentPick[], ctx: PageCtx, opt: { bare?: boolean; champ?: string } = {}): HTMLElement {
+    const grid = h(parent, "div", "mn-aug-tiles" + (opt.bare ? " is-bare" : ""));
     for (const p of picks) {
         const t = h(grid, "button", "mn-aug-tile");
         t.style.setProperty("--r", RARITY_COLOR[p.a.rarity] ?? "var(--mn-muted)");
         augIcon(t, p.a.icon, p.a.rarity, "mn-aug-tic");
         h(t, "span", "mn-aug-tn", p.a.name);
-        h(t, "span", "mn-aug-tw", p.why);
-        t.addEventListener("click", (e) => { e.preventDefault(); ctx.openAugment(p.a.id); });
+        if (!opt.bare) h(t, "span", "mn-aug-tw", p.why);
+        t.addEventListener("click", (e) => { e.preventDefault(); ctx.openAugment(p.a.id, opt.champ); });
     }
     return grid;
 }
@@ -211,6 +213,7 @@ export function augmentPage(ctx: PageCtx): PageOut {
     const rar = h(tags, "span", "mn-ag-rar", a.rarity);
     rar.style.setProperty("--c", RARITY_COLOR[a.rarity] ?? "var(--mn-muted)");
     if (history[0]?.what === "added" && history[0].patch === store.riotNotes[0]?.patch) h(tags, "span", "mn-ag-new", "新");
+    forChampion(el, store, a, String(ctx.frame.params?.champ ?? ""));
 
     // the numbers: a Lv1 / 最大 switch when it levels up; chips and the effect card follow it
     const levels = nums?.levels ?? [];
@@ -270,7 +273,16 @@ export function augmentPage(ctx: PageCtx): PageOut {
         row(links, { icon: "external-link", title: "OP.GG 強化列表", chevron: true, onTap: () => window.open("https://op.gg/lol/modes/aram-mayhem") });
     }
 
-    // who it suits: Riot's own tags when they rule champions out, else the hand-written `fits`, else a guess from the wording
+    // who it suits: the augment model's best users (Dev Tools/Augment Model.md), the champions it is S for, then A
+    if (modelUsers(el, store, a, ctx)) {
+        if (history.length) {
+            h(el, "div", "mn-gh", "版本紀錄");
+            h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "新增於" : "移除於"} ${x.patch}`).join(" · "));
+        }
+        centreBelow(el, 1);   // under the banner, centred when short (an unrated augment)
+        return { title: "", el };
+    }
+    // without the model's file: Riot's own tags when they rule champions out, else the hand-written `fits`, else a guess from the wording
     const all = store.champions();
     let tagList: string[] = [], list: Champion[] = [], label = "";
     if (data?.fits) {
@@ -304,7 +316,66 @@ export function augmentPage(ctx: PageCtx): PageOut {
         h(el, "div", "mn-gh", "版本紀錄");
         h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "新增於" : "移除於"} ${x.patch}`).join(" · "));
     }
+    centreBelow(el, 1);
     return { title: "", el };   // the name is already the big heading
+}
+
+// Opened from a champion's 強化: how the augment fits that champion (its face, the tier in its colour, the reason, 前期強 / 後期強),
+// the detail its icon grid leaves out
+function forChampion(el: HTMLElement, store: Store, a: Augment, cid: string): void {
+    const c = cid ? store.champion(cid) : undefined;
+    if (!c) return;
+    let best: AugTier | undefined;
+    for (const st of Object.values(store.augTiers[cid] ?? {})) {
+        const t = st.tiers.find((x) => x.id === a.id);
+        if (t && (!best || t.score > best.score)) best = t;
+    }
+    const line = h(el, "div", "mn-ag-for");
+    const im = h(line, "img"); im.src = c.icon; im.alt = "";
+    const tx = h(line, "div", "mn-ag-for-t");
+    if (c.pinned.includes(a.name)) { h(tx, "b", undefined, `${c.name} · 置頂`); return; }
+    if (!best) { h(tx, "b", undefined, `${c.name} · 沒有幫助`); return; }
+    const head = h(tx, "b");
+    head.append(`${c.name} · `);
+    const tier = h(head, "span", "mn-ag-for-tier", best.tier);
+    tier.style.setProperty("--t", TIER_COLOR[best.tier] ?? "var(--mn-muted)");
+    h(tx, "span", undefined, [best.reason, best.when].filter(Boolean).join(" · "));
+}
+
+// The augment model's best users of an augment: per champion its best play style's tier; the S ones, then the A ones, best first, as
+// rows of faces (a tap opens the champion's 強化). An augment the model cannot value says why. False when there is no model file.
+const USERS_SHOWN = 24;   // faces per tier row
+function modelUsers(el: HTMLElement, store: Store, a: Augment, ctx: PageCtx): boolean {
+    const champs = Object.entries(store.augTiers);
+    if (!champs.length) return false;
+    h(el, "div", "mn-gh", "適合的英雄");
+    const why = store.augUnrated[String(a.id)];
+    if (why) { h(el, "div", "mn-gf", `這個強化無法用數值估算（${why}），沒有排名。`); return true; }
+    const best = new Map<string, { tier: string; score: number }>();
+    for (const [cid, styles] of champs) {
+        for (const st of Object.values(styles)) {
+            const t = st.tiers.find((x) => x.id === a.id);
+            if (t && (!best.has(cid) || t.score > best.get(cid)!.score)) best.set(cid, { tier: t.tier, score: t.score });
+        }
+    }
+    let shown = 0;
+    for (const tier of ["S", "A"]) {
+        const list = [...best].filter(([, b]) => b.tier === tier).sort((x, y) => y[1].score - x[1].score).slice(0, USERS_SHOWN);
+        const faces = list.map(([cid]) => store.champion(cid)).filter((c): c is Champion => !!c);
+        if (!faces.length) continue;
+        shown += faces.length;
+        h(el, "div", "mn-ag-tier", tier);
+        const strip = layoutBlock(h(el, "div", "mn-ag-strip"));
+        for (const c of faces) {
+            const tile = h(strip, "button", "mn-tile");
+            const t = h(tile, "img"); t.src = c.icon; t.alt = "";
+            h(tile, "span", "mn-tile-n", c.name);
+            tile.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id, "augments"); });
+        }
+    }
+    h(el, "div", "mn-gf", shown ? "依英雄的技能數值估算：對這些英雄是 S 或 A（和同稀有度的其他強化比較，也和其他英雄比較）。不是勝率。"
+        : "依英雄的技能數值估算，沒有英雄特別適合這個強化。");
+    return true;
 }
 
 // An item's text, split for its page: the stats ("120 魔法攻擊"), then each passive or active with its name and text. Riot's text is one
@@ -350,9 +421,12 @@ export function itemPage(ctx: PageCtx): PageOut {
     const tags = h(who, "div", "mn-it-tags");
     h(tags, "span", "mn-it-gold", `${item.goldTotal} 金`);
     if (item.variantOf) h(tags, "span", "mn-it-aram", "ARAM 版本");
+    // everything under the banner, centred down the screen when it is shorter than the screen (Design Rules, balance)
+    el.addClass("is-centred");
+    const body = h(el, "div", "mn-it-body");
     const { stats, effects } = splitItemText(item.desc);
     if (stats.length) {
-        const row = h(el, "div", "mn-it-stats");
+        const row = h(body, "div", "mn-it-stats");
         for (const s of stats) {
             const cat = STAT_CAT[s.name];
             const k = cat ? ITEM_CATS.findIndex(([n]) => n === cat) : -1;
@@ -364,24 +438,29 @@ export function itemPage(ctx: PageCtx): PageOut {
         }
     }
     for (const fx of effects) {
-        const card = h(el, "div", "mn-it-fx" + (fx.active ? " is-active" : ""));
+        const card = h(body, "div", "mn-it-fx" + (fx.active ? " is-active" : ""));
         if (fx.active) h(card, "span", "mn-it-fxk", "主動");   // Riot's text marks an active only sometimes, so a card without it has no label
         if (fx.name) h(card, "b", "mn-it-fxn", fx.name.replace(/^主動\s*[─-]\s*/, ""));
         if (fx.text) h(card, "p", "mn-it-fxt", fx.text);
     }
-    if (item.variantOf) h(el, "div", "mn-gf", "價格與數值和一般版本不同。");
-    // what it is made of, drawn like the shop's tree; then what it builds into; Riot's changes last
-    if (item.from.length) { h(el, "div", "mn-gh", "合成材料"); itemTree(h(el, "div", "mn-panel mn-itree"), ctx, item.id); }
-    recipe(el, ctx, "可合成", item.into.map((id) => store.item(id)).filter((i): i is Item => !!i));
+    if (item.variantOf) h(body, "div", "mn-gf", "價格與數值和一般版本不同。");
+    // its route: what it is made of, drawn like the shop's tree; then what it builds into, in two rows: 升級 (straight into) and 最終
+    // (the legendaries they lead to), so a base item shows its whole path instead of a short page with blank space under it
+    if (item.from.length) { h(body, "div", "mn-gh", "合成材料"); itemTree(h(body, "div", "mn-itree"), ctx, item.id); }
+    const next = item.into.map((id) => store.item(id)).filter((i): i is Item => !!i && !i.reward);
+    const finals = new Map<number, Item>();
+    for (const i of next) for (const id of i.into) { const f = store.item(id); if (f && !f.reward && !next.includes(f)) finals.set(f.id, f); }
+    recipe(body, ctx, "升級", next);
+    recipe(body, ctx, "最終", [...finals.values()].sort((x, y) => x.goldTotal - y.goldTotal));
     const official = store.officialFor("items", item.name);
-    if (official.length) { h(el, "div", "mn-gh", "版本調整"); officialBlock(el, official); }
+    if (official.length) { h(body, "div", "mn-gh", "版本調整"); officialBlock(body, official); }
     return { title: "", el };
 }
 
 function recipe(el: HTMLElement, ctx: PageCtx, title: string, items: Item[]): void {
     if (!items.length) return;
     h(el, "div", "mn-gh", title);
-    const grid = h(el, "div", "mn-recipe");
+    const grid = layoutBlock(h(el, "div", "mn-recipe"));
     for (const i of items) {
         const b = h(grid, "button", "mn-rc");
         const im = h(b, "img"); im.src = i.icon; im.alt = "";

@@ -168,6 +168,12 @@ var Store = class {
     this.gameText = {};
     // augment id -> the game's own description (tools/fetch_augment_text.py)
     this.augData = {};
+    this.augTiers = {};
+    // champion id -> play style -> the augment model's tiers (tools/augment_model.py)
+    this.augUnrated = {};
+    // augment id -> why the model cannot value it (a quest, random, an item upgrade...)
+    this.itemRoles = null;
+    // item id -> the shop's class tabs it is under (_data/item-roles.json, the League wiki)
     // false until the data files (_data/*.json) have been read once after start-up
     this.ready = false;
   }
@@ -211,6 +217,21 @@ var Store = class {
       this.augs = null;
     } catch {
       this.augData = {};
+    }
+    try {
+      const path = (0, import_obsidian.normalizePath)("_data/augment-tiers.json");
+      const d = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)) : {};
+      this.augTiers = d.champions ?? {};
+      this.augUnrated = d.unrated ?? {};
+    } catch {
+      this.augTiers = {};
+      this.augUnrated = {};
+    }
+    try {
+      const path = (0, import_obsidian.normalizePath)("_data/item-roles.json");
+      this.itemRoles = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)).items ?? null : null;
+    } catch {
+      this.itemRoles = null;
     }
     try {
       const path = (0, import_obsidian.normalizePath)("_data/positions.json");
@@ -340,6 +361,7 @@ var Store = class {
         rift: fm.rift === true,
         icon: str(fm.icon),
         variantOf: typeof fm.variant_of === "string" ? fm.variant_of : void 0,
+        reward: fm.reward === true,
         path: file.path
       })).sort((a, b) => a.goldTotal - b.goldTotal || a.name.localeCompare(b.name, "zh-Hant"));
     }
@@ -631,6 +653,7 @@ function placeVeil(veil) {
 }
 function holdBlock(veil) {
   const stop = (e) => {
+    if (veil.closest(".mn-cpa-track")) return;
     e.preventDefault();
     e.stopPropagation();
   };
@@ -950,6 +973,13 @@ var augIcon = (parent, src, rarity, cls = "") => {
   }
   return box;
 };
+var centreBelow = (el, keep) => {
+  const body = h(null, "div", "mn-centre-body");
+  while (el.children.length > keep) body.append(el.children[keep]);
+  el.append(body);
+  el.addClass("is-centred");
+  return body;
+};
 var row = (parent, r) => {
   const el = h(parent, "div", "mn-row" + (r.onTap ? " is-tap" : "") + (r.muted ? " is-muted" : ""));
   if (r.image && r.rarity && AUG_CLASS[r.rarity]) augIcon(el, r.image, r.rarity, "mn-row-aug");
@@ -961,6 +991,14 @@ var row = (parent, r) => {
   const main = h(el, "div", "mn-row-main");
   h(main, "div", "mn-row-t", r.title);
   if (r.sub) h(main, "div", "mn-row-s" + (r.clamp ? " is-clamp" : ""), r.sub);
+  if (r.faces?.length) {
+    const f = h(el, "div", "mn-row-faces");
+    for (const src of r.faces) {
+      const im = h(f, "img");
+      im.src = src;
+      im.alt = "";
+    }
+  }
   if (r.value) h(el, "div", "mn-row-v", r.value);
   if (r.chevron) icon(el, "chevron-right", "mn-row-chev");
   if (r.onTap) {
@@ -1019,6 +1057,12 @@ var shopMask = (sheet, row2) => {
 };
 var shopIcon = (parent, row2, lit, cls = "mn-shopic") => {
   const el = h(parent, "span", cls);
+  const ready = shopMasks.get(row2);
+  if (ready) {
+    el.style.setProperty("--mask", `url("${ready}")`);
+    el.classList.add("is-sharp");
+    return el;
+  }
   const im = h(el, "img");
   im.crossOrigin = "anonymous";
   im.src = SHOP_SPRITE;
@@ -1031,11 +1075,7 @@ var shopIcon = (parent, row2, lit, cls = "mn-shopic") => {
     el.style.setProperty("--mask", `url("${url}")`);
     el.classList.add("is-sharp");
   };
-  const ready = shopMasks.get(row2);
-  if (ready) {
-    el.style.setProperty("--mask", `url("${ready}")`);
-    el.classList.add("is-sharp");
-  } else void loadShopSheet().then(sharpen);
+  void loadShopSheet().then(sharpen);
   return el;
 };
 var ITEM_CAT_COLOR = {
@@ -1103,6 +1143,35 @@ var preloadRoleIcons = () => {
     im.src = ROLE_WIKI + file;
     preloaded.set(file, im);
   }
+  const sheet = new Image();
+  sheet.src = SHOP_ROLE_SPRITE;
+  preloaded.set(SHOP_ROLE_SPRITE, sheet);
+  void loadShopSheet().then((s) => {
+    if (s) SHOP_ICON_Y.forEach((_, row2) => shopMask(s, row2));
+  });
+};
+var SHOP_ROLE_SPRITE = "https://raw.communitydragon.org/latest/game/assets/ux/itemshop/jade/itemshop_texture_atlas.png";
+var SHOP_ROLE_BOX = {
+  \u5168\u90E8: [188, 131, 22, 19],
+  \u6230\u58EB: [898, 29, 23, 24],
+  \u5C04\u624B: [900, 86, 27, 22],
+  \u523A\u5BA2: [940, 232, 24, 21],
+  \u6CD5\u5E2B: [898, 61, 24, 20],
+  \u5766\u514B: [906, 112, 16, 24],
+  \u8F14\u52A9: [843, 244, 26, 22]
+};
+var shopRoleIcon = (parent, role) => {
+  const s = h(parent, "span", "mn-shoprole-ic");
+  const b = SHOP_ROLE_BOX[role];
+  if (!b) {
+    icon(s, ROLE_ICON[role] ?? "layout-grid");
+    return s;
+  }
+  s.style.width = `${b[2]}px`;
+  s.style.height = `${b[3]}px`;
+  s.style.backgroundImage = `url("${SHOP_ROLE_SPRITE}")`;
+  s.style.backgroundPosition = `-${b[0]}px -${b[1]}px`;
+  return s;
 };
 var iconChip = (parent, label, file, fallback, o) => {
   const el = chip(parent, "", { on: o.on, onTap: o.onTap });
@@ -1166,6 +1235,34 @@ var empty = (parent, o) => {
   h(box, "div", "mn-empty-t", o.title);
   if (o.text) h(box, "div", "mn-empty-s", o.text);
   return box;
+};
+var textSwitch = (parent, options, value, onChange) => {
+  const box = h(parent, "div", "mn-tsw");
+  for (const [id, label] of options) {
+    const b = h(box, "button", "mn-tsw-b" + (id === value ? " is-on" : ""), label);
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      box.querySelectorAll(".mn-tsw-b").forEach((x) => x.toggleClass("is-on", x === b));
+      onChange(id);
+    });
+  }
+  return box;
+};
+var TIER_COLOR = { S: "var(--color-orange)", A: "var(--color-yellow)", B: "var(--color-green)", C: "var(--mn-muted)" };
+var tierHead = (parent, label) => {
+  const el = h(parent, "div", "mn-tier-h", label);
+  if (TIER_COLOR[label]) el.style.setProperty("--t", TIER_COLOR[label]);
+  return el;
+};
+var moreLink = (parent, label, go) => {
+  const b = h(parent, "button", "mn-more-link");
+  h(b, "span", void 0, label);
+  icon(b, "chevron-right");
+  b.addEventListener("click", (e) => {
+    e.preventDefault();
+    go();
+  });
+  return b;
 };
 var segmented = (parent, options, value, onChange, cls = "") => {
   const seg = h(parent, "div", "mn-seg " + cls);
@@ -1532,6 +1629,9 @@ var LAYER = { hero: 0, float: 3 };
 var SYNCED = "mn-layout-synced";
 var memory = /* @__PURE__ */ new Map();
 var winAt = /* @__PURE__ */ new Map();
+var metricAt = "left";
+var STEP = 4;
+var REPEAT_MS = 110;
 var uid = () => Math.random().toString(36).slice(2, 8);
 var snap = (v) => Math.round(v / SNAP) * SNAP;
 var clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -1548,9 +1648,10 @@ function layoutBlock2(plugin, source, el, ctx) {
   const saved = parse2(source);
   const steps = memory.get(ctx.sourcePath) ?? /* @__PURE__ */ new Map();
   memory.set(ctx.sourcePath, steps);
-  const pages = saved.map((p) => steps.has(p.id) ? JSON.parse(steps.get(p.id).last) : p);
-  for (const [id, s] of steps) if (!saved.some((p) => p.id === id)) pages.push(JSON.parse(s.last));
   const info = ctx.getSectionInfo(el);
+  const home = saved[0]?.id ?? `@${info?.lineStart ?? 0}`;
+  const pages = saved.map((p) => steps.has(p.id) ? JSON.parse(steps.get(p.id).last) : p);
+  for (const [id, s] of steps) if (s.home === home && !saved.some((p) => p.id === id)) pages.push(JSON.parse(s.last));
   const root = el.createDiv({ cls: "mn-lay" });
   if (source.trim() && !saved.length) {
     root.createDiv({ cls: "mn-lay-err", text: "The layout data could not be read (JSON). Fix it in the source view." });
@@ -1573,6 +1674,8 @@ function layoutBlock2(plugin, source, el, ctx) {
   if (file0 instanceof import_obsidian4.TFile) void plugin.app.vault.cachedRead(file0).then((text) => {
     const m = new RegExp("```" + SYNCED + "\\n([\\s\\S]*?)\\n```").exec(text);
     synced = new Map(parse2(m?.[1] ?? "").map((p) => [p.id, JSON.stringify(p)]));
+    const first = text.split("\n").findIndex((l) => l.trim() === "```mn-layout");
+    legend.toggleClass("is-hidden", !!info && first >= 0 && first !== info.lineStart);
     draw();
   });
   const changedSinceSync = (page2) => synced.size > 0 && synced.get(page2.id) !== savedJson(page2.id);
@@ -1583,7 +1686,7 @@ function layoutBlock2(plugin, source, el, ctx) {
   const stepsOf = (page2) => {
     let s = steps.get(page2.id);
     if (!s) {
-      s = { past: [], future: [], last: savedJson(page2.id) || JSON.stringify(page2) };
+      s = { past: [], future: [], last: savedJson(page2.id) || JSON.stringify(page2), home };
       steps.set(page2.id, s);
     }
     return s;
@@ -1618,6 +1721,13 @@ function layoutBlock2(plugin, source, el, ctx) {
   }
   const wall = root.createDiv({ cls: "mn-lay-groups" });
   let selected = null;
+  let openWin = null;
+  const life = new import_obsidian4.MarkdownRenderChild(el);
+  life.onunload = () => {
+    openWin?.remove();
+    openWin = null;
+  };
+  ctx.addChild(life);
   const groupOf = (p) => p.name.split(SEP)[0];
   const subOf = (p) => p.name.split(SEP).slice(1).join(SEP);
   const named = (group2, sub) => sub ? group2 + SEP + sub : group2;
@@ -1629,6 +1739,8 @@ function layoutBlock2(plugin, source, el, ctx) {
   };
   const draw = () => {
     wall.empty();
+    openWin?.remove();
+    openWin = null;
     const groups = /* @__PURE__ */ new Map();
     for (const p of pages) groups.set(groupOf(p), [...groups.get(groupOf(p)) ?? [], p]);
     for (const [group2, list2] of groups) {
@@ -1836,43 +1948,60 @@ function layoutBlock2(plugin, source, el, ctx) {
     return g;
   };
   const inspector = (fig, page2, b) => {
-    const win = fig.createDiv({ cls: "mn-lay-win" });
-    const phone = fig.querySelector(".mn-lay-phone");
-    const top = (phone?.offsetTop ?? 0) + (b.y + b.h) * SCALE + 8;
-    win.style.top = `${Math.min(top, (phone?.offsetTop ?? 0) + H * SCALE - 360)}px`;
-    const moved = winAt.get(page2.id);
-    if (moved) win.style.transform = `translate(${moved.x}px, ${moved.y}px)`;
+    openWin?.remove();
+    const win = document.body.createDiv({ cls: "mn-lay-win" });
+    openWin = win;
+    const place = (p) => {
+      win.style.transform = `translate(calc(${import_obsidian4.Platform.isMobile ? "-50%" : `50vw - ${MARGIN}px - 100%`} + ${p.x}px), calc(-50% + ${p.y}px))`;
+    };
+    place(winAt.get(page2.id) ?? { x: 0, y: 0 });
+    const shut = () => {
+      selected = null;
+      winAt.delete(page2.id);
+      draw();
+    };
+    const onScroll = (e) => {
+      if (!win.isConnected) {
+        document.removeEventListener("scroll", onScroll, true);
+        return;
+      }
+      if (e.target instanceof Node && win.contains(e.target)) return;
+      if (win.contains(document.activeElement)) return;
+      document.removeEventListener("scroll", onScroll, true);
+      shut();
+    };
+    document.addEventListener("scroll", onScroll, true);
+    for (const ev of ["pointerdown", "mousedown", "click", "touchstart"]) win.addEventListener(ev, (e) => e.stopPropagation());
     const commit = () => {
       changed(page2);
       draw();
     };
     const head2 = win.createDiv({ cls: "mn-lay-winhead" });
-    const title = head2.createDiv({ cls: "mn-lay-wtitle", text: b.label });
+    head2.createSpan({ cls: "mn-lay-wspace" });
+    const nameRow = win.createDiv({ cls: "mn-lay-wrow" });
+    const title = nameRow.createEl("textarea", { cls: "mn-lay-wtitle-in", attr: { rows: "1", spellcheck: "false", "aria-label": "Block name" } });
+    title.value = b.label;
+    const growTitle = () => {
+      title.style.height = "auto";
+      title.style.height = `${title.scrollHeight}px`;
+    };
+    title.addEventListener("input", growTitle);
+    requestAnimationFrame(growTitle);
+    title.addEventListener("keydown", (k) => {
+      if (k.key === "Enter") {
+        k.preventDefault();
+        title.blur();
+      }
+    });
+    title.addEventListener("change", () => {
+      b.label = title.value.replace(/\s+/g, " ").trim() || b.label;
+      commit();
+    });
     const close = head2.createEl("button", { cls: "mn-lay-wbtn", attr: { "aria-label": "Close" } });
     icon(close, "x");
-    close.addEventListener("click", () => {
-      selected = null;
-      winAt.delete(page2.id);
-      draw();
-    });
-    title.addEventListener("dblclick", (e) => {
-      e.stopPropagation();
-      const input = createEl("input", { cls: "mn-lay-wtitle-in", attr: { value: b.label, spellcheck: "false" } });
-      title.replaceWith(input);
-      input.focus();
-      input.select();
-      const done = (keep) => {
-        if (keep) b.label = input.value.trim() || b.label;
-        commit();
-      };
-      input.addEventListener("keydown", (k) => {
-        if (k.key === "Enter") done(true);
-        if (k.key === "Escape") done(false);
-      });
-      input.addEventListener("blur", () => done(true));
-    });
+    close.addEventListener("click", shut);
     head2.addEventListener("pointerdown", (e) => {
-      if (e.target.closest("input, button")) return;
+      if (e.target.closest("input, textarea, button")) return;
       const x0 = e.clientX, y0 = e.clientY, start = winAt.get(page2.id) ?? { x: 0, y: 0 };
       let dragging = false;
       head2.setPointerCapture(e.pointerId);
@@ -1881,7 +2010,7 @@ function layoutBlock2(plugin, source, el, ctx) {
         dragging = true;
         const p = { x: start.x + m.clientX - x0, y: start.y + m.clientY - y0 };
         winAt.set(page2.id, p);
-        win.style.transform = `translate(${p.x}px, ${p.y}px)`;
+        place(p);
       };
       const up = () => {
         head2.removeEventListener("pointermove", move);
@@ -1951,50 +2080,92 @@ function layoutBlock2(plugin, source, el, ctx) {
       b.w = Math.max(4, x2 - b.x);
       b.h = Math.max(4, y2 - b.y);
     });
-    const geo = win.createDiv({ cls: "mn-lay-fields" });
-    const field = (lab, hint, get, set) => {
-      const f = geo.createDiv({ cls: "mn-lay-field", attr: { title: hint } });
-      const l = f.createSpan({ cls: "mn-lay-flab", text: lab });
-      const n = f.createEl("input", { cls: "mn-lay-num", attr: { type: "number", value: String(get()), step: String(SNAP), "aria-label": hint } });
-      n.addEventListener("change", () => {
-        set(Math.round(Number(n.value) || 0));
-        commit();
-      });
-      l.addEventListener("pointerdown", (e) => {
-        e.preventDefault();
-        const x0 = e.clientX, v0 = get();
-        l.setPointerCapture(e.pointerId);
-        const move = (m) => {
-          set(snap(v0 + (m.clientX - x0)));
-          n.value = String(get());
-        };
-        const up = () => {
-          l.removeEventListener("pointermove", move);
-          l.removeEventListener("pointerup", up);
-          if (get() !== v0) commit();
-        };
-        l.addEventListener("pointermove", move);
-        l.addEventListener("pointerup", up);
-      });
+    const get = { top: () => b.y, left: () => b.x, right: () => W - b.x - b.w, bottom: () => H - b.y - b.h, w: () => b.w, h: () => b.h };
+    const put = {
+      top: (v) => {
+        b.y = clamp(v, 0, H - b.h);
+      },
+      left: (v) => {
+        b.x = clamp(v, 0, W - b.w);
+      },
+      right: (v) => {
+        b.x = clamp(W - v - b.w, 0, W - b.w);
+      },
+      bottom: (v) => {
+        b.y = clamp(H - v - b.h, 0, H - b.h);
+      },
+      w: (v) => {
+        b.w = clamp(v, 8, W - b.x);
+      },
+      h: (v) => {
+        b.h = clamp(v, 8, H - b.y);
+      }
     };
-    field("X", "Left edge (x)", () => b.x, (v) => {
-      b.x = clamp(v, 0, W - b.w);
+    const NAME = { top: "Top gap", left: "Left gap", right: "Right gap", bottom: "Bottom gap", w: "Width", h: "Height" };
+    const boxEl = win.createDiv({ cls: "mn-lay-box" });
+    const nums = /* @__PURE__ */ new Map();
+    const num2 = (m, parent, cls) => {
+      const btn = parent.createEl("button", { cls: "mn-lay-bnum " + cls + (m === metricAt ? " is-on" : ""), text: String(get[m]()), attr: { "aria-label": NAME[m] } });
+      btn.addEventListener("click", () => {
+        metricAt = m;
+        nums.forEach((x, k) => x.toggleClass("is-on", k === m));
+        showStep();
+      });
+      nums.set(m, btn);
+    };
+    num2("top", boxEl, "is-top");
+    num2("left", boxEl, "is-left");
+    const blockEl = boxEl.createDiv({ cls: "mn-lay-bblock" });
+    blockEl.style.setProperty("--c", KINDS[b.kind]?.color ?? "#9aa3b8");
+    num2("w", blockEl, "is-w");
+    blockEl.createSpan({ cls: "mn-lay-bx", text: "\xD7" });
+    num2("h", blockEl, "is-h");
+    num2("right", boxEl, "is-right");
+    num2("bottom", boxEl, "is-bottom");
+    const step = win.createDiv({ cls: "mn-lay-step" });
+    const stepName = step.createSpan({ cls: "mn-lay-sname" });
+    const minus = step.createEl("button", { cls: "mn-lay-sbtn", attr: { "aria-label": "Less" } });
+    icon(minus, "minus");
+    const input = step.createEl("input", { cls: "mn-lay-sin", attr: { type: "number", inputmode: "numeric", step: String(STEP) } });
+    const plus = step.createEl("button", { cls: "mn-lay-sbtn", attr: { "aria-label": "More" } });
+    icon(plus, "plus");
+    const showStep = () => {
+      stepName.setText(NAME[metricAt]);
+      input.value = String(get[metricAt]());
+    };
+    const refresh = () => {
+      nums.forEach((x, k) => x.setText(String(get[k]())));
+      input.value = String(get[metricAt]());
+    };
+    const nudge = (d) => {
+      put[metricAt](get[metricAt]() + d);
+      refresh();
+    };
+    let held = 0, nudged = false;
+    const hold = (btn, d) => {
+      btn.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        nudge(d);
+        nudged = true;
+        held = window.setInterval(() => nudge(d), REPEAT_MS);
+      });
+      const stop = () => {
+        window.clearInterval(held);
+        held = 0;
+        if (nudged) {
+          nudged = false;
+          commit();
+        }
+      };
+      for (const ev of ["pointerup", "pointercancel", "pointerleave"]) btn.addEventListener(ev, stop);
+    };
+    hold(minus, -STEP);
+    hold(plus, STEP);
+    input.addEventListener("change", () => {
+      put[metricAt](Math.round(Number(input.value) || 0));
+      commit();
     });
-    field("Y", "Top edge (y)", () => b.y, (v) => {
-      b.y = clamp(v, 0, H - b.h);
-    });
-    field("W", "Width", () => b.w, (v) => {
-      b.w = clamp(v, 8, W - b.x);
-    });
-    field("H", "Height", () => b.h, (v) => {
-      b.h = clamp(v, 8, H - b.y);
-    });
-    field("R", "Right edge (x + w)", () => b.x + b.w, (v) => {
-      b.w = clamp(v - b.x, 8, W - b.x);
-    });
-    field("B", "Bottom edge (y + h)", () => b.y + b.h, (v) => {
-      b.h = clamp(v - b.y, 8, H - b.y);
-    });
+    showStep();
     const note = win.createEl("textarea", { cls: "mn-lay-wnote", attr: { rows: "1", placeholder: "Note: what goes here, what is wrong" } });
     note.value = b.note ?? "";
     const grow = () => {
@@ -2784,7 +2955,7 @@ function augmentsPage(ctx) {
   icon(box, "search", "mn-search-ic");
   const search = h(box, "input");
   search.type = "search";
-  search.placeholder = "Search";
+  search.placeholder = "\u641C\u5C0B\u5F37\u5316";
   const sortHost = h(el, "div", "mn-aug-sort");
   const chips = h(el, "div", "mn-chips mn-aug-rar");
   const list2 = h(el, "div", "mn-blk");
@@ -2850,7 +3021,7 @@ function profileAxes(c) {
     { label: "\u5766\u5EA6", value: c.defense },
     { label: "\u63A7\u5834", value: score(count(c, "\u63A7\u5834")) },
     { label: "\u4F4D\u79FB", value: score(count(c, "\u4F4D\u79FB")) },
-    { label: "\u8F14\u52A9", value: score(count(c, "\u6CBB\u7642", "\u8B77\u76FE")) },
+    { label: "\u8F14\u52A9", value: score(count(c, "\u968A\u53CB\u589E\u76CA")) },
     { label: "\u5C04\u7A0B", value: Math.min(10, Math.round(c.range / 65)) }
   ];
 }
@@ -3074,7 +3245,8 @@ function styleAxes(c) {
     { label: "\u5766\u5EA6", icon: "shield", color: "var(--mn-tank)", value: c.defense, sub: tough },
     { label: "\u63A7\u5834", icon: "lock", color: "var(--mn-cc)", value: score(count(c, "\u63A7\u5834")), sub: keysOf(c, "\u63A7\u5834"), tag: "\u63A7\u5834" },
     { label: "\u4F4D\u79FB", icon: "arrow-big-right-dash", color: "var(--mn-dash)", value: score(count(c, "\u4F4D\u79FB")), sub: keysOf(c, "\u4F4D\u79FB"), tag: "\u4F4D\u79FB" },
-    { label: "\u8F14\u52A9", icon: "heart-pulse", color: "var(--mn-heal)", value: score(count(c, "\u6CBB\u7642", "\u8B77\u76FE")), sub: keysOf(c, "\u6CBB\u7642", "\u8B77\u76FE"), tag: "\u6CBB\u7642" },
+    { label: "\u8F14\u52A9", icon: "heart-pulse", color: "var(--mn-heal)", value: score(count(c, "\u968A\u53CB\u589E\u76CA")), sub: keysOf(c, "\u968A\u53CB\u589E\u76CA"), tag: "\u968A\u53CB\u589E\u76CA" },
+    // only help for teammates (profileAxes)
     { label: "\u5C04\u7A0B", icon: "target", color: "var(--mn-range)", value: Math.min(10, Math.round(c.range / 65)), sub: [reachOf(c), String(c.range)].filter(Boolean).join(" \xB7 ") }
   ];
 }
@@ -3149,10 +3321,6 @@ function styleCard(parent, c, app) {
   styleChart(card, c);
   if (OFF_CHART.some((x) => hasTag(c, x))) tagRow(h(card, "div", "mn-style-f"), c, OFF_CHART, true);
 }
-function championProfile(parent, c, app) {
-  factsStrip(parent, c);
-  styleCard(parent, c, app);
-}
 
 // src/pages/fresh.ts
 function metaLine(parent, m, now) {
@@ -3176,7 +3344,8 @@ function metaLine(parent, m, now) {
 var TOP_SETS = 3;
 var TOP_ITEMS = 8;
 var pct = (wins, games) => games ? Math.round(wins / games * 100) : 0;
-function buildTab(body, c, ctx) {
+function buildTab(page2, c, ctx) {
+  const body = h(page2, "div", "mn-bt-main");
   const store = ctx.plugin.store;
   const mode = ctx.plugin.settings.mode;
   const stats2 = store.stats?.champions[c.id];
@@ -3211,15 +3380,15 @@ function buildTab(body, c, ctx) {
     for (const b of synergy) setCard(body, c, ctx, b);
   }
   if (!stats2 && !mine.length) empty(body, { icon: "package-open", title: "No builds of ours yet", text: "Our own builds and ideas for this champion will appear here." });
-  if (mode === "mayhem") liveStats(body, c);
+  if (mode === "mayhem") liveStats(h(page2, "div", "mn-bt-live"), c);
 }
 var OPGG_SLUG = { MonkeyKing: "wukong" };
 function liveStats(body, c) {
   const slug = OPGG_SLUG[c.id] ?? c.id.toLowerCase();
   section(body, "Live stats");
-  const g = group(body);
-  row(g, { icon: "external-link", title: "OP.GG Mayhem build", chevron: true, onTap: () => window.open(`https://op.gg/lol/modes/aram-mayhem/${slug}/build`) });
-  row(g, { icon: "external-link", title: "Mobalytics Mayhem builds", chevron: true, onTap: () => window.open(`https://mobalytics.gg/lol/champions/${slug}/mayhem-builds`) });
+  const links = h(body, "div", "mn-bt-links");
+  moreLink(links, "OP.GG", () => window.open(`https://op.gg/lol/modes/aram-mayhem/${slug}/build`));
+  moreLink(links, "Mobalytics", () => window.open(`https://mobalytics.gg/lol/champions/${slug}/mayhem-builds`));
 }
 function section(body, title) {
   h(body, "div", "mn-gh", title);
@@ -3279,6 +3448,9 @@ function itemRow(parent, c, ctx, ids, captions = []) {
     });
   });
 }
+
+// src/pages/roster.ts
+var import_obsidian12 = require("obsidian");
 
 // src/pages/changes.ts
 var DIR_COLOR = { buff: "var(--color-green)", nerf: "var(--color-red)", mixed: "var(--color-yellow)", change: "var(--color-blue)", text: "var(--color-blue)" };
@@ -3394,11 +3566,85 @@ function changesBlock(parent, c, ctx) {
 // src/pages/skills.ts
 var import_obsidian10 = require("obsidian");
 var CLIP_FADE_MS = 350;
+var STAGE_DPR = 2;
 function skillStrip(parent, c, changes = [], opt = {}) {
   if (!c.skills.length) return;
   const strip2 = h(parent, "div", "mn-skills");
   const detail = h(parent, "div", "mn-skill-detail");
+  if (opt.barBelow) parent.append(strip2);
   let open = -1;
+  const shelf = opt.shelf;
+  const held = /* @__PURE__ */ new Map();
+  let active = null;
+  if (shelf) c.skills.forEach((s, i) => {
+    demo(shelf, c, s, () => {
+      held.delete(i);
+      if (open === i) detail.querySelector(".mn-sd-clipbox")?.remove();
+    });
+    const v = shelf.lastElementChild;
+    if (!(v instanceof HTMLVideoElement)) return;
+    held.set(i, v);
+    v.addEventListener("loadeddata", () => {
+      if (v !== active) v.pause();
+    }, { once: true });
+  });
+  let stage = null, canvas = null, ph = null;
+  let painted = false, raf = 0;
+  const paint = () => {
+    raf = 0;
+    if (!stage?.isConnected || !canvas) {
+      active?.pause();
+      return;
+    }
+    const v = active;
+    const w = canvas.clientWidth, ht = canvas.clientHeight;
+    if (v && v.readyState >= 2 && v.videoWidth && w && ht) {
+      const dpr = Math.min(STAGE_DPR, window.devicePixelRatio || 1);
+      if (canvas.width !== Math.round(w * dpr)) {
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(ht * dpr);
+      }
+      const g = canvas.getContext("2d");
+      if (g) {
+        const k = Math.max(canvas.width / v.videoWidth, canvas.height / v.videoHeight);
+        const sw = canvas.width / k, sh = canvas.height / k;
+        g.drawImage(v, (v.videoWidth - sw) / 2, (v.videoHeight - sh) / 2, sw, sh, 0, 0, canvas.width, canvas.height);
+        if (!painted) {
+          painted = true;
+          window.setTimeout(() => ph?.remove(), CLIP_FADE_MS);
+          canvas.addClass("is-on");
+        }
+      }
+    }
+    raf = requestAnimationFrame(paint);
+  };
+  const stageClip = (i, s) => {
+    const v = held.get(i);
+    if (!v) return null;
+    if (!stage) {
+      stage = h(null, "div", "mn-sd-clipbox mn-sd-stage");
+      canvas = h(stage, "canvas", "mn-sd-canvas");
+    }
+    detail.append(stage);
+    if (!painted) {
+      ph?.remove();
+      ph = h(null, "div", "mn-sd-clipph");
+      ph.style.backgroundImage = `url("${s.icon}")`;
+      stage.prepend(ph);
+    }
+    if (active && active !== v) active.pause();
+    active = v;
+    v.currentTime = 0;
+    void v.play().catch(() => void 0);
+    if (!raf) raf = requestAnimationFrame(paint);
+    if (v.readyState >= 2) return Promise.resolve();
+    const loaded = new Promise((done) => {
+      v.addEventListener("loadeddata", () => done(), { once: true });
+      window.setTimeout(done, CLIP_WAIT_MS);
+    });
+    if (!painted) blockUntil(stage, loaded);
+    return loaded;
+  };
   const boxes = c.skills.map((s, i) => {
     const box = h(strip2, "button", "mn-skill-box");
     box.setAttribute("aria-label", `${s.key} ${s.name}`);
@@ -3418,17 +3664,51 @@ function skillStrip(parent, c, changes = [], opt = {}) {
   const show = (i) => {
     open = i;
     boxes.forEach((b, j) => b.toggleClass("is-on", j === i));
+    const shown = detail.querySelector(".mn-sd-video");
+    const prev = shown && shown.readyState >= 2 ? shown : null;
+    prev?.remove();
     detail.empty();
     detail.toggleClass("is-open", i >= 0);
-    if (i < 0) return;
+    let dropped = false;
+    const dropPrev = () => {
+      if (!prev || dropped) return;
+      dropped = true;
+      prev.remove();
+      prev.pause();
+      prev.removeAttribute("src");
+      prev.replaceChildren();
+      prev.load();
+    };
+    if (i < 0) {
+      dropPrev();
+      return;
+    }
     const s = c.skills[i];
     const clip = () => {
+      if (shelf) return stageClip(i, s);
       const clipBox = h(detail, "div", "mn-sd-clipbox");
-      const ph = h(clipBox, "div", "mn-sd-clipph");
-      ph.style.backgroundImage = `url("${s.icon}")`;
-      demo(clipBox, c, s, () => clipBox.remove());
-      clipBox.querySelector("video")?.addEventListener("loadeddata", () => window.setTimeout(() => ph.remove(), CLIP_FADE_MS), { once: true });
-      if (!clipBox.querySelector("video")) {
+      let stand;
+      if (prev) {
+        stand = prev;
+        clipBox.append(prev);
+        void prev.play().catch(() => void 0);
+      } else {
+        stand = h(clipBox, "div", "mn-sd-clipph");
+        stand.style.backgroundImage = `url("${s.icon}")`;
+      }
+      const letGo = () => {
+        if (stand === prev) dropPrev();
+        else stand.remove();
+      };
+      demo(clipBox, c, s, () => {
+        letGo();
+        clipBox.remove();
+      });
+      const last = clipBox.lastElementChild;
+      const v = last instanceof HTMLVideoElement && last !== prev ? last : null;
+      v?.addEventListener("loadeddata", () => window.setTimeout(letGo, CLIP_FADE_MS), { once: true });
+      if (!v) {
+        letGo();
         clipBox.remove();
         return null;
       }
@@ -3477,6 +3757,7 @@ var clipAddress = (c, key) => {
   const k = String(c.key).padStart(4, "0");
   return `${DEMO_BASE}/${k}/ability_${k}_${/\d$/.test(key) ? key : `${key}1`}`;
 };
+var CLIP_CACHE = 15;
 var downloaded = /* @__PURE__ */ new Map();
 var webmOnly = /* @__PURE__ */ new Set();
 var downloading = /* @__PURE__ */ new Map();
@@ -3492,6 +3773,12 @@ function preloadClip(c, key) {
         if (r.status === 200) {
           if (ext === "webm") webmOnly.add(url);
           downloaded.set(url, URL.createObjectURL(new Blob([r.arrayBuffer], { type: `video/${ext}` })));
+          for (const [old, local] of downloaded) {
+            if (downloaded.size <= CLIP_CACHE) break;
+            URL.revokeObjectURL(local);
+            downloaded.delete(old);
+            downloading.delete(old);
+          }
           return;
         }
       } catch {
@@ -3637,8 +3924,297 @@ function rankTable(parent, s, changes) {
   }
 }
 
-// src/pages/detail.ts
-var import_obsidian12 = require("obsidian");
+// src/pages/cardkit.ts
+var LEVELS_STAT = { ap: 300, ad: 200 };
+var ULT_LEVELS = [6, 11, 16];
+var FORM_ICONS = ["hammer", "crosshair"];
+var FORM_ART = "https://raw.communitydragon.org/latest/game/assets/characters";
+var DAMAGE_ROW = /^(物理|魔法|真實)傷害|^治療|^護盾/;
+var SCALING = /\+([\d./]+)%\s*(額外物理攻擊|物理攻擊|魔法攻擊)/;
+var NEUTRAL = "#6b7183";
+var kindColor = (s) => DAMAGE_COLOR[s.damage[0] ?? ""] ?? NEUTRAL;
+var statColor = (stat) => stat.includes("\u9B54\u6CD5") ? DAMAGE_COLOR["\u9B54\u6CD5"] : DAMAGE_COLOR["\u7269\u7406"];
+var lastNum2 = (v) => parseFloat(v.split("/").pop() ?? "") || 0;
+function pill(parent, label, color, ic) {
+  const p = h(parent, "span", "mn-ck-pill");
+  p.style.setProperty("--c", color);
+  if (ic) icon(p, ic);
+  h(p, "span", void 0, label);
+}
+var measure = null;
+function centreInk(letter) {
+  if (!letter.isConnected) return;
+  measure ?? (measure = document.createElement("canvas").getContext("2d"));
+  if (!measure) return;
+  const cs = getComputedStyle(letter);
+  measure.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  const m = measure.measureText(letter.textContent ?? "");
+  const box = (m.fontBoundingBoxAscent - m.fontBoundingBoxDescent) / 2;
+  const ink = (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+  if (Number.isFinite(ink) && Number.isFinite(box)) letter.style.setProperty("--dy", `${(ink - box).toFixed(2)}px`);
+}
+function keyBadge(parent, key, color) {
+  const k = h(parent, "span", "mn-ck-key" + (key === "P" ? " is-zh" : ""));
+  const letter = h(k, "span", void 0, key === "P" ? "\u88AB" : key);
+  k.style.setProperty("--c", color);
+  requestAnimationFrame(() => centreInk(letter));
+  void document.fonts?.ready.then(() => centreInk(letter));
+  return k;
+}
+var head = (el, { c, s }) => {
+  const color = kindColor(s);
+  const ic = h(el, "div", "mn-ck-ic");
+  ic.style.setProperty("--c", color);
+  const im = h(ic, "img");
+  im.src = s.icon;
+  im.alt = "";
+  keyBadge(ic, s.key, color);
+  const who = h(el, "div", "mn-ck-who");
+  h(who, "div", "mn-ck-kn", `${c.name} \xB7 ${s.key === "P" ? "\u88AB\u52D5" : s.key}`);
+  h(who, "div", "mn-ck-name", s.name);
+};
+var tags = (el, { s }) => {
+  for (const k of s.damage) pill(el, `${k}\u50B7\u5BB3`, DAMAGE_COLOR[k] ?? NEUTRAL, DAMAGE_ICON[k] ?? "flame");
+  for (const t of s.tags) {
+    const i = tagInfo(t);
+    pill(el, t, i?.color ?? "var(--mn-muted)", i?.icon);
+  }
+};
+var desc = (el, { s }) => {
+  el.textContent = s.desc;
+};
+var numbers2 = (el, { s }) => {
+  const rows = s.rows.filter((r) => DAMAGE_ROW.test(r.label));
+  if (!rows.length) return;
+  const ranks = Math.max(1, ...rows.map((r) => r.vals.length));
+  el.style.setProperty("--r", String(ranks));
+  if (ranks > 1) {
+    h(el, "div");
+    for (let i = 1; i <= ranks; i++) h(el, "div", "mn-ck-h", s.levels[i - 1] ? `Lv ${s.levels[i - 1]}` : `${i} \u7D1A`);
+  }
+  for (const r of rows) {
+    const color = DAMAGE_COLOR[r.label.slice(0, 2)] ?? (r.label.startsWith("\u6CBB\u7642") ? "var(--mn-heal)" : "var(--mn-shield)");
+    const name = h(el, "div", "mn-ck-l", r.label);
+    name.style.color = color;
+    if (r.vals.length === 1) {
+      const v = h(el, "div", "mn-ck-v", r.vals[0]);
+      v.style.gridColumn = `span ${ranks}`;
+      v.style.color = color;
+    } else for (const v of r.vals) h(el, "div", "mn-ck-v", v).style.color = color;
+    if (r.note) {
+      const sc = h(el, "div", "mn-ck-sc");
+      sc.style.gridColumn = "1 / -1";
+      for (const p of scalingParts(r.note)) pill(sc, p.text, p.color, p.icon);
+    }
+  }
+};
+var stats = (el, { s }) => {
+  const val = (re) => s.rows.find((r) => re.test(r.label))?.vals.join(" / ");
+  const box = (ic, v, label) => {
+    if (!v) return;
+    const b = h(el, "div", "mn-ck-stat");
+    icon(b, ic);
+    h(b, "b", void 0, v);
+    h(b, "span", void 0, label);
+  };
+  box("timer", val(/^冷卻/), "\u51B7\u537B \u79D2");
+  box("droplet", val(/^消耗/), "\u6D88\u8017");
+  box("crosshair", s.range, "\u5C04\u7A0B");
+};
+var media = (el, { c, s, args }) => {
+  const wrap = h(el, "div", "mn-sl-video");
+  const spec = args.find((a) => /^\d+(?:\.\d+)?-\d+(?:\.\d+)?(?:\+\d+(?:\.\d+)?-\d+(?:\.\d+)?)*$/.test(a));
+  const seconds = spec?.split("+").map((p) => p.split("-").map(Number));
+  demo(wrap, c, { key: args.find((a) => /^[PQWER]\d?$/i.test(a))?.toUpperCase() ?? s.key, seconds }, () => {
+    const im = h(wrap, "img", "mn-ck-failic");
+    im.src = s.icon;
+    im.alt = "";
+  });
+  tags(h(wrap, "div", "mn-ck-onclip"), { c, s, args });
+  const hud = h(wrap, "div", "mn-ck-hud");
+  keyBadge(hud, s.key, kindColor(s));
+  h(hud, "span", "mn-ck-hudn", s.name);
+};
+var levelBars = (el, { s, args }) => {
+  const row2 = s.rows.find((r) => /^(物理|魔法|真實)傷害/.test(r.label));
+  const m = row2 ? SCALING.exec(row2.note) : null;
+  if (!row2 || !m) return;
+  const pct2 = lastNum2(m[1]), stat = m[2], color = statColor(stat);
+  const amount = Number(args.find((a2) => /^\d+$/.test(a2))) || (stat.includes("\u9B54\u6CD5") ? LEVELS_STAT.ap : LEVELS_STAT.ad);
+  const bonus = Math.round(pct2 / 100 * amount);
+  const bases = row2.vals.map((v) => lastNum2(v));
+  const top = Math.max(...bases) + bonus;
+  bases.forEach((base, i) => {
+    const r = h(el, "div", "mn-ck-lv");
+    const lab = h(r, "div", "mn-ck-lvk");
+    h(lab, "b", void 0, `${i + 1} \u7D1A`);
+    if (s.key === "R" && ULT_LEVELS[i]) h(lab, "span", void 0, `Lv ${ULT_LEVELS[i]}`);
+    const pair = h(r, "div", "mn-ck-lvp");
+    const one = (withStat) => {
+      const line = h(pair, "div", "mn-ck-lvl");
+      const tr = h(line, "div", "mn-ck-track");
+      h(tr, "i", "mn-ck-b1", withStat ? "" : String(base)).style.width = `${base / top * 100}%`;
+      if (withStat) {
+        const b2 = h(tr, "i", "mn-ck-b2", `+${bonus}`);
+        b2.style.width = `${bonus / top * 100}%`;
+        b2.style.background = color;
+      }
+      h(line, "b", void 0, String(base + (withStat ? bonus : 0)));
+    };
+    one(false);
+    one(true);
+  });
+  const lg = h(el, "div", "mn-ck-lg");
+  const a = h(lg, "span");
+  h(a, "i").style.background = "#6e7b92";
+  a.append("\u6280\u80FD\u7B49\u7D1A\u7D66\u7684");
+  const b = h(lg, "span");
+  h(b, "i").style.background = color;
+  b.append(`${amount} ${stat.replace("\u653B\u64CA", "\u653B")}\u591A\u7D66\u7684`);
+};
+var formsTitle = (el, { c, args }) => {
+  const im = h(el, "img", "mn-ck-sq");
+  im.src = c.icon;
+  im.alt = "";
+  h(el, "span", void 0, `${c.name} \xB7 ${args.filter((a) => !/^[PQWER]\d?$/i.test(a)).length || 2} \u7A2E\u578B\u614B`);
+};
+var formSets = (el, { c, args }) => {
+  const names = args.map((a) => a.replace(/^\*/, "")).filter((a) => !/^[PQWER]\d?$/i.test(a));
+  const id = c.id.toLowerCase();
+  names.forEach((form, i) => {
+    const col = h(el, "div", "mn-ck-set");
+    const t = h(col, "div", "mn-ck-formh");
+    icon(t, FORM_ICONS[i] ?? "shapes");
+    h(t, "span", void 0, form);
+    const pic2 = (parent, key, big) => {
+      const s = c.skills.find((x) => x.key === key);
+      if (!s) return;
+      const cell = h(parent, "div", "mn-ck-cell" + (big ? " is-big" : ""));
+      const ic = h(cell, "div", "mn-ck-ic" + (big ? " is-big" : " is-sm"));
+      ic.style.setProperty("--c", kindColor(s));
+      const im = h(ic, "img");
+      im.alt = "";
+      im.src = `${FORM_ART}/${id}/hud/icons2d/${id}${key.toLowerCase()}_${i === 0 ? "melee" : "ranged"}.png`;
+      im.addEventListener("error", () => {
+        if (i === 0) im.src = s.icon;
+        else im.remove();
+      }, { once: true });
+      keyBadge(ic, key, kindColor(s));
+      h(cell, "span", "mn-ck-cn", s.name.split("\uFF0F")[i] ?? s.name);
+    };
+    pic2(col, "R", true);
+    const row2 = h(col, "div", "mn-ck-qwe");
+    for (const k of ["Q", "W", "E"]) pic2(row2, k, false);
+  });
+};
+var RESULT_ICON = [[/快|速/, "zap"], [/遠|長/, "move-horizontal"], [/痛|傷|強/, "flame"], [/穩|盾/, "shield"]];
+var beforeEquals = (args) => args.includes("=") ? args.slice(0, args.indexOf("=")) : args;
+var comboMedia = (el, { c, args }) => {
+  const keys = beforeEquals(args).filter((a) => /^[PQWER]\d?$/i.test(a)).map((a) => a.toUpperCase());
+  const wrap = h(el, "div", "mn-sl-video");
+  const reels = keys.map((key) => {
+    const box = h(wrap, "div", "mn-ck-reel");
+    demo(box, c, { key });
+    return box;
+  });
+  let now = 0;
+  const show = (i) => {
+    now = i;
+    reels.forEach((box, n) => {
+      box.classList.toggle("is-on", n === i);
+      if (n !== i) box.querySelector("video")?.pause();
+    });
+    const v = reels[i]?.querySelector("video");
+    if (v) {
+      v.currentTime = 0;
+      void v.play().catch(() => void 0);
+    }
+  };
+  reels.forEach((box, i) => {
+    const v = box.querySelector("video");
+    if (!v || reels.length < 2) return;
+    v.loop = false;
+    v.addEventListener("ended", () => {
+      if (now === i) show((i + 1) % reels.length);
+    });
+    v.addEventListener("play", () => {
+      if (now !== i) v.pause();
+    });
+  });
+  reels[0]?.classList.add("is-on");
+  comboFlow(h(wrap, "div", "mn-ck-comboFlow"), { c, s: c.skills[0], args });
+};
+var comboFlow = (el, { c, args }) => {
+  const spec = beforeEquals(args);
+  const names = spec.filter((a) => !/^[PQWER]\d?$/i.test(a)).map((a) => a.replace(/^\*/, ""));
+  const form = Math.max(0, names.indexOf(spec.find((a) => a.startsWith("*"))?.slice(1) ?? ""));
+  const keys = spec.filter((a) => /^[PQWER]\d?$/i.test(a)).map((a) => a.toUpperCase());
+  const id = c.id.toLowerCase();
+  keys.forEach((key, i) => {
+    if (i) icon(el, "arrow-right", "mn-ck-arrow");
+    const s = c.skills.find((x) => x.key === key.charAt(0));
+    if (!s) return;
+    const cell = h(el, "div", "mn-ck-cell is-step");
+    const ic = h(cell, "div", "mn-ck-ic is-huge");
+    ic.style.setProperty("--c", kindColor(s));
+    const im = h(ic, "img");
+    im.alt = "";
+    im.src = `${FORM_ART}/${id}/hud/icons2d/${id}${key.toLowerCase()}_${form === 0 ? "melee" : "ranged"}.png`;
+    im.addEventListener("error", () => {
+      im.src = s.icon;
+    }, { once: true });
+    keyBadge(ic, key, kindColor(s));
+    h(ic, "span", "mn-ck-step", String(i + 1));
+    h(cell, "span", "mn-ck-cn", s.name.split("\uFF0F")[form] ?? s.name);
+  });
+  const at = args.indexOf("=");
+  if (at < 0) return;
+  const chips = h(el, "div", "mn-ck-comboChips");
+  for (const w of args.slice(at + 1)) pill(chips, w, "#f0b074", RESULT_ICON.find(([re]) => re.test(w))?.[1] ?? "sparkles");
+};
+var formCols = (el, { c, args }) => {
+  const names = args.map((a) => a.replace(/^\*/, "")).filter((a) => !/^[PQWER]$/i.test(a));
+  const on = args.find((a) => a.startsWith("*"))?.slice(1);
+  const cut = new RegExp(`(?=(?:${names.join("|")})[^\uFF1A:\uFF0C\u3002\\s]{0,3}\u578B\u614B[\uFF1A:])`);
+  names.forEach((form, i) => {
+    const col = h(el, "div", "mn-ck-form" + (form === on ? " is-on" : ""));
+    const t = h(col, "div", "mn-ck-formh");
+    icon(t, FORM_ICONS[i] ?? "shapes");
+    h(t, "span", void 0, form);
+    for (const key of ["Q", "W", "E"]) {
+      const s = c.skills.find((x) => x.key === key);
+      const part = s?.desc.split(cut).find((p) => p.startsWith(form));
+      if (!part) continue;
+      const line = h(col, "div", "mn-ck-fl");
+      keyBadge(line, key, s ? kindColor(s) : "var(--mn-muted)");
+      h(line, "span", void 0, part.replace(/^[^：:]*[：:]/, "").trim());
+    }
+  });
+};
+var LAYOUTS = {
+  ability: { areas: ["head", "tags", "desc", "numbers", "stats"], rows: "auto auto auto auto auto", fill: { head, tags, desc, numbers: numbers2, stats } },
+  clip: { areas: ["media"], rows: "1fr", fill: { media } },
+  levels: { areas: ["head", "levelBars"], rows: "auto auto", fill: { head, levelBars } },
+  forms: { areas: ["formsTitle", "formCols"], rows: "auto auto", fill: { formsTitle, formCols } },
+  combo: { areas: ["comboMedia"], rows: "1fr", fill: { comboMedia } },
+  formset: { areas: ["formsTitle", "formSets"], rows: "auto auto", fill: { formsTitle, formSets } }
+};
+function cardKit(box, kind, c, args) {
+  const layout = LAYOUTS[kind];
+  if (!layout || !c) return false;
+  const key = (args.find((a) => /^[PQWER]\d?$/i.test(a)) ?? "Q").toUpperCase();
+  const s = c.skills.find((x) => x.key === key.charAt(0));
+  if (!s && kind !== "forms" && kind !== "formset" && kind !== "combo") return false;
+  const root = h(box, "div", `mn-ck mn-ck-${kind}`);
+  root.style.gridTemplateAreas = layout.areas.map((a) => `"${a}"`).join(" ");
+  root.style.gridTemplateRows = layout.rows;
+  for (const area of layout.areas) {
+    const slot = h(root, "div", `mn-ck-slot mn-ck-${area}`);
+    slot.style.gridArea = area;
+    layout.fill[area](slot, { c, s: s ?? c.skills[0], args });
+  }
+  return true;
+}
 
 // src/pages/deck.ts
 var import_obsidian11 = require("obsidian");
@@ -3669,7 +4245,7 @@ function handbookPage(ctx) {
   icon(box, "search", "mn-search-ic");
   const search = h(box, "input");
   search.type = "search";
-  search.placeholder = "Search anything you read here";
+  search.placeholder = "\u641C\u5C0B\u624B\u518A\u88E1\u7684\u5167\u5BB9";
   const chips = h(el, "div", "mn-keys");
   const out = h(el, "div");
   const notes = store.guideNotes();
@@ -4121,298 +4697,6 @@ function cardPile(pager, sec, o) {
   } };
 }
 
-// src/pages/cardkit.ts
-var LEVELS_STAT = { ap: 300, ad: 200 };
-var ULT_LEVELS = [6, 11, 16];
-var FORM_ICONS = ["hammer", "crosshair"];
-var FORM_ART = "https://raw.communitydragon.org/latest/game/assets/characters";
-var DAMAGE_ROW = /^(物理|魔法|真實)傷害|^治療|^護盾/;
-var SCALING = /\+([\d./]+)%\s*(額外物理攻擊|物理攻擊|魔法攻擊)/;
-var NEUTRAL = "#6b7183";
-var kindColor = (s) => DAMAGE_COLOR[s.damage[0] ?? ""] ?? NEUTRAL;
-var statColor = (stat) => stat.includes("\u9B54\u6CD5") ? DAMAGE_COLOR["\u9B54\u6CD5"] : DAMAGE_COLOR["\u7269\u7406"];
-var lastNum2 = (v) => parseFloat(v.split("/").pop() ?? "") || 0;
-function pill(parent, label, color, ic) {
-  const p = h(parent, "span", "mn-ck-pill");
-  p.style.setProperty("--c", color);
-  if (ic) icon(p, ic);
-  h(p, "span", void 0, label);
-}
-var measure = null;
-function centreInk(letter) {
-  if (!letter.isConnected) return;
-  measure ?? (measure = document.createElement("canvas").getContext("2d"));
-  if (!measure) return;
-  const cs = getComputedStyle(letter);
-  measure.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-  const m = measure.measureText(letter.textContent ?? "");
-  const box = (m.fontBoundingBoxAscent - m.fontBoundingBoxDescent) / 2;
-  const ink = (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
-  if (Number.isFinite(ink) && Number.isFinite(box)) letter.style.setProperty("--dy", `${(ink - box).toFixed(2)}px`);
-}
-function keyBadge(parent, key, color) {
-  const k = h(parent, "span", "mn-ck-key" + (key === "P" ? " is-zh" : ""));
-  const letter = h(k, "span", void 0, key === "P" ? "\u88AB" : key);
-  k.style.setProperty("--c", color);
-  requestAnimationFrame(() => centreInk(letter));
-  void document.fonts?.ready.then(() => centreInk(letter));
-  return k;
-}
-var head = (el, { c, s }) => {
-  const color = kindColor(s);
-  const ic = h(el, "div", "mn-ck-ic");
-  ic.style.setProperty("--c", color);
-  const im = h(ic, "img");
-  im.src = s.icon;
-  im.alt = "";
-  keyBadge(ic, s.key, color);
-  const who = h(el, "div", "mn-ck-who");
-  h(who, "div", "mn-ck-kn", `${c.name} \xB7 ${s.key === "P" ? "\u88AB\u52D5" : s.key}`);
-  h(who, "div", "mn-ck-name", s.name);
-};
-var tags = (el, { s }) => {
-  for (const k of s.damage) pill(el, `${k}\u50B7\u5BB3`, DAMAGE_COLOR[k] ?? NEUTRAL, DAMAGE_ICON[k] ?? "flame");
-  for (const t of s.tags) {
-    const i = tagInfo(t);
-    pill(el, t, i?.color ?? "var(--mn-muted)", i?.icon);
-  }
-};
-var desc = (el, { s }) => {
-  el.textContent = s.desc;
-};
-var numbers2 = (el, { s }) => {
-  const rows = s.rows.filter((r) => DAMAGE_ROW.test(r.label));
-  if (!rows.length) return;
-  const ranks = Math.max(1, ...rows.map((r) => r.vals.length));
-  el.style.setProperty("--r", String(ranks));
-  if (ranks > 1) {
-    h(el, "div");
-    for (let i = 1; i <= ranks; i++) h(el, "div", "mn-ck-h", s.levels[i - 1] ? `Lv ${s.levels[i - 1]}` : `${i} \u7D1A`);
-  }
-  for (const r of rows) {
-    const color = DAMAGE_COLOR[r.label.slice(0, 2)] ?? (r.label.startsWith("\u6CBB\u7642") ? "var(--mn-heal)" : "var(--mn-shield)");
-    const name = h(el, "div", "mn-ck-l", r.label);
-    name.style.color = color;
-    if (r.vals.length === 1) {
-      const v = h(el, "div", "mn-ck-v", r.vals[0]);
-      v.style.gridColumn = `span ${ranks}`;
-      v.style.color = color;
-    } else for (const v of r.vals) h(el, "div", "mn-ck-v", v).style.color = color;
-    if (r.note) {
-      const sc = h(el, "div", "mn-ck-sc");
-      sc.style.gridColumn = "1 / -1";
-      for (const p of scalingParts(r.note)) pill(sc, p.text, p.color, p.icon);
-    }
-  }
-};
-var stats = (el, { s }) => {
-  const val = (re) => s.rows.find((r) => re.test(r.label))?.vals.join(" / ");
-  const box = (ic, v, label) => {
-    if (!v) return;
-    const b = h(el, "div", "mn-ck-stat");
-    icon(b, ic);
-    h(b, "b", void 0, v);
-    h(b, "span", void 0, label);
-  };
-  box("timer", val(/^冷卻/), "\u51B7\u537B \u79D2");
-  box("droplet", val(/^消耗/), "\u6D88\u8017");
-  box("crosshair", s.range, "\u5C04\u7A0B");
-};
-var media = (el, { c, s, args }) => {
-  const wrap = h(el, "div", "mn-sl-video");
-  const spec = args.find((a) => /^\d+(?:\.\d+)?-\d+(?:\.\d+)?(?:\+\d+(?:\.\d+)?-\d+(?:\.\d+)?)*$/.test(a));
-  const seconds = spec?.split("+").map((p) => p.split("-").map(Number));
-  demo(wrap, c, { key: args.find((a) => /^[PQWER]\d?$/i.test(a))?.toUpperCase() ?? s.key, seconds }, () => {
-    const im = h(wrap, "img", "mn-ck-failic");
-    im.src = s.icon;
-    im.alt = "";
-  });
-  tags(h(wrap, "div", "mn-ck-onclip"), { c, s, args });
-  const hud = h(wrap, "div", "mn-ck-hud");
-  keyBadge(hud, s.key, kindColor(s));
-  h(hud, "span", "mn-ck-hudn", s.name);
-};
-var levelBars = (el, { s, args }) => {
-  const row2 = s.rows.find((r) => /^(物理|魔法|真實)傷害/.test(r.label));
-  const m = row2 ? SCALING.exec(row2.note) : null;
-  if (!row2 || !m) return;
-  const pct2 = lastNum2(m[1]), stat = m[2], color = statColor(stat);
-  const amount = Number(args.find((a2) => /^\d+$/.test(a2))) || (stat.includes("\u9B54\u6CD5") ? LEVELS_STAT.ap : LEVELS_STAT.ad);
-  const bonus = Math.round(pct2 / 100 * amount);
-  const bases = row2.vals.map((v) => lastNum2(v));
-  const top = Math.max(...bases) + bonus;
-  bases.forEach((base, i) => {
-    const r = h(el, "div", "mn-ck-lv");
-    const lab = h(r, "div", "mn-ck-lvk");
-    h(lab, "b", void 0, `${i + 1} \u7D1A`);
-    if (s.key === "R" && ULT_LEVELS[i]) h(lab, "span", void 0, `Lv ${ULT_LEVELS[i]}`);
-    const pair = h(r, "div", "mn-ck-lvp");
-    const one = (withStat) => {
-      const line = h(pair, "div", "mn-ck-lvl");
-      const tr = h(line, "div", "mn-ck-track");
-      h(tr, "i", "mn-ck-b1", withStat ? "" : String(base)).style.width = `${base / top * 100}%`;
-      if (withStat) {
-        const b2 = h(tr, "i", "mn-ck-b2", `+${bonus}`);
-        b2.style.width = `${bonus / top * 100}%`;
-        b2.style.background = color;
-      }
-      h(line, "b", void 0, String(base + (withStat ? bonus : 0)));
-    };
-    one(false);
-    one(true);
-  });
-  const lg = h(el, "div", "mn-ck-lg");
-  const a = h(lg, "span");
-  h(a, "i").style.background = "#6e7b92";
-  a.append("\u6280\u80FD\u7B49\u7D1A\u7D66\u7684");
-  const b = h(lg, "span");
-  h(b, "i").style.background = color;
-  b.append(`${amount} ${stat.replace("\u653B\u64CA", "\u653B")}\u591A\u7D66\u7684`);
-};
-var formsTitle = (el, { c, args }) => {
-  const im = h(el, "img", "mn-ck-sq");
-  im.src = c.icon;
-  im.alt = "";
-  h(el, "span", void 0, `${c.name} \xB7 ${args.filter((a) => !/^[PQWER]\d?$/i.test(a)).length || 2} \u7A2E\u578B\u614B`);
-};
-var formSets = (el, { c, args }) => {
-  const names = args.map((a) => a.replace(/^\*/, "")).filter((a) => !/^[PQWER]\d?$/i.test(a));
-  const id = c.id.toLowerCase();
-  names.forEach((form, i) => {
-    const col = h(el, "div", "mn-ck-set");
-    const t = h(col, "div", "mn-ck-formh");
-    icon(t, FORM_ICONS[i] ?? "shapes");
-    h(t, "span", void 0, form);
-    const pic2 = (parent, key, big) => {
-      const s = c.skills.find((x) => x.key === key);
-      if (!s) return;
-      const cell = h(parent, "div", "mn-ck-cell" + (big ? " is-big" : ""));
-      const ic = h(cell, "div", "mn-ck-ic" + (big ? " is-big" : " is-sm"));
-      ic.style.setProperty("--c", kindColor(s));
-      const im = h(ic, "img");
-      im.alt = "";
-      im.src = `${FORM_ART}/${id}/hud/icons2d/${id}${key.toLowerCase()}_${i === 0 ? "melee" : "ranged"}.png`;
-      im.addEventListener("error", () => {
-        if (i === 0) im.src = s.icon;
-        else im.remove();
-      }, { once: true });
-      keyBadge(ic, key, kindColor(s));
-      h(cell, "span", "mn-ck-cn", s.name.split("\uFF0F")[i] ?? s.name);
-    };
-    pic2(col, "R", true);
-    const row2 = h(col, "div", "mn-ck-qwe");
-    for (const k of ["Q", "W", "E"]) pic2(row2, k, false);
-  });
-};
-var RESULT_ICON = [[/快|速/, "zap"], [/遠|長/, "move-horizontal"], [/痛|傷|強/, "flame"], [/穩|盾/, "shield"]];
-var beforeEquals = (args) => args.includes("=") ? args.slice(0, args.indexOf("=")) : args;
-var comboMedia = (el, { c, args }) => {
-  const keys = beforeEquals(args).filter((a) => /^[PQWER]\d?$/i.test(a)).map((a) => a.toUpperCase());
-  const wrap = h(el, "div", "mn-sl-video");
-  const reels = keys.map((key) => {
-    const box = h(wrap, "div", "mn-ck-reel");
-    demo(box, c, { key });
-    return box;
-  });
-  let now = 0;
-  const show = (i) => {
-    now = i;
-    reels.forEach((box, n) => {
-      box.classList.toggle("is-on", n === i);
-      if (n !== i) box.querySelector("video")?.pause();
-    });
-    const v = reels[i]?.querySelector("video");
-    if (v) {
-      v.currentTime = 0;
-      void v.play().catch(() => void 0);
-    }
-  };
-  reels.forEach((box, i) => {
-    const v = box.querySelector("video");
-    if (!v || reels.length < 2) return;
-    v.loop = false;
-    v.addEventListener("ended", () => {
-      if (now === i) show((i + 1) % reels.length);
-    });
-    v.addEventListener("play", () => {
-      if (now !== i) v.pause();
-    });
-  });
-  reels[0]?.classList.add("is-on");
-  comboFlow(h(wrap, "div", "mn-ck-comboFlow"), { c, s: c.skills[0], args });
-};
-var comboFlow = (el, { c, args }) => {
-  const spec = beforeEquals(args);
-  const names = spec.filter((a) => !/^[PQWER]\d?$/i.test(a)).map((a) => a.replace(/^\*/, ""));
-  const form = Math.max(0, names.indexOf(spec.find((a) => a.startsWith("*"))?.slice(1) ?? ""));
-  const keys = spec.filter((a) => /^[PQWER]\d?$/i.test(a)).map((a) => a.toUpperCase());
-  const id = c.id.toLowerCase();
-  keys.forEach((key, i) => {
-    if (i) icon(el, "arrow-right", "mn-ck-arrow");
-    const s = c.skills.find((x) => x.key === key.charAt(0));
-    if (!s) return;
-    const cell = h(el, "div", "mn-ck-cell is-step");
-    const ic = h(cell, "div", "mn-ck-ic is-huge");
-    ic.style.setProperty("--c", kindColor(s));
-    const im = h(ic, "img");
-    im.alt = "";
-    im.src = `${FORM_ART}/${id}/hud/icons2d/${id}${key.toLowerCase()}_${form === 0 ? "melee" : "ranged"}.png`;
-    im.addEventListener("error", () => {
-      im.src = s.icon;
-    }, { once: true });
-    keyBadge(ic, key, kindColor(s));
-    h(ic, "span", "mn-ck-step", String(i + 1));
-    h(cell, "span", "mn-ck-cn", s.name.split("\uFF0F")[form] ?? s.name);
-  });
-  const at = args.indexOf("=");
-  if (at < 0) return;
-  const chips = h(el, "div", "mn-ck-comboChips");
-  for (const w of args.slice(at + 1)) pill(chips, w, "#f0b074", RESULT_ICON.find(([re]) => re.test(w))?.[1] ?? "sparkles");
-};
-var formCols = (el, { c, args }) => {
-  const names = args.map((a) => a.replace(/^\*/, "")).filter((a) => !/^[PQWER]$/i.test(a));
-  const on = args.find((a) => a.startsWith("*"))?.slice(1);
-  const cut = new RegExp(`(?=(?:${names.join("|")})[^\uFF1A:\uFF0C\u3002\\s]{0,3}\u578B\u614B[\uFF1A:])`);
-  names.forEach((form, i) => {
-    const col = h(el, "div", "mn-ck-form" + (form === on ? " is-on" : ""));
-    const t = h(col, "div", "mn-ck-formh");
-    icon(t, FORM_ICONS[i] ?? "shapes");
-    h(t, "span", void 0, form);
-    for (const key of ["Q", "W", "E"]) {
-      const s = c.skills.find((x) => x.key === key);
-      const part = s?.desc.split(cut).find((p) => p.startsWith(form));
-      if (!part) continue;
-      const line = h(col, "div", "mn-ck-fl");
-      keyBadge(line, key, s ? kindColor(s) : "var(--mn-muted)");
-      h(line, "span", void 0, part.replace(/^[^：:]*[：:]/, "").trim());
-    }
-  });
-};
-var LAYOUTS = {
-  ability: { areas: ["head", "tags", "desc", "numbers", "stats"], rows: "auto auto auto auto auto", fill: { head, tags, desc, numbers: numbers2, stats } },
-  clip: { areas: ["media"], rows: "1fr", fill: { media } },
-  levels: { areas: ["head", "levelBars"], rows: "auto auto", fill: { head, levelBars } },
-  forms: { areas: ["formsTitle", "formCols"], rows: "auto auto", fill: { formsTitle, formCols } },
-  combo: { areas: ["comboMedia"], rows: "1fr", fill: { comboMedia } },
-  formset: { areas: ["formsTitle", "formSets"], rows: "auto auto", fill: { formsTitle, formSets } }
-};
-function cardKit(box, kind, c, args) {
-  const layout = LAYOUTS[kind];
-  if (!layout || !c) return false;
-  const key = (args.find((a) => /^[PQWER]\d?$/i.test(a)) ?? "Q").toUpperCase();
-  const s = c.skills.find((x) => x.key === key.charAt(0));
-  if (!s && kind !== "forms" && kind !== "formset" && kind !== "combo") return false;
-  const root = h(box, "div", `mn-ck mn-ck-${kind}`);
-  root.style.gridTemplateAreas = layout.areas.map((a) => `"${a}"`).join(" ");
-  root.style.gridTemplateRows = layout.rows;
-  for (const area of layout.areas) {
-    const slot = h(root, "div", `mn-ck-slot mn-ck-${area}`);
-    slot.style.gridArea = area;
-    layout.fill[area](slot, { c, s: s ?? c.skills[0], args });
-  }
-  return true;
-}
-
 // src/pages/deck.ts
 var GLOSSARY2 = "\u540D\u8A5E\u8868";
 var STRIP = 6;
@@ -4835,1660 +5119,7 @@ function strip(box, items) {
   }
 }
 
-// src/pages/glossary.ts
-var OWN = {
-  AD: [DAMAGE_ICON["\u7269\u7406"], DAMAGE_COLOR["\u7269\u7406"]],
-  AP: [DAMAGE_ICON["\u9B54\u6CD5"], DAMAGE_COLOR["\u9B54\u6CD5"]],
-  \u8B77\u7532: [STAT_ICON["\u8B77\u7532"], STAT_COLOR["\u8B77\u7532"]],
-  \u9B54\u6297: [STAT_ICON["\u9B54\u9632"], STAT_COLOR["\u9B54\u9632"]],
-  \u51B7\u537B: [STAT_ICON["\u6280\u80FD\u6025\u901F"], STAT_COLOR["\u6280\u80FD\u6025\u901F"]],
-  \u6D88\u8017: ["droplet", ITEM_CAT_COLOR["\u9B54\u529B"]],
-  \u666E\u653B: ["mouse-pointer-click", "var(--mn-text)"],
-  \u7206\u767C: ["zap", "var(--mn-exec)"],
-  \u524D\u6392: ["brick-wall", "var(--mn-guard)"],
-  \u5F8C\u6392: ["telescope", "var(--mn-phys)"],
-  \u958B\u5718: ["flag", "var(--mn-accent)"],
-  \u98A8\u7B8F: ["rewind", "var(--mn-dash)"],
-  \u589E\u5E45\u88DD\u7F6E: ["sparkles", "var(--mn-accent)"],
-  \u56DE\u8840\u5305: ["package-plus", "var(--mn-heal)"]
-};
-var termArt = (term) => {
-  const key = term.split(/[（(]/)[0].trim();
-  const tag = tagInfo(key);
-  return OWN[key] ?? (tag ? [tag.icon, tag.color] : ["book-a", "var(--mn-muted)"]);
-};
-var plain = (s) => s.replace(/[*_`]/g, "").replace(/!?\[\[([^\]|]*)(?:\|([^\]]*))?\]\]/g, (_m, a, b) => b ?? a).trim();
-function parse4(text) {
-  const out = [];
-  for (const line of text.replace(/^---[\s\S]*?---\n/, "").split("\n")) {
-    const g = /^##\s+(.+)/.exec(line);
-    if (g) {
-      out.push({ group: g[1].trim(), terms: [] });
-      continue;
-    }
-    const t = /^\s*[-*]\s+\*\*(.+?)\*\*\s*[:：]\s*(.+)$/.exec(line);
-    if (!t) continue;
-    if (!out.length) out.push({ group: "", terms: [] });
-    out[out.length - 1].terms.push({ term: plain(t[1]), text: plain(t[2]) });
-  }
-  return out.filter((g) => g.terms.length);
-}
-function glossaryPage(ctx, file) {
-  const el = h(null, "div", "mn-page mn-glpage");
-  fixedPage(el, ctx.component);
-  h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
-  const list2 = h(el, "div", "mn-rq-list mn-gl");
-  const dock = h(el, "div", "mn-rq-dock");
-  const cap = h(dock, "div", "mn-rq-cap");
-  icon(cap, "search", "mn-rq-cap-ic");
-  const search = h(cap, "input");
-  search.type = "search";
-  search.placeholder = "\u627E\u4E00\u500B\u8A5E";
-  search.setAttribute("enterkeyhint", "search");
-  const mic = h(cap, "button", "mn-rq-mic");
-  icon(mic, "mic");
-  mic.setAttribute("aria-label", "\u7528\u9375\u76E4\u7684\u9EA5\u514B\u98A8\u8AAA");
-  mic.addEventListener("click", (e) => {
-    e.preventDefault();
-    search.focus();
-  });
-  let groups = [];
-  const draw = () => {
-    list2.empty();
-    const q = search.value.trim().toLowerCase();
-    let shown = 0;
-    for (const g of groups) {
-      const hits = g.terms.filter((t) => !q || t.term.toLowerCase().includes(q) || t.text.toLowerCase().includes(q));
-      if (!hits.length) continue;
-      const sec = h(list2, "section", "mn-gl-sec");
-      if (g.group) h(sec, "div", "mn-gl-head", g.group);
-      for (const t of hits) {
-        const r = h(sec, "div", "mn-gl-row");
-        const [ic, color] = termArt(t.term);
-        const tile2 = h(r, "span", "mn-gl-ic");
-        tile2.style.setProperty("--c", color);
-        icon(tile2, ic);
-        const words = h(r, "div", "mn-gl-words");
-        h(words, "b", void 0, t.term);
-        h(words, "span", void 0, t.text);
-        shown++;
-      }
-    }
-    if (!shown) empty(list2, { icon: "search-x", title: "\u627E\u4E0D\u5230\u9019\u500B\u8A5E" });
-  };
-  search.addEventListener("input", draw);
-  void ctx.app.vault.cachedRead(file).then((text) => {
-    groups = parse4(text);
-    draw();
-  });
-  return { title: "", el };
-}
-
-// src/pages/detail.ts
-var SUGGESTED = 12;
-var GLOSSARY3 = "\u540D\u8A5E\u8868";
-function notePage(ctx) {
-  const path = String(ctx.frame.params?.path ?? "");
-  const file = ctx.app.vault.getAbstractFileByPath(path);
-  const el = h(null, "div", "mn-page");
-  if (!(file instanceof import_obsidian12.TFile)) {
-    empty(el, { icon: "file-x", title: "Note not found" });
-    return { title: "", el };
-  }
-  if (ctx.plugin.store.guideNotes().some((n) => n.file.path === path && n.layout === "deck")) return deckPage(ctx, file);
-  if (file.basename === GLOSSARY3) return glossaryPage(ctx, file);
-  h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
-  const body = h(el, "div", "mn-note markdown-rendered");
-  void ctx.app.vault.cachedRead(file).then((text) => import_obsidian12.MarkdownRenderer.render(ctx.app, text.replace(/^---[\s\S]*?---\n/, ""), body, path, ctx.component));
-  const guide = ctx.plugin.store.guideNotes();
-  const at = guide.findIndex((n) => n.file.path === path);
-  if (at >= 0) {
-    void ctx.plugin.markRead(path);
-    const next = guide[at + 1];
-    if (next) {
-      const b = h(el, "button", "mn-nextcard");
-      h(b, "span", "mn-nextcard-k", "\u4E0B\u4E00\u7BC7");
-      h(b, "span", "mn-nextcard-t", next.title);
-      icon(b, "arrow-right", "mn-nextcard-ic");
-      b.addEventListener("click", (e) => {
-        e.preventDefault();
-        ctx.pop();
-        ctx.openNote(next.file.path);
-      });
-    } else h(el, "div", "mn-nextcard-done", "\u{1F389} \u5168\u90E8\u8B80\u5B8C\u4E86");
-  }
-  row(group(el), { icon: "pencil", title: "Edit in Obsidian", chevron: true, onTap: () => void ctx.plugin.openPath(path) });
-  return { title: "", el };
-}
-var KINDS3 = [
-  { tag: "\u9B54\u6CD5\u653B\u64CA", re: /魔攻|魔法攻擊|法術強度/, fits: (c) => c.damageType === "\u9B54\u6CD5" || c.damageType === "\u6DF7\u5408" },
-  { tag: "\u7269\u7406\u653B\u64CA", re: /物攻|物理攻擊/, fits: (c) => c.damageType === "\u7269\u7406" || c.damageType === "\u6DF7\u5408" },
-  { tag: "\u666E\u653B", re: /普攻|普通攻擊|攻速|暴擊/, fits: (c) => c.roles.includes("\u5C04\u624B") || c.damageType === "\u7269\u7406" && c.archetypes.includes("\u8FD1\u6230") },
-  { tag: "\u6280\u80FD", re: /技能|大絕|冷卻/, fits: (c) => c.damageType === "\u9B54\u6CD5" || c.roles.includes("\u6CD5\u5E2B") },
-  { tag: "\u751F\u5B58", re: /生命|物防|魔防|護甲|魔抗|韌性|減傷/, fits: (c) => c.roles.includes("\u5766\u514B") || c.roles.includes("\u6230\u58EB") },
-  { tag: "\u8B77\u76FE / \u6CBB\u7642", re: /護盾|治療|回復/, fits: (c) => c.features.includes("\u8B77\u76FE") || c.features.includes("\u6CBB\u7642") || c.roles.includes("\u8F14\u52A9") },
-  { tag: "\u8DD1\u901F / \u4F4D\u79FB", re: /跑速|衝刺|位移/, fits: (c) => c.features.includes("\u4F4D\u79FB") },
-  { tag: "\u63A7\u5834", re: /緩速|暈眩|擊飛|控制|定身|擊退/, fits: (c) => c.features.includes("\u63A7\u5834") }
-];
-function suggest(effect, champions) {
-  const kinds = KINDS3.filter((k) => k.re.test(effect));
-  if (!kinds.length) return { tags: [], champions: [] };
-  const need = Math.max(1, Math.ceil(kinds.length * 0.6));
-  const scored = champions.map((c) => ({ c, n: kinds.filter((k) => k.fits(c)).length })).filter((x) => x.n >= need);
-  scored.sort((a, b) => b.n - a.n || a.c.name.localeCompare(b.c.name, "zh-Hant"));
-  return { tags: kinds.map((k) => k.tag), champions: scored.slice(0, SUGGESTED).map((x) => x.c) };
-}
-var has = (c, t) => c.features.includes(t) || c.archetypes.includes(t);
-var NEEDS = [
-  { re: /魔攻|魔法傷害|適性/, fit: (c) => c.damageType === "\u9B54\u6CD5" ? 1 : c.skillDamage.includes("\u9B54\u6CD5") ? 0.5 : 0, why: () => "\u5403\u9B54\u653B" },
-  { re: /物攻|物理傷害|物理致命|穿透/, fit: (c) => c.damageType === "\u7269\u7406" ? 1 : c.damageType === "\u6DF7\u5408" ? 0.6 : 0, why: () => "\u5403\u7269\u653B" },
-  { re: /普攻|攻速|命中效果/, fit: (c) => c.roles.includes("\u5C04\u624B") ? 1 : has(c, "\u5F37\u5316\u666E\u653B") || has(c, "\u653B\u64CA\u7279\u6548") ? 0.7 : 0, why: (c) => c.roles.includes("\u5C04\u624B") ? "\u666E\u653B\u5C04\u624B" : "\u666E\u653B\u578B" },
-  { re: /暴擊/, fit: (c) => c.roles.includes("\u5C04\u624B") ? 1 : 0, why: () => "\u66B4\u64CA\u5C04\u624B" },
-  { re: /技能加速|冷卻/, fit: (c) => c.damageType === "\u9B54\u6CD5" || c.roles.includes("\u6CD5\u5E2B") ? 0.9 : 0.5, why: () => "\u9760\u6280\u80FD" },
-  { re: /治療|護盾/, fit: (c) => has(c, "\u8B77\u76FE") || has(c, "\u6CBB\u7642") ? 1 : c.roles.includes("\u8F14\u52A9") ? 0.8 : 0, why: (c) => has(c, "\u8B77\u76FE") ? "\u6709\u8B77\u76FE\u6280\u80FD" : has(c, "\u6CBB\u7642") ? "\u6709\u6CBB\u7642\u6280\u80FD" : "\u8F14\u52A9" },
-  { re: /生命|物防|魔防|韌性|傷害減免|體型/, fit: (c) => c.roles.includes("\u5766\u514B") ? 1 : c.roles.includes("\u6230\u58EB") ? 0.7 : 0.1, why: (c) => c.roles.includes("\u5766\u514B") ? "\u5766\u514B" : "\u524D\u6392\u6230\u58EB" },
-  { re: /衝刺|位移|閃現|跳躍/, fit: (c) => has(c, "\u4F4D\u79FB") ? 1 : 0, why: () => "\u6709\u4F4D\u79FB" },
-  { re: /硬控場|禁錮|控場|擊飛|暈眩/, fit: (c) => has(c, "\u63A7\u5834") ? 1 : 0, why: () => "\u6709\u63A7\u5834" },
-  { re: /魔力/, fit: (c) => c.resource === "\u9B54\u529B" ? 0.8 : 0, why: () => "\u7528\u9B54\u529B" },
-  { re: /大絕/, fit: () => 0.6, why: () => "\u5927\u7D55\u5F37\u5316" }
-];
-function augmentTiles(parent, picks, ctx) {
-  const grid = h(parent, "div", "mn-aug-tiles");
-  for (const p of picks) {
-    const t = h(grid, "button", "mn-aug-tile");
-    t.style.setProperty("--r", RARITY_COLOR[p.a.rarity] ?? "var(--mn-muted)");
-    augIcon(t, p.a.icon, p.a.rarity, "mn-aug-tic");
-    h(t, "span", "mn-aug-tn", p.a.name);
-    h(t, "span", "mn-aug-tw", p.why);
-    t.addEventListener("click", (e) => {
-      e.preventDefault();
-      ctx.openAugment(p.a.id);
-    });
-  }
-  return grid;
-}
-function augmentPicks(store, c) {
-  const out = [];
-  for (const a of store.augments()) {
-    if (c.avoid.includes(a.name)) continue;
-    const data = store.augmentData(a.id);
-    if (data?.fits && !data.fits.includes(c.id.toLowerCase())) continue;
-    if (c.pinned.includes(a.name)) {
-      out.push({ a, why: "\u7F6E\u9802", score: 100 });
-      continue;
-    }
-    if (!a.effect) continue;
-    const needs = NEEDS.filter((n) => n.re.test(a.effect));
-    if (!needs.length) continue;
-    const fits = needs.map((n) => n.fit(c));
-    if (fits.filter((f) => f === 0).length > needs.length / 2) continue;
-    const mean = fits.reduce((x, y) => x + y, 0) / fits.length;
-    if (mean < 0.5) continue;
-    const best = needs[fits.indexOf(Math.max(...fits))];
-    const bonus = (a.rarity === "\u7A1C\u93E1" ? 0.12 : a.rarity === "\u91D1" ? 0.06 : 0) + (data?.fits ? 0.08 : 0) + (a.fits.some((f) => has(c, f) || c.roles.includes(f)) ? 0.15 : 0);
-    out.push({ a, why: best.why(c), score: Math.round((mean + bonus) * 100) });
-  }
-  return out.sort((x, y) => y.score - x.score || x.a.name.localeCompare(y.a.name, "zh-Hant"));
-}
-var KIND_COLOR = {
-  magicDamage: "var(--mn-magic)",
-  scaleAP: "var(--mn-magic)",
-  scaleMana: "var(--mn-magic)",
-  physicalDamage: "var(--mn-phys)",
-  scaleAD: "var(--mn-phys)",
-  trueDamage: "var(--mn-true)",
-  healing: "var(--mn-heal)",
-  scaleHealth: "var(--mn-heal)",
-  lifeSteal: "var(--mn-ls)",
-  lifesteal: "var(--mn-ls)",
-  shield: "var(--mn-shield)",
-  scaleMR: "var(--mn-shield)",
-  scaleArmor: "var(--mn-guard)",
-  crit: "var(--mn-exec)",
-  scaleCrit: "var(--mn-exec)",
-  speed: "var(--mn-true)",
-  attackSpeed: "var(--mn-true)",
-  scaleAS: "var(--mn-true)",
-  scaleAbilityHaste: "var(--mn-haste)",
-  scaleAH: "var(--mn-haste)",
-  armorPen: "var(--mn-aa)",
-  magicPen: "var(--mn-weak)"
-};
-var KIND_BOLD = /* @__PURE__ */ new Set(["keywordMajor", "status", "attention", "spellName"]);
-var CHIP_CAT = {
-  scaleAP: "\u6CD5\u8853\u5F37\u5EA6",
-  scaleAD: "\u653B\u64CA\u529B",
-  scaleCrit: "\u66B4\u64CA",
-  scaleAS: "\u653B\u901F",
-  scaleAH: "\u6280\u80FD\u6025\u901F",
-  scaleAbilityHaste: "\u6280\u80FD\u6025\u901F",
-  scaleHealth: "\u751F\u547D",
-  scaleArmor: "\u8B77\u7532",
-  scaleMR: "\u9B54\u9632",
-  scaleAPen: "\u7269\u7406\u7A7F\u900F",
-  scaleMPen: "\u6CD5\u8853\u7A7F\u900F",
-  scaleMana: "\u9B54\u529B",
-  scaleMS: "\u79FB\u52D5",
-  scaleLS: "\u5438\u8840"
-};
-var FX_STAT = [
-  [/魔法傷害|魔攻|魔力|魔法穿透/, "var(--mn-magic)", "sparkles"],
-  [/物理傷害|物攻|物理致命|物理穿透/, "var(--mn-phys)", "sword"],
-  [/真實傷害/, "var(--mn-true)", "gem"],
-  [/適性/, "var(--mn-mixed)", "blend"],
-  [/治療與護盾強度|治療|生命/, "var(--mn-heal)", "heart"],
-  [/護盾|魔防/, "var(--mn-shield)", "shield-check"],
-  [/物防/, "var(--mn-guard)", "shield"],
-  [/攻速/, "var(--mn-true)", "gauge"],
-  [/技能加速|大絕加速|道具加速/, "var(--mn-haste)", "timer-reset"],
-  [/跑速/, "var(--mn-dash)", "footprints"],
-  [/暴擊/, "var(--mn-exec)", "dice-5"],
-  [/吸血/, "var(--mn-ls)", "syringe"],
-  [/攻擊距離/, "var(--mn-range)", "ruler"]
-];
-var fxStat = (t) => {
-  for (const [re, c, i] of FX_STAT) if (re.test(t)) return [c, i];
-  return null;
-};
-var FX_TOKEN = new RegExp([
-  "\uFF08(?:\\+|\u6BCF)[^\uFF08\uFF09]*(?:\uFF08[^\uFF08\uFF09]*\uFF09[^\uFF08\uFF09]*)*\uFF09",
-  // a scaling in brackets, maybe with a ranged value inside
-  "\\d+(?:\\.\\d+)?%?\u2013\\d+(?:\\.\\d+)?%?\uFF08\u96A8\u7B49\u7D1A[^\uFF09]*\uFF09",
-  // a value by level
-  "\\d+(?:\\.\\d+)?%?(?:\uFF08\u9060\u7A0B [^\uFF09]+\uFF09)?\\s?(?:\u984D\u5916|\u6700\u5927|\u76EE\u524D|\u5DF2\u640D\u5931|\u57FA\u790E|\u7E3D)?(?:\u7269\u653B|\u9B54\u653B|\u653B\u901F|\u6280\u80FD\u52A0\u901F|\u5927\u7D55\u52A0\u901F|\u57FA\u790E\u6280\u80FD\u52A0\u901F|\u9053\u5177\u52A0\u901F|\u8DD1\u901F|\u7269\u9632|\u9B54\u9632|\u751F\u547D|\u66B4\u64CA\u7387|\u66B4\u64CA\u50B7\u5BB3|\u5168\u80FD\u5438\u8840|\u666E\u653B\u5438\u8840|\u7269\u7406\u81F4\u547D|\u7269\u7406\u7A7F\u900F|\u9B54\u6CD5\u7A7F\u900F|\u6CBB\u7642\u8207\u8B77\u76FE\u5F37\u5EA6|\u9069\u6027\u4E4B\u529B|\u9B54\u529B|\u653B\u64CA\u8DDD\u96E2)",
-  "\\d+(?:\\.\\d+)?%?(?:\uFF08\u9060\u7A0B [^\uFF09]+\uFF09|(?=\uFF08\u6BCF))",
-  // a number with its ranged value, or before a scaling
-  "\u9B54\u6CD5\u50B7\u5BB3|\u7269\u7406\u50B7\u5BB3|\u771F\u5BE6\u50B7\u5BB3|\u9069\u6027\u50B7\u5BB3",
-  "(?:\u984D\u5916|\u6700\u5927|\u5DF2\u640D\u5931)?(?:\u7269\u653B|\u9B54\u653B|\u653B\u901F|\u6280\u80FD\u52A0\u901F|\u5927\u7D55\u52A0\u901F|\u8DD1\u901F|\u7269\u9632|\u9B54\u9632|\u66B4\u64CA\u7387|\u66B4\u64CA\u50B7\u5BB3|\u5168\u80FD\u5438\u8840|\u666E\u653B\u5438\u8840|\u7269\u7406\u81F4\u547D|\u7269\u7406\u7A7F\u900F|\u9B54\u6CD5\u7A7F\u900F|\u6CBB\u7642\u8207\u8B77\u76FE\u5F37\u5EA6|\u9069\u6027\u4E4B\u529B)"
-  // a stat named on its own
-].join("|"), "g");
-function richEffect(p, text) {
-  let at = 0;
-  for (const m of text.matchAll(FX_TOKEN)) {
-    const t = m[0], i = m.index ?? 0;
-    if (i > at) p.append(text.slice(at, i));
-    at = i + t.length;
-    if (t.startsWith("\uFF08")) {
-      const inner = t.slice(1, -1);
-      const st2 = fxStat(inner);
-      const pill2 = h(p, "span", "mn-fx-sc");
-      if (st2) {
-        pill2.style.setProperty("--c", st2[0]);
-        icon(pill2, st2[1], "mn-fx-ic");
-      }
-      pill2.append(inner.replace(/^每\s*/, "\u6BCF "));
-      continue;
-    }
-    const lv = /^(.+?)（隨等級[^）]*）$/.exec(t);
-    if (lv) {
-      const pill2 = h(p, "span", "mn-fx-lv");
-      icon(pill2, "trending-up", "mn-fx-ic");
-      pill2.append(lv[1]);
-      continue;
-    }
-    const st = fxStat(t);
-    const v = h(p, "span", "mn-fx-v", t);
-    if (st) v.style.setProperty("--c", st[0]);
-  }
-  if (at < text.length) p.append(text.slice(at));
-}
-var LEVEL_LABEL = (lv, top) => lv === top && top > 1 ? "\u6700\u5927" : `Lv${lv}`;
-function augmentPage(ctx) {
-  const store = ctx.plugin.store;
-  const a = store.augment(Number(ctx.frame.params?.id));
-  const el = h(null, "div", "mn-page mn-itpage");
-  if (!a) {
-    empty(el, { icon: "sparkles", title: "Augment not found" });
-    return { title: "", el };
-  }
-  const data = store.augmentData(a.id);
-  const nums = a.hand ? void 0 : data;
-  const history = store.augmentHistory(a.name);
-  const hero = h(el, "div", "mn-it-hero mn-ag-hero");
-  const bg = h(hero, "img", "mn-it-bg");
-  bg.src = a.icon;
-  bg.alt = "";
-  augIcon(hero, a.icon, a.rarity, "mn-dimg-aug mn-ag-ic");
-  const who = h(hero, "div", "mn-it-who");
-  h(who, "h1", "mn-it-name", a.name);
-  const tags2 = h(who, "div", "mn-it-tags");
-  const rar = h(tags2, "span", "mn-ag-rar", a.rarity);
-  rar.style.setProperty("--c", RARITY_COLOR[a.rarity] ?? "var(--mn-muted)");
-  if (history[0]?.what === "added" && history[0].patch === store.riotNotes[0]?.patch) h(tags2, "span", "mn-ag-new", "\u65B0");
-  const levels = nums?.levels ?? [];
-  let at = 0;
-  const seg = levels.length > 1 ? h(el, "div", "mn-seg is-sm mn-ag-lv") : null;
-  const chipsEl = h(el, "div", "mn-it-stats");
-  const card = h(el, "div", "mn-it-fx mn-ag-fx");
-  const draw = () => {
-    chipsEl.empty();
-    card.empty();
-    for (const c of nums?.chips[at] ?? []) {
-      const cat = CHIP_CAT[c.stat];
-      const x = h(chipsEl, "span", "mn-it-stat");
-      if (cat) x.style.setProperty("--c", ITEM_CAT_COLOR[cat] ?? "var(--mn-muted)");
-      const k = cat ? ITEM_CATS.findIndex(([n]) => n === cat) : -1;
-      if (k >= 0) shopIcon(x, k, true);
-      const m = /^([+\-]?[\d.]+%?)\s*(.*)$/.exec(c.text);
-      if (m) {
-        h(x, "b", void 0, m[1]);
-        x.append(m[2]);
-      } else x.append(c.text);
-    }
-    chipsEl.toggleClass("is-empty", !chipsEl.childElementCount);
-    const p = h(card, "p", "mn-it-fxt");
-    if (nums) {
-      for (const [text, kind] of nums.runs[at] ?? []) {
-        if (!kind) {
-          p.append(text);
-          continue;
-        }
-        const sp = h(p, "span", KIND_BOLD.has(kind) ? "mn-ag-kw" : "mn-ag-k", text);
-        if (KIND_COLOR[kind]) sp.style.setProperty("--c", KIND_COLOR[kind]);
-      }
-      h(card, "div", "mn-pn-src", `\u6578\u503C\uFF1A\u7AF6\u6280\u5834\u7684\u904A\u6232\u8CC7\u6599\uFF0C\u5927\u6DF7\u6230\u53EF\u80FD\u4E0D\u540C${nums.partial ? "\uFF08X \u662F\u904A\u6232\u5167\u624D\u7B97\u5F97\u51FA\u7684\u6578\u503C\uFF09" : ""}`);
-    } else if (a.effect) {
-      richEffect(p, a.effect);
-      const src = a.effectSource ? `\u6578\u503C\uFF1A${a.effectSource}${a.effectSource.includes("Wiki") ? "\uFF08CC BY-SA\uFF09" : ""}${a.effectPatch ? ` \xB7 ${a.effectPatch}` : ""}${a.effectStatus ? ` \xB7 ${a.effectStatus}` : ""}` : "";
-      h(card, "div", "mn-pn-src", src || (a.partial ? "\u6578\u503C\u5F85\u88DC\uFF08X \u662F\u904A\u6232\u5167\u624D\u770B\u5F97\u5230\u7684\u6578\u503C\uFF09" : "\u6548\u679C\uFF1ARiot Games"));
-    } else {
-      p.addClass("mn-muted");
-      p.setText("\u9019\u500B\u5F37\u5316\u7684\u6548\u679C\u8AAA\u660E\u9084\u6C92\u6709\u6536\u9304\u3002");
-    }
-  };
-  if (seg) {
-    levels.forEach((lv, i) => {
-      const b = h(seg, "button", "mn-seg-b" + (i === 0 ? " is-on" : ""), LEVEL_LABEL(lv, levels[levels.length - 1]));
-      b.addEventListener("click", (e) => {
-        e.preventDefault();
-        if (at === i) return;
-        at = i;
-        seg.querySelectorAll(".mn-seg-b").forEach((x, j) => x.toggleClass("is-on", j === i));
-        draw();
-      });
-    });
-    slideSeg(seg);
-  }
-  draw();
-  if (!a.effect && !data) {
-    const links = group(el);
-    row(links, { icon: "external-link", title: "\u5728 League \u7DAD\u57FA\u67E5\u770B\u6548\u679C", chevron: true, onTap: () => window.open("https://wiki.leagueoflegends.com/en-us/ARAM_Mayhem/Augments") });
-    row(links, { icon: "external-link", title: "OP.GG \u5F37\u5316\u5217\u8868", chevron: true, onTap: () => window.open("https://op.gg/lol/modes/aram-mayhem") });
-  }
-  const all = store.champions();
-  let tagList = [], list2 = [], label = "";
-  if (data?.fits) {
-    const ok = new Set(data.fits);
-    tagList = data.tags;
-    list2 = all.filter((c) => ok.has(c.id.toLowerCase()));
-    label = `\u904A\u6232\u7684\u5F37\u5316\u6A19\u7C64\uFF1A\u53EA\u6703\u51FA\u73FE\u5728\u9019 ${list2.length} \u4F4D\u82F1\u96C4\u7684\u9078\u9805\u88E1`;
-  } else if (a.fits.length) {
-    tagList = a.fits;
-    list2 = all.filter((c) => a.fits.some((f) => c.archetypes.includes(f) || c.features.includes(f) || c.roles.includes(f))).slice(0, SUGGESTED);
-    label = "\u4EBA\u5DE5\u6574\u7406";
-  } else if (a.effect) {
-    const s = suggest(a.effect, all);
-    tagList = s.tags;
-    list2 = s.champions;
-    label = "\u4F9D\u6548\u679C\u6587\u5B57\u63A8\u6E2C\uFF0C\u50C5\u4F9B\u53C3\u8003";
-  }
-  if (list2.length) {
-    h(el, "div", "mn-gh", "\u9069\u5408\u7684\u82F1\u96C4");
-    if (tagList.length) {
-      const chips = h(el, "div", "mn-chips mn-ag-tags");
-      for (const t of tagList) chip(chips, t);
-    }
-    const strip2 = layoutBlock(h(el, "div", "mn-ag-strip"));
-    for (const c of list2) {
-      const tile2 = h(strip2, "button", "mn-tile");
-      const t = h(tile2, "img");
-      t.src = c.icon;
-      t.alt = "";
-      h(tile2, "span", "mn-tile-n", c.name);
-      tile2.addEventListener("click", (e) => {
-        e.preventDefault();
-        ctx.openChampion(c.id, "augments");
-      });
-    }
-    h(el, "div", "mn-gf", label);
-  }
-  if (history.length) {
-    h(el, "div", "mn-gh", "\u7248\u672C\u7D00\u9304");
-    h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "\u65B0\u589E\u65BC" : "\u79FB\u9664\u65BC"} ${x.patch}`).join(" \xB7 "));
-  }
-  return { title: "", el };
-}
-var STAT_CAT = {
-  \u751F\u547D: "\u751F\u547D",
-  \u57FA\u790E\u751F\u547D\u56DE\u5FA9: "\u751F\u547D",
-  \u7269\u7406\u653B\u64CA: "\u653B\u64CA\u529B",
-  \u9B54\u6CD5\u653B\u64CA: "\u6CD5\u8853\u5F37\u5EA6",
-  \u6280\u80FD\u52A0\u901F: "\u6280\u80FD\u6025\u901F",
-  \u51B7\u537B\u6642\u9593\u6E1B\u514D: "\u6280\u80FD\u6025\u901F",
-  \u7269\u7406\u9632\u79A6: "\u8B77\u7532",
-  \u9B54\u6CD5\u9632\u79A6: "\u9B54\u9632",
-  \u8DD1\u901F: "\u79FB\u52D5",
-  \u653B\u64CA\u901F\u5EA6: "\u653B\u901F",
-  \u66B4\u64CA\u7387: "\u66B4\u64CA",
-  \u66B4\u64CA\u50B7\u5BB3: "\u66B4\u64CA",
-  \u9B54\u529B: "\u9B54\u529B",
-  \u57FA\u790E\u9B54\u529B\u56DE\u5FA9: "\u9B54\u529B",
-  \u7269\u7406\u81F4\u547D: "\u7269\u7406\u7A7F\u900F",
-  \u7269\u7406\u7A7F\u900F: "\u7269\u7406\u7A7F\u900F",
-  \u9B54\u6CD5\u7A7F\u900F: "\u6CD5\u8853\u7A7F\u900F",
-  \u666E\u653B\u5438\u8840: "\u5438\u8840",
-  \u5168\u80FD\u5438\u8840: "\u5438\u8840"
-};
-var STAT_NAME = 8;
-var FX_NAME = 16;
-var bareName = (part) => {
-  const b = part.replace(/\s*[（(][^)）]*[)）]/g, "").trim();
-  return b.length > 0 && b.length <= FX_NAME && !/[。，、]/.test(b);
-};
-function splitItemText(desc2) {
-  const stats2 = [];
-  const effects = [];
-  for (const raw of desc2.split(" / ")) {
-    const part = raw.trim();
-    if (!part) continue;
-    const st = /^([+\-]?\d+(?:\.\d+)?%?)\s*([^\d：。，]+)$/.exec(part);
-    if (st && !effects.length && st[2].trim().length <= STAT_NAME) {
-      stats2.push({ value: st[1], name: st[2].trim() });
-      continue;
-    }
-    const named = /^([^：。，]{1,16})：(.+)$/.exec(part);
-    const last = effects[effects.length - 1];
-    if (named) effects.push({ name: named[1].trim(), text: named[2].trim(), active: /^主動/.test(named[1]) });
-    else if (bareName(part)) effects.push({ name: part, text: "", active: /^主動/.test(part) });
-    else if (last) last.text = last.text ? `${last.text}${part}` : part;
-    else effects.push({ name: "", text: part, active: false });
-  }
-  return { stats: stats2, effects };
-}
-function itemPage(ctx) {
-  const store = ctx.plugin.store;
-  const item = store.item(Number(ctx.frame.params?.id));
-  const el = h(null, "div", "mn-page mn-itpage");
-  if (!item) {
-    empty(el, { icon: "package-x", title: "Item not found" });
-    return { title: "", el };
-  }
-  const hero = h(el, "div", "mn-it-hero");
-  const bg = h(hero, "img", "mn-it-bg");
-  bg.src = item.icon;
-  bg.alt = "";
-  const im = h(hero, "img", "mn-it-ic");
-  im.src = item.icon;
-  im.alt = "";
-  const who = h(hero, "div", "mn-it-who");
-  h(who, "h1", "mn-it-name", item.name);
-  const tags2 = h(who, "div", "mn-it-tags");
-  h(tags2, "span", "mn-it-gold", `${item.goldTotal} \u91D1`);
-  if (item.variantOf) h(tags2, "span", "mn-it-aram", "ARAM \u7248\u672C");
-  const { stats: stats2, effects } = splitItemText(item.desc);
-  if (stats2.length) {
-    const row2 = h(el, "div", "mn-it-stats");
-    for (const s of stats2) {
-      const cat = STAT_CAT[s.name];
-      const k = cat ? ITEM_CATS.findIndex(([n]) => n === cat) : -1;
-      const x = h(row2, "span", "mn-it-stat");
-      if (cat) x.style.setProperty("--c", ITEM_CAT_COLOR[cat] ?? "var(--mn-muted)");
-      if (k >= 0) shopIcon(x, k, true);
-      h(x, "b", void 0, s.value);
-      x.append(s.name);
-    }
-  }
-  for (const fx of effects) {
-    const card = h(el, "div", "mn-it-fx" + (fx.active ? " is-active" : ""));
-    if (fx.active) h(card, "span", "mn-it-fxk", "\u4E3B\u52D5");
-    if (fx.name) h(card, "b", "mn-it-fxn", fx.name.replace(/^主動\s*[─-]\s*/, ""));
-    if (fx.text) h(card, "p", "mn-it-fxt", fx.text);
-  }
-  if (item.variantOf) h(el, "div", "mn-gf", "\u50F9\u683C\u8207\u6578\u503C\u548C\u4E00\u822C\u7248\u672C\u4E0D\u540C\u3002");
-  if (item.from.length) {
-    h(el, "div", "mn-gh", "\u5408\u6210\u6750\u6599");
-    itemTree(h(el, "div", "mn-panel mn-itree"), ctx, item.id);
-  }
-  recipe(el, ctx, "\u53EF\u5408\u6210", item.into.map((id) => store.item(id)).filter((i) => !!i));
-  const official = store.officialFor("items", item.name);
-  if (official.length) {
-    h(el, "div", "mn-gh", "\u7248\u672C\u8ABF\u6574");
-    officialBlock(el, official);
-  }
-  return { title: "", el };
-}
-function recipe(el, ctx, title, items) {
-  if (!items.length) return;
-  h(el, "div", "mn-gh", title);
-  const grid = h(el, "div", "mn-recipe");
-  for (const i of items) {
-    const b = h(grid, "button", "mn-rc");
-    const im = h(b, "img");
-    im.src = i.icon;
-    im.alt = "";
-    h(b, "span", "mn-rc-n", i.name);
-    h(b, "span", "mn-rc-g", `${i.goldTotal}`);
-    b.addEventListener("click", (e) => {
-      e.preventDefault();
-      ctx.openItem(i.id);
-    });
-  }
-}
-
-// src/pages/champions.ts
-var ROLES = ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u5C04\u624B", "\u8F14\u52A9"];
-var DAMAGES = ["\u7269\u7406", "\u9B54\u6CD5", "\u6DF7\u5408"];
-var REACH = ["\u8FD1\u6230", "\u4E2D\u7A0B", "\u9060\u7A0B"];
-var SORTS2 = [["name", "\u540D\u7A31"], ["diff", "\u96E3\u5EA6"], ["range", "\u5C04\u7A0B"]];
-var SORT_DIR2 = { name: 1, diff: 1, range: -1 };
-var SEARCH_EXTRA = 8;
-var F = { lanes: /* @__PURE__ */ new Set(), roles: /* @__PURE__ */ new Set(), dmg: "", feat: /* @__PURE__ */ new Map(), reach: "", sort: "name", dir: 1, open: false };
-var activeFilters = () => F.roles.size + (F.dmg ? 1 : 0) + F.feat.size + (F.reach ? 1 : 0);
-function matches(c, lanes) {
-  if (F.lanes.size && !lanes.some((l) => F.lanes.has(l))) return false;
-  if (F.roles.size && !c.roles.some((r) => F.roles.has(r))) return false;
-  if (F.dmg && c.damageType !== F.dmg) return false;
-  for (const [f, want] of F.feat) if (c.features.includes(f) !== (want === 1)) return false;
-  return !F.reach || c.archetypes.includes(F.reach);
-}
-function sorted(list2) {
-  const byName = (a, b) => a.name.localeCompare(b.name, "zh-Hant");
-  if (F.sort === "diff") return [...list2].sort((a, b) => F.dir * (a.difficulty - b.difficulty) || byName(a, b));
-  if (F.sort === "range") return [...list2].sort((a, b) => F.dir * (a.range - b.range) || byName(a, b));
-  return F.dir === 1 ? list2 : [...list2].reverse();
-}
-function championPicker(parent, ctx) {
-  const store = ctx.plugin.store;
-  const all = store.champions();
-  if (!all.length) {
-    empty(parent, { icon: "database", title: "No champion notes yet", text: "Run python3 tools/fetch_data.py" });
-    return;
-  }
-  let query = "";
-  const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)]));
-  const filtersHost = layoutBlock(h(parent, "div"));
-  const filters = h(filtersHost, "div", "mn-fgroup");
-  const count2 = h(parent, "div", "mn-count");
-  const list2 = h(parent, "div", "mn-rq-list");
-  const gridHost = layoutBlock(h(list2, "div"));
-  const grid = h(gridHost, "div", "mn-grid");
-  const extra = layoutBlock(h(list2, "div"));
-  const dock = h(parent, "div", "mn-rq-dock");
-  const panel = h(dock, "div", "mn-fpanel mn-fsheet");
-  const cap = h(dock, "div", "mn-rq-cap");
-  icon(cap, "search", "mn-rq-cap-ic");
-  const search = h(cap, "input");
-  search.type = "search";
-  search.placeholder = "\u641C\u5C0B\u82F1\u96C4\u3001\u5F37\u5316\u3001\u88DD\u5099";
-  search.setAttribute("enterkeyhint", "search");
-  const mic = h(cap, "button", "mn-rq-mic");
-  icon(mic, "mic");
-  mic.setAttribute("aria-label", "\u7528\u9375\u76E4\u7684\u9EA5\u514B\u98A8\u8AAA");
-  mic.addEventListener("click", (e) => {
-    e.preventDefault();
-    search.focus();
-  });
-  const fbHost = h(cap, "div", "mn-cap-fb");
-  const draw = () => {
-    grid.empty();
-    extra.empty();
-    const q = query.trim().toLowerCase();
-    const hits = sorted(all.filter((c) => matches(c, store.lanes(c)) && (!q || c.name.toLowerCase().includes(q) || c.title.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))));
-    count2.textContent = `${hits.length} / ${all.length}`;
-    for (const c of hits) {
-      const tile2 = h(grid, "button", "mn-tile");
-      const im = h(tile2, "img");
-      im.src = c.icon;
-      im.alt = "";
-      const rd = recent.get(c.name);
-      if (rd) {
-        const m = marker(rd);
-        const b = h(tile2, "span", "mn-tile-b", m.mark);
-        b.style.background = m.color;
-      }
-      const ms = store.masteryOf(c.id);
-      if (ms && ms.level > 0) h(tile2, "span", "mn-tile-m" + (ms.level >= 10 ? " is-high" : ""), String(ms.level));
-      h(tile2, "span", "mn-tile-n", c.name);
-      tile2.addEventListener("click", (e) => {
-        e.preventDefault();
-        ctx.openChampion(c.id);
-      });
-    }
-    if (!q) return;
-    if (!hits.length) empty(grid, { icon: "search-x", title: "No champion" });
-    const augs = ctx.plugin.settings.mode === "mayhem" ? store.augments().filter((a) => a.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA) : [];
-    if (augs.length) {
-      const g = group(extra, "Augments");
-      for (const a of augs) row(g, { image: a.icon, rarity: a.rarity, title: a.name, value: a.rarity, chevron: true, onTap: () => ctx.openAugment(a.id) });
-    }
-    const items = store.modeItems().filter((i) => i.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA);
-    if (items.length) {
-      const g = group(extra, "Items");
-      for (const i of items) row(g, { image: i.icon, title: i.name, sub: i.desc || void 0, value: `${i.goldTotal}`, chevron: true, onTap: () => ctx.openItem(i.id) });
-    }
-  };
-  const redraw = () => {
-    drawFilters();
-    drawPanel();
-    draw();
-  };
-  const drawFilters = () => {
-    filters.empty();
-    const row2 = h(filters, "div", "mn-lanebar");
-    const known = store.hasLanes();
-    for (const l of LANES) {
-      const chipEl = laneChip(row2, l, { on: F.lanes.has(l), onTap: () => {
-        if (!known) {
-          tip(chipEl, "\u9084\u6C92\u6709\u5206\u8DEF\u8CC7\u6599");
-          return;
-        }
-        const was = F.lanes.has(l);
-        F.lanes.clear();
-        if (!was) F.lanes.add(l);
-        redraw();
-      } });
-    }
-    const n = activeFilters();
-    row2.prepend(count2);
-    fbHost.empty();
-    const fb = h(fbHost, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
-    fb.setAttribute("aria-label", "\u7BE9\u9078");
-    icon(fb, "sliders-horizontal", "mn-filterbtn-ic");
-    if (n) h(fb, "span", "mn-filterbtn-n", String(n));
-    fb.addEventListener("click", (e) => {
-      e.preventDefault();
-      F.open = !F.open;
-      drawFilters();
-      drawPanel();
-    });
-  };
-  const drawPanel = () => {
-    panel.empty();
-    panel.toggleClass("is-open", F.open);
-    if (!F.open) return;
-    const sect = (title, hint = "") => {
-      const s = h(panel, "div", "mn-fp-s");
-      const head2 = h(s, "div", "mn-fp-h");
-      h(head2, "span", "mn-fp-t", title);
-      if (hint) h(head2, "span", "mn-fp-hint", hint);
-      return s;
-    };
-    const roleSect = sect("\u5B9A\u4F4D");
-    if (activeFilters() || F.sort !== "name" || F.dir !== 1) {
-      const clear = h(roleSect.querySelector(".mn-fp-h") ?? roleSect, "button", "mn-clear", "\u5168\u90E8\u6E05\u9664");
-      clear.addEventListener("click", (e) => {
-        e.preventDefault();
-        F.roles.clear();
-        F.dmg = "";
-        F.feat.clear();
-        F.reach = "";
-        F.sort = "name";
-        F.dir = 1;
-        redraw();
-      });
-    }
-    const roleRow = fgrid(roleSect, ROLES.length);
-    for (const r of ROLES) roleChip(roleRow, r, { on: F.roles.has(r), onTap: () => {
-      F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r);
-      redraw();
-    } });
-    const ab = sect("\u6280\u80FD");
-    for (const [group2, tags2] of TAG_GROUPS) {
-      const line = h(ab, "div", "mn-fcat");
-      h(line, "span", "mn-fcat-l", group2);
-      for (const f of tags2) {
-        const on = F.feat.get(f) === 1;
-        tagFilter(line, f, on, () => {
-          if (on) F.feat.delete(f);
-          else F.feat.set(f, 1);
-          redraw();
-        });
-      }
-    }
-    const kindRow = fgrid(sect("\u50B7\u5BB3\u985E\u578B"), DAMAGES.length);
-    for (const d of DAMAGES) iconFilter(kindRow, d, DAMAGE_ICON[d], DAMAGE_COLOR[d], F.dmg === d, () => {
-      F.dmg = F.dmg === d ? "" : d;
-      redraw();
-    });
-    segmented(sect("\u653B\u64CA\u8DDD\u96E2"), [["", "\u5168\u90E8"], ...REACH.map((r) => [r, r])], F.reach, (id) => {
-      F.reach = id;
-      redraw();
-    }, "is-sm");
-    const arrow = (id) => F.sort !== id ? "" : F.dir === 1 ? " \u2191" : " \u2193";
-    segmented(sect("\u6392\u5E8F"), SORTS2.map(([id, l]) => [id, l + arrow(id)]), F.sort, (id) => {
-      if (id === F.sort) F.dir = F.dir === 1 ? -1 : 1;
-      else {
-        F.sort = id;
-        F.dir = SORT_DIR2[id] ?? 1;
-      }
-      redraw();
-    }, "is-sm");
-  };
-  search.addEventListener("input", () => {
-    query = search.value;
-    draw();
-  });
-  redraw();
-}
-function championsPage(ctx) {
-  if (ctx.frame.key === "champion") return championCard(ctx);
-  const el = page("Champions");
-  fixedPage(el, ctx.component);
-  championPicker(el, ctx);
-  return { title: "Champions", el, ready: null };
-}
-var lastSub = /* @__PURE__ */ new Map();
-function rememberSub(id, sub) {
-  lastSub.set(id, sub);
-}
-var PAGES = [["overview", "\u6982\u89BD", "id-card"], ["skills", "\u6280\u80FD", "keyboard"], ["build", "\u51FA\u88DD", "shopping-bag"], ["augments", "\u5F37\u5316", "sparkles"], ["tips", "\u6280\u5DE7", "lightbulb"]];
-function championCard(ctx) {
-  const store = ctx.plugin.store;
-  const c = store.champion(String(ctx.frame.params?.id ?? ""));
-  const el = h(null, "div", "mn-page mn-champ");
-  if (!c) {
-    empty(el, { icon: "user-x", title: "Champion not found" });
-    return { title: "", el };
-  }
-  const mayhem = ctx.plugin.settings.mode === "mayhem";
-  const part = (p) => () => ctx.push({ key: "champpart", title: `${c.name} \xB7 ${PART_TITLE[p]}`, params: { id: c.id, part: p } });
-  el.style.setProperty("--dc", DAMAGE_COLOR[c.damageType || c.skillDamage[0] || ""] ?? "var(--mn-accent)");
-  const hero = h(el, "div", "mn-hero");
-  const bg = h(hero, "div", "mn-hero-bg");
-  bg.style.backgroundImage = `url("https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg")`;
-  const head2 = h(hero, "div", "mn-card-head");
-  const im = h(head2, "img", "mn-card-img");
-  im.src = c.icon;
-  im.alt = "";
-  const splash = bg.style.backgroundImage.slice(5, -2);
-  blockUntil(hero, Promise.all([new Promise((r) => {
-    const x = new Image();
-    x.onload = x.onerror = () => r();
-    x.src = splash;
-  }), new Promise((r) => {
-    if (im.complete) r();
-    else {
-      im.addEventListener("load", () => r(), { once: true });
-      im.addEventListener("error", () => r(), { once: true });
-    }
-  })]).then(() => void 0), 200);
-  const who = h(head2, "div", "mn-card-who");
-  h(who, "h1", "mn-title", c.name);
-  h(who, "div", "mn-card-sub", c.title);
-  const tags2 = h(who, "div", "mn-chips");
-  for (const r of c.roles) chip(tags2, r);
-  const mastery = store.masteryOf(c.id);
-  if (mastery && mastery.level > 0) chip(tags2, `\u719F\u7DF4\u5EA6 ${mastery.level}`, { color: "var(--color-yellow)" });
-  const now = store.currentChanges(c.id);
-  const official = store.officialFor("champions", c.name)[0];
-  if (badgeText(now)) chip(tags2, badgeText(now), { color: badgeColor(now), onTap: part("overview") });
-  else if (official) {
-    const m = marker(entryDir(official.entry));
-    chip(tags2, `${m.mark} ${official.patch}`, { color: m.color, onTap: part("overview") });
-  }
-  const pages = PAGES.filter(([p]) => p !== "augments" || mayhem);
-  const box = h(el, "div", "mn-cpa");
-  const track = h(box, "div", "mn-cpa-track");
-  for (const ev of ["touchstart", "touchmove"]) track.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
-  const cards = pages.map(([p, name]) => {
-    const pg = h(track, "section", "mn-cpa-page");
-    const body = h(pg, "div", "mn-cpa-body");
-    if (p === "overview") overviewTop(body, c);
-    else if (p === "skills") skillsTop(body, c);
-    else if (p === "build") buildTop(body, c, ctx);
-    else if (p === "augments") augmentTop(body, c, ctx);
-    else tipsTop(body, c);
-    const count2 = p === "skills" ? c.skills.length : p === "augments" ? augmentPicks(store, c).length : p === "tips" ? c.tips.length : p === "build" ? c.builds.filter((x) => x.mode === ctx.plugin.settings.mode).length : 0;
-    if (p !== "tips" || c.tips.length) moreLink(pg, part(p), `\u5168\u90E8${name}`, count2);
-    return pg;
-  });
-  const nav = h(el, "div", "mn-cpa-nav");
-  const chips = pages.map(([, name, ic], i) => {
-    const d = h(nav, "button", "mn-cpa-chip");
-    icon(d, ic);
-    d.setAttribute("aria-label", name);
-    d.addEventListener("click", (e) => {
-      e.preventDefault();
-      go(i, true);
-    });
-    return d;
-  });
-  let cur = -1;
-  const mark = (i) => {
-    if (i === cur) return;
-    cur = i;
-    chips.forEach((d, k) => d.toggleClass("is-on", k === i));
-  };
-  const at = () => {
-    const step = (cards[1]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0);
-    return step > 0 ? Math.round(track.scrollLeft / step) : 0;
-  };
-  const go = (i, smooth) => {
-    track.scrollTo({ left: (cards[i]?.offsetLeft ?? 0) - (cards[0]?.offsetLeft ?? 0), behavior: smooth ? "smooth" : "instant" });
-    mark(i);
-  };
-  track.addEventListener("scroll", () => mark(Math.min(cards.length - 1, at())), { passive: true });
-  const startSub = lastSub.get(c.id);
-  lastSub.delete(c.id);
-  const start = Math.max(0, pages.findIndex(([p]) => p === startSub));
-  const fit = () => {
-    const scroll = el.closest(".mn-scroll");
-    if (!scroll || !box.isConnected) return;
-    const top = box.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
-    box.style.height = `${Math.max(280, scroll.clientHeight - top - nav.offsetHeight - CPA_BELOW)}px`;
-    go(start, false);
-  };
-  requestAnimationFrame(fit);
-  mark(start);
-  return { title: "", el, ready: null };
-}
-var CPA_BELOW = 10;
-function moreLink(parent, go, label, count2) {
-  const b = h(parent, "button", "mn-cpa-more");
-  icon(b, "layout-list", "mn-cpa-more-ic");
-  h(b, "span", "mn-cpa-more-l", label);
-  if (count2) h(b, "span", "mn-cpa-more-n", String(count2));
-  icon(b, "chevron-right", "mn-cpa-more-go");
-  b.addEventListener("click", (e) => {
-    e.preventDefault();
-    go();
-  });
-}
-var DIFF_STEPS = 10;
-var TAGS_SHOWN = 4;
-function overviewTop(body, c) {
-  const tiles = h(body, "div", "mn-cv-stats");
-  const tile2 = (iconName, color, big, small) => {
-    const t2 = h(tiles, "div", "mn-cv-stat");
-    t2.style.setProperty("--c", color);
-    icon(t2, iconName, "mn-cv-sic");
-    h(t2, "b", void 0, big);
-    h(t2, "span", void 0, small);
-    return t2;
-  };
-  const main = c.damageType || c.skillDamage[0] || "";
-  if (main) tile2(DAMAGE_ICON[main] ?? "flame", DAMAGE_COLOR[main] ?? "var(--mn-muted)", main === "\u7269\u7406" ? "\u7269\u653B" : main === "\u9B54\u6CD5" ? "\u9B54\u653B" : main, "\u50B7\u5BB3");
-  const reach = reachOf(c) || (c.range >= 550 ? "\u9060\u7A0B" : c.range >= 300 ? "\u4E2D\u7A0B" : "\u8FD1\u6230");
-  tile2("ruler", "var(--mn-dash)", reach, c.range ? `\u5C04\u7A0B ${c.range}` : "\u8DDD\u96E2");
-  const d = tile2("gauge", "var(--mn-accent)", `${c.difficulty}`, "\u96E3\u5EA6");
-  const bar = h(d, "div", "mn-cv-bar");
-  for (let i = 0; i < DIFF_STEPS; i++) h(bar, "i", i < c.difficulty ? "is-on" : "");
-  const t = tagRow(body, c, void 0, true);
-  t.addClass("mn-cv-tags");
-  Array.from(t.children).slice(TAGS_SHOWN).forEach((x) => x.remove());
-}
-function skillsTop(body, c) {
-  const bar = h(body, "div", "mn-cv-hud");
-  const panel = h(body, "div", "mn-cv-sk");
-  const show = (i) => {
-    bar.querySelectorAll(".mn-cv-key").forEach((b, k) => b.toggleClass("is-on", k === i));
-    panel.empty();
-    const s = c.skills[i];
-    if (!s) return;
-    const head2 = h(panel, "div", "mn-cv-skh");
-    h(head2, "span", "mn-cv-skk", s.key);
-    h(head2, "b", void 0, s.name);
-    const chips = h(panel, "div", "mn-cv-skc");
-    const dmg = s.rows?.find((r) => /傷害/.test(r.label));
-    if (dmg) {
-      const x = h(chips, "span", "mn-cv-pill", `${dmg.label} ${dmg.vals[dmg.vals.length - 1]}`);
-      x.style.setProperty("--c", DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--mn-muted)");
-      for (const part of scalingParts(dmg.note)) {
-        const y = h(chips, "span", "mn-cv-pill", part.text);
-        y.style.setProperty("--c", part.color);
-      }
-    }
-    const cd = s.rows?.find((r) => r.label.startsWith("\u51B7\u537B"));
-    if (cd) h(chips, "span", "mn-cv-pill", `\u51B7\u537B ${cd.vals[cd.vals.length - 1]} \u79D2`);
-    const cost = s.rows?.find((r) => r.label.startsWith("\u6D88\u8017"));
-    if (cost && cost.vals[0] !== "\u7121") h(chips, "span", "mn-cv-pill", `${cost.label.replace(/[()（）]/g, " ").trim()} ${cost.vals[cost.vals.length - 1]}`);
-    h(panel, "p", "mn-cv-skp", c.plain[s.key] || s.desc.slice(0, 60));
-  };
-  c.skills.forEach((s, i) => {
-    const b = h(bar, "button", "mn-cv-key");
-    b.style.setProperty("--c", DAMAGE_COLOR[s.damage[0] ?? ""] ?? "var(--mn-line)");
-    const pic2 = h(b, "img");
-    pic2.src = s.icon;
-    pic2.alt = "";
-    h(b, "span", void 0, s.key);
-    b.addEventListener("click", (e) => {
-      e.preventDefault();
-      show(i);
-    });
-  });
-  show(Math.max(0, c.skills.findIndex((s) => s.key === "Q")));
-}
-var PART_TITLE = { overview: "\u6982\u89BD", skills: "\u6280\u80FD", build: "\u51FA\u88DD", augments: "\u5F37\u5316", tips: "\u6280\u5DE7" };
-function championPart(ctx) {
-  const c = ctx.plugin.store.champion(String(ctx.frame.params?.id ?? ""));
-  const p = String(ctx.frame.params?.part ?? "");
-  const el = h(null, "div", "mn-page");
-  if (!c) {
-    empty(el, { icon: "user-x", title: "Champion not found" });
-    return { title: "", el };
-  }
-  h(h(el, "div", "mn-title-row"), "h1", "mn-title", `${c.name} \xB7 ${PART_TITLE[p] ?? ""}`);
-  if (p === "overview") overview(el, c, ctx);
-  else if (p === "skills") skillStrip(el, c, ctx.plugin.store.currentChanges(c.id), { open: c.skills.findIndex((s) => s.key === "Q"), clipFirst: true, scroll: false });
-  else if (p === "build") buildTab(el, c, ctx);
-  else if (p === "augments") augmentsTab(el, c, ctx);
-  else tips(el, c, ctx);
-  return { title: `${c.name} \xB7 ${PART_TITLE[p] ?? ""}`, el };
-}
-var BUILD_SHOWN = 3;
-function buildTop(tab, c, ctx) {
-  const store = ctx.plugin.store;
-  const b = c.builds.find((x) => x.mode === ctx.plugin.settings.mode);
-  if (!b) {
-    h(tab, "p", "mn-cpa-empty", "\u9084\u6C92\u6709\u5BEB\u51FA\u88DD\u3002\u4E4B\u5F8C\u4F9D\u73A9\u6CD5\u63A8\u85A6\u524D\u4E09\u4EF6\u3002");
-    return;
-  }
-  h(tab, "b", "mn-cv-title", b.name);
-  const row2 = h(tab, "div", "mn-cv-items");
-  b.items.slice(0, BUILD_SHOWN).map((id) => store.item(id)).filter((i) => !!i).forEach((i, k) => {
-    if (k) icon(row2, "chevron-right", "mn-cv-arrow");
-    const x = h(row2, "button", "mn-cv-item");
-    h(x, "span", "mn-cv-no", String(k + 1));
-    const im = h(x, "img");
-    im.src = i.icon;
-    im.alt = "";
-    h(x, "span", "mn-cv-iname", i.name);
-    x.addEventListener("click", (e) => {
-      e.preventDefault();
-      ctx.openItem(i.id);
-    });
-  });
-  if (b.note) h(tab, "p", "mn-cv-note", b.note);
-}
-var AUGS_SHOWN = 3;
-function augmentTop(tab, c, ctx) {
-  const picks = augmentPicks(ctx.plugin.store, c);
-  if (!picks.length) {
-    h(tab, "p", "mn-cpa-empty", "\u9084\u6C92\u6709\u914D\u5C0D\u5230\u7684\u5F37\u5316\u3002");
-    return;
-  }
-  augmentTiles(tab, picks.slice(0, AUGS_SHOWN), ctx).addClass("is-big");
-}
-function tipsTop(tab, c) {
-  if (!c.tips.length) {
-    h(tab, "p", "mn-cpa-empty", "\u9084\u6C92\u6709\u6280\u5DE7\u3002\u5BEB\u5728 Inbox/\u6280\u5DE7\uFF0C\u6574\u7406\u5F8C\u6703\u51FA\u73FE\u5728\u9019\u88E1\u3002");
-    return;
-  }
-  const t = c.tips[0];
-  const card = h(tab, "div", "mn-cv-tip");
-  h(card, "b", void 0, t.title);
-  if (t.text) h(card, "p", void 0, t.text);
-  const meta = [t.sourceName, t.patch].filter(Boolean).join(" \xB7 ");
-  if (meta) h(card, "span", "mn-cv-meta", meta);
-  if (c.tips.length > 1) {
-    const d = h(tab, "div", "mn-cv-dots");
-    c.tips.forEach((_, i) => h(d, "i", i ? "" : "is-on"));
-  }
-}
-var CHAMPION_TABS = [["\u6982\u89BD", "id-card"], ["\u6280\u80FD", "keyboard"], ["\u51FA\u88DD", "shopping-bag"], ["\u5F37\u5316", "sparkles"], ["\u6280\u5DE7", "lightbulb"]];
-function overview(body, c, ctx) {
-  championProfile(body, c, ctx.app);
-  if (c.video) row(group(body), { icon: "play-circle", title: "Combo video", chevron: true, onTap: () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video)}`) });
-  return changesBlock(body, c, ctx);
-}
-function augmentsTab(body, c, ctx) {
-  const picks = augmentPicks(ctx.plugin.store, c);
-  if (!picks.length) {
-    empty(body, { icon: "sparkles", title: "No augments matched yet" });
-    return;
-  }
-  augmentTiles(body, picks, ctx);
-  h(body, "div", "mn-gf", "\u4F9D\u5F37\u5316\u6548\u679C\u548C\u9019\u4F4D\u82F1\u96C4\u7684\u6280\u80FD\u6311\u9078\uFF1A\u5403\u9B54\u653B\u6216\u7269\u653B\u3001\u666E\u653B\u578B\u3001\u6709\u8B77\u76FE\u6216\u6CBB\u7642\u3001\u5766\u514B\u3001\u6709\u4F4D\u79FB\u6216\u63A7\u5834\u3001\u7528\u9B54\u529B\u3002\u7F6E\u9802\u662F\u4F60\u5728\u82F1\u96C4\u7B46\u8A18\u5BEB\u7684 pinned\u3002\u6C92\u6709\u52DD\u7387\u8CC7\u6599\uFF08Riot \u6C92\u6709\u516C\u958B\u5927\u6DF7\u6230\u5C0D\u6230\uFF09\u3002");
-}
-function tips(body, c, ctx) {
-  void ctx;
-  if (!c.tips.length) {
-    empty(body, { icon: "lightbulb", title: "No tips yet", text: "Add tips to this champion's note." });
-    return;
-  }
-  for (const t of c.tips) {
-    const card = h(body, "div", "mn-tip");
-    icon(card, "lightbulb", "mn-tip-ic");
-    const main = h(card, "div", "mn-tip-main");
-    h(main, "div", "mn-tip-t", t.title);
-    h(main, "div", "mn-tip-s", t.text);
-    metaLine(main, t, ctx.plugin.store.currentPatch());
-    if (t.video) {
-      const v = h(main, "button", "mn-tip-v", "\u25B6 Video");
-      v.addEventListener("click", (e) => {
-        e.preventDefault();
-        window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(t.video)}`);
-      });
-    }
-  }
-}
-
-// src/data/riot.ts
-var import_obsidian13 = require("obsidian");
-var KEY2 = "morellonomicon-profile";
-var PROFILE_FRESH = 10 * 60 * 1e3;
-var GAMES = 10;
-var REGION = {
-  TW2: { account: "asia", match: "sea" },
-  SG2: { account: "asia", match: "sea" },
-  VN2: { account: "asia", match: "sea" },
-  OC1: { account: "americas", match: "sea" },
-  JP1: { account: "asia", match: "asia" },
-  KR: { account: "asia", match: "asia" },
-  NA1: { account: "americas", match: "americas" },
-  EUW1: { account: "europe", match: "europe" },
-  EUN1: { account: "europe", match: "europe" }
-};
-var QUEUE = { 400: "\u4E00\u822C", 430: "\u4E00\u822C", 490: "\u5FEB\u901F\u5C0D\u6230", 420: "\u55AE/\u96D9\u6392", 440: "\u5F48\u6027\u7A4D\u5206", 450: "\u96A8\u6A5F\u55AE\u4E2D", 2400: "\u5927\u6DF7\u6230", 900: "\u963F\u798F\u5FEB\u6253", 1700: "\u7AF6\u6280\u5834", 1900: "\u963F\u798F\u5FEB\u6253", 830: "\u4EBA\u6A5F", 840: "\u4EBA\u6A5F", 850: "\u4EBA\u6A5F" };
-var RiotError = class extends Error {
-};
-function cachedProfile(app, riotId) {
-  try {
-    const p = app.loadLocalStorage(KEY2);
-    return p && p.riotId === riotId ? p : null;
-  } catch {
-    return null;
-  }
-}
-async function fetchProfile(app, riotId, server, key) {
-  if (!key) throw new RiotError("\u9084\u6C92\u8A2D\u5B9A Riot API \u91D1\u9470(\u8A2D\u5B9A \u2192 Riot API key)");
-  const [name, tag] = riotId.split("#");
-  const reg = REGION[server] ?? REGION.TW2;
-  const plat = server.toLowerCase();
-  const get = async (host, path) => {
-    const r = await (0, import_obsidian13.requestUrl)({ url: `https://${host}.api.riotgames.com${path}`, headers: { "X-Riot-Token": key }, throw: false });
-    if (r.status === 200) return r.json;
-    if (r.status === 401 || r.status === 403) throw new RiotError("\u91D1\u9470\u7121\u6548\u6216\u5DF2\u904E\u671F(\u958B\u767C\u91D1\u9470\u6BCF 24 \u5C0F\u6642\u8981\u63DB)");
-    if (r.status === 404) throw new RiotError("\u627E\u4E0D\u5230\u9019\u500B Riot ID,\u6AA2\u67E5\u540D\u7A31\u3001\u6A19\u7C64\u548C\u4F3A\u670D\u5668");
-    if (r.status === 429) throw new RiotError("\u67E5\u592A\u591A\u6B21\u4E86,\u7B49\u4E00\u5169\u5206\u9418\u518D\u8A66");
-    throw new RiotError(`Riot \u56DE\u61C9\u932F\u8AA4 ${r.status}`);
-  };
-  const acc = await get(reg.account, `/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name ?? "")}/${encodeURIComponent(tag ?? "")}`);
-  const id = encodeURIComponent(acc.puuid);
-  const [sum, leagues, mastery, ids] = await Promise.all([
-    get(plat, `/lol/summoner/v4/summoners/by-puuid/${id}`),
-    get(plat, `/lol/league/v4/entries/by-puuid/${id}`),
-    get(plat, `/lol/champion-mastery/v4/champion-masteries/by-puuid/${id}/top?count=3`),
-    get(reg.match, `/lol/match/v5/matches/by-puuid/${id}/ids?count=${GAMES}`)
-  ]);
-  const games = [];
-  for (const m of ids) {
-    try {
-      const g = await get(reg.match, `/lol/match/v5/matches/${encodeURIComponent(m)}`);
-      const p = g.info.participants.find((x) => x.puuid === acc.puuid);
-      if (!p) continue;
-      games.push({
-        id: m,
-        queue: g.info.queueId,
-        end: g.info.gameEndTimestamp,
-        duration: g.info.gameDuration,
-        champion: p.championName,
-        win: p.win,
-        k: p.kills,
-        d: p.deaths,
-        a: p.assists,
-        cs: p.totalMinionsKilled + p.neutralMinionsKilled,
-        items: [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5].filter((x) => x > 0)
-      });
-    } catch (e) {
-      if (e instanceof RiotError && /太多次/.test(e.message)) break;
-    }
-  }
-  const prof = {
-    riotId,
-    fetched: Date.now(),
-    name: acc.gameName,
-    tag: acc.tagLine,
-    icon: sum.profileIconId,
-    level: sum.summonerLevel,
-    ranks: leagues.map((l) => ({ queue: l.queueType, tier: l.tier, division: l.rank, lp: l.leaguePoints, wins: l.wins, losses: l.losses })),
-    mastery: mastery.map((x) => ({ championKey: x.championId, level: x.championLevel, points: x.championPoints })),
-    games
-  };
-  try {
-    app.saveLocalStorage(KEY2, prof);
-  } catch {
-  }
-  return prof;
-}
-var TIER = { IRON: "\u9435\u724C", BRONZE: "\u9285\u724C", SILVER: "\u9280\u724C", GOLD: "\u91D1\u724C", PLATINUM: "\u767D\u91D1", EMERALD: "\u7FE1\u7FE0", DIAMOND: "\u947D\u77F3", MASTER: "\u5927\u5E2B", GRANDMASTER: "\u5B97\u5E2B", CHALLENGER: "\u83C1\u82F1" };
-var emblem = (tier) => `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests/${tier.toLowerCase()}.png`;
-var ago = (t) => {
-  const m = Math.round((Date.now() - t) / 6e4);
-  return m < 60 ? `${Math.max(1, m)} \u5206\u9418\u524D` : m < 1440 ? `${Math.round(m / 60)} \u5C0F\u6642\u524D` : `${Math.round(m / 1440)} \u5929\u524D`;
-};
-
-// src/pages/home.ts
-var SERVERS = [["TW2", "\u53F0\u7063"], ["JP1", "\u65E5\u672C"], ["KR", "\u97D3\u570B"], ["SG2", "\u65B0\u52A0\u5761"], ["VN2", "\u8D8A\u5357"], ["NA1", "\u5317\u7F8E"], ["EUW1", "\u897F\u6B50"], ["EUN1", "\u5317\u6B50\u6771\u6B50"], ["OC1", "\u5927\u6D0B\u6D32"]];
-var TOP = 3;
-function homePage(ctx) {
-  const store = ctx.plugin.store;
-  const s = ctx.plugin.settings;
-  const el = page("Home");
-  const all = store.champions();
-  const byId = new Map(all.map((c) => [c.id, c]));
-  const prof = s.riotId ? cachedProfile(ctx.app, s.riotId) : null;
-  const byKey = new Map(all.map((c) => [c.key, c]));
-  let top = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).slice(0, TOP);
-  if (prof?.mastery.length) top = prof.mastery.filter((m) => byKey.has(m.championKey)).map((m) => [byKey.get(m.championKey).id, { level: m.level, points: m.points, last: "" }]);
-  const patch = all[0]?.patch ?? "";
-  const dd = (path) => `https://ddragon.leagueoflegends.com/cdn/${patch}/img/${path}`;
-  const hero = layoutBlock(h(el, "div", "mn-home-hero"));
-  if (!s.riotId) {
-    hero.addClass("is-out");
-    const bg = h(hero, "img", "mn-home-wall");
-    bg.src = mapUrl("habackground");
-    bg.alt = "";
-    const box = h(hero, "div", "mn-home-cta");
-    h(box, "b", void 0, "\u9023\u7D50\u4F60\u7684\u53EC\u559A\u5E2B");
-    h(box, "span", void 0, "\u8F38\u5165 Riot ID,\u770B\u4F60\u7684\u982D\u50CF\u3001\u7B49\u7D1A\u3001\u724C\u4F4D\u548C\u6700\u8FD1\u5C0D\u6230");
-    const id = h(box, "input", "mn-home-in");
-    id.type = "text";
-    id.placeholder = "\u904A\u6232\u540D\u7A31#\u6A19\u7C64";
-    id.autocapitalize = "off";
-    id.spellcheck = false;
-    const server = h(box, "select", "mn-home-in");
-    for (const [v, name] of SERVERS) {
-      const o = h(server, "option", void 0, `${name} ${v}`);
-      o.value = v;
-    }
-    server.value = s.riotServer || "TW2";
-    const err = h(box, "span", "mn-home-err");
-    const go = h(box, "button", "mn-home-go", "\u9023\u7D50");
-    go.addEventListener("click", (e) => {
-      e.preventDefault();
-      const v = id.value.trim().replace(/＃/g, "#");
-      if (!/^[^#]{3,16}#[^#]{2,5}$/.test(v)) {
-        err.textContent = "\u683C\u5F0F\u662F \u540D\u7A31#\u6A19\u7C64,\u4F8B\u5982 Zaviel#TW2";
-        return;
-      }
-      s.riotId = v;
-      s.riotServer = server.value;
-      void ctx.plugin.saveData(s).then(() => ctx.goTab("home"));
-    });
-  } else {
-    const [name, tag] = s.riotId.split("#");
-    const best = top[0] ? byId.get(top[0][0]) : void 0;
-    const splash = (id, n) => `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(id)}_${n}.jpg`;
-    const [wid, wn] = s.wallpaper ? s.wallpaper.split("_") : [best?.id ?? "", String(Math.max(0, ...best?.skins ?? [0]))];
-    if (wid) {
-      const bg = h(hero, "img", "mn-home-wall");
-      bg.src = splash(wid, Number(wn) || 0);
-      bg.alt = "";
-    }
-    const av = h(hero, "button", "mn-home-av");
-    if (prof) {
-      const im = h(av, "img");
-      im.src = dd(`profileicon/${prof.icon}.png`);
-      im.alt = "";
-    } else if (best) {
-      const im = h(av, "img");
-      im.src = best.icon;
-      im.alt = "";
-    } else h(av, "span", void 0, (name ?? "?").slice(0, 1));
-    av.setAttribute("aria-label", "\u66F4\u63DB Riot ID");
-    if (prof) h(hero, "div", "mn-home-lvl", String(prof.level));
-    h(hero, "div", "mn-home-name").append(prof?.name ?? name ?? "", h(null, "small", void 0, `#${prof?.tag ?? tag ?? ""}`));
-    const where = SERVERS.find((x) => x[0] === s.riotServer)?.[1] ?? s.riotServer;
-    const sub = h(hero, "div", "mn-home-sub", prof ? `${where} \xB7 ${ago(prof.fetched)}\u66F4\u65B0` : s.riotKey ? `${where} \xB7 \u8B80\u53D6\u4E2D\u2026` : `${where} \xB7 \u8A2D\u5B9A\u88E1\u586B Riot API \u91D1\u9470\u5F8C\u986F\u793A\u982D\u50CF\u3001\u724C\u4F4D\u3001\u5C0D\u6230`);
-    const refresh = () => {
-      sub.textContent = `${where} \xB7 \u8B80\u53D6\u4E2D\u2026`;
-      fetchProfile(ctx.app, s.riotId, s.riotServer, s.riotKey).then(() => {
-        if (el.isConnected) ctx.redraw();
-      }).catch((err) => {
-        sub.textContent = err instanceof RiotError ? err.message : "\u9023\u4E0D\u4E0A Riot,\u7A0D\u5F8C\u518D\u8A66";
-        sub.addClass("is-err");
-      });
-    };
-    if (s.riotKey && (!prof || Date.now() - prof.fetched > PROFILE_FRESH)) refresh();
-    const menu = h(hero, "div", "mn-home-menu is-hidden");
-    const again = h(menu, "button", void 0, "\u91CD\u65B0\u6574\u7406");
-    again.addEventListener("click", (e) => {
-      e.preventDefault();
-      refresh();
-    });
-    const wallBtn = h(menu, "button", void 0, "\u63DB\u80CC\u666F");
-    const out = h(menu, "button", void 0, "\u66F4\u63DB / \u767B\u51FA");
-    const picker2 = h(el, "div", "mn-home-pick is-hidden");
-    wallBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      picker2.toggleClass("is-hidden", !picker2.hasClass("is-hidden"));
-    });
-    const champsRow = layoutBlock(h(picker2, "div", "mn-home-prow"));
-    const skinsRow = layoutBlock(h(picker2, "div", "mn-home-prow is-skins"));
-    const mine = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).map(([id]) => byId.get(id));
-    const pool = mine.length ? mine.slice(0, 24) : all;
-    const showSkins = (cid) => {
-      skinsRow.empty();
-      const c = byId.get(cid);
-      if (!c) return;
-      for (const n of [...c.skins].sort((a, b) => b - a)) {
-        const b = h(skinsRow, "button", "mn-home-skin" + (s.wallpaper === `${cid}_${n}` ? " is-on" : ""));
-        const im = h(b, "img");
-        im.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(cid)}_${n}.jpg`;
-        im.alt = "";
-        im.loading = "lazy";
-        b.addEventListener("click", (e) => {
-          e.preventDefault();
-          s.wallpaper = `${cid}_${n}`;
-          void ctx.plugin.saveData(s).then(() => ctx.goTab("home"));
-        });
-      }
-    };
-    for (const c of pool) {
-      const b = h(champsRow, "button", "mn-home-pc");
-      const im = h(b, "img");
-      im.src = c.icon;
-      im.alt = c.name;
-      b.addEventListener("click", (e) => {
-        e.preventDefault();
-        champsRow.querySelectorAll(".is-on").forEach((x) => x.removeClass("is-on"));
-        b.addClass("is-on");
-        showSkins(c.id);
-      });
-    }
-    if (s.wallpaper) {
-      const reset = h(picker2, "button", "mn-home-preset", "\u7528\u9810\u8A2D(\u6700\u719F\u7DF4\u82F1\u96C4\u7684\u6700\u65B0\u9020\u578B)");
-      reset.addEventListener("click", (e) => {
-        e.preventDefault();
-        s.wallpaper = "";
-        void ctx.plugin.saveData(s).then(() => ctx.goTab("home"));
-      });
-    }
-    showSkins(wid || pool[0]?.id || "");
-    out.addEventListener("click", (e) => {
-      e.preventDefault();
-      s.riotId = "";
-      void ctx.plugin.saveData(s).then(() => ctx.goTab("home"));
-    });
-    av.addEventListener("click", (e) => {
-      e.preventDefault();
-      menu.toggleClass("is-hidden", !menu.hasClass("is-hidden"));
-    });
-  }
-  if (prof?.ranks.length) {
-    const ranks = layoutBlock(h(el, "div", "mn-home-ranks"));
-    for (const q of ["RANKED_SOLO_5x5", "RANKED_FLEX_SR"]) {
-      const r = prof.ranks.find((x) => x.queue === q);
-      const t = h(ranks, "div", "mn-home-rank");
-      if (r) {
-        const im = h(t, "img");
-        im.src = emblem(r.tier);
-        im.alt = "";
-      }
-      const tx = h(t, "div");
-      h(tx, "b", void 0, r ? `${TIER[r.tier] ?? r.tier} ${["MASTER", "GRANDMASTER", "CHALLENGER"].includes(r.tier) ? "" : r.division} \xB7 ${r.lp} LP` : "\u672A\u5B9A\u7D1A");
-      h(tx, "span", void 0, `${q === "RANKED_SOLO_5x5" ? "\u55AE/\u96D9\u6392" : "\u5F48\u6027"}${r ? ` \xB7 ${r.wins} \u52DD ${r.losses} \u6557` : ""}`);
-    }
-  }
-  const entries = layoutBlock(h(el, "div", "mn-home-entries"));
-  const entry = (iconName, title, line, tint, go) => {
-    const b = h(entries, "button", "mn-home-entry");
-    b.style.setProperty("--t", tint);
-    icon(b, iconName);
-    h(b, "b", void 0, title);
-    h(b, "span", void 0, line);
-    b.addEventListener("click", (e) => {
-      e.preventDefault();
-      go();
-    });
-  };
-  entry("users", "Champions", `${all.length} \u4F4D\u82F1\u96C4 \xB7 \u7BE9\u9078`, "var(--mn-accent)", () => ctx.push({ key: "championlist", title: "Champions" }));
-  entry("shopping-bag", "Items", "\u88DD\u5099 \xB7 \u50F9\u683C \xB7 \u5408\u6210", "var(--color-yellow)", () => ctx.push({ key: "itemlist", title: "Items" }));
-  const read = new Set(s.read);
-  const next = store.guideNotes().find((n) => n.layout === "deck" && !read.has(n.file.path));
-  entry("book-open", "Handbook", next ? `\u7E7C\u7E8C:${next.title}` : "\u5168\u90E8\u8B80\u5B8C\u4E86", "var(--color-cyan)", () => {
-    if (next) ctx.openNote(next.file.path);
-    else ctx.goTab("handbook");
-  });
-  if (!s.riotId) entries.lastElementChild?.addClass("is-wide");
-  else entry("swords", "\u6700\u8FD1\u5C0D\u6230", prof?.games.length ? `${prof.games.length} \u5834 \xB7 ${prof.games.filter((g) => g.win).length} \u52DD` : "\u9023\u7D50 Riot \u5F8C\u986F\u793A", "var(--color-purple)", () => ctx.push({ key: "games", title: "\u6700\u8FD1\u5C0D\u6230" }));
-  if (top.length) {
-    h(el, "div", "mn-home-lab", "\u719F\u7DF4\u5EA6");
-    const row2 = layoutBlock(h(el, "div", "mn-home-mast"));
-    for (const [id, m] of top) {
-      const c = byId.get(id);
-      const card = h(row2, "button", "mn-home-mc");
-      const im = h(card, "img");
-      im.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(id)}_0.jpg`;
-      im.alt = "";
-      h(card, "em", m.level >= 10 ? "is-high" : void 0, `M${m.level}`);
-      h(card, "b", void 0, c.name);
-      card.addEventListener("click", (e) => {
-        e.preventDefault();
-        ctx.openChampion(id);
-      });
-    }
-  }
-  if (prof?.games.length) {
-    const lab = h(el, "div", "mn-home-lab mn-home-labrow");
-    h(lab, "span", void 0, "\u6700\u8FD1\u5C0D\u6230");
-    const more = h(lab, "button", "mn-home-more", "\u66F4\u591A");
-    more.addEventListener("click", (e) => {
-      e.preventDefault();
-      ctx.push({ key: "games", title: "\u6700\u8FD1\u5C0D\u6230" });
-    });
-    const list2 = layoutBlock(h(el, "div", "mn-home-games"));
-    for (const g of prof.games.slice(0, HOME_GAMES)) gameRow(ctx, list2, g, false);
-  }
-  return { title: "Home", el };
-}
-var HOME_GAMES = 4;
-function gameRow(ctx, parent, g, full) {
-  const c = ctx.plugin.store.champions().find((x) => x.id.toLowerCase() === g.champion.toLowerCase());
-  const r = h(parent, "button", "mn-game" + (g.win ? " is-win" : " is-loss") + (full ? " is-full" : ""));
-  const im = h(r, "img");
-  im.src = c?.icon ?? "";
-  im.alt = "";
-  const tx = h(r, "div", "mn-game-t");
-  h(tx, "b", void 0, `${c?.name ?? g.champion} \xB7 ${g.k}/${g.d}/${g.a}`);
-  h(tx, "span", void 0, [QUEUE[g.queue] ?? "\u5176\u4ED6", ago(g.end), full ? `${Math.round(g.duration / 60)} \u5206 \xB7 ${g.cs} \u5175` : ""].filter(Boolean).join(" \xB7 "));
-  if (full && g.items.length) {
-    const items = h(tx, "div", "mn-game-items");
-    for (const id of g.items) {
-      const x = h(items, "img");
-      x.src = `https://ddragon.leagueoflegends.com/cdn/${ctx.plugin.store.champions()[0]?.patch ?? ""}/img/item/${id}.png`;
-      x.alt = "";
-      x.loading = "lazy";
-    }
-  }
-  h(r, "span", "mn-game-wl", g.win ? "\u52DD" : "\u6557");
-  if (c) r.addEventListener("click", (e) => {
-    e.preventDefault();
-    ctx.openChampion(c.id);
-  });
-}
-function gamesPage(ctx) {
-  const el = page("\u6700\u8FD1\u5C0D\u6230");
-  const prof = cachedProfile(ctx.app, ctx.plugin.settings.riotId);
-  if (!prof?.games.length) {
-    h(el, "p", "mn-home-sub", "\u9084\u6C92\u6709\u5C0D\u6230\u8CC7\u6599:\u5728 Home \u9023\u7D50 Riot ID \u4E26\u8A2D\u5B9A\u91D1\u9470\u3002");
-    return { title: "\u6700\u8FD1\u5C0D\u6230", el };
-  }
-  const wins = prof.games.filter((g) => g.win).length;
-  h(el, "div", "mn-home-sub", `\u6700\u8FD1 ${prof.games.length} \u5834 \xB7 ${wins} \u52DD ${prof.games.length - wins} \u6557 \xB7 ${ago(prof.fetched)}\u66F4\u65B0`);
-  const list2 = layoutBlock(h(el, "div", "mn-home-games"));
-  for (const g of prof.games) gameRow(ctx, list2, g, true);
-  return { title: "\u6700\u8FD1\u5C0D\u6230", el };
-}
-var TIERS = ["\u8D77\u59CB", "\u978B\u5B50", "\u57FA\u672C", "\u53F2\u8A69", "\u50B3\u8AAA"];
-var tierOf = (i) => i.tags.includes("Boots") ? "\u978B\u5B50" : !i.from.length && !i.into.length ? "\u8D77\u59CB" : !i.from.length ? "\u57FA\u672C" : i.into.length ? "\u53F2\u8A69" : "\u50B3\u8AAA";
-var has2 = (i, ...tags2) => tags2.some((x) => i.tags.includes(x));
-var ITEM_ROLES = [
-  ["\u6230\u58EB", (i) => has2(i, "Damage") && has2(i, "Health")],
-  ["\u5C04\u624B", (i) => has2(i, "CriticalStrike") || has2(i, "AttackSpeed") && has2(i, "Damage")],
-  ["\u523A\u5BA2", (i) => has2(i, "Damage") && has2(i, "ArmorPenetration", "NonbootsMovement") && !has2(i, "Health")],
-  ["\u6CD5\u5E2B", (i) => has2(i, "SpellDamage")],
-  ["\u5766\u514B", (i) => has2(i, "Health") && has2(i, "Armor", "SpellBlock", "MagicResist") && !has2(i, "Damage", "SpellDamage")],
-  ["\u8F14\u52A9", (i) => has2(i, "GoldPer", "Aura") || has2(i, "Active") && !has2(i, "Damage", "SpellDamage")]
-];
-var RAIL_BREAKS = /* @__PURE__ */ new Set(["\u6CD5\u8853\u5F37\u5EA6", "\u751F\u547D", "\u6280\u80FD\u6025\u901F"]);
-var itemRole = "";
-var itemSort = "tier";
-var itemStats = /* @__PURE__ */ new Set();
-function itemsPage(ctx) {
-  const store = ctx.plugin.store;
-  const flag = MODES[ctx.plugin.settings.mode].itemFlag;
-  const el = page("Items");
-  const seen = /* @__PURE__ */ new Set();
-  const items = store.items().filter((i) => i[flag] && i.goldTotal > 0 && !seen.has(i.name) && seen.add(i.name));
-  const box = h(el, "div", "mn-search");
-  icon(box, "search", "mn-search-ic");
-  const search = h(box, "input");
-  search.type = "search";
-  search.placeholder = "\u641C\u5C0B\u88DD\u5099";
-  const roles = layoutBlock(h(el, "div", "mn-shop-roles"), true);
-  const sortWrap = h(el, "div", "mn-shop-sortwrap");
-  const body = h(el, "div", "mn-shop");
-  const rail = layoutBlock(h(body, "div", "mn-shop-rail"), true);
-  const host = layoutBlock(h(body, "div", "mn-shop-list"), true);
-  const drawRoles = () => {
-    roles.empty();
-    const all = h(roles, "button", "mn-shop-role" + (!itemRole ? " is-on" : ""));
-    icon(all, "layout-grid");
-    all.setAttribute("aria-label", "\u5168\u90E8");
-    all.addEventListener("click", (e) => {
-      e.preventDefault();
-      itemRole = "";
-      drawRoles();
-      draw();
-    });
-    const mid = h(roles, "div", "mn-shop-rolemid");
-    for (const [r] of ITEM_ROLES) {
-      const b = h(mid, "button", "mn-shop-role" + (itemRole === r ? " is-on" : ""));
-      roleArt(b, r);
-      holdTip(b, r);
-      b.addEventListener("click", (e) => {
-        e.preventDefault();
-        itemRole = itemRole === r ? "" : r;
-        drawRoles();
-        draw();
-      });
-    }
-    const sb = h(roles, "button", "mn-shop-sortbtn");
-    icon(sb, "arrow-up-down");
-    sb.setAttribute("aria-label", "\u6392\u5E8F");
-    sb.addEventListener("click", (e) => {
-      e.preventDefault();
-      sortWrap.toggleClass("is-open", !sortWrap.hasClass("is-open"));
-    });
-  };
-  const drawSort = () => {
-    sortWrap.empty();
-    for (const [id, name] of [["tier", "\u4F9D\u968E\u7D1A"], ["up", "\u50F9\u683C \u4F4E \u2192 \u9AD8"], ["down", "\u50F9\u683C \u9AD8 \u2192 \u4F4E"]]) {
-      const b = h(sortWrap, "button", "mn-shop-sort" + (itemSort === id ? " is-on" : ""), name);
-      b.addEventListener("click", (e) => {
-        e.preventDefault();
-        itemSort = id;
-        sortWrap.removeClass("is-open");
-        drawSort();
-        draw();
-      });
-    }
-  };
-  const drawRail = () => {
-    rail.empty();
-    const clear = h(rail, "button", "mn-shop-stat is-clear" + (itemStats.size ? " is-live" : ""));
-    icon(clear, "list-x");
-    clear.setAttribute("aria-label", "\u6E05\u9664\u7BE9\u9078");
-    clear.addEventListener("click", (e) => {
-      e.preventDefault();
-      itemStats.clear();
-      drawRail();
-      draw();
-    });
-    ITEM_CATS.forEach(([name], k) => {
-      if (RAIL_BREAKS.has(name)) h(rail, "i", "mn-shop-break");
-      const b = h(rail, "button", "mn-shop-stat" + (itemStats.has(name) ? " is-on" : ""));
-      if (itemStats.has(name)) b.style.color = ITEM_CAT_COLOR[name] ?? "";
-      shopIcon(b, k, itemStats.has(name), "mn-shop-sprite");
-      holdTip(b, name);
-      b.addEventListener("click", (e) => {
-        e.preventDefault();
-        itemStats.has(name) ? itemStats.delete(name) : itemStats.add(name);
-        drawRail();
-        draw();
-      });
-    });
-  };
-  const tile2 = (grid, it) => {
-    const b = h(grid, "button", "mn-item-tile");
-    const im = h(b, "img");
-    im.src = it.icon;
-    im.alt = it.name;
-    h(b, "span", void 0, `${it.goldTotal}`);
-    holdTip(b, it.name);
-    b.addEventListener("click", (e) => {
-      e.preventDefault();
-      ctx.openItem(it.id);
-    });
-  };
-  const draw = () => {
-    host.empty();
-    const q = search.value.trim();
-    const role = ITEM_ROLES.find(([r]) => r === itemRole)?.[1];
-    const need = ITEM_CATS.filter(([n]) => itemStats.has(n)).map(([, , tags2]) => tags2);
-    let list2 = items.filter((i) => (!q || i.name.includes(q)) && (!role || role(i)) && need.every((tags2) => i.tags.some((x) => tags2.includes(x))));
-    if (!list2.length) {
-      h(host, "p", "mn-home-sub", "\u6C92\u6709\u7B26\u5408\u7684\u88DD\u5099");
-      return;
-    }
-    if (itemSort === "tier") {
-      for (const tier of TIERS) {
-        const part = list2.filter((i) => tierOf(i) === tier);
-        if (!part.length) continue;
-        h(host, "div", "mn-shop-tier", tier);
-        const grid = h(host, "div", "mn-items");
-        for (const it of part) tile2(grid, it);
-      }
-    } else {
-      list2 = [...list2].sort((x, y) => (itemSort === "up" ? 1 : -1) * (x.goldTotal - y.goldTotal));
-      const grid = h(host, "div", "mn-items");
-      for (const it of list2) tile2(grid, it);
-    }
-  };
-  search.addEventListener("input", draw);
-  drawRoles();
-  drawSort();
-  drawRail();
-  draw();
-  const fit = () => {
-    const scroll = el.closest(".mn-scroll");
-    if (!scroll || !body.isConnected) return;
-    body.style.height = `${Math.max(240, scroll.getBoundingClientRect().bottom - body.getBoundingClientRect().top - 8)}px`;
-  };
-  requestAnimationFrame(fit);
-  sortWrap.addEventListener("transitionend", fit);
-  new ResizeObserver(fit).observe(sortWrap);
-  return { title: "Items", el };
-}
-
-// src/pages/patch.ts
-var LEGEND = "\u25B2 \u589E\u5F37 \xB7 \u25BC \u524A\u5F31 \xB7 \u25C6 \u6709\u589E\u6709\u6E1B \xB7 \u25CF \u8ABF\u6574\u3002\u65B9\u5411\u662F\u4F9D\u6578\u5B57\u8B8A\u5316\u63A8\u6E2C\u7684,\u4E0D\u662F\u5B98\u65B9\u6A19\u793A\u3002";
-function patchPage(ctx) {
-  const store = ctx.plugin.store;
-  const el = page("Patch");
-  const [latest, ...older] = store.riotNotes;
-  if (latest) latestCard(el, latest);
-  else {
-    const hero = h(el, "div", "mn-patch");
-    h(hero, "div", "mn-patch-k", "Data from patch");
-    h(hero, "div", "mn-patch-v", store.riotPatch() || "\u2014");
-    h(hero, "div", "mn-patch-s", "Run tools/fetch_patch_notes.py to show Riot's patch notes here.");
-  }
-  if (latest?.champions?.length) {
-    h(el, "div", "mn-gh", `Champions \xB7 ${latest.champions.length}`);
-    const grid = h(el, "div", "mn-grid");
-    for (const { e, dir } of byDir(latest.champions)) {
-      const c = store.champions().find((x) => x.name === e.name);
-      if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "overview"), { dir });
-    }
-    blockLoad(grid);
-    h(el, "div", "mn-gf", LEGEND);
-  }
-  if (latest?.items?.length) {
-    h(el, "div", "mn-gh", `Items \xB7 ${latest.items.length}`);
-    const grid = h(el, "div", "mn-grid");
-    for (const { e, dir } of byDir(latest.items)) {
-      const i = store.items().find((x) => x.name === e.name);
-      if (i) tile(grid, i.icon, i.name, () => ctx.openItem(i.id), { dir });
-    }
-    blockLoad(grid);
-    h(el, "div", "mn-gf", LEGEND);
-  }
-  if (latest && ctx.plugin.settings.mode === "mayhem") mayhemSection(el, ctx, latest);
-  if (older.length) {
-    const g2 = group(el, "Earlier patches");
-    for (const n of older) row(g2, { icon: "newspaper", title: n.title, sub: n.summary || void 0, value: n.date, chevron: true, clamp: true, onTap: () => window.open(n.url) });
-  }
-  const mine = store.patchNotes();
-  if (mine.length) {
-    const g2 = group(el, "Our patch notes");
-    for (const n of mine) row(g2, { icon: "file-text", title: n.title, sub: n.summary || void 0, value: n.patch, chevron: true, onTap: () => ctx.openNote(n.file.path) });
-  }
-  const stale = store.staleEntries();
-  const g = group(el, "Check these tricks");
-  if (!stale.length) empty(g, { icon: "check-circle", title: "Nothing to recheck", text: "Every tip and build matches the current patch." });
-  else {
-    for (const s of stale.slice(0, 30)) {
-      row(g, {
-        image: s.champion.icon,
-        title: `${s.champion.name}:${s.title}`,
-        sub: s.patch ? `Written for ${s.patch}` : "No patch given",
-        value: s.kind === "tip" ? "Tip" : "Build",
-        chevron: true,
-        onTap: () => ctx.openChampion(s.champion.id, s.kind === "tip" ? "tips" : "build")
-      });
-    }
-    if (stale.length > 30) h(el, "div", "mn-gf", `${stale.length - 30} more`);
-  }
-  return { title: "Patch", el, ready: null };
-}
-var DIR_ORDER = ["buff", "nerf", "mixed", "change"];
-function byDir(list2) {
-  return list2.map((e) => ({ e, dir: entryDir(e) })).sort((a, b) => DIR_ORDER.indexOf(a.dir) - DIR_ORDER.indexOf(b.dir));
-}
-function tile(grid, src, name, onTap, o = {}) {
-  const t = h(grid, "button", "mn-tile");
-  if (o.rarity && AUG_CLASS[o.rarity]) augIcon(t, src, o.rarity, "mn-tile-aug");
-  else {
-    const im = h(t, "img");
-    im.src = src;
-    im.alt = "";
-  }
-  if (o.dir) {
-    const m = marker(o.dir);
-    const b = h(t, "span", "mn-tile-b", m.mark);
-    b.style.background = m.color;
-  }
-  h(t, "span", "mn-tile-n", name);
-  t.addEventListener("click", (e) => {
-    e.preventDefault();
-    onTap();
-  });
-}
-function latestCard(el, n) {
-  const card = h(el, "div", "mn-pn");
-  if (n.image) {
-    const im = h(card, "img", "mn-pn-img");
-    im.src = n.image;
-    im.alt = "";
-    im.loading = "lazy";
-  }
-  const body = h(card, "div", "mn-pn-body");
-  h(body, "div", "mn-patch-k", `Patch ${n.patch} \xB7 ${n.date}`);
-  h(body, "div", "mn-pn-t", n.title);
-  if (n.summary) h(body, "div", "mn-patch-s", n.summary);
-  const btn = h(body, "button", "mn-pn-btn", "Read the full notes \u2197");
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    window.open(n.url);
-  });
-  h(body, "div", "mn-pn-src", "Riot Games \xB7 \u7248\u672C\u66F4\u65B0\u516C\u544A");
-  blockLoad(card);
-}
-function mayhemSection(el, ctx, n) {
-  const added = n.augments_new ?? [], removed = n.augments_removed ?? [];
-  if (!added.length && !removed.length) return;
-  const byName = new Map(ctx.plugin.store.augments().map((a) => [a.name, a]));
-  if (added.length) {
-    h(el, "div", "mn-gh", `Mayhem \xB7 ${added.length} new augments`);
-    const grid = h(el, "div", "mn-grid");
-    for (const a of added) {
-      const mine = byName.get(a.name);
-      if (mine) tile(grid, mine.icon, a.name, () => ctx.openAugment(mine.id), { rarity: a.rarity });
-    }
-    blockLoad(grid);
-  }
-  if (removed.length) {
-    h(el, "div", "mn-gh", `Removed augments \xB7 ${removed.length}`);
-    const chips = h(el, "div", "mn-chips");
-    for (const r of removed) chip(chips, r, { color: RARITY_COLOR["\u9280"] });
-  }
-}
-
 // src/pages/roster.ts
-var import_obsidian14 = require("obsidian");
 var MAX_PICKS = 15;
 var SPLIT = /[\s,，、;；和跟與及]+/;
 var swipeAt = 0;
@@ -6711,7 +5342,7 @@ function rosterPage(ctx) {
   const toggle = (id) => {
     if (picks.includes(id)) picks = picks.filter((p) => p !== id);
     else if (picks.length >= MAX_PICKS) {
-      new import_obsidian14.Notice(`\u6700\u591A\u9078 ${MAX_PICKS} \u4F4D`);
+      new import_obsidian12.Notice(`\u6700\u591A\u9078 ${MAX_PICKS} \u4F4D`);
       return;
     } else picks = [...picks, id];
     save();
@@ -6830,6 +5461,11 @@ function rosterPage(ctx) {
   drawGrid();
   return { title: "\u901F\u67E5", el };
 }
+var CHOSEN_MS = 1050;
+var FLOOD_FADE_MS = 450;
+var WASH_AT_MS = 560;
+var CHOSEN_SPARKS = 12;
+var CHOSEN_DOTS = 10;
 function swipePage(ctx) {
   const store = ctx.plugin.store;
   const el = h(null, "div", "mn-page mn-deckpage");
@@ -6842,6 +5478,7 @@ function swipePage(ctx) {
     swipeLiked = [];
   }
   let at = swipeAt, liked = swipeLiked;
+  void warmPictures(picks.map((id) => loading(id)));
   const results = h(el, "div", "mn-rq-results");
   const restart = () => {
     at = swipeAt = 0;
@@ -6867,6 +5504,36 @@ function swipePage(ctx) {
       requestAnimationFrame(fitEnd);
       return;
     }
+    let under = null;
+    const bridge = (preview) => {
+      if (under && !preview) {
+        const view = under;
+        const count2 = view.querySelector(".mn-rq-endhead span");
+        if (count2) count2.textContent = `${liked.length} / ${picks.length} \u4F4D`;
+        const last = liked[liked.length - 1];
+        const lastIsNew = last && last === picks[picks.length - 1];
+        const grid = view.querySelector(".mn-rq-liked");
+        if (lastIsNew && grid) likedTile(grid, last)?.addClass("is-new");
+        else if (lastIsNew) {
+          view.empty();
+          likedGrid(view);
+          view.addClass("is-bridged");
+        }
+        view.removeClass("is-preview");
+        return;
+      }
+      under?.remove();
+      under = h(results, "div", "mn-rq-end mn-rq-under" + (preview ? " is-preview" : " is-bridged"));
+      const fitUnder = () => {
+        if (under) under.style.height = wrap.style.height || `${wrap.offsetHeight}px`;
+      };
+      fitUnder();
+      likedGrid(under);
+      requestAnimationFrame(() => {
+        fitUnder();
+        under?.addClass("is-in");
+      });
+    };
     const wrap = h(results, "div", "mn-deckwrap mn-rq-deck");
     const pager = h(wrap, "div", "mn-pager");
     for (const ev of ["touchstart", "touchmove"]) pager.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
@@ -6901,6 +5568,7 @@ function swipePage(ctx) {
           c.style.visibility = i >= cur - 1 && i <= cur + 2 ? "" : "hidden";
         });
         warmSkins(cur);
+        if (cur === sec.length - 1 && !under) bridge(true);
       },
       onDrag: (dx, w) => {
         const st = stamps[pile?.cur ?? 0];
@@ -6924,8 +5592,16 @@ function swipePage(ctx) {
         armed = false;
         btns.removeClass("is-left", "is-right");
         if (like) swipeLiked = liked = [...liked, ids[i]];
+        if (at >= picks.length) bridge(false);
       },
-      onEnd: () => drawResults()
+      onEnd: () => {
+        if (!under) {
+          drawResults();
+          return;
+        }
+        wrap.remove();
+        under.removeClass("mn-rq-under");
+      }
     });
     pile.layout(false);
     const fit = () => {
@@ -6964,6 +5640,85 @@ function swipePage(ctx) {
       press(true);
     });
   };
+  const choose = (grid, card, c) => {
+    if (grid.hasClass("is-choosing")) return;
+    grid.addClass("is-choosing");
+    card.addClass("is-chosen");
+    const r = card.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height * 0.42;
+    const at2 = (el2) => {
+      el2.style.left = `${cx}px`;
+      el2.style.top = `${cy}px`;
+      return el2;
+    };
+    const pop = h(card, "span", "mn-rq-pop");
+    icon(pop, "heart", "mn-rq-pop-big");
+    for (let k = 0; k < CHOSEN_SPARKS; k++) {
+      const sp = h(pop, "span", "mn-rq-spark");
+      sp.style.setProperty("--a", `${360 / CHOSEN_SPARKS * k + (k % 2 ? 12 : -8)}deg`);
+      sp.style.setProperty("--d", `${48 + k * 37 % 46}px`);
+      sp.style.setProperty("--s", String(0.6 + k * 53 % 10 / 12));
+      sp.style.setProperty("--r", `${(k % 2 ? 1 : -1) * (30 + k * 29 % 60)}deg`);
+      icon(sp, "heart");
+    }
+    for (let k = 0; k < CHOSEN_DOTS; k++) {
+      const dot = h(pop, "span", "mn-rq-dot");
+      dot.style.setProperty("--a", `${360 / CHOSEN_DOTS * k + 20}deg`);
+      dot.style.setProperty("--d", `${70 + k * 41 % 50}px`);
+    }
+    at2(h(document.body, "div", "mn-rq-ring"));
+    const flood = at2(h(document.body, "div", "mn-rq-flood"));
+    icon(flood, "heart");
+    const wash = h(document.body, "div", "mn-rq-wash");
+    const who = h(document.body, "div", "mn-rq-who");
+    const face = h(who, "img");
+    face.src = c.icon;
+    face.alt = "";
+    h(who, "b", void 0, c.name);
+    h(who, "span", void 0, c.title);
+    window.setTimeout(() => {
+      wash.addClass("is-in");
+      who.addClass("is-in");
+    }, WASH_AT_MS);
+    haptic();
+    window.setTimeout(() => {
+      ctx.openChampion(c.id);
+      grid.removeClass("is-choosing");
+      card.removeClass("is-chosen");
+      pop.remove();
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        flood.addClass("is-out");
+        wash.addClass("is-out");
+        who.addClass("is-out");
+        window.setTimeout(() => {
+          flood.remove();
+          wash.remove();
+          who.remove();
+          document.querySelectorAll(".mn-rq-ring").forEach((x) => x.remove());
+        }, FLOOD_FADE_MS);
+      }));
+    }, CHOSEN_MS);
+  };
+  const likedTile = (g, id) => {
+    const c = all.find((x) => x.id === id);
+    if (!c) return null;
+    const b = h(g, "button", "mn-rq-lk");
+    const im = h(b, "img");
+    im.src = loading(c.id);
+    im.alt = "";
+    if (c.face) im.style.objectPosition = c.face;
+    const who = h(b, "span", "mn-rq-lw");
+    h(who, "b", void 0, c.name);
+    const main = c.damageType || c.skillDamage[0] || "";
+    h(who, "span", "mn-rq-ls", [c.roles[0], main && `${main}\u50B7`, c.range ? c.range >= 550 ? "\u9060\u7A0B" : c.range >= 300 ? "\u4E2D\u7A0B" : "\u8FD1\u6230" : ""].filter(Boolean).join(" \xB7 "));
+    if (c.punch) h(who, "span", "mn-rq-lp", c.punch);
+    b.style.setProperty("--i", String(g.childElementCount - 1));
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      choose(g, b, c);
+    });
+    return b;
+  };
   const likedGrid = (box) => {
     const head2 = h(box, "div", "mn-rq-endhead");
     h(head2, "b", void 0, "Pick Me Up!");
@@ -6971,24 +5726,7 @@ function swipePage(ctx) {
     const list2 = h(box, "div", "mn-rq-endlist");
     if (liked.length) {
       const g = h(list2, "div", "mn-rq-liked");
-      for (const id of liked) {
-        const c = all.find((x) => x.id === id);
-        if (!c) continue;
-        const b = h(g, "button", "mn-rq-lk");
-        const im = h(b, "img");
-        im.src = loading(c.id);
-        im.alt = "";
-        if (c.face) im.style.objectPosition = c.face;
-        const who = h(b, "span", "mn-rq-lw");
-        h(who, "b", void 0, c.name);
-        const main = c.damageType || c.skillDamage[0] || "";
-        h(who, "span", "mn-rq-ls", [c.roles[0], main && `${main}\u50B7`, c.range ? c.range >= 550 ? "\u9060\u7A0B" : c.range >= 300 ? "\u4E2D\u7A0B" : "\u8FD1\u6230" : ""].filter(Boolean).join(" \xB7 "));
-        if (c.punch) h(who, "span", "mn-rq-lp", c.punch);
-        b.addEventListener("click", (e) => {
-          e.preventDefault();
-          ctx.openChampion(c.id);
-        });
-      }
+      for (const id of liked) likedTile(g, id);
     } else empty(list2, { icon: "heart-off", title: "\u4E00\u500B\u90FD\u6C92\u559C\u6B61" });
     const foot = h(box, "div", "mn-rq-endfoot");
     const back = h(foot, "button", "mn-rq-back", "\u91CD\u65B0\u6311\u9078");
@@ -7205,6 +5943,1800 @@ function quickCard(ctx, c, face, o) {
   return skins;
 }
 
+// src/pages/detail.ts
+var import_obsidian13 = require("obsidian");
+
+// src/pages/glossary.ts
+var OWN = {
+  AD: [DAMAGE_ICON["\u7269\u7406"], DAMAGE_COLOR["\u7269\u7406"]],
+  AP: [DAMAGE_ICON["\u9B54\u6CD5"], DAMAGE_COLOR["\u9B54\u6CD5"]],
+  \u8B77\u7532: [STAT_ICON["\u8B77\u7532"], STAT_COLOR["\u8B77\u7532"]],
+  \u9B54\u6297: [STAT_ICON["\u9B54\u9632"], STAT_COLOR["\u9B54\u9632"]],
+  \u51B7\u537B: [STAT_ICON["\u6280\u80FD\u6025\u901F"], STAT_COLOR["\u6280\u80FD\u6025\u901F"]],
+  \u6D88\u8017: ["droplet", ITEM_CAT_COLOR["\u9B54\u529B"]],
+  \u666E\u653B: ["mouse-pointer-click", "var(--mn-text)"],
+  \u7206\u767C: ["zap", "var(--mn-exec)"],
+  \u524D\u6392: ["brick-wall", "var(--mn-guard)"],
+  \u5F8C\u6392: ["telescope", "var(--mn-phys)"],
+  \u958B\u5718: ["flag", "var(--mn-accent)"],
+  \u98A8\u7B8F: ["rewind", "var(--mn-dash)"],
+  \u589E\u5E45\u88DD\u7F6E: ["sparkles", "var(--mn-accent)"],
+  \u56DE\u8840\u5305: ["package-plus", "var(--mn-heal)"]
+};
+var termArt = (term) => {
+  const key = term.split(/[（(]/)[0].trim();
+  const tag = tagInfo(key);
+  return OWN[key] ?? (tag ? [tag.icon, tag.color] : ["book-a", "var(--mn-muted)"]);
+};
+var plain = (s) => s.replace(/[*_`]/g, "").replace(/!?\[\[([^\]|]*)(?:\|([^\]]*))?\]\]/g, (_m, a, b) => b ?? a).trim();
+function parse4(text) {
+  const out = [];
+  for (const line of text.replace(/^---[\s\S]*?---\n/, "").split("\n")) {
+    const g = /^##\s+(.+)/.exec(line);
+    if (g) {
+      out.push({ group: g[1].trim(), terms: [] });
+      continue;
+    }
+    const t = /^\s*[-*]\s+\*\*(.+?)\*\*\s*[:：]\s*(.+)$/.exec(line);
+    if (!t) continue;
+    if (!out.length) out.push({ group: "", terms: [] });
+    out[out.length - 1].terms.push({ term: plain(t[1]), text: plain(t[2]) });
+  }
+  return out.filter((g) => g.terms.length);
+}
+function glossaryPage(ctx, file) {
+  const el = h(null, "div", "mn-page mn-glpage");
+  fixedPage(el, ctx.component);
+  h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
+  const list2 = h(el, "div", "mn-rq-list mn-gl");
+  const dock = h(el, "div", "mn-rq-dock");
+  const cap = h(dock, "div", "mn-rq-cap");
+  icon(cap, "search", "mn-rq-cap-ic");
+  const search = h(cap, "input");
+  search.type = "search";
+  search.placeholder = "\u627E\u4E00\u500B\u8A5E";
+  search.setAttribute("enterkeyhint", "search");
+  const mic = h(cap, "button", "mn-rq-mic");
+  icon(mic, "mic");
+  mic.setAttribute("aria-label", "\u7528\u9375\u76E4\u7684\u9EA5\u514B\u98A8\u8AAA");
+  mic.addEventListener("click", (e) => {
+    e.preventDefault();
+    search.focus();
+  });
+  let groups = [];
+  const draw = () => {
+    list2.empty();
+    const q = search.value.trim().toLowerCase();
+    let shown = 0;
+    for (const g of groups) {
+      const hits = g.terms.filter((t) => !q || t.term.toLowerCase().includes(q) || t.text.toLowerCase().includes(q));
+      if (!hits.length) continue;
+      const sec = h(list2, "section", "mn-gl-sec");
+      if (g.group) h(sec, "div", "mn-gl-head", g.group);
+      for (const t of hits) {
+        const r = h(sec, "div", "mn-gl-row");
+        const [ic, color] = termArt(t.term);
+        const tile2 = h(r, "span", "mn-gl-ic");
+        tile2.style.setProperty("--c", color);
+        icon(tile2, ic);
+        const words = h(r, "div", "mn-gl-words");
+        h(words, "b", void 0, t.term);
+        h(words, "span", void 0, t.text);
+        shown++;
+      }
+    }
+    if (!shown) empty(list2, { icon: "search-x", title: "\u627E\u4E0D\u5230\u9019\u500B\u8A5E" });
+  };
+  search.addEventListener("input", draw);
+  void ctx.app.vault.cachedRead(file).then((text) => {
+    groups = parse4(text);
+    draw();
+  });
+  return { title: "", el };
+}
+
+// src/pages/detail.ts
+var SUGGESTED = 12;
+var GLOSSARY3 = "\u540D\u8A5E\u8868";
+function notePage(ctx) {
+  const path = String(ctx.frame.params?.path ?? "");
+  const file = ctx.app.vault.getAbstractFileByPath(path);
+  const el = h(null, "div", "mn-page");
+  if (!(file instanceof import_obsidian13.TFile)) {
+    empty(el, { icon: "file-x", title: "Note not found" });
+    return { title: "", el };
+  }
+  if (ctx.plugin.store.guideNotes().some((n) => n.file.path === path && n.layout === "deck")) return deckPage(ctx, file);
+  if (file.basename === GLOSSARY3) return glossaryPage(ctx, file);
+  h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
+  const body = h(el, "div", "mn-note markdown-rendered");
+  void ctx.app.vault.cachedRead(file).then((text) => import_obsidian13.MarkdownRenderer.render(ctx.app, text.replace(/^---[\s\S]*?---\n/, ""), body, path, ctx.component));
+  const guide = ctx.plugin.store.guideNotes();
+  const at = guide.findIndex((n) => n.file.path === path);
+  if (at >= 0) {
+    void ctx.plugin.markRead(path);
+    const next = guide[at + 1];
+    if (next) {
+      const b = h(el, "button", "mn-nextcard");
+      h(b, "span", "mn-nextcard-k", "\u4E0B\u4E00\u7BC7");
+      h(b, "span", "mn-nextcard-t", next.title);
+      icon(b, "arrow-right", "mn-nextcard-ic");
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        ctx.pop();
+        ctx.openNote(next.file.path);
+      });
+    } else h(el, "div", "mn-nextcard-done", "\u{1F389} \u5168\u90E8\u8B80\u5B8C\u4E86");
+  }
+  row(group(el), { icon: "pencil", title: "Edit in Obsidian", chevron: true, onTap: () => void ctx.plugin.openPath(path) });
+  return { title: "", el };
+}
+var KINDS3 = [
+  { tag: "\u9B54\u6CD5\u653B\u64CA", re: /魔攻|魔法攻擊|法術強度/, fits: (c) => c.damageType === "\u9B54\u6CD5" || c.damageType === "\u6DF7\u5408" },
+  { tag: "\u7269\u7406\u653B\u64CA", re: /物攻|物理攻擊/, fits: (c) => c.damageType === "\u7269\u7406" || c.damageType === "\u6DF7\u5408" },
+  { tag: "\u666E\u653B", re: /普攻|普通攻擊|攻速|暴擊/, fits: (c) => c.roles.includes("\u5C04\u624B") || c.damageType === "\u7269\u7406" && c.archetypes.includes("\u8FD1\u6230") },
+  { tag: "\u6280\u80FD", re: /技能|大絕|冷卻/, fits: (c) => c.damageType === "\u9B54\u6CD5" || c.roles.includes("\u6CD5\u5E2B") },
+  { tag: "\u751F\u5B58", re: /生命|物防|魔防|護甲|魔抗|韌性|減傷/, fits: (c) => c.roles.includes("\u5766\u514B") || c.roles.includes("\u6230\u58EB") },
+  { tag: "\u8B77\u76FE / \u6CBB\u7642", re: /護盾|治療|回復/, fits: (c) => c.features.includes("\u8B77\u76FE") || c.features.includes("\u6CBB\u7642") || c.roles.includes("\u8F14\u52A9") },
+  { tag: "\u8DD1\u901F / \u4F4D\u79FB", re: /跑速|衝刺|位移/, fits: (c) => c.features.includes("\u4F4D\u79FB") },
+  { tag: "\u63A7\u5834", re: /緩速|暈眩|擊飛|控制|定身|擊退/, fits: (c) => c.features.includes("\u63A7\u5834") }
+];
+function suggest(effect, champions) {
+  const kinds = KINDS3.filter((k) => k.re.test(effect));
+  if (!kinds.length) return { tags: [], champions: [] };
+  const need = Math.max(1, Math.ceil(kinds.length * 0.6));
+  const scored = champions.map((c) => ({ c, n: kinds.filter((k) => k.fits(c)).length })).filter((x) => x.n >= need);
+  scored.sort((a, b) => b.n - a.n || a.c.name.localeCompare(b.c.name, "zh-Hant"));
+  return { tags: kinds.map((k) => k.tag), champions: scored.slice(0, SUGGESTED).map((x) => x.c) };
+}
+var has = (c, t) => c.features.includes(t) || c.archetypes.includes(t);
+var NEEDS = [
+  { re: /魔攻|魔法傷害|適性/, fit: (c) => c.damageType === "\u9B54\u6CD5" ? 1 : c.skillDamage.includes("\u9B54\u6CD5") ? 0.5 : 0, why: () => "\u5403\u9B54\u653B" },
+  { re: /物攻|物理傷害|物理致命|穿透/, fit: (c) => c.damageType === "\u7269\u7406" ? 1 : c.damageType === "\u6DF7\u5408" ? 0.6 : 0, why: () => "\u5403\u7269\u653B" },
+  { re: /普攻|攻速|命中效果/, fit: (c) => c.roles.includes("\u5C04\u624B") ? 1 : has(c, "\u5F37\u5316\u666E\u653B") || has(c, "\u653B\u64CA\u7279\u6548") ? 0.7 : 0, why: (c) => c.roles.includes("\u5C04\u624B") ? "\u666E\u653B\u5C04\u624B" : "\u666E\u653B\u578B" },
+  { re: /暴擊/, fit: (c) => c.roles.includes("\u5C04\u624B") ? 1 : 0, why: () => "\u66B4\u64CA\u5C04\u624B" },
+  { re: /技能加速|冷卻/, fit: (c) => c.damageType === "\u9B54\u6CD5" || c.roles.includes("\u6CD5\u5E2B") ? 0.9 : 0.5, why: () => "\u9760\u6280\u80FD" },
+  { re: /治療|護盾/, fit: (c) => has(c, "\u8B77\u76FE") || has(c, "\u6CBB\u7642") ? 1 : c.roles.includes("\u8F14\u52A9") ? 0.8 : 0, why: (c) => has(c, "\u8B77\u76FE") ? "\u6709\u8B77\u76FE\u6280\u80FD" : has(c, "\u6CBB\u7642") ? "\u6709\u6CBB\u7642\u6280\u80FD" : "\u8F14\u52A9" },
+  { re: /生命|物防|魔防|韌性|傷害減免|體型/, fit: (c) => c.roles.includes("\u5766\u514B") ? 1 : c.roles.includes("\u6230\u58EB") ? 0.7 : 0.1, why: (c) => c.roles.includes("\u5766\u514B") ? "\u5766\u514B" : "\u524D\u6392\u6230\u58EB" },
+  { re: /衝刺|位移|閃現|跳躍/, fit: (c) => has(c, "\u4F4D\u79FB") ? 1 : 0, why: () => "\u6709\u4F4D\u79FB" },
+  { re: /硬控場|禁錮|控場|擊飛|暈眩/, fit: (c) => has(c, "\u63A7\u5834") ? 1 : 0, why: () => "\u6709\u63A7\u5834" },
+  { re: /魔力/, fit: (c) => c.resource === "\u9B54\u529B" ? 0.8 : 0, why: () => "\u7528\u9B54\u529B" },
+  { re: /大絕/, fit: () => 0.6, why: () => "\u5927\u7D55\u5F37\u5316" }
+];
+function augmentTiles(parent, picks, ctx, opt = {}) {
+  const grid = h(parent, "div", "mn-aug-tiles" + (opt.bare ? " is-bare" : ""));
+  for (const p of picks) {
+    const t = h(grid, "button", "mn-aug-tile");
+    t.style.setProperty("--r", RARITY_COLOR[p.a.rarity] ?? "var(--mn-muted)");
+    augIcon(t, p.a.icon, p.a.rarity, "mn-aug-tic");
+    h(t, "span", "mn-aug-tn", p.a.name);
+    if (!opt.bare) h(t, "span", "mn-aug-tw", p.why);
+    t.addEventListener("click", (e) => {
+      e.preventDefault();
+      ctx.openAugment(p.a.id, opt.champ);
+    });
+  }
+  return grid;
+}
+function augmentPicks(store, c) {
+  const out = [];
+  for (const a of store.augments()) {
+    if (c.avoid.includes(a.name)) continue;
+    const data = store.augmentData(a.id);
+    if (data?.fits && !data.fits.includes(c.id.toLowerCase())) continue;
+    if (c.pinned.includes(a.name)) {
+      out.push({ a, why: "\u7F6E\u9802", score: 100 });
+      continue;
+    }
+    if (!a.effect) continue;
+    const needs = NEEDS.filter((n) => n.re.test(a.effect));
+    if (!needs.length) continue;
+    const fits = needs.map((n) => n.fit(c));
+    if (fits.filter((f) => f === 0).length > needs.length / 2) continue;
+    const mean = fits.reduce((x, y) => x + y, 0) / fits.length;
+    if (mean < 0.5) continue;
+    const best = needs[fits.indexOf(Math.max(...fits))];
+    const bonus = (a.rarity === "\u7A1C\u93E1" ? 0.12 : a.rarity === "\u91D1" ? 0.06 : 0) + (data?.fits ? 0.08 : 0) + (a.fits.some((f) => has(c, f) || c.roles.includes(f)) ? 0.15 : 0);
+    out.push({ a, why: best.why(c), score: Math.round((mean + bonus) * 100) });
+  }
+  return out.sort((x, y) => y.score - x.score || x.a.name.localeCompare(y.a.name, "zh-Hant"));
+}
+var KIND_COLOR = {
+  magicDamage: "var(--mn-magic)",
+  scaleAP: "var(--mn-magic)",
+  scaleMana: "var(--mn-magic)",
+  physicalDamage: "var(--mn-phys)",
+  scaleAD: "var(--mn-phys)",
+  trueDamage: "var(--mn-true)",
+  healing: "var(--mn-heal)",
+  scaleHealth: "var(--mn-heal)",
+  lifeSteal: "var(--mn-ls)",
+  lifesteal: "var(--mn-ls)",
+  shield: "var(--mn-shield)",
+  scaleMR: "var(--mn-shield)",
+  scaleArmor: "var(--mn-guard)",
+  crit: "var(--mn-exec)",
+  scaleCrit: "var(--mn-exec)",
+  speed: "var(--mn-true)",
+  attackSpeed: "var(--mn-true)",
+  scaleAS: "var(--mn-true)",
+  scaleAbilityHaste: "var(--mn-haste)",
+  scaleAH: "var(--mn-haste)",
+  armorPen: "var(--mn-aa)",
+  magicPen: "var(--mn-weak)"
+};
+var KIND_BOLD = /* @__PURE__ */ new Set(["keywordMajor", "status", "attention", "spellName"]);
+var CHIP_CAT = {
+  scaleAP: "\u6CD5\u8853\u5F37\u5EA6",
+  scaleAD: "\u653B\u64CA\u529B",
+  scaleCrit: "\u66B4\u64CA",
+  scaleAS: "\u653B\u901F",
+  scaleAH: "\u6280\u80FD\u6025\u901F",
+  scaleAbilityHaste: "\u6280\u80FD\u6025\u901F",
+  scaleHealth: "\u751F\u547D",
+  scaleArmor: "\u8B77\u7532",
+  scaleMR: "\u9B54\u9632",
+  scaleAPen: "\u7269\u7406\u7A7F\u900F",
+  scaleMPen: "\u6CD5\u8853\u7A7F\u900F",
+  scaleMana: "\u9B54\u529B",
+  scaleMS: "\u79FB\u52D5",
+  scaleLS: "\u5438\u8840"
+};
+var FX_STAT = [
+  [/魔法傷害|魔攻|魔力|魔法穿透/, "var(--mn-magic)", "sparkles"],
+  [/物理傷害|物攻|物理致命|物理穿透/, "var(--mn-phys)", "sword"],
+  [/真實傷害/, "var(--mn-true)", "gem"],
+  [/適性/, "var(--mn-mixed)", "blend"],
+  [/治療與護盾強度|治療|生命/, "var(--mn-heal)", "heart"],
+  [/護盾|魔防/, "var(--mn-shield)", "shield-check"],
+  [/物防/, "var(--mn-guard)", "shield"],
+  [/攻速/, "var(--mn-true)", "gauge"],
+  [/技能加速|大絕加速|道具加速/, "var(--mn-haste)", "timer-reset"],
+  [/跑速/, "var(--mn-dash)", "footprints"],
+  [/暴擊/, "var(--mn-exec)", "dice-5"],
+  [/吸血/, "var(--mn-ls)", "syringe"],
+  [/攻擊距離/, "var(--mn-range)", "ruler"]
+];
+var fxStat = (t) => {
+  for (const [re, c, i] of FX_STAT) if (re.test(t)) return [c, i];
+  return null;
+};
+var FX_TOKEN = new RegExp([
+  "\uFF08(?:\\+|\u6BCF)[^\uFF08\uFF09]*(?:\uFF08[^\uFF08\uFF09]*\uFF09[^\uFF08\uFF09]*)*\uFF09",
+  // a scaling in brackets, maybe with a ranged value inside
+  "\\d+(?:\\.\\d+)?%?\u2013\\d+(?:\\.\\d+)?%?\uFF08\u96A8\u7B49\u7D1A[^\uFF09]*\uFF09",
+  // a value by level
+  "\\d+(?:\\.\\d+)?%?(?:\uFF08\u9060\u7A0B [^\uFF09]+\uFF09)?\\s?(?:\u984D\u5916|\u6700\u5927|\u76EE\u524D|\u5DF2\u640D\u5931|\u57FA\u790E|\u7E3D)?(?:\u7269\u653B|\u9B54\u653B|\u653B\u901F|\u6280\u80FD\u52A0\u901F|\u5927\u7D55\u52A0\u901F|\u57FA\u790E\u6280\u80FD\u52A0\u901F|\u9053\u5177\u52A0\u901F|\u8DD1\u901F|\u7269\u9632|\u9B54\u9632|\u751F\u547D|\u66B4\u64CA\u7387|\u66B4\u64CA\u50B7\u5BB3|\u5168\u80FD\u5438\u8840|\u666E\u653B\u5438\u8840|\u7269\u7406\u81F4\u547D|\u7269\u7406\u7A7F\u900F|\u9B54\u6CD5\u7A7F\u900F|\u6CBB\u7642\u8207\u8B77\u76FE\u5F37\u5EA6|\u9069\u6027\u4E4B\u529B|\u9B54\u529B|\u653B\u64CA\u8DDD\u96E2)",
+  "\\d+(?:\\.\\d+)?%?(?:\uFF08\u9060\u7A0B [^\uFF09]+\uFF09|(?=\uFF08\u6BCF))",
+  // a number with its ranged value, or before a scaling
+  "\u9B54\u6CD5\u50B7\u5BB3|\u7269\u7406\u50B7\u5BB3|\u771F\u5BE6\u50B7\u5BB3|\u9069\u6027\u50B7\u5BB3",
+  "(?:\u984D\u5916|\u6700\u5927|\u5DF2\u640D\u5931)?(?:\u7269\u653B|\u9B54\u653B|\u653B\u901F|\u6280\u80FD\u52A0\u901F|\u5927\u7D55\u52A0\u901F|\u8DD1\u901F|\u7269\u9632|\u9B54\u9632|\u66B4\u64CA\u7387|\u66B4\u64CA\u50B7\u5BB3|\u5168\u80FD\u5438\u8840|\u666E\u653B\u5438\u8840|\u7269\u7406\u81F4\u547D|\u7269\u7406\u7A7F\u900F|\u9B54\u6CD5\u7A7F\u900F|\u6CBB\u7642\u8207\u8B77\u76FE\u5F37\u5EA6|\u9069\u6027\u4E4B\u529B)"
+  // a stat named on its own
+].join("|"), "g");
+function richEffect(p, text) {
+  let at = 0;
+  for (const m of text.matchAll(FX_TOKEN)) {
+    const t = m[0], i = m.index ?? 0;
+    if (i > at) p.append(text.slice(at, i));
+    at = i + t.length;
+    if (t.startsWith("\uFF08")) {
+      const inner = t.slice(1, -1);
+      const st2 = fxStat(inner);
+      const pill2 = h(p, "span", "mn-fx-sc");
+      if (st2) {
+        pill2.style.setProperty("--c", st2[0]);
+        icon(pill2, st2[1], "mn-fx-ic");
+      }
+      pill2.append(inner.replace(/^每\s*/, "\u6BCF "));
+      continue;
+    }
+    const lv = /^(.+?)（隨等級[^）]*）$/.exec(t);
+    if (lv) {
+      const pill2 = h(p, "span", "mn-fx-lv");
+      icon(pill2, "trending-up", "mn-fx-ic");
+      pill2.append(lv[1]);
+      continue;
+    }
+    const st = fxStat(t);
+    const v = h(p, "span", "mn-fx-v", t);
+    if (st) v.style.setProperty("--c", st[0]);
+  }
+  if (at < text.length) p.append(text.slice(at));
+}
+var LEVEL_LABEL = (lv, top) => lv === top && top > 1 ? "\u6700\u5927" : `Lv${lv}`;
+function augmentPage(ctx) {
+  const store = ctx.plugin.store;
+  const a = store.augment(Number(ctx.frame.params?.id));
+  const el = h(null, "div", "mn-page mn-itpage");
+  if (!a) {
+    empty(el, { icon: "sparkles", title: "Augment not found" });
+    return { title: "", el };
+  }
+  const data = store.augmentData(a.id);
+  const nums = a.hand ? void 0 : data;
+  const history = store.augmentHistory(a.name);
+  const hero = h(el, "div", "mn-it-hero mn-ag-hero");
+  const bg = h(hero, "img", "mn-it-bg");
+  bg.src = a.icon;
+  bg.alt = "";
+  augIcon(hero, a.icon, a.rarity, "mn-dimg-aug mn-ag-ic");
+  const who = h(hero, "div", "mn-it-who");
+  h(who, "h1", "mn-it-name", a.name);
+  const tags2 = h(who, "div", "mn-it-tags");
+  const rar = h(tags2, "span", "mn-ag-rar", a.rarity);
+  rar.style.setProperty("--c", RARITY_COLOR[a.rarity] ?? "var(--mn-muted)");
+  if (history[0]?.what === "added" && history[0].patch === store.riotNotes[0]?.patch) h(tags2, "span", "mn-ag-new", "\u65B0");
+  forChampion(el, store, a, String(ctx.frame.params?.champ ?? ""));
+  const levels = nums?.levels ?? [];
+  let at = 0;
+  const seg = levels.length > 1 ? h(el, "div", "mn-seg is-sm mn-ag-lv") : null;
+  const chipsEl = h(el, "div", "mn-it-stats");
+  const card = h(el, "div", "mn-it-fx mn-ag-fx");
+  const draw = () => {
+    chipsEl.empty();
+    card.empty();
+    for (const c of nums?.chips[at] ?? []) {
+      const cat = CHIP_CAT[c.stat];
+      const x = h(chipsEl, "span", "mn-it-stat");
+      if (cat) x.style.setProperty("--c", ITEM_CAT_COLOR[cat] ?? "var(--mn-muted)");
+      const k = cat ? ITEM_CATS.findIndex(([n]) => n === cat) : -1;
+      if (k >= 0) shopIcon(x, k, true);
+      const m = /^([+\-]?[\d.]+%?)\s*(.*)$/.exec(c.text);
+      if (m) {
+        h(x, "b", void 0, m[1]);
+        x.append(m[2]);
+      } else x.append(c.text);
+    }
+    chipsEl.toggleClass("is-empty", !chipsEl.childElementCount);
+    const p = h(card, "p", "mn-it-fxt");
+    if (nums) {
+      for (const [text, kind] of nums.runs[at] ?? []) {
+        if (!kind) {
+          p.append(text);
+          continue;
+        }
+        const sp = h(p, "span", KIND_BOLD.has(kind) ? "mn-ag-kw" : "mn-ag-k", text);
+        if (KIND_COLOR[kind]) sp.style.setProperty("--c", KIND_COLOR[kind]);
+      }
+      h(card, "div", "mn-pn-src", `\u6578\u503C\uFF1A\u7AF6\u6280\u5834\u7684\u904A\u6232\u8CC7\u6599\uFF0C\u5927\u6DF7\u6230\u53EF\u80FD\u4E0D\u540C${nums.partial ? "\uFF08X \u662F\u904A\u6232\u5167\u624D\u7B97\u5F97\u51FA\u7684\u6578\u503C\uFF09" : ""}`);
+    } else if (a.effect) {
+      richEffect(p, a.effect);
+      const src = a.effectSource ? `\u6578\u503C\uFF1A${a.effectSource}${a.effectSource.includes("Wiki") ? "\uFF08CC BY-SA\uFF09" : ""}${a.effectPatch ? ` \xB7 ${a.effectPatch}` : ""}${a.effectStatus ? ` \xB7 ${a.effectStatus}` : ""}` : "";
+      h(card, "div", "mn-pn-src", src || (a.partial ? "\u6578\u503C\u5F85\u88DC\uFF08X \u662F\u904A\u6232\u5167\u624D\u770B\u5F97\u5230\u7684\u6578\u503C\uFF09" : "\u6548\u679C\uFF1ARiot Games"));
+    } else {
+      p.addClass("mn-muted");
+      p.setText("\u9019\u500B\u5F37\u5316\u7684\u6548\u679C\u8AAA\u660E\u9084\u6C92\u6709\u6536\u9304\u3002");
+    }
+  };
+  if (seg) {
+    levels.forEach((lv, i) => {
+      const b = h(seg, "button", "mn-seg-b" + (i === 0 ? " is-on" : ""), LEVEL_LABEL(lv, levels[levels.length - 1]));
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (at === i) return;
+        at = i;
+        seg.querySelectorAll(".mn-seg-b").forEach((x, j) => x.toggleClass("is-on", j === i));
+        draw();
+      });
+    });
+    slideSeg(seg);
+  }
+  draw();
+  if (!a.effect && !data) {
+    const links = group(el);
+    row(links, { icon: "external-link", title: "\u5728 League \u7DAD\u57FA\u67E5\u770B\u6548\u679C", chevron: true, onTap: () => window.open("https://wiki.leagueoflegends.com/en-us/ARAM_Mayhem/Augments") });
+    row(links, { icon: "external-link", title: "OP.GG \u5F37\u5316\u5217\u8868", chevron: true, onTap: () => window.open("https://op.gg/lol/modes/aram-mayhem") });
+  }
+  if (modelUsers(el, store, a, ctx)) {
+    if (history.length) {
+      h(el, "div", "mn-gh", "\u7248\u672C\u7D00\u9304");
+      h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "\u65B0\u589E\u65BC" : "\u79FB\u9664\u65BC"} ${x.patch}`).join(" \xB7 "));
+    }
+    centreBelow(el, 1);
+    return { title: "", el };
+  }
+  const all = store.champions();
+  let tagList = [], list2 = [], label = "";
+  if (data?.fits) {
+    const ok = new Set(data.fits);
+    tagList = data.tags;
+    list2 = all.filter((c) => ok.has(c.id.toLowerCase()));
+    label = `\u904A\u6232\u7684\u5F37\u5316\u6A19\u7C64\uFF1A\u53EA\u6703\u51FA\u73FE\u5728\u9019 ${list2.length} \u4F4D\u82F1\u96C4\u7684\u9078\u9805\u88E1`;
+  } else if (a.fits.length) {
+    tagList = a.fits;
+    list2 = all.filter((c) => a.fits.some((f) => c.archetypes.includes(f) || c.features.includes(f) || c.roles.includes(f))).slice(0, SUGGESTED);
+    label = "\u4EBA\u5DE5\u6574\u7406";
+  } else if (a.effect) {
+    const s = suggest(a.effect, all);
+    tagList = s.tags;
+    list2 = s.champions;
+    label = "\u4F9D\u6548\u679C\u6587\u5B57\u63A8\u6E2C\uFF0C\u50C5\u4F9B\u53C3\u8003";
+  }
+  if (list2.length) {
+    h(el, "div", "mn-gh", "\u9069\u5408\u7684\u82F1\u96C4");
+    if (tagList.length) {
+      const chips = h(el, "div", "mn-chips mn-ag-tags");
+      for (const t of tagList) chip(chips, t);
+    }
+    const strip2 = layoutBlock(h(el, "div", "mn-ag-strip"));
+    for (const c of list2) {
+      const tile2 = h(strip2, "button", "mn-tile");
+      const t = h(tile2, "img");
+      t.src = c.icon;
+      t.alt = "";
+      h(tile2, "span", "mn-tile-n", c.name);
+      tile2.addEventListener("click", (e) => {
+        e.preventDefault();
+        ctx.openChampion(c.id, "augments");
+      });
+    }
+    h(el, "div", "mn-gf", label);
+  }
+  if (history.length) {
+    h(el, "div", "mn-gh", "\u7248\u672C\u7D00\u9304");
+    h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "\u65B0\u589E\u65BC" : "\u79FB\u9664\u65BC"} ${x.patch}`).join(" \xB7 "));
+  }
+  centreBelow(el, 1);
+  return { title: "", el };
+}
+function forChampion(el, store, a, cid) {
+  const c = cid ? store.champion(cid) : void 0;
+  if (!c) return;
+  let best;
+  for (const st of Object.values(store.augTiers[cid] ?? {})) {
+    const t = st.tiers.find((x) => x.id === a.id);
+    if (t && (!best || t.score > best.score)) best = t;
+  }
+  const line = h(el, "div", "mn-ag-for");
+  const im = h(line, "img");
+  im.src = c.icon;
+  im.alt = "";
+  const tx = h(line, "div", "mn-ag-for-t");
+  if (c.pinned.includes(a.name)) {
+    h(tx, "b", void 0, `${c.name} \xB7 \u7F6E\u9802`);
+    return;
+  }
+  if (!best) {
+    h(tx, "b", void 0, `${c.name} \xB7 \u6C92\u6709\u5E6B\u52A9`);
+    return;
+  }
+  const head2 = h(tx, "b");
+  head2.append(`${c.name} \xB7 `);
+  const tier = h(head2, "span", "mn-ag-for-tier", best.tier);
+  tier.style.setProperty("--t", TIER_COLOR[best.tier] ?? "var(--mn-muted)");
+  h(tx, "span", void 0, [best.reason, best.when].filter(Boolean).join(" \xB7 "));
+}
+var USERS_SHOWN = 24;
+function modelUsers(el, store, a, ctx) {
+  const champs = Object.entries(store.augTiers);
+  if (!champs.length) return false;
+  h(el, "div", "mn-gh", "\u9069\u5408\u7684\u82F1\u96C4");
+  const why = store.augUnrated[String(a.id)];
+  if (why) {
+    h(el, "div", "mn-gf", `\u9019\u500B\u5F37\u5316\u7121\u6CD5\u7528\u6578\u503C\u4F30\u7B97\uFF08${why}\uFF09\uFF0C\u6C92\u6709\u6392\u540D\u3002`);
+    return true;
+  }
+  const best = /* @__PURE__ */ new Map();
+  for (const [cid, styles] of champs) {
+    for (const st of Object.values(styles)) {
+      const t = st.tiers.find((x) => x.id === a.id);
+      if (t && (!best.has(cid) || t.score > best.get(cid).score)) best.set(cid, { tier: t.tier, score: t.score });
+    }
+  }
+  let shown = 0;
+  for (const tier of ["S", "A"]) {
+    const list2 = [...best].filter(([, b]) => b.tier === tier).sort((x, y) => y[1].score - x[1].score).slice(0, USERS_SHOWN);
+    const faces = list2.map(([cid]) => store.champion(cid)).filter((c) => !!c);
+    if (!faces.length) continue;
+    shown += faces.length;
+    h(el, "div", "mn-ag-tier", tier);
+    const strip2 = layoutBlock(h(el, "div", "mn-ag-strip"));
+    for (const c of faces) {
+      const tile2 = h(strip2, "button", "mn-tile");
+      const t = h(tile2, "img");
+      t.src = c.icon;
+      t.alt = "";
+      h(tile2, "span", "mn-tile-n", c.name);
+      tile2.addEventListener("click", (e) => {
+        e.preventDefault();
+        ctx.openChampion(c.id, "augments");
+      });
+    }
+  }
+  h(el, "div", "mn-gf", shown ? "\u4F9D\u82F1\u96C4\u7684\u6280\u80FD\u6578\u503C\u4F30\u7B97\uFF1A\u5C0D\u9019\u4E9B\u82F1\u96C4\u662F S \u6216 A\uFF08\u548C\u540C\u7A00\u6709\u5EA6\u7684\u5176\u4ED6\u5F37\u5316\u6BD4\u8F03\uFF0C\u4E5F\u548C\u5176\u4ED6\u82F1\u96C4\u6BD4\u8F03\uFF09\u3002\u4E0D\u662F\u52DD\u7387\u3002" : "\u4F9D\u82F1\u96C4\u7684\u6280\u80FD\u6578\u503C\u4F30\u7B97\uFF0C\u6C92\u6709\u82F1\u96C4\u7279\u5225\u9069\u5408\u9019\u500B\u5F37\u5316\u3002");
+  return true;
+}
+var STAT_CAT = {
+  \u751F\u547D: "\u751F\u547D",
+  \u57FA\u790E\u751F\u547D\u56DE\u5FA9: "\u751F\u547D",
+  \u7269\u7406\u653B\u64CA: "\u653B\u64CA\u529B",
+  \u9B54\u6CD5\u653B\u64CA: "\u6CD5\u8853\u5F37\u5EA6",
+  \u6280\u80FD\u52A0\u901F: "\u6280\u80FD\u6025\u901F",
+  \u51B7\u537B\u6642\u9593\u6E1B\u514D: "\u6280\u80FD\u6025\u901F",
+  \u7269\u7406\u9632\u79A6: "\u8B77\u7532",
+  \u9B54\u6CD5\u9632\u79A6: "\u9B54\u9632",
+  \u8DD1\u901F: "\u79FB\u52D5",
+  \u653B\u64CA\u901F\u5EA6: "\u653B\u901F",
+  \u66B4\u64CA\u7387: "\u66B4\u64CA",
+  \u66B4\u64CA\u50B7\u5BB3: "\u66B4\u64CA",
+  \u9B54\u529B: "\u9B54\u529B",
+  \u57FA\u790E\u9B54\u529B\u56DE\u5FA9: "\u9B54\u529B",
+  \u7269\u7406\u81F4\u547D: "\u7269\u7406\u7A7F\u900F",
+  \u7269\u7406\u7A7F\u900F: "\u7269\u7406\u7A7F\u900F",
+  \u9B54\u6CD5\u7A7F\u900F: "\u6CD5\u8853\u7A7F\u900F",
+  \u666E\u653B\u5438\u8840: "\u5438\u8840",
+  \u5168\u80FD\u5438\u8840: "\u5438\u8840"
+};
+var STAT_NAME = 8;
+var FX_NAME = 16;
+var bareName = (part) => {
+  const b = part.replace(/\s*[（(][^)）]*[)）]/g, "").trim();
+  return b.length > 0 && b.length <= FX_NAME && !/[。，、]/.test(b);
+};
+function splitItemText(desc2) {
+  const stats2 = [];
+  const effects = [];
+  for (const raw of desc2.split(" / ")) {
+    const part = raw.trim();
+    if (!part) continue;
+    const st = /^([+\-]?\d+(?:\.\d+)?%?)\s*([^\d：。，]+)$/.exec(part);
+    if (st && !effects.length && st[2].trim().length <= STAT_NAME) {
+      stats2.push({ value: st[1], name: st[2].trim() });
+      continue;
+    }
+    const named = /^([^：。，]{1,16})：(.+)$/.exec(part);
+    const last = effects[effects.length - 1];
+    if (named) effects.push({ name: named[1].trim(), text: named[2].trim(), active: /^主動/.test(named[1]) });
+    else if (bareName(part)) effects.push({ name: part, text: "", active: /^主動/.test(part) });
+    else if (last) last.text = last.text ? `${last.text}${part}` : part;
+    else effects.push({ name: "", text: part, active: false });
+  }
+  return { stats: stats2, effects };
+}
+function itemPage(ctx) {
+  const store = ctx.plugin.store;
+  const item = store.item(Number(ctx.frame.params?.id));
+  const el = h(null, "div", "mn-page mn-itpage");
+  if (!item) {
+    empty(el, { icon: "package-x", title: "Item not found" });
+    return { title: "", el };
+  }
+  const hero = h(el, "div", "mn-it-hero");
+  const bg = h(hero, "img", "mn-it-bg");
+  bg.src = item.icon;
+  bg.alt = "";
+  const im = h(hero, "img", "mn-it-ic");
+  im.src = item.icon;
+  im.alt = "";
+  const who = h(hero, "div", "mn-it-who");
+  h(who, "h1", "mn-it-name", item.name);
+  const tags2 = h(who, "div", "mn-it-tags");
+  h(tags2, "span", "mn-it-gold", `${item.goldTotal} \u91D1`);
+  if (item.variantOf) h(tags2, "span", "mn-it-aram", "ARAM \u7248\u672C");
+  el.addClass("is-centred");
+  const body = h(el, "div", "mn-it-body");
+  const { stats: stats2, effects } = splitItemText(item.desc);
+  if (stats2.length) {
+    const row2 = h(body, "div", "mn-it-stats");
+    for (const s of stats2) {
+      const cat = STAT_CAT[s.name];
+      const k = cat ? ITEM_CATS.findIndex(([n]) => n === cat) : -1;
+      const x = h(row2, "span", "mn-it-stat");
+      if (cat) x.style.setProperty("--c", ITEM_CAT_COLOR[cat] ?? "var(--mn-muted)");
+      if (k >= 0) shopIcon(x, k, true);
+      h(x, "b", void 0, s.value);
+      x.append(s.name);
+    }
+  }
+  for (const fx of effects) {
+    const card = h(body, "div", "mn-it-fx" + (fx.active ? " is-active" : ""));
+    if (fx.active) h(card, "span", "mn-it-fxk", "\u4E3B\u52D5");
+    if (fx.name) h(card, "b", "mn-it-fxn", fx.name.replace(/^主動\s*[─-]\s*/, ""));
+    if (fx.text) h(card, "p", "mn-it-fxt", fx.text);
+  }
+  if (item.variantOf) h(body, "div", "mn-gf", "\u50F9\u683C\u8207\u6578\u503C\u548C\u4E00\u822C\u7248\u672C\u4E0D\u540C\u3002");
+  if (item.from.length) {
+    h(body, "div", "mn-gh", "\u5408\u6210\u6750\u6599");
+    itemTree(h(body, "div", "mn-itree"), ctx, item.id);
+  }
+  const next = item.into.map((id) => store.item(id)).filter((i) => !!i && !i.reward);
+  const finals = /* @__PURE__ */ new Map();
+  for (const i of next) for (const id of i.into) {
+    const f = store.item(id);
+    if (f && !f.reward && !next.includes(f)) finals.set(f.id, f);
+  }
+  recipe(body, ctx, "\u5347\u7D1A", next);
+  recipe(body, ctx, "\u6700\u7D42", [...finals.values()].sort((x, y) => x.goldTotal - y.goldTotal));
+  const official = store.officialFor("items", item.name);
+  if (official.length) {
+    h(body, "div", "mn-gh", "\u7248\u672C\u8ABF\u6574");
+    officialBlock(body, official);
+  }
+  return { title: "", el };
+}
+function recipe(el, ctx, title, items) {
+  if (!items.length) return;
+  h(el, "div", "mn-gh", title);
+  const grid = layoutBlock(h(el, "div", "mn-recipe"));
+  for (const i of items) {
+    const b = h(grid, "button", "mn-rc");
+    const im = h(b, "img");
+    im.src = i.icon;
+    im.alt = "";
+    h(b, "span", "mn-rc-n", i.name);
+    h(b, "span", "mn-rc-g", `${i.goldTotal}`);
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      ctx.openItem(i.id);
+    });
+  }
+}
+
+// src/pages/champions.ts
+var ROLES = ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u5C04\u624B", "\u8F14\u52A9"];
+var DAMAGES = ["\u7269\u7406", "\u9B54\u6CD5", "\u6DF7\u5408"];
+var REACH = ["\u8FD1\u6230", "\u4E2D\u7A0B", "\u9060\u7A0B"];
+var SORTS2 = [["name", "\u540D\u7A31"], ["diff", "\u96E3\u5EA6"], ["range", "\u5C04\u7A0B"]];
+var SORT_DIR2 = { name: 1, diff: 1, range: -1 };
+var SEARCH_EXTRA = 8;
+var F = { lanes: /* @__PURE__ */ new Set(), roles: /* @__PURE__ */ new Set(), dmg: "", feat: /* @__PURE__ */ new Map(), reach: "", sort: "name", dir: 1, open: false };
+var activeFilters = () => F.roles.size + (F.dmg ? 1 : 0) + F.feat.size + (F.reach ? 1 : 0);
+function matches(c, lanes) {
+  if (F.lanes.size && !lanes.some((l) => F.lanes.has(l))) return false;
+  if (F.roles.size && !c.roles.some((r) => F.roles.has(r))) return false;
+  if (F.dmg && c.damageType !== F.dmg) return false;
+  for (const [f, want] of F.feat) if (c.features.includes(f) !== (want === 1)) return false;
+  return !F.reach || c.archetypes.includes(F.reach);
+}
+function sorted(list2) {
+  const byName = (a, b) => a.name.localeCompare(b.name, "zh-Hant");
+  if (F.sort === "diff") return [...list2].sort((a, b) => F.dir * (a.difficulty - b.difficulty) || byName(a, b));
+  if (F.sort === "range") return [...list2].sort((a, b) => F.dir * (a.range - b.range) || byName(a, b));
+  return F.dir === 1 ? list2 : [...list2].reverse();
+}
+function championPicker(parent, ctx) {
+  const store = ctx.plugin.store;
+  const all = store.champions();
+  if (!all.length) {
+    empty(parent, { icon: "database", title: "No champion notes yet", text: "Run python3 tools/fetch_data.py" });
+    return;
+  }
+  let query = "";
+  const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)]));
+  const filtersHost = layoutBlock(h(parent, "div"));
+  const filters = h(filtersHost, "div", "mn-fgroup");
+  const count2 = h(parent, "div", "mn-count");
+  const list2 = h(parent, "div", "mn-rq-list");
+  const gridHost = layoutBlock(h(list2, "div"));
+  const grid = h(gridHost, "div", "mn-grid");
+  const extra = layoutBlock(h(list2, "div"));
+  const dock = h(parent, "div", "mn-rq-dock");
+  const panel = h(dock, "div", "mn-fpanel mn-fsheet");
+  const cap = h(dock, "div", "mn-rq-cap");
+  icon(cap, "search", "mn-rq-cap-ic");
+  const search = h(cap, "input");
+  search.type = "search";
+  search.placeholder = "\u641C\u5C0B\u82F1\u96C4\u3001\u5F37\u5316\u3001\u88DD\u5099";
+  search.setAttribute("enterkeyhint", "search");
+  const mic = h(cap, "button", "mn-rq-mic");
+  icon(mic, "mic");
+  mic.setAttribute("aria-label", "\u7528\u9375\u76E4\u7684\u9EA5\u514B\u98A8\u8AAA");
+  mic.addEventListener("click", (e) => {
+    e.preventDefault();
+    search.focus();
+  });
+  const fbHost = h(cap, "div", "mn-cap-fb");
+  const draw = () => {
+    grid.empty();
+    extra.empty();
+    const q = query.trim().toLowerCase();
+    const hits = sorted(all.filter((c) => matches(c, store.lanes(c)) && (!q || c.name.toLowerCase().includes(q) || c.title.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))));
+    count2.textContent = `${hits.length} / ${all.length}`;
+    for (const c of hits) {
+      const tile2 = h(grid, "button", "mn-tile");
+      const im = h(tile2, "img");
+      im.src = c.icon;
+      im.alt = "";
+      const rd = recent.get(c.name);
+      if (rd) {
+        const m = marker(rd);
+        const b = h(tile2, "span", "mn-tile-b", m.mark);
+        b.style.background = m.color;
+      }
+      const ms = store.masteryOf(c.id);
+      if (ms && ms.level > 0) h(tile2, "span", "mn-tile-m" + (ms.level >= 10 ? " is-high" : ""), String(ms.level));
+      h(tile2, "span", "mn-tile-n", c.name);
+      tile2.addEventListener("click", (e) => {
+        e.preventDefault();
+        ctx.openChampion(c.id);
+      });
+    }
+    if (!q) return;
+    if (!hits.length) empty(grid, { icon: "search-x", title: "No champion" });
+    const augs = ctx.plugin.settings.mode === "mayhem" ? store.augments().filter((a) => a.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA) : [];
+    if (augs.length) {
+      const g = group(extra, "Augments");
+      for (const a of augs) row(g, { image: a.icon, rarity: a.rarity, title: a.name, value: a.rarity, chevron: true, onTap: () => ctx.openAugment(a.id) });
+    }
+    const items = store.modeItems().filter((i) => i.name.toLowerCase().includes(q)).slice(0, SEARCH_EXTRA);
+    if (items.length) {
+      const g = group(extra, "Items");
+      for (const i of items) row(g, { image: i.icon, title: i.name, sub: i.desc || void 0, value: `${i.goldTotal}`, chevron: true, onTap: () => ctx.openItem(i.id) });
+    }
+  };
+  const redraw = () => {
+    drawFilters();
+    drawPanel();
+    draw();
+  };
+  const drawFilters = () => {
+    filters.empty();
+    const row2 = h(filters, "div", "mn-lanebar");
+    const known = store.hasLanes();
+    for (const l of LANES) {
+      const chipEl = laneChip(row2, l, { on: F.lanes.has(l), onTap: () => {
+        if (!known) {
+          tip(chipEl, "\u9084\u6C92\u6709\u5206\u8DEF\u8CC7\u6599");
+          return;
+        }
+        const was = F.lanes.has(l);
+        F.lanes.clear();
+        if (!was) F.lanes.add(l);
+        redraw();
+      } });
+    }
+    const n = activeFilters();
+    row2.prepend(count2);
+    fbHost.empty();
+    const fb = h(fbHost, "button", "mn-filterbtn" + (F.open ? " is-open" : "") + (n ? " has-n" : ""));
+    fb.setAttribute("aria-label", "\u7BE9\u9078");
+    icon(fb, "sliders-horizontal", "mn-filterbtn-ic");
+    if (n) h(fb, "span", "mn-filterbtn-n", String(n));
+    fb.addEventListener("click", (e) => {
+      e.preventDefault();
+      F.open = !F.open;
+      drawFilters();
+      drawPanel();
+    });
+  };
+  const drawPanel = () => {
+    panel.empty();
+    panel.toggleClass("is-open", F.open);
+    if (!F.open) return;
+    const sect = (title, hint = "") => {
+      const s = h(panel, "div", "mn-fp-s");
+      const head2 = h(s, "div", "mn-fp-h");
+      h(head2, "span", "mn-fp-t", title);
+      if (hint) h(head2, "span", "mn-fp-hint", hint);
+      return s;
+    };
+    const roleSect = sect("\u5B9A\u4F4D");
+    if (activeFilters() || F.sort !== "name" || F.dir !== 1) {
+      const clear = h(roleSect.querySelector(".mn-fp-h") ?? roleSect, "button", "mn-clear", "\u5168\u90E8\u6E05\u9664");
+      clear.addEventListener("click", (e) => {
+        e.preventDefault();
+        F.roles.clear();
+        F.dmg = "";
+        F.feat.clear();
+        F.reach = "";
+        F.sort = "name";
+        F.dir = 1;
+        redraw();
+      });
+    }
+    const roleRow = fgrid(roleSect, ROLES.length);
+    for (const r of ROLES) roleChip(roleRow, r, { on: F.roles.has(r), onTap: () => {
+      F.roles.has(r) ? F.roles.delete(r) : F.roles.add(r);
+      redraw();
+    } });
+    const ab = sect("\u6280\u80FD");
+    for (const [group2, tags2] of TAG_GROUPS) {
+      const line = h(ab, "div", "mn-fcat");
+      h(line, "span", "mn-fcat-l", group2);
+      for (const f of tags2) {
+        const on = F.feat.get(f) === 1;
+        tagFilter(line, f, on, () => {
+          if (on) F.feat.delete(f);
+          else F.feat.set(f, 1);
+          redraw();
+        });
+      }
+    }
+    const kindRow = fgrid(sect("\u50B7\u5BB3\u985E\u578B"), DAMAGES.length);
+    for (const d of DAMAGES) iconFilter(kindRow, d, DAMAGE_ICON[d], DAMAGE_COLOR[d], F.dmg === d, () => {
+      F.dmg = F.dmg === d ? "" : d;
+      redraw();
+    });
+    segmented(sect("\u653B\u64CA\u8DDD\u96E2"), [["", "\u5168\u90E8"], ...REACH.map((r) => [r, r])], F.reach, (id) => {
+      F.reach = id;
+      redraw();
+    }, "is-sm");
+    const arrow = (id) => F.sort !== id ? "" : F.dir === 1 ? " \u2191" : " \u2193";
+    segmented(sect("\u6392\u5E8F"), SORTS2.map(([id, l]) => [id, l + arrow(id)]), F.sort, (id) => {
+      if (id === F.sort) F.dir = F.dir === 1 ? -1 : 1;
+      else {
+        F.sort = id;
+        F.dir = SORT_DIR2[id] ?? 1;
+      }
+      redraw();
+    }, "is-sm");
+  };
+  search.addEventListener("input", () => {
+    query = search.value;
+    draw();
+  });
+  redraw();
+}
+function championsPage(ctx) {
+  if (ctx.frame.key === "champion") return championCard(ctx);
+  const el = page("Champions");
+  fixedPage(el, ctx.component);
+  championPicker(el, ctx);
+  return { title: "Champions", el, ready: null };
+}
+var lastSub = /* @__PURE__ */ new Map();
+function rememberSub(id, sub) {
+  lastSub.set(id, sub);
+}
+var AXIS_PX = 8;
+var TURN_PART = 0.22;
+var FLICK_PX_MS = 0.35;
+var EDGE_PULL = 0.3;
+var WHEEL_PX = 12;
+var WHEEL_GAP_MS = 450;
+var TAP_SIDE = 0.22;
+var PAGES = [["overview", "\u6982\u89BD", "id-card"], ["skills", "\u6280\u80FD", "keyboard"], ["build", "\u51FA\u88DD", "shopping-bag"], ["augments", "\u5F37\u5316", "sparkles"], ["tips", "\u6280\u5DE7", "lightbulb"]];
+function championCard(ctx) {
+  const store = ctx.plugin.store;
+  const c = store.champion(String(ctx.frame.params?.id ?? ""));
+  const el = h(null, "div", "mn-page mn-champ is-v3");
+  if (!c) {
+    empty(el, { icon: "user-x", title: "Champion not found" });
+    return { title: "", el };
+  }
+  fixedPage(el, ctx.component);
+  const mayhem = ctx.plugin.settings.mode === "mayhem";
+  const part = (p) => () => ctx.push({ key: "champpart", title: `${c.name} \xB7 ${PART_TITLE[p]}`, params: { id: c.id, part: p } });
+  el.style.setProperty("--dc", DAMAGE_COLOR[c.damageType || c.skillDamage[0] || ""] ?? "var(--mn-accent)");
+  const hero = h(el, "div", "mn-hero");
+  const bg = h(hero, "div", "mn-hero-bg");
+  bg.style.backgroundImage = `url("${cardArt(c.id)}")`;
+  const head2 = h(null, "div", "mn-card-head");
+  const im = h(head2, "img", "mn-card-img");
+  im.src = c.icon;
+  im.alt = "";
+  const splash = bg.style.backgroundImage.slice(5, -2);
+  blockUntil(hero, Promise.all([new Promise((r) => {
+    const x = new Image();
+    x.onload = x.onerror = () => r();
+    x.src = splash;
+  }), new Promise((r) => {
+    if (im.complete) r();
+    else {
+      im.addEventListener("load", () => r(), { once: true });
+      im.addEventListener("error", () => r(), { once: true });
+    }
+  })]).then(() => void 0), 200);
+  const who = h(head2, "div", "mn-card-who");
+  h(who, "h1", "mn-title", c.name);
+  h(who, "div", "mn-card-sub", c.title);
+  const tags2 = h(who, "div", "mn-chips");
+  for (const r of c.roles) chip(tags2, r);
+  const mastery = store.masteryOf(c.id);
+  if (mastery && mastery.level > 0) chip(tags2, `\u719F\u7DF4\u5EA6 ${mastery.level}`, { color: "var(--color-yellow)" });
+  const now = store.currentChanges(c.id);
+  const official = store.officialFor("champions", c.name)[0];
+  if (badgeText(now)) chip(tags2, badgeText(now), { color: badgeColor(now), onTap: part("overview") });
+  else if (official) {
+    const m = marker(entryDir(official.entry));
+    chip(tags2, `${m.mark} ${official.patch}`, { color: m.color, onTap: part("overview") });
+  }
+  const pages = PAGES.filter(([p]) => p !== "augments" || mayhem);
+  const box = h(el, "div", "mn-cpa");
+  const track = h(box, "div", "mn-cpa-track");
+  let tagLine = null;
+  const shelf = h(el, "div", "mn-clip-shelf");
+  const cards = pages.map(([p]) => {
+    const pg = h(track, "section", "mn-cpa-page is-" + p);
+    const body = h(pg, "div", "mn-cpa-body");
+    if (p === "overview") tagLine = overviewTop(body, c, part("overview"));
+    else if (p === "skills") skillStrip(body, c, now, { open: c.skills.findIndex((s) => s.key === "Q"), scroll: false, shelf, barBelow: true });
+    else if (p === "build") buildTab(body, c, ctx);
+    else if (p === "augments") augmentsTop(body, c, ctx, part("augments"));
+    else tips(body, c, ctx);
+    return pg;
+  });
+  const look = cards[pages.findIndex(([p]) => p === "overview")] ?? el;
+  look.append(head2);
+  if (tagLine) h(look, "div", "mn-cv-foot").append(tagLine);
+  const hint = h(el, "div", "mn-cpa-hint");
+  const dots = pages.map(() => h(hint, "i"));
+  let cur = -1;
+  const mark = (i) => {
+    if (i === cur) return;
+    cur = i;
+    dots.forEach((d, k) => d.toggleClass("is-on", k === i));
+    ctx.frame.at = pages[i][0];
+    el.toggleClass("is-deep", i > 0);
+  };
+  let pos = 0;
+  const place = (px, animate) => {
+    track.toggleClass("is-settling", animate);
+    track.style.transform = `translateX(calc(${-pos * 100}% + ${px}px))`;
+  };
+  const go = (i, animate = true) => {
+    pos = Math.max(0, Math.min(cards.length - 1, i));
+    place(0, animate);
+    mark(pos);
+  };
+  let x0 = 0, y0 = 0, t0 = 0, dx = 0, axis = "";
+  track.addEventListener("touchstart", (e) => {
+    e.stopPropagation();
+    const t = e.touches[0];
+    x0 = t.clientX;
+    y0 = t.clientY;
+    t0 = Date.now();
+    dx = 0;
+    axis = "";
+  }, { passive: true });
+  track.addEventListener("touchmove", (e) => {
+    e.stopPropagation();
+    const t = e.touches[0];
+    const mx = t.clientX - x0, my = t.clientY - y0;
+    if (!axis) {
+      if (Math.abs(mx) < AXIS_PX && Math.abs(my) < AXIS_PX) return;
+      axis = Math.abs(mx) > Math.abs(my) ? "x" : "y";
+    }
+    if (axis !== "x") return;
+    if (e.cancelable) e.preventDefault();
+    const edge = pos === 0 && mx > 0 || pos === cards.length - 1 && mx < 0;
+    dx = edge ? mx * EDGE_PULL : mx;
+    place(dx, false);
+  }, { passive: false });
+  const end = () => {
+    if (axis !== "x") {
+      axis = "";
+      return;
+    }
+    axis = "";
+    const w = track.clientWidth || 1;
+    const flick = Math.abs(dx) / Math.max(1, Date.now() - t0) > FLICK_PX_MS && Math.abs(dx) > AXIS_PX * 2;
+    go(pos + (Math.abs(dx) > w * TURN_PART || flick ? dx < 0 ? 1 : -1 : 0));
+  };
+  for (const ev of ["touchend", "touchcancel"]) track.addEventListener(ev, end, { passive: true });
+  let wheelAt = 0;
+  track.addEventListener("wheel", (e) => {
+    if (Math.abs(e.deltaX) <= Math.abs(e.deltaY) || Math.abs(e.deltaX) < WHEEL_PX) return;
+    e.preventDefault();
+    if (Date.now() - wheelAt < WHEEL_GAP_MS) return;
+    wheelAt = Date.now();
+    go(pos + (e.deltaX > 0 ? 1 : -1));
+  }, { passive: false });
+  const startSub = ctx.frame.at ?? lastSub.get(c.id);
+  lastSub.delete(c.id);
+  const start = Math.max(0, pages.findIndex(([p]) => p === startSub));
+  go(start, false);
+  return { title: "", el, ready: null };
+}
+var DIFF_STEPS = 10;
+var TAGS_SHOWN = 4;
+function overviewTop(body, c, more) {
+  const row2 = h(body, "div", "mn-cv-look");
+  profileRadar(h(row2, "div", "mn-cv-radar"), profileAxes(c), DAMAGE_COLOR[c.damageType || c.skillDamage[0] || ""] ?? "var(--mn-accent)");
+  statTiles(row2, c);
+  const t = tagRow(body, c, void 0, true);
+  t.addClass("mn-cv-tags");
+  Array.from(t.children).slice(TAGS_SHOWN).forEach((x) => x.remove());
+  for (const x of [row2, t]) x.addEventListener("click", (e) => {
+    e.preventDefault();
+    more();
+  });
+  return t;
+}
+function statTiles(parent, c) {
+  const tiles = h(parent, "div", "mn-cv-stats");
+  const tile2 = (iconName, color, big, small) => {
+    const t = h(tiles, "div", "mn-cv-stat");
+    t.style.setProperty("--c", color);
+    icon(t, iconName, "mn-cv-sic");
+    h(t, "b", void 0, big);
+    h(t, "span", void 0, small);
+    return t;
+  };
+  const main = c.damageType || c.skillDamage[0] || "";
+  if (main) tile2(DAMAGE_ICON[main] ?? "flame", DAMAGE_COLOR[main] ?? "var(--mn-muted)", main === "\u7269\u7406" ? "\u7269\u653B" : main === "\u9B54\u6CD5" ? "\u9B54\u653B" : main, "\u50B7\u5BB3");
+  const reach = reachOf(c) || (c.range >= 550 ? "\u9060\u7A0B" : c.range >= 300 ? "\u4E2D\u7A0B" : "\u8FD1\u6230");
+  tile2("ruler", "var(--mn-dash)", reach, c.range ? `\u5C04\u7A0B ${c.range}` : "\u8DDD\u96E2");
+  const d = tile2("gauge", "var(--mn-accent)", `${c.difficulty}`, "\u96E3\u5EA6");
+  const bar = h(d, "div", "mn-cv-bar");
+  for (let i = 0; i < DIFF_STEPS; i++) h(bar, "i", i < c.difficulty ? "is-on" : "");
+  return tiles;
+}
+var PART_TITLE = { overview: "\u6982\u89BD", skills: "\u6280\u80FD", build: "\u51FA\u88DD", augments: "\u5F37\u5316", tips: "\u6280\u5DE7" };
+function championPart(ctx) {
+  const c = ctx.plugin.store.champion(String(ctx.frame.params?.id ?? ""));
+  const p = String(ctx.frame.params?.part ?? "");
+  const el = h(null, "div", "mn-page mn-part");
+  if (!c) {
+    empty(el, { icon: "user-x", title: "Champion not found" });
+    return { title: "", el };
+  }
+  const head2 = h(el, "div", "mn-title-row mn-part-head");
+  const face = h(head2, "img");
+  face.src = c.icon;
+  face.alt = "";
+  const words = h(head2, "div");
+  h(words, "span", "mn-part-who", c.name);
+  h(words, "b", "mn-part-what", `\u5168\u90E8${PART_TITLE[p] ?? ""}`);
+  if (p === "overview") overviewAll(el, c, ctx);
+  else if (p === "skills") skillStrip(el, c, ctx.plugin.store.currentChanges(c.id), { open: c.skills.findIndex((s) => s.key === "Q"), scroll: false, barBelow: true });
+  else if (p === "build") buildTab(el, c, ctx);
+  else if (p === "augments") augmentsAll(el, c, ctx);
+  else tips(el, c, ctx);
+  return { title: `${c.name} \xB7 ${PART_TITLE[p] ?? ""}`, el, art: cardArt(c.id) };
+}
+var CHAMPION_TABS = [["\u6982\u89BD", "id-card"], ["\u6280\u80FD", "keyboard"], ["\u51FA\u88DD", "shopping-bag"], ["\u5F37\u5316", "sparkles"], ["\u6280\u5DE7", "lightbulb"]];
+function overviewAll(body, c, ctx) {
+  const look = h(body, "div", "mn-ov");
+  styleChart(h(look, "div", "mn-ov-chart"), c);
+  statTiles(look, c).addClass("mn-ov-stats");
+  tagRow(look, c, void 0, true).addClass("mn-ov-tags");
+  const lines = damageLines(c);
+  if (lines.length) {
+    tierHead(look, "\u6280\u80FD\u50B7\u5BB3");
+    const list2 = h(look, "div", "mn-ov-dl");
+    for (const t of ["", "", "", "\u7269\u653B", "\u9B54\u653B"]) h(list2, "span", "mn-ov-col", t);
+    for (const d of lines) {
+      h(list2, "b", "mn-ov-key", d.key);
+      const name = h(list2, "span", "mn-ov-name", d.name);
+      if (d.onHit) h(name, "small", void 0, "\u89F8\u767C\u653B\u64CA\u7279\u6548");
+      h(list2, "span", "mn-ov-kind", d.kind).style.color = DAMAGE_COLOR[d.kind] ?? "inherit";
+      h(list2, "span", "mn-ov-pct", d.ad ? `${Math.round(d.ad)}%` : "\u2014").style.color = d.ad ? DAMAGE_COLOR["\u7269\u7406"] : "";
+      h(list2, "span", "mn-ov-pct", d.ap ? `${Math.round(d.ap)}%` : "\u2014").style.color = d.ap ? DAMAGE_COLOR["\u9B54\u6CD5"] : "";
+    }
+  }
+  if (c.video) moreLink(look, "\u9023\u62DB\u5F71\u7247", () => window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(c.video)}`));
+  changesBlock(look, c, ctx);
+  body.addClass("is-centred");
+}
+var TIER_ORDER = ["S", "A", "B", "C"];
+var AUG_COLS = 4;
+var MODEL_NOTE = "\u4F9D\u82F1\u96C4\u7684\u6280\u80FD\u6578\u503C\u4F30\u7B97\uFF1A\u5728\u7B2C 3\u30017\u300111\u300115 \u7D1A\u9078\u5230\u6642\uFF0C\u8B93\u9019\u4F4D\u82F1\u96C4\u8B8A\u5F37\u591A\u5C11\uFF0C\u548C\u540C\u7A00\u6709\u5EA6\u7684\u5176\u4ED6\u5F37\u5316\u6BD4\u8F03\u3002\u4E0D\u662F\u52DD\u7387\u3002\u9EDE\u5F37\u5316\u770B\u539F\u56E0\u3002";
+function tierPicks(store, c, style) {
+  const out = [];
+  for (const name of c.pinned) {
+    const a = store.augments().find((x) => x.name === name);
+    if (a) out.push({ a, why: "\u7F6E\u9802", score: 100, tier: "S" });
+  }
+  const rows = [...style.tiers].sort((x, y) => TIER_ORDER.indexOf(x.tier) - TIER_ORDER.indexOf(y.tier) || y.score - x.score);
+  for (const t of rows) {
+    const a = store.augment(t.id);
+    if (!a || c.avoid.includes(a.name) || c.pinned.includes(a.name)) continue;
+    out.push({ a, why: t.reason, score: t.score, tier: t.tier });
+  }
+  return out;
+}
+function styleSwitch(body, styles, draw) {
+  if (styles.length < 2) return;
+  let at = 0;
+  const words = textSwitch(body, styles.map((s, i) => [String(i), s.name]), "0", (id) => {
+    at = Number(id);
+    draw(styles[at]);
+  });
+  body.addEventListener("click", (e) => {
+    if (e.target.closest("button, a, input, video, img, .mn-tsw")) return;
+    const r = body.getBoundingClientRect();
+    const x = (e.clientX - r.left) / (r.width || 1);
+    const to = x < TAP_SIDE ? at - 1 : x > 1 - TAP_SIDE ? at + 1 : at;
+    if (to === at || to < 0 || to >= styles.length) return;
+    words.children[to]?.click();
+  });
+}
+function augmentsTop(body, c, ctx, more) {
+  const styles = Object.values(ctx.plugin.store.augTiers[c.id] ?? {});
+  if (!styles.length) {
+    augmentsTab(body, c, ctx);
+    return;
+  }
+  body.addClass("is-glance");
+  styleSwitch(body, styles, (s) => draw(s));
+  const box = h(body, "div", "mn-cv-glance");
+  const draw = (style) => {
+    box.empty();
+    const picks = tierPicks(ctx.plugin.store, c, style).filter((p) => p.tier === "S");
+    if (!picks.length) {
+      h(box, "p", "mn-cpa-empty", "\u6C92\u6709\u7279\u5225\u9069\u5408\u7684\u5F37\u5316\u3002");
+      return;
+    }
+    const grid = augmentTiles(box, picks, ctx, { bare: true, champ: c.id });
+    requestAnimationFrame(() => {
+      while (box.scrollHeight > box.clientHeight + 1 && grid.childElementCount > AUG_COLS) {
+        const last = (grid.childElementCount - 1) % AUG_COLS + 1;
+        for (let i = 0; i < last; i++) grid.lastElementChild?.remove();
+      }
+    });
+  };
+  draw(styles[0]);
+  moreLink(body, "\u5168\u90E8\u5F37\u5316", more);
+}
+function augmentsAll(body, c, ctx) {
+  const store = ctx.plugin.store;
+  const styles = Object.values(store.augTiers[c.id] ?? {});
+  if (!styles.length) {
+    augmentsTab(body, c, ctx);
+    return;
+  }
+  styleSwitch(body, styles, (s) => draw(s));
+  const box = h(body, "div", "mn-cv-tiers");
+  const draw = (style) => {
+    box.empty();
+    const picks = tierPicks(store, c, style);
+    for (const tier of TIER_ORDER) {
+      const these = picks.filter((p) => p.tier === tier);
+      if (!these.length) continue;
+      tierHead(box, tier);
+      augmentTiles(box, these, ctx, { bare: true, champ: c.id });
+    }
+    const none = style.none.map((n) => store.augment(n.id)).filter((a) => !!a && !c.pinned.includes(a.name));
+    if (none.length) h(box, "div", "mn-gf", `\u6C92\u6709\u5E6B\u52A9\uFF1A${none.map((a) => a.name).join("\u3001")}`);
+  };
+  draw(styles[0]);
+  h(body, "div", "mn-gf", MODEL_NOTE);
+}
+function augmentsTab(body, c, ctx) {
+  const picks = augmentPicks(ctx.plugin.store, c);
+  if (!picks.length) {
+    empty(body, { icon: "sparkles", title: "No augments matched yet" });
+    return;
+  }
+  augmentTiles(body, picks, ctx);
+  h(body, "div", "mn-gf", "\u4F9D\u5F37\u5316\u6548\u679C\u548C\u9019\u4F4D\u82F1\u96C4\u7684\u6280\u80FD\u6311\u9078\uFF1A\u5403\u9B54\u653B\u6216\u7269\u653B\u3001\u666E\u653B\u578B\u3001\u6709\u8B77\u76FE\u6216\u6CBB\u7642\u3001\u5766\u514B\u3001\u6709\u4F4D\u79FB\u6216\u63A7\u5834\u3001\u7528\u9B54\u529B\u3002\u7F6E\u9802\u662F\u4F60\u5728\u82F1\u96C4\u7B46\u8A18\u5BEB\u7684 pinned\u3002\u6C92\u6709\u52DD\u7387\u8CC7\u6599\uFF08Riot \u6C92\u6709\u516C\u958B\u5927\u6DF7\u6230\u5C0D\u6230\uFF09\u3002");
+}
+function tips(body, c, ctx) {
+  void ctx;
+  if (!c.tips.length) {
+    empty(body, { icon: "lightbulb", title: "No tips yet", text: "Add tips to this champion's note." });
+    return;
+  }
+  for (const t of c.tips) {
+    const card = h(body, "div", "mn-tip");
+    icon(card, "lightbulb", "mn-tip-ic");
+    const main = h(card, "div", "mn-tip-main");
+    h(main, "div", "mn-tip-t", t.title);
+    h(main, "div", "mn-tip-s", t.text);
+    metaLine(main, t, ctx.plugin.store.currentPatch());
+    if (t.video) {
+      const v = h(main, "button", "mn-tip-v", "\u25B6 Video");
+      v.addEventListener("click", (e) => {
+        e.preventDefault();
+        window.open(`https://www.youtube.com/watch?v=${encodeURIComponent(t.video)}`);
+      });
+    }
+  }
+}
+
+// src/data/riot.ts
+var import_obsidian14 = require("obsidian");
+var KEY2 = "morellonomicon-profile";
+var PROFILE_FRESH = 10 * 60 * 1e3;
+var GAMES = 10;
+var REGION = {
+  TW2: { account: "asia", match: "sea" },
+  SG2: { account: "asia", match: "sea" },
+  VN2: { account: "asia", match: "sea" },
+  OC1: { account: "americas", match: "sea" },
+  JP1: { account: "asia", match: "asia" },
+  KR: { account: "asia", match: "asia" },
+  NA1: { account: "americas", match: "americas" },
+  EUW1: { account: "europe", match: "europe" },
+  EUN1: { account: "europe", match: "europe" }
+};
+var QUEUE = { 400: "\u4E00\u822C", 430: "\u4E00\u822C", 490: "\u5FEB\u901F\u5C0D\u6230", 420: "\u55AE/\u96D9\u6392", 440: "\u5F48\u6027\u7A4D\u5206", 450: "\u96A8\u6A5F\u55AE\u4E2D", 2400: "\u5927\u6DF7\u6230", 900: "\u963F\u798F\u5FEB\u6253", 1700: "\u7AF6\u6280\u5834", 1900: "\u963F\u798F\u5FEB\u6253", 830: "\u4EBA\u6A5F", 840: "\u4EBA\u6A5F", 850: "\u4EBA\u6A5F" };
+var RiotError = class extends Error {
+};
+function cachedProfile(app, riotId) {
+  try {
+    const p = app.loadLocalStorage(KEY2);
+    return p && p.riotId === riotId ? p : null;
+  } catch {
+    return null;
+  }
+}
+async function fetchProfile(app, riotId, server, key) {
+  if (!key) throw new RiotError("\u9084\u6C92\u8A2D\u5B9A Riot API \u91D1\u9470(\u8A2D\u5B9A \u2192 Riot API key)");
+  const [name, tag] = riotId.split("#");
+  const reg = REGION[server] ?? REGION.TW2;
+  const plat = server.toLowerCase();
+  const get = async (host, path) => {
+    const r = await (0, import_obsidian14.requestUrl)({ url: `https://${host}.api.riotgames.com${path}`, headers: { "X-Riot-Token": key }, throw: false });
+    if (r.status === 200) return r.json;
+    if (r.status === 401 || r.status === 403) throw new RiotError("\u91D1\u9470\u7121\u6548\u6216\u5DF2\u904E\u671F(\u958B\u767C\u91D1\u9470\u6BCF 24 \u5C0F\u6642\u8981\u63DB)");
+    if (r.status === 404) throw new RiotError("\u627E\u4E0D\u5230\u9019\u500B Riot ID,\u6AA2\u67E5\u540D\u7A31\u3001\u6A19\u7C64\u548C\u4F3A\u670D\u5668");
+    if (r.status === 429) throw new RiotError("\u67E5\u592A\u591A\u6B21\u4E86,\u7B49\u4E00\u5169\u5206\u9418\u518D\u8A66");
+    throw new RiotError(`Riot \u56DE\u61C9\u932F\u8AA4 ${r.status}`);
+  };
+  const acc = await get(reg.account, `/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name ?? "")}/${encodeURIComponent(tag ?? "")}`);
+  const id = encodeURIComponent(acc.puuid);
+  const [sum, leagues, mastery, ids] = await Promise.all([
+    get(plat, `/lol/summoner/v4/summoners/by-puuid/${id}`),
+    get(plat, `/lol/league/v4/entries/by-puuid/${id}`),
+    get(plat, `/lol/champion-mastery/v4/champion-masteries/by-puuid/${id}/top?count=3`),
+    get(reg.match, `/lol/match/v5/matches/by-puuid/${id}/ids?count=${GAMES}`)
+  ]);
+  const games = [];
+  for (const m of ids) {
+    try {
+      const g = await get(reg.match, `/lol/match/v5/matches/${encodeURIComponent(m)}`);
+      const p = g.info.participants.find((x) => x.puuid === acc.puuid);
+      if (!p) continue;
+      games.push({
+        id: m,
+        queue: g.info.queueId,
+        end: g.info.gameEndTimestamp,
+        duration: g.info.gameDuration,
+        champion: p.championName,
+        win: p.win,
+        k: p.kills,
+        d: p.deaths,
+        a: p.assists,
+        cs: p.totalMinionsKilled + p.neutralMinionsKilled,
+        items: [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5].filter((x) => x > 0)
+      });
+    } catch (e) {
+      if (e instanceof RiotError && /太多次/.test(e.message)) break;
+    }
+  }
+  const prof = {
+    riotId,
+    fetched: Date.now(),
+    name: acc.gameName,
+    tag: acc.tagLine,
+    icon: sum.profileIconId,
+    level: sum.summonerLevel,
+    ranks: leagues.map((l) => ({ queue: l.queueType, tier: l.tier, division: l.rank, lp: l.leaguePoints, wins: l.wins, losses: l.losses })),
+    mastery: mastery.map((x) => ({ championKey: x.championId, level: x.championLevel, points: x.championPoints })),
+    games
+  };
+  try {
+    app.saveLocalStorage(KEY2, prof);
+  } catch {
+  }
+  return prof;
+}
+var TIER = { IRON: "\u9435\u724C", BRONZE: "\u9285\u724C", SILVER: "\u9280\u724C", GOLD: "\u91D1\u724C", PLATINUM: "\u767D\u91D1", EMERALD: "\u7FE1\u7FE0", DIAMOND: "\u947D\u77F3", MASTER: "\u5927\u5E2B", GRANDMASTER: "\u5B97\u5E2B", CHALLENGER: "\u83C1\u82F1" };
+var emblem = (tier) => `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests/${tier.toLowerCase()}.png`;
+var ago = (t) => {
+  const m = Math.round((Date.now() - t) / 6e4);
+  return m < 60 ? `${Math.max(1, m)} \u5206\u9418\u524D` : m < 1440 ? `${Math.round(m / 60)} \u5C0F\u6642\u524D` : `${Math.round(m / 1440)} \u5929\u524D`;
+};
+
+// src/pages/home.ts
+var SERVERS = [["TW2", "\u53F0\u7063"], ["JP1", "\u65E5\u672C"], ["KR", "\u97D3\u570B"], ["SG2", "\u65B0\u52A0\u5761"], ["VN2", "\u8D8A\u5357"], ["NA1", "\u5317\u7F8E"], ["EUW1", "\u897F\u6B50"], ["EUN1", "\u5317\u6B50\u6771\u6B50"], ["OC1", "\u5927\u6D0B\u6D32"]];
+var TOP = 3;
+function homePage(ctx) {
+  const store = ctx.plugin.store;
+  const s = ctx.plugin.settings;
+  const el = page("Home");
+  const all = store.champions();
+  const byId = new Map(all.map((c) => [c.id, c]));
+  const prof = s.riotId ? cachedProfile(ctx.app, s.riotId) : null;
+  const byKey = new Map(all.map((c) => [c.key, c]));
+  let top = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).slice(0, TOP);
+  if (prof?.mastery.length) top = prof.mastery.filter((m) => byKey.has(m.championKey)).map((m) => [byKey.get(m.championKey).id, { level: m.level, points: m.points, last: "" }]);
+  const patch = all[0]?.patch ?? "";
+  const dd = (path) => `https://ddragon.leagueoflegends.com/cdn/${patch}/img/${path}`;
+  const hero = layoutBlock(h(el, "div", "mn-home-hero"));
+  if (!s.riotId) {
+    hero.addClass("is-out");
+    const bg = h(hero, "img", "mn-home-wall");
+    bg.src = mapUrl("habackground");
+    bg.alt = "";
+    const box = h(hero, "div", "mn-home-cta");
+    h(box, "b", void 0, "\u9023\u7D50\u4F60\u7684\u53EC\u559A\u5E2B");
+    h(box, "span", void 0, "\u8F38\u5165 Riot ID,\u770B\u4F60\u7684\u982D\u50CF\u3001\u7B49\u7D1A\u3001\u724C\u4F4D\u548C\u6700\u8FD1\u5C0D\u6230");
+    const id = h(box, "input", "mn-home-in");
+    id.type = "text";
+    id.placeholder = "\u904A\u6232\u540D\u7A31#\u6A19\u7C64";
+    id.autocapitalize = "off";
+    id.spellcheck = false;
+    const server = h(box, "select", "mn-home-in");
+    for (const [v, name] of SERVERS) {
+      const o = h(server, "option", void 0, `${name} ${v}`);
+      o.value = v;
+    }
+    server.value = s.riotServer || "TW2";
+    const err = h(box, "span", "mn-home-err");
+    const go = h(box, "button", "mn-home-go", "\u9023\u7D50");
+    go.addEventListener("click", (e) => {
+      e.preventDefault();
+      const v = id.value.trim().replace(/＃/g, "#");
+      if (!/^[^#]{3,16}#[^#]{2,5}$/.test(v)) {
+        err.textContent = "\u683C\u5F0F\u662F \u540D\u7A31#\u6A19\u7C64,\u4F8B\u5982 Zaviel#TW2";
+        return;
+      }
+      s.riotId = v;
+      s.riotServer = server.value;
+      void ctx.plugin.saveData(s).then(() => ctx.goTab("home"));
+    });
+  } else {
+    const [name, tag] = s.riotId.split("#");
+    const best = top[0] ? byId.get(top[0][0]) : void 0;
+    const splash = (id, n) => `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(id)}_${n}.jpg`;
+    const [wid, wn] = s.wallpaper ? s.wallpaper.split("_") : [best?.id ?? "", String(Math.max(0, ...best?.skins ?? [0]))];
+    if (wid) {
+      const bg = h(hero, "img", "mn-home-wall");
+      bg.src = splash(wid, Number(wn) || 0);
+      bg.alt = "";
+    }
+    const av = h(hero, "button", "mn-home-av");
+    if (prof) {
+      const im = h(av, "img");
+      im.src = dd(`profileicon/${prof.icon}.png`);
+      im.alt = "";
+    } else if (best) {
+      const im = h(av, "img");
+      im.src = best.icon;
+      im.alt = "";
+    } else h(av, "span", void 0, (name ?? "?").slice(0, 1));
+    av.setAttribute("aria-label", "\u66F4\u63DB Riot ID");
+    if (prof) h(hero, "div", "mn-home-lvl", String(prof.level));
+    h(hero, "div", "mn-home-name").append(prof?.name ?? name ?? "", h(null, "small", void 0, `#${prof?.tag ?? tag ?? ""}`));
+    const where = SERVERS.find((x) => x[0] === s.riotServer)?.[1] ?? s.riotServer;
+    const sub = h(hero, "div", "mn-home-sub", prof ? `${where} \xB7 ${ago(prof.fetched)}\u66F4\u65B0` : s.riotKey ? `${where} \xB7 \u8B80\u53D6\u4E2D\u2026` : `${where} \xB7 \u8A2D\u5B9A\u88E1\u586B Riot API \u91D1\u9470\u5F8C\u986F\u793A\u982D\u50CF\u3001\u724C\u4F4D\u3001\u5C0D\u6230`);
+    const refresh = () => {
+      sub.textContent = `${where} \xB7 \u8B80\u53D6\u4E2D\u2026`;
+      sub.removeClass("is-err");
+      profileFetch(ctx).then((p) => {
+        if (!el.isConnected) return;
+        if (sameProfile(p, prof)) sub.textContent = `${where} \xB7 ${ago(p.fetched)}\u66F4\u65B0`;
+        else ctx.redraw();
+      }).catch((err) => {
+        if (!el.isConnected) return;
+        sub.textContent = err instanceof RiotError ? err.message : "\u9023\u4E0D\u4E0A Riot,\u7A0D\u5F8C\u518D\u8A66";
+        sub.addClass("is-err");
+      });
+    };
+    if (s.riotKey && (!prof || Date.now() - prof.fetched > PROFILE_FRESH)) refresh();
+    const menu = h(hero, "div", "mn-home-menu is-hidden");
+    const again = h(menu, "button", void 0, "\u91CD\u65B0\u6574\u7406");
+    again.addEventListener("click", (e) => {
+      e.preventDefault();
+      refresh();
+    });
+    const wallBtn = h(menu, "button", void 0, "\u63DB\u80CC\u666F");
+    const out = h(menu, "button", void 0, "\u66F4\u63DB / \u767B\u51FA");
+    const picker2 = h(el, "div", "mn-home-pick is-hidden");
+    wallBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      picker2.toggleClass("is-hidden", !picker2.hasClass("is-hidden"));
+    });
+    const champsRow = layoutBlock(h(picker2, "div", "mn-home-prow"));
+    const skinsRow = layoutBlock(h(picker2, "div", "mn-home-prow is-skins"));
+    const mine = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).map(([id]) => byId.get(id));
+    const pool = mine.length ? mine.slice(0, 24) : all;
+    const showSkins = (cid) => {
+      skinsRow.empty();
+      const c = byId.get(cid);
+      if (!c) return;
+      for (const n of [...c.skins].sort((a, b) => b - a)) {
+        const b = h(skinsRow, "button", "mn-home-skin" + (s.wallpaper === `${cid}_${n}` ? " is-on" : ""));
+        const im = h(b, "img");
+        im.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(cid)}_${n}.jpg`;
+        im.alt = "";
+        im.loading = "lazy";
+        b.addEventListener("click", (e) => {
+          e.preventDefault();
+          s.wallpaper = `${cid}_${n}`;
+          void ctx.plugin.saveData(s).then(() => ctx.goTab("home"));
+        });
+      }
+    };
+    for (const c of pool) {
+      const b = h(champsRow, "button", "mn-home-pc");
+      const im = h(b, "img");
+      im.src = c.icon;
+      im.alt = c.name;
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        champsRow.querySelectorAll(".is-on").forEach((x) => x.removeClass("is-on"));
+        b.addClass("is-on");
+        showSkins(c.id);
+      });
+    }
+    if (s.wallpaper) {
+      const reset = h(picker2, "button", "mn-home-preset", "\u7528\u9810\u8A2D(\u6700\u719F\u7DF4\u82F1\u96C4\u7684\u6700\u65B0\u9020\u578B)");
+      reset.addEventListener("click", (e) => {
+        e.preventDefault();
+        s.wallpaper = "";
+        void ctx.plugin.saveData(s).then(() => ctx.goTab("home"));
+      });
+    }
+    showSkins(wid || pool[0]?.id || "");
+    out.addEventListener("click", (e) => {
+      e.preventDefault();
+      s.riotId = "";
+      void ctx.plugin.saveData(s).then(() => ctx.goTab("home"));
+    });
+    av.addEventListener("click", (e) => {
+      e.preventDefault();
+      menu.toggleClass("is-hidden", !menu.hasClass("is-hidden"));
+    });
+  }
+  if (prof?.ranks.length) {
+    const ranks = layoutBlock(h(el, "div", "mn-home-ranks"));
+    for (const q of ["RANKED_SOLO_5x5", "RANKED_FLEX_SR"]) {
+      const r = prof.ranks.find((x) => x.queue === q);
+      const t = h(ranks, "div", "mn-home-rank");
+      if (r) {
+        const im = h(t, "img");
+        im.src = emblem(r.tier);
+        im.alt = "";
+      }
+      const tx = h(t, "div");
+      h(tx, "b", void 0, r ? `${TIER[r.tier] ?? r.tier} ${["MASTER", "GRANDMASTER", "CHALLENGER"].includes(r.tier) ? "" : r.division} \xB7 ${r.lp} LP` : "\u672A\u5B9A\u7D1A");
+      h(tx, "span", void 0, `${q === "RANKED_SOLO_5x5" ? "\u55AE/\u96D9\u6392" : "\u5F48\u6027"}${r ? ` \xB7 ${r.wins} \u52DD ${r.losses} \u6557` : ""}`);
+    }
+  }
+  const entries = layoutBlock(h(el, "div", "mn-home-entries"));
+  const entry = (iconName, title, line, tint, go) => {
+    const b = h(entries, "button", "mn-home-entry");
+    b.style.setProperty("--t", tint);
+    icon(b, iconName);
+    h(b, "b", void 0, title);
+    h(b, "span", void 0, line);
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      go();
+    });
+  };
+  entry("users", "Champions", `${all.length} \u4F4D\u82F1\u96C4 \xB7 \u7BE9\u9078`, "var(--mn-accent)", () => ctx.push({ key: "championlist", title: "Champions" }));
+  entry("shopping-bag", "Items", "\u88DD\u5099 \xB7 \u50F9\u683C \xB7 \u5408\u6210", "var(--color-yellow)", () => ctx.push({ key: "itemlist", title: "Items" }));
+  const read = new Set(s.read);
+  const next = store.guideNotes().find((n) => n.layout === "deck" && !read.has(n.file.path));
+  entry("book-open", "Handbook", next ? `\u7E7C\u7E8C:${next.title}` : "\u5168\u90E8\u8B80\u5B8C\u4E86", "var(--color-cyan)", () => {
+    if (next) ctx.openNote(next.file.path);
+    else ctx.goTab("handbook");
+  });
+  if (!s.riotId) entries.lastElementChild?.addClass("is-wide");
+  else entry("swords", "\u6700\u8FD1\u5C0D\u6230", prof?.games.length ? `${prof.games.length} \u5834 \xB7 ${prof.games.filter((g) => g.win).length} \u52DD` : "\u9023\u7D50 Riot \u5F8C\u986F\u793A", "var(--color-purple)", () => ctx.push({ key: "games", title: "\u6700\u8FD1\u5C0D\u6230" }));
+  if (top.length) {
+    h(el, "div", "mn-home-lab", "\u719F\u7DF4\u5EA6");
+    const row2 = layoutBlock(h(el, "div", "mn-home-mast"));
+    for (const [id, m] of top) {
+      const c = byId.get(id);
+      const card = h(row2, "button", "mn-home-mc");
+      const im = h(card, "img");
+      im.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(id)}_0.jpg`;
+      im.alt = "";
+      h(card, "em", m.level >= 10 ? "is-high" : void 0, `M${m.level}`);
+      h(card, "b", void 0, c.name);
+      card.addEventListener("click", (e) => {
+        e.preventDefault();
+        ctx.openChampion(id);
+      });
+    }
+  }
+  if (prof?.games.length) {
+    const lab = h(el, "div", "mn-home-lab mn-home-labrow");
+    h(lab, "span", void 0, "\u6700\u8FD1\u5C0D\u6230");
+    const more = h(lab, "button", "mn-home-more", "\u66F4\u591A");
+    more.addEventListener("click", (e) => {
+      e.preventDefault();
+      ctx.push({ key: "games", title: "\u6700\u8FD1\u5C0D\u6230" });
+    });
+    const list2 = layoutBlock(h(el, "div", "mn-home-games"));
+    for (const g of prof.games.slice(0, HOME_GAMES)) gameRow(ctx, list2, g, false);
+  }
+  centreBelow(el, 1);
+  return { title: "Home", el };
+}
+var inFlight = null;
+function profileFetch(ctx) {
+  const s = ctx.plugin.settings;
+  inFlight ?? (inFlight = fetchProfile(ctx.app, s.riotId, s.riotServer, s.riotKey).finally(() => {
+    inFlight = null;
+  }));
+  return inFlight;
+}
+var sameProfile = (a, b) => !!b && JSON.stringify({ ...a, fetched: 0 }) === JSON.stringify({ ...b, fetched: 0 });
+var HOME_GAMES = 4;
+function gameRow(ctx, parent, g, full) {
+  const c = ctx.plugin.store.champions().find((x) => x.id.toLowerCase() === g.champion.toLowerCase());
+  const r = h(parent, "button", "mn-game" + (g.win ? " is-win" : " is-loss") + (full ? " is-full" : ""));
+  const im = h(r, "img");
+  im.src = c?.icon ?? "";
+  im.alt = "";
+  const tx = h(r, "div", "mn-game-t");
+  h(tx, "b", void 0, `${c?.name ?? g.champion} \xB7 ${g.k}/${g.d}/${g.a}`);
+  h(tx, "span", void 0, [QUEUE[g.queue] ?? "\u5176\u4ED6", ago(g.end), full ? `${Math.round(g.duration / 60)} \u5206 \xB7 ${g.cs} \u5175` : ""].filter(Boolean).join(" \xB7 "));
+  if (full && g.items.length) {
+    const items = h(tx, "div", "mn-game-items");
+    for (const id of g.items) {
+      const x = h(items, "img");
+      x.src = `https://ddragon.leagueoflegends.com/cdn/${ctx.plugin.store.champions()[0]?.patch ?? ""}/img/item/${id}.png`;
+      x.alt = "";
+      x.loading = "lazy";
+    }
+  }
+  h(r, "span", "mn-game-wl", g.win ? "\u52DD" : "\u6557");
+  if (c) r.addEventListener("click", (e) => {
+    e.preventDefault();
+    ctx.openChampion(c.id);
+  });
+}
+function gamesPage(ctx) {
+  const el = page("\u6700\u8FD1\u5C0D\u6230");
+  const prof = cachedProfile(ctx.app, ctx.plugin.settings.riotId);
+  if (!prof?.games.length) {
+    empty(el, { icon: "swords", title: "\u9084\u6C92\u6709\u5C0D\u6230\u8CC7\u6599", text: "\u5728 Home \u9023\u7D50 Riot ID\uFF0C\u4E26\u5728\u8A2D\u5B9A\u586B Riot API \u91D1\u9470\u3002" });
+    centreBelow(el, 1);
+    return { title: "\u6700\u8FD1\u5C0D\u6230", el };
+  }
+  const wins = prof.games.filter((g) => g.win).length;
+  h(el, "div", "mn-home-sub", `\u6700\u8FD1 ${prof.games.length} \u5834 \xB7 ${wins} \u52DD ${prof.games.length - wins} \u6557 \xB7 ${ago(prof.fetched)}\u66F4\u65B0`);
+  const list2 = layoutBlock(h(el, "div", "mn-home-games"));
+  for (const g of prof.games) gameRow(ctx, list2, g, true);
+  return { title: "\u6700\u8FD1\u5C0D\u6230", el };
+}
+var TIERS = ["\u8D77\u59CB", "\u978B\u5B50", "\u57FA\u672C", "\u53F2\u8A69", "\u50B3\u8AAA"];
+var tierOf = (i) => i.tags.includes("Boots") ? "\u978B\u5B50" : !i.from.length && !i.into.length ? "\u8D77\u59CB" : !i.from.length ? "\u57FA\u672C" : i.into.length ? "\u53F2\u8A69" : "\u50B3\u8AAA";
+var has2 = (i, ...tags2) => tags2.some((x) => i.tags.includes(x));
+var ITEM_ROLES = [
+  ["\u6230\u58EB", (i) => has2(i, "Damage") && has2(i, "Health")],
+  ["\u5C04\u624B", (i) => has2(i, "CriticalStrike") || has2(i, "AttackSpeed") && has2(i, "Damage")],
+  ["\u523A\u5BA2", (i) => has2(i, "Damage") && has2(i, "ArmorPenetration", "NonbootsMovement") && !has2(i, "Health")],
+  ["\u6CD5\u5E2B", (i) => has2(i, "SpellDamage")],
+  ["\u5766\u514B", (i) => has2(i, "Health") && has2(i, "Armor", "SpellBlock", "MagicResist") && !has2(i, "Damage", "SpellDamage")],
+  ["\u8F14\u52A9", (i) => has2(i, "GoldPer", "Aura") || has2(i, "Active") && !has2(i, "Damage", "SpellDamage")]
+];
+var RAIL_BREAKS = /* @__PURE__ */ new Set(["\u6CD5\u8853\u5F37\u5EA6", "\u751F\u547D", "\u6280\u80FD\u6025\u901F"]);
+var itemRole = "";
+var itemFlip = false;
+var itemStats = /* @__PURE__ */ new Set();
+function itemsPage(ctx) {
+  const store = ctx.plugin.store;
+  const flag = MODES[ctx.plugin.settings.mode].itemFlag;
+  const el = page("Items");
+  const seen = /* @__PURE__ */ new Set();
+  const items = store.items().filter((i) => i[flag] && i.goldTotal > 0 && !i.reward && !seen.has(i.name) && seen.add(i.name));
+  const box = h(el, "div", "mn-search");
+  icon(box, "search", "mn-search-ic");
+  const search = h(box, "input");
+  search.type = "search";
+  search.placeholder = "\u641C\u5C0B\u88DD\u5099";
+  const roles = layoutBlock(h(el, "div", "mn-shop-roles"), true);
+  const body = h(el, "div", "mn-shop");
+  const rail = layoutBlock(h(body, "div", "mn-shop-rail"), true);
+  const host = layoutBlock(h(body, "div", "mn-shop-list"), true);
+  const drawRoles = () => {
+    roles.empty();
+    const all = h(roles, "button", "mn-shop-role" + (!itemRole ? " is-on" : ""));
+    shopRoleIcon(all, "\u5168\u90E8");
+    all.setAttribute("aria-label", "\u5168\u90E8");
+    all.addEventListener("click", (e) => {
+      e.preventDefault();
+      itemRole = "";
+      drawRoles();
+      draw();
+    });
+    const mid = h(roles, "div", "mn-shop-rolemid");
+    for (const [r] of ITEM_ROLES) {
+      const b = h(mid, "button", "mn-shop-role" + (itemRole === r ? " is-on" : ""));
+      shopRoleIcon(b, r);
+      holdTip(b, r);
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        itemRole = itemRole === r ? "" : r;
+        drawRoles();
+        draw();
+      });
+    }
+    const sb = h(roles, "button", "mn-shop-sortbtn" + (itemFlip ? " is-on" : ""));
+    icon(sb, itemFlip ? "arrow-up-wide-narrow" : "arrow-down-wide-narrow");
+    sb.setAttribute("aria-label", itemFlip ? "\u50B3\u8AAA\u5728\u524D" : "\u8D77\u59CB\u5728\u524D");
+    holdTip(sb, itemFlip ? "\u50B3\u8AAA\u5728\u524D" : "\u8D77\u59CB\u5728\u524D");
+    sb.addEventListener("click", (e) => {
+      e.preventDefault();
+      itemFlip = !itemFlip;
+      drawRoles();
+      draw();
+    });
+  };
+  const drawRail = () => {
+    rail.empty();
+    const clear = h(rail, "button", "mn-shop-stat is-clear" + (itemStats.size ? " is-live" : ""));
+    icon(clear, "list-x");
+    clear.setAttribute("aria-label", "\u6E05\u9664\u7BE9\u9078");
+    clear.addEventListener("click", (e) => {
+      e.preventDefault();
+      itemStats.clear();
+      drawRail();
+      draw();
+    });
+    ITEM_CATS.forEach(([name], k) => {
+      if (RAIL_BREAKS.has(name)) h(rail, "i", "mn-shop-break");
+      const b = h(rail, "button", "mn-shop-stat" + (itemStats.has(name) ? " is-on" : ""));
+      if (itemStats.has(name)) b.style.color = ITEM_CAT_COLOR[name] ?? "";
+      shopIcon(b, k, itemStats.has(name), "mn-shop-sprite");
+      holdTip(b, name);
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        itemStats.has(name) ? itemStats.delete(name) : itemStats.add(name);
+        drawRail();
+        draw();
+      });
+    });
+  };
+  const tile2 = (grid, it) => {
+    const b = h(grid, "button", "mn-item-tile");
+    const im = h(b, "img");
+    im.src = it.icon;
+    im.alt = it.name;
+    h(b, "span", void 0, `${it.goldTotal}`);
+    holdTip(b, it.name);
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      ctx.openItem(it.id);
+    });
+  };
+  const draw = () => {
+    host.empty();
+    const q = search.value.trim();
+    const shopRoles = store.itemRoles;
+    const role = !itemRole ? void 0 : shopRoles ? (i) => (shopRoles[String(i.id)] ?? []).includes(itemRole) : ITEM_ROLES.find(([r]) => r === itemRole)?.[1];
+    const need = ITEM_CATS.filter(([n]) => itemStats.has(n)).map(([, , tags2]) => tags2);
+    let list2 = items.filter((i) => (!q || i.name.includes(q)) && (!role || role(i)) && need.every((tags2) => i.tags.some((x) => tags2.includes(x))));
+    if (!list2.length) {
+      h(host, "p", "mn-home-sub", "\u6C92\u6709\u7B26\u5408\u7684\u88DD\u5099");
+      return;
+    }
+    for (const tier of itemFlip ? [...TIERS].reverse() : TIERS) {
+      const part = list2.filter((i) => tierOf(i) === tier).sort((x, y) => x.goldTotal - y.goldTotal);
+      if (!part.length) continue;
+      h(host, "div", "mn-shop-tier", tier);
+      const grid = h(host, "div", "mn-items");
+      for (const it of part) tile2(grid, it);
+    }
+    host.scrollTop = 0;
+  };
+  search.addEventListener("input", draw);
+  void warmPictures(items.map((i) => i.icon));
+  drawRoles();
+  drawRail();
+  draw();
+  const fit = () => {
+    const scroll = el.closest(".mn-scroll");
+    if (!scroll || !body.isConnected) return;
+    body.style.height = `${Math.max(240, scroll.getBoundingClientRect().bottom - body.getBoundingClientRect().top - 8)}px`;
+  };
+  requestAnimationFrame(fit);
+  return { title: "Items", el };
+}
+
+// src/pages/patch.ts
+var LEGEND = "\u25B2 \u589E\u5F37 \xB7 \u25BC \u524A\u5F31 \xB7 \u25C6 \u6709\u589E\u6709\u6E1B \xB7 \u25CF \u8ABF\u6574\u3002\u65B9\u5411\u662F\u4F9D\u6578\u5B57\u8B8A\u5316\u63A8\u6E2C\u7684,\u4E0D\u662F\u5B98\u65B9\u6A19\u793A\u3002";
+function patchPage(ctx) {
+  const store = ctx.plugin.store;
+  const el = page("Patch");
+  const [latest, ...older] = store.riotNotes;
+  if (latest) latestCard(el, latest);
+  else {
+    const hero = h(el, "div", "mn-patch");
+    h(hero, "div", "mn-patch-k", "Data from patch");
+    h(hero, "div", "mn-patch-v", store.riotPatch() || "\u2014");
+    h(hero, "div", "mn-patch-s", "Run tools/fetch_patch_notes.py to show Riot's patch notes here.");
+  }
+  if (latest?.champions?.length) {
+    h(el, "div", "mn-gh", `Champions \xB7 ${latest.champions.length}`);
+    const grid = h(el, "div", "mn-grid");
+    for (const { e, dir } of byDir(latest.champions)) {
+      const c = store.champions().find((x) => x.name === e.name);
+      if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "overview"), { dir });
+    }
+    blockLoad(grid);
+    h(el, "div", "mn-gf", LEGEND);
+  }
+  if (latest?.items?.length) {
+    h(el, "div", "mn-gh", `Items \xB7 ${latest.items.length}`);
+    const grid = h(el, "div", "mn-grid");
+    for (const { e, dir } of byDir(latest.items)) {
+      const i = store.items().find((x) => x.name === e.name);
+      if (i) tile(grid, i.icon, i.name, () => ctx.openItem(i.id), { dir });
+    }
+    blockLoad(grid);
+    h(el, "div", "mn-gf", LEGEND);
+  }
+  if (latest && ctx.plugin.settings.mode === "mayhem") mayhemSection(el, ctx, latest);
+  if (older.length) {
+    const g2 = group(el, "Earlier patches");
+    for (const n of older) row(g2, { icon: "newspaper", title: n.title, sub: n.summary || void 0, value: n.date, chevron: true, clamp: true, onTap: () => window.open(n.url) });
+  }
+  const mine = store.patchNotes();
+  if (mine.length) {
+    const g2 = group(el, "Our patch notes");
+    for (const n of mine) row(g2, { icon: "file-text", title: n.title, sub: n.summary || void 0, value: n.patch, chevron: true, onTap: () => ctx.openNote(n.file.path) });
+  }
+  const stale = store.staleEntries();
+  const g = group(el, "Check these tricks");
+  if (!stale.length) empty(g, { icon: "check-circle", title: "Nothing to recheck", text: "Every tip and build matches the current patch." });
+  else {
+    for (const s of stale.slice(0, 30)) {
+      row(g, {
+        image: s.champion.icon,
+        title: `${s.champion.name}:${s.title}`,
+        sub: s.patch ? `Written for ${s.patch}` : "No patch given",
+        value: s.kind === "tip" ? "Tip" : "Build",
+        chevron: true,
+        onTap: () => ctx.openChampion(s.champion.id, s.kind === "tip" ? "tips" : "build")
+      });
+    }
+    if (stale.length > 30) h(el, "div", "mn-gf", `${stale.length - 30} more`);
+  }
+  return { title: "Patch", el, ready: null };
+}
+var DIR_ORDER = ["buff", "nerf", "mixed", "change"];
+function byDir(list2) {
+  return list2.map((e) => ({ e, dir: entryDir(e) })).sort((a, b) => DIR_ORDER.indexOf(a.dir) - DIR_ORDER.indexOf(b.dir));
+}
+function tile(grid, src, name, onTap, o = {}) {
+  const t = h(grid, "button", "mn-tile");
+  if (o.rarity && AUG_CLASS[o.rarity]) augIcon(t, src, o.rarity, "mn-tile-aug");
+  else {
+    const im = h(t, "img");
+    im.src = src;
+    im.alt = "";
+  }
+  if (o.dir) {
+    const m = marker(o.dir);
+    const b = h(t, "span", "mn-tile-b", m.mark);
+    b.style.background = m.color;
+  }
+  h(t, "span", "mn-tile-n", name);
+  t.addEventListener("click", (e) => {
+    e.preventDefault();
+    onTap();
+  });
+}
+function latestCard(el, n) {
+  const card = h(el, "div", "mn-pn");
+  if (n.image) {
+    const im = h(card, "img", "mn-pn-img");
+    im.src = n.image;
+    im.alt = "";
+    im.loading = "lazy";
+  }
+  const body = h(card, "div", "mn-pn-body");
+  h(body, "div", "mn-patch-k", `Patch ${n.patch} \xB7 ${n.date}`);
+  h(body, "div", "mn-pn-t", n.title);
+  if (n.summary) h(body, "div", "mn-patch-s", n.summary);
+  const btn = h(body, "button", "mn-pn-btn", "Read the full notes \u2197");
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    window.open(n.url);
+  });
+  h(body, "div", "mn-pn-src", "Riot Games \xB7 \u7248\u672C\u66F4\u65B0\u516C\u544A");
+  blockLoad(card);
+}
+function mayhemSection(el, ctx, n) {
+  const added = n.augments_new ?? [], removed = n.augments_removed ?? [];
+  if (!added.length && !removed.length) return;
+  const byName = new Map(ctx.plugin.store.augments().map((a) => [a.name, a]));
+  if (added.length) {
+    h(el, "div", "mn-gh", `Mayhem \xB7 ${added.length} new augments`);
+    const grid = h(el, "div", "mn-grid");
+    for (const a of added) {
+      const mine = byName.get(a.name);
+      if (mine) tile(grid, mine.icon, a.name, () => ctx.openAugment(mine.id), { rarity: a.rarity });
+    }
+    blockLoad(grid);
+  }
+  if (removed.length) {
+    h(el, "div", "mn-gh", `Removed augments \xB7 ${removed.length}`);
+    const chips = h(el, "div", "mn-chips");
+    for (const r of removed) chip(chips, r, { color: RARITY_COLOR["\u9280"] });
+  }
+}
+
 // src/pages/index.ts
 var PAGES2 = {
   home: homePage,
@@ -7320,6 +7852,7 @@ var MnView = class extends import_obsidian15.ItemView {
       this.modeMenu(e);
     });
     this.modeBtn = modeBtn;
+    this.artEl = h(app, "div", "mn-page-art");
     this.scrollEl = h(app, "div", "mn-scroll");
     const vv = window.visualViewport;
     let kbEvent = 0;
@@ -7630,7 +8163,7 @@ var MnView = class extends import_obsidian15.ItemView {
           if (sub) rememberSub(id2, sub);
           this.push({ key: "champion", title: store.champion(id2)?.name ?? id2, params: { id: id2 } });
         },
-        openAugment: (id2) => this.push({ key: "augment", title: store.augment(id2)?.name ?? "Augment", params: { id: id2 } }),
+        openAugment: (id2, champ) => this.push({ key: "augment", title: store.augment(id2)?.name ?? "Augment", params: champ ? { id: id2, champ } : { id: id2 } }),
         openItem: (id2) => this.push({ key: "item", title: store.item(id2)?.name ?? "Item", params: { id: id2 } }),
         openNote: (path) => this.push({ key: "note", title: path.split("/").pop()?.replace(/\.md$/, "") ?? "Note", params: { path } })
       });
@@ -7647,6 +8180,8 @@ var MnView = class extends import_obsidian15.ItemView {
       this.topEl.removeClass("is-scrolled");
       releaseVideos(this.scrollEl);
       this.scrollEl.replaceChildren(page2.el);
+      this.artEl.style.backgroundImage = page2.art ? `url("${page2.art}")` : "";
+      this.artEl.toggleClass("is-on", !!page2.art);
       this.shown = key;
       const fresh = anim === "push" || OVERLAY_PAGES.has(f.key);
       if (fresh) this.scrolls.delete(key);
@@ -7766,7 +8301,7 @@ var MorellonomiconPlugin = class extends import_obsidian16.Plugin {
         this.lastChange = Date.now();
         this.views().forEach((v) => v.refresh());
       });
-      void this.whenBooted().then(() => warmPictures([...this.store.champions().map((c) => c.icon), ...this.store.augments().map((a) => a.icon)]));
+      void this.whenBooted().then(() => warmPictures([...this.store.champions().map((c) => c.icon), ...this.store.augments().map((a) => a.icon), ...this.store.items().map((i) => i.icon)]));
       if (this.settings.openOnStartup) void this.activate(true);
       this.updateBody();
     });

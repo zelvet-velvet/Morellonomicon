@@ -11,7 +11,7 @@ import { patchPage } from "./patch";
 import { rosterPage, swipePage } from "./roster";
 
 // `ready`: a page that knows better than the default (the first pictures) what it waits for before it shows
-export interface PageOut { title: string; el: HTMLElement; ready?: Promise<void> | null; immersive?: boolean }   // immersive: full screen, no top bar
+export interface PageOut { title: string; el: HTMLElement; ready?: Promise<void> | null; immersive?: boolean; art?: string }   // immersive: full screen, no top bar; art: a picture behind the page, darkened, that does not scroll (the champion page family's sub pages)
 export interface PageCtx {
     app: App;
     plugin: MorellonomiconPlugin;
@@ -23,7 +23,7 @@ export interface PageCtx {
     redraw(): void;                // draw this page again where it is (new data for it), without the page animation
     // every detail opens as a page of the app on top of the current tab (Back returns to where you were)
     openChampion(id: string, sub?: SubTab): void;
-    openAugment(id: number): void;
+    openAugment(id: number, champ?: string): void;   // champ: opened from that champion (its page then says how it fits)
     openItem(id: number): void;
     openNote(path: string): void;  // a note, drawn inside the app
 }
