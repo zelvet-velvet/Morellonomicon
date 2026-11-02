@@ -8,7 +8,7 @@ import { keyBadge } from "./cardkit";
 import { DECK_BELOW } from "./deck";
 import { cardPile } from "./pile";
 import { damageLines, reachOf, styleCard } from "./profile";
-import { art, type Need } from "../media";
+import { art, warm, type Need } from "../media";
 
 const MAX_PICKS = 15;   // a Mayhem game can hand you a lot of champions
 const SPLIT = /[\s,，、;；和跟與及]+/;
@@ -151,6 +151,14 @@ export function finder(all: Champion[], sounds: Sounds | null) {
 
 // the art of a 速查 card (and the champion card page): Riot's centered splash, cut to the card's shape
 export const cardArt = (id: string, skin = 0) => art.centered(id, skin);
+// a 速查 card's four pictures: tab 1 the base splash, tabs 2 to 4 the newest skins, newest first (a higher skin number is a later
+// skin); quickCard draws from this and a pick fetches it, so both ask for the same addresses
+export function cardPictures(c: Champion): string[] {
+    const others = c.skins.filter((n) => n !== 0).sort((a, b) => b - a);
+    return [0, ...[0, 1, 2].map((k) => (others.length ? others[k % others.length] : 0))].map((n) => cardArt(c.id, n));
+}
+// a champion just picked: its card's art starts coming at once (the base splash first), so the swipe shows every tab sharp
+const fetchCard = (c: Champion | undefined) => { if (c) { const [base, ...skins] = cardPictures(c); void warm([base], "soon"); void warm(skins, "idle"); } };
 // a champion's loading screen art: a small portrait (your hand, the liked page)
 const loading = (id: string) => art.loading(id);
 
@@ -233,7 +241,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
     const toggle = (id: string) => {
         if (picks.includes(id)) picks = picks.filter((p) => p !== id);
         else if (picks.length >= MAX_PICKS) { new Notice(`最多選 ${MAX_PICKS} 位`); return; }
-        else picks = [...picks, id];
+        else { picks = [...picks, id]; fetchCard(all.find((c) => c.id === id)); }
         save();
         drawCount();
         drawGrid();
@@ -273,7 +281,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
         if (unique.length === 1 && !guessed) return;
         if (guessed) h(suggest, "span", "mn-dym", "你是不是在找:");
         for (const c of unique) chip(suggest, `${picks.includes(c.id) ? "✓ " : "+ "}${c.name}`, { color: "var(--color-green)", onTap: () => pickFromSearch(c.id) });
-        if (unique.length > 1) chip(suggest, "全部加入", { on: true, onTap: () => { for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) picks = [...picks, c.id]; save(); search.value = ""; query = ""; drawCount(); drawSuggest(); drawGrid(); } });
+        if (unique.length > 1) chip(suggest, "全部加入", { on: true, onTap: () => { for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) { picks = [...picks, c.id]; fetchCard(c); } save(); search.value = ""; query = ""; drawCount(); drawSuggest(); drawGrid(); } });
     };
 
     const drawGrid = () => {
@@ -602,12 +610,11 @@ export function quickCard(ctx: PageCtx, c: Champion, face: HTMLElement, o: Quick
     // the card's art is Riot's centered splash (1280 × 720) cut to the card: much sharper than the loading screen art (308 × 560,
     // the only tall art there is), whose picture was soft at the card's size; the lower part, softer in Riot's painting, sits under
     // the tiles and text (Zaviel, 2026-10-30)
-    const art = (n: number) => cardArt(c.id, n);
-    const others = c.skins.filter((n) => n !== 0).sort((a, b) => b - a);
+    const pics = cardPictures(c);
     const skins = tabs.slice(1).map((tab, k) => {
         const bg = h(tab, "img", "mn-qc-bg");
         bg.loading = "lazy";   // a hidden tab's picture loads when the tab is opened, or earlier once the card is near the top (warmSkins)
-        bg.src = art(others.length ? others[k % others.length] : 0);
+        bg.src = pics[1 + (k % 3)];
         bg.alt = "";
         return bg.src;
     });

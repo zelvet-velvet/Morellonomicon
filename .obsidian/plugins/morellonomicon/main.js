@@ -3629,6 +3629,17 @@ function finder(all, sounds) {
   return { score: score2, within };
 }
 var cardArt = (id, skin = 0) => art.centered(id, skin);
+function cardPictures(c) {
+  const others = c.skins.filter((n) => n !== 0).sort((a, b) => b - a);
+  return [0, ...[0, 1, 2].map((k) => others.length ? others[k % others.length] : 0)].map((n) => cardArt(c.id, n));
+}
+var fetchCard = (c) => {
+  if (c) {
+    const [base, ...skins] = cardPictures(c);
+    void warm([base], "soon");
+    void warm(skins, "idle");
+  }
+};
 var loading = (id) => art.loading(id);
 function rosterPage(ctx) {
   const store = ctx.plugin.store;
@@ -3725,7 +3736,10 @@ function rosterPage(ctx) {
     else if (picks.length >= MAX_PICKS) {
       new import_obsidian6.Notice(`\u6700\u591A\u9078 ${MAX_PICKS} \u4F4D`);
       return;
-    } else picks = [...picks, id];
+    } else {
+      picks = [...picks, id];
+      fetchCard(all.find((c) => c.id === id));
+    }
     save();
     drawCount();
     drawGrid();
@@ -3765,7 +3779,10 @@ function rosterPage(ctx) {
     if (guessed) h(suggest2, "span", "mn-dym", "\u4F60\u662F\u4E0D\u662F\u5728\u627E:");
     for (const c of unique) chip(suggest2, `${picks.includes(c.id) ? "\u2713 " : "+ "}${c.name}`, { color: "var(--color-green)", onTap: () => pickFromSearch(c.id) });
     if (unique.length > 1) chip(suggest2, "\u5168\u90E8\u52A0\u5165", { on: true, onTap: () => {
-      for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) picks = [...picks, c.id];
+      for (const c of unique) if (!picks.includes(c.id) && picks.length < MAX_PICKS) {
+        picks = [...picks, c.id];
+        fetchCard(c);
+      }
       save();
       search.value = "";
       query = "";
@@ -4152,12 +4169,11 @@ function quickCard(ctx, c, face, o) {
   const TABS = [...QUICK_TABS, ...(o.extra ?? []).map((x) => x.name)];
   face.addClass("mn-qc");
   const tabs = TABS.map((name, i) => h(face, "div", `mn-qc-tab is-${["look", "play", "skill", "style"][i] ?? "more"}`));
-  const art2 = (n) => cardArt(c.id, n);
-  const others = c.skins.filter((n) => n !== 0).sort((a, b) => b - a);
+  const pics = cardPictures(c);
   const skins = tabs.slice(1).map((tab, k) => {
     const bg = h(tab, "img", "mn-qc-bg");
     bg.loading = "lazy";
-    bg.src = art2(others.length ? others[k % others.length] : 0);
+    bg.src = pics[1 + k % 3];
     bg.alt = "";
     return bg.src;
   });
@@ -4232,11 +4248,11 @@ function quickCard(ctx, c, face, o) {
   im.alt = "";
   if (c.face) im.style.objectPosition = c.face;
   const tiles = h(look, "div", "mn-qc-tiles");
-  const tile2 = (iconName, color, big, small, art3) => {
+  const tile2 = (iconName, color, big, small, art2) => {
     const t = h(tiles, "div", "mn-qc-tile");
     t.style.setProperty("--c", color);
     const ic = h(t, "span", "mn-qc-tic");
-    if (art3) art3(ic);
+    if (art2) art2(ic);
     else icon(ic, iconName);
     h(t, "b", void 0, big);
     h(t, "span", void 0, small);
