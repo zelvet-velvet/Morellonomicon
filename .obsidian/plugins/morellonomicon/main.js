@@ -3717,7 +3717,6 @@ function rosterPage(ctx) {
       let card = minis.get(id);
       if (!card) {
         card = h(shelf, "div", "mn-rq-mini");
-        card.style.backgroundImage = `url("${c.icon}")`;
         const im = h(card, "img");
         im.alt = "";
         if (!isWarm(loading(c.id))) {

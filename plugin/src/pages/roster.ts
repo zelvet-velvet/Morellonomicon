@@ -231,8 +231,6 @@ export function rosterPage(ctx: PageCtx): PageOut {
             let card = minis.get(id);
             if (!card) {
                 card = h(shelf, "div", "mn-rq-mini");
-                // the champion's icon (already on screen in the grid) fills the card at once; the portrait covers it when it is in
-                card.style.backgroundImage = `url("${c.icon}")`;
                 const im = h(card, "img"); im.alt = "";
                 if (!isWarm(loading(c.id))) { im.addClass("is-coming"); im.addEventListener("load", () => im.removeClass("is-coming"), { once: true }); }
                 im.src = loading(c.id);
