@@ -368,6 +368,13 @@ export function autoLoading(root: HTMLElement): MutationObserver {
 // Fetches pictures ahead, in the background (media.ts: one queue for the whole app, each address once), so a list that shows them
 // later (Champions, Augments) has them at once instead of each one fading in as it arrives
 export const warmPictures = (urls: string[]): Promise<void> => warm(urls, "soon");
+// Marks what a tap on `el` opens (a page's route key and params), so the app fetches that page's pictures before the tap: while `el` is
+// on screen for a moment, and at once when a finger touches it (view.ts). Every element that opens a page with big pictures (a
+// champion, a Handbook topic) gets this next to its click handler; the splash is then there as soon as the page appears.
+export function goes<T extends HTMLElement>(el: T, frame: { key: string; params?: Record<string, string | number> }): T {
+    el.dataset.go = JSON.stringify(frame);
+    return el;
+}
 
 // A hold does not count as a tap (the element's tap action stays for a quick tap).
 const HOLD_MS = 280;

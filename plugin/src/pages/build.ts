@@ -1,5 +1,5 @@
 import type { Champion } from "../data/store";
-import { chip, empty, h, moreLink } from "../ui";
+import { chip, empty, h, moreLink, goes } from "../ui";
 import { metaLine } from "./fresh";
 import type { PageCtx } from "./index";
 import { art } from "../media";
@@ -67,7 +67,7 @@ function setCard(body: HTMLElement, c: Champion, ctx: PageCtx, b: Champion["buil
             const btn = h(row, "button", "mn-with-b");
             const im = h(btn, "img"); im.src = mate?.icon ?? ""; im.alt = "";
             h(btn, "span", "", mate?.name ?? id);
-            if (mate) btn.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(mate.id); });
+            if (mate) { btn.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(mate.id); }); goes(btn, { key: "champion", params: { id: mate.id } }); }
         }
     }
     itemRow(card, c, ctx, b.items);

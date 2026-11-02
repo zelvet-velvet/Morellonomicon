@@ -9,7 +9,7 @@ import { augmentNeeds, augmentPage, itemNeeds, itemPage, noteNeeds, notePage } f
 import { handbookNeeds, handbookNext, handbookPage } from "./handbook";
 import { gamesPage, homeNeeds, homePage, itemsPage } from "./home";
 import { patchPage } from "./patch";
-import { rosterPage, swipePage } from "./roster";
+import { rosterPage, swipeNeeds, swipePage } from "./roster";
 
 // `ready`: a page that knows better than the default (the first pictures) what it waits for before it shows
 export interface PageOut { title: string; el: HTMLElement; ready?: Promise<void> | null; immersive?: boolean; art?: string }   // immersive: full screen, no top bar; art: a picture behind the page, darkened, that does not scroll (the champion page family's sub pages)
@@ -58,7 +58,7 @@ export const ROUTES: Record<PageKey, Route> = {
     championlist: { render: championsPage, needs: none },
     games: { render: gamesPage, needs: none },
     itemlist: { render: itemsPage, needs: none },        // the Items page, opened from Home
-    rosterswipe: { render: swipePage, needs: none },     // its cards' art is fetched by 速查 while the picks are made
+    rosterswipe: { render: swipePage, needs: swipeNeeds },
 };
 export const PAGES: Record<TabId, PageRender> = { home: homePage, champions: championsPage, picks: rosterPage, augments: augmentsPage, patch: patchPage, handbook: handbookPage };
 

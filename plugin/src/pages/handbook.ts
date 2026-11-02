@@ -1,4 +1,4 @@
-import { SWIPE, blockLoad, blockUntil, empty, h, icon, page } from "../ui";
+import { SWIPE, blockLoad, blockUntil, empty, h, icon, page, goes } from "../ui";
 import type { NeedCtx, PageCtx, PageOut } from "./index";
 import { ARAM_SCREENS, art, coverUrl, warm, type Need } from "../media";
 import type { Frame } from "../router";
@@ -76,6 +76,7 @@ export function handbookPage(ctx: PageCtx): PageOut {
                 h(txt, "div", "mn-hb-t", n.title);
                 if (big && n.summary) h(txt, "div", "mn-hb-s", n.summary);
                 b.addEventListener("click", (e) => { e.preventDefault(); ctx.openNote(n.file.path); });
+                goes(b, { key: "note", params: { path: n.file.path } });
             };
             // each group of topic tiles loads as a block of its own, under its heading
             const tiles = h(out, "div");
@@ -199,6 +200,7 @@ export function handbookPage(ctx: PageCtx): PageOut {
                 for (const l of ls.slice(0, MAX_PER_NOTE)) marked(h(main, "div", "mn-row-s"), snippet(l, q), q);
                 icon(r, "chevron-right", "mn-row-chev");
                 r.addEventListener("click", () => ctx.openNote(n.file.path));
+                goes(r, { key: "note", params: { path: n.file.path } });
                 found++;
             }
         }
@@ -213,6 +215,7 @@ export function handbookPage(ctx: PageCtx): PageOut {
                 marked(h(main, "div", "mn-row-s"), snippet(t.text, q), q);
                 icon(r, "chevron-right", "mn-row-chev");
                 r.addEventListener("click", () => ctx.openChampion(c.id, "tips"));
+                goes(r, { key: "champion", params: { id: c.id } });
                 found++;
             }
         }
@@ -227,6 +230,7 @@ export function handbookPage(ctx: PageCtx): PageOut {
                 if (b.note) marked(h(main, "div", "mn-row-s"), snippet(b.note, q), q);
                 icon(r, "chevron-right", "mn-row-chev");
                 r.addEventListener("click", () => ctx.openChampion(c.id, "build"));
+                goes(r, { key: "champion", params: { id: c.id } });
                 found++;
             }
         }

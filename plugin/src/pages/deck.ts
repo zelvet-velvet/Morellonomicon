@@ -1,7 +1,7 @@
 import { CHAMPION_TABS } from "./champions";
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { Champion } from "../data/store";
-import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, icon, laneChip, roleChip, svg, whenMediaLoaded, endBand, trackBand } from "../ui";
+import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, icon, laneChip, roleChip, svg, whenMediaLoaded, endBand, trackBand, goes } from "../ui";
 import { GO_AT, cardPile } from "./pile";
 import { factsStrip, profileAxes, profileRadar, styleCard, tagRow } from "./profile";
 import type { NeedCtx, PageCtx, PageOut } from "./index";
@@ -383,10 +383,10 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
         }
     } else if (kind === "role") {
         const list = store.champions().filter((c) => c.roles.includes(args[0] ?? "")).sort((a, b) => hashStr(a.id + day()) - hashStr(b.id + day())).slice(0, STRIP);
-        if (list.length) { strip(box, list.map((c) => ({ src: c.icon, label: c.name, tap: () => ctx.openChampion(c.id) }))); return; }
+        if (list.length) { strip(box, list.map((c) => ({ src: c.icon, label: c.name, tap: () => ctx.openChampion(c.id), go: { key: "champion", params: { id: c.id } } }))); return; }
     } else if (kind === "champs") {
         const list = args.map(champ).filter((c): c is Champion => !!c);
-        if (list.length) { strip(box, list.map((c) => ({ src: c.icon, label: c.name, tap: () => ctx.openChampion(c.id) }))); return; }
+        if (list.length) { strip(box, list.map((c) => ({ src: c.icon, label: c.name, tap: () => ctx.openChampion(c.id), go: { key: "champion", params: { id: c.id } } }))); return; }
     } else if (kind === "itemtag") {
         const list = store.items().filter((i) => i.aram && i.tags.includes(args[0] ?? "") && i.into.length === 0 && i.goldTotal >= 2000)
             .sort((a, b) => hashStr(String(a.id) + day()) - hashStr(String(b.id) + day())).slice(0, STRIP - 1);
@@ -408,7 +408,7 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
 }
 
 // icons with their names under them
-function strip(box: HTMLElement, items: { src: string; label: string; rarity?: string; tap: () => void }[]): void {
+function strip(box: HTMLElement, items: { src: string; label: string; rarity?: string; tap: () => void; go?: { key: string; params?: Record<string, string | number> } }[]): void {
     const row = h(box, "div", "mn-sl-strip");
     for (const it of items) {
         const b = h(row, "button", "mn-sl-ic");
@@ -416,5 +416,6 @@ function strip(box: HTMLElement, items: { src: string; label: string; rarity?: s
         else { const im = h(b, "img"); im.src = it.src; im.alt = ""; }
         h(b, "span", "", it.label);
         b.addEventListener("click", (e) => { e.preventDefault(); it.tap(); });
+        if (it.go) goes(b, it.go);
     }
 }

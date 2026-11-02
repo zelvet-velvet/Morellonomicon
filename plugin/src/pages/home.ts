@@ -2,7 +2,7 @@ import type { App } from "obsidian";
 import type MorellonomiconPlugin from "../main";
 import type { Champion } from "../data/store";
 import type { NeedCtx, PageCtx, PageOut } from "./index";
-import { ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, shopRoleIcon, h, holdTip, icon, page, warmPictures, centreBelow, empty } from "../ui";
+import { ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, shopRoleIcon, h, holdTip, icon, page, warmPictures, centreBelow, empty, goes } from "../ui";
 import { MODES } from "../modes";
 import { PROFILE_FRESH, QUEUE, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, type Profile } from "../data/riot";
 import { art, type Need } from "../media";
@@ -177,6 +177,7 @@ export function homePage(ctx: PageCtx): PageOut {
             h(card, "em", m.level >= 10 ? "is-high" : undefined, `M${m.level}`);
             h(card, "b", undefined, c.name);
             card.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(id); });
+            goes(card, { key: "champion", params: { id: id } });
         }
     }
     // the last games: a few rows here, all of them on the recent games page
@@ -217,7 +218,7 @@ function gameRow(ctx: PageCtx, parent: HTMLElement, g: Profile["games"][number],
         for (const id of g.items) { const x = h(items, "img"); x.src = art.item(ctx.plugin.store.champions()[0]?.patch ?? "", id); x.alt = ""; x.loading = "lazy"; }
     }
     h(r, "span", "mn-game-wl", g.win ? "勝" : "敗");
-    if (c) r.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); });
+    if (c) { r.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); }); goes(r, { key: "champion", params: { id: c.id } }); }
 }
 
 // The recent games page: every game Home has

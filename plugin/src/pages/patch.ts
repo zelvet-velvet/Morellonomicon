@@ -1,5 +1,5 @@
 import type { NoteEntry, PatchNote } from "../data/store";
-import { AUG_CLASS, augIcon, blockLoad, chip, empty, group, h, page, row } from "../ui";
+import { AUG_CLASS, augIcon, blockLoad, chip, empty, group, h, page, row, goes } from "../ui";
 import { RARITY_COLOR } from "./augments";
 import { entryDir, marker, type OfficialDir } from "./changes";
 import type { PageCtx, PageOut } from "./index";
@@ -27,7 +27,7 @@ export function patchPage(ctx: PageCtx): PageOut {
         const grid = h(el, "div", "mn-grid");
         for (const { e, dir } of byDir(latest.champions)) {
             const c = store.champions().find((x) => x.name === e.name);
-            if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "overview"), { dir });
+            if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "overview"), { dir, go: { key: "champion", params: { id: c.id } } });
         }
         blockLoad(grid);
         h(el, "div", "mn-gf", LEGEND);
@@ -75,13 +75,14 @@ function byDir<T extends NoteEntry>(list: T[]): { e: T; dir: OfficialDir }[] {
 }
 
 // An icon with its name under it; `badge` is the number of changes, `ring` an outline colour (rarity)
-function tile(grid: HTMLElement, src: string, name: string, onTap: () => void, o: { dir?: OfficialDir; rarity?: string } = {}): void {
+function tile(grid: HTMLElement, src: string, name: string, onTap: () => void, o: { dir?: OfficialDir; rarity?: string; go?: { key: string; params?: Record<string, string | number> } } = {}): void {
     const t = h(grid, "button", "mn-tile");
     if (o.rarity && AUG_CLASS[o.rarity]) augIcon(t, src, o.rarity, "mn-tile-aug");
     else { const im = h(t, "img"); im.src = src; im.alt = ""; }
     if (o.dir) { const m = marker(o.dir); const b = h(t, "span", "mn-tile-b", m.mark); b.style.background = m.color; }
     h(t, "span", "mn-tile-n", name);
     t.addEventListener("click", (e) => { e.preventDefault(); onTap(); });
+    if (o.go) goes(t, o.go);
 }
 
 function latestCard(el: HTMLElement, n: PatchNote): void {

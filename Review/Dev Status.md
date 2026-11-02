@@ -11,7 +11,7 @@ sticker: lucide//activity
 ## 🚀 Today's Progress (2026-11-02)
 > [!abstract]+ Today
 > - **Project management like agent-worklog-vault**: `AGENTS.md` is the entry point; the commands and the long task rules are `mn-*` skills in `.claude/skills/`; [[LLM Guide]] keeps the shared rules (26 → 11 KB); `tools/vault_status.py` does the mechanical steps; finished work moved to [[Progress Archive]].
-> - **Pictures fetched ahead from one place**: `media.ts` builds every picture address and fetches what a page needs before it opens; every page must list its needs to build; Settings → Picture readout shows pictures that came late.
+> - **Pictures fetched ahead from one place**: `media.ts` builds every picture address and fetches what a page needs before it opens; every page must list its needs to build; Settings → Picture readout shows pictures that came late; every champion and topic link on screen fetches its page's splash before the tap, so the art is there the moment the page opens.
 > - **Next**: review the augment recommendations on the 強化 tab and `Review/Augment Tiers.md` (see Ongoing → Data).
 
 ## 📅 Yesterday's Progress (2026-11-01)

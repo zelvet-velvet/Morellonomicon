@@ -614,7 +614,7 @@ function preloadClip(c, key) {
 var RANK = { now: 0, soon: 1, idle: 2 };
 var PARALLEL = 6;
 var HELD_SMALL = 600;
-var HELD_BIG = 16;
+var HELD_BIG = 24;
 var BIG_PX = 256 * 256;
 var held = /* @__PURE__ */ new Map();
 var heldBig = /* @__PURE__ */ new Map();
@@ -1076,6 +1076,10 @@ function autoLoading(root) {
   return mo;
 }
 var warmPictures = (urls) => warm(urls, "soon");
+function goes(el, frame) {
+  el.dataset.go = JSON.stringify(frame);
+  return el;
+}
 var HOLD_MS = 280;
 var holdTip = (el, text) => {
   let timer = 0, shown = false;
@@ -2074,10 +2078,13 @@ function setCard(body, c, ctx, b) {
       im.src = mate?.icon ?? "";
       im.alt = "";
       h(btn, "span", "", mate?.name ?? id);
-      if (mate) btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        ctx.openChampion(mate.id);
-      });
+      if (mate) {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          ctx.openChampion(mate.id);
+        });
+        goes(btn, { key: "champion", params: { id: mate.id } });
+      }
     }
   }
   itemRow(card, c, ctx, b.items);
@@ -3425,13 +3432,13 @@ function visual(ctx, box, s) {
   } else if (kind === "role") {
     const list2 = store.champions().filter((c) => c.roles.includes(args[0] ?? "")).sort((a, b) => hashStr(a.id + day()) - hashStr(b.id + day())).slice(0, STRIP);
     if (list2.length) {
-      strip(box, list2.map((c) => ({ src: c.icon, label: c.name, tap: () => ctx.openChampion(c.id) })));
+      strip(box, list2.map((c) => ({ src: c.icon, label: c.name, tap: () => ctx.openChampion(c.id), go: { key: "champion", params: { id: c.id } } })));
       return;
     }
   } else if (kind === "champs") {
     const list2 = args.map(champ2).filter((c) => !!c);
     if (list2.length) {
-      strip(box, list2.map((c) => ({ src: c.icon, label: c.name, tap: () => ctx.openChampion(c.id) })));
+      strip(box, list2.map((c) => ({ src: c.icon, label: c.name, tap: () => ctx.openChampion(c.id), go: { key: "champion", params: { id: c.id } } })));
       return;
     }
   } else if (kind === "itemtag") {
@@ -3472,6 +3479,7 @@ function strip(box, items) {
       e.preventDefault();
       it.tap();
     });
+    if (it.go) goes(b, it.go);
   }
 }
 
@@ -3657,6 +3665,7 @@ function rosterPage(ctx) {
     e.preventDefault();
     if (picks.length) ctx.push({ key: "rosterswipe", title: "\u901F\u67E5" });
   });
+  goes(go, { key: "rosterswipe" });
   const masteryTag = (parent, id, cls) => {
     const ms = store.masteryOf(id);
     if (ms && ms.level >= 5) h(parent, "span", cls + (ms.level >= 10 ? " is-high" : ""), String(ms.level));
@@ -3822,6 +3831,11 @@ var FLOOD_FADE_MS = 450;
 var WASH_AT_MS = 560;
 var CHOSEN_SPARKS = 12;
 var CHOSEN_DOTS = 10;
+var SWIPE_AHEAD = 3;
+function swipeNeeds({ plugin }) {
+  const ids = plugin.settings.roster.filter((id) => plugin.store.champion(id)).slice(0, MAX_PICKS);
+  return [...ids.slice(0, SWIPE_AHEAD).map((id) => cardArt(id, 0)), ...ids.map((id) => loading(id))];
+}
 function swipePage(ctx) {
   const store = ctx.plugin.store;
   const el = h(null, "div", "mn-page mn-deckpage");
@@ -4155,6 +4169,7 @@ function quickCard(ctx, c, face, o) {
       e.stopPropagation();
       ctx.openChampion(c.id);
     });
+    goes(open, { key: "champion", params: { id: c.id } });
   }
   let cur = 0;
   const show = (i) => {
@@ -4739,6 +4754,7 @@ function augmentPage(ctx) {
         e.preventDefault();
         ctx.openChampion(c.id, "augments");
       });
+      goes(tile2, { key: "champion", params: { id: c.id } });
     }
     h(el, "div", "mn-gf", label);
   }
@@ -4811,6 +4827,7 @@ function modelUsers(el, store, a, ctx) {
         e.preventDefault();
         ctx.openChampion(c.id, "augments");
       });
+      goes(tile2, { key: "champion", params: { id: c.id } });
     }
   }
   h(el, "div", "mn-gf", shown ? "\u4F9D\u82F1\u96C4\u7684\u6280\u80FD\u6578\u503C\u4F30\u7B97\uFF1A\u5C0D\u9019\u4E9B\u82F1\u96C4\u662F S \u6216 A\uFF08\u548C\u540C\u7A00\u6709\u5EA6\u7684\u5176\u4ED6\u5F37\u5316\u6BD4\u8F03\uFF0C\u4E5F\u548C\u5176\u4ED6\u82F1\u96C4\u6BD4\u8F03\uFF09\u3002\u4E0D\u662F\u52DD\u7387\u3002" : "\u4F9D\u82F1\u96C4\u7684\u6280\u80FD\u6578\u503C\u4F30\u7B97\uFF0C\u6C92\u6709\u82F1\u96C4\u7279\u5225\u9069\u5408\u9019\u500B\u5F37\u5316\u3002");
@@ -5020,6 +5037,7 @@ function championPicker(parent, ctx) {
         e.preventDefault();
         ctx.openChampion(c.id);
       });
+      goes(tile2, { key: "champion", params: { id: c.id } });
     }
     if (!q) return;
     if (!hits.length) empty(grid, { icon: "search-x", title: "No champion" });
@@ -5556,6 +5574,7 @@ function handbookPage(ctx) {
           e.preventDefault();
           ctx.openNote(n.file.path);
         });
+        goes(b, { key: "note", params: { path: n.file.path } });
       };
       const tiles = h(out, "div");
       if (next) tile2(tiles, next, true);
@@ -5695,6 +5714,7 @@ function handbookPage(ctx) {
         for (const l of ls.slice(0, MAX_PER_NOTE)) marked(h(main, "div", "mn-row-s"), snippet(l, q), q);
         icon(r, "chevron-right", "mn-row-chev");
         r.addEventListener("click", () => ctx.openNote(n.file.path));
+        goes(r, { key: "note", params: { path: n.file.path } });
         found++;
       }
     }
@@ -5711,6 +5731,7 @@ function handbookPage(ctx) {
         marked(h(main, "div", "mn-row-s"), snippet(t.text, q), q);
         icon(r, "chevron-right", "mn-row-chev");
         r.addEventListener("click", () => ctx.openChampion(c.id, "tips"));
+        goes(r, { key: "champion", params: { id: c.id } });
         found++;
       }
     }
@@ -5727,6 +5748,7 @@ function handbookPage(ctx) {
         if (b.note) marked(h(main, "div", "mn-row-s"), snippet(b.note, q), q);
         icon(r, "chevron-right", "mn-row-chev");
         r.addEventListener("click", () => ctx.openChampion(c.id, "build"));
+        goes(r, { key: "champion", params: { id: c.id } });
         found++;
       }
     }
@@ -6072,6 +6094,7 @@ function homePage(ctx) {
         e.preventDefault();
         ctx.openChampion(id);
       });
+      goes(card, { key: "champion", params: { id } });
     }
   }
   if (prof?.games.length) {
@@ -6117,10 +6140,13 @@ function gameRow(ctx, parent, g, full) {
     }
   }
   h(r, "span", "mn-game-wl", g.win ? "\u52DD" : "\u6557");
-  if (c) r.addEventListener("click", (e) => {
-    e.preventDefault();
-    ctx.openChampion(c.id);
-  });
+  if (c) {
+    r.addEventListener("click", (e) => {
+      e.preventDefault();
+      ctx.openChampion(c.id);
+    });
+    goes(r, { key: "champion", params: { id: c.id } });
+  }
 }
 function gamesPage(ctx) {
   const el = page("\u6700\u8FD1\u5C0D\u6230");
@@ -6289,7 +6315,7 @@ function patchPage(ctx) {
     const grid = h(el, "div", "mn-grid");
     for (const { e, dir } of byDir(latest.champions)) {
       const c = store.champions().find((x) => x.name === e.name);
-      if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "overview"), { dir });
+      if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "overview"), { dir, go: { key: "champion", params: { id: c.id } } });
     }
     blockLoad(grid);
     h(el, "div", "mn-gf", LEGEND);
@@ -6354,6 +6380,7 @@ function tile(grid, src, name, onTap, o = {}) {
     e.preventDefault();
     onTap();
   });
+  if (o.go) goes(t, o.go);
 }
 function latestCard(el, n) {
   const card = h(el, "div", "mn-pn");
@@ -6417,8 +6444,7 @@ var ROUTES = {
   games: { render: gamesPage, needs: none },
   itemlist: { render: itemsPage, needs: none },
   // the Items page, opened from Home
-  rosterswipe: { render: swipePage, needs: none }
-  // its cards' art is fetched by 速查 while the picks are made
+  rosterswipe: { render: swipePage, needs: swipeNeeds }
 };
 function routeKey(tab, frame) {
   return frame.key in ROUTES && frame.key !== "root" ? frame.key : tab;
@@ -7934,6 +7960,8 @@ var ARRIVE_MS = 240;
 var VEIL_DELAY_MS = 250;
 var VEIL_MIN_MS = 500;
 var AHEAD_MS = 600;
+var SEEN_MS = 250;
+var SEEN_MARGIN = "120px";
 var BOOT_PICTURES_MS = 7e3;
 function arrive(page2, anim) {
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || !page2.animate) return;
@@ -8166,6 +8194,43 @@ var MnView = class extends import_obsidian15.ItemView {
       cancelAnimationFrame(raf);
     });
     this.registerDomEvent(this.scrollEl, "scroll", () => this.markScrolled(), { passive: true });
+    const linkFrame = (el) => {
+      try {
+        return JSON.parse(el.dataset.go ?? "");
+      } catch {
+        return null;
+      }
+    };
+    const timers = /* @__PURE__ */ new WeakMap();
+    const seen = new IntersectionObserver((list2) => {
+      for (const e of list2) {
+        if (e.isIntersecting) {
+          timers.set(e.target, window.setTimeout(() => {
+            seen.unobserve(e.target);
+            const f = linkFrame(e.target);
+            if (f) this.fetchAhead(this.router.tab, f, "soon");
+          }, SEEN_MS));
+        } else window.clearTimeout(timers.get(e.target));
+      }
+    }, { root: this.scrollEl, rootMargin: SEEN_MARGIN });
+    const watch = (n) => {
+      if (!(n instanceof HTMLElement)) return;
+      if (n.dataset.go) seen.observe(n);
+      n.querySelectorAll("[data-go]").forEach((x) => seen.observe(x));
+    };
+    const added = new MutationObserver((ms) => {
+      for (const m of ms) m.addedNodes.forEach(watch);
+    });
+    added.observe(this.scrollEl, { childList: true, subtree: true });
+    this.register(() => {
+      seen.disconnect();
+      added.disconnect();
+    });
+    this.registerDomEvent(this.scrollEl, "pointerdown", (e) => {
+      const el = e.target?.closest?.("[data-go]");
+      const f = el ? linkFrame(el) : null;
+      if (f) this.fetchAhead(this.router.tab, f, "now");
+    }, { capture: true, passive: true });
     this.tabsEl = h(app, "div", "mn-tabs");
     this.applyTheme();
     this.registerEvent(this.app.workspace.on("css-change", () => this.applyTheme()));

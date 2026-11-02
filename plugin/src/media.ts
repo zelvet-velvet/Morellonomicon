@@ -87,7 +87,7 @@ const PARALLEL = 6;          // pictures fetched at once
 // Decoded pictures kept in memory (oldest first out), so the phone does not drop them: icons are small (~16 KB decoded) and many are
 // kept; a splash is ~3.7 MB decoded, so only a few (an older one is still in the browser's cache and comes back quickly)
 const HELD_SMALL = 600;
-const HELD_BIG = 16;
+const HELD_BIG = 24;   // enough for the champions on one screen of a list, fetched ahead (goes() in ui.ts)
 const BIG_PX = 256 * 256;
 const held = new Map<string, HTMLImageElement>();      // icons, fetched and decoded
 const heldBig = new Map<string, HTMLImageElement>();   // splashes, loading art, wallpapers

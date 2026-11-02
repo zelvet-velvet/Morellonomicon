@@ -22,7 +22,9 @@ const ARRIVE_MS = 240;
 // A picture that arrives after its page is on screen (a card built later, a lazy one) stays clear, then fades in
 const VEIL_DELAY_MS = 250;   // a later page waits this long for its pictures before it shows under the loading veil
 const VEIL_MIN_MS = 500;     // and once shown it stays at least this long
-const AHEAD_MS = 600;            // after a page shows, what is one tap away from it is fetched (its route's `next`)
+const AHEAD_MS = 600;
+const SEEN_MS = 250;              // a link on screen this long has its page's pictures fetched (a fast fling past it does not)
+const SEEN_MARGIN = "120px";     // and one just below the edge counts as on screen            // after a page shows, what is one tap away from it is fetched (its route's `next`)
 const BOOT_PICTURES_MS = 7000;   // at start-up the first page may wait this long for its icons (the first time they come over the network)
 
 function arrive(page: HTMLElement, anim: "push" | "back" | "tab"): void {
@@ -201,6 +203,34 @@ export class MnView extends ItemView {
         sized.observe(this.scrollEl);
         this.register(() => { sized.disconnect(); cancelAnimationFrame(raf); });
         this.registerDomEvent(this.scrollEl, "scroll", () => this.markScrolled(), { passive: true });
+        // Links that say what they open (goes() in ui.ts): their page's pictures are fetched while they are on screen, and first in line
+        // when a finger touches one, so the page shows complete the moment it opens (Design Rules, "Fetch ahead")
+        const linkFrame = (el: Element): Frame | null => { try { return JSON.parse((el as HTMLElement).dataset.go ?? "") as Frame; } catch { return null; } };
+        const timers = new WeakMap<Element, number>();
+        const seen = new IntersectionObserver((list) => {
+            for (const e of list) {
+                if (e.isIntersecting) {
+                    timers.set(e.target, window.setTimeout(() => {
+                        seen.unobserve(e.target);
+                        const f = linkFrame(e.target);
+                        if (f) this.fetchAhead(this.router.tab, f, "soon");
+                    }, SEEN_MS));
+                } else window.clearTimeout(timers.get(e.target));
+            }
+        }, { root: this.scrollEl, rootMargin: SEEN_MARGIN });
+        const watch = (n: Node) => {
+            if (!(n instanceof HTMLElement)) return;
+            if (n.dataset.go) seen.observe(n);
+            n.querySelectorAll("[data-go]").forEach((x) => seen.observe(x));
+        };
+        const added = new MutationObserver((ms) => { for (const m of ms) m.addedNodes.forEach(watch); });
+        added.observe(this.scrollEl, { childList: true, subtree: true });
+        this.register(() => { seen.disconnect(); added.disconnect(); });
+        this.registerDomEvent(this.scrollEl, "pointerdown", (e) => {
+            const el = (e.target as Element | null)?.closest?.("[data-go]");
+            const f = el ? linkFrame(el) : null;
+            if (f) this.fetchAhead(this.router.tab, f, "now");
+        }, { capture: true, passive: true });
         this.tabsEl = h(app, "div", "mn-tabs");
         this.applyTheme();
         this.registerEvent(this.app.workspace.on("css-change", () => this.applyTheme()));   // Obsidian switched light / dark

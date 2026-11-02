@@ -1,6 +1,6 @@
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { AugTier, Augment, Champion, Item, Store } from "../data/store";
-import { ITEM_CAT_COLOR, ITEM_CATS, TIER_COLOR, augIcon, chip, empty, group, h, icon, layoutBlock, row, shopIcon, slideSeg, centreBelow } from "../ui";
+import { ITEM_CAT_COLOR, ITEM_CATS, TIER_COLOR, augIcon, chip, empty, group, h, icon, layoutBlock, row, shopIcon, slideSeg, centreBelow, goes } from "../ui";
 import { RARITY_COLOR } from "./augments";
 import { officialBlock } from "./changes";
 import { deckNeeds, deckPage, itemTree } from "./deck";
@@ -328,6 +328,7 @@ export function augmentPage(ctx: PageCtx): PageOut {
             const t = h(tile, "img"); t.src = c.icon; t.alt = "";
             h(tile, "span", "mn-tile-n", c.name);
             tile.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id, "augments"); });
+            goes(tile, { key: "champion", params: { id: c.id } });
         }
         h(el, "div", "mn-gf", label);
     }
@@ -390,6 +391,7 @@ function modelUsers(el: HTMLElement, store: Store, a: Augment, ctx: PageCtx): bo
             const t = h(tile, "img"); t.src = c.icon; t.alt = "";
             h(tile, "span", "mn-tile-n", c.name);
             tile.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id, "augments"); });
+            goes(tile, { key: "champion", params: { id: c.id } });
         }
     }
     h(el, "div", "mn-gf", shown ? "依英雄的技能數值估算：對這些英雄是 S 或 A（和同稀有度的其他強化比較，也和其他英雄比較）。不是勝率。"

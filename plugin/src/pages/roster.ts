@@ -1,14 +1,14 @@
 import { Notice } from "obsidian";
 import type { Champion } from "../data/store";
 import { findSaid, type Said, type Sounds, soundScore } from "../data/sound";
-import { DAMAGE_COLOR, DAMAGE_ICON, REACH_ICON, fixedPage, haptic, layoutBlock, SHOP_ROW, STAT_COLOR, STAT_ICON, SWIPE, shopIcon, chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, roleArt, tip, warmPictures } from "../ui";
+import { DAMAGE_COLOR, DAMAGE_ICON, REACH_ICON, fixedPage, haptic, layoutBlock, SHOP_ROW, STAT_COLOR, STAT_ICON, SWIPE, shopIcon, chip, empty, fgrid, h, holdTip, icon, LANES, laneChip, page, roleArt, tip, warmPictures, goes } from "../ui";
 import { entryDir, marker } from "./changes";
-import type { PageCtx, PageOut } from "./index";
+import type { NeedCtx, PageCtx, PageOut } from "./index";
 import { keyBadge } from "./cardkit";
 import { DECK_BELOW } from "./deck";
 import { cardPile } from "./pile";
 import { damageLines, reachOf, styleCard } from "./profile";
-import { art } from "../media";
+import { art, type Need } from "../media";
 
 const MAX_PICKS = 15;   // a Mayhem game can hand you a lot of champions
 const SPLIT = /[\s,，、;；和跟與及]+/;
@@ -198,6 +198,7 @@ export function rosterPage(ctx: PageCtx): PageOut {
     h(go, "span", undefined, "配對");
     icon(go, "arrow-right");
     go.addEventListener("click", (e) => { e.preventDefault(); if (picks.length) ctx.push({ key: "rosterswipe", title: "速查" }); });
+    goes(go, { key: "rosterswipe" });   // the first cards' art starts coming while the button is on screen
     const masteryTag = (parent: HTMLElement, id: string, cls: string) => {
         const ms = store.masteryOf(id);
         if (ms && ms.level >= 5) h(parent, "span", cls + (ms.level >= 10 ? " is-high" : ""), String(ms.level));
@@ -335,6 +336,12 @@ const CHOSEN_SPARKS = 12; // small hearts bursting out of the big one
 const CHOSEN_DOTS = 10;   // sparkle dots between them
 // The swipe through the picked champions, as a page that fills the screen like a Handbook topic: the top card is dragged right
 // (like) or left (pass), or the ♥ / ✕ buttons are tapped; after the last card the liked champions are listed.
+// What 速查's swipe page shows from the network (its route in pages/index.ts): the first cards' art and the end view's portraits
+const SWIPE_AHEAD = 3;
+export function swipeNeeds({ plugin }: NeedCtx): Need[] {
+    const ids = plugin.settings.roster.filter((id) => plugin.store.champion(id)).slice(0, MAX_PICKS);
+    return [...ids.slice(0, SWIPE_AHEAD).map((id) => cardArt(id, 0)), ...ids.map((id) => loading(id))];
+}
 export function swipePage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const el = h(null, "div", "mn-page mn-deckpage");
@@ -620,6 +627,7 @@ export function quickCard(ctx: PageCtx, c: Champion, face: HTMLElement, o: Quick
         icon(open, "arrow-up-right");
         open.setAttribute("aria-label", "英雄頁");
         open.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); ctx.openChampion(c.id); });
+        goes(open, { key: "champion", params: { id: c.id } });
     }
     let cur = 0;
     const show = (i: number) => {
