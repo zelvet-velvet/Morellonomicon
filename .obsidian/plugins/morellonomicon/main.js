@@ -643,6 +643,10 @@ function pump() {
       pump();
     };
     im.onload = () => {
+      if (!job.keep) {
+        finish();
+        return;
+      }
       void (im.decode ? im.decode() : Promise.resolve()).catch(() => void 0).then(() => {
         const [map, max] = im.naturalWidth * im.naturalHeight > BIG_PX ? [heldBig, HELD_BIG] : [held, HELD_SMALL];
         map.delete(url);
@@ -670,12 +674,24 @@ function warm(urls, soon = "soon") {
     jobs.push(new Promise((done) => {
       if (w) {
         w.rank = Math.min(w.rank, rank);
+        w.keep = true;
         w.done.push(done);
-      } else waiting.set(url, { rank, done: [done] });
+      } else waiting.set(url, { rank, keep: true, done: [done] });
     }));
   }
   pump();
   return Promise.all(jobs).then(() => void 0);
+}
+var PREFETCH_RANK = 3;
+var cellular = () => navigator.connection?.type === "cellular";
+function prefetch(urls) {
+  if (saveData() || cellular()) return;
+  for (const url of urls) {
+    if (!url || !/^https?:/.test(url)) continue;
+    asked.add(url);
+    if (!isWarm(url) && !waiting.has(url)) waiting.set(url, { rank: PREFETCH_RANK, keep: false, done: [] });
+  }
+  pump();
 }
 var clipChain = Promise.resolve();
 function want(needs, soon = "soon") {
@@ -8603,6 +8619,7 @@ var MorellonomiconPlugin = class extends import_obsidian16.Plugin {
       void this.whenBooted().then(() => {
         void warm([...this.store.champions().map((c) => c.icon), ...this.store.augments().map((a) => a.icon), ...this.store.items().map((i) => i.icon)], "idle");
         for (const tab of MODES[this.settings.mode].tabs) void Promise.resolve(ROUTES[tab].needs({ app: this.app, plugin: this }, { key: "root", title: "" })).then((n) => want(n, "idle")).catch(() => void 0);
+        prefetch(this.store.champions().map((c) => art.loading(c.id)));
       });
       if (this.settings.openOnStartup) void this.activate(true);
       this.updateBody();

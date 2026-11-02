@@ -92,7 +92,7 @@ const BIG_PX = 256 * 256;
 const held = new Map<string, HTMLImageElement>();      // icons, fetched and decoded
 const heldBig = new Map<string, HTMLImageElement>();   // splashes, loading art, wallpapers
 const asked = new Set<string>();                    // every address ever asked for ahead (for the miss readout)
-const waiting = new Map<string, { rank: number; done: Array<() => void> }>();
+const waiting = new Map<string, { rank: number; keep: boolean; done: Array<() => void> }>();
 let running = 0;
 const saveData = () => !!(navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
 
@@ -110,6 +110,7 @@ function pump(): void {
         const im = new Image();
         const finish = () => { running--; job.done.forEach((d) => d()); pump(); };
         im.onload = () => {
+            if (!job.keep) { finish(); return; }   // prefetch: only into the browser's cache, not kept decoded
             void (im.decode ? im.decode() : Promise.resolve()).catch(() => undefined).then(() => {
                 const [map, max] = im.naturalWidth * im.naturalHeight > BIG_PX ? [heldBig, HELD_BIG] : [held, HELD_SMALL];
                 map.delete(url); map.set(url, im);
@@ -134,11 +135,25 @@ export function warm(urls: Iterable<string>, soon: Soon = "soon"): Promise<void>
         if (isWarm(url)) continue;
         const w = waiting.get(url);
         jobs.push(new Promise<void>((done) => {
-            if (w) { w.rank = Math.min(w.rank, rank); w.done.push(done); } else waiting.set(url, { rank, done: [done] });
+            if (w) { w.rank = Math.min(w.rank, rank); w.keep = true; w.done.push(done); } else waiting.set(url, { rank, keep: true, done: [done] });
         }));
     }
     pump();
     return Promise.all(jobs).then(() => undefined);
+}
+
+// Many pictures that may be needed some day (every champion's portrait for the Picks hand): fetched last, after everything else,
+// into the browser's cache only (not kept decoded, so they cost no memory), and not on a phone network or data saver
+const PREFETCH_RANK = 3;
+const cellular = () => (navigator as Navigator & { connection?: { type?: string } }).connection?.type === "cellular";
+export function prefetch(urls: Iterable<string>): void {
+    if (saveData() || cellular()) return;
+    for (const url of urls) {
+        if (!url || !/^https?:/.test(url)) continue;
+        asked.add(url);
+        if (!isWarm(url) && !waiting.has(url)) waiting.set(url, { rank: PREFETCH_RANK, keep: false, done: [] });
+    }
+    pump();
 }
 
 // Pictures and clips together. Clips are big (about 1 MB each): they are fetched one by one after the pictures, never at start-up.

@@ -2,7 +2,7 @@ import { Platform, Plugin, TAbstractFile, TFile, View, WorkspaceLeaf, setIcon } 
 import { Store } from "./data/store";
 import { Router } from "./router";
 import { preloadRoleIcons } from "./ui";
-import { want, warm } from "./media";
+import { art, prefetch, want, warm } from "./media";
 import { ROUTES } from "./pages";
 import { MODES } from "./modes";
 import { registerIconsNote } from "./iconsnote";
@@ -81,6 +81,8 @@ export default class MorellonomiconPlugin extends Plugin {
             void this.whenBooted().then(() => {
                 void warm([...this.store.champions().map((c) => c.icon), ...this.store.augments().map((a) => a.icon), ...this.store.items().map((i) => i.icon)], "idle");
                 for (const tab of MODES[this.settings.mode].tabs) void Promise.resolve(ROUTES[tab].needs({ app: this.app, plugin: this }, { key: "root", title: "" })).then((n) => want(n, "idle")).catch(() => undefined);
+                // last: every champion's portrait, so a champion picked on 速查 shows its small card at once (cache only, not on a phone network)
+                prefetch(this.store.champions().map((c) => art.loading(c.id)));
             });
             if (this.settings.openOnStartup) void this.activate(true);
             this.updateBody();
