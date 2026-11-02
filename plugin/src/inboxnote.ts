@@ -4,7 +4,7 @@ import { Choice, picker, splitNames } from "./pickers";
 
 // The inbox notes (Inbox/技巧.md, Inbox/玩法出裝.md) are editors, like the Layouts note: a ```mn-inbox block holds the
 // entries as JSON ({"kind": "tip" | "build", "entries": [...]}) and is drawn as cards; tap a card to edit it in a form, + 新增 adds
-// one. A field saves when you leave it. "Process the inbox" (LLM Guide) reads the entries and removes the ones turned into cards.
+// one. A field saves when you leave it. "Process the inbox" (skill mn-content) reads the entries and removes the ones turned into cards.
 type Kind = "tip" | "build";
 // champ / items: a picker with pictures and names (pickers.ts); multi for several, max when the order counts
 interface Field { key: string; label: string; type: "text" | "area" | "select" | "date" | "champ" | "items"; options?: string[]; multi?: boolean; max?: number; hint?: string }

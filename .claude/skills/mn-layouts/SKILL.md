@@ -1,0 +1,12 @@
+---
+name: mn-layouts
+description: Morellonomicon Layouts and UI Text notes: applying or syncing Dev Tools/Layouts.md (mn-layout blocks), proposing a new page layout as a mock page, applying Dev Tools/UI Text.md, and visual (CSS, theme) changes. Use when asked to apply / sync the layout or the UI Text note, or before proposing or changing a page layout or the look.
+---
+# Layouts, UI Text and visual changes (Morellonomicon)
+
+`Dev Tools/Layouts.md` is about 60 KB of JSON: grep the page or group title and read only that block. Every UI change also follows [[Design Rules]] (`Dev Tools/Design Rules.md`) and the picture and balance checks there.
+
+- **Layouts note.** `Dev Tools/Layouts.md` holds every page as a phone with blocks (`mn-layout`, JSON, phone px 390 × 844; editor in `plugin/src/layoutnote.ts`). Zaviel moves, resizes, renames and annotates blocks there; "apply the Layouts note" (or "sync the layout") = read the blocks and their notes, tidy the rough sizes first (Zaviel drags roughly: snap edges that nearly meet, make neighbours the same width, keep the 16 px side margins and even gaps, 4 px steps), change the pages to match, save the tidied blocks back into the note, and copy the whole `mn-layout` block into the `mn-layout-synced` block at the end (that clears the changed-page outlines).
+- **Layout proposals go in the Layouts note.** A new page layout or grid template is drawn as a page in `Dev Tools/Layouts.md` with `"mock": true` (a light blue frame) before it is built; several options for one choice go under one group title that names the choice (`<Choice> options · A <name>`, `… · B <name>`), each with a page note saying what it is. A change to an existing page's layout is made on that page in the note (the editor then frames it orange against `mn-layout-synced`). Either way, ask Zaviel to look in Layouts and pick there; build only once a page is chosen (its mock flag off), then delete the unchosen options and sync the block. A new Handbook card template also goes in the Handbook card section of [[Layouts]] and `cardkit.ts`, as that section says.
+- **UI Text note.** `Dev Tools/UI Text.md` lists the app's hint and tip texts by file (`python3 -I tools/list_ui_text.py` remakes it from the code). "Apply the UI Text note" = compare the note with its last commit and change each edited text in the code, then rerun the tool.
+- **Visual changes** (CSS snippets, theme): show a screenshot or describe the change and let Zaviel pick before building. Page layouts are proposed in the Layouts note instead (above).

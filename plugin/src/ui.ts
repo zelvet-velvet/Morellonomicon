@@ -255,7 +255,7 @@ export function blockLoad(host: HTMLElement | HTMLElement[]): void {
 
 // A block as the Layouts note defines it (Dev Tools/Layouts.md: the title row, a grid, a shelf, a hero...). Marking its element is
 // all a page does: whenever pictures in it are still loading (drawn, redrawn, a picture added later) the whole block shows the block
-// loading look until they are in, the way the Handbook's tile groups do (LLM Guide, "Loading look").
+// loading look until they are in, the way the Handbook's tile groups do (Design Rules, "Loading look").
 // own: the block loads by itself instead of with the page's other blocks (Items: the role tabs, the stat rail and the list)
 export function layoutBlock<T extends HTMLElement>(el: T, own = false): T {
     el.classList.add("mn-lb");
@@ -263,7 +263,7 @@ export function layoutBlock<T extends HTMLElement>(el: T, own = false): T {
     return el;
 }
 
-// Every picture gets the loading look by itself, so no page has to ask for it (LLM Guide, "Loading look"): a picture still loading is
+// Every picture gets the loading look by itself, so no page has to ask for it (Design Rules, "Loading look"): a picture still loading is
 // hidden and fades in when it arrives, and a big one (its frame AUTO_BLOCK px or more each way: a card, a splash, a wallpaper) puts the
 // block loading look (blur and the band of light) on its frame until then. Inside a Layouts block (layoutBlock) the whole block gets
 // that look instead. Pictures inside a block a page already handles (mn-blk), inside a card pile (it has its own) or under .mn-noauto

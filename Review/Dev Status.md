@@ -6,7 +6,7 @@ tags:
 sticker: lucide//activity
 ---
 > [!important] For AI assistants
-> Read [[LLM Guide]] before any `CMD_` or status update. This note is kept by `CMD_SYNC` / `CMD_ROLLOVER` / `CMD_NOTES_SYNC`; the day notes in `Review/Log/` by `CMD_JOURNAL`.
+> Kept by `CMD_SYNC` / `CMD_ROLLOVER` / `CMD_NOTES_SYNC` (skills, table in `AGENTS.md`); the day notes in `Review/Log/` by `CMD_JOURNAL`. Run `python3 -I tools/vault_status.py show` before reading this note; read only the section you change.
 
 ## 🚀 Today's Progress (2026-10-30)
 > [!abstract]+ Today
@@ -131,14 +131,5 @@ sticker: lucide//activity
 > - A "what do I build?" note per champion that changes with the enemy team (armor vs magic resist).
 
 ## 🏁 Last Progress
-> [!done]- Finished, by area
-> - **Content / beginner guide**: 初來乍到 (5 topics) and 高手必備 (4 topics) in the Handbook.
-> - **Data / fetch script**: champions and items in zh_TW, the patch in every note.
-> - **Data / augments**: names, rarity and icons for all 249.
-> - **Data / augment effects**: Riot's own text for 234 of 249.
-> - **Patch / automatic update**: the GitHub job regenerates everything Wed-Fri.
-> - **Match data / Mayhem**: Riot publishes no Mayhem matches; builds counting stays for Summoner's Rift.
-> - **Videos / skill clips**: play on the phone, looping without controls.
-> - **Plugin / app**: in daily use on the phone.
-> - **Phone / Git clone**: works; every change is tested on the phone.
-> - **Project**: repo created on GitHub (public).
+> [!abstract]- Moved
+> Finished work is in [[Progress Archive]] (`CMD_NOTES_SYNC` moves `[x]` Ongoing items there).

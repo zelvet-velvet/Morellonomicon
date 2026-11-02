@@ -29,9 +29,9 @@ The other community plugins in the list (Dataview, Templater, Style Settings…)
 
 1. Read [[Dev Status]]: what is today's work and what is ongoing.
 2. Work: write or generate notes (Traditional Chinese; see [[LLM Guide]] for the content rules).
-3. With Claude Code, say `CMD_SYNC` to update Dev Status, and `CMD_JOURNAL` to write the day note. At the end of the day, `CMD_ROLLOVER`.
+3. With Claude Code, say `CMD_SYNC` to update Dev Status, and `CMD_JOURNAL` to write the day note. When notes may be stale or Ongoing items are done, `CMD_NOTES_SYNC` (finished items go to [[Progress Archive]]). At the end of the day, `CMD_ROLLOVER`. The commands are skills in `.claude/skills/` (table in `AGENTS.md`).
 4. Commit and push to `main`: `type(scope): summary`, for example `feat(champions): add the first ten champions`.
 
 ## 4. Where things are
 
-See [[Home]] for the folder map. Content: `新手入門/`, `英雄/`, `強化/`, `模式/`. Progress: [[Dev Status]] and [[Dev Log]].
+See [[Home]] for the folder map. Content: `新手入門/`, `英雄/`, `強化/`, `模式/`. Progress: [[Dev Status]], [[Progress Archive]] and [[Dev Log]].

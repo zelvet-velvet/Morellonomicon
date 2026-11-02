@@ -113,7 +113,7 @@ cd plugin && npm install && npm run check && npm run build && npm run install-va
 | `plugin/` | Morellonomicon 的 Obsidian 外掛（TypeScript） |
 | `tools/` | 抓資料的 Python 腳本 |
 
-從 `Start/Start Guide.md` 開始；AI 助理請讀 `Start/LLM Guide.md`。授權：[MIT](LICENSE)。
+從 `Start/Start Guide.md` 開始；AI 助理請讀 `AGENTS.md`（規則在 `Start/LLM Guide.md`）。授權：[MIT](LICENSE)。
 
 ---
 
