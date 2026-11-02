@@ -1,8 +1,8 @@
 ---
-name: mn-notes-sync
-description: Morellonomicon vault command CMD_NOTES_SYNC [YYYY-MM-DD]. Use when the user types CMD_NOTES_SYNC in the Morellonomicon repo. Brings the notes describing the day's work up to date against the code, then moves finished Ongoing items from Review/Dev Status.md to Review/Progress Archive.md.
+name: cmd-notes-sync
+description: Morellonomicon vault command /cmd-notes-sync [YYYY-MM-DD]. Use when the user runs /cmd-notes-sync (or asks to bring the notes up to date). Fixes the notes describing the day's work against the code, then moves finished Ongoing items from Review/Dev Status.md to Review/Progress Archive.md.
 ---
-# CMD_NOTES_SYNC [YYYY-MM-DD] (Morellonomicon)
+# /cmd-notes-sync [YYYY-MM-DD] (Morellonomicon)
 
 No argument: use `Today's Progress` in `Review/Dev Status.md`; with a date, `Yesterday's` when its heading date matches (`python3 -I tools/vault_status.py show`).
 

@@ -82,10 +82,10 @@ plugin/       the Morellonomicon Obsidian plugin (TypeScript, esbuild)
 ---
 ## 📜 Commands: status, journal
 
-The commands (`CMD_SYNC`, `CMD_JOURNAL`, `CMD_ROLLOVER`, `CMD_NOTES_SYNC`) are skills; the table is in `AGENTS.md`. The progress lives in **[[Dev Status]]** (🚀 Today (date), 📅 Yesterday (date), ⏳ Ongoing by area, 💡 Ideas), **[[Progress Archive]]** (finished work) and the **day notes** (`Review/Log/…`, one `## ` entry per change; the [[Dev Log]] lists them).
+The commands (`/cmd-sync`, `/cmd-journal`, `/cmd-rollover`, `/cmd-notes-sync`) are skills; the table is in `AGENTS.md`. The progress lives in **[[Dev Status]]** (🚀 Today (date), 📅 Yesterday (date), ⏳ Ongoing by area, 💡 Ideas), **[[Progress Archive]]** (finished work) and the **day notes** (`Review/Log/…`, one `## ` entry per change; the [[Dev Log]] lists them).
 
 - **Read before edit**: always read a note right before changing it; Zaviel may have rolled something back: never put it back.
-- **Trust order** (when sources disagree): the code, then today's chat and Dev Status, then other notes. If a note contradicts the code, say so and suggest `CMD_NOTES_SYNC`.
+- **Trust order** (when sources disagree): the code, then today's chat and Dev Status, then other notes. If a note contradicts the code, say so and suggest `/cmd-notes-sync`.
 - **Notifications**: at the very end, only for what changed, one line each: `**[Today's Progress]** Updated in Dev Status`, `**[Journal]** 2 entries in 2026-10-27`. A blank line before and after.
 
 ---
@@ -108,7 +108,7 @@ For the workflow notes (`Start/`, `Review/`, `Dev Tools/`) and the inbox templat
 
 - **Block from its boxes.** Every box `[x]` (or `[x]` and `[-]`) → `[!done]`; every box `[-]` → `[!failure]`; otherwise any `[!]` → `[!warning]`, else any `[?]` → `[!question]`, else `[!todo]`.
 - **Keep it in sync.** Ticking the last open box turns `[!todo]` into `[!done]`; adding an open item to a `[!done]` block turns it back to `[!todo]`. Keep the fold sign (`-` / `+`) and the title.
-- **In [[Dev Status]]:** Today and Yesterday are an `[!abstract]` callout under their dated heading (Today open `+`, Yesterday folded `-`); each Ongoing area is one callout titled with the area (its type from its boxes); Ideas is an `[!example]`. Finished work moves to [[Progress Archive]] (`CMD_NOTES_SYNC`). Callout types are set by `python3 -I tools/vault_status.py callouts [note]`, not by hand. An inbox entry is a `[!todo]` callout until it is processed (then it is removed).
+- **In [[Dev Status]]:** Today and Yesterday are an `[!abstract]` callout under their dated heading (Today open `+`, Yesterday folded `-`); each Ongoing area is one callout titled with the area (its type from its boxes); Ideas is an `[!example]`. Finished work moves to [[Progress Archive]] (`/cmd-notes-sync`). Callout types are set by `python3 -I tools/vault_status.py callouts [note]`, not by hand. An inbox entry is a `[!todo]` callout until it is processed (then it is removed).
 
 ---
 ## 🗣️ Conventions

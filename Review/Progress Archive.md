@@ -5,7 +5,7 @@ tags:
   - status
 sticker: lucide//archive
 ---
-Finished work moved out of [[Dev Status]] by `CMD_NOTES_SYNC`, newest first, one line per item, result only. Read only when asked or for history; what changed day by day is in [[Dev Log]].
+Finished work moved out of [[Dev Status]] by `/cmd-notes-sync`, newest first, one line per item, result only. Read only when asked or for history; what changed day by day is in [[Dev Log]].
 
 ## 🏁 Finished
 > [!done]- Finished, by area (to 2026-10-30)

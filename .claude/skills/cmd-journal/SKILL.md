@@ -1,8 +1,8 @@
 ---
-name: mn-journal
-description: Morellonomicon vault command CMD_JOURNAL [YYYY-MM-DD]. Use when the user types CMD_JOURNAL in the Morellonomicon repo. Writes that day's Dev Log note in Review/Log/ (one English entry per change) from Dev Status and lists the day in Review/Dev Log.md.
+name: cmd-journal
+description: Morellonomicon vault command /cmd-journal [YYYY-MM-DD]. Use when the user runs /cmd-journal (or asks for the day's Dev Log entries). Writes that day's Dev Log note in Review/Log/ (one English entry per feature) from Dev Status and lists the day in Review/Dev Log.md.
 ---
-# CMD_JOURNAL [YYYY-MM-DD] (Morellonomicon)
+# /cmd-journal [YYYY-MM-DD] (Morellonomicon)
 
 Default day: today. Source: `Today's Progress` in `Review/Dev Status.md`, or `Yesterday's` when its heading date matches (`python3 -I tools/vault_status.py show`), plus `git log --since/--until` for that day.
 

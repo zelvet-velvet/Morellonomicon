@@ -4,7 +4,7 @@
 
 ## Start here
 - Shared rules: `Start/LLM Guide.md` (read it before editing notes, scripts or the plugin). Progress: `python3 -I tools/vault_status.py show`, then only the part of `Review/Dev Status.md` you need.
-- Task rules are skills in `.claude/skills/<name>/SKILL.md`: Claude Code loads them by itself; any other agent opens the file when the task matches the table below.
+- Commands are typed as `/cmd-*` (slash completion lists them). Task rules are skills in `.claude/skills/<name>/SKILL.md`: Claude Code loads them by itself; any other agent opens the file when the task matches the table below.
 - Read a note right before editing it: Zaviel edits in Obsidian at the same time and may have rolled something back; never put it back.
 - Large notes: grep first, read the matching section. Never read `Review/Tag Audit.md` or `Review/Augment Tiers.md` whole (generated, 130–140 KB each); `Dev Tools/Layouts.md` is about 50 KB of JSON.
 - Vault content for readers is Traditional Chinese; workflow notes stay English. Reply in the language Zaviel writes in.
@@ -12,10 +12,10 @@
 ## Commands and skills
 | Command / task | Skill | What it does |
 | :--- | :--- | :--- |
-| `CMD_SYNC` | `mn-sync` | Update Today / Yesterday / Ongoing in Dev Status from the chat and git |
-| `CMD_JOURNAL [date]` | `mn-journal` | The day's Dev Log note (one English entry per change) and the Dev Log index |
-| `CMD_ROLLOVER` | `mn-rollover` | Today → Yesterday, Today cleared and dated, commit (`tools/vault_status.py rollover`) |
-| `CMD_NOTES_SYNC [date]` | `mn-notes-sync` | Fix stale notes, move `[x]` Ongoing items to `Review/Progress Archive.md` |
+| `/cmd-sync` | `cmd-sync` | Update Today / Yesterday / Ongoing in Dev Status from the chat and git |
+| `/cmd-journal [date]` | `cmd-journal` | The day's Dev Log note (one English entry per change) and the Dev Log index |
+| `/cmd-rollover` | `cmd-rollover` | Today → Yesterday, Today cleared and dated, commit (`tools/vault_status.py rollover`) |
+| `/cmd-notes-sync [date]` | `cmd-notes-sync` | Fix stale notes, move `[x]` Ongoing items to `Review/Progress Archive.md` |
 | (frontmatter, tips, builds, inbox) | `mn-content` | Champion / item / augment keys, tips and builds, "process the inbox" |
 | (Handbook topic or card) | `mn-handbook` | Deck format, visual kinds, text limits |
 | (Layouts or UI Text note, a new layout, the look) | `mn-layouts` | Apply / sync the layout, mock pages, UI Text, visual changes |
@@ -30,7 +30,7 @@ Solo project, owner **Zaviel** (GitHub `zelvet-velvet`); no branches or pull req
 - Git identity: in a fresh clone check `git config user.name` / `user.email`; if not `Zaviel` / `81034608+zelvet-velvet@users.noreply.github.com`, set them at repo level.
 - Messages `type(scope): summary`, lowercase, imperative, no trailing period; `type` is feat, fix, refactor, chore or docs; `scope` is champions, augments, modes, tools, vault, css, docs. End with the co-author line from the session's attribution rules.
 - Stage only the files of the change; never `git add -A` (`.obsidian/` holds per-device files).
-- Each change gets a Dev Log entry (`CMD_JOURNAL`).
+- Each change gets a Dev Log entry (`/cmd-journal`).
 - If collaborators are ever invited, add `CONTRIBUTING.md` and switch to branches + PRs first.
 
 ## Setup on a new machine

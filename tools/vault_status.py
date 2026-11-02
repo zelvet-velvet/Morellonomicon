@@ -8,7 +8,7 @@ Usage (from the repo root):
     python3 -I tools/vault_status.py day-note [DATE] [--create]
                                                           # path of a Dev Log day note, its entry count; make it if missing
 
-Rules: the skills in .claude/skills/ (mn-sync, mn-rollover, mn-journal, mn-notes-sync) and the
+Rules: the skills in .claude/skills/ (cmd-sync, cmd-rollover, cmd-journal, cmd-notes-sync) and the
 vault note format in Start/LLM Guide.md. Exit codes: 0 done, 1 nothing to do / stale (--check), 2 not found.
 """
 import argparse, datetime, re, subprocess, sys
@@ -163,14 +163,14 @@ def cmd_rollover(a):
             write(STATUS, s[:t.start()] + f"## 🚀 Today's Progress ({new_date})\n" + s[t.end():], crlf)
             print(f'Today was empty: only its date set to {new_date}. Yesterday unchanged.')
         else:
-            print('Today has no items: run CMD_SYNC first. Nothing changed.')
+            print('Today has no items: run /cmd-sync first. Nothing changed.')
         sys.exit(1)
     if date == new_date and not a.force:
         print(f'Today is already dated {new_date}; rolling it over would empty today. Rerun with --force if meant.')
         sys.exit(1)
     p = day_path(date)
     if not p.exists() or sum(1 for l in read(p)[0].split('\n') if l.startswith('## ')) == 0:
-        print(f'Warning: no day note entries for {date} ({p.relative_to(ROOT)}): run CMD_JOURNAL {date} first.')
+        print(f'Warning: no day note entries for {date} ({p.relative_to(ROOT)}): run /cmd-journal {date} first.')
         if not a.force:
             sys.exit(2)
     yest = "> [!abstract]- Yesterday\n" + '\n'.join(today) + '\n'

@@ -6,7 +6,7 @@ tags:
 sticker: lucide//activity
 ---
 > [!important] For AI assistants
-> Kept by `CMD_SYNC` / `CMD_ROLLOVER` / `CMD_NOTES_SYNC` (skills, table in `AGENTS.md`); the day notes in `Review/Log/` by `CMD_JOURNAL`. Run `python3 -I tools/vault_status.py show` before reading this note; read only the section you change.
+> Kept by `/cmd-sync` / `/cmd-rollover` / `/cmd-notes-sync` (skills, table in `AGENTS.md`); the day notes in `Review/Log/` by `/cmd-journal`. Run `python3 -I tools/vault_status.py show` before reading this note; read only the section you change.
 
 ## 🚀 Today's Progress (2026-11-02)
 > [!abstract]+ Today
@@ -101,4 +101,4 @@ sticker: lucide//activity
 
 ## 🏁 Last Progress
 > [!abstract]- Moved
-> Finished work is in [[Progress Archive]] (`CMD_NOTES_SYNC` moves `[x]` Ongoing items there).
+> Finished work is in [[Progress Archive]] (`/cmd-notes-sync` moves `[x]` Ongoing items there).
