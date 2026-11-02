@@ -1,8 +1,9 @@
-import { ItemView, Menu, Platform, WorkspaceLeaf } from "obsidian";
+import { ItemView, Menu, Notice, Platform, WorkspaceLeaf } from "obsidian";
 import type MorellonomiconPlugin from "./main";
 import { MODES, MODE_ORDER, TAB_ICON, TAB_LABEL, TabId } from "./modes";
 import { THEMES, themeVars } from "./themes";
-import { PageOut, renderPage } from "./pages";
+import { PageOut, ROUTES, renderPage, routeKey } from "./pages";
+import { misses, onMiss, setMissPage, want } from "./media";
 import { rememberSub } from "./pages/champions";
 import type { Frame } from "./router";
 import { autoLoading, empty, h, icon, preloadRoleIcons, releaseVideos, slideSeg, whenLoaded } from "./ui";
@@ -21,6 +22,7 @@ const ARRIVE_MS = 240;
 // A picture that arrives after its page is on screen (a card built later, a lazy one) stays clear, then fades in
 const VEIL_DELAY_MS = 250;   // a later page waits this long for its pictures before it shows under the loading veil
 const VEIL_MIN_MS = 500;     // and once shown it stays at least this long
+const AHEAD_MS = 600;            // after a page shows, what is one tap away from it is fetched (its route's `next`)
 const BOOT_PICTURES_MS = 7000;   // at start-up the first page may wait this long for its icons (the first time they come over the network)
 
 function arrive(page: HTMLElement, anim: "push" | "back" | "tab"): void {
@@ -96,6 +98,21 @@ export class MnView extends ItemView {
         let lastTop: number | null = null;   // its top on screen as last drawn
         let raf = 0, last = 0;
         const readout = h(app, "div", "mn-kbread is-hidden");
+        // Settings → Picture readout: how many pictures on this page showed still loading without being fetched ahead (media.ts)
+        const cold = h(app, "button", "mn-picread is-hidden");
+        const showCold = () => {
+            const list = misses();
+            cold.toggleClass("is-hidden", !this.plugin.settings.picDebug);
+            cold.setText(`cold ${list.length}`);
+            cold.toggleClass("is-bad", list.length > 0);
+        };
+        cold.addEventListener("click", (e) => {
+            e.preventDefault();
+            const list = misses();
+            new Notice(list.length ? list.map((m) => `${m.page}: ${m.url.replace(/^https?:\/\/[^/]+\//, "")}`).join("\n") : "No cold pictures on this page.", 10000);
+        });
+        this.register(onMiss(showCold));
+        showCold();
         const visibleBottom = () => {
             const tells = [window.innerHeight];
             if (vv) tells.push(vv.offsetTop + vv.height);
@@ -253,6 +270,7 @@ export class MnView extends ItemView {
             icon(b, this.tabIcon(id));
             h(b, "span", "mn-tab-l", this.tabLabel(id));
             b.addEventListener("click", (e) => { e.preventDefault(); this.tapTab(id); });
+            b.addEventListener("pointerdown", () => this.fetchAhead(id, { key: "root", title: "" }, "now"), { passive: true });   // the tab's pictures start coming while the finger is down
         }
         slideSeg(this.tabsEl, "main-tabs", { item: ".mn-tab" });   // one glass pill behind the chosen tab slides and can be dragged
         this.modeBtn.empty();
@@ -319,6 +337,7 @@ export class MnView extends ItemView {
         if (this.shown) this.scrolls.set(this.shown, this.scrollEl.scrollTop);
         const key = this.key();
         const f = this.router.top();
+        setMissPage(routeKey(this.router.tab, f) + (f.params ? ` ${Object.values(f.params).join(" ")}` : ""));
         let out: PageOut;
         try {
             const store = this.plugin.store;
@@ -370,6 +389,8 @@ export class MnView extends ItemView {
             this.appEl.toggleClass("is-sub", this.router.depth() > 0 && !OVERLAY_PAGES.has(f.key));   // Back sits on the title's line   // a tab's first page: no empty strip above its big title
             this.markScrolled();
             requestAnimationFrame(() => requestAnimationFrame(() => this.appEl.removeClass("is-switching")));
+            const tab = this.router.tab;
+            window.setTimeout(() => { if (id === this.drawId) for (const nf of ROUTES[routeKey(tab, f)].next?.(this.needCtx(), f) ?? []) this.fetchAhead(tab, nf, "soon"); }, AHEAD_MS);
             if (anim === "none") return;
             arrive(page.el, anim);
         };
@@ -393,6 +414,12 @@ export class MnView extends ItemView {
             show();
             if (loaded) this.hideVeil(); else this.holdVeil(page, wait, id);
         });
+    }
+
+    private needCtx() { return { app: this.app, plugin: this.plugin }; }
+    // Fetches what a page shows from the network before it is opened (its route's needs; media.ts)
+    fetchAhead(tab: TabId, f: Frame, soon: "now" | "soon" | "idle"): void {
+        try { void Promise.resolve(ROUTES[routeKey(tab, f)].needs(this.needCtx(), f)).then((n) => want(n, soon)).catch(() => undefined); } catch { /* a page that cannot say: it loads as it is drawn */ }
     }
 
     // Puts the loading veil over the page until `until`, then (never sooner than half a second after it appeared) takes it off

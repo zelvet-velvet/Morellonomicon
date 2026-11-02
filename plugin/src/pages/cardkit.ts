@@ -2,6 +2,7 @@ import type { Champion, Skill } from "../data/store";
 import { DAMAGE_COLOR, DAMAGE_ICON, h, icon, scalingParts } from "../ui";
 import { tagInfo } from "./profile";
 import { demo } from "./skills";
+import { art } from "../media";
 
 // The card kit: small components (skill head, tag pills, number grid, stat boxes, level bars, form columns) and the layout
 // templates that say which component goes in which grid area. A card names a template and a skill (`ability Malphite R`); the
@@ -20,7 +21,6 @@ interface Layout { areas: string[]; rows: string; fill: Record<string, Fill> }
 const LEVELS_STAT = { ap: 300, ad: 200 };   // the stat a levels card adds when the note gives none: a built-up AP or AD build
 const ULT_LEVELS = [6, 11, 16];       // the champion levels an ultimate's ranks open at
 const FORM_ICONS = ["hammer", "crosshair"];
-const FORM_ART = "https://raw.communitydragon.org/latest/game/assets/characters";   // <id>/hud/icons2d/<id><key>_melee|ranged.png: the picture of each form's ability
 const DAMAGE_ROW = /^(物理|魔法|真實)傷害|^治療|^護盾/;
 const SCALING = /\+([\d./]+)%\s*(額外物理攻擊|物理攻擊|魔法攻擊)/;
 
@@ -171,7 +171,7 @@ const formSets: Fill = (el, { c, args }) => {
             const cell = h(parent, "div", "mn-ck-cell" + (big ? " is-big" : ""));
             const ic = h(cell, "div", "mn-ck-ic" + (big ? " is-big" : " is-sm"));
             ic.style.setProperty("--c", kindColor(s));
-            const im = h(ic, "img"); im.alt = ""; im.src = `${FORM_ART}/${id}/hud/icons2d/${id}${key.toLowerCase()}_${i === 0 ? "melee" : "ranged"}.png`;
+            const im = h(ic, "img"); im.alt = ""; im.src = art.formIcon(id, key, i);
             im.addEventListener("error", () => { if (i === 0) im.src = s.icon; else im.remove(); }, { once: true });
             keyBadge(ic, key, kindColor(s));
             h(cell, "span", "mn-ck-cn", s.name.split("／")[i] ?? s.name);
@@ -225,7 +225,7 @@ const comboFlow: Fill = (el, { c, args }) => {
         const cell = h(el, "div", "mn-ck-cell is-step");
         const ic = h(cell, "div", "mn-ck-ic is-huge");
         ic.style.setProperty("--c", kindColor(s));
-        const im = h(ic, "img"); im.alt = ""; im.src = `${FORM_ART}/${id}/hud/icons2d/${id}${key.toLowerCase()}_${form === 0 ? "melee" : "ranged"}.png`;
+        const im = h(ic, "img"); im.alt = ""; im.src = art.formIcon(id, key, form);
         im.addEventListener("error", () => { im.src = s.icon; }, { once: true });
         keyBadge(ic, key, kindColor(s));
         h(ic, "span", "mn-ck-step", String(i + 1));

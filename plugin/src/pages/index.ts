@@ -2,11 +2,12 @@ import type { App, Component } from "obsidian";
 import type MorellonomiconPlugin from "../main";
 import type { Frame } from "../router";
 import type { TabId } from "../modes";
+import type { Need } from "../media";
 import { augmentsPage } from "./augments";
-import { championCard, championPart, championsPage, type SubTab } from "./champions";
-import { augmentPage, itemPage, notePage } from "./detail";
-import { handbookPage } from "./handbook";
-import { gamesPage, homePage, itemsPage } from "./home";
+import { championCard, championNeeds, championPart, championsPage, type SubTab } from "./champions";
+import { augmentNeeds, augmentPage, itemNeeds, itemPage, noteNeeds, notePage } from "./detail";
+import { handbookNeeds, handbookNext, handbookPage } from "./handbook";
+import { gamesPage, homeNeeds, homePage, itemsPage } from "./home";
 import { patchPage } from "./patch";
 import { rosterPage, swipePage } from "./roster";
 
@@ -29,29 +30,38 @@ export interface PageCtx {
 }
 export type PageRender = (ctx: PageCtx) => PageOut;
 
-// One renderer per tab (its first page).
-export const PAGES: Record<TabId, PageRender> = {
-    home: homePage,
-    champions: championsPage,
-    picks: rosterPage,   // 速查: pick the champions the game gave you, then swipe through them
-    augments: augmentsPage,
-    patch: patchPage,
-    handbook: handbookPage,
-};
+// What a page shows from the network, for fetching it ahead (media.ts, Design Rules "Fetch ahead"): the big pictures at its top, the
+// art behind it, its first clips. Icons of champions, augments and items are fetched at start-up and need not be listed.
+export interface NeedCtx { app: App; plugin: MorellonomiconPlugin }
+export type Needs = (n: NeedCtx, frame: Frame) => Need[] | Promise<Need[]>;
+// Every page is a route: how it is drawn, what it needs, and (optionally) the pages one tap away whose needs are fetched while it is on
+// screen. A page cannot be added without saying what it needs: ROUTES is typed over every page key, so a missing entry does not compile.
+export interface Route { render: PageRender; needs: Needs; next?: (n: NeedCtx, frame: Frame) => Frame[] }
+const none: Needs = () => [];
 
-// Detail pages can be reached from any tab, so they are chosen by the frame before the tab's own page.
-export function renderPage(tab: TabId, ctx: PageCtx): PageOut {
-    switch (ctx.frame.key) {
-        case "champion": return championCard(ctx);
-        case "augment": return augmentPage(ctx);
-        case "item": return itemPage(ctx);
-        case "note": return notePage(ctx);
-        case "roster": return rosterPage(ctx);
-        case "championlist": return championsPage(ctx);
-        case "games": return gamesPage(ctx);
-        case "itemlist": return itemsPage(ctx);   // the Champions page, opened from Home
-        case "rosterswipe": return swipePage(ctx);
-        case "champpart": return championPart(ctx);
-        default: return PAGES[tab](ctx);
-    }
-}
+// The tabs' first pages, then the pages that can be opened from any tab (chosen by the frame's key before the tab's own page)
+type DetailKey = "champion" | "augment" | "item" | "note" | "roster" | "championlist" | "games" | "itemlist" | "rosterswipe" | "champpart";
+export type PageKey = TabId | DetailKey;
+export const ROUTES: Record<PageKey, Route> = {
+    home: { render: homePage, needs: homeNeeds },
+    champions: { render: championsPage, needs: none },   // the champion icons: start-up
+    picks: { render: rosterPage, needs: none },          // 速查: pick the champions the game gave you, then swipe through them (it fetches each pick's art as it is picked)
+    augments: { render: augmentsPage, needs: none },
+    patch: { render: patchPage, needs: none },           // the patch notes' pictures load lazily, further down the page
+    handbook: { render: handbookPage, needs: handbookNeeds, next: handbookNext },
+    champion: { render: championCard, needs: championNeeds },
+    champpart: { render: championPart, needs: championNeeds },
+    augment: { render: augmentPage, needs: augmentNeeds },
+    item: { render: itemPage, needs: itemNeeds },
+    note: { render: notePage, needs: noteNeeds },
+    roster: { render: rosterPage, needs: none },
+    championlist: { render: championsPage, needs: none },
+    games: { render: gamesPage, needs: none },
+    itemlist: { render: itemsPage, needs: none },        // the Items page, opened from Home
+    rosterswipe: { render: swipePage, needs: none },     // its cards' art is fetched by 速查 while the picks are made
+};
+export const PAGES: Record<TabId, PageRender> = { home: homePage, champions: championsPage, picks: rosterPage, augments: augmentsPage, patch: patchPage, handbook: handbookPage };
+
+// The route of a frame in a tab: a detail page by its key, else the tab's first page
+export function routeKey(tab: TabId, frame: Frame): PageKey { return frame.key in ROUTES && frame.key !== "root" ? (frame.key as PageKey) : tab; }
+export function renderPage(tab: TabId, ctx: PageCtx): PageOut { return ROUTES[routeKey(tab, ctx.frame)].render(ctx); }

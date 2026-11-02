@@ -1,7 +1,10 @@
 import { Platform, Plugin, TAbstractFile, TFile, View, WorkspaceLeaf, setIcon } from "obsidian";
 import { Store } from "./data/store";
 import { Router } from "./router";
-import { preloadRoleIcons, warmPictures } from "./ui";
+import { preloadRoleIcons } from "./ui";
+import { want, warm } from "./media";
+import { ROUTES } from "./pages";
+import { MODES } from "./modes";
 import { registerIconsNote } from "./iconsnote";
 import { registerLayoutNote } from "./layoutnote";
 import { registerInboxNote } from "./inboxnote";
@@ -74,7 +77,11 @@ export default class MorellonomiconPlugin extends Plugin {
         this.app.workspace.onLayoutReady(() => {
             void this.store.loadStats().then(() => { this.lastChange = Date.now(); this.views().forEach((v) => v.refresh()); });
             // once start-up is over, the champion and augment icons are fetched in the background so their lists show them at once
-            void this.whenBooted().then(() => warmPictures([...this.store.champions().map((c) => c.icon), ...this.store.augments().map((a) => a.icon), ...this.store.items().map((i) => i.icon)]));
+            // and then every tab's first page (its route's needs: the Handbook's covers, Home's wallpaper), so the first visit to a tab shows them at once
+            void this.whenBooted().then(() => {
+                void warm([...this.store.champions().map((c) => c.icon), ...this.store.augments().map((a) => a.icon), ...this.store.items().map((i) => i.icon)], "idle");
+                for (const tab of MODES[this.settings.mode].tabs) void Promise.resolve(ROUTES[tab].needs({ app: this.app, plugin: this }, { key: "root", title: "" })).then((n) => want(n, "idle")).catch(() => undefined);
+            });
             if (this.settings.openOnStartup) void this.activate(true);
             this.updateBody();
         });

@@ -1,4 +1,5 @@
 import { App, requestUrl } from "obsidian";
+import { art } from "../media";
 
 // Your League profile from Riot's API, for Home: account, avatar and level, rank, top mastery and the last games.
 // Only fetched when Home asks (opening it after a while, or the refresh button), with the key from the plugin's settings, which
@@ -76,7 +77,7 @@ export async function fetchProfile(app: App, riotId: string, server: string, key
 
 // Riot's tier names in the zh_TW client
 export const TIER: Record<string, string> = { IRON: "鐵牌", BRONZE: "銅牌", SILVER: "銀牌", GOLD: "金牌", PLATINUM: "白金", EMERALD: "翡翠", DIAMOND: "鑽石", MASTER: "大師", GRANDMASTER: "宗師", CHALLENGER: "菁英" };
-export const emblem = (tier: string): string => `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests/${tier.toLowerCase()}.png`;
+export const emblem = art.emblem;
 export const ago = (t: number): string => {
     const m = Math.round((Date.now() - t) / 60000);
     return m < 60 ? `${Math.max(1, m)} 分鐘前` : m < 1440 ? `${Math.round(m / 60)} 小時前` : `${Math.round(m / 1440)} 天前`;

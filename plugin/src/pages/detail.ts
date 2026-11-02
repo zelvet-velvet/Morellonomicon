@@ -3,9 +3,11 @@ import type { AugTier, Augment, Champion, Item, Store } from "../data/store";
 import { ITEM_CAT_COLOR, ITEM_CATS, TIER_COLOR, augIcon, chip, empty, group, h, icon, layoutBlock, row, shopIcon, slideSeg, centreBelow } from "../ui";
 import { RARITY_COLOR } from "./augments";
 import { officialBlock } from "./changes";
-import { deckPage, itemTree } from "./deck";
+import { deckNeeds, deckPage, itemTree } from "./deck";
 import { glossaryPage } from "./glossary";
-import type { PageCtx, PageOut } from "./index";
+import type { NeedCtx, PageCtx, PageOut } from "./index";
+import type { Frame } from "../router";
+import type { Need as MediaNeed } from "../media";
 
 const TAG_ZH: Record<string, string> = {
     Damage: "物理攻擊", SpellDamage: "魔法攻擊", Armor: "護甲", SpellBlock: "魔抗", Health: "生命", HealthRegen: "生命回復", Mana: "魔力", ManaRegen: "魔力回復",
@@ -14,6 +16,23 @@ const TAG_ZH: Record<string, string> = {
 };
 const SUGGESTED = 12;
 const GLOSSARY = "名詞表";   // champions shown under "適合的英雄"
+
+// What these pages show from the network (their routes in pages/index.ts). A Handbook topic: its first cards' pictures and clips;
+// an augment or an item: its own icon, drawn large behind its banner (champion and item icons are fetched at start-up).
+export function noteNeeds(n: NeedCtx, frame: Frame): Promise<MediaNeed[]> | MediaNeed[] {
+    const path = String(frame.params?.path ?? "");
+    const file = n.app.vault.getAbstractFileByPath(path);
+    const deck = n.plugin.store.guideNotes().some((g) => g.file.path === path && g.layout === "deck");
+    return file instanceof TFile && deck ? deckNeeds(n, file) : [];
+}
+export function augmentNeeds({ plugin }: NeedCtx, frame: Frame): MediaNeed[] {
+    const a = plugin.store.augment(Number(frame.params?.id));
+    return a ? [a.icon] : [];
+}
+export function itemNeeds({ plugin }: NeedCtx, frame: Frame): MediaNeed[] {
+    const i = plugin.store.item(Number(frame.params?.id));
+    return i ? [i.icon] : [];
+}
 
 // ---- a note, drawn inside the app (Handbook cards, our patch notes)
 export function notePage(ctx: PageCtx): PageOut {

@@ -1776,3 +1776,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-part-head div { display: flex; flex-direction: column; line-height: 1.15; }
 .mn-part-who { font-size: 12px; font-weight: 600; color: var(--mn-muted); }
 .mn-part-what { font-size: 18px; font-weight: 800; color: var(--mn-accent); }
+/* Settings → Picture readout (media.ts): pictures this page showed still loading that were never fetched ahead */
+.mn-picread { position: fixed; z-index: 99; left: 8px; bottom: calc(var(--mn-safe-bottom, 0px) + 72px); padding: 2px 8px; border-radius: 8px; border: 0; background: rgba(0, 0, 0, 0.75); color: #9fe0b0; font: 11px/1.4 ui-monospace, monospace; }
+.mn-picread.is-bad { color: #ffb4a8; }
+.mn-picread.is-hidden { display: none; }

@@ -1,12 +1,40 @@
-import { mapUrl } from "./handbook";
-import type { PageCtx, PageOut } from "./index";
+import type { App } from "obsidian";
+import type MorellonomiconPlugin from "../main";
+import type { Champion } from "../data/store";
+import type { NeedCtx, PageCtx, PageOut } from "./index";
 import { ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, shopRoleIcon, h, holdTip, icon, page, warmPictures, centreBelow, empty } from "../ui";
 import { MODES } from "../modes";
 import { PROFILE_FRESH, QUEUE, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, type Profile } from "../data/riot";
+import { art, type Need } from "../media";
 
 // The servers a Riot ID can be on (Riot's platform ids), Taiwan first
 const SERVERS: [string, string][] = [["TW2", "台灣"], ["JP1", "日本"], ["KR", "韓國"], ["SG2", "新加坡"], ["VN2", "越南"], ["NA1", "北美"], ["EUW1", "西歐"], ["EUN1", "北歐東歐"], ["OC1", "大洋洲"]];
 const TOP = 3;   // mastery cards on Home
+
+// your profile from Riot (cached on this device) and your top mastery; the profile's mastery wins over the mastery file
+function topMastery(app: App, plugin: MorellonomiconPlugin) {
+    const s = plugin.settings, store = plugin.store;
+    const all = store.champions();
+    const byId = new Map(all.map((c) => [c.id, c]));
+    const prof: Profile | null = s.riotId ? cachedProfile(app, s.riotId) : null;
+    const byKey = new Map(all.map((c) => [c.key, c]));
+    let top = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).slice(0, TOP);
+    if (prof?.mastery.length) top = prof.mastery.filter((m) => byKey.has(m.championKey)).map((m) => [byKey.get(m.championKey)!.id, { level: m.level, points: m.points, last: "" }]);
+    return { all, byId, prof, top };
+}
+// the wallpaper: the one you picked, else your top mastery champion's newest skin
+function wallpaper(plugin: MorellonomiconPlugin, best: Champion | undefined): string {
+    const s = plugin.settings;
+    const [wid, wn] = s.wallpaper ? s.wallpaper.split("_") : [best?.id ?? "", String(Math.max(0, ...(best?.skins ?? [0])))];
+    return wid ? art.splash(wid, Number(wn) || 0) : "";
+}
+// What Home shows from the network (its route in pages/index.ts): the wallpaper and the mastery portraits
+export function homeNeeds({ app, plugin }: NeedCtx): Need[] {
+    if (!plugin.settings.riotId) return [art.aramScreen("habackground")];
+    const { byId, prof, top } = topMastery(app, plugin);
+    const best = top[0] ? byId.get(top[0][0]) : undefined;
+    return [wallpaper(plugin, best), ...(prof ? [art.profileIcon(plugin.store.champions()[0]?.patch ?? "", prof.icon)] : []), ...top.map(([id]) => art.loading(id))];
+}
 
 // Home (Review: Home tab draft): your profile like the client's, the way into Champions and the Handbook, your top mastery.
 // Signed out it is a Riot ID box. The avatar, level, rank and recent games need Riot's API, which is not wired yet: until then the
@@ -15,21 +43,14 @@ export function homePage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const s = ctx.plugin.settings;
     const el = page("Home");
-    const all = store.champions();
-    const byId = new Map(all.map((c) => [c.id, c]));
-    // your profile from Riot (cached on this device); its top mastery wins over the mastery file
-    const prof: Profile | null = s.riotId ? cachedProfile(ctx.app, s.riotId) : null;
-    const byKey = new Map(all.map((c) => [c.key, c]));
-    let top = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).slice(0, TOP);
-    if (prof?.mastery.length) top = prof.mastery.filter((m) => byKey.has(m.championKey)).map((m) => [byKey.get(m.championKey)!.id, { level: m.level, points: m.points, last: "" }]);
+    const { all, byId, prof, top } = topMastery(ctx.app, ctx.plugin);
     const patch = all[0]?.patch ?? "";
-    const dd = (path: string) => `https://ddragon.leagueoflegends.com/cdn/${patch}/img/${path}`;
-
+    
     const hero = layoutBlock(h(el, "div", "mn-home-hero"));
     if (!s.riotId) {
         // not linked: an ARAM map behind, one line on why, the Riot ID and the server
         hero.addClass("is-out");
-        const bg = h(hero, "img", "mn-home-wall"); bg.src = mapUrl("habackground"); bg.alt = "";
+        const bg = h(hero, "img", "mn-home-wall"); bg.src = art.aramScreen("habackground"); bg.alt = "";
         const box = h(hero, "div", "mn-home-cta");
         h(box, "b", undefined, "連結你的召喚師");
         h(box, "span", undefined, "輸入 Riot ID,看你的頭像、等級、牌位和最近對戰");
@@ -51,12 +72,10 @@ export function homePage(ctx: PageCtx): PageOut {
         // linked: your best champion's art as the wallpaper, the avatar ring with your name; a tap on it changes or removes the ID
         const [name, tag] = s.riotId.split("#");
         const best = top[0] ? byId.get(top[0][0]) : undefined;
-        // the wallpaper: the one you picked, else your top mastery champion's newest skin
-        const splash = (id: string, n: number) => `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(id)}_${n}.jpg`;
-        const [wid, wn] = s.wallpaper ? s.wallpaper.split("_") : [best?.id ?? "", String(Math.max(0, ...(best?.skins ?? [0])))];
-        if (wid) { const bg = h(hero, "img", "mn-home-wall"); bg.src = splash(wid, Number(wn) || 0); bg.alt = ""; }
+        const wall = wallpaper(ctx.plugin, best);
+        if (wall) { const bg = h(hero, "img", "mn-home-wall"); bg.src = wall; bg.alt = ""; }
         const av = h(hero, "button", "mn-home-av");
-        if (prof) { const im = h(av, "img"); im.src = dd(`profileicon/${prof.icon}.png`); im.alt = ""; }
+        if (prof) { const im = h(av, "img"); im.src = art.profileIcon(patch, prof.icon); im.alt = ""; }
         else if (best) { const im = h(av, "img"); im.src = best.icon; im.alt = ""; } else h(av, "span", undefined, (name ?? "?").slice(0, 1));
         av.setAttribute("aria-label", "更換 Riot ID");
         if (prof) h(hero, "div", "mn-home-lvl", String(prof.level));
@@ -97,7 +116,7 @@ export function homePage(ctx: PageCtx): PageOut {
             if (!c) return;
             for (const n of [...c.skins].sort((a, b) => b - a)) {
                 const b = h(skinsRow, "button", "mn-home-skin" + (s.wallpaper === `${cid}_${n}` ? " is-on" : ""));
-                const im = h(b, "img"); im.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(cid)}_${n}.jpg`; im.alt = ""; im.loading = "lazy";
+                const im = h(b, "img"); im.src = art.loading(cid, n); im.alt = ""; im.loading = "lazy";
                 b.addEventListener("click", (e) => { e.preventDefault(); s.wallpaper = `${cid}_${n}`; void ctx.plugin.saveData(s).then(() => ctx.goTab("home")); });
             }
         };
@@ -110,7 +129,7 @@ export function homePage(ctx: PageCtx): PageOut {
             const reset = h(picker, "button", "mn-home-preset", "用預設(最熟練英雄的最新造型)");
             reset.addEventListener("click", (e) => { e.preventDefault(); s.wallpaper = ""; void ctx.plugin.saveData(s).then(() => ctx.goTab("home")); });
         }
-        showSkins(wid || pool[0]?.id || "");
+        showSkins((s.wallpaper ? s.wallpaper.split("_")[0] : best?.id) || pool[0]?.id || "");
         out.addEventListener("click", (e) => { e.preventDefault(); s.riotId = ""; void ctx.plugin.saveData(s).then(() => ctx.goTab("home")); });
         av.addEventListener("click", (e) => { e.preventDefault(); menu.toggleClass("is-hidden", !menu.hasClass("is-hidden")); });
     }
@@ -154,7 +173,7 @@ export function homePage(ctx: PageCtx): PageOut {
         for (const [id, m] of top) {
             const c = byId.get(id)!;
             const card = h(row, "button", "mn-home-mc");
-            const im = h(card, "img"); im.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(id)}_0.jpg`; im.alt = "";
+            const im = h(card, "img"); im.src = art.loading(id); im.alt = "";
             h(card, "em", m.level >= 10 ? "is-high" : undefined, `M${m.level}`);
             h(card, "b", undefined, c.name);
             card.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(id); });
@@ -195,7 +214,7 @@ function gameRow(ctx: PageCtx, parent: HTMLElement, g: Profile["games"][number],
     h(tx, "span", undefined, [QUEUE[g.queue] ?? "其他", ago(g.end), full ? `${Math.round(g.duration / 60)} 分 · ${g.cs} 兵` : ""].filter(Boolean).join(" · "));
     if (full && g.items.length) {
         const items = h(tx, "div", "mn-game-items");
-        for (const id of g.items) { const x = h(items, "img"); x.src = `https://ddragon.leagueoflegends.com/cdn/${ctx.plugin.store.champions()[0]?.patch ?? ""}/img/item/${id}.png`; x.alt = ""; x.loading = "lazy"; }
+        for (const id of g.items) { const x = h(items, "img"); x.src = art.item(ctx.plugin.store.champions()[0]?.patch ?? "", id); x.alt = ""; x.loading = "lazy"; }
     }
     h(r, "span", "mn-game-wl", g.win ? "勝" : "敗");
     if (c) r.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); });

@@ -1,13 +1,13 @@
 import { CHAMPION_TABS } from "./champions";
 import { MarkdownRenderer, TFile } from "obsidian";
 import type { Champion } from "../data/store";
-import { mapUrl } from "./handbook";
 import { DAMAGE_COLOR, LANES, augIcon, fgrid, h, icon, laneChip, roleChip, svg, whenMediaLoaded, endBand, trackBand } from "../ui";
 import { GO_AT, cardPile } from "./pile";
 import { factsStrip, profileAxes, profileRadar, styleCard, tagRow } from "./profile";
-import type { PageCtx, PageOut } from "./index";
+import type { NeedCtx, PageCtx, PageOut } from "./index";
 import { cardKit } from "./cardkit";
 import { demo, rankTable } from "./skills";
+import { ARAM_SCREENS, art, type Need } from "../media";
 
 // A guide topic as a deck of swipeable cards. In the note every `## ` heading is one card; right under it:
 //   icon: swords                       the big icon when there is no picture (a Lucide name)
@@ -219,6 +219,30 @@ export function itemTree(parent: HTMLElement, ctx: PageCtx, id: number): void {
     node(h(parent, "div", "mn-tree"), id, 0);
 }
 
+// What a topic's first cards show from the network (the "note" page's needs in pages/index.ts), read from the same `visual:` lines
+// the cards are drawn from, so opening the topic shows them at once. Kinds drawn without network pictures (charts, chips) need nothing.
+const NEED_CARDS = WAIT_CARDS + NEAR_AHEAD;
+export async function deckNeeds({ app, plugin }: NeedCtx, file: TFile, cards = NEED_CARDS): Promise<Need[]> {
+    const store = plugin.store;
+    const ver = store.champions()[0]?.patch ?? "";
+    const out: Need[] = [];
+    for (const s of parseSlides(await app.vault.cachedRead(file)).slice(0, cards)) {
+        const [kind, ...args] = s.visual.split(/\s+/).filter(Boolean);
+        const c = args[0] ? store.champion(args[0]) : undefined;
+        const key = (args.slice(1).find((a) => /^[PQWER]\d?$/i.test(a)) ?? "Q").toUpperCase();
+        const skill = c?.skills.find((x) => x.key === key.replace(/\d$/, ""));
+        if (kind === "img" && args.length) { const src = args.join(" "); if (/^https?:/.test(src)) out.push(src); }
+        else if (kind === "splash" && c) out.push(art.splash(c.id));
+        else if (kind === "map") out.push(...(args[0] ? [art.aramScreen(args[0])] : ARAM_SCREENS.map((n) => art.aramScreen(n))));   // no name: one at random
+        else if (kind === "wards") out.push(art.minimap(ver), art.item(ver, 2055), art.item(ver, 3340));
+        else if (c && (kind === "video" || kind === "clip" || kind === "ability" || kind === "combo")) out.push({ clip: c, key }, ...(skill ? [skill.icon] : []));
+        else if (c && (kind === "skill" || kind === "levels") && skill) out.push(skill.icon);
+        else if (c && (kind === "forms" || kind === "formset")) out.push(art.formIcon(c.id, key, 0), art.formIcon(c.id, key, 1));
+        else if (c && kind === "skills") out.push(...c.skills.map((x) => x.icon));
+    }
+    return out;
+}
+
 // ---- the picture of a card
 function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
     const store = ctx.plugin.store;
@@ -318,11 +342,11 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
         const scene = WARDS[args[0] ?? "lane"] ?? WARDS.lane;
         const ver = /\/cdn\/([\d.]+)\//.exec(store.champions()[0]?.icon ?? "")?.[1] ?? "";
         const map = h(box, "div", "mn-wmap");
-        const im = h(map, "img", "mn-wmap-img"); im.src = `https://ddragon.leagueoflegends.com/cdn/${ver}/img/map/map11.png`; im.alt = "";
+        const im = h(map, "img", "mn-wmap-img"); im.src = art.minimap(ver); im.alt = "";
         for (const [label, x, y] of scene.obj ?? []) { const o = h(map, "span", "mn-wmap-obj", label); o.style.left = `${x}%`; o.style.top = `${y}%`; }
         for (const [x, y, k] of scene.wards) {
             const w = h(map, "img", "mn-wmap-ward is-" + k);
-            w.src = `https://ddragon.leagueoflegends.com/cdn/${ver}/img/item/${k === "c" ? 2055 : 3340}.png`; w.alt = "";
+            w.src = art.item(ver, k === "c" ? 2055 : 3340); w.alt = "";
             w.style.left = `${x}%`; w.style.top = `${y}%`;
         }
         return;
@@ -330,13 +354,13 @@ function visual(ctx: PageCtx, box: HTMLElement, s: Slide): void {
         // a champion's splash art, filling the card (its face kept in view)
         const c = champ(args[0]);
         if (c) {
-            const im = h(box, "img", "mn-sl-img mn-sl-splash"); im.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg`; im.alt = "";
+            const im = h(box, "img", "mn-sl-img mn-sl-splash"); im.src = art.splash(c.id); im.alt = "";
             box.className = "mn-sl-vis is-img";
             return;
         }
     } else if (kind === "map") {
         // ARAM's loading screen picture (the game's, shown from CommunityDragon by address)
-        const im = h(box, "img", "mn-sl-img"); im.src = mapUrl(args[0]); im.alt = "";
+        const im = h(box, "img", "mn-sl-img"); im.src = art.aramScreen(args[0]); im.alt = "";
         box.className = "mn-sl-vis is-img";
         return;
     } else if (kind === "radar") {

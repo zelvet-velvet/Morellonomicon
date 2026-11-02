@@ -1,4 +1,5 @@
 import { setIcon } from "obsidian";
+import { isWarm, notePicture, warm } from "./media";
 
 // Small DOM helpers. Text always goes in through textContent (never innerHTML).
 export const h = <K extends keyof HTMLElementTagNameMap>(parent: HTMLElement | null, tag: K, cls?: string, text?: string): HTMLElementTagNameMap[K] => {
@@ -228,8 +229,9 @@ function pendingBackgrounds(host: HTMLElement): Promise<void>[] {
     for (const el of [host, ...Array.from(host.querySelectorAll<HTMLElement>("[style]"))]) {
         for (const m of (el.getAttribute("style") ?? "").matchAll(URL_IN_STYLE)) {
             const src = m[1];
-            if (asked.has(src) || bgHeld.get(src)?.complete) continue;
+            if (asked.has(src) || bgHeld.get(src)?.complete || isWarm(src)) continue;   // fetched ahead (media.ts): already there
             asked.add(src);
+            notePicture(src, false);
             out.push(loadBackground(src));
         }
     }
@@ -330,8 +332,10 @@ export function autoLoading(root: HTMLElement): MutationObserver {
     };
     const take = (im: HTMLImageElement) => {
         const src = im.getAttribute("src");
-        if (!src || seen.get(im) === src || im.closest(".mn-noauto, .mn-blk.mn-blk-busy, .mn-pager")) return;   // a loading block: its veil covers it
+        if (!src || seen.get(im) === src) return;
         seen.set(im, src);
+        notePicture(src, (im.complete && im.naturalWidth > 0) || im.loading === "lazy");   // still loading and never fetched ahead: a miss (media.ts, the readout); a lazy one is meant to come late
+        if (im.closest(".mn-noauto, .mn-blk.mn-blk-busy, .mn-pager")) return;   // a loading block: its veil covers it
         if (im.complete && im.naturalWidth) return;
         waiting.add(im);
         if (!graceTimer) graceTimer = window.setTimeout(settle, PIC_GRACE_MS);
@@ -361,13 +365,9 @@ export function autoLoading(root: HTMLElement): MutationObserver {
     return mo;
 }
 
-// Fetches pictures into the browser's cache a few at a time, in the background, so a list that shows them later (Champions, Augments)
-// has them at once instead of each one fading in as it arrives
-export async function warmPictures(urls: string[], batch = 6): Promise<void> {
-    for (let i = 0; i < urls.length; i += batch) {
-        await Promise.all(urls.slice(i, i + batch).map((u) => new Promise<void>((done) => { const im = new Image(); im.onload = im.onerror = () => done(); im.src = u; })));
-    }
-}
+// Fetches pictures ahead, in the background (media.ts: one queue for the whole app, each address once), so a list that shows them
+// later (Champions, Augments) has them at once instead of each one fading in as it arrives
+export const warmPictures = (urls: string[]): Promise<void> => warm(urls, "soon");
 
 // A hold does not count as a tap (the element's tap action stays for a quick tap).
 const HOLD_MS = 280;

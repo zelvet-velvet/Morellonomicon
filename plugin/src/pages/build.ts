@@ -2,6 +2,7 @@ import type { Champion } from "../data/store";
 import { chip, empty, h, moreLink } from "../ui";
 import { metaLine } from "./fresh";
 import type { PageCtx } from "./index";
+import { art } from "../media";
 
 const TOP_SETS = 3;
 const TOP_ITEMS = 8;
@@ -84,7 +85,7 @@ function itemRow(parent: HTMLElement, c: Champion, ctx: PageCtx, ids: number[], 
         const item = store.item(id);
         const btn = h(row, "button", "mn-item");
         const im = h(btn, "img");
-        im.src = item?.icon || `https://ddragon.leagueoflegends.com/cdn/${c.patch}/img/item/${id}.png`;
+        im.src = item?.icon || art.item(c.patch, id);
         im.alt = item?.name ?? String(id);
         if (captions[i]) h(btn, "span", "mn-item-c", captions[i]);
         btn.addEventListener("click", (e) => {

@@ -1,7 +1,8 @@
-import { requestUrl } from "obsidian";
 import type { Champion, Change, Skill } from "../data/store";
 import { DIR_COLOR } from "./changes";
 import { DAMAGE_COLOR, blockUntil, chip, h, icon, scalingParts, whenMediaLoaded } from "../ui";
+import { clipAddress, clipFile, clipIsWebmOnly, preloadClip } from "../media";
+export { preloadClip };
 const CLIP_FADE_MS = 350;
 const STAGE_DPR = 2;        // the champion page's clip canvas is drawn at most at this pixel density (enough on a phone, half the work of 3x)   // a clip fades in over 0.3 s (styles.css, .mn-app video); its stand-in stays under it that long
 
@@ -159,48 +160,8 @@ export function skillStrip(parent: HTMLElement, c: Champion, changes: Change[] =
     if (opt.open !== undefined) show(Math.max(0, Math.min(opt.open, c.skills.length - 1)));
 }
 
-// Riot's own ability demo (the clip the official champion page plays): <champion key, 4 digits>/ability_<key>_<P|Q|W|E|R>1.mp4/.webm.
-// An unofficial but public Riot CDN path, so if a clip is missing or the address changes the video simply does not appear.
-const DEMO_BASE = "https://d28xe8vt774jo5.cloudfront.net/champion-abilities";
 const CLIP_WAIT_MS = 8000;    // a skill's clip box shows its loading look this long at most before the page scrolls to it anyway
 const CLIP_STALL_MS = 5000;   // a downloaded clip that still has no frame after this long is given up
-const clipAddress = (c: Champion, key: string): string => {
-    const k = String(c.key).padStart(4, "0");
-    // "Q" is the ability's first clip; "Q2" the second one (the other form of Jayce, Nidalee, Elise… where Riot made one)
-    return `${DEMO_BASE}/${k}/ability_${k}_${/\d$/.test(key) ? key : `${key}1`}`;
-};
-// Clips downloaded ahead of time (see preloadClip): clip address -> a local address of the whole file, which plays at once. Only the
-// last CLIP_CACHE are kept (oldest first out), so browsing many champions does not fill the phone's memory
-const CLIP_CACHE = 15;
-const downloaded = new Map<string, string>();
-const webmOnly = new Set<string>();   // clips Riot has only as WebM: a phone decodes those in software, so only the clip in view should play
-const downloading = new Map<string, Promise<void>>();
-// Downloads a clip into memory with Obsidian's own request (Riot's server allows no cross-site fetch from a page), so the card that
-// uses it later has the whole file already. Does nothing for a clip already fetched; a clip that cannot be fetched is skipped.
-export function preloadClip(c: Champion, key: string): Promise<void> {
-    if (!c.key) return Promise.resolve();
-    const url = clipAddress(c, key);
-    const have = downloading.get(url);
-    if (have) return have;
-    const job = (async () => {
-        for (const ext of ["mp4", "webm"]) {
-            try {
-                const r = await requestUrl({ url: `${url}.${ext}`, throw: false });
-                if (r.status === 200) {
-                    if (ext === "webm") webmOnly.add(url);
-                    downloaded.set(url, URL.createObjectURL(new Blob([r.arrayBuffer], { type: `video/${ext}` })));
-                    for (const [old, local] of downloaded) {
-                        if (downloaded.size <= CLIP_CACHE) break;
-                        URL.revokeObjectURL(local); downloaded.delete(old); downloading.delete(old);
-                    }
-                    return;
-                }
-            } catch { /* try the next format */ }
-        }
-    })();
-    downloading.set(url, job);
-    return job;
-}
 export function demo(parent: HTMLElement, c: Champion, s: { key: string; seconds?: [number, number][] }, onFail?: () => void): void {
     if (!c.key) return;
     const url = clipAddress(c, s.key);
@@ -230,13 +191,13 @@ export function demo(parent: HTMLElement, c: Champion, s: { key: string; seconds
     // the whole file, played from memory: for a clip already downloaded, and the way out for a clip that does not stream
     const playLocal = (local: string) => {
         v.replaceChildren();
-        if (webmOnly.has(url)) v.dataset.heavy = "1";
+        if (clipIsWebmOnly(url)) v.dataset.heavy = "1";
         v.addEventListener("error", fail, { once: true });
         v.src = local;
         v.load();
         void v.play().catch(() => undefined);
     };
-    const local = downloaded.get(url);
+    const local = clipFile(url);
     if (local) { playLocal(local); return; }
     v.addEventListener("loadeddata", () => { void v.play().catch(() => undefined); }, { once: true });
     // Some champions (Pyke…) have only a WebM clip, which Riot's server labels as plain text; a phone refuses to stream that.
@@ -248,7 +209,7 @@ export function demo(parent: HTMLElement, c: Champion, s: { key: string; seconds
         // a device that cannot decode WebM at all would only stall: show the skill picture at once instead
         if (!document.createElement("video").canPlayType("video/webm")) { fail(); return; }
         void preloadClip(c, s.key).then(() => {
-            const f = downloaded.get(url);
+            const f = clipFile(url);
             if (!f) { fail(); return; }
             playLocal(f);
             window.setTimeout(() => { if (v.isConnected && v.readyState < 2) fail(); }, CLIP_STALL_MS);   // loaded but never shows a frame: give up

@@ -8,6 +8,7 @@ import { keyBadge } from "./cardkit";
 import { DECK_BELOW } from "./deck";
 import { cardPile } from "./pile";
 import { damageLines, reachOf, styleCard } from "./profile";
+import { art } from "../media";
 
 const MAX_PICKS = 15;   // a Mayhem game can hand you a lot of champions
 const SPLIT = /[\s,，、;；和跟與及]+/;
@@ -149,9 +150,9 @@ export function finder(all: Champion[], sounds: Sounds | null) {
 }
 
 // the art of a 速查 card (and the champion card page): Riot's centered splash, cut to the card's shape
-export const cardArt = (id: string, skin = 0) => `https://ddragon.leagueoflegends.com/cdn/img/champion/centered/${encodeURIComponent(id)}_${skin}.jpg`;
+export const cardArt = (id: string, skin = 0) => art.centered(id, skin);
 // a champion's loading screen art: a small portrait (your hand, the liked page)
-const loading = (id: string) => `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(id)}_0.jpg`;
+const loading = (id: string) => art.loading(id);
 
 // Quick Look: pick the champions the game gave you (up to 15) and see right away what each one is and can do.
 export function rosterPage(ctx: PageCtx): PageOut {

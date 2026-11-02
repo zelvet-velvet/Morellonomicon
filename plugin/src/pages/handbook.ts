@@ -1,7 +1,7 @@
 import { SWIPE, blockLoad, blockUntil, empty, h, icon, page } from "../ui";
-import { parseSlides } from "./deck";
-import type { PageCtx, PageOut } from "./index";
-import { preloadClip } from "./skills";
+import type { NeedCtx, PageCtx, PageOut } from "./index";
+import { ARAM_SCREENS, art, coverUrl, warm, type Need } from "../media";
+import type { Frame } from "../router";
 
 const SNIPPET = 46;      // characters of context around a match
 const MAX_PER_NOTE = 2;  // matching lines shown per guide card
@@ -9,22 +9,21 @@ const KEYWORDS = 8;      // quick-search chips taken from the glossary (two full
 const GLOSSARY = "名詞表";
 const TRIVIA_TILT = 10;   // degrees the tip card tilts per card width it is dragged
 const TRIVIA_MS = 300;    // how long the card takes to leave or spring back
-const WARM_CLIPS = 3;       // clips of a topic downloaded ahead of time (its first cards)
-const WARM_DELAY_MS = 1500; // after the home is shown
-// A topic's cover picture from its `cover:` frontmatter: a champion id (its splash art) or `map <name>` (an ARAM loading screen)
-export const coverUrl = (cover: string): string => {
-    const [a, b] = cover.trim().split(/\s+/);
-    if (!a) return "";
-    return a === "map" ? mapUrl(b)
-        : `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(a)}_0.jpg`;
-};
-// An ARAM map's loading screen picture by name, or one of the three at random
-export const mapUrl = (name?: string): string => {
-    const n = name || ["habackground", "arambilgewater", "arambloom"][Math.floor(Math.random() * 3)];
-    return `https://raw.communitydragon.org/latest/game/assets/ux/loadingscreen/${n}.png`;
-};
-// the game's ARAM loading screen backgrounds (CommunityDragon, shown by address): Howling Abyss, Butcher's Bridge, the Ionian bridge
-const ARAM_ART = ["habackground", "arambilgewater", "arambloom"].map((n) => `https://raw.communitydragon.org/latest/game/assets/ux/loadingscreen/${n}.png`);
+// the game's ARAM loading screen backgrounds (CommunityDragon, shown by address), for the tip cards
+const ARAM_ART = ARAM_SCREENS.map((n) => art.aramScreen(n));
+
+// What the Handbook shows from the network (its route in pages/index.ts): every topic's cover and the tip cards' loading screens.
+export function handbookNeeds({ plugin }: NeedCtx): Need[] {
+    return [...plugin.store.guideNotes().map((n) => coverUrl(n.cover)).filter(Boolean), ...ARAM_ART];
+}
+// One tap away: the topic to read next in each block (初來乍到, 高手必備); its first cards are fetched ahead while you look at the list.
+export function handbookNext({ plugin }: NeedCtx): Frame[] {
+    const read = new Set(plugin.settings.read);
+    const decks = plugin.store.guideNotes().filter((n) => n.layout === "deck").sort((a, b) => a.order - b.order);
+    return [decks.filter((n) => n.level !== "advanced"), decks.filter((n) => n.level === "advanced")]
+        .flatMap((list) => list.find((n) => !read.has(n.file.path)) ?? [])
+        .map((n) => ({ key: "note", title: n.title, params: { path: n.file.path } }));
+}
 
 // The Handbook: a short, friendly start page (where to begin, topic tiles with a read time, a small fact of the day) and a search over
 // everything we have written (guide cards, champion tips and our own builds), so a detail read once can be found again in a couple of taps.
@@ -105,7 +104,7 @@ export function handbookPage(ctx: PageCtx): PageOut {
             lastArt = choices[Math.floor(Math.random() * choices.length)];
             return lastArt;
         };
-        const loadArt = (u: string) => new Promise<void>((done) => { const im = new Image(); im.onload = im.onerror = () => done(); im.src = u; });
+        const loadArt = (u: string) => warm([u], "now");
         const stack = h(parent, "div", "mn-trv-stack");
         const arts: string[] = [];
         const make = (i: number, z: number): HTMLElement => {
@@ -238,25 +237,6 @@ export function handbookPage(ctx: PageCtx): PageOut {
         const q = search.value.trim().toLowerCase();
         if (!q) void home(); else void results(q);
     });
-    // while you look at the home, the first clips of the topic to read next in each block are downloaded one by one, so opening it
-    // shows the cards at once (nothing is fetched on a data-saver connection)
-    const warm = () => {
-        if ((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData) return;
-        const decks = notes.filter((n) => n.layout === "deck");
-        const next = [decks.filter((n) => n.level !== "advanced"), decks.filter((n) => n.level === "advanced")].flatMap((list) => list.find((n) => !read.has(n.file.path)) ?? []);
-        void (async () => {
-            for (const n of next) {
-                const md = await ctx.app.vault.cachedRead(n.file);
-                const clips = parseSlides(md).slice(0, WARM_CLIPS).flatMap((s) => {
-                    const [kind, id, key] = s.visual.split(/\s+/);
-                    const c = id ? store.champion(id) : undefined;
-                    return (kind === "video" || kind === "clip") && c ? [{ c, key: key ?? "Q" }] : [];
-                });
-                for (const { c, key } of clips) await preloadClip(c, key);
-            }
-        })();
-    };
-    window.setTimeout(warm, WARM_DELAY_MS);
     home();
     void keywords();
     // the page shows at once; the tip stack and each group of tiles load as blocks of their own

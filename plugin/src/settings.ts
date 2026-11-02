@@ -19,6 +19,7 @@ export interface MnSettings {
     riotServer: string;        // the platform, e.g. TW2
     riotKey: string;           // your Riot API key (Home's profile); in data.json, which is git-ignored: never in the repo
     kbDebug: boolean;          // show what the phone reports about the keyboard while typing in a search capsule
+    picDebug: boolean;         // show the pictures a page showed still loading that were never fetched ahead (media.ts)
     wallpaper: string;         // Home's background, "<champion id>_<skin number>"; empty: your top mastery champion's newest skin
 }
 
@@ -36,6 +37,7 @@ export const DEFAULTS: MnSettings = {
     riotServer: "TW2",
     riotKey: "",
     kbDebug: false,
+    picDebug: false,
     wallpaper: "",
     read: [],
     roster: [],
@@ -72,6 +74,8 @@ export class MnSettingTab extends PluginSettingTab {
             .addText((x) => { x.inputEl.type = "password"; x.setPlaceholder("RGAPI-…").setValue(s.riotKey).onChange(async (v) => { s.riotKey = v.trim(); await this.plugin.saveData(s); }); });
         new Setting(c).setName("Keyboard readout").setDesc("While typing in a search box, show what the phone reports about the keyboard (for fixing the search bar position).")
             .addToggle((x) => x.setValue(s.kbDebug).onChange(async (v) => { s.kbDebug = v; await this.plugin.saveData(s); }));
+        new Setting(c).setName("Picture readout").setDesc("Count the pictures a page showed still loading that were never fetched ahead (tap the count for the list). A new page or tab should show none.")
+            .addToggle((x) => x.setValue(s.picDebug).onChange(async (v) => { s.picDebug = v; await this.plugin.saveData(s); this.plugin.views().forEach((w) => w.refresh()); }));
         new Setting(c).setName("Open on startup").setDesc("Show the app when Obsidian starts (on by default on a phone).")
             .addToggle((x) => x.setValue(s.openOnStartup).onChange(async (v) => { s.openOnStartup = v; await save(); }));
         // which way this phone gives the tick on the button bars, if any (see haptic in ui.ts)

@@ -544,7 +544,173 @@ var Router = class {
 };
 
 // src/ui.ts
+var import_obsidian3 = require("obsidian");
+
+// src/media.ts
 var import_obsidian2 = require("obsidian");
+var DD = "https://ddragon.leagueoflegends.com/cdn";
+var CD = "https://raw.communitydragon.org/latest";
+var champ = (id) => encodeURIComponent(id);
+var ARAM_SCREENS = ["habackground", "arambilgewater", "arambloom"];
+var art = {
+  splash: (id, skin = 0) => `${DD}/img/champion/splash/${champ(id)}_${skin}.jpg`,
+  // the full splash (1215 × 717)
+  centered: (id, skin = 0) => `${DD}/img/champion/centered/${champ(id)}_${skin}.jpg`,
+  // the champion in the middle (1280 × 720)
+  loading: (id, skin = 0) => `${DD}/img/champion/loading/${champ(id)}_${skin}.jpg`,
+  // the loading screen portrait (308 × 560)
+  item: (patch, id) => `${DD}/${patch}/img/item/${id}.png`,
+  profileIcon: (patch, n) => `${DD}/${patch}/img/profileicon/${n}.png`,
+  minimap: (patch) => `${DD}/${patch}/img/map/map11.png`,
+  // an ARAM loading screen by name, or one of the three at random
+  aramScreen: (name) => `${CD}/game/assets/ux/loadingscreen/${name || ARAM_SCREENS[Math.floor(Math.random() * ARAM_SCREENS.length)]}.png`,
+  emblem: (tier) => `${CD}/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests/${tier.toLowerCase()}.png`,
+  // a form's ability picture (Jayce, Nidalee, Elise…): form 0 melee, 1 ranged
+  formIcon: (id, key, form) => `${CD}/game/assets/characters/${id}/hud/icons2d/${id}${key.toLowerCase()}_${form === 0 ? "melee" : "ranged"}.png`
+};
+var coverUrl = (cover) => {
+  const [a, b] = cover.trim().split(/\s+/);
+  if (!a) return "";
+  return a === "map" ? art.aramScreen(b) : art.splash(a);
+};
+var DEMO_BASE = "https://d28xe8vt774jo5.cloudfront.net/champion-abilities";
+var clipAddress = (c, key) => {
+  const k = String(c.key).padStart(4, "0");
+  return `${DEMO_BASE}/${k}/ability_${k}_${/\d$/.test(key) ? key : `${key}1`}`;
+};
+var CLIP_CACHE = 15;
+var downloaded = /* @__PURE__ */ new Map();
+var webmOnly = /* @__PURE__ */ new Set();
+var downloading = /* @__PURE__ */ new Map();
+var clipFile = (url) => downloaded.get(url);
+var clipIsWebmOnly = (url) => webmOnly.has(url);
+function preloadClip(c, key) {
+  if (!c.key) return Promise.resolve();
+  const url = clipAddress(c, key);
+  const have = downloading.get(url);
+  if (have) return have;
+  const job = (async () => {
+    for (const ext of ["mp4", "webm"]) {
+      try {
+        const r = await (0, import_obsidian2.requestUrl)({ url: `${url}.${ext}`, throw: false });
+        if (r.status === 200) {
+          if (ext === "webm") webmOnly.add(url);
+          downloaded.set(url, URL.createObjectURL(new Blob([r.arrayBuffer], { type: `video/${ext}` })));
+          for (const [old, local] of downloaded) {
+            if (downloaded.size <= CLIP_CACHE) break;
+            URL.revokeObjectURL(local);
+            downloaded.delete(old);
+            downloading.delete(old);
+          }
+          return;
+        }
+      } catch {
+      }
+    }
+  })();
+  downloading.set(url, job);
+  return job;
+}
+var RANK = { now: 0, soon: 1, idle: 2 };
+var PARALLEL = 6;
+var HELD_SMALL = 600;
+var HELD_BIG = 16;
+var BIG_PX = 256 * 256;
+var held = /* @__PURE__ */ new Map();
+var heldBig = /* @__PURE__ */ new Map();
+var asked = /* @__PURE__ */ new Set();
+var waiting = /* @__PURE__ */ new Map();
+var running = 0;
+var saveData = () => !!navigator.connection?.saveData;
+var isWarm = (url) => !!(held.get(url) ?? heldBig.get(url))?.complete;
+function pump() {
+  while (running < PARALLEL && waiting.size) {
+    let best = null, rank = 9;
+    for (const [u, w] of waiting) if (w.rank < rank) {
+      best = u;
+      rank = w.rank;
+      if (rank === 0) break;
+    }
+    if (best === null) return;
+    const job = waiting.get(best);
+    waiting.delete(best);
+    running++;
+    const url = best;
+    const im = new Image();
+    const finish = () => {
+      running--;
+      job.done.forEach((d) => d());
+      pump();
+    };
+    im.onload = () => {
+      void (im.decode ? im.decode() : Promise.resolve()).catch(() => void 0).then(() => {
+        const [map, max] = im.naturalWidth * im.naturalHeight > BIG_PX ? [heldBig, HELD_BIG] : [held, HELD_SMALL];
+        map.delete(url);
+        map.set(url, im);
+        for (const old of map.keys()) {
+          if (map.size <= max) break;
+          map.delete(old);
+        }
+        finish();
+      });
+    };
+    im.onerror = finish;
+    im.src = url;
+  }
+}
+function warm(urls, soon = "soon") {
+  if (soon !== "now" && saveData()) return Promise.resolve();
+  const rank = RANK[soon];
+  const jobs = [];
+  for (const url of urls) {
+    if (!url || !/^https?:/.test(url)) continue;
+    asked.add(url);
+    if (isWarm(url)) continue;
+    const w = waiting.get(url);
+    jobs.push(new Promise((done) => {
+      if (w) {
+        w.rank = Math.min(w.rank, rank);
+        w.done.push(done);
+      } else waiting.set(url, { rank, done: [done] });
+    }));
+  }
+  pump();
+  return Promise.all(jobs).then(() => void 0);
+}
+var clipChain = Promise.resolve();
+function want(needs, soon = "soon") {
+  const pics = needs.filter((n) => typeof n === "string");
+  const clips = soon === "idle" || saveData() ? [] : needs.filter((n) => typeof n !== "string");
+  const p = warm(pics, soon);
+  for (const c of clips) {
+    if (!c.clip.key) continue;
+    asked.add(clipAddress(c.clip, c.key));
+    clipChain = clipChain.then(() => p).then(() => preloadClip(c.clip, c.key));
+  }
+  return p;
+}
+var pageNow = "";
+var missed = [];
+var MISS_MAX = 200;
+var listeners = /* @__PURE__ */ new Set();
+function setMissPage(key) {
+  pageNow = key;
+  missed.length = 0;
+  listeners.forEach((l) => l());
+}
+function notePicture(url, ready) {
+  if (ready || !/^https?:/.test(url) || asked.has(url) || missed.some((m) => m.url === url)) return;
+  missed.push({ url, page: pageNow });
+  if (missed.length > MISS_MAX) missed.shift();
+  listeners.forEach((l) => l());
+}
+var misses = () => missed;
+function onMiss(l) {
+  listeners.add(l);
+  return () => listeners.delete(l);
+}
+
+// src/ui.ts
 var h = (parent, tag, cls, text) => {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
@@ -780,12 +946,13 @@ function loadBackground(src) {
   return p;
 }
 function pendingBackgrounds(host) {
-  const out = [], asked = /* @__PURE__ */ new Set();
+  const out = [], asked2 = /* @__PURE__ */ new Set();
   for (const el of [host, ...Array.from(host.querySelectorAll("[style]"))]) {
     for (const m of (el.getAttribute("style") ?? "").matchAll(URL_IN_STYLE)) {
       const src = m[1];
-      if (asked.has(src) || bgHeld.get(src)?.complete) continue;
-      asked.add(src);
+      if (asked2.has(src) || bgHeld.get(src)?.complete || isWarm(src)) continue;
+      asked2.add(src);
+      notePicture(src, false);
       out.push(loadBackground(src));
     }
   }
@@ -843,12 +1010,12 @@ function autoLoading(root) {
     if (b) queue(b);
     n.querySelectorAll(".mn-lb").forEach(queue);
   };
-  const waiting = /* @__PURE__ */ new Set();
+  const waiting2 = /* @__PURE__ */ new Set();
   let graceTimer = 0;
   const settle = () => {
     graceTimer = 0;
-    const list2 = [...waiting].filter((im) => im.isConnected && !im.complete);
-    waiting.clear();
+    const list2 = [...waiting2].filter((im) => im.isConnected && !im.complete);
+    waiting2.clear();
     const sizes = list2.map((im) => ({ im: im.getBoundingClientRect(), host: im.parentElement?.getBoundingClientRect() }));
     list2.forEach((im, k) => {
       const r = sizes[k].im, hr = sizes[k].host;
@@ -870,10 +1037,12 @@ function autoLoading(root) {
   };
   const take = (im) => {
     const src = im.getAttribute("src");
-    if (!src || seen.get(im) === src || im.closest(".mn-noauto, .mn-blk.mn-blk-busy, .mn-pager")) return;
+    if (!src || seen.get(im) === src) return;
     seen.set(im, src);
+    notePicture(src, im.complete && im.naturalWidth > 0 || im.loading === "lazy");
+    if (im.closest(".mn-noauto, .mn-blk.mn-blk-busy, .mn-pager")) return;
     if (im.complete && im.naturalWidth) return;
-    waiting.add(im);
+    waiting2.add(im);
     if (!graceTimer) graceTimer = window.setTimeout(settle, PIC_GRACE_MS);
   };
   const takeVideo = (v) => {
@@ -906,15 +1075,7 @@ function autoLoading(root) {
   mo.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["src"] });
   return mo;
 }
-async function warmPictures(urls, batch = 6) {
-  for (let i = 0; i < urls.length; i += batch) {
-    await Promise.all(urls.slice(i, i + batch).map((u) => new Promise((done) => {
-      const im = new Image();
-      im.onload = im.onerror = () => done();
-      im.src = u;
-    })));
-  }
-}
+var warmPictures = (urls) => warm(urls, "soon");
 var HOLD_MS = 280;
 var holdTip = (el, text) => {
   let timer = 0, shown = false;
@@ -943,8 +1104,8 @@ var holdTip = (el, text) => {
 };
 var icon = (parent, name, cls = "mn-ic") => {
   const s = h(parent, "span", cls);
-  (0, import_obsidian2.setIcon)(s, name);
-  if (!s.querySelector("svg")) (0, import_obsidian2.setIcon)(s, "circle");
+  (0, import_obsidian3.setIcon)(s, name);
+  if (!s.querySelector("svg")) (0, import_obsidian3.setIcon)(s, "circle");
   return s;
 };
 var page = (title) => {
@@ -1436,1498 +1597,6 @@ function slideSeg(seg, key = "", opt = {}) {
   }, { capture: true });
 }
 
-// src/iconsnote.ts
-var import_obsidian3 = require("obsidian");
-var HEX = /^#[0-9a-fA-F]{6}$/;
-var CHUNK = 90;
-var toHex = (rgb) => {
-  const m = rgb.match(/\d+(?:\.\d+)?/g);
-  return m && m.length >= 3 ? "#" + m.slice(0, 3).map((n) => Math.round(Number(n)).toString(16).padStart(2, "0")).join("") : "";
-};
-var parse = (line) => {
-  const f = line.split("|").map((s) => s.trim());
-  let variable = "", hex = "";
-  for (const x of f.slice(2)) {
-    if (x.startsWith("--")) variable = x;
-    else if (/^#[0-9a-fA-F]{3,8}$/.test(x)) hex = x.toLowerCase();
-  }
-  return { label: f[0] ?? "", name: f[1] ?? "", variable, hex };
-};
-var baseline = /* @__PURE__ */ new Map();
-var serialise = (r) => [r.label, r.name, r.variable, r.hex].filter((x, i) => i < 2 || x).join(" | ");
-function iconsBlock(plugin, source, el, ctx) {
-  const ids = (0, import_obsidian3.getIconIds)().map((i) => i.replace(/^lucide-/, ""));
-  const known = new Set(ids);
-  const shopRow = (n) => {
-    const m = /^shop:(\d+)$/.exec(n);
-    return m ? Number(m[1]) : -1;
-  };
-  const valid = (n) => known.has(n) || shopRow(n) >= 0;
-  const probe = document.body.createDiv({ cls: "mn-app mn-icprobe" });
-  const current = (r) => {
-    if (r.hex) return r.hex.length === 7 ? r.hex : "#888888";
-    if (!r.variable) return "";
-    probe.style.color = `var(${r.variable})`;
-    return toHex(getComputedStyle(probe).color);
-  };
-  const info = ctx.getSectionInfo(el);
-  const list2 = el.createDiv({ cls: "mn-iclist" });
-  let openPanel = null;
-  const save = (i, r) => {
-    const file = plugin.app.vault.getAbstractFileByPath(ctx.sourcePath);
-    if (!info || !(file instanceof import_obsidian3.TFile)) return;
-    void plugin.app.vault.process(file, (data) => {
-      const lines = data.split("\n");
-      lines[info.lineStart + 1 + i] = serialise(r);
-      return lines.join("\n");
-    });
-  };
-  source.split("\n").forEach((line, i) => {
-    if (!line.trim()) return;
-    const r = parse(line);
-    const key = `${ctx.sourcePath}|${r.label}`;
-    if (!baseline.has(key)) baseline.set(key, { ...r });
-    const base = baseline.get(key);
-    const row2 = list2.createDiv({ cls: "mn-icrow" });
-    const pic2 = row2.createSpan({ cls: "mn-icbig" });
-    const label = row2.createDiv({ cls: "mn-iclabel", text: r.label });
-    if (r.variable) label.createSpan({ cls: "mn-icvar", text: r.variable });
-    const ctl = row2.createDiv({ cls: "mn-icctl" });
-    const name = ctl.createEl("input", { cls: "mn-icin", attr: { type: "text", value: r.name, placeholder: "lucide name", spellcheck: "false", autocapitalize: "off", autocomplete: "off" } });
-    const resetName = ctl.createEl("button", { cls: "mn-icreset", attr: { "aria-label": "Back to the first icon" } });
-    (0, import_obsidian3.setIcon)(resetName, "rotate-ccw");
-    const pick = ctl.createEl("input", { cls: "mn-icpick", attr: { type: "color" } });
-    const hex = ctl.createEl("input", { cls: "mn-icin mn-ichexin", attr: { type: "text", placeholder: "#hex", spellcheck: "false", autocapitalize: "off" } });
-    const reset = ctl.createEl("button", { cls: "mn-icreset", attr: { "aria-label": "Back to the app's colour" } });
-    (0, import_obsidian3.setIcon)(reset, "rotate-ccw");
-    const draw = () => {
-      const c = current(r);
-      pic2.empty();
-      pic2.style.color = c || "";
-      if (shopRow(r.name) >= 0) shopIcon(pic2, shopRow(r.name), true);
-      else if (known.has(r.name)) (0, import_obsidian3.setIcon)(pic2, r.name);
-      else pic2.setText("?");
-      name.toggleClass("is-bad", !valid(r.name));
-      if (HEX.test(c)) pick.value = c;
-      hex.value = r.hex;
-      hex.placeholder = c || "#hex";
-      reset.toggleClass("is-off", r.variable ? !r.hex : r.hex === base.hex);
-      resetName.toggleClass("is-off", r.name === base.name);
-    };
-    draw();
-    const panel = row2.createDiv({ cls: "mn-icpanel is-hidden" });
-    let shown = 0, matches2 = [];
-    const more = () => {
-      for (const id of matches2.slice(shown, shown + CHUNK)) {
-        const b = panel.createEl("button", { cls: "mn-ictile" });
-        b.createSpan({ cls: "mn-ictile-ic" }).style.color = current(r);
-        (0, import_obsidian3.setIcon)(b.firstElementChild, id);
-        b.createSpan({ cls: "mn-ictile-n", text: id });
-        b.addEventListener("click", (e) => {
-          e.preventDefault();
-          r.name = id;
-          name.value = id;
-          draw();
-          close();
-          save(i, r);
-        });
-      }
-      shown += CHUNK;
-    };
-    const fill = () => {
-      const q = name.value.trim().toLowerCase().replace(/^lucide-/, "");
-      matches2 = q ? ids.filter((x) => x.includes(q)) : ids;
-      panel.empty();
-      shown = 0;
-      panel.scrollTop = 0;
-      if (!matches2.length) panel.createDiv({ cls: "mn-icnone", text: "no icon with that name" });
-      else more();
-    };
-    const close = () => {
-      panel.addClass("is-hidden");
-      if (openPanel === panel) openPanel = null;
-    };
-    panel.addEventListener("scroll", () => {
-      if (shown < matches2.length && panel.scrollTop + panel.clientHeight > panel.scrollHeight - 80) more();
-    });
-    panel.addEventListener("mousedown", (e) => e.preventDefault());
-    name.addEventListener("focus", () => {
-      openPanel?.addClass("is-hidden");
-      openPanel = panel;
-      panel.removeClass("is-hidden");
-      name.select();
-      fill();
-    });
-    name.addEventListener("input", fill);
-    name.addEventListener("blur", () => window.setTimeout(close, 150));
-    name.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        name.blur();
-      }
-    });
-    name.addEventListener("change", () => {
-      r.name = name.value.trim().toLowerCase().replace(/^lucide-/, "");
-      draw();
-      if (valid(r.name)) save(i, r);
-    });
-    pick.addEventListener("input", () => {
-      r.hex = pick.value.toLowerCase();
-      draw();
-    });
-    pick.addEventListener("change", () => {
-      r.hex = pick.value.toLowerCase();
-      draw();
-      save(i, r);
-    });
-    hex.addEventListener("change", () => {
-      const v = hex.value.trim().toLowerCase().replace(/^(?=[0-9a-f]{6}$)/, "#");
-      r.hex = HEX.test(v) ? v : "";
-      draw();
-      save(i, r);
-    });
-    reset.addEventListener("click", (e) => {
-      e.preventDefault();
-      r.hex = r.variable ? "" : base.hex;
-      draw();
-      save(i, r);
-    });
-    resetName.addEventListener("click", (e) => {
-      e.preventDefault();
-      r.name = base.name;
-      name.value = base.name;
-      draw();
-      save(i, r);
-    });
-  });
-  probe.remove();
-}
-function registerIconsNote(plugin) {
-  plugin.registerMarkdownCodeBlockProcessor("mn-icons", (source, el, ctx) => iconsBlock(plugin, source, el, ctx));
-}
-
-// src/layoutnote.ts
-var import_obsidian4 = require("obsidian");
-var W = 390;
-var H = 844;
-var SCALE = 0.78;
-var SNAP = 2;
-var MARGIN = 16;
-var TABBAR = 64;
-var STATUS = 47;
-var CARRIER = "\u4E2D\u83EF\u96FB\u4FE1";
-var SEP = " \xB7 ";
-var KINDS = {
-  hero: { color: "#8fb4ee", name: "hero / picture" },
-  nav: { color: "#9aa3b8", name: "title / nav" },
-  entry: { color: "#7fd9ad", name: "entries / buttons" },
-  list: { color: "#f0cd7a", name: "list / grid" },
-  info: { color: "#cba8f5", name: "info / stats" },
-  action: { color: "#f08ab8", name: "input / action" },
-  float: { color: "#73bbb2", name: "floating" }
-};
-var LAYER = { hero: 0, float: 3 };
-var SYNCED = "mn-layout-synced";
-var memory = /* @__PURE__ */ new Map();
-var winAt = /* @__PURE__ */ new Map();
-var metricAt = "left";
-var STEP = 4;
-var REPEAT_MS = 110;
-var uid = () => Math.random().toString(36).slice(2, 8);
-var snap = (v) => Math.round(v / SNAP) * SNAP;
-var clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-function parse2(source) {
-  try {
-    const v = JSON.parse(source || "[]");
-    return Array.isArray(v) ? v : [];
-  } catch {
-    return [];
-  }
-}
-var serialise2 = (pages) => "[\n" + pages.map((p) => "  " + JSON.stringify(p)).join(",\n") + "\n]";
-function layoutBlock2(plugin, source, el, ctx) {
-  const saved = parse2(source);
-  const steps = memory.get(ctx.sourcePath) ?? /* @__PURE__ */ new Map();
-  memory.set(ctx.sourcePath, steps);
-  const info = ctx.getSectionInfo(el);
-  const home = saved[0]?.id ?? `@${info?.lineStart ?? 0}`;
-  const pages = saved.map((p) => steps.has(p.id) ? JSON.parse(steps.get(p.id).last) : p);
-  for (const [id, s] of steps) if (s.home === home && !saved.some((p) => p.id === id)) pages.push(JSON.parse(s.last));
-  const root = el.createDiv({ cls: "mn-lay" });
-  if (source.trim() && !saved.length) {
-    root.createDiv({ cls: "mn-lay-err", text: "The layout data could not be read (JSON). Fix it in the source view." });
-    return;
-  }
-  const write = (list2) => {
-    const file = plugin.app.vault.getAbstractFileByPath(ctx.sourcePath);
-    if (!info || !(file instanceof import_obsidian4.TFile)) {
-      new import_obsidian4.Notice("Could not save the layout");
-      return;
-    }
-    void plugin.app.vault.process(file, (data) => {
-      const lines = data.split("\n");
-      lines.splice(info.lineStart + 1, info.lineEnd - info.lineStart - 1, ...serialise2(list2).split("\n"));
-      return lines.join("\n");
-    });
-  };
-  let synced = /* @__PURE__ */ new Map();
-  const file0 = plugin.app.vault.getAbstractFileByPath(ctx.sourcePath);
-  if (file0 instanceof import_obsidian4.TFile) void plugin.app.vault.cachedRead(file0).then((text) => {
-    const m = new RegExp("```" + SYNCED + "\\n([\\s\\S]*?)\\n```").exec(text);
-    synced = new Map(parse2(m?.[1] ?? "").map((p) => [p.id, JSON.stringify(p)]));
-    const first = text.split("\n").findIndex((l) => l.trim() === "```mn-layout");
-    legend.toggleClass("is-hidden", !!info && first >= 0 && first !== info.lineStart);
-    draw();
-  });
-  const changedSinceSync = (page2) => synced.size > 0 && synced.get(page2.id) !== savedJson(page2.id);
-  const savedJson = (id) => {
-    const p = saved.find((x) => x.id === id);
-    return p ? JSON.stringify(p) : "";
-  };
-  const stepsOf = (page2) => {
-    let s = steps.get(page2.id);
-    if (!s) {
-      s = { past: [], future: [], last: savedJson(page2.id) || JSON.stringify(page2), home };
-      steps.set(page2.id, s);
-    }
-    return s;
-  };
-  const changed = (page2) => {
-    const s = stepsOf(page2), now = JSON.stringify(page2);
-    if (now === s.last) return;
-    s.past.push(s.last);
-    s.last = now;
-    s.future = [];
-  };
-  const goTo = (page2, json) => {
-    const v = JSON.parse(json);
-    Object.assign(page2, v);
-    if (!page2.note) delete page2.note;
-    if (!v.mock) delete page2.mock;
-    selected = null;
-    draw();
-  };
-  const dirty = (page2) => (steps.get(page2.id)?.last ?? JSON.stringify(page2)) !== savedJson(page2.id);
-  const savePage = (page2) => {
-    const list2 = saved.map((p) => p.id === page2.id ? page2 : p);
-    if (!saved.some((p) => p.id === page2.id)) list2.push(page2);
-    write(list2);
-  };
-  for (const ev of ["pointerdown", "mousedown", "click", "touchstart"]) root.addEventListener(ev, (e) => e.stopPropagation());
-  const legend = root.createDiv({ cls: "mn-lay-legend" });
-  for (const v of Object.values(KINDS)) {
-    const s = legend.createSpan();
-    s.createEl("i").style.borderColor = v.color;
-    s.append(v.name);
-  }
-  const wall = root.createDiv({ cls: "mn-lay-groups" });
-  let selected = null;
-  let openWin = null;
-  const life = new import_obsidian4.MarkdownRenderChild(el);
-  life.onunload = () => {
-    openWin?.remove();
-    openWin = null;
-  };
-  ctx.addChild(life);
-  const groupOf = (p) => p.name.split(SEP)[0];
-  const subOf = (p) => p.name.split(SEP).slice(1).join(SEP);
-  const named = (group2, sub) => sub ? group2 + SEP + sub : group2;
-  const addPage = (name, after) => {
-    const p = { id: uid(), name, tabbar: true, blocks: [] };
-    pages.splice(after ? pages.indexOf(after) + 1 : pages.length, 0, p);
-    stepsOf(p);
-    draw();
-  };
-  const draw = () => {
-    wall.empty();
-    openWin?.remove();
-    openWin = null;
-    const groups = /* @__PURE__ */ new Map();
-    for (const p of pages) groups.set(groupOf(p), [...groups.get(groupOf(p)) ?? [], p]);
-    for (const [group2, list2] of groups) {
-      const sec = wall.createDiv({ cls: "mn-lay-group" });
-      const gh = sec.createDiv({ cls: "mn-lay-ghead" });
-      const gname = gh.createEl("input", { cls: "mn-lay-gname", attr: { value: group2, spellcheck: "false" } });
-      gname.addEventListener("change", () => {
-        const g = gname.value.trim();
-        if (!g || g === group2) return;
-        for (const p of list2) {
-          p.name = named(g, subOf(p));
-          changed(p);
-        }
-        draw();
-      });
-      const sub = gh.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": "Add a page to this group" } });
-      icon(sub, "plus");
-      sub.addEventListener("click", () => addPage(named(group2, "New page"), list2[list2.length - 1]));
-      const row2 = sec.createDiv({ cls: "mn-lay-pages" });
-      for (const page2 of list2) drawPage(row2, page2);
-    }
-    const add = wall.createEl("button", { cls: "mn-lay-addpage" });
-    icon(add, "plus");
-    add.append("Page");
-    add.addEventListener("click", () => addPage("New page"));
-  };
-  const drawPage = (parent, page2) => {
-    const fig = parent.createDiv({ cls: "mn-lay-page" + (page2.mock ? " is-mock" : changedSinceSync(page2) ? " is-changed" : "") + (dirty(page2) ? " is-dirty" : "") });
-    const head2 = fig.createDiv({ cls: "mn-lay-head" });
-    const name = head2.createEl("input", { cls: "mn-lay-name", attr: { value: subOf(page2), placeholder: "Main page", spellcheck: "false" } });
-    name.addEventListener("change", () => {
-      page2.name = named(groupOf(page2), name.value.trim());
-      changed(page2);
-      draw();
-    });
-    const s = stepsOf(page2);
-    const tool = (ic, label, on, act, cls = "") => {
-      const b = head2.createEl("button", { cls: "mn-lay-btn" + cls + (on ? "" : " is-off"), attr: { "aria-label": label } });
-      icon(b, ic);
-      b.addEventListener("click", () => {
-        if (on) act();
-      });
-    };
-    tool("undo-2", "Back a step", s.past.length > 0, () => {
-      s.future.push(s.last);
-      s.last = s.past.pop();
-      goTo(page2, s.last);
-    });
-    tool("redo-2", "Forward a step", s.future.length > 0, () => {
-      s.past.push(s.last);
-      s.last = s.future.pop();
-      goTo(page2, s.last);
-    });
-    const base = synced.get(page2.id);
-    tool("rotate-ccw", "Reset to the synced layout", !!base && (dirty(page2) || changedSinceSync(page2)), () => {
-      s.past.push(s.last);
-      s.last = base;
-      s.future = [];
-      goTo(page2, s.last);
-      savePage(page2);
-    });
-    tool("flask-conical", page2.mock ? "Mock: tap to make it a real page" : "Mark as a mock", true, () => {
-      if (page2.mock) delete page2.mock;
-      else page2.mock = true;
-      changed(page2);
-      draw();
-    }, page2.mock ? " is-mock" : "");
-    tool("save", "Save this page into the note", dirty(page2), () => savePage(page2), dirty(page2) ? " is-dirty" : "");
-    const addB = head2.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": "Add a block" } });
-    icon(addB, "square-plus");
-    addB.addEventListener("click", () => {
-      const open = fig.querySelector(".mn-lay-kinds.is-add");
-      if (open) {
-        open.remove();
-        return;
-      }
-      const pop = kindGrid(fig, "", (k) => {
-        pop.remove();
-        const low = page2.blocks.reduce((m, x) => Math.max(m, x.y + x.h), STATUS + 8);
-        const y = clamp(snap(low + 8), 0, H - TABBAR - 80);
-        const b = { id: uid(), label: `New ${KINDS[k].name.split(" / ")[0]}`, kind: k, x: MARGIN, y, w: W - 2 * MARGIN, h: 80 };
-        page2.blocks.push(b);
-        selected = { page: page2, block: b };
-        changed(page2);
-        draw();
-      });
-      pop.addClass("is-add");
-    });
-    const delP = head2.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": "Delete the page (tap twice)" } });
-    icon(delP, "trash-2");
-    delP.addEventListener("click", () => {
-      if (!delP.hasClass("is-armed")) {
-        delP.addClass("is-armed");
-        window.setTimeout(() => delP.removeClass("is-armed"), 2500);
-        return;
-      }
-      steps.delete(page2.id);
-      if (saved.some((p) => p.id === page2.id)) write(saved.filter((p) => p.id !== page2.id));
-      else {
-        pages.splice(pages.indexOf(page2), 1);
-        draw();
-      }
-    });
-    const note = fig.createEl("textarea", { cls: "mn-lay-pnote", attr: { rows: "4", placeholder: "What this page is for" } });
-    note.value = page2.note ?? "";
-    note.addEventListener("change", () => {
-      page2.note = note.value.trim() || void 0;
-      changed(page2);
-      draw();
-    });
-    const phone = fig.createDiv({ cls: "mn-lay-phone" });
-    phone.style.width = `${W * SCALE}px`;
-    phone.style.height = `${H * SCALE}px`;
-    const screen2 = phone.createDiv({ cls: "mn-lay-screen" });
-    screen2.style.transform = `scale(${SCALE})`;
-    screen2.style.width = `${W}px`;
-    screen2.style.height = `${H}px`;
-    const sb = screen2.createDiv({ cls: "mn-lay-status" });
-    sb.style.height = `${STATUS}px`;
-    sb.createSpan({ cls: "mn-lay-carrier", text: CARRIER });
-    sb.createDiv({ cls: "mn-lay-notch" });
-    const sig = sb.createDiv({ cls: "mn-lay-sig" });
-    const bars = sig.createSpan({ cls: "mn-lay-bars" });
-    for (let i = 0; i < 4; i++) bars.createEl("i");
-    sig.createSpan({ text: "5G" });
-    sig.createSpan({ cls: "mn-lay-batt" }).createEl("i");
-    if (page2.tabbar !== false) {
-      const tb = screen2.createDiv({ cls: "mn-lay-tabbar" });
-      tb.style.height = `${TABBAR}px`;
-      for (const t of MODES[plugin.settings.mode].tabs) {
-        const c = tb.createSpan();
-        icon(c, TAB_ICON[t]);
-        c.createSpan({ text: TAB_LABEL[t] });
-      }
-    }
-    for (const b of page2.blocks) {
-      const z = screen2.createDiv({ cls: "mn-lay-z" + (selected?.block === b ? " is-sel" : "") });
-      const pos = () => {
-        z.style.left = `${b.x}px`;
-        z.style.top = `${b.y}px`;
-        z.style.width = `${b.w}px`;
-        z.style.height = `${b.h}px`;
-        size.textContent = `${b.w}\xD7${b.h}`;
-      };
-      const col = KINDS[b.kind]?.color ?? "#9aa3b8";
-      z.style.setProperty("--c", col);
-      z.style.zIndex = String(LAYER[b.kind] ?? 1);
-      const tag = z.createDiv({ cls: "mn-lay-tag" });
-      tag.createSpan({ text: b.label });
-      const size = tag.createEl("small");
-      if (b.note) z.createDiv({ cls: "mn-lay-znote", text: b.note });
-      const grip = z.createDiv({ cls: "mn-lay-grip" });
-      pos();
-      const drag = (resize) => (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const x0 = e.clientX, y0 = e.clientY, start = { ...b };
-        let moved = false;
-        z.setPointerCapture(e.pointerId);
-        const move = (m) => {
-          const dx = (m.clientX - x0) / SCALE, dy = (m.clientY - y0) / SCALE;
-          if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
-          if (resize) {
-            b.w = clamp(snap(start.w + dx), 16, W - b.x);
-            b.h = clamp(snap(start.h + dy), 12, H - b.y);
-          } else {
-            b.x = clamp(snap(start.x + dx), 0, W - b.w);
-            b.y = clamp(snap(start.y + dy), 0, H - b.h);
-          }
-          pos();
-        };
-        const up = () => {
-          z.removeEventListener("pointermove", move);
-          z.removeEventListener("pointerup", up);
-          z.removeEventListener("pointercancel", up);
-          if (moved) {
-            changed(page2);
-            draw();
-          } else {
-            selected = selected?.block === b ? null : { page: page2, block: b };
-            draw();
-          }
-        };
-        z.addEventListener("pointermove", move);
-        z.addEventListener("pointerup", up);
-        z.addEventListener("pointercancel", up);
-      };
-      z.addEventListener("pointerdown", drag(false));
-      grip.addEventListener("pointerdown", drag(true));
-    }
-    if (selected?.page === page2) inspector(fig, page2, selected.block);
-  };
-  const kindGrid = (parent, current, pick) => {
-    const g = parent.createDiv({ cls: "mn-lay-kinds" });
-    for (const [k, v] of Object.entries(KINDS)) {
-      const c = g.createEl("button", { cls: "mn-lay-kind" + (k === current ? " is-on" : "") });
-      const sw = c.createSpan({ cls: "mn-lay-sw" });
-      sw.style.setProperty("--c", v.color);
-      c.createSpan({ text: v.name });
-      c.addEventListener("click", (e) => {
-        e.stopPropagation();
-        pick(k);
-      });
-    }
-    return g;
-  };
-  const inspector = (fig, page2, b) => {
-    openWin?.remove();
-    const win = document.body.createDiv({ cls: "mn-lay-win" });
-    openWin = win;
-    const place = (p) => {
-      win.style.transform = `translate(calc(${import_obsidian4.Platform.isMobile ? "-50%" : `50vw - ${MARGIN}px - 100%`} + ${p.x}px), calc(-50% + ${p.y}px))`;
-    };
-    place(winAt.get(page2.id) ?? { x: 0, y: 0 });
-    const shut = () => {
-      selected = null;
-      winAt.delete(page2.id);
-      draw();
-    };
-    const onScroll = (e) => {
-      if (!win.isConnected) {
-        document.removeEventListener("scroll", onScroll, true);
-        return;
-      }
-      if (e.target instanceof Node && win.contains(e.target)) return;
-      if (win.contains(document.activeElement)) return;
-      document.removeEventListener("scroll", onScroll, true);
-      shut();
-    };
-    document.addEventListener("scroll", onScroll, true);
-    for (const ev of ["pointerdown", "mousedown", "click", "touchstart"]) win.addEventListener(ev, (e) => e.stopPropagation());
-    const commit = () => {
-      changed(page2);
-      draw();
-    };
-    const head2 = win.createDiv({ cls: "mn-lay-winhead" });
-    head2.createSpan({ cls: "mn-lay-wspace" });
-    const nameRow = win.createDiv({ cls: "mn-lay-wrow" });
-    const title = nameRow.createEl("textarea", { cls: "mn-lay-wtitle-in", attr: { rows: "1", spellcheck: "false", "aria-label": "Block name" } });
-    title.value = b.label;
-    const growTitle = () => {
-      title.style.height = "auto";
-      title.style.height = `${title.scrollHeight}px`;
-    };
-    title.addEventListener("input", growTitle);
-    requestAnimationFrame(growTitle);
-    title.addEventListener("keydown", (k) => {
-      if (k.key === "Enter") {
-        k.preventDefault();
-        title.blur();
-      }
-    });
-    title.addEventListener("change", () => {
-      b.label = title.value.replace(/\s+/g, " ").trim() || b.label;
-      commit();
-    });
-    const close = head2.createEl("button", { cls: "mn-lay-wbtn", attr: { "aria-label": "Close" } });
-    icon(close, "x");
-    close.addEventListener("click", shut);
-    head2.addEventListener("pointerdown", (e) => {
-      if (e.target.closest("input, textarea, button")) return;
-      const x0 = e.clientX, y0 = e.clientY, start = winAt.get(page2.id) ?? { x: 0, y: 0 };
-      let dragging = false;
-      head2.setPointerCapture(e.pointerId);
-      const move = (m) => {
-        if (!dragging && Math.abs(m.clientX - x0) + Math.abs(m.clientY - y0) < 4) return;
-        dragging = true;
-        const p = { x: start.x + m.clientX - x0, y: start.y + m.clientY - y0 };
-        winAt.set(page2.id, p);
-        place(p);
-      };
-      const up = () => {
-        head2.removeEventListener("pointermove", move);
-        head2.removeEventListener("pointerup", up);
-        head2.removeEventListener("pointercancel", up);
-      };
-      head2.addEventListener("pointermove", move);
-      head2.addEventListener("pointerup", up);
-      head2.addEventListener("pointercancel", up);
-    });
-    const kindRow = win.createDiv({ cls: "mn-lay-wrow" });
-    const kindBtn = kindRow.createEl("button", { cls: "mn-lay-kindbtn" });
-    const ks = kindBtn.createSpan({ cls: "mn-lay-sw" });
-    ks.style.setProperty("--c", KINDS[b.kind]?.color ?? "#9aa3b8");
-    kindBtn.createSpan({ text: KINDS[b.kind]?.name ?? b.kind });
-    icon(kindBtn, "chevron-down");
-    kindBtn.addEventListener("click", () => {
-      const open = win.querySelector(".mn-lay-kinds");
-      if (open) {
-        open.remove();
-        return;
-      }
-      kindRow.after(kindGrid(win, b.kind, (k) => {
-        b.kind = k;
-        commit();
-      }));
-    });
-    const SAFE_TOP = STATUS + 1, SAFE_BOTTOM = H - (page2.tabbar !== false ? TABBAR : 0);
-    const align = win.createDiv({ cls: "mn-lay-align" });
-    const al = (ic, label, act) => {
-      const btn = align.createEl("button", { cls: "mn-lay-wbtn", attr: { "aria-label": label, title: label } });
-      icon(btn, ic);
-      btn.addEventListener("click", () => {
-        act();
-        commit();
-      });
-    };
-    al("align-start-vertical", "Align left (16 px margin)", () => {
-      b.x = MARGIN;
-    });
-    al("align-center-vertical", "Centre across", () => {
-      b.x = Math.round((W - b.w) / 2);
-    });
-    al("align-end-vertical", "Align right (16 px margin)", () => {
-      b.x = W - MARGIN - b.w;
-    });
-    align.createSpan({ cls: "mn-lay-asep" });
-    al("align-start-horizontal", "Align top (under the status bar)", () => {
-      b.y = SAFE_TOP;
-    });
-    al("align-center-horizontal", "Centre down", () => {
-      b.y = Math.round((SAFE_TOP + SAFE_BOTTOM - b.h) / 2);
-    });
-    al("align-end-horizontal", "Align bottom (over the tab bar)", () => {
-      b.y = SAFE_BOTTOM - b.h;
-    });
-    align.createSpan({ cls: "mn-lay-asep" });
-    al("stretch-horizontal", "Full width (16 px margins)", () => {
-      b.x = MARGIN;
-      b.w = W - 2 * MARGIN;
-    });
-    al("layout-grid", "Snap every edge to 4 px", () => {
-      const r = (v) => Math.round(v / 4) * 4;
-      const x2 = r(b.x + b.w), y2 = r(b.y + b.h);
-      b.x = r(b.x);
-      b.y = r(b.y);
-      b.w = Math.max(4, x2 - b.x);
-      b.h = Math.max(4, y2 - b.y);
-    });
-    const get = { top: () => b.y, left: () => b.x, right: () => W - b.x - b.w, bottom: () => H - b.y - b.h, w: () => b.w, h: () => b.h };
-    const put = {
-      top: (v) => {
-        b.y = clamp(v, 0, H - b.h);
-      },
-      left: (v) => {
-        b.x = clamp(v, 0, W - b.w);
-      },
-      right: (v) => {
-        b.x = clamp(W - v - b.w, 0, W - b.w);
-      },
-      bottom: (v) => {
-        b.y = clamp(H - v - b.h, 0, H - b.h);
-      },
-      w: (v) => {
-        b.w = clamp(v, 8, W - b.x);
-      },
-      h: (v) => {
-        b.h = clamp(v, 8, H - b.y);
-      }
-    };
-    const NAME = { top: "Top gap", left: "Left gap", right: "Right gap", bottom: "Bottom gap", w: "Width", h: "Height" };
-    const boxEl = win.createDiv({ cls: "mn-lay-box" });
-    const nums = /* @__PURE__ */ new Map();
-    const num2 = (m, parent, cls) => {
-      const btn = parent.createEl("button", { cls: "mn-lay-bnum " + cls + (m === metricAt ? " is-on" : ""), text: String(get[m]()), attr: { "aria-label": NAME[m] } });
-      btn.addEventListener("click", () => {
-        metricAt = m;
-        nums.forEach((x, k) => x.toggleClass("is-on", k === m));
-        showStep();
-      });
-      nums.set(m, btn);
-    };
-    num2("top", boxEl, "is-top");
-    num2("left", boxEl, "is-left");
-    const blockEl = boxEl.createDiv({ cls: "mn-lay-bblock" });
-    blockEl.style.setProperty("--c", KINDS[b.kind]?.color ?? "#9aa3b8");
-    num2("w", blockEl, "is-w");
-    blockEl.createSpan({ cls: "mn-lay-bx", text: "\xD7" });
-    num2("h", blockEl, "is-h");
-    num2("right", boxEl, "is-right");
-    num2("bottom", boxEl, "is-bottom");
-    const step = win.createDiv({ cls: "mn-lay-step" });
-    const stepName = step.createSpan({ cls: "mn-lay-sname" });
-    const minus = step.createEl("button", { cls: "mn-lay-sbtn", attr: { "aria-label": "Less" } });
-    icon(minus, "minus");
-    const input = step.createEl("input", { cls: "mn-lay-sin", attr: { type: "number", inputmode: "numeric", step: String(STEP) } });
-    const plus = step.createEl("button", { cls: "mn-lay-sbtn", attr: { "aria-label": "More" } });
-    icon(plus, "plus");
-    const showStep = () => {
-      stepName.setText(NAME[metricAt]);
-      input.value = String(get[metricAt]());
-    };
-    const refresh = () => {
-      nums.forEach((x, k) => x.setText(String(get[k]())));
-      input.value = String(get[metricAt]());
-    };
-    const nudge = (d) => {
-      put[metricAt](get[metricAt]() + d);
-      refresh();
-    };
-    let held = 0, nudged = false;
-    const hold = (btn, d) => {
-      btn.addEventListener("pointerdown", (e) => {
-        e.preventDefault();
-        nudge(d);
-        nudged = true;
-        held = window.setInterval(() => nudge(d), REPEAT_MS);
-      });
-      const stop = () => {
-        window.clearInterval(held);
-        held = 0;
-        if (nudged) {
-          nudged = false;
-          commit();
-        }
-      };
-      for (const ev of ["pointerup", "pointercancel", "pointerleave"]) btn.addEventListener(ev, stop);
-    };
-    hold(minus, -STEP);
-    hold(plus, STEP);
-    input.addEventListener("change", () => {
-      put[metricAt](Math.round(Number(input.value) || 0));
-      commit();
-    });
-    showStep();
-    const note = win.createEl("textarea", { cls: "mn-lay-wnote", attr: { rows: "1", placeholder: "Note: what goes here, what is wrong" } });
-    note.value = b.note ?? "";
-    const grow = () => {
-      note.style.height = "auto";
-      note.style.height = `${note.scrollHeight + 2}px`;
-    };
-    note.addEventListener("input", grow);
-    requestAnimationFrame(grow);
-    note.addEventListener("change", () => {
-      b.note = note.value.trim() || void 0;
-      commit();
-    });
-    const acts = win.createDiv({ cls: "mn-lay-acts" });
-    const dup = acts.createEl("button", { cls: "mn-lay-wbtn", attr: { "aria-label": "Duplicate", title: "Duplicate" } });
-    icon(dup, "copy");
-    dup.addEventListener("click", () => {
-      const c = { ...b, id: uid(), y: clamp(b.y + 12, 0, H - b.h) };
-      page2.blocks.push(c);
-      selected = { page: page2, block: c };
-      commit();
-    });
-    const del = acts.createEl("button", { cls: "mn-lay-wbtn is-danger", attr: { "aria-label": "Delete", title: "Delete" } });
-    icon(del, "trash-2");
-    del.addEventListener("click", () => {
-      page2.blocks.splice(page2.blocks.indexOf(b), 1);
-      selected = null;
-      commit();
-    });
-  };
-  draw();
-}
-function registerLayoutNote(plugin) {
-  plugin.registerMarkdownCodeBlockProcessor("mn-layout", (source, el, ctx) => layoutBlock2(plugin, source, el, ctx));
-  plugin.registerMarkdownCodeBlockProcessor(SYNCED, (_source, el) => {
-    el.createDiv({ cls: "mn-lay-synced", text: "Last synced layout (kept by Claude; changed pages are marked against it)" });
-  });
-}
-
-// src/inboxnote.ts
-var import_obsidian6 = require("obsidian");
-
-// src/pickers.ts
-var import_obsidian5 = require("obsidian");
-var splitNames = (s) => (s ?? "").split(/[、,，]/).map((x) => x.trim()).filter(Boolean);
-var pic = (parent, c, cls) => {
-  const box = parent.createSpan({ cls });
-  if (c?.img) {
-    box.addClass("has-img");
-    box.style.backgroundImage = `url("${c.img}")`;
-  } else if (c?.icon) {
-    (0, import_obsidian5.setIcon)(box, c.icon);
-    if (c.color) box.style.color = c.color;
-  }
-};
-function picker(parent, o) {
-  const root = parent.createDiv({ cls: "mn-pick" });
-  const byName = new Map(o.choices.map((c) => [c.name, c]));
-  let value = [...o.value];
-  const chips = root.createDiv({ cls: "mn-pick-chips" });
-  const input = root.createEl("input", { cls: "mn-pick-in", attr: { type: "text", placeholder: o.placeholder ?? "\u641C\u5C0B\u2026", spellcheck: "false", autocomplete: "off" } });
-  const list2 = root.createDiv({ cls: "mn-pick-list" });
-  const full = () => !o.multi ? false : !!o.max && value.length >= o.max;
-  let pending = false;
-  const set = (v, now = true) => {
-    value = v;
-    drawChips();
-    if (now) o.onChange(value);
-    else pending = true;
-  };
-  const close = () => {
-    list2.removeClass("is-open");
-    if (pending) {
-      pending = false;
-      o.onChange(value);
-    }
-  };
-  const drawChips = () => {
-    chips.empty();
-    value.forEach((n, i) => {
-      const chip2 = chips.createDiv({ cls: "mn-pick-chip" });
-      if (o.max && o.multi) chip2.createSpan({ cls: "mn-pick-no", text: String(i + 1) });
-      pic(chip2, byName.get(n), "mn-pick-pic");
-      chip2.createSpan({ text: n });
-      const x = chip2.createSpan({ cls: "mn-pick-x" });
-      (0, import_obsidian5.setIcon)(x, "x");
-      x.addEventListener("click", (e) => {
-        e.stopPropagation();
-        set(value.filter((_, j) => j !== i), !list2.hasClass("is-open"));
-      });
-    });
-    chips.toggleClass("is-empty", !value.length);
-    input.toggleClass("is-hidden", full());
-  };
-  const drawList = () => {
-    list2.empty();
-    const q = input.value.trim().toLowerCase();
-    const hits = o.choices.filter((c) => !value.includes(c.name) && (!q || c.name.toLowerCase().includes(q) || (c.also ?? "").toLowerCase().includes(q)));
-    list2.toggleClass("is-open", document.activeElement === input && hits.length > 0);
-    let group2 = "";
-    for (const c of hits) {
-      if (c.group && c.group !== group2) {
-        group2 = c.group;
-        list2.createDiv({ cls: "mn-pick-group", text: group2 });
-      }
-      const row2 = list2.createDiv({ cls: "mn-pick-opt" });
-      pic(row2, c, "mn-pick-pic");
-      row2.createSpan({ text: c.name });
-      row2.addEventListener("click", (e) => {
-        e.preventDefault();
-        input.value = "";
-        if (o.multi) {
-          set([...value, c.name], false);
-          if (full()) {
-            input.blur();
-            close();
-          } else drawList();
-        } else {
-          set([c.name]);
-          list2.removeClass("is-open");
-          input.blur();
-        }
-      });
-    }
-  };
-  list2.addEventListener("mousedown", (e) => e.preventDefault());
-  input.addEventListener("focus", drawList);
-  input.addEventListener("input", drawList);
-  input.addEventListener("blur", () => window.setTimeout(close, 120));
-  drawChips();
-  return root;
-}
-
-// src/inboxnote.ts
-var MODES2 = ["\u5927\u6DF7\u6230", "\u5CFD\u8C37"];
-var STATUS2 = ["\u5F85\u9A57\u8B49", "\u5DF2\u9A57\u8B49"];
-var FIELDS = {
-  tip: [
-    { key: "hero", label: "\u82F1\u96C4", type: "champ" },
-    { key: "mode", label: "\u6A21\u5F0F", type: "select", options: MODES2 },
-    { key: "type", label: "\u985E\u578B", type: "select", options: ["\u6280\u5DE7", "\u51FA\u88DD", "\u6709\u8DA3\u51FA\u88DD", "\u642D\u914D"] },
-    { key: "title", label: "\u6A19\u984C", type: "text" },
-    { key: "text", label: "\u5167\u5BB9", type: "area" },
-    { key: "items", label: "\u51FA\u88DD", type: "items", multi: true },
-    { key: "with", label: "\u642D\u914D\u82F1\u96C4", type: "champ", multi: true },
-    { key: "patch", label: "\u7248\u672C", type: "text", hint: "26.21 \u6216 16.21\uFF1B\u4E0D\u78BA\u5B9A\u5BEB ?" },
-    { key: "date", label: "\u65E5\u671F", type: "date" },
-    { key: "source", label: "\u4F86\u6E90", type: "text", hint: "\u983B\u9053\u540D\u7A31 + \u7DB2\u5740" },
-    { key: "status", label: "\u72C0\u614B", type: "select", options: STATUS2 }
-  ],
-  build: [
-    { key: "style", label: "\u73A9\u6CD5", type: "text" },
-    { key: "mode", label: "\u6A21\u5F0F", type: "select", options: MODES2 },
-    { key: "items", label: "\u524D\u4E09\u4EF6", type: "items", multi: true, max: 3, hint: "\u7167\u8CFC\u8CB7\u9806\u5E8F" },
-    { key: "why", label: "\u70BA\u4EC0\u9EBC", type: "area" },
-    { key: "champs", label: "\u9069\u5408\u7684\u82F1\u96C4", type: "champ", multi: true, hint: "\u8209\u5E7E\u500B\u5C31\u597D" },
-    { key: "patch", label: "\u7248\u672C", type: "text" },
-    { key: "date", label: "\u65E5\u671F", type: "date" },
-    { key: "source", label: "\u4F86\u6E90", type: "text", hint: "\u7DB2\u7AD9\u548C\u7DB2\u5740\uFF08\u6578\u5B57\u4E0D\u7167\u6284\uFF09" },
-    { key: "status", label: "\u72C0\u614B", type: "select", options: STATUS2 }
-  ]
-};
-var opened = /* @__PURE__ */ new Map();
-var uid2 = () => Math.random().toString(36).slice(2, 8);
-var parse3 = (source) => {
-  if (!source.trim()) return { kind: "tip", entries: [] };
-  try {
-    const v = JSON.parse(source);
-    return { kind: v.kind === "build" ? "build" : "tip", entries: Array.isArray(v.entries) ? v.entries : [] };
-  } catch {
-    return null;
-  }
-};
-var serialise3 = (b) => `{"kind": "${b.kind}", "entries": [` + (b.entries.length ? "\n" + b.entries.map((e) => "  " + JSON.stringify(e)).join(",\n") + "\n" : "") + "]}";
-function inboxBlock(plugin, source, el, ctx) {
-  const box = parse3(source);
-  const root = el.createDiv({ cls: "mn-inb" });
-  if (!box) {
-    root.createDiv({ cls: "mn-lay-err", text: "The inbox data could not be read (JSON). Fix it in the source view." });
-    return;
-  }
-  const fields = FIELDS[box.kind];
-  const write = () => {
-    const info = ctx.getSectionInfo(el);
-    const file = plugin.app.vault.getAbstractFileByPath(ctx.sourcePath);
-    if (!info || !(file instanceof import_obsidian6.TFile)) {
-      new import_obsidian6.Notice("Could not save the inbox");
-      return;
-    }
-    void plugin.app.vault.process(file, (data) => {
-      const lines = data.split("\n");
-      lines.splice(info.lineStart + 1, info.lineEnd - info.lineStart - 1, ...serialise3(box).split("\n"));
-      return lines.join("\n");
-    });
-  };
-  const champs = plugin.store.champions().map((c) => ({ name: c.name, img: c.icon, also: `${c.nameEn} ${c.aliases.join(" ")}` }));
-  const itemsFor = (mode) => {
-    const seen = /* @__PURE__ */ new Set(), legendary = [], epic = [];
-    for (const i of [...plugin.store.items()].reverse()) {
-      if ((mode === "\u5CFD\u8C37" ? !i.rift : !i.aram) || !i.from.length || seen.has(i.name)) continue;
-      seen.add(i.name);
-      (i.into.length ? epic : legendary).push({ name: i.name, img: i.icon, group: i.into.length ? "\u4E2D\u968E" : "\u50B3\u8AAA" });
-    }
-    return [...legendary, ...epic];
-  };
-  const bar = root.createDiv({ cls: "mn-inb-bar" });
-  bar.createSpan({ cls: "mn-inb-count", text: box.entries.length ? `${box.entries.length} \u7B46\u5F85\u6574\u7406` : "\u9084\u6C92\u6709\u6771\u897F\uFF0C\u6309 + \u65B0\u589E" });
-  const add = bar.createEl("button", { cls: "mn-inb-add" });
-  (0, import_obsidian6.setIcon)(add.createSpan(), "plus");
-  add.createSpan({ text: "\u65B0\u589E" });
-  add.addEventListener("click", () => {
-    const e = { id: uid2(), mode: MODES2[0], status: STATUS2[0], date: window.moment().format("YYYY-MM-DD"), patch: plugin.store.currentPatch() };
-    if (box.kind === "tip") e.type = "\u6280\u5DE7";
-    box.entries.unshift(e);
-    opened.set(ctx.sourcePath, e.id);
-    write();
-  });
-  for (const e of box.entries) {
-    if (!e.id) e.id = uid2();
-    const card = root.createDiv({ cls: "mn-inb-card" });
-    const head2 = card.createDiv({ cls: "mn-inb-head" });
-    const who = head2.createDiv({ cls: "mn-inb-who" });
-    const top = box.kind === "tip" ? [e.hero || "\uFF08\u82F1\u96C4\uFF09", e.type, e.mode] : [e.style || "\uFF08\u73A9\u6CD5\uFF09", e.mode];
-    who.createDiv({ cls: "mn-inb-t", text: top.filter(Boolean).join(" \xB7 ") });
-    const sub = box.kind === "tip" ? e.title || e.text || "" : e.items || e.why || "";
-    if (sub) who.createDiv({ cls: "mn-inb-s", text: sub });
-    head2.createSpan({ cls: "mn-inb-st" + (e.status === "\u5DF2\u9A57\u8B49" ? " is-ok" : ""), text: e.status || STATUS2[0] });
-    const form = card.createDiv({ cls: "mn-inb-form" });
-    const isOpen = opened.get(ctx.sourcePath) === e.id;
-    card.toggleClass("is-open", isOpen);
-    head2.addEventListener("click", () => {
-      const now = !card.hasClass("is-open");
-      root.querySelectorAll(".mn-inb-card.is-open").forEach((c) => c.removeClass("is-open"));
-      card.toggleClass("is-open", now);
-      if (now) opened.set(ctx.sourcePath, e.id);
-      else opened.delete(ctx.sourcePath);
-    });
-    for (const f of fields) {
-      const row2 = form.createDiv({ cls: "mn-inb-row" });
-      row2.createDiv({ cls: "mn-inb-l", text: f.label });
-      if (f.type === "champ" || f.type === "items") {
-        picker(row2, {
-          choices: f.type === "champ" ? champs : itemsFor(e.mode || MODES2[0]),
-          value: splitNames(e[f.key]),
-          multi: f.multi,
-          max: f.max,
-          placeholder: f.hint ?? (f.type === "champ" ? "\u641C\u5C0B\u82F1\u96C4" : "\u641C\u5C0B\u88DD\u5099"),
-          onChange: (v) => {
-            if (v.length) e[f.key] = v.join("\u3001");
-            else delete e[f.key];
-            write();
-          }
-        });
-        continue;
-      }
-      let input;
-      if (f.type === "select") {
-        input = row2.createEl("select");
-        for (const o of f.options ?? []) input.createEl("option", { text: o, attr: { value: o } });
-        input.value = e[f.key] || f.options?.[0] || "";
-      } else if (f.type === "area") {
-        input = row2.createEl("textarea", { attr: { rows: "4" } });
-        input.value = e[f.key] ?? "";
-      } else {
-        input = row2.createEl("input", { attr: { type: f.type === "date" ? "date" : "text", spellcheck: "false" } });
-        input.value = e[f.key] ?? "";
-      }
-      if (f.hint) input.setAttr("placeholder", f.hint);
-      input.addEventListener("change", () => {
-        const v = input.value.trim();
-        if ((e[f.key] ?? "") === v) return;
-        if (v) e[f.key] = v;
-        else delete e[f.key];
-        write();
-      });
-    }
-    const del = form.createEl("button", { cls: "mn-inb-del", text: "\u522A\u9664\u9019\u4E00\u7B46" });
-    let armed = false;
-    del.addEventListener("click", () => {
-      if (!armed) {
-        armed = true;
-        del.setText("\u518D\u6309\u4E00\u6B21\u522A\u9664");
-        del.addClass("is-armed");
-        window.setTimeout(() => {
-          armed = false;
-          del.setText("\u522A\u9664\u9019\u4E00\u7B46");
-          del.removeClass("is-armed");
-        }, 2500);
-        return;
-      }
-      box.entries = box.entries.filter((x) => x !== e);
-      write();
-    });
-  }
-}
-function registerInboxNote(plugin) {
-  plugin.registerMarkdownCodeBlockProcessor("mn-inbox", (source, el, ctx) => inboxBlock(plugin, source, el, ctx));
-}
-
-// src/picksnote.ts
-var import_obsidian7 = require("obsidian");
-var PUNCH_MAX = 14;
-var SOUL_MAX = 16;
-var SOUL_LINES = 3;
-var KEYS = ["P", "Q", "W", "E", "R"];
-var STATUS3 = ["\u5F85\u9A57\u8B49", "\u5DF2\u9A57\u8B49"];
-var chosen = /* @__PURE__ */ new Map();
-async function setKeys(plugin, path, values) {
-  const file = plugin.app.vault.getAbstractFileByPath(path);
-  if (!(file instanceof import_obsidian7.TFile)) return;
-  await plugin.app.vault.process(file, (data) => {
-    const lines = data.split("\n");
-    if (lines[0] !== "---") return data;
-    let end = lines.indexOf("---", 1);
-    if (end < 0) return data;
-    for (const [key, v] of Object.entries(values)) {
-      const empty2 = v === void 0 || v === "" || Array.isArray(v) && !v.length || typeof v === "object" && v !== null && !Array.isArray(v) && !Object.keys(v).length;
-      const at = lines.slice(1, end).findIndex((l) => l.startsWith(`${key}:`)) + 1;
-      if (at > 0) {
-        let n = 1;
-        while (at + n < end && /^\s/.test(lines[at + n])) n++;
-        lines.splice(at, n, ...empty2 ? [] : [`${key}: ${yaml(v)}`]);
-        end -= n - (empty2 ? 0 : 1);
-      } else if (!empty2) {
-        lines.splice(end, 0, `${key}: ${yaml(v)}`);
-        end++;
-      }
-    }
-    return lines.join("\n");
-  });
-}
-var yaml = (v) => Array.isArray(v) ? `[${v.map((x) => JSON.stringify(x)).join(", ")}]` : typeof v === "object" && v !== null ? `{${Object.entries(v).map(([k, x]) => `${JSON.stringify(k)}: ${JSON.stringify(x)}`).join(", ")}}` : JSON.stringify(v);
-var width = (s) => [...s].reduce((n, ch) => n + (/[\x00-\x7f]/.test(ch) ? 0.5 : 1), 0);
-function picksBlock(plugin, el, ctx) {
-  const store = plugin.store;
-  const all = store.champions();
-  const root = el.createDiv({ cls: "mn-pk mn-inb" });
-  if (!all.length) {
-    root.createDiv({ text: "No champion notes yet." });
-    return;
-  }
-  const statusOf = (c) => String(plugin.app.metadataCache.getFileCache(plugin.app.vault.getAbstractFileByPath(c.path))?.frontmatter?.picks_status ?? STATUS3[0]);
-  const bar = root.createDiv({ cls: "mn-inb-bar" });
-  const count2 = bar.createSpan({ cls: "mn-inb-count" });
-  const next = bar.createEl("button", { cls: "mn-inb-add" });
-  (0, import_obsidian7.setIcon)(next.createSpan(), "skip-forward");
-  next.createSpan({ text: "\u4E0B\u4E00\u4F4D\u5F85\u9A57\u8B49" });
-  const pickHost = root.createDiv();
-  const form = root.createDiv({ cls: "mn-pk-form" });
-  const counted = () => count2.setText(`\u5DF2\u9A57\u8B49 ${all.filter((c) => statusOf(c) === "\u5DF2\u9A57\u8B49").length} / ${all.length}`);
-  const show = (c) => {
-    form.empty();
-    if (!c) return;
-    chosen.set(ctx.sourcePath, c.id);
-    const save = (values) => void setKeys(plugin, c.path, values).then(counted);
-    const head2 = form.createDiv({ cls: "mn-pk-head" });
-    pic(head2, { name: c.name, img: c.icon }, "mn-pk-face");
-    const who = head2.createDiv();
-    who.createDiv({ cls: "mn-inb-t", text: c.name });
-    who.createDiv({ cls: "mn-inb-s", text: c.title });
-    const status = head2.createEl("select", { cls: "mn-pk-status" });
-    for (const s of STATUS3) status.createEl("option", { text: s, attr: { value: s } });
-    status.value = statusOf(c);
-    status.toggleClass("is-ok", status.value === "\u5DF2\u9A57\u8B49");
-    status.addEventListener("change", () => {
-      status.toggleClass("is-ok", status.value === "\u5DF2\u9A57\u8B49");
-      save({ picks_status: status.value === STATUS3[0] ? "" : status.value });
-    });
-    const row2 = (label) => {
-      const r = form.createDiv({ cls: "mn-inb-row" });
-      const l = r.createDiv({ cls: "mn-inb-l", text: label });
-      return { r, l };
-    };
-    const text = (parent, value, max, onSave) => {
-      const wrap = parent.createDiv({ cls: "mn-pk-text" });
-      const input = wrap.createEl("input", { attr: { type: "text" } });
-      input.value = value;
-      const n = wrap.createSpan({ cls: "mn-pk-n" });
-      const tick = () => {
-        const w = width(input.value);
-        n.setText(`${w}/${max}`);
-        n.toggleClass("is-over", w > max);
-      };
-      tick();
-      input.addEventListener("input", tick);
-      input.addEventListener("change", () => onSave(input.value.trim()));
-      return input;
-    };
-    text(row2("\u4E00\u53E5\u8A71\uFF08punch\uFF09").r, c.punch, PUNCH_MAX, (v) => save({ punch: v }));
-    const stats2 = Object.keys(STAT_ICON).map((name) => ({ name, icon: STAT_ICON[name], color: STAT_COLOR[name] }));
-    picker(row2("\u5806\uFF08stack\uFF09\xB7 \u5169\u4E09\u500B").r, { choices: stats2, value: c.stack, multi: true, max: 3, placeholder: "\u9078\u5C6C\u6027", onChange: (v) => save({ stack: v }) });
-    const soul = row2("\u73A9\u6CD5\uFF08soul\uFF09\xB7 \u4E00\u884C\u4E00\u53E5").r;
-    const lines = [...c.how, ...Array(SOUL_LINES).fill("")].slice(0, SOUL_LINES);
-    const soulInputs = lines.map((l) => text(soul, l, SOUL_MAX, () => {
-      const v = soulInputs.map((i) => i.value.trim()).filter(Boolean);
-      save({ soul: v.length > 1 ? v : v[0] ?? "" });
-    }));
-    const focus = row2("\u4E3B\u529B\uFF08focus\uFF09\xB7 \u53EA\u6709\u4E00\u62DB\u662F\u91CD\u9EDE\u6642").r.createEl("select");
-    for (const k of ["", ...KEYS]) focus.createEl("option", { text: k || "\uFF08\u7121\uFF09", attr: { value: k } });
-    focus.value = c.focus;
-    focus.addEventListener("change", () => save({ focus: focus.value }));
-    const plain2 = row2("\u6280\u80FD\u767D\u8A71\uFF08plain\uFF09").r;
-    const plainInputs = {};
-    for (const k of KEYS) {
-      const s = c.skills.find((x) => x.key === k);
-      const line = plain2.createDiv({ cls: "mn-pk-skill" });
-      pic(line, s ? { name: s.name, img: s.icon } : void 0, "mn-pk-skic");
-      line.createSpan({ cls: "mn-pk-key", text: k });
-      const input = line.createEl("input", { attr: { type: "text", placeholder: s?.name ?? "" } });
-      input.value = c.plain[k] ?? "";
-      plainInputs[k] = input;
-      input.addEventListener("change", () => {
-        const v = {};
-        for (const key of KEYS) if (plainInputs[key].value.trim()) v[key] = plainInputs[key].value.trim();
-        save({ plain: v });
-      });
-    }
-    const open = form.createEl("button", { cls: "mn-inb-del", text: "\u6253\u958B\u82F1\u96C4\u7B46\u8A18" });
-    open.addEventListener("click", () => void plugin.app.workspace.openLinkText(c.path, ctx.sourcePath, true));
-  };
-  const choices = all.map((c) => ({ name: c.name, img: c.icon, also: `${c.nameEn} ${c.aliases.join(" ")}` }));
-  const byName = new Map(all.map((c) => [c.name, c]));
-  const current = all.find((c) => c.id === chosen.get(ctx.sourcePath));
-  const drawPicker = (c) => {
-    pickHost.empty();
-    picker(pickHost, { choices, value: c ? [c.name] : [], placeholder: "\u9078\u4E00\u4F4D\u82F1\u96C4", onChange: (v) => show(byName.get(v[0])) });
-  };
-  next.addEventListener("click", () => {
-    const at = all.findIndex((c2) => c2.id === chosen.get(ctx.sourcePath));
-    const c = [...all.slice(at + 1), ...all.slice(0, at + 1)].find((x) => statusOf(x) !== "\u5DF2\u9A57\u8B49");
-    drawPicker(c);
-    show(c);
-  });
-  counted();
-  drawPicker(current);
-  show(current);
-}
-function registerPicksNote(plugin) {
-  plugin.registerMarkdownCodeBlockProcessor("mn-picks", (_source, el, ctx) => picksBlock(plugin, el, ctx));
-}
-
-// src/settings.ts
-var import_obsidian8 = require("obsidian");
-
-// src/themes.ts
-var THEMES = [
-  { id: "auto", name: "Obsidian (follows your theme)" },
-  {
-    id: "popping",
-    name: "Popping and Locking",
-    dark: {
-      bg: "#1C1D26",
-      surface: "#262836",
-      surface2: "#30334A",
-      text: "#F2E5BC",
-      text2: "#C9C2B2",
-      text3: "#9A8F80",
-      onAccent: "#1C1D26",
-      accent: "#E9892B",
-      positive: "#A3CF7E",
-      negative: "#F7685B",
-      warning: "#F5B83D",
-      info: "#7DB3C9",
-      orange: "#E9892B",
-      purple: "#B995D8",
-      pink: "#D3869B",
-      cyan: "#8EC0B4",
-      line: "rgba(242,229,188,0.11)"
-    },
-    light: {
-      bg: "#F6F0DF",
-      surface: "#FFFBEE",
-      surface2: "#EFE7D0",
-      text: "#2B2A33",
-      text2: "#5C574C",
-      text3: "#766F61",
-      onAccent: "#FFFFFF",
-      accent: "#B5470A",
-      positive: "#3F7A1E",
-      negative: "#B8322A",
-      warning: "#915600",
-      info: "#2D6C8C",
-      orange: "#D9741A",
-      purple: "#8A5DB5",
-      pink: "#C2587A",
-      cyan: "#3F9A8A",
-      line: "rgba(60,48,20,0.13)"
-    }
-  },
-  {
-    // the dark of the Picks page sketches: blue-black cards, warm cream text and an amber accent
-    id: "draft",
-    name: "Draft Night",
-    dark: {
-      bg: "#12141B",
-      surface: "#1A1D26",
-      surface2: "#252937",
-      text: "#F4F1E8",
-      text2: "#C9C5B8",
-      text3: "#9A97A0",
-      onAccent: "#FFFFFF",
-      accent: "#E38B3A",
-      positive: "#A8C373",
-      negative: "#E06A6A",
-      warning: "#E5B567",
-      info: "#6C99BB",
-      orange: "#E0894A",
-      purple: "#9E86C8",
-      pink: "#B05279",
-      cyan: "#73BBB2",
-      line: "rgba(255,255,255,0.14)"
-    },
-    light: {
-      bg: "#F2F3F6",
-      surface: "#FFFFFF",
-      surface2: "#E6E8EE",
-      text: "#1D2230",
-      text2: "#4A5164",
-      text3: "#5F667A",
-      onAccent: "#FFFFFF",
-      accent: "#B4601C",
-      positive: "#4C7A1E",
-      negative: "#B83A3A",
-      warning: "#8A6100",
-      info: "#2F6588",
-      orange: "#C46A24",
-      purple: "#6E55A8",
-      pink: "#A2406A",
-      cyan: "#2E8A80",
-      line: "rgba(29,34,48,0.14)"
-    }
-  },
-  {
-    id: "ocean",
-    name: "Ocean",
-    dark: {
-      bg: "#101820",
-      surface: "#1A2530",
-      surface2: "#243241",
-      text: "#EAF1F7",
-      text2: "#A9B8C6",
-      text3: "#7F90A0",
-      onAccent: "#0B1218",
-      accent: "#4DB6AC",
-      positive: "#6FCF97",
-      negative: "#EB5757",
-      warning: "#F2C94C",
-      info: "#56CCF2",
-      orange: "#F2994A",
-      purple: "#BB86FC",
-      pink: "#FF7AA8",
-      cyan: "#4DB6AC",
-      line: "rgba(234,241,247,0.11)"
-    },
-    light: {
-      bg: "#F4F8FB",
-      surface: "#FFFFFF",
-      surface2: "#EAF0F5",
-      text: "#14202B",
-      text2: "#4B5C6B",
-      text3: "#66798A",
-      onAccent: "#FFFFFF",
-      accent: "#00796B",
-      positive: "#1B7F46",
-      negative: "#C62828",
-      warning: "#8A6100",
-      info: "#0A6C9A",
-      orange: "#E07B20",
-      purple: "#8E4EC6",
-      pink: "#E0457F",
-      cyan: "#12877B",
-      line: "rgba(20,32,43,0.13)"
-    }
-  },
-  {
-    id: "sakura",
-    name: "Sakura",
-    dark: {
-      bg: "#211922",
-      surface: "#2D2230",
-      surface2: "#3A2C3E",
-      text: "#F7E8F0",
-      text2: "#CDB6C4",
-      text3: "#9C8696",
-      onAccent: "#2A1020",
-      accent: "#FF8FB1",
-      positive: "#9ED8A5",
-      negative: "#FF6B7A",
-      warning: "#F7C873",
-      info: "#8FC5E8",
-      orange: "#FFA776",
-      purple: "#C7A2F0",
-      pink: "#FF8FB1",
-      cyan: "#7DD3CB",
-      line: "rgba(247,232,240,0.11)"
-    },
-    light: {
-      bg: "#FBF3F6",
-      surface: "#FFFFFF",
-      surface2: "#F5E6EC",
-      text: "#2B1B24",
-      text2: "#5E4654",
-      text3: "#7A6270",
-      onAccent: "#FFFFFF",
-      accent: "#C2185B",
-      positive: "#2E7D32",
-      negative: "#C62828",
-      warning: "#8D5B00",
-      info: "#1565A0",
-      orange: "#D2691E",
-      purple: "#7B4DB2",
-      pink: "#C2185B",
-      cyan: "#00796B",
-      line: "rgba(43,27,36,0.13)"
-    }
-  },
-  {
-    id: "forest",
-    name: "Forest",
-    dark: {
-      bg: "#141A16",
-      surface: "#1D2620",
-      surface2: "#27342B",
-      text: "#E6F0E4",
-      text2: "#B0C2B0",
-      text3: "#86998A",
-      onAccent: "#0E1A10",
-      accent: "#8FD19E",
-      positive: "#8FD19E",
-      negative: "#F0776B",
-      warning: "#E8C35C",
-      info: "#7DC4D6",
-      orange: "#E8955A",
-      purple: "#B59AE0",
-      pink: "#DB8CA8",
-      cyan: "#6CC7B5",
-      line: "rgba(230,240,228,0.11)"
-    },
-    light: {
-      bg: "#F2F6EF",
-      surface: "#FFFFFF",
-      surface2: "#E6EEE2",
-      text: "#18241A",
-      text2: "#4A5E4C",
-      text3: "#657A68",
-      onAccent: "#FFFFFF",
-      accent: "#2E7D32",
-      positive: "#2E7D32",
-      negative: "#B3261E",
-      warning: "#8A6100",
-      info: "#0A6C85",
-      orange: "#C9651A",
-      purple: "#6F4AAE",
-      pink: "#B03A6C",
-      cyan: "#00796B",
-      line: "rgba(24,36,26,0.13)"
-    }
-  }
-];
-function themeVars(id, dark) {
-  const t = THEMES.find((x) => x.id === id);
-  const k = t && (dark ? t.dark : t.light);
-  if (!k) return {};
-  return {
-    "--mn-bg": k.bg,
-    "--mn-card": k.surface,
-    "--mn-card-hi": k.surface2,
-    "--mn-text": k.text,
-    "--mn-muted": k.text2,
-    "--mn-faint": k.text3,
-    "--mn-line": k.line,
-    "--mn-accent": k.accent,
-    "--interactive-accent": k.accent,
-    "--text-on-accent": k.onAccent,
-    "--color-green": k.positive,
-    "--color-red": k.negative,
-    "--color-yellow": k.warning,
-    "--color-blue": k.info,
-    "--color-orange": k.orange,
-    "--color-purple": k.purple,
-    "--color-pink": k.pink,
-    "--color-cyan": k.cyan
-  };
-}
-
-// src/settings.ts
-var DEFAULTS = {
-  mode: "mayhem",
-  theme: "popping",
-  // where the notes live: the only place the plugin names these folders (tools/vault_paths.py does the same for the scripts)
-  championFolder: "\u82F1\u96C4",
-  itemFolder: "\u9053\u5177",
-  guideFolder: "\u65B0\u624B\u5165\u9580",
-  augmentFolder: "\u5F37\u5316",
-  patchFolder: "\u7248\u672C\u66F4\u65B0",
-  openOnStartup: import_obsidian8.Platform.isMobile,
-  riotId: "",
-  riotServer: "TW2",
-  riotKey: "",
-  kbDebug: false,
-  wallpaper: "",
-  read: [],
-  roster: []
-};
-var MnSettingTab = class extends import_obsidian8.PluginSettingTab {
-  constructor(app, plugin) {
-    super(app, plugin);
-    this.plugin = plugin;
-  }
-  display() {
-    const { containerEl: c } = this;
-    const s = this.plugin.settings;
-    const save = () => this.plugin.saveSettings();
-    c.empty();
-    new import_obsidian8.Setting(c).setName("Mode").setDesc("What the app shows. Rift is planned.").addDropdown((d) => {
-      for (const id of MODE_ORDER) d.addOption(id, MODES[id].label + (MODES[id].enabled ? "" : " (coming soon)"));
-      d.setValue(s.mode).onChange(async (v) => {
-        s.mode = v;
-        await save();
-      });
-    });
-    new import_obsidian8.Setting(c).setName("Color theme").setDesc("Colors of the app screen. Follows Obsidian's light / dark.").addDropdown((d) => {
-      for (const t of THEMES) d.addOption(t.id, t.name);
-      d.setValue(s.theme).onChange(async (v) => {
-        s.theme = v;
-        await save();
-      });
-    });
-    const folder = (name, desc2, key) => new import_obsidian8.Setting(c).setName(name).setDesc(desc2).addText((x) => x.setValue(s[key]).onChange(async (v) => {
-      s[key] = v.trim() || DEFAULTS[key];
-      await save();
-    }));
-    folder("Champion folder", "Notes made by tools/fetch_data.py", "championFolder");
-    folder("Item folder", "Notes made by tools/fetch_data.py", "itemFolder");
-    folder("Augment folder", "Notes made by tools/fetch_augments.py", "augmentFolder");
-    folder("Patch notes folder", "Our own patch notes (frontmatter: patch, date, title, summary)", "patchFolder");
-    folder("Guide folder", "Beginner guide notes", "guideFolder");
-    new import_obsidian8.Setting(c).setName("Riot API key").setDesc("For Home: your avatar, rank, mastery and recent games. From developer.riotgames.com (a development key expires every 24 hours; a personal key does not). Stays on this device.").addText((x) => {
-      x.inputEl.type = "password";
-      x.setPlaceholder("RGAPI-\u2026").setValue(s.riotKey).onChange(async (v) => {
-        s.riotKey = v.trim();
-        await this.plugin.saveData(s);
-      });
-    });
-    new import_obsidian8.Setting(c).setName("Keyboard readout").setDesc("While typing in a search box, show what the phone reports about the keyboard (for fixing the search bar position).").addToggle((x) => x.setValue(s.kbDebug).onChange(async (v) => {
-      s.kbDebug = v;
-      await this.plugin.saveData(s);
-    }));
-    new import_obsidian8.Setting(c).setName("Open on startup").setDesc("Show the app when Obsidian starts (on by default on a phone).").addToggle((x) => x.setValue(s.openOnStartup).onChange(async (v) => {
-      s.openOnStartup = v;
-      await save();
-    }));
-    const hap = new import_obsidian8.Setting(c).setName("Test haptic").setDesc("Tap: the phone should tick once.");
-    hap.addButton((b) => b.setButtonText("Tick").onClick(() => {
-      const how = haptic();
-      hap.setDesc({ capacitor: "Used: Obsidian's haptics.", vibrate: "Used: web vibration.", switch: "Used: the iOS 18 switch tick. Felt nothing? Then Obsidian has no haptics here.", "": "No haptics found on this device." }[how] ?? how);
-    }));
-  }
-};
-
-// src/view.ts
-var import_obsidian15 = require("obsidian");
-
 // src/pages/augments.ts
 var RARITIES = ["\u9280", "\u91D1", "\u7A1C\u93E1"];
 var RARITY_COLOR = { \u9280: "var(--text-muted)", \u91D1: "var(--color-yellow)", \u7A1C\u93E1: "var(--color-purple)" };
@@ -3011,7 +1680,7 @@ function augmentsPage(ctx) {
 }
 
 // src/pages/profile.ts
-var import_obsidian9 = require("obsidian");
+var import_obsidian4 = require("obsidian");
 var SKILL_STEPS = [0, 4, 7, 9, 10];
 var count = (c, ...tags2) => c.skills.filter((s) => s.key !== "P" && tags2.some((t) => s.tags.includes(t))).length;
 var score = (n) => SKILL_STEPS[Math.min(n, SKILL_STEPS.length - 1)];
@@ -3025,7 +1694,7 @@ function profileAxes(c) {
     { label: "\u5C04\u7A0B", value: Math.min(10, Math.round(c.range / 65)) }
   ];
 }
-var uid3 = 0;
+var uid = 0;
 function profileRadar(parent, axes, color, max = 10) {
   const W2 = 300, H2 = 204, cx = W2 / 2, cy = 102, R = 66, LABEL = 22, n = axes.length;
   const pt = (i, r) => {
@@ -3036,7 +1705,7 @@ function profileRadar(parent, axes, color, max = 10) {
   const val = (i) => R * Math.max(0, Math.min(max, axes[i].value)) / max;
   const root = svg(parent, "svg", { viewBox: `0 0 ${W2} ${H2}` }, "mn-radar mn-pro");
   root.style.setProperty("--rd", color);
-  const id = `mn-grad-${++uid3}`;
+  const id = `mn-grad-${++uid}`;
   const defs = svg(root, "defs");
   const grad = svg(defs, "linearGradient", { id, x1: 0, y1: 0, x2: 0, y2: 1 });
   svg(grad, "stop", { offset: "0%", "stop-opacity": 0.62 }, "mn-rd-stop").setAttribute("style", `stop-color:${color}`);
@@ -3098,7 +1767,7 @@ var TAG_GROUPS = [
 ];
 var TAG = new Map(TAGS.map((t) => [t.tag, t]));
 var tagInfo = (tag) => TAG.get(tag);
-var TagLegend = class extends import_obsidian9.Modal {
+var TagLegend = class extends import_obsidian4.Modal {
   constructor(app) {
     super(app);
   }
@@ -3167,11 +1836,11 @@ function tagRow(parent, c, only, litOnly = false) {
   for (const t of TAGS) if ((!only || only.includes(t.tag)) && (!litOnly || hasTag(c, t.tag))) tagChip(row2, c, t);
   return row2;
 }
-var KINDS2 = ["\u7269\u7406", "\u9B54\u6CD5", "\u771F\u5BE6"];
+var KINDS = ["\u7269\u7406", "\u9B54\u6CD5", "\u771F\u5BE6"];
 var lastNum = (s) => parseFloat(s.split("/").pop() ?? "") || 0;
 function damageLines(c) {
   const out = [];
-  for (const s of c.skills) for (const kind of KINDS2) {
+  for (const s of c.skills) for (const kind of KINDS) {
     const rows = s.rows.filter((r) => r.label.startsWith(`${kind}\u50B7\u5BB3`));
     if (!rows.length && s.key === "P" && s.desc.includes(`${kind}\u50B7\u5BB3`)) {
       out.push({ key: s.key, name: s.name, kind, first: 0, base: 0, ad: 0, ap: 0, onHit: s.tags.includes("\u653B\u64CA\u7279\u6548") });
@@ -3268,7 +1937,7 @@ function styleChart(parent, c) {
   const color = axes[0].color;
   const wrap = h(parent, "div", "mn-sc");
   const root = svg(wrap, "svg", { viewBox: `0 0 ${SW} ${SH}`, "aria-hidden": "true" }, "mn-sc-svg");
-  const id = `mn-grad-${++uid3}`;
+  const id = `mn-grad-${++uid}`;
   const grad = svg(svg(root, "defs"), "linearGradient", { id, x1: 0, y1: 0, x2: 0, y2: 1 });
   svg(grad, "stop", { offset: "0%", "stop-opacity": 0.55 }).setAttribute("style", `stop-color:${color}`);
   svg(grad, "stop", { offset: "100%", "stop-opacity": 0.12 }).setAttribute("style", `stop-color:${color}`);
@@ -3424,7 +2093,7 @@ function itemRow(parent, c, ctx, ids, captions = []) {
     const item = store.item(id);
     const btn = h(row2, "button", "mn-item");
     const im = h(btn, "img");
-    im.src = item?.icon || `https://ddragon.leagueoflegends.com/cdn/${c.patch}/img/item/${id}.png`;
+    im.src = item?.icon || art.item(c.patch, id);
     im.alt = item?.name ?? String(id);
     if (captions[i]) h(btn, "span", "mn-item-c", captions[i]);
     btn.addEventListener("click", (e) => {
@@ -3450,7 +2119,7 @@ function itemRow(parent, c, ctx, ids, captions = []) {
 }
 
 // src/pages/roster.ts
-var import_obsidian12 = require("obsidian");
+var import_obsidian6 = require("obsidian");
 
 // src/pages/changes.ts
 var DIR_COLOR = { buff: "var(--color-green)", nerf: "var(--color-red)", mixed: "var(--color-yellow)", change: "var(--color-blue)", text: "var(--color-blue)" };
@@ -3564,7 +2233,6 @@ function changesBlock(parent, c, ctx) {
 }
 
 // src/pages/skills.ts
-var import_obsidian10 = require("obsidian");
 var CLIP_FADE_MS = 350;
 var STAGE_DPR = 2;
 function skillStrip(parent, c, changes = [], opt = {}) {
@@ -3574,16 +2242,16 @@ function skillStrip(parent, c, changes = [], opt = {}) {
   if (opt.barBelow) parent.append(strip2);
   let open = -1;
   const shelf = opt.shelf;
-  const held = /* @__PURE__ */ new Map();
+  const held2 = /* @__PURE__ */ new Map();
   let active = null;
   if (shelf) c.skills.forEach((s, i) => {
     demo(shelf, c, s, () => {
-      held.delete(i);
+      held2.delete(i);
       if (open === i) detail.querySelector(".mn-sd-clipbox")?.remove();
     });
     const v = shelf.lastElementChild;
     if (!(v instanceof HTMLVideoElement)) return;
-    held.set(i, v);
+    held2.set(i, v);
     v.addEventListener("loadeddata", () => {
       if (v !== active) v.pause();
     }, { once: true });
@@ -3619,7 +2287,7 @@ function skillStrip(parent, c, changes = [], opt = {}) {
     raf = requestAnimationFrame(paint);
   };
   const stageClip = (i, s) => {
-    const v = held.get(i);
+    const v = held2.get(i);
     if (!v) return null;
     if (!stage) {
       stage = h(null, "div", "mn-sd-clipbox mn-sd-stage");
@@ -3750,44 +2418,8 @@ function skillStrip(parent, c, changes = [], opt = {}) {
   };
   if (opt.open !== void 0) show(Math.max(0, Math.min(opt.open, c.skills.length - 1)));
 }
-var DEMO_BASE = "https://d28xe8vt774jo5.cloudfront.net/champion-abilities";
 var CLIP_WAIT_MS = 8e3;
 var CLIP_STALL_MS = 5e3;
-var clipAddress = (c, key) => {
-  const k = String(c.key).padStart(4, "0");
-  return `${DEMO_BASE}/${k}/ability_${k}_${/\d$/.test(key) ? key : `${key}1`}`;
-};
-var CLIP_CACHE = 15;
-var downloaded = /* @__PURE__ */ new Map();
-var webmOnly = /* @__PURE__ */ new Set();
-var downloading = /* @__PURE__ */ new Map();
-function preloadClip(c, key) {
-  if (!c.key) return Promise.resolve();
-  const url = clipAddress(c, key);
-  const have = downloading.get(url);
-  if (have) return have;
-  const job = (async () => {
-    for (const ext of ["mp4", "webm"]) {
-      try {
-        const r = await (0, import_obsidian10.requestUrl)({ url: `${url}.${ext}`, throw: false });
-        if (r.status === 200) {
-          if (ext === "webm") webmOnly.add(url);
-          downloaded.set(url, URL.createObjectURL(new Blob([r.arrayBuffer], { type: `video/${ext}` })));
-          for (const [old, local] of downloaded) {
-            if (downloaded.size <= CLIP_CACHE) break;
-            URL.revokeObjectURL(local);
-            downloaded.delete(old);
-            downloading.delete(old);
-          }
-          return;
-        }
-      } catch {
-      }
-    }
-  })();
-  downloading.set(url, job);
-  return job;
-}
 function demo(parent, c, s, onFail) {
   if (!c.key) return;
   const url = clipAddress(c, s.key);
@@ -3825,13 +2457,13 @@ function demo(parent, c, s, onFail) {
   }
   const playLocal = (local2) => {
     v.replaceChildren();
-    if (webmOnly.has(url)) v.dataset.heavy = "1";
+    if (clipIsWebmOnly(url)) v.dataset.heavy = "1";
     v.addEventListener("error", fail, { once: true });
     v.src = local2;
     v.load();
     void v.play().catch(() => void 0);
   };
-  const local = downloaded.get(url);
+  const local = clipFile(url);
   if (local) {
     playLocal(local);
     return;
@@ -3848,7 +2480,7 @@ function demo(parent, c, s, onFail) {
       return;
     }
     void preloadClip(c, s.key).then(() => {
-      const f = downloaded.get(url);
+      const f = clipFile(url);
       if (!f) {
         fail();
         return;
@@ -3928,7 +2560,6 @@ function rankTable(parent, s, changes) {
 var LEVELS_STAT = { ap: 300, ad: 200 };
 var ULT_LEVELS = [6, 11, 16];
 var FORM_ICONS = ["hammer", "crosshair"];
-var FORM_ART = "https://raw.communitydragon.org/latest/game/assets/characters";
 var DAMAGE_ROW = /^(物理|魔法|真實)傷害|^治療|^護盾/;
 var SCALING = /\+([\d./]+)%\s*(額外物理攻擊|物理攻擊|魔法攻擊)/;
 var NEUTRAL = "#6b7183";
@@ -4094,7 +2725,7 @@ var formSets = (el, { c, args }) => {
       ic.style.setProperty("--c", kindColor(s));
       const im = h(ic, "img");
       im.alt = "";
-      im.src = `${FORM_ART}/${id}/hud/icons2d/${id}${key.toLowerCase()}_${i === 0 ? "melee" : "ranged"}.png`;
+      im.src = art.formIcon(id, key, i);
       im.addEventListener("error", () => {
         if (i === 0) im.src = s.icon;
         else im.remove();
@@ -4159,7 +2790,7 @@ var comboFlow = (el, { c, args }) => {
     ic.style.setProperty("--c", kindColor(s));
     const im = h(ic, "img");
     im.alt = "";
-    im.src = `${FORM_ART}/${id}/hud/icons2d/${id}${key.toLowerCase()}_${form === 0 ? "melee" : "ranged"}.png`;
+    im.src = art.formIcon(id, key, form);
     im.addEventListener("error", () => {
       im.src = s.icon;
     }, { once: true });
@@ -4217,305 +2848,7 @@ function cardKit(box, kind, c, args) {
 }
 
 // src/pages/deck.ts
-var import_obsidian11 = require("obsidian");
-
-// src/pages/handbook.ts
-var SNIPPET = 46;
-var MAX_PER_NOTE = 2;
-var KEYWORDS = 8;
-var GLOSSARY = "\u540D\u8A5E\u8868";
-var TRIVIA_TILT = 10;
-var TRIVIA_MS = 300;
-var WARM_CLIPS = 3;
-var WARM_DELAY_MS = 1500;
-var coverUrl = (cover) => {
-  const [a, b] = cover.trim().split(/\s+/);
-  if (!a) return "";
-  return a === "map" ? mapUrl(b) : `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(a)}_0.jpg`;
-};
-var mapUrl = (name) => {
-  const n = name || ["habackground", "arambilgewater", "arambloom"][Math.floor(Math.random() * 3)];
-  return `https://raw.communitydragon.org/latest/game/assets/ux/loadingscreen/${n}.png`;
-};
-var ARAM_ART = ["habackground", "arambilgewater", "arambloom"].map((n) => `https://raw.communitydragon.org/latest/game/assets/ux/loadingscreen/${n}.png`);
-function handbookPage(ctx) {
-  const store = ctx.plugin.store;
-  const el = page("Handbook");
-  const box = h(el, "div", "mn-search");
-  icon(box, "search", "mn-search-ic");
-  const search = h(box, "input");
-  search.type = "search";
-  search.placeholder = "\u641C\u5C0B\u624B\u518A\u88E1\u7684\u5167\u5BB9";
-  const chips = h(el, "div", "mn-keys");
-  const out = h(el, "div");
-  const notes = store.guideNotes();
-  let texts = null;
-  const read = new Set(ctx.plugin.settings.read);
-  const load = async () => {
-    if (texts) return texts;
-    texts = /* @__PURE__ */ new Map();
-    for (const n of notes) texts.set(n.file.path, (await ctx.app.vault.cachedRead(n.file)).replace(/^---[\s\S]*?---\n/, "").split("\n").map(clean).filter(Boolean));
-    return texts;
-  };
-  const home = () => {
-    out.empty();
-    if (!notes.length) {
-      empty(out, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." });
-      return null;
-    }
-    const triviaHost = h(out, "div");
-    const tipsReady = trivia(triviaHost);
-    if (tipsReady) blockUntil(triviaHost, tipsReady);
-    const decks = notes.filter((n) => n.layout === "deck");
-    const block = (name, list2) => {
-      if (!list2.length) return;
-      const done = list2.filter((n) => read.has(n.file.path)).length;
-      const next = list2.length % 2 ? list2.find((n) => !read.has(n.file.path)) : void 0;
-      const head2 = h(out, "div", "mn-hb-head");
-      h(head2, "span", "mn-hb-k", name);
-      h(head2, "span", "mn-hb-n", done >= list2.length ? "\u5168\u90E8\u8B80\u5B8C\u4E86" : `${done} / ${list2.length}`);
-      h(h(out, "div", "mn-hb-track"), "div", "mn-hb-fill").style.width = `${done / list2.length * 100}%`;
-      const tile2 = (parent, n, big) => {
-        const b = h(parent, "button", "mn-hb-tile" + (big ? " is-big" : "") + (read.has(n.file.path) ? " is-read" : ""));
-        const url = coverUrl(n.cover);
-        if (url) {
-          const im = h(b, "img", "mn-hb-art");
-          im.alt = "";
-          im.onerror = () => im.remove();
-          im.src = url;
-        }
-        const txt = h(b, "div", "mn-hb-ov");
-        const num2 = String(list2.indexOf(n) + 1).padStart(2, "0");
-        h(txt, "div", "mn-hb-kn", big ? `${done ? "\u7E7C\u7E8C" : "\u958B\u59CB"} \xB7 ${num2}` : read.has(n.file.path) ? `\u2713 ${num2}` : num2);
-        h(txt, "div", "mn-hb-t", n.title);
-        if (big && n.summary) h(txt, "div", "mn-hb-s", n.summary);
-        b.addEventListener("click", (e) => {
-          e.preventDefault();
-          ctx.openNote(n.file.path);
-        });
-      };
-      const tiles = h(out, "div");
-      if (next) tile2(tiles, next, true);
-      const rest = list2.filter((n) => n !== next);
-      if (rest.length) {
-        const grid = h(tiles, "div", "mn-hb-grid");
-        rest.forEach((n) => tile2(grid, n, false));
-      }
-      blockLoad(tiles);
-    };
-    block("\u521D\u4F86\u4E4D\u5230", decks.filter((n) => n.level !== "advanced"));
-    block("\u9AD8\u624B\u5FC5\u5099", decks.filter((n) => n.level === "advanced"));
-    return tipsReady;
-  };
-  const trivia = (parent) => {
-    const tips2 = store.loadingTips;
-    if (!tips2.length) return null;
-    const order = tips2.map((_, i) => i);
-    for (let i = order.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [order[i], order[j]] = [order[j], order[i]];
-    }
-    let lastArt = "";
-    const pickArt = () => {
-      const choices = ARAM_ART.filter((u) => u !== lastArt);
-      lastArt = choices[Math.floor(Math.random() * choices.length)];
-      return lastArt;
-    };
-    const loadArt = (u) => new Promise((done) => {
-      const im = new Image();
-      im.onload = im.onerror = () => done();
-      im.src = u;
-    });
-    const stack = h(parent, "div", "mn-trv-stack");
-    const arts = [];
-    const make = (i, z) => {
-      const c = h(stack, "div", "mn-trv");
-      const art = pickArt();
-      c.style.backgroundImage = `url("${art}")`;
-      arts.push(art);
-      c.style.zIndex = String(z);
-      h(c, "div", "mn-trv-tip", tips2[order[i % order.length]].text);
-      return c;
-    };
-    let n = 0, top = make(0, 2), under = make(1, 1);
-    let busy = false, pid = -1, x0 = 0, y0 = 0, t0 = 0, dx = 0, lastY = 0, mode = "";
-    const scroller = () => stack.closest(".mn-scroll");
-    for (const ev of ["touchstart", "touchmove"]) stack.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
-    const pose = (x) => {
-      top.style.transform = `translateX(${x.toFixed(1)}px) rotate(${(x / Math.max(1, stack.clientWidth) * TRIVIA_TILT).toFixed(2)}deg)`;
-    };
-    stack.addEventListener("pointerdown", (e) => {
-      if (busy || pid !== -1 || e.pointerType === "mouse" && e.button !== 0) return;
-      pid = e.pointerId;
-      x0 = e.clientX;
-      y0 = e.clientY;
-      lastY = e.clientY;
-      t0 = e.timeStamp;
-      dx = 0;
-      mode = "";
-    });
-    stack.addEventListener("pointermove", (e) => {
-      if (e.pointerId !== pid) return;
-      dx = e.clientX - x0;
-      const dy = e.clientY - y0;
-      if (!mode) {
-        if (Math.abs(dx) < SWIPE.slop && Math.abs(dy) < SWIPE.slop) return;
-        mode = Math.abs(dx) > Math.abs(dy) * SWIPE.bias ? "x" : "y";
-        stack.setPointerCapture(pid);
-        if (mode === "x") top.style.transition = "none";
-      }
-      if (mode === "x") pose(dx);
-      else {
-        scroller()?.scrollBy(0, lastY - e.clientY);
-      }
-      lastY = e.clientY;
-    });
-    const end = (e) => {
-      if (e.pointerId !== pid) return;
-      pid = -1;
-      const m = mode;
-      mode = "";
-      if (m !== "x") return;
-      const w = stack.clientWidth, v = dx / Math.max(1, e.timeStamp - t0);
-      const far = Math.abs(dx) > SWIPE.at * w || Math.abs(v) > SWIPE.flick && Math.abs(dx) > SWIPE.flickMin;
-      top.style.transition = `transform ${TRIVIA_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity ${TRIVIA_MS}ms`;
-      if (!far) {
-        top.style.transform = "";
-        return;
-      }
-      busy = true;
-      const gone = top, dir = dx < 0 ? -1 : 1;
-      gone.style.transform = `translateX(${dir * w * 1.3}px) rotate(${dir * TRIVIA_TILT * 1.2}deg)`;
-      window.setTimeout(() => {
-        gone.remove();
-        top = under;
-        top.style.zIndex = "2";
-        n += 1;
-        under = make(n + 1, 1);
-        void loadArt(arts[arts.length - 1]);
-        busy = false;
-      }, TRIVIA_MS);
-    };
-    stack.addEventListener("pointerup", end);
-    stack.addEventListener("pointercancel", end);
-    return Promise.all(arts.slice(0, 2).map(loadArt)).then(() => void 0);
-  };
-  const keywords = async () => {
-    const g = notes.find((n) => n.title === GLOSSARY);
-    if (!g) return;
-    const spacer = h(chips, "button", "mn-key", "AD");
-    spacer.style.visibility = "hidden";
-    const terms = ((await load()).get(g.file.path) ?? []).filter((l) => /[:：]/.test(l)).map((l) => l.split(/[:：]/)[0].trim()).filter((t) => t && t.length <= 8).slice(0, KEYWORDS);
-    spacer.remove();
-    for (const t of terms) {
-      const b = h(chips, "button", "mn-key", t.replace("\uFF08", " (").replace("\uFF09", ")").trim());
-      b.addEventListener("click", (e) => {
-        e.preventDefault();
-        search.value = t;
-        void results(t.toLowerCase());
-      });
-    }
-  };
-  const results = async (q) => {
-    const lines = await load();
-    if (search.value.trim().toLowerCase() !== q) return;
-    out.empty();
-    let found = 0;
-    const guide = notes.map((n) => ({ n, lines: (lines.get(n.file.path) ?? []).filter((l) => l.toLowerCase().includes(q)), title: n.title.toLowerCase().includes(q) })).filter((x) => x.title || x.lines.length);
-    const sect = (title) => {
-      h(out, "div", "mn-gh", title);
-      return h(out, "div", "mn-group");
-    };
-    if (guide.length) {
-      const g = sect("Guide");
-      for (const { n, lines: ls } of guide) {
-        const r = h(g, "div", "mn-row is-tap");
-        icon(r, n.icon, "mn-row-ic");
-        const main = h(r, "div", "mn-row-main");
-        h(main, "div", "mn-row-t", n.title);
-        for (const l of ls.slice(0, MAX_PER_NOTE)) marked(h(main, "div", "mn-row-s"), snippet(l, q), q);
-        icon(r, "chevron-right", "mn-row-chev");
-        r.addEventListener("click", () => ctx.openNote(n.file.path));
-        found++;
-      }
-    }
-    const tipHits = store.champions().flatMap((c) => c.tips.filter((t) => `${t.title} ${t.text}`.toLowerCase().includes(q)).map((t) => ({ c, t })));
-    if (tipHits.length) {
-      const g = sect("Tips");
-      for (const { c, t } of tipHits) {
-        const r = h(g, "div", "mn-row is-tap");
-        const im = h(r, "img", "mn-row-img");
-        im.src = c.icon;
-        im.alt = "";
-        const main = h(r, "div", "mn-row-main");
-        h(main, "div", "mn-row-t", `${c.name}:${t.title}`);
-        marked(h(main, "div", "mn-row-s"), snippet(t.text, q), q);
-        icon(r, "chevron-right", "mn-row-chev");
-        r.addEventListener("click", () => ctx.openChampion(c.id, "tips"));
-        found++;
-      }
-    }
-    const buildHits = store.champions().flatMap((c) => c.builds.filter((b) => `${b.name} ${b.note}`.toLowerCase().includes(q)).map((b) => ({ c, b })));
-    if (buildHits.length) {
-      const g = sect("Builds");
-      for (const { c, b } of buildHits) {
-        const r = h(g, "div", "mn-row is-tap");
-        const im = h(r, "img", "mn-row-img");
-        im.src = c.icon;
-        im.alt = "";
-        const main = h(r, "div", "mn-row-main");
-        h(main, "div", "mn-row-t", `${c.name}:${b.name}`);
-        if (b.note) marked(h(main, "div", "mn-row-s"), snippet(b.note, q), q);
-        icon(r, "chevron-right", "mn-row-chev");
-        r.addEventListener("click", () => ctx.openChampion(c.id, "build"));
-        found++;
-      }
-    }
-    if (!found) empty(out, { icon: "search-x", title: "Nothing found", text: "Try a shorter word." });
-  };
-  search.addEventListener("input", () => {
-    const q = search.value.trim().toLowerCase();
-    if (!q) void home();
-    else void results(q);
-  });
-  const warm = () => {
-    if (navigator.connection?.saveData) return;
-    const decks = notes.filter((n) => n.layout === "deck");
-    const next = [decks.filter((n) => n.level !== "advanced"), decks.filter((n) => n.level === "advanced")].flatMap((list2) => list2.find((n) => !read.has(n.file.path)) ?? []);
-    void (async () => {
-      for (const n of next) {
-        const md = await ctx.app.vault.cachedRead(n.file);
-        const clips = parseSlides(md).slice(0, WARM_CLIPS).flatMap((s) => {
-          const [kind, id, key] = s.visual.split(/\s+/);
-          const c = id ? store.champion(id) : void 0;
-          return (kind === "video" || kind === "clip") && c ? [{ c, key: key ?? "Q" }] : [];
-        });
-        for (const { c, key } of clips) await preloadClip(c, key);
-      }
-    })();
-  };
-  window.setTimeout(warm, WARM_DELAY_MS);
-  home();
-  void keywords();
-  return { title: "Handbook", el, ready: null };
-}
-var clean = (l) => l.replace(/^\s*(?:[-*]|\d+\.|>)\s*/, "").replace(/[*_`]/g, "").replace(/!?\[\[?([^\]|]*)(?:\|[^\]]*)?\]\]?/g, "$1").trim();
-function snippet(line, q) {
-  const i = line.toLowerCase().indexOf(q);
-  if (i < 0 || line.length <= SNIPPET * 2) return line;
-  const from = Math.max(0, i - SNIPPET), to = Math.min(line.length, i + q.length + SNIPPET);
-  return (from ? "\u2026" : "") + line.slice(from, to) + (to < line.length ? "\u2026" : "");
-}
-function marked(parent, text, q) {
-  const lower = text.toLowerCase();
-  let at = 0;
-  for (let i = lower.indexOf(q); i >= 0; i = lower.indexOf(q, at)) {
-    if (i > at) parent.appendChild(document.createTextNode(text.slice(at, i)));
-    h(parent, "mark", "mn-hl", text.slice(i, i + q.length));
-    at = i + q.length;
-  }
-  if (at < text.length) parent.appendChild(document.createTextNode(text.slice(at)));
-}
+var import_obsidian5 = require("obsidian");
 
 // src/pages/pile.ts
 var PULL = 0.6;
@@ -4698,7 +3031,7 @@ function cardPile(pager, sec, o) {
 }
 
 // src/pages/deck.ts
-var GLOSSARY2 = "\u540D\u8A5E\u8868";
+var GLOSSARY = "\u540D\u8A5E\u8868";
 var STRIP = 6;
 var WAIT_CARDS = 3;
 var LOOK_MIN_MS = 500;
@@ -4759,8 +3092,8 @@ function deckPage(ctx, file) {
     });
   };
   float("is-back", "chevron-left", "Back", () => ctx.pop());
-  const glossary = store.guideNotes().find((n) => n.layout !== "deck" && n.title === GLOSSARY2);
-  if (glossary) float("is-info", "info", GLOSSARY2, () => ctx.openNote(glossary.file.path));
+  const glossary = store.guideNotes().find((n) => n.layout !== "deck" && n.title === GLOSSARY);
+  if (glossary) float("is-info", "info", GLOSSARY, () => ctx.openNote(glossary.file.path));
   const peek = h(wrap, "div", "mn-peek");
   const peekIn = h(peek, "div", "mn-peek-in");
   const pager = h(wrap, "div", "mn-pager");
@@ -4796,11 +3129,11 @@ function deckPage(ctx, file) {
       const tip2 = /^([\s\S]*?)\*\*([^*\n]{1,8})[:：]\*\*\s*([\s\S]+)$/.exec(s.text);
       const main = tip2 ? tip2[1].trim() : s.text;
       const body = h(words, "div", "mn-sl-x markdown-rendered");
-      if (main) void import_obsidian11.MarkdownRenderer.render(ctx.app, main, body, file.path, ctx.component);
+      if (main) void import_obsidian5.MarkdownRenderer.render(ctx.app, main, body, file.path, ctx.component);
       const box = h(words, "div", "mn-sl-tip" + (tip2 ? "" : " is-empty"));
       if (tip2) {
         h(box, "div", "mn-sl-tip-k", tip2[2]);
-        void import_obsidian11.MarkdownRenderer.render(ctx.app, tip2[3].trim(), h(box, "div", "mn-sl-tip-x markdown-rendered"), file.path, ctx.component);
+        void import_obsidian5.MarkdownRenderer.render(ctx.app, tip2[3].trim(), h(box, "div", "mn-sl-tip-x markdown-rendered"), file.path, ctx.component);
       }
       sec.push(section2);
     });
@@ -4898,13 +3231,36 @@ function itemTree(parent, ctx, id) {
   };
   node(h(parent, "div", "mn-tree"), id, 0);
 }
+var NEED_CARDS = WAIT_CARDS + NEAR_AHEAD;
+async function deckNeeds({ app, plugin }, file, cards = NEED_CARDS) {
+  const store = plugin.store;
+  const ver = store.champions()[0]?.patch ?? "";
+  const out = [];
+  for (const s of parseSlides(await app.vault.cachedRead(file)).slice(0, cards)) {
+    const [kind, ...args] = s.visual.split(/\s+/).filter(Boolean);
+    const c = args[0] ? store.champion(args[0]) : void 0;
+    const key = (args.slice(1).find((a) => /^[PQWER]\d?$/i.test(a)) ?? "Q").toUpperCase();
+    const skill = c?.skills.find((x) => x.key === key.replace(/\d$/, ""));
+    if (kind === "img" && args.length) {
+      const src = args.join(" ");
+      if (/^https?:/.test(src)) out.push(src);
+    } else if (kind === "splash" && c) out.push(art.splash(c.id));
+    else if (kind === "map") out.push(...args[0] ? [art.aramScreen(args[0])] : ARAM_SCREENS.map((n) => art.aramScreen(n)));
+    else if (kind === "wards") out.push(art.minimap(ver), art.item(ver, 2055), art.item(ver, 3340));
+    else if (c && (kind === "video" || kind === "clip" || kind === "ability" || kind === "combo")) out.push({ clip: c, key }, ...skill ? [skill.icon] : []);
+    else if (c && (kind === "skill" || kind === "levels") && skill) out.push(skill.icon);
+    else if (c && (kind === "forms" || kind === "formset")) out.push(art.formIcon(c.id, key, 0), art.formIcon(c.id, key, 1));
+    else if (c && kind === "skills") out.push(...c.skills.map((x) => x.icon));
+  }
+  return out;
+}
 function visual(ctx, box, s) {
   const store = ctx.plugin.store;
   const [kind, ...args] = s.visual.split(/\s+/).filter(Boolean);
   box.addClass(`is-${kind || "icon"}`);
-  const champ = (id) => id ? store.champion(id) : void 0;
+  const champ2 = (id) => id ? store.champion(id) : void 0;
   if (kind === "video") {
-    const c = champ(args[0]);
+    const c = champ2(args[0]);
     if (c) {
       demo(h(box, "div", "mn-sl-video"), c, { key: args[1] ?? "Q" });
       return;
@@ -4917,19 +3273,19 @@ function visual(ctx, box, s) {
     im.alt = "";
     return;
   } else if (kind === "style") {
-    const c = champ(args[0]);
+    const c = champ2(args[0]);
     if (c) {
       styleCard(h(box, "div", "mn-sl-style"), c, ctx.app);
       return;
     }
   } else if (kind === "facts") {
-    const c = champ(args[0]);
+    const c = champ2(args[0]);
     if (c) {
       factsStrip(h(box, "div", "mn-sl-facts"), c);
       return;
     }
   } else if (kind === "tags") {
-    const c = champ(args[0]);
+    const c = champ2(args[0]);
     if (c) {
       tagRow(h(box, "div", "mn-sl-tags"), c, void 0, true);
       return;
@@ -4959,9 +3315,9 @@ function visual(ctx, box, s) {
     }
     return;
   } else if (kind === "ability" || kind === "clip" || kind === "levels" || kind === "forms" || kind === "formset" || kind === "combo") {
-    if (cardKit(box, kind, champ(args[0]), args.slice(1))) return;
+    if (cardKit(box, kind, champ2(args[0]), args.slice(1))) return;
   } else if (kind === "skill") {
-    const c = champ(args[0]), k = (args[1] ?? "Q").toUpperCase();
+    const c = champ2(args[0]), k = (args[1] ?? "Q").toUpperCase();
     const sk = c?.skills.find((x) => x.key === k);
     if (c && sk) {
       const wrap = h(box, "div", "mn-sl-skill");
@@ -5016,7 +3372,7 @@ function visual(ctx, box, s) {
     const ver = /\/cdn\/([\d.]+)\//.exec(store.champions()[0]?.icon ?? "")?.[1] ?? "";
     const map = h(box, "div", "mn-wmap");
     const im = h(map, "img", "mn-wmap-img");
-    im.src = `https://ddragon.leagueoflegends.com/cdn/${ver}/img/map/map11.png`;
+    im.src = art.minimap(ver);
     im.alt = "";
     for (const [label, x, y] of scene.obj ?? []) {
       const o = h(map, "span", "mn-wmap-obj", label);
@@ -5025,35 +3381,35 @@ function visual(ctx, box, s) {
     }
     for (const [x, y, k] of scene.wards) {
       const w = h(map, "img", "mn-wmap-ward is-" + k);
-      w.src = `https://ddragon.leagueoflegends.com/cdn/${ver}/img/item/${k === "c" ? 2055 : 3340}.png`;
+      w.src = art.item(ver, k === "c" ? 2055 : 3340);
       w.alt = "";
       w.style.left = `${x}%`;
       w.style.top = `${y}%`;
     }
     return;
   } else if (kind === "splash") {
-    const c = champ(args[0]);
+    const c = champ2(args[0]);
     if (c) {
       const im = h(box, "img", "mn-sl-img mn-sl-splash");
-      im.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(c.id)}_0.jpg`;
+      im.src = art.splash(c.id);
       im.alt = "";
       box.className = "mn-sl-vis is-img";
       return;
     }
   } else if (kind === "map") {
     const im = h(box, "img", "mn-sl-img");
-    im.src = mapUrl(args[0]);
+    im.src = art.aramScreen(args[0]);
     im.alt = "";
     box.className = "mn-sl-vis is-img";
     return;
   } else if (kind === "radar") {
-    const c = champ(args[0]);
+    const c = champ2(args[0]);
     if (c) {
       profileRadar(h(box, "div", "mn-sl-radar"), profileAxes(c), DAMAGE_COLOR[c.damageType] ?? "var(--interactive-accent)");
       return;
     }
   } else if (kind === "skills") {
-    const c = champ(args[0]);
+    const c = champ2(args[0]);
     if (c) {
       const strip2 = h(box, "div", "mn-skills mn-sl-skills");
       for (const k of c.skills) {
@@ -5073,7 +3429,7 @@ function visual(ctx, box, s) {
       return;
     }
   } else if (kind === "champs") {
-    const list2 = args.map(champ).filter((c) => !!c);
+    const list2 = args.map(champ2).filter((c) => !!c);
     if (list2.length) {
       strip(box, list2.map((c) => ({ src: c.icon, label: c.name, tap: () => ctx.openChampion(c.id) })));
       return;
@@ -5248,8 +3604,8 @@ function finder(all, sounds) {
   };
   return { score: score2, within };
 }
-var cardArt = (id, skin = 0) => `https://ddragon.leagueoflegends.com/cdn/img/champion/centered/${encodeURIComponent(id)}_${skin}.jpg`;
-var loading = (id) => `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(id)}_0.jpg`;
+var cardArt = (id, skin = 0) => art.centered(id, skin);
+var loading = (id) => art.loading(id);
 function rosterPage(ctx) {
   const store = ctx.plugin.store;
   const el = page("Picks");
@@ -5342,7 +3698,7 @@ function rosterPage(ctx) {
   const toggle = (id) => {
     if (picks.includes(id)) picks = picks.filter((p) => p !== id);
     else if (picks.length >= MAX_PICKS) {
-      new import_obsidian12.Notice(`\u6700\u591A\u9078 ${MAX_PICKS} \u4F4D`);
+      new import_obsidian6.Notice(`\u6700\u591A\u9078 ${MAX_PICKS} \u4F4D`);
       return;
     } else picks = [...picks, id];
     save();
@@ -5766,12 +4122,12 @@ function quickCard(ctx, c, face, o) {
   const TABS = [...QUICK_TABS, ...(o.extra ?? []).map((x) => x.name)];
   face.addClass("mn-qc");
   const tabs = TABS.map((name, i) => h(face, "div", `mn-qc-tab is-${["look", "play", "skill", "style"][i] ?? "more"}`));
-  const art = (n) => cardArt(c.id, n);
+  const art2 = (n) => cardArt(c.id, n);
   const others = c.skins.filter((n) => n !== 0).sort((a, b) => b - a);
   const skins = tabs.slice(1).map((tab, k) => {
     const bg = h(tab, "img", "mn-qc-bg");
     bg.loading = "lazy";
-    bg.src = art(others.length ? others[k % others.length] : 0);
+    bg.src = art2(others.length ? others[k % others.length] : 0);
     bg.alt = "";
     return bg.src;
   });
@@ -5845,11 +4201,11 @@ function quickCard(ctx, c, face, o) {
   im.alt = "";
   if (c.face) im.style.objectPosition = c.face;
   const tiles = h(look, "div", "mn-qc-tiles");
-  const tile2 = (iconName, color, big, small, art2) => {
+  const tile2 = (iconName, color, big, small, art3) => {
     const t = h(tiles, "div", "mn-qc-tile");
     t.style.setProperty("--c", color);
     const ic = h(t, "span", "mn-qc-tic");
-    if (art2) art2(ic);
+    if (art3) art3(ic);
     else icon(ic, iconName);
     h(t, "b", void 0, big);
     h(t, "span", void 0, small);
@@ -5944,7 +4300,7 @@ function quickCard(ctx, c, face, o) {
 }
 
 // src/pages/detail.ts
-var import_obsidian13 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 
 // src/pages/glossary.ts
 var OWN = {
@@ -5969,7 +4325,7 @@ var termArt = (term) => {
   return OWN[key] ?? (tag ? [tag.icon, tag.color] : ["book-a", "var(--mn-muted)"]);
 };
 var plain = (s) => s.replace(/[*_`]/g, "").replace(/!?\[\[([^\]|]*)(?:\|([^\]]*))?\]\]/g, (_m, a, b) => b ?? a).trim();
-function parse4(text) {
+function parse(text) {
   const out = [];
   for (const line of text.replace(/^---[\s\S]*?---\n/, "").split("\n")) {
     const g = /^##\s+(.+)/.exec(line);
@@ -6029,7 +4385,7 @@ function glossaryPage(ctx, file) {
   };
   search.addEventListener("input", draw);
   void ctx.app.vault.cachedRead(file).then((text) => {
-    groups = parse4(text);
+    groups = parse(text);
     draw();
   });
   return { title: "", el };
@@ -6037,20 +4393,34 @@ function glossaryPage(ctx, file) {
 
 // src/pages/detail.ts
 var SUGGESTED = 12;
-var GLOSSARY3 = "\u540D\u8A5E\u8868";
+var GLOSSARY2 = "\u540D\u8A5E\u8868";
+function noteNeeds(n, frame) {
+  const path = String(frame.params?.path ?? "");
+  const file = n.app.vault.getAbstractFileByPath(path);
+  const deck = n.plugin.store.guideNotes().some((g) => g.file.path === path && g.layout === "deck");
+  return file instanceof import_obsidian7.TFile && deck ? deckNeeds(n, file) : [];
+}
+function augmentNeeds({ plugin }, frame) {
+  const a = plugin.store.augment(Number(frame.params?.id));
+  return a ? [a.icon] : [];
+}
+function itemNeeds({ plugin }, frame) {
+  const i = plugin.store.item(Number(frame.params?.id));
+  return i ? [i.icon] : [];
+}
 function notePage(ctx) {
   const path = String(ctx.frame.params?.path ?? "");
   const file = ctx.app.vault.getAbstractFileByPath(path);
   const el = h(null, "div", "mn-page");
-  if (!(file instanceof import_obsidian13.TFile)) {
+  if (!(file instanceof import_obsidian7.TFile)) {
     empty(el, { icon: "file-x", title: "Note not found" });
     return { title: "", el };
   }
   if (ctx.plugin.store.guideNotes().some((n) => n.file.path === path && n.layout === "deck")) return deckPage(ctx, file);
-  if (file.basename === GLOSSARY3) return glossaryPage(ctx, file);
+  if (file.basename === GLOSSARY2) return glossaryPage(ctx, file);
   h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
   const body = h(el, "div", "mn-note markdown-rendered");
-  void ctx.app.vault.cachedRead(file).then((text) => import_obsidian13.MarkdownRenderer.render(ctx.app, text.replace(/^---[\s\S]*?---\n/, ""), body, path, ctx.component));
+  void ctx.app.vault.cachedRead(file).then((text) => import_obsidian7.MarkdownRenderer.render(ctx.app, text.replace(/^---[\s\S]*?---\n/, ""), body, path, ctx.component));
   const guide = ctx.plugin.store.guideNotes();
   const at = guide.findIndex((n) => n.file.path === path);
   if (at >= 0) {
@@ -6071,7 +4441,7 @@ function notePage(ctx) {
   row(group(el), { icon: "pencil", title: "Edit in Obsidian", chevron: true, onTap: () => void ctx.plugin.openPath(path) });
   return { title: "", el };
 }
-var KINDS3 = [
+var KINDS2 = [
   { tag: "\u9B54\u6CD5\u653B\u64CA", re: /魔攻|魔法攻擊|法術強度/, fits: (c) => c.damageType === "\u9B54\u6CD5" || c.damageType === "\u6DF7\u5408" },
   { tag: "\u7269\u7406\u653B\u64CA", re: /物攻|物理攻擊/, fits: (c) => c.damageType === "\u7269\u7406" || c.damageType === "\u6DF7\u5408" },
   { tag: "\u666E\u653B", re: /普攻|普通攻擊|攻速|暴擊/, fits: (c) => c.roles.includes("\u5C04\u624B") || c.damageType === "\u7269\u7406" && c.archetypes.includes("\u8FD1\u6230") },
@@ -6082,7 +4452,7 @@ var KINDS3 = [
   { tag: "\u63A7\u5834", re: /緩速|暈眩|擊飛|控制|定身|擊退/, fits: (c) => c.features.includes("\u63A7\u5834") }
 ];
 function suggest(effect, champions) {
-  const kinds = KINDS3.filter((k) => k.re.test(effect));
+  const kinds = KINDS2.filter((k) => k.re.test(effect));
   if (!kinds.length) return { tags: [], champions: [] };
   const need = Math.max(1, Math.ceil(kinds.length * 0.6));
   const scored = champions.map((c) => ({ c, n: kinds.filter((k) => k.fits(c)).length })).filter((x) => x.n >= need);
@@ -6585,7 +4955,7 @@ function matches(c, lanes) {
   if (F.lanes.size && !lanes.some((l) => F.lanes.has(l))) return false;
   if (F.roles.size && !c.roles.some((r) => F.roles.has(r))) return false;
   if (F.dmg && c.damageType !== F.dmg) return false;
-  for (const [f, want] of F.feat) if (c.features.includes(f) !== (want === 1)) return false;
+  for (const [f, want2] of F.feat) if (c.features.includes(f) !== (want2 === 1)) return false;
   return !F.reach || c.archetypes.includes(F.reach);
 }
 function sorted(list2) {
@@ -6786,6 +5156,10 @@ var WHEEL_PX = 12;
 var WHEEL_GAP_MS = 450;
 var TAP_SIDE = 0.22;
 var PAGES = [["overview", "\u6982\u89BD", "id-card"], ["skills", "\u6280\u80FD", "keyboard"], ["build", "\u51FA\u88DD", "shopping-bag"], ["augments", "\u5F37\u5316", "sparkles"], ["tips", "\u6280\u5DE7", "lightbulb"]];
+function championNeeds({ plugin }, frame) {
+  const c = plugin.store.champion(String(frame.params?.id ?? ""));
+  return c ? [cardArt(c.id), c.icon] : [];
+}
 function championCard(ctx) {
   const store = ctx.plugin.store;
   const c = store.champion(String(ctx.frame.params?.id ?? ""));
@@ -6806,11 +5180,7 @@ function championCard(ctx) {
   im.src = c.icon;
   im.alt = "";
   const splash = bg.style.backgroundImage.slice(5, -2);
-  blockUntil(hero, Promise.all([new Promise((r) => {
-    const x = new Image();
-    x.onload = x.onerror = () => r();
-    x.src = splash;
-  }), new Promise((r) => {
+  blockUntil(hero, Promise.all([warm([splash], "now"), new Promise((r) => {
     if (im.complete) r();
     else {
       im.addEventListener("load", () => r(), { once: true });
@@ -7077,8 +5447,8 @@ function augmentsAll(body, c, ctx) {
       tierHead(box, tier);
       augmentTiles(box, these, ctx, { bare: true, champ: c.id });
     }
-    const none = style.none.map((n) => store.augment(n.id)).filter((a) => !!a && !c.pinned.includes(a.name));
-    if (none.length) h(box, "div", "mn-gf", `\u6C92\u6709\u5E6B\u52A9\uFF1A${none.map((a) => a.name).join("\u3001")}`);
+    const none2 = style.none.map((n) => store.augment(n.id)).filter((a) => !!a && !c.pinned.includes(a.name));
+    if (none2.length) h(box, "div", "mn-gf", `\u6C92\u6709\u5E6B\u52A9\uFF1A${none2.map((a) => a.name).join("\u3001")}`);
   };
   draw(styles[0]);
   h(body, "div", "mn-gf", MODEL_NOTE);
@@ -7115,8 +5485,282 @@ function tips(body, c, ctx) {
   }
 }
 
+// src/pages/handbook.ts
+var SNIPPET = 46;
+var MAX_PER_NOTE = 2;
+var KEYWORDS = 8;
+var GLOSSARY3 = "\u540D\u8A5E\u8868";
+var TRIVIA_TILT = 10;
+var TRIVIA_MS = 300;
+var ARAM_ART = ARAM_SCREENS.map((n) => art.aramScreen(n));
+function handbookNeeds({ plugin }) {
+  return [...plugin.store.guideNotes().map((n) => coverUrl(n.cover)).filter(Boolean), ...ARAM_ART];
+}
+function handbookNext({ plugin }) {
+  const read = new Set(plugin.settings.read);
+  const decks = plugin.store.guideNotes().filter((n) => n.layout === "deck").sort((a, b) => a.order - b.order);
+  return [decks.filter((n) => n.level !== "advanced"), decks.filter((n) => n.level === "advanced")].flatMap((list2) => list2.find((n) => !read.has(n.file.path)) ?? []).map((n) => ({ key: "note", title: n.title, params: { path: n.file.path } }));
+}
+function handbookPage(ctx) {
+  const store = ctx.plugin.store;
+  const el = page("Handbook");
+  const box = h(el, "div", "mn-search");
+  icon(box, "search", "mn-search-ic");
+  const search = h(box, "input");
+  search.type = "search";
+  search.placeholder = "\u641C\u5C0B\u624B\u518A\u88E1\u7684\u5167\u5BB9";
+  const chips = h(el, "div", "mn-keys");
+  const out = h(el, "div");
+  const notes = store.guideNotes();
+  let texts = null;
+  const read = new Set(ctx.plugin.settings.read);
+  const load = async () => {
+    if (texts) return texts;
+    texts = /* @__PURE__ */ new Map();
+    for (const n of notes) texts.set(n.file.path, (await ctx.app.vault.cachedRead(n.file)).replace(/^---[\s\S]*?---\n/, "").split("\n").map(clean).filter(Boolean));
+    return texts;
+  };
+  const home = () => {
+    out.empty();
+    if (!notes.length) {
+      empty(out, { icon: "book-open", title: "Nothing here yet", text: "Guide notes go in the guide folder." });
+      return null;
+    }
+    const triviaHost = h(out, "div");
+    const tipsReady = trivia(triviaHost);
+    if (tipsReady) blockUntil(triviaHost, tipsReady);
+    const decks = notes.filter((n) => n.layout === "deck");
+    const block = (name, list2) => {
+      if (!list2.length) return;
+      const done = list2.filter((n) => read.has(n.file.path)).length;
+      const next = list2.length % 2 ? list2.find((n) => !read.has(n.file.path)) : void 0;
+      const head2 = h(out, "div", "mn-hb-head");
+      h(head2, "span", "mn-hb-k", name);
+      h(head2, "span", "mn-hb-n", done >= list2.length ? "\u5168\u90E8\u8B80\u5B8C\u4E86" : `${done} / ${list2.length}`);
+      h(h(out, "div", "mn-hb-track"), "div", "mn-hb-fill").style.width = `${done / list2.length * 100}%`;
+      const tile2 = (parent, n, big) => {
+        const b = h(parent, "button", "mn-hb-tile" + (big ? " is-big" : "") + (read.has(n.file.path) ? " is-read" : ""));
+        const url = coverUrl(n.cover);
+        if (url) {
+          const im = h(b, "img", "mn-hb-art");
+          im.alt = "";
+          im.onerror = () => im.remove();
+          im.src = url;
+        }
+        const txt = h(b, "div", "mn-hb-ov");
+        const num2 = String(list2.indexOf(n) + 1).padStart(2, "0");
+        h(txt, "div", "mn-hb-kn", big ? `${done ? "\u7E7C\u7E8C" : "\u958B\u59CB"} \xB7 ${num2}` : read.has(n.file.path) ? `\u2713 ${num2}` : num2);
+        h(txt, "div", "mn-hb-t", n.title);
+        if (big && n.summary) h(txt, "div", "mn-hb-s", n.summary);
+        b.addEventListener("click", (e) => {
+          e.preventDefault();
+          ctx.openNote(n.file.path);
+        });
+      };
+      const tiles = h(out, "div");
+      if (next) tile2(tiles, next, true);
+      const rest = list2.filter((n) => n !== next);
+      if (rest.length) {
+        const grid = h(tiles, "div", "mn-hb-grid");
+        rest.forEach((n) => tile2(grid, n, false));
+      }
+      blockLoad(tiles);
+    };
+    block("\u521D\u4F86\u4E4D\u5230", decks.filter((n) => n.level !== "advanced"));
+    block("\u9AD8\u624B\u5FC5\u5099", decks.filter((n) => n.level === "advanced"));
+    return tipsReady;
+  };
+  const trivia = (parent) => {
+    const tips2 = store.loadingTips;
+    if (!tips2.length) return null;
+    const order = tips2.map((_, i) => i);
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    let lastArt = "";
+    const pickArt = () => {
+      const choices = ARAM_ART.filter((u) => u !== lastArt);
+      lastArt = choices[Math.floor(Math.random() * choices.length)];
+      return lastArt;
+    };
+    const loadArt = (u) => warm([u], "now");
+    const stack = h(parent, "div", "mn-trv-stack");
+    const arts = [];
+    const make = (i, z) => {
+      const c = h(stack, "div", "mn-trv");
+      const art2 = pickArt();
+      c.style.backgroundImage = `url("${art2}")`;
+      arts.push(art2);
+      c.style.zIndex = String(z);
+      h(c, "div", "mn-trv-tip", tips2[order[i % order.length]].text);
+      return c;
+    };
+    let n = 0, top = make(0, 2), under = make(1, 1);
+    let busy = false, pid = -1, x0 = 0, y0 = 0, t0 = 0, dx = 0, lastY = 0, mode = "";
+    const scroller = () => stack.closest(".mn-scroll");
+    for (const ev of ["touchstart", "touchmove"]) stack.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
+    const pose = (x) => {
+      top.style.transform = `translateX(${x.toFixed(1)}px) rotate(${(x / Math.max(1, stack.clientWidth) * TRIVIA_TILT).toFixed(2)}deg)`;
+    };
+    stack.addEventListener("pointerdown", (e) => {
+      if (busy || pid !== -1 || e.pointerType === "mouse" && e.button !== 0) return;
+      pid = e.pointerId;
+      x0 = e.clientX;
+      y0 = e.clientY;
+      lastY = e.clientY;
+      t0 = e.timeStamp;
+      dx = 0;
+      mode = "";
+    });
+    stack.addEventListener("pointermove", (e) => {
+      if (e.pointerId !== pid) return;
+      dx = e.clientX - x0;
+      const dy = e.clientY - y0;
+      if (!mode) {
+        if (Math.abs(dx) < SWIPE.slop && Math.abs(dy) < SWIPE.slop) return;
+        mode = Math.abs(dx) > Math.abs(dy) * SWIPE.bias ? "x" : "y";
+        stack.setPointerCapture(pid);
+        if (mode === "x") top.style.transition = "none";
+      }
+      if (mode === "x") pose(dx);
+      else {
+        scroller()?.scrollBy(0, lastY - e.clientY);
+      }
+      lastY = e.clientY;
+    });
+    const end = (e) => {
+      if (e.pointerId !== pid) return;
+      pid = -1;
+      const m = mode;
+      mode = "";
+      if (m !== "x") return;
+      const w = stack.clientWidth, v = dx / Math.max(1, e.timeStamp - t0);
+      const far = Math.abs(dx) > SWIPE.at * w || Math.abs(v) > SWIPE.flick && Math.abs(dx) > SWIPE.flickMin;
+      top.style.transition = `transform ${TRIVIA_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity ${TRIVIA_MS}ms`;
+      if (!far) {
+        top.style.transform = "";
+        return;
+      }
+      busy = true;
+      const gone = top, dir = dx < 0 ? -1 : 1;
+      gone.style.transform = `translateX(${dir * w * 1.3}px) rotate(${dir * TRIVIA_TILT * 1.2}deg)`;
+      window.setTimeout(() => {
+        gone.remove();
+        top = under;
+        top.style.zIndex = "2";
+        n += 1;
+        under = make(n + 1, 1);
+        void loadArt(arts[arts.length - 1]);
+        busy = false;
+      }, TRIVIA_MS);
+    };
+    stack.addEventListener("pointerup", end);
+    stack.addEventListener("pointercancel", end);
+    return Promise.all(arts.slice(0, 2).map(loadArt)).then(() => void 0);
+  };
+  const keywords = async () => {
+    const g = notes.find((n) => n.title === GLOSSARY3);
+    if (!g) return;
+    const spacer = h(chips, "button", "mn-key", "AD");
+    spacer.style.visibility = "hidden";
+    const terms = ((await load()).get(g.file.path) ?? []).filter((l) => /[:：]/.test(l)).map((l) => l.split(/[:：]/)[0].trim()).filter((t) => t && t.length <= 8).slice(0, KEYWORDS);
+    spacer.remove();
+    for (const t of terms) {
+      const b = h(chips, "button", "mn-key", t.replace("\uFF08", " (").replace("\uFF09", ")").trim());
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        search.value = t;
+        void results(t.toLowerCase());
+      });
+    }
+  };
+  const results = async (q) => {
+    const lines = await load();
+    if (search.value.trim().toLowerCase() !== q) return;
+    out.empty();
+    let found = 0;
+    const guide = notes.map((n) => ({ n, lines: (lines.get(n.file.path) ?? []).filter((l) => l.toLowerCase().includes(q)), title: n.title.toLowerCase().includes(q) })).filter((x) => x.title || x.lines.length);
+    const sect = (title) => {
+      h(out, "div", "mn-gh", title);
+      return h(out, "div", "mn-group");
+    };
+    if (guide.length) {
+      const g = sect("Guide");
+      for (const { n, lines: ls } of guide) {
+        const r = h(g, "div", "mn-row is-tap");
+        icon(r, n.icon, "mn-row-ic");
+        const main = h(r, "div", "mn-row-main");
+        h(main, "div", "mn-row-t", n.title);
+        for (const l of ls.slice(0, MAX_PER_NOTE)) marked(h(main, "div", "mn-row-s"), snippet(l, q), q);
+        icon(r, "chevron-right", "mn-row-chev");
+        r.addEventListener("click", () => ctx.openNote(n.file.path));
+        found++;
+      }
+    }
+    const tipHits = store.champions().flatMap((c) => c.tips.filter((t) => `${t.title} ${t.text}`.toLowerCase().includes(q)).map((t) => ({ c, t })));
+    if (tipHits.length) {
+      const g = sect("Tips");
+      for (const { c, t } of tipHits) {
+        const r = h(g, "div", "mn-row is-tap");
+        const im = h(r, "img", "mn-row-img");
+        im.src = c.icon;
+        im.alt = "";
+        const main = h(r, "div", "mn-row-main");
+        h(main, "div", "mn-row-t", `${c.name}:${t.title}`);
+        marked(h(main, "div", "mn-row-s"), snippet(t.text, q), q);
+        icon(r, "chevron-right", "mn-row-chev");
+        r.addEventListener("click", () => ctx.openChampion(c.id, "tips"));
+        found++;
+      }
+    }
+    const buildHits = store.champions().flatMap((c) => c.builds.filter((b) => `${b.name} ${b.note}`.toLowerCase().includes(q)).map((b) => ({ c, b })));
+    if (buildHits.length) {
+      const g = sect("Builds");
+      for (const { c, b } of buildHits) {
+        const r = h(g, "div", "mn-row is-tap");
+        const im = h(r, "img", "mn-row-img");
+        im.src = c.icon;
+        im.alt = "";
+        const main = h(r, "div", "mn-row-main");
+        h(main, "div", "mn-row-t", `${c.name}:${b.name}`);
+        if (b.note) marked(h(main, "div", "mn-row-s"), snippet(b.note, q), q);
+        icon(r, "chevron-right", "mn-row-chev");
+        r.addEventListener("click", () => ctx.openChampion(c.id, "build"));
+        found++;
+      }
+    }
+    if (!found) empty(out, { icon: "search-x", title: "Nothing found", text: "Try a shorter word." });
+  };
+  search.addEventListener("input", () => {
+    const q = search.value.trim().toLowerCase();
+    if (!q) void home();
+    else void results(q);
+  });
+  home();
+  void keywords();
+  return { title: "Handbook", el, ready: null };
+}
+var clean = (l) => l.replace(/^\s*(?:[-*]|\d+\.|>)\s*/, "").replace(/[*_`]/g, "").replace(/!?\[\[?([^\]|]*)(?:\|[^\]]*)?\]\]?/g, "$1").trim();
+function snippet(line, q) {
+  const i = line.toLowerCase().indexOf(q);
+  if (i < 0 || line.length <= SNIPPET * 2) return line;
+  const from = Math.max(0, i - SNIPPET), to = Math.min(line.length, i + q.length + SNIPPET);
+  return (from ? "\u2026" : "") + line.slice(from, to) + (to < line.length ? "\u2026" : "");
+}
+function marked(parent, text, q) {
+  const lower = text.toLowerCase();
+  let at = 0;
+  for (let i = lower.indexOf(q); i >= 0; i = lower.indexOf(q, at)) {
+    if (i > at) parent.appendChild(document.createTextNode(text.slice(at, i)));
+    h(parent, "mark", "mn-hl", text.slice(i, i + q.length));
+    at = i + q.length;
+  }
+  if (at < text.length) parent.appendChild(document.createTextNode(text.slice(at)));
+}
+
 // src/data/riot.ts
-var import_obsidian14 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 var KEY2 = "morellonomicon-profile";
 var PROFILE_FRESH = 10 * 60 * 1e3;
 var GAMES = 10;
@@ -7148,7 +5792,7 @@ async function fetchProfile(app, riotId, server, key) {
   const reg = REGION[server] ?? REGION.TW2;
   const plat = server.toLowerCase();
   const get = async (host, path) => {
-    const r = await (0, import_obsidian14.requestUrl)({ url: `https://${host}.api.riotgames.com${path}`, headers: { "X-Riot-Token": key }, throw: false });
+    const r = await (0, import_obsidian8.requestUrl)({ url: `https://${host}.api.riotgames.com${path}`, headers: { "X-Riot-Token": key }, throw: false });
     if (r.status === 200) return r.json;
     if (r.status === 401 || r.status === 403) throw new RiotError("\u91D1\u9470\u7121\u6548\u6216\u5DF2\u904E\u671F(\u958B\u767C\u91D1\u9470\u6BCF 24 \u5C0F\u6642\u8981\u63DB)");
     if (r.status === 404) throw new RiotError("\u627E\u4E0D\u5230\u9019\u500B Riot ID,\u6AA2\u67E5\u540D\u7A31\u3001\u6A19\u7C64\u548C\u4F3A\u670D\u5668");
@@ -7204,7 +5848,7 @@ async function fetchProfile(app, riotId, server, key) {
   return prof;
 }
 var TIER = { IRON: "\u9435\u724C", BRONZE: "\u9285\u724C", SILVER: "\u9280\u724C", GOLD: "\u91D1\u724C", PLATINUM: "\u767D\u91D1", EMERALD: "\u7FE1\u7FE0", DIAMOND: "\u947D\u77F3", MASTER: "\u5927\u5E2B", GRANDMASTER: "\u5B97\u5E2B", CHALLENGER: "\u83C1\u82F1" };
-var emblem = (tier) => `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests/${tier.toLowerCase()}.png`;
+var emblem = art.emblem;
 var ago = (t) => {
   const m = Math.round((Date.now() - t) / 6e4);
   return m < 60 ? `${Math.max(1, m)} \u5206\u9418\u524D` : m < 1440 ? `${Math.round(m / 60)} \u5C0F\u6642\u524D` : `${Math.round(m / 1440)} \u5929\u524D`;
@@ -7213,23 +5857,38 @@ var ago = (t) => {
 // src/pages/home.ts
 var SERVERS = [["TW2", "\u53F0\u7063"], ["JP1", "\u65E5\u672C"], ["KR", "\u97D3\u570B"], ["SG2", "\u65B0\u52A0\u5761"], ["VN2", "\u8D8A\u5357"], ["NA1", "\u5317\u7F8E"], ["EUW1", "\u897F\u6B50"], ["EUN1", "\u5317\u6B50\u6771\u6B50"], ["OC1", "\u5927\u6D0B\u6D32"]];
 var TOP = 3;
+function topMastery(app, plugin) {
+  const s = plugin.settings, store = plugin.store;
+  const all = store.champions();
+  const byId = new Map(all.map((c) => [c.id, c]));
+  const prof = s.riotId ? cachedProfile(app, s.riotId) : null;
+  const byKey = new Map(all.map((c) => [c.key, c]));
+  let top = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).slice(0, TOP);
+  if (prof?.mastery.length) top = prof.mastery.filter((m) => byKey.has(m.championKey)).map((m) => [byKey.get(m.championKey).id, { level: m.level, points: m.points, last: "" }]);
+  return { all, byId, prof, top };
+}
+function wallpaper(plugin, best) {
+  const s = plugin.settings;
+  const [wid, wn] = s.wallpaper ? s.wallpaper.split("_") : [best?.id ?? "", String(Math.max(0, ...best?.skins ?? [0]))];
+  return wid ? art.splash(wid, Number(wn) || 0) : "";
+}
+function homeNeeds({ app, plugin }) {
+  if (!plugin.settings.riotId) return [art.aramScreen("habackground")];
+  const { byId, prof, top } = topMastery(app, plugin);
+  const best = top[0] ? byId.get(top[0][0]) : void 0;
+  return [wallpaper(plugin, best), ...prof ? [art.profileIcon(plugin.store.champions()[0]?.patch ?? "", prof.icon)] : [], ...top.map(([id]) => art.loading(id))];
+}
 function homePage(ctx) {
   const store = ctx.plugin.store;
   const s = ctx.plugin.settings;
   const el = page("Home");
-  const all = store.champions();
-  const byId = new Map(all.map((c) => [c.id, c]));
-  const prof = s.riotId ? cachedProfile(ctx.app, s.riotId) : null;
-  const byKey = new Map(all.map((c) => [c.key, c]));
-  let top = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).slice(0, TOP);
-  if (prof?.mastery.length) top = prof.mastery.filter((m) => byKey.has(m.championKey)).map((m) => [byKey.get(m.championKey).id, { level: m.level, points: m.points, last: "" }]);
+  const { all, byId, prof, top } = topMastery(ctx.app, ctx.plugin);
   const patch = all[0]?.patch ?? "";
-  const dd = (path) => `https://ddragon.leagueoflegends.com/cdn/${patch}/img/${path}`;
   const hero = layoutBlock(h(el, "div", "mn-home-hero"));
   if (!s.riotId) {
     hero.addClass("is-out");
     const bg = h(hero, "img", "mn-home-wall");
-    bg.src = mapUrl("habackground");
+    bg.src = art.aramScreen("habackground");
     bg.alt = "";
     const box = h(hero, "div", "mn-home-cta");
     h(box, "b", void 0, "\u9023\u7D50\u4F60\u7684\u53EC\u559A\u5E2B");
@@ -7261,17 +5920,16 @@ function homePage(ctx) {
   } else {
     const [name, tag] = s.riotId.split("#");
     const best = top[0] ? byId.get(top[0][0]) : void 0;
-    const splash = (id, n) => `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${encodeURIComponent(id)}_${n}.jpg`;
-    const [wid, wn] = s.wallpaper ? s.wallpaper.split("_") : [best?.id ?? "", String(Math.max(0, ...best?.skins ?? [0]))];
-    if (wid) {
+    const wall = wallpaper(ctx.plugin, best);
+    if (wall) {
       const bg = h(hero, "img", "mn-home-wall");
-      bg.src = splash(wid, Number(wn) || 0);
+      bg.src = wall;
       bg.alt = "";
     }
     const av = h(hero, "button", "mn-home-av");
     if (prof) {
       const im = h(av, "img");
-      im.src = dd(`profileicon/${prof.icon}.png`);
+      im.src = art.profileIcon(patch, prof.icon);
       im.alt = "";
     } else if (best) {
       const im = h(av, "img");
@@ -7321,7 +5979,7 @@ function homePage(ctx) {
       for (const n of [...c.skins].sort((a, b) => b - a)) {
         const b = h(skinsRow, "button", "mn-home-skin" + (s.wallpaper === `${cid}_${n}` ? " is-on" : ""));
         const im = h(b, "img");
-        im.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(cid)}_${n}.jpg`;
+        im.src = art.loading(cid, n);
         im.alt = "";
         im.loading = "lazy";
         b.addEventListener("click", (e) => {
@@ -7351,7 +6009,7 @@ function homePage(ctx) {
         void ctx.plugin.saveData(s).then(() => ctx.goTab("home"));
       });
     }
-    showSkins(wid || pool[0]?.id || "");
+    showSkins((s.wallpaper ? s.wallpaper.split("_")[0] : best?.id) || pool[0]?.id || "");
     out.addEventListener("click", (e) => {
       e.preventDefault();
       s.riotId = "";
@@ -7406,7 +6064,7 @@ function homePage(ctx) {
       const c = byId.get(id);
       const card = h(row2, "button", "mn-home-mc");
       const im = h(card, "img");
-      im.src = `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${encodeURIComponent(id)}_0.jpg`;
+      im.src = art.loading(id);
       im.alt = "";
       h(card, "em", m.level >= 10 ? "is-high" : void 0, `M${m.level}`);
       h(card, "b", void 0, c.name);
@@ -7453,7 +6111,7 @@ function gameRow(ctx, parent, g, full) {
     const items = h(tx, "div", "mn-game-items");
     for (const id of g.items) {
       const x = h(items, "img");
-      x.src = `https://ddragon.leagueoflegends.com/cdn/${ctx.plugin.store.champions()[0]?.patch ?? ""}/img/item/${id}.png`;
+      x.src = art.item(ctx.plugin.store.champions()[0]?.patch ?? "", id);
       x.alt = "";
       x.loading = "lazy";
     }
@@ -7738,44 +6396,1534 @@ function mayhemSection(el, ctx, n) {
 }
 
 // src/pages/index.ts
-var PAGES2 = {
-  home: homePage,
-  champions: championsPage,
-  picks: rosterPage,
-  // 速查: pick the champions the game gave you, then swipe through them
-  augments: augmentsPage,
-  patch: patchPage,
-  handbook: handbookPage
+var none = () => [];
+var ROUTES = {
+  home: { render: homePage, needs: homeNeeds },
+  champions: { render: championsPage, needs: none },
+  // the champion icons: start-up
+  picks: { render: rosterPage, needs: none },
+  // 速查: pick the champions the game gave you, then swipe through them (it fetches each pick's art as it is picked)
+  augments: { render: augmentsPage, needs: none },
+  patch: { render: patchPage, needs: none },
+  // the patch notes' pictures load lazily, further down the page
+  handbook: { render: handbookPage, needs: handbookNeeds, next: handbookNext },
+  champion: { render: championCard, needs: championNeeds },
+  champpart: { render: championPart, needs: championNeeds },
+  augment: { render: augmentPage, needs: augmentNeeds },
+  item: { render: itemPage, needs: itemNeeds },
+  note: { render: notePage, needs: noteNeeds },
+  roster: { render: rosterPage, needs: none },
+  championlist: { render: championsPage, needs: none },
+  games: { render: gamesPage, needs: none },
+  itemlist: { render: itemsPage, needs: none },
+  // the Items page, opened from Home
+  rosterswipe: { render: swipePage, needs: none }
+  // its cards' art is fetched by 速查 while the picks are made
 };
+function routeKey(tab, frame) {
+  return frame.key in ROUTES && frame.key !== "root" ? frame.key : tab;
+}
 function renderPage(tab, ctx) {
-  switch (ctx.frame.key) {
-    case "champion":
-      return championCard(ctx);
-    case "augment":
-      return augmentPage(ctx);
-    case "item":
-      return itemPage(ctx);
-    case "note":
-      return notePage(ctx);
-    case "roster":
-      return rosterPage(ctx);
-    case "championlist":
-      return championsPage(ctx);
-    case "games":
-      return gamesPage(ctx);
-    case "itemlist":
-      return itemsPage(ctx);
-    // the Champions page, opened from Home
-    case "rosterswipe":
-      return swipePage(ctx);
-    case "champpart":
-      return championPart(ctx);
-    default:
-      return PAGES2[tab](ctx);
-  }
+  return ROUTES[routeKey(tab, ctx.frame)].render(ctx);
 }
 
+// src/iconsnote.ts
+var import_obsidian9 = require("obsidian");
+var HEX = /^#[0-9a-fA-F]{6}$/;
+var CHUNK = 90;
+var toHex = (rgb) => {
+  const m = rgb.match(/\d+(?:\.\d+)?/g);
+  return m && m.length >= 3 ? "#" + m.slice(0, 3).map((n) => Math.round(Number(n)).toString(16).padStart(2, "0")).join("") : "";
+};
+var parse2 = (line) => {
+  const f = line.split("|").map((s) => s.trim());
+  let variable = "", hex = "";
+  for (const x of f.slice(2)) {
+    if (x.startsWith("--")) variable = x;
+    else if (/^#[0-9a-fA-F]{3,8}$/.test(x)) hex = x.toLowerCase();
+  }
+  return { label: f[0] ?? "", name: f[1] ?? "", variable, hex };
+};
+var baseline = /* @__PURE__ */ new Map();
+var serialise = (r) => [r.label, r.name, r.variable, r.hex].filter((x, i) => i < 2 || x).join(" | ");
+function iconsBlock(plugin, source, el, ctx) {
+  const ids = (0, import_obsidian9.getIconIds)().map((i) => i.replace(/^lucide-/, ""));
+  const known = new Set(ids);
+  const shopRow = (n) => {
+    const m = /^shop:(\d+)$/.exec(n);
+    return m ? Number(m[1]) : -1;
+  };
+  const valid = (n) => known.has(n) || shopRow(n) >= 0;
+  const probe = document.body.createDiv({ cls: "mn-app mn-icprobe" });
+  const current = (r) => {
+    if (r.hex) return r.hex.length === 7 ? r.hex : "#888888";
+    if (!r.variable) return "";
+    probe.style.color = `var(${r.variable})`;
+    return toHex(getComputedStyle(probe).color);
+  };
+  const info = ctx.getSectionInfo(el);
+  const list2 = el.createDiv({ cls: "mn-iclist" });
+  let openPanel = null;
+  const save = (i, r) => {
+    const file = plugin.app.vault.getAbstractFileByPath(ctx.sourcePath);
+    if (!info || !(file instanceof import_obsidian9.TFile)) return;
+    void plugin.app.vault.process(file, (data) => {
+      const lines = data.split("\n");
+      lines[info.lineStart + 1 + i] = serialise(r);
+      return lines.join("\n");
+    });
+  };
+  source.split("\n").forEach((line, i) => {
+    if (!line.trim()) return;
+    const r = parse2(line);
+    const key = `${ctx.sourcePath}|${r.label}`;
+    if (!baseline.has(key)) baseline.set(key, { ...r });
+    const base = baseline.get(key);
+    const row2 = list2.createDiv({ cls: "mn-icrow" });
+    const pic2 = row2.createSpan({ cls: "mn-icbig" });
+    const label = row2.createDiv({ cls: "mn-iclabel", text: r.label });
+    if (r.variable) label.createSpan({ cls: "mn-icvar", text: r.variable });
+    const ctl = row2.createDiv({ cls: "mn-icctl" });
+    const name = ctl.createEl("input", { cls: "mn-icin", attr: { type: "text", value: r.name, placeholder: "lucide name", spellcheck: "false", autocapitalize: "off", autocomplete: "off" } });
+    const resetName = ctl.createEl("button", { cls: "mn-icreset", attr: { "aria-label": "Back to the first icon" } });
+    (0, import_obsidian9.setIcon)(resetName, "rotate-ccw");
+    const pick = ctl.createEl("input", { cls: "mn-icpick", attr: { type: "color" } });
+    const hex = ctl.createEl("input", { cls: "mn-icin mn-ichexin", attr: { type: "text", placeholder: "#hex", spellcheck: "false", autocapitalize: "off" } });
+    const reset = ctl.createEl("button", { cls: "mn-icreset", attr: { "aria-label": "Back to the app's colour" } });
+    (0, import_obsidian9.setIcon)(reset, "rotate-ccw");
+    const draw = () => {
+      const c = current(r);
+      pic2.empty();
+      pic2.style.color = c || "";
+      if (shopRow(r.name) >= 0) shopIcon(pic2, shopRow(r.name), true);
+      else if (known.has(r.name)) (0, import_obsidian9.setIcon)(pic2, r.name);
+      else pic2.setText("?");
+      name.toggleClass("is-bad", !valid(r.name));
+      if (HEX.test(c)) pick.value = c;
+      hex.value = r.hex;
+      hex.placeholder = c || "#hex";
+      reset.toggleClass("is-off", r.variable ? !r.hex : r.hex === base.hex);
+      resetName.toggleClass("is-off", r.name === base.name);
+    };
+    draw();
+    const panel = row2.createDiv({ cls: "mn-icpanel is-hidden" });
+    let shown = 0, matches2 = [];
+    const more = () => {
+      for (const id of matches2.slice(shown, shown + CHUNK)) {
+        const b = panel.createEl("button", { cls: "mn-ictile" });
+        b.createSpan({ cls: "mn-ictile-ic" }).style.color = current(r);
+        (0, import_obsidian9.setIcon)(b.firstElementChild, id);
+        b.createSpan({ cls: "mn-ictile-n", text: id });
+        b.addEventListener("click", (e) => {
+          e.preventDefault();
+          r.name = id;
+          name.value = id;
+          draw();
+          close();
+          save(i, r);
+        });
+      }
+      shown += CHUNK;
+    };
+    const fill = () => {
+      const q = name.value.trim().toLowerCase().replace(/^lucide-/, "");
+      matches2 = q ? ids.filter((x) => x.includes(q)) : ids;
+      panel.empty();
+      shown = 0;
+      panel.scrollTop = 0;
+      if (!matches2.length) panel.createDiv({ cls: "mn-icnone", text: "no icon with that name" });
+      else more();
+    };
+    const close = () => {
+      panel.addClass("is-hidden");
+      if (openPanel === panel) openPanel = null;
+    };
+    panel.addEventListener("scroll", () => {
+      if (shown < matches2.length && panel.scrollTop + panel.clientHeight > panel.scrollHeight - 80) more();
+    });
+    panel.addEventListener("mousedown", (e) => e.preventDefault());
+    name.addEventListener("focus", () => {
+      openPanel?.addClass("is-hidden");
+      openPanel = panel;
+      panel.removeClass("is-hidden");
+      name.select();
+      fill();
+    });
+    name.addEventListener("input", fill);
+    name.addEventListener("blur", () => window.setTimeout(close, 150));
+    name.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        name.blur();
+      }
+    });
+    name.addEventListener("change", () => {
+      r.name = name.value.trim().toLowerCase().replace(/^lucide-/, "");
+      draw();
+      if (valid(r.name)) save(i, r);
+    });
+    pick.addEventListener("input", () => {
+      r.hex = pick.value.toLowerCase();
+      draw();
+    });
+    pick.addEventListener("change", () => {
+      r.hex = pick.value.toLowerCase();
+      draw();
+      save(i, r);
+    });
+    hex.addEventListener("change", () => {
+      const v = hex.value.trim().toLowerCase().replace(/^(?=[0-9a-f]{6}$)/, "#");
+      r.hex = HEX.test(v) ? v : "";
+      draw();
+      save(i, r);
+    });
+    reset.addEventListener("click", (e) => {
+      e.preventDefault();
+      r.hex = r.variable ? "" : base.hex;
+      draw();
+      save(i, r);
+    });
+    resetName.addEventListener("click", (e) => {
+      e.preventDefault();
+      r.name = base.name;
+      name.value = base.name;
+      draw();
+      save(i, r);
+    });
+  });
+  probe.remove();
+}
+function registerIconsNote(plugin) {
+  plugin.registerMarkdownCodeBlockProcessor("mn-icons", (source, el, ctx) => iconsBlock(plugin, source, el, ctx));
+}
+
+// src/layoutnote.ts
+var import_obsidian10 = require("obsidian");
+var W = 390;
+var H = 844;
+var SCALE = 0.78;
+var SNAP = 2;
+var MARGIN = 16;
+var TABBAR = 64;
+var STATUS = 47;
+var CARRIER = "\u4E2D\u83EF\u96FB\u4FE1";
+var SEP = " \xB7 ";
+var KINDS3 = {
+  hero: { color: "#8fb4ee", name: "hero / picture" },
+  nav: { color: "#9aa3b8", name: "title / nav" },
+  entry: { color: "#7fd9ad", name: "entries / buttons" },
+  list: { color: "#f0cd7a", name: "list / grid" },
+  info: { color: "#cba8f5", name: "info / stats" },
+  action: { color: "#f08ab8", name: "input / action" },
+  float: { color: "#73bbb2", name: "floating" }
+};
+var LAYER = { hero: 0, float: 3 };
+var SYNCED = "mn-layout-synced";
+var memory = /* @__PURE__ */ new Map();
+var winAt = /* @__PURE__ */ new Map();
+var metricAt = "left";
+var STEP = 4;
+var REPEAT_MS = 110;
+var uid2 = () => Math.random().toString(36).slice(2, 8);
+var snap = (v) => Math.round(v / SNAP) * SNAP;
+var clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+function parse3(source) {
+  try {
+    const v = JSON.parse(source || "[]");
+    return Array.isArray(v) ? v : [];
+  } catch {
+    return [];
+  }
+}
+var serialise2 = (pages) => "[\n" + pages.map((p) => "  " + JSON.stringify(p)).join(",\n") + "\n]";
+function layoutBlock2(plugin, source, el, ctx) {
+  const saved = parse3(source);
+  const steps = memory.get(ctx.sourcePath) ?? /* @__PURE__ */ new Map();
+  memory.set(ctx.sourcePath, steps);
+  const info = ctx.getSectionInfo(el);
+  const home = saved[0]?.id ?? `@${info?.lineStart ?? 0}`;
+  const pages = saved.map((p) => steps.has(p.id) ? JSON.parse(steps.get(p.id).last) : p);
+  for (const [id, s] of steps) if (s.home === home && !saved.some((p) => p.id === id)) pages.push(JSON.parse(s.last));
+  const root = el.createDiv({ cls: "mn-lay" });
+  if (source.trim() && !saved.length) {
+    root.createDiv({ cls: "mn-lay-err", text: "The layout data could not be read (JSON). Fix it in the source view." });
+    return;
+  }
+  const write = (list2) => {
+    const file = plugin.app.vault.getAbstractFileByPath(ctx.sourcePath);
+    if (!info || !(file instanceof import_obsidian10.TFile)) {
+      new import_obsidian10.Notice("Could not save the layout");
+      return;
+    }
+    void plugin.app.vault.process(file, (data) => {
+      const lines = data.split("\n");
+      lines.splice(info.lineStart + 1, info.lineEnd - info.lineStart - 1, ...serialise2(list2).split("\n"));
+      return lines.join("\n");
+    });
+  };
+  let synced = /* @__PURE__ */ new Map();
+  const file0 = plugin.app.vault.getAbstractFileByPath(ctx.sourcePath);
+  if (file0 instanceof import_obsidian10.TFile) void plugin.app.vault.cachedRead(file0).then((text) => {
+    const m = new RegExp("```" + SYNCED + "\\n([\\s\\S]*?)\\n```").exec(text);
+    synced = new Map(parse3(m?.[1] ?? "").map((p) => [p.id, JSON.stringify(p)]));
+    const first = text.split("\n").findIndex((l) => l.trim() === "```mn-layout");
+    legend.toggleClass("is-hidden", !!info && first >= 0 && first !== info.lineStart);
+    draw();
+  });
+  const changedSinceSync = (page2) => synced.size > 0 && synced.get(page2.id) !== savedJson(page2.id);
+  const savedJson = (id) => {
+    const p = saved.find((x) => x.id === id);
+    return p ? JSON.stringify(p) : "";
+  };
+  const stepsOf = (page2) => {
+    let s = steps.get(page2.id);
+    if (!s) {
+      s = { past: [], future: [], last: savedJson(page2.id) || JSON.stringify(page2), home };
+      steps.set(page2.id, s);
+    }
+    return s;
+  };
+  const changed = (page2) => {
+    const s = stepsOf(page2), now = JSON.stringify(page2);
+    if (now === s.last) return;
+    s.past.push(s.last);
+    s.last = now;
+    s.future = [];
+  };
+  const goTo = (page2, json) => {
+    const v = JSON.parse(json);
+    Object.assign(page2, v);
+    if (!page2.note) delete page2.note;
+    if (!v.mock) delete page2.mock;
+    selected = null;
+    draw();
+  };
+  const dirty = (page2) => (steps.get(page2.id)?.last ?? JSON.stringify(page2)) !== savedJson(page2.id);
+  const savePage = (page2) => {
+    const list2 = saved.map((p) => p.id === page2.id ? page2 : p);
+    if (!saved.some((p) => p.id === page2.id)) list2.push(page2);
+    write(list2);
+  };
+  for (const ev of ["pointerdown", "mousedown", "click", "touchstart"]) root.addEventListener(ev, (e) => e.stopPropagation());
+  const legend = root.createDiv({ cls: "mn-lay-legend" });
+  for (const v of Object.values(KINDS3)) {
+    const s = legend.createSpan();
+    s.createEl("i").style.borderColor = v.color;
+    s.append(v.name);
+  }
+  const wall = root.createDiv({ cls: "mn-lay-groups" });
+  let selected = null;
+  let openWin = null;
+  const life = new import_obsidian10.MarkdownRenderChild(el);
+  life.onunload = () => {
+    openWin?.remove();
+    openWin = null;
+  };
+  ctx.addChild(life);
+  const groupOf = (p) => p.name.split(SEP)[0];
+  const subOf = (p) => p.name.split(SEP).slice(1).join(SEP);
+  const named = (group2, sub) => sub ? group2 + SEP + sub : group2;
+  const addPage = (name, after) => {
+    const p = { id: uid2(), name, tabbar: true, blocks: [] };
+    pages.splice(after ? pages.indexOf(after) + 1 : pages.length, 0, p);
+    stepsOf(p);
+    draw();
+  };
+  const draw = () => {
+    wall.empty();
+    openWin?.remove();
+    openWin = null;
+    const groups = /* @__PURE__ */ new Map();
+    for (const p of pages) groups.set(groupOf(p), [...groups.get(groupOf(p)) ?? [], p]);
+    for (const [group2, list2] of groups) {
+      const sec = wall.createDiv({ cls: "mn-lay-group" });
+      const gh = sec.createDiv({ cls: "mn-lay-ghead" });
+      const gname = gh.createEl("input", { cls: "mn-lay-gname", attr: { value: group2, spellcheck: "false" } });
+      gname.addEventListener("change", () => {
+        const g = gname.value.trim();
+        if (!g || g === group2) return;
+        for (const p of list2) {
+          p.name = named(g, subOf(p));
+          changed(p);
+        }
+        draw();
+      });
+      const sub = gh.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": "Add a page to this group" } });
+      icon(sub, "plus");
+      sub.addEventListener("click", () => addPage(named(group2, "New page"), list2[list2.length - 1]));
+      const row2 = sec.createDiv({ cls: "mn-lay-pages" });
+      for (const page2 of list2) drawPage(row2, page2);
+    }
+    const add = wall.createEl("button", { cls: "mn-lay-addpage" });
+    icon(add, "plus");
+    add.append("Page");
+    add.addEventListener("click", () => addPage("New page"));
+  };
+  const drawPage = (parent, page2) => {
+    const fig = parent.createDiv({ cls: "mn-lay-page" + (page2.mock ? " is-mock" : changedSinceSync(page2) ? " is-changed" : "") + (dirty(page2) ? " is-dirty" : "") });
+    const head2 = fig.createDiv({ cls: "mn-lay-head" });
+    const name = head2.createEl("input", { cls: "mn-lay-name", attr: { value: subOf(page2), placeholder: "Main page", spellcheck: "false" } });
+    name.addEventListener("change", () => {
+      page2.name = named(groupOf(page2), name.value.trim());
+      changed(page2);
+      draw();
+    });
+    const s = stepsOf(page2);
+    const tool = (ic, label, on, act, cls = "") => {
+      const b = head2.createEl("button", { cls: "mn-lay-btn" + cls + (on ? "" : " is-off"), attr: { "aria-label": label } });
+      icon(b, ic);
+      b.addEventListener("click", () => {
+        if (on) act();
+      });
+    };
+    tool("undo-2", "Back a step", s.past.length > 0, () => {
+      s.future.push(s.last);
+      s.last = s.past.pop();
+      goTo(page2, s.last);
+    });
+    tool("redo-2", "Forward a step", s.future.length > 0, () => {
+      s.past.push(s.last);
+      s.last = s.future.pop();
+      goTo(page2, s.last);
+    });
+    const base = synced.get(page2.id);
+    tool("rotate-ccw", "Reset to the synced layout", !!base && (dirty(page2) || changedSinceSync(page2)), () => {
+      s.past.push(s.last);
+      s.last = base;
+      s.future = [];
+      goTo(page2, s.last);
+      savePage(page2);
+    });
+    tool("flask-conical", page2.mock ? "Mock: tap to make it a real page" : "Mark as a mock", true, () => {
+      if (page2.mock) delete page2.mock;
+      else page2.mock = true;
+      changed(page2);
+      draw();
+    }, page2.mock ? " is-mock" : "");
+    tool("save", "Save this page into the note", dirty(page2), () => savePage(page2), dirty(page2) ? " is-dirty" : "");
+    const addB = head2.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": "Add a block" } });
+    icon(addB, "square-plus");
+    addB.addEventListener("click", () => {
+      const open = fig.querySelector(".mn-lay-kinds.is-add");
+      if (open) {
+        open.remove();
+        return;
+      }
+      const pop = kindGrid(fig, "", (k) => {
+        pop.remove();
+        const low = page2.blocks.reduce((m, x) => Math.max(m, x.y + x.h), STATUS + 8);
+        const y = clamp(snap(low + 8), 0, H - TABBAR - 80);
+        const b = { id: uid2(), label: `New ${KINDS3[k].name.split(" / ")[0]}`, kind: k, x: MARGIN, y, w: W - 2 * MARGIN, h: 80 };
+        page2.blocks.push(b);
+        selected = { page: page2, block: b };
+        changed(page2);
+        draw();
+      });
+      pop.addClass("is-add");
+    });
+    const delP = head2.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": "Delete the page (tap twice)" } });
+    icon(delP, "trash-2");
+    delP.addEventListener("click", () => {
+      if (!delP.hasClass("is-armed")) {
+        delP.addClass("is-armed");
+        window.setTimeout(() => delP.removeClass("is-armed"), 2500);
+        return;
+      }
+      steps.delete(page2.id);
+      if (saved.some((p) => p.id === page2.id)) write(saved.filter((p) => p.id !== page2.id));
+      else {
+        pages.splice(pages.indexOf(page2), 1);
+        draw();
+      }
+    });
+    const note = fig.createEl("textarea", { cls: "mn-lay-pnote", attr: { rows: "4", placeholder: "What this page is for" } });
+    note.value = page2.note ?? "";
+    note.addEventListener("change", () => {
+      page2.note = note.value.trim() || void 0;
+      changed(page2);
+      draw();
+    });
+    const phone = fig.createDiv({ cls: "mn-lay-phone" });
+    phone.style.width = `${W * SCALE}px`;
+    phone.style.height = `${H * SCALE}px`;
+    const screen2 = phone.createDiv({ cls: "mn-lay-screen" });
+    screen2.style.transform = `scale(${SCALE})`;
+    screen2.style.width = `${W}px`;
+    screen2.style.height = `${H}px`;
+    const sb = screen2.createDiv({ cls: "mn-lay-status" });
+    sb.style.height = `${STATUS}px`;
+    sb.createSpan({ cls: "mn-lay-carrier", text: CARRIER });
+    sb.createDiv({ cls: "mn-lay-notch" });
+    const sig = sb.createDiv({ cls: "mn-lay-sig" });
+    const bars = sig.createSpan({ cls: "mn-lay-bars" });
+    for (let i = 0; i < 4; i++) bars.createEl("i");
+    sig.createSpan({ text: "5G" });
+    sig.createSpan({ cls: "mn-lay-batt" }).createEl("i");
+    if (page2.tabbar !== false) {
+      const tb = screen2.createDiv({ cls: "mn-lay-tabbar" });
+      tb.style.height = `${TABBAR}px`;
+      for (const t of MODES[plugin.settings.mode].tabs) {
+        const c = tb.createSpan();
+        icon(c, TAB_ICON[t]);
+        c.createSpan({ text: TAB_LABEL[t] });
+      }
+    }
+    for (const b of page2.blocks) {
+      const z = screen2.createDiv({ cls: "mn-lay-z" + (selected?.block === b ? " is-sel" : "") });
+      const pos = () => {
+        z.style.left = `${b.x}px`;
+        z.style.top = `${b.y}px`;
+        z.style.width = `${b.w}px`;
+        z.style.height = `${b.h}px`;
+        size.textContent = `${b.w}\xD7${b.h}`;
+      };
+      const col = KINDS3[b.kind]?.color ?? "#9aa3b8";
+      z.style.setProperty("--c", col);
+      z.style.zIndex = String(LAYER[b.kind] ?? 1);
+      const tag = z.createDiv({ cls: "mn-lay-tag" });
+      tag.createSpan({ text: b.label });
+      const size = tag.createEl("small");
+      if (b.note) z.createDiv({ cls: "mn-lay-znote", text: b.note });
+      const grip = z.createDiv({ cls: "mn-lay-grip" });
+      pos();
+      const drag = (resize) => (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const x0 = e.clientX, y0 = e.clientY, start = { ...b };
+        let moved = false;
+        z.setPointerCapture(e.pointerId);
+        const move = (m) => {
+          const dx = (m.clientX - x0) / SCALE, dy = (m.clientY - y0) / SCALE;
+          if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
+          if (resize) {
+            b.w = clamp(snap(start.w + dx), 16, W - b.x);
+            b.h = clamp(snap(start.h + dy), 12, H - b.y);
+          } else {
+            b.x = clamp(snap(start.x + dx), 0, W - b.w);
+            b.y = clamp(snap(start.y + dy), 0, H - b.h);
+          }
+          pos();
+        };
+        const up = () => {
+          z.removeEventListener("pointermove", move);
+          z.removeEventListener("pointerup", up);
+          z.removeEventListener("pointercancel", up);
+          if (moved) {
+            changed(page2);
+            draw();
+          } else {
+            selected = selected?.block === b ? null : { page: page2, block: b };
+            draw();
+          }
+        };
+        z.addEventListener("pointermove", move);
+        z.addEventListener("pointerup", up);
+        z.addEventListener("pointercancel", up);
+      };
+      z.addEventListener("pointerdown", drag(false));
+      grip.addEventListener("pointerdown", drag(true));
+    }
+    if (selected?.page === page2) inspector(fig, page2, selected.block);
+  };
+  const kindGrid = (parent, current, pick) => {
+    const g = parent.createDiv({ cls: "mn-lay-kinds" });
+    for (const [k, v] of Object.entries(KINDS3)) {
+      const c = g.createEl("button", { cls: "mn-lay-kind" + (k === current ? " is-on" : "") });
+      const sw = c.createSpan({ cls: "mn-lay-sw" });
+      sw.style.setProperty("--c", v.color);
+      c.createSpan({ text: v.name });
+      c.addEventListener("click", (e) => {
+        e.stopPropagation();
+        pick(k);
+      });
+    }
+    return g;
+  };
+  const inspector = (fig, page2, b) => {
+    openWin?.remove();
+    const win = document.body.createDiv({ cls: "mn-lay-win" });
+    openWin = win;
+    const place = (p) => {
+      win.style.transform = `translate(calc(${import_obsidian10.Platform.isMobile ? "-50%" : `50vw - ${MARGIN}px - 100%`} + ${p.x}px), calc(-50% + ${p.y}px))`;
+    };
+    place(winAt.get(page2.id) ?? { x: 0, y: 0 });
+    const shut = () => {
+      selected = null;
+      winAt.delete(page2.id);
+      draw();
+    };
+    const onScroll = (e) => {
+      if (!win.isConnected) {
+        document.removeEventListener("scroll", onScroll, true);
+        return;
+      }
+      if (e.target instanceof Node && win.contains(e.target)) return;
+      if (win.contains(document.activeElement)) return;
+      document.removeEventListener("scroll", onScroll, true);
+      shut();
+    };
+    document.addEventListener("scroll", onScroll, true);
+    for (const ev of ["pointerdown", "mousedown", "click", "touchstart"]) win.addEventListener(ev, (e) => e.stopPropagation());
+    const commit = () => {
+      changed(page2);
+      draw();
+    };
+    const head2 = win.createDiv({ cls: "mn-lay-winhead" });
+    head2.createSpan({ cls: "mn-lay-wspace" });
+    const nameRow = win.createDiv({ cls: "mn-lay-wrow" });
+    const title = nameRow.createEl("textarea", { cls: "mn-lay-wtitle-in", attr: { rows: "1", spellcheck: "false", "aria-label": "Block name" } });
+    title.value = b.label;
+    const growTitle = () => {
+      title.style.height = "auto";
+      title.style.height = `${title.scrollHeight}px`;
+    };
+    title.addEventListener("input", growTitle);
+    requestAnimationFrame(growTitle);
+    title.addEventListener("keydown", (k) => {
+      if (k.key === "Enter") {
+        k.preventDefault();
+        title.blur();
+      }
+    });
+    title.addEventListener("change", () => {
+      b.label = title.value.replace(/\s+/g, " ").trim() || b.label;
+      commit();
+    });
+    const close = head2.createEl("button", { cls: "mn-lay-wbtn", attr: { "aria-label": "Close" } });
+    icon(close, "x");
+    close.addEventListener("click", shut);
+    head2.addEventListener("pointerdown", (e) => {
+      if (e.target.closest("input, textarea, button")) return;
+      const x0 = e.clientX, y0 = e.clientY, start = winAt.get(page2.id) ?? { x: 0, y: 0 };
+      let dragging = false;
+      head2.setPointerCapture(e.pointerId);
+      const move = (m) => {
+        if (!dragging && Math.abs(m.clientX - x0) + Math.abs(m.clientY - y0) < 4) return;
+        dragging = true;
+        const p = { x: start.x + m.clientX - x0, y: start.y + m.clientY - y0 };
+        winAt.set(page2.id, p);
+        place(p);
+      };
+      const up = () => {
+        head2.removeEventListener("pointermove", move);
+        head2.removeEventListener("pointerup", up);
+        head2.removeEventListener("pointercancel", up);
+      };
+      head2.addEventListener("pointermove", move);
+      head2.addEventListener("pointerup", up);
+      head2.addEventListener("pointercancel", up);
+    });
+    const kindRow = win.createDiv({ cls: "mn-lay-wrow" });
+    const kindBtn = kindRow.createEl("button", { cls: "mn-lay-kindbtn" });
+    const ks = kindBtn.createSpan({ cls: "mn-lay-sw" });
+    ks.style.setProperty("--c", KINDS3[b.kind]?.color ?? "#9aa3b8");
+    kindBtn.createSpan({ text: KINDS3[b.kind]?.name ?? b.kind });
+    icon(kindBtn, "chevron-down");
+    kindBtn.addEventListener("click", () => {
+      const open = win.querySelector(".mn-lay-kinds");
+      if (open) {
+        open.remove();
+        return;
+      }
+      kindRow.after(kindGrid(win, b.kind, (k) => {
+        b.kind = k;
+        commit();
+      }));
+    });
+    const SAFE_TOP = STATUS + 1, SAFE_BOTTOM = H - (page2.tabbar !== false ? TABBAR : 0);
+    const align = win.createDiv({ cls: "mn-lay-align" });
+    const al = (ic, label, act) => {
+      const btn = align.createEl("button", { cls: "mn-lay-wbtn", attr: { "aria-label": label, title: label } });
+      icon(btn, ic);
+      btn.addEventListener("click", () => {
+        act();
+        commit();
+      });
+    };
+    al("align-start-vertical", "Align left (16 px margin)", () => {
+      b.x = MARGIN;
+    });
+    al("align-center-vertical", "Centre across", () => {
+      b.x = Math.round((W - b.w) / 2);
+    });
+    al("align-end-vertical", "Align right (16 px margin)", () => {
+      b.x = W - MARGIN - b.w;
+    });
+    align.createSpan({ cls: "mn-lay-asep" });
+    al("align-start-horizontal", "Align top (under the status bar)", () => {
+      b.y = SAFE_TOP;
+    });
+    al("align-center-horizontal", "Centre down", () => {
+      b.y = Math.round((SAFE_TOP + SAFE_BOTTOM - b.h) / 2);
+    });
+    al("align-end-horizontal", "Align bottom (over the tab bar)", () => {
+      b.y = SAFE_BOTTOM - b.h;
+    });
+    align.createSpan({ cls: "mn-lay-asep" });
+    al("stretch-horizontal", "Full width (16 px margins)", () => {
+      b.x = MARGIN;
+      b.w = W - 2 * MARGIN;
+    });
+    al("layout-grid", "Snap every edge to 4 px", () => {
+      const r = (v) => Math.round(v / 4) * 4;
+      const x2 = r(b.x + b.w), y2 = r(b.y + b.h);
+      b.x = r(b.x);
+      b.y = r(b.y);
+      b.w = Math.max(4, x2 - b.x);
+      b.h = Math.max(4, y2 - b.y);
+    });
+    const get = { top: () => b.y, left: () => b.x, right: () => W - b.x - b.w, bottom: () => H - b.y - b.h, w: () => b.w, h: () => b.h };
+    const put = {
+      top: (v) => {
+        b.y = clamp(v, 0, H - b.h);
+      },
+      left: (v) => {
+        b.x = clamp(v, 0, W - b.w);
+      },
+      right: (v) => {
+        b.x = clamp(W - v - b.w, 0, W - b.w);
+      },
+      bottom: (v) => {
+        b.y = clamp(H - v - b.h, 0, H - b.h);
+      },
+      w: (v) => {
+        b.w = clamp(v, 8, W - b.x);
+      },
+      h: (v) => {
+        b.h = clamp(v, 8, H - b.y);
+      }
+    };
+    const NAME = { top: "Top gap", left: "Left gap", right: "Right gap", bottom: "Bottom gap", w: "Width", h: "Height" };
+    const boxEl = win.createDiv({ cls: "mn-lay-box" });
+    const nums = /* @__PURE__ */ new Map();
+    const num2 = (m, parent, cls) => {
+      const btn = parent.createEl("button", { cls: "mn-lay-bnum " + cls + (m === metricAt ? " is-on" : ""), text: String(get[m]()), attr: { "aria-label": NAME[m] } });
+      btn.addEventListener("click", () => {
+        metricAt = m;
+        nums.forEach((x, k) => x.toggleClass("is-on", k === m));
+        showStep();
+      });
+      nums.set(m, btn);
+    };
+    num2("top", boxEl, "is-top");
+    num2("left", boxEl, "is-left");
+    const blockEl = boxEl.createDiv({ cls: "mn-lay-bblock" });
+    blockEl.style.setProperty("--c", KINDS3[b.kind]?.color ?? "#9aa3b8");
+    num2("w", blockEl, "is-w");
+    blockEl.createSpan({ cls: "mn-lay-bx", text: "\xD7" });
+    num2("h", blockEl, "is-h");
+    num2("right", boxEl, "is-right");
+    num2("bottom", boxEl, "is-bottom");
+    const step = win.createDiv({ cls: "mn-lay-step" });
+    const stepName = step.createSpan({ cls: "mn-lay-sname" });
+    const minus = step.createEl("button", { cls: "mn-lay-sbtn", attr: { "aria-label": "Less" } });
+    icon(minus, "minus");
+    const input = step.createEl("input", { cls: "mn-lay-sin", attr: { type: "number", inputmode: "numeric", step: String(STEP) } });
+    const plus = step.createEl("button", { cls: "mn-lay-sbtn", attr: { "aria-label": "More" } });
+    icon(plus, "plus");
+    const showStep = () => {
+      stepName.setText(NAME[metricAt]);
+      input.value = String(get[metricAt]());
+    };
+    const refresh = () => {
+      nums.forEach((x, k) => x.setText(String(get[k]())));
+      input.value = String(get[metricAt]());
+    };
+    const nudge = (d) => {
+      put[metricAt](get[metricAt]() + d);
+      refresh();
+    };
+    let held2 = 0, nudged = false;
+    const hold = (btn, d) => {
+      btn.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        nudge(d);
+        nudged = true;
+        held2 = window.setInterval(() => nudge(d), REPEAT_MS);
+      });
+      const stop = () => {
+        window.clearInterval(held2);
+        held2 = 0;
+        if (nudged) {
+          nudged = false;
+          commit();
+        }
+      };
+      for (const ev of ["pointerup", "pointercancel", "pointerleave"]) btn.addEventListener(ev, stop);
+    };
+    hold(minus, -STEP);
+    hold(plus, STEP);
+    input.addEventListener("change", () => {
+      put[metricAt](Math.round(Number(input.value) || 0));
+      commit();
+    });
+    showStep();
+    const note = win.createEl("textarea", { cls: "mn-lay-wnote", attr: { rows: "1", placeholder: "Note: what goes here, what is wrong" } });
+    note.value = b.note ?? "";
+    const grow = () => {
+      note.style.height = "auto";
+      note.style.height = `${note.scrollHeight + 2}px`;
+    };
+    note.addEventListener("input", grow);
+    requestAnimationFrame(grow);
+    note.addEventListener("change", () => {
+      b.note = note.value.trim() || void 0;
+      commit();
+    });
+    const acts = win.createDiv({ cls: "mn-lay-acts" });
+    const dup = acts.createEl("button", { cls: "mn-lay-wbtn", attr: { "aria-label": "Duplicate", title: "Duplicate" } });
+    icon(dup, "copy");
+    dup.addEventListener("click", () => {
+      const c = { ...b, id: uid2(), y: clamp(b.y + 12, 0, H - b.h) };
+      page2.blocks.push(c);
+      selected = { page: page2, block: c };
+      commit();
+    });
+    const del = acts.createEl("button", { cls: "mn-lay-wbtn is-danger", attr: { "aria-label": "Delete", title: "Delete" } });
+    icon(del, "trash-2");
+    del.addEventListener("click", () => {
+      page2.blocks.splice(page2.blocks.indexOf(b), 1);
+      selected = null;
+      commit();
+    });
+  };
+  draw();
+}
+function registerLayoutNote(plugin) {
+  plugin.registerMarkdownCodeBlockProcessor("mn-layout", (source, el, ctx) => layoutBlock2(plugin, source, el, ctx));
+  plugin.registerMarkdownCodeBlockProcessor(SYNCED, (_source, el) => {
+    el.createDiv({ cls: "mn-lay-synced", text: "Last synced layout (kept by Claude; changed pages are marked against it)" });
+  });
+}
+
+// src/inboxnote.ts
+var import_obsidian12 = require("obsidian");
+
+// src/pickers.ts
+var import_obsidian11 = require("obsidian");
+var splitNames = (s) => (s ?? "").split(/[、,，]/).map((x) => x.trim()).filter(Boolean);
+var pic = (parent, c, cls) => {
+  const box = parent.createSpan({ cls });
+  if (c?.img) {
+    box.addClass("has-img");
+    box.style.backgroundImage = `url("${c.img}")`;
+  } else if (c?.icon) {
+    (0, import_obsidian11.setIcon)(box, c.icon);
+    if (c.color) box.style.color = c.color;
+  }
+};
+function picker(parent, o) {
+  const root = parent.createDiv({ cls: "mn-pick" });
+  const byName = new Map(o.choices.map((c) => [c.name, c]));
+  let value = [...o.value];
+  const chips = root.createDiv({ cls: "mn-pick-chips" });
+  const input = root.createEl("input", { cls: "mn-pick-in", attr: { type: "text", placeholder: o.placeholder ?? "\u641C\u5C0B\u2026", spellcheck: "false", autocomplete: "off" } });
+  const list2 = root.createDiv({ cls: "mn-pick-list" });
+  const full = () => !o.multi ? false : !!o.max && value.length >= o.max;
+  let pending = false;
+  const set = (v, now = true) => {
+    value = v;
+    drawChips();
+    if (now) o.onChange(value);
+    else pending = true;
+  };
+  const close = () => {
+    list2.removeClass("is-open");
+    if (pending) {
+      pending = false;
+      o.onChange(value);
+    }
+  };
+  const drawChips = () => {
+    chips.empty();
+    value.forEach((n, i) => {
+      const chip2 = chips.createDiv({ cls: "mn-pick-chip" });
+      if (o.max && o.multi) chip2.createSpan({ cls: "mn-pick-no", text: String(i + 1) });
+      pic(chip2, byName.get(n), "mn-pick-pic");
+      chip2.createSpan({ text: n });
+      const x = chip2.createSpan({ cls: "mn-pick-x" });
+      (0, import_obsidian11.setIcon)(x, "x");
+      x.addEventListener("click", (e) => {
+        e.stopPropagation();
+        set(value.filter((_, j) => j !== i), !list2.hasClass("is-open"));
+      });
+    });
+    chips.toggleClass("is-empty", !value.length);
+    input.toggleClass("is-hidden", full());
+  };
+  const drawList = () => {
+    list2.empty();
+    const q = input.value.trim().toLowerCase();
+    const hits = o.choices.filter((c) => !value.includes(c.name) && (!q || c.name.toLowerCase().includes(q) || (c.also ?? "").toLowerCase().includes(q)));
+    list2.toggleClass("is-open", document.activeElement === input && hits.length > 0);
+    let group2 = "";
+    for (const c of hits) {
+      if (c.group && c.group !== group2) {
+        group2 = c.group;
+        list2.createDiv({ cls: "mn-pick-group", text: group2 });
+      }
+      const row2 = list2.createDiv({ cls: "mn-pick-opt" });
+      pic(row2, c, "mn-pick-pic");
+      row2.createSpan({ text: c.name });
+      row2.addEventListener("click", (e) => {
+        e.preventDefault();
+        input.value = "";
+        if (o.multi) {
+          set([...value, c.name], false);
+          if (full()) {
+            input.blur();
+            close();
+          } else drawList();
+        } else {
+          set([c.name]);
+          list2.removeClass("is-open");
+          input.blur();
+        }
+      });
+    }
+  };
+  list2.addEventListener("mousedown", (e) => e.preventDefault());
+  input.addEventListener("focus", drawList);
+  input.addEventListener("input", drawList);
+  input.addEventListener("blur", () => window.setTimeout(close, 120));
+  drawChips();
+  return root;
+}
+
+// src/inboxnote.ts
+var MODES2 = ["\u5927\u6DF7\u6230", "\u5CFD\u8C37"];
+var STATUS2 = ["\u5F85\u9A57\u8B49", "\u5DF2\u9A57\u8B49"];
+var FIELDS = {
+  tip: [
+    { key: "hero", label: "\u82F1\u96C4", type: "champ" },
+    { key: "mode", label: "\u6A21\u5F0F", type: "select", options: MODES2 },
+    { key: "type", label: "\u985E\u578B", type: "select", options: ["\u6280\u5DE7", "\u51FA\u88DD", "\u6709\u8DA3\u51FA\u88DD", "\u642D\u914D"] },
+    { key: "title", label: "\u6A19\u984C", type: "text" },
+    { key: "text", label: "\u5167\u5BB9", type: "area" },
+    { key: "items", label: "\u51FA\u88DD", type: "items", multi: true },
+    { key: "with", label: "\u642D\u914D\u82F1\u96C4", type: "champ", multi: true },
+    { key: "patch", label: "\u7248\u672C", type: "text", hint: "26.21 \u6216 16.21\uFF1B\u4E0D\u78BA\u5B9A\u5BEB ?" },
+    { key: "date", label: "\u65E5\u671F", type: "date" },
+    { key: "source", label: "\u4F86\u6E90", type: "text", hint: "\u983B\u9053\u540D\u7A31 + \u7DB2\u5740" },
+    { key: "status", label: "\u72C0\u614B", type: "select", options: STATUS2 }
+  ],
+  build: [
+    { key: "style", label: "\u73A9\u6CD5", type: "text" },
+    { key: "mode", label: "\u6A21\u5F0F", type: "select", options: MODES2 },
+    { key: "items", label: "\u524D\u4E09\u4EF6", type: "items", multi: true, max: 3, hint: "\u7167\u8CFC\u8CB7\u9806\u5E8F" },
+    { key: "why", label: "\u70BA\u4EC0\u9EBC", type: "area" },
+    { key: "champs", label: "\u9069\u5408\u7684\u82F1\u96C4", type: "champ", multi: true, hint: "\u8209\u5E7E\u500B\u5C31\u597D" },
+    { key: "patch", label: "\u7248\u672C", type: "text" },
+    { key: "date", label: "\u65E5\u671F", type: "date" },
+    { key: "source", label: "\u4F86\u6E90", type: "text", hint: "\u7DB2\u7AD9\u548C\u7DB2\u5740\uFF08\u6578\u5B57\u4E0D\u7167\u6284\uFF09" },
+    { key: "status", label: "\u72C0\u614B", type: "select", options: STATUS2 }
+  ]
+};
+var opened = /* @__PURE__ */ new Map();
+var uid3 = () => Math.random().toString(36).slice(2, 8);
+var parse4 = (source) => {
+  if (!source.trim()) return { kind: "tip", entries: [] };
+  try {
+    const v = JSON.parse(source);
+    return { kind: v.kind === "build" ? "build" : "tip", entries: Array.isArray(v.entries) ? v.entries : [] };
+  } catch {
+    return null;
+  }
+};
+var serialise3 = (b) => `{"kind": "${b.kind}", "entries": [` + (b.entries.length ? "\n" + b.entries.map((e) => "  " + JSON.stringify(e)).join(",\n") + "\n" : "") + "]}";
+function inboxBlock(plugin, source, el, ctx) {
+  const box = parse4(source);
+  const root = el.createDiv({ cls: "mn-inb" });
+  if (!box) {
+    root.createDiv({ cls: "mn-lay-err", text: "The inbox data could not be read (JSON). Fix it in the source view." });
+    return;
+  }
+  const fields = FIELDS[box.kind];
+  const write = () => {
+    const info = ctx.getSectionInfo(el);
+    const file = plugin.app.vault.getAbstractFileByPath(ctx.sourcePath);
+    if (!info || !(file instanceof import_obsidian12.TFile)) {
+      new import_obsidian12.Notice("Could not save the inbox");
+      return;
+    }
+    void plugin.app.vault.process(file, (data) => {
+      const lines = data.split("\n");
+      lines.splice(info.lineStart + 1, info.lineEnd - info.lineStart - 1, ...serialise3(box).split("\n"));
+      return lines.join("\n");
+    });
+  };
+  const champs = plugin.store.champions().map((c) => ({ name: c.name, img: c.icon, also: `${c.nameEn} ${c.aliases.join(" ")}` }));
+  const itemsFor = (mode) => {
+    const seen = /* @__PURE__ */ new Set(), legendary = [], epic = [];
+    for (const i of [...plugin.store.items()].reverse()) {
+      if ((mode === "\u5CFD\u8C37" ? !i.rift : !i.aram) || !i.from.length || seen.has(i.name)) continue;
+      seen.add(i.name);
+      (i.into.length ? epic : legendary).push({ name: i.name, img: i.icon, group: i.into.length ? "\u4E2D\u968E" : "\u50B3\u8AAA" });
+    }
+    return [...legendary, ...epic];
+  };
+  const bar = root.createDiv({ cls: "mn-inb-bar" });
+  bar.createSpan({ cls: "mn-inb-count", text: box.entries.length ? `${box.entries.length} \u7B46\u5F85\u6574\u7406` : "\u9084\u6C92\u6709\u6771\u897F\uFF0C\u6309 + \u65B0\u589E" });
+  const add = bar.createEl("button", { cls: "mn-inb-add" });
+  (0, import_obsidian12.setIcon)(add.createSpan(), "plus");
+  add.createSpan({ text: "\u65B0\u589E" });
+  add.addEventListener("click", () => {
+    const e = { id: uid3(), mode: MODES2[0], status: STATUS2[0], date: window.moment().format("YYYY-MM-DD"), patch: plugin.store.currentPatch() };
+    if (box.kind === "tip") e.type = "\u6280\u5DE7";
+    box.entries.unshift(e);
+    opened.set(ctx.sourcePath, e.id);
+    write();
+  });
+  for (const e of box.entries) {
+    if (!e.id) e.id = uid3();
+    const card = root.createDiv({ cls: "mn-inb-card" });
+    const head2 = card.createDiv({ cls: "mn-inb-head" });
+    const who = head2.createDiv({ cls: "mn-inb-who" });
+    const top = box.kind === "tip" ? [e.hero || "\uFF08\u82F1\u96C4\uFF09", e.type, e.mode] : [e.style || "\uFF08\u73A9\u6CD5\uFF09", e.mode];
+    who.createDiv({ cls: "mn-inb-t", text: top.filter(Boolean).join(" \xB7 ") });
+    const sub = box.kind === "tip" ? e.title || e.text || "" : e.items || e.why || "";
+    if (sub) who.createDiv({ cls: "mn-inb-s", text: sub });
+    head2.createSpan({ cls: "mn-inb-st" + (e.status === "\u5DF2\u9A57\u8B49" ? " is-ok" : ""), text: e.status || STATUS2[0] });
+    const form = card.createDiv({ cls: "mn-inb-form" });
+    const isOpen = opened.get(ctx.sourcePath) === e.id;
+    card.toggleClass("is-open", isOpen);
+    head2.addEventListener("click", () => {
+      const now = !card.hasClass("is-open");
+      root.querySelectorAll(".mn-inb-card.is-open").forEach((c) => c.removeClass("is-open"));
+      card.toggleClass("is-open", now);
+      if (now) opened.set(ctx.sourcePath, e.id);
+      else opened.delete(ctx.sourcePath);
+    });
+    for (const f of fields) {
+      const row2 = form.createDiv({ cls: "mn-inb-row" });
+      row2.createDiv({ cls: "mn-inb-l", text: f.label });
+      if (f.type === "champ" || f.type === "items") {
+        picker(row2, {
+          choices: f.type === "champ" ? champs : itemsFor(e.mode || MODES2[0]),
+          value: splitNames(e[f.key]),
+          multi: f.multi,
+          max: f.max,
+          placeholder: f.hint ?? (f.type === "champ" ? "\u641C\u5C0B\u82F1\u96C4" : "\u641C\u5C0B\u88DD\u5099"),
+          onChange: (v) => {
+            if (v.length) e[f.key] = v.join("\u3001");
+            else delete e[f.key];
+            write();
+          }
+        });
+        continue;
+      }
+      let input;
+      if (f.type === "select") {
+        input = row2.createEl("select");
+        for (const o of f.options ?? []) input.createEl("option", { text: o, attr: { value: o } });
+        input.value = e[f.key] || f.options?.[0] || "";
+      } else if (f.type === "area") {
+        input = row2.createEl("textarea", { attr: { rows: "4" } });
+        input.value = e[f.key] ?? "";
+      } else {
+        input = row2.createEl("input", { attr: { type: f.type === "date" ? "date" : "text", spellcheck: "false" } });
+        input.value = e[f.key] ?? "";
+      }
+      if (f.hint) input.setAttr("placeholder", f.hint);
+      input.addEventListener("change", () => {
+        const v = input.value.trim();
+        if ((e[f.key] ?? "") === v) return;
+        if (v) e[f.key] = v;
+        else delete e[f.key];
+        write();
+      });
+    }
+    const del = form.createEl("button", { cls: "mn-inb-del", text: "\u522A\u9664\u9019\u4E00\u7B46" });
+    let armed = false;
+    del.addEventListener("click", () => {
+      if (!armed) {
+        armed = true;
+        del.setText("\u518D\u6309\u4E00\u6B21\u522A\u9664");
+        del.addClass("is-armed");
+        window.setTimeout(() => {
+          armed = false;
+          del.setText("\u522A\u9664\u9019\u4E00\u7B46");
+          del.removeClass("is-armed");
+        }, 2500);
+        return;
+      }
+      box.entries = box.entries.filter((x) => x !== e);
+      write();
+    });
+  }
+}
+function registerInboxNote(plugin) {
+  plugin.registerMarkdownCodeBlockProcessor("mn-inbox", (source, el, ctx) => inboxBlock(plugin, source, el, ctx));
+}
+
+// src/picksnote.ts
+var import_obsidian13 = require("obsidian");
+var PUNCH_MAX = 14;
+var SOUL_MAX = 16;
+var SOUL_LINES = 3;
+var KEYS = ["P", "Q", "W", "E", "R"];
+var STATUS3 = ["\u5F85\u9A57\u8B49", "\u5DF2\u9A57\u8B49"];
+var chosen = /* @__PURE__ */ new Map();
+async function setKeys(plugin, path, values) {
+  const file = plugin.app.vault.getAbstractFileByPath(path);
+  if (!(file instanceof import_obsidian13.TFile)) return;
+  await plugin.app.vault.process(file, (data) => {
+    const lines = data.split("\n");
+    if (lines[0] !== "---") return data;
+    let end = lines.indexOf("---", 1);
+    if (end < 0) return data;
+    for (const [key, v] of Object.entries(values)) {
+      const empty2 = v === void 0 || v === "" || Array.isArray(v) && !v.length || typeof v === "object" && v !== null && !Array.isArray(v) && !Object.keys(v).length;
+      const at = lines.slice(1, end).findIndex((l) => l.startsWith(`${key}:`)) + 1;
+      if (at > 0) {
+        let n = 1;
+        while (at + n < end && /^\s/.test(lines[at + n])) n++;
+        lines.splice(at, n, ...empty2 ? [] : [`${key}: ${yaml(v)}`]);
+        end -= n - (empty2 ? 0 : 1);
+      } else if (!empty2) {
+        lines.splice(end, 0, `${key}: ${yaml(v)}`);
+        end++;
+      }
+    }
+    return lines.join("\n");
+  });
+}
+var yaml = (v) => Array.isArray(v) ? `[${v.map((x) => JSON.stringify(x)).join(", ")}]` : typeof v === "object" && v !== null ? `{${Object.entries(v).map(([k, x]) => `${JSON.stringify(k)}: ${JSON.stringify(x)}`).join(", ")}}` : JSON.stringify(v);
+var width = (s) => [...s].reduce((n, ch) => n + (/[\x00-\x7f]/.test(ch) ? 0.5 : 1), 0);
+function picksBlock(plugin, el, ctx) {
+  const store = plugin.store;
+  const all = store.champions();
+  const root = el.createDiv({ cls: "mn-pk mn-inb" });
+  if (!all.length) {
+    root.createDiv({ text: "No champion notes yet." });
+    return;
+  }
+  const statusOf = (c) => String(plugin.app.metadataCache.getFileCache(plugin.app.vault.getAbstractFileByPath(c.path))?.frontmatter?.picks_status ?? STATUS3[0]);
+  const bar = root.createDiv({ cls: "mn-inb-bar" });
+  const count2 = bar.createSpan({ cls: "mn-inb-count" });
+  const next = bar.createEl("button", { cls: "mn-inb-add" });
+  (0, import_obsidian13.setIcon)(next.createSpan(), "skip-forward");
+  next.createSpan({ text: "\u4E0B\u4E00\u4F4D\u5F85\u9A57\u8B49" });
+  const pickHost = root.createDiv();
+  const form = root.createDiv({ cls: "mn-pk-form" });
+  const counted = () => count2.setText(`\u5DF2\u9A57\u8B49 ${all.filter((c) => statusOf(c) === "\u5DF2\u9A57\u8B49").length} / ${all.length}`);
+  const show = (c) => {
+    form.empty();
+    if (!c) return;
+    chosen.set(ctx.sourcePath, c.id);
+    const save = (values) => void setKeys(plugin, c.path, values).then(counted);
+    const head2 = form.createDiv({ cls: "mn-pk-head" });
+    pic(head2, { name: c.name, img: c.icon }, "mn-pk-face");
+    const who = head2.createDiv();
+    who.createDiv({ cls: "mn-inb-t", text: c.name });
+    who.createDiv({ cls: "mn-inb-s", text: c.title });
+    const status = head2.createEl("select", { cls: "mn-pk-status" });
+    for (const s of STATUS3) status.createEl("option", { text: s, attr: { value: s } });
+    status.value = statusOf(c);
+    status.toggleClass("is-ok", status.value === "\u5DF2\u9A57\u8B49");
+    status.addEventListener("change", () => {
+      status.toggleClass("is-ok", status.value === "\u5DF2\u9A57\u8B49");
+      save({ picks_status: status.value === STATUS3[0] ? "" : status.value });
+    });
+    const row2 = (label) => {
+      const r = form.createDiv({ cls: "mn-inb-row" });
+      const l = r.createDiv({ cls: "mn-inb-l", text: label });
+      return { r, l };
+    };
+    const text = (parent, value, max, onSave) => {
+      const wrap = parent.createDiv({ cls: "mn-pk-text" });
+      const input = wrap.createEl("input", { attr: { type: "text" } });
+      input.value = value;
+      const n = wrap.createSpan({ cls: "mn-pk-n" });
+      const tick = () => {
+        const w = width(input.value);
+        n.setText(`${w}/${max}`);
+        n.toggleClass("is-over", w > max);
+      };
+      tick();
+      input.addEventListener("input", tick);
+      input.addEventListener("change", () => onSave(input.value.trim()));
+      return input;
+    };
+    text(row2("\u4E00\u53E5\u8A71\uFF08punch\uFF09").r, c.punch, PUNCH_MAX, (v) => save({ punch: v }));
+    const stats2 = Object.keys(STAT_ICON).map((name) => ({ name, icon: STAT_ICON[name], color: STAT_COLOR[name] }));
+    picker(row2("\u5806\uFF08stack\uFF09\xB7 \u5169\u4E09\u500B").r, { choices: stats2, value: c.stack, multi: true, max: 3, placeholder: "\u9078\u5C6C\u6027", onChange: (v) => save({ stack: v }) });
+    const soul = row2("\u73A9\u6CD5\uFF08soul\uFF09\xB7 \u4E00\u884C\u4E00\u53E5").r;
+    const lines = [...c.how, ...Array(SOUL_LINES).fill("")].slice(0, SOUL_LINES);
+    const soulInputs = lines.map((l) => text(soul, l, SOUL_MAX, () => {
+      const v = soulInputs.map((i) => i.value.trim()).filter(Boolean);
+      save({ soul: v.length > 1 ? v : v[0] ?? "" });
+    }));
+    const focus = row2("\u4E3B\u529B\uFF08focus\uFF09\xB7 \u53EA\u6709\u4E00\u62DB\u662F\u91CD\u9EDE\u6642").r.createEl("select");
+    for (const k of ["", ...KEYS]) focus.createEl("option", { text: k || "\uFF08\u7121\uFF09", attr: { value: k } });
+    focus.value = c.focus;
+    focus.addEventListener("change", () => save({ focus: focus.value }));
+    const plain2 = row2("\u6280\u80FD\u767D\u8A71\uFF08plain\uFF09").r;
+    const plainInputs = {};
+    for (const k of KEYS) {
+      const s = c.skills.find((x) => x.key === k);
+      const line = plain2.createDiv({ cls: "mn-pk-skill" });
+      pic(line, s ? { name: s.name, img: s.icon } : void 0, "mn-pk-skic");
+      line.createSpan({ cls: "mn-pk-key", text: k });
+      const input = line.createEl("input", { attr: { type: "text", placeholder: s?.name ?? "" } });
+      input.value = c.plain[k] ?? "";
+      plainInputs[k] = input;
+      input.addEventListener("change", () => {
+        const v = {};
+        for (const key of KEYS) if (plainInputs[key].value.trim()) v[key] = plainInputs[key].value.trim();
+        save({ plain: v });
+      });
+    }
+    const open = form.createEl("button", { cls: "mn-inb-del", text: "\u6253\u958B\u82F1\u96C4\u7B46\u8A18" });
+    open.addEventListener("click", () => void plugin.app.workspace.openLinkText(c.path, ctx.sourcePath, true));
+  };
+  const choices = all.map((c) => ({ name: c.name, img: c.icon, also: `${c.nameEn} ${c.aliases.join(" ")}` }));
+  const byName = new Map(all.map((c) => [c.name, c]));
+  const current = all.find((c) => c.id === chosen.get(ctx.sourcePath));
+  const drawPicker = (c) => {
+    pickHost.empty();
+    picker(pickHost, { choices, value: c ? [c.name] : [], placeholder: "\u9078\u4E00\u4F4D\u82F1\u96C4", onChange: (v) => show(byName.get(v[0])) });
+  };
+  next.addEventListener("click", () => {
+    const at = all.findIndex((c2) => c2.id === chosen.get(ctx.sourcePath));
+    const c = [...all.slice(at + 1), ...all.slice(0, at + 1)].find((x) => statusOf(x) !== "\u5DF2\u9A57\u8B49");
+    drawPicker(c);
+    show(c);
+  });
+  counted();
+  drawPicker(current);
+  show(current);
+}
+function registerPicksNote(plugin) {
+  plugin.registerMarkdownCodeBlockProcessor("mn-picks", (_source, el, ctx) => picksBlock(plugin, el, ctx));
+}
+
+// src/settings.ts
+var import_obsidian14 = require("obsidian");
+
+// src/themes.ts
+var THEMES = [
+  { id: "auto", name: "Obsidian (follows your theme)" },
+  {
+    id: "popping",
+    name: "Popping and Locking",
+    dark: {
+      bg: "#1C1D26",
+      surface: "#262836",
+      surface2: "#30334A",
+      text: "#F2E5BC",
+      text2: "#C9C2B2",
+      text3: "#9A8F80",
+      onAccent: "#1C1D26",
+      accent: "#E9892B",
+      positive: "#A3CF7E",
+      negative: "#F7685B",
+      warning: "#F5B83D",
+      info: "#7DB3C9",
+      orange: "#E9892B",
+      purple: "#B995D8",
+      pink: "#D3869B",
+      cyan: "#8EC0B4",
+      line: "rgba(242,229,188,0.11)"
+    },
+    light: {
+      bg: "#F6F0DF",
+      surface: "#FFFBEE",
+      surface2: "#EFE7D0",
+      text: "#2B2A33",
+      text2: "#5C574C",
+      text3: "#766F61",
+      onAccent: "#FFFFFF",
+      accent: "#B5470A",
+      positive: "#3F7A1E",
+      negative: "#B8322A",
+      warning: "#915600",
+      info: "#2D6C8C",
+      orange: "#D9741A",
+      purple: "#8A5DB5",
+      pink: "#C2587A",
+      cyan: "#3F9A8A",
+      line: "rgba(60,48,20,0.13)"
+    }
+  },
+  {
+    // the dark of the Picks page sketches: blue-black cards, warm cream text and an amber accent
+    id: "draft",
+    name: "Draft Night",
+    dark: {
+      bg: "#12141B",
+      surface: "#1A1D26",
+      surface2: "#252937",
+      text: "#F4F1E8",
+      text2: "#C9C5B8",
+      text3: "#9A97A0",
+      onAccent: "#FFFFFF",
+      accent: "#E38B3A",
+      positive: "#A8C373",
+      negative: "#E06A6A",
+      warning: "#E5B567",
+      info: "#6C99BB",
+      orange: "#E0894A",
+      purple: "#9E86C8",
+      pink: "#B05279",
+      cyan: "#73BBB2",
+      line: "rgba(255,255,255,0.14)"
+    },
+    light: {
+      bg: "#F2F3F6",
+      surface: "#FFFFFF",
+      surface2: "#E6E8EE",
+      text: "#1D2230",
+      text2: "#4A5164",
+      text3: "#5F667A",
+      onAccent: "#FFFFFF",
+      accent: "#B4601C",
+      positive: "#4C7A1E",
+      negative: "#B83A3A",
+      warning: "#8A6100",
+      info: "#2F6588",
+      orange: "#C46A24",
+      purple: "#6E55A8",
+      pink: "#A2406A",
+      cyan: "#2E8A80",
+      line: "rgba(29,34,48,0.14)"
+    }
+  },
+  {
+    id: "ocean",
+    name: "Ocean",
+    dark: {
+      bg: "#101820",
+      surface: "#1A2530",
+      surface2: "#243241",
+      text: "#EAF1F7",
+      text2: "#A9B8C6",
+      text3: "#7F90A0",
+      onAccent: "#0B1218",
+      accent: "#4DB6AC",
+      positive: "#6FCF97",
+      negative: "#EB5757",
+      warning: "#F2C94C",
+      info: "#56CCF2",
+      orange: "#F2994A",
+      purple: "#BB86FC",
+      pink: "#FF7AA8",
+      cyan: "#4DB6AC",
+      line: "rgba(234,241,247,0.11)"
+    },
+    light: {
+      bg: "#F4F8FB",
+      surface: "#FFFFFF",
+      surface2: "#EAF0F5",
+      text: "#14202B",
+      text2: "#4B5C6B",
+      text3: "#66798A",
+      onAccent: "#FFFFFF",
+      accent: "#00796B",
+      positive: "#1B7F46",
+      negative: "#C62828",
+      warning: "#8A6100",
+      info: "#0A6C9A",
+      orange: "#E07B20",
+      purple: "#8E4EC6",
+      pink: "#E0457F",
+      cyan: "#12877B",
+      line: "rgba(20,32,43,0.13)"
+    }
+  },
+  {
+    id: "sakura",
+    name: "Sakura",
+    dark: {
+      bg: "#211922",
+      surface: "#2D2230",
+      surface2: "#3A2C3E",
+      text: "#F7E8F0",
+      text2: "#CDB6C4",
+      text3: "#9C8696",
+      onAccent: "#2A1020",
+      accent: "#FF8FB1",
+      positive: "#9ED8A5",
+      negative: "#FF6B7A",
+      warning: "#F7C873",
+      info: "#8FC5E8",
+      orange: "#FFA776",
+      purple: "#C7A2F0",
+      pink: "#FF8FB1",
+      cyan: "#7DD3CB",
+      line: "rgba(247,232,240,0.11)"
+    },
+    light: {
+      bg: "#FBF3F6",
+      surface: "#FFFFFF",
+      surface2: "#F5E6EC",
+      text: "#2B1B24",
+      text2: "#5E4654",
+      text3: "#7A6270",
+      onAccent: "#FFFFFF",
+      accent: "#C2185B",
+      positive: "#2E7D32",
+      negative: "#C62828",
+      warning: "#8D5B00",
+      info: "#1565A0",
+      orange: "#D2691E",
+      purple: "#7B4DB2",
+      pink: "#C2185B",
+      cyan: "#00796B",
+      line: "rgba(43,27,36,0.13)"
+    }
+  },
+  {
+    id: "forest",
+    name: "Forest",
+    dark: {
+      bg: "#141A16",
+      surface: "#1D2620",
+      surface2: "#27342B",
+      text: "#E6F0E4",
+      text2: "#B0C2B0",
+      text3: "#86998A",
+      onAccent: "#0E1A10",
+      accent: "#8FD19E",
+      positive: "#8FD19E",
+      negative: "#F0776B",
+      warning: "#E8C35C",
+      info: "#7DC4D6",
+      orange: "#E8955A",
+      purple: "#B59AE0",
+      pink: "#DB8CA8",
+      cyan: "#6CC7B5",
+      line: "rgba(230,240,228,0.11)"
+    },
+    light: {
+      bg: "#F2F6EF",
+      surface: "#FFFFFF",
+      surface2: "#E6EEE2",
+      text: "#18241A",
+      text2: "#4A5E4C",
+      text3: "#657A68",
+      onAccent: "#FFFFFF",
+      accent: "#2E7D32",
+      positive: "#2E7D32",
+      negative: "#B3261E",
+      warning: "#8A6100",
+      info: "#0A6C85",
+      orange: "#C9651A",
+      purple: "#6F4AAE",
+      pink: "#B03A6C",
+      cyan: "#00796B",
+      line: "rgba(24,36,26,0.13)"
+    }
+  }
+];
+function themeVars(id, dark) {
+  const t = THEMES.find((x) => x.id === id);
+  const k = t && (dark ? t.dark : t.light);
+  if (!k) return {};
+  return {
+    "--mn-bg": k.bg,
+    "--mn-card": k.surface,
+    "--mn-card-hi": k.surface2,
+    "--mn-text": k.text,
+    "--mn-muted": k.text2,
+    "--mn-faint": k.text3,
+    "--mn-line": k.line,
+    "--mn-accent": k.accent,
+    "--interactive-accent": k.accent,
+    "--text-on-accent": k.onAccent,
+    "--color-green": k.positive,
+    "--color-red": k.negative,
+    "--color-yellow": k.warning,
+    "--color-blue": k.info,
+    "--color-orange": k.orange,
+    "--color-purple": k.purple,
+    "--color-pink": k.pink,
+    "--color-cyan": k.cyan
+  };
+}
+
+// src/settings.ts
+var DEFAULTS = {
+  mode: "mayhem",
+  theme: "popping",
+  // where the notes live: the only place the plugin names these folders (tools/vault_paths.py does the same for the scripts)
+  championFolder: "\u82F1\u96C4",
+  itemFolder: "\u9053\u5177",
+  guideFolder: "\u65B0\u624B\u5165\u9580",
+  augmentFolder: "\u5F37\u5316",
+  patchFolder: "\u7248\u672C\u66F4\u65B0",
+  openOnStartup: import_obsidian14.Platform.isMobile,
+  riotId: "",
+  riotServer: "TW2",
+  riotKey: "",
+  kbDebug: false,
+  picDebug: false,
+  wallpaper: "",
+  read: [],
+  roster: []
+};
+var MnSettingTab = class extends import_obsidian14.PluginSettingTab {
+  constructor(app, plugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+  display() {
+    const { containerEl: c } = this;
+    const s = this.plugin.settings;
+    const save = () => this.plugin.saveSettings();
+    c.empty();
+    new import_obsidian14.Setting(c).setName("Mode").setDesc("What the app shows. Rift is planned.").addDropdown((d) => {
+      for (const id of MODE_ORDER) d.addOption(id, MODES[id].label + (MODES[id].enabled ? "" : " (coming soon)"));
+      d.setValue(s.mode).onChange(async (v) => {
+        s.mode = v;
+        await save();
+      });
+    });
+    new import_obsidian14.Setting(c).setName("Color theme").setDesc("Colors of the app screen. Follows Obsidian's light / dark.").addDropdown((d) => {
+      for (const t of THEMES) d.addOption(t.id, t.name);
+      d.setValue(s.theme).onChange(async (v) => {
+        s.theme = v;
+        await save();
+      });
+    });
+    const folder = (name, desc2, key) => new import_obsidian14.Setting(c).setName(name).setDesc(desc2).addText((x) => x.setValue(s[key]).onChange(async (v) => {
+      s[key] = v.trim() || DEFAULTS[key];
+      await save();
+    }));
+    folder("Champion folder", "Notes made by tools/fetch_data.py", "championFolder");
+    folder("Item folder", "Notes made by tools/fetch_data.py", "itemFolder");
+    folder("Augment folder", "Notes made by tools/fetch_augments.py", "augmentFolder");
+    folder("Patch notes folder", "Our own patch notes (frontmatter: patch, date, title, summary)", "patchFolder");
+    folder("Guide folder", "Beginner guide notes", "guideFolder");
+    new import_obsidian14.Setting(c).setName("Riot API key").setDesc("For Home: your avatar, rank, mastery and recent games. From developer.riotgames.com (a development key expires every 24 hours; a personal key does not). Stays on this device.").addText((x) => {
+      x.inputEl.type = "password";
+      x.setPlaceholder("RGAPI-\u2026").setValue(s.riotKey).onChange(async (v) => {
+        s.riotKey = v.trim();
+        await this.plugin.saveData(s);
+      });
+    });
+    new import_obsidian14.Setting(c).setName("Keyboard readout").setDesc("While typing in a search box, show what the phone reports about the keyboard (for fixing the search bar position).").addToggle((x) => x.setValue(s.kbDebug).onChange(async (v) => {
+      s.kbDebug = v;
+      await this.plugin.saveData(s);
+    }));
+    new import_obsidian14.Setting(c).setName("Picture readout").setDesc("Count the pictures a page showed still loading that were never fetched ahead (tap the count for the list). A new page or tab should show none.").addToggle((x) => x.setValue(s.picDebug).onChange(async (v) => {
+      s.picDebug = v;
+      await this.plugin.saveData(s);
+      this.plugin.views().forEach((w) => w.refresh());
+    }));
+    new import_obsidian14.Setting(c).setName("Open on startup").setDesc("Show the app when Obsidian starts (on by default on a phone).").addToggle((x) => x.setValue(s.openOnStartup).onChange(async (v) => {
+      s.openOnStartup = v;
+      await save();
+    }));
+    const hap = new import_obsidian14.Setting(c).setName("Test haptic").setDesc("Tap: the phone should tick once.");
+    hap.addButton((b) => b.setButtonText("Tick").onClick(() => {
+      const how = haptic();
+      hap.setDesc({ capacitor: "Used: Obsidian's haptics.", vibrate: "Used: web vibration.", switch: "Used: the iOS 18 switch tick. Felt nothing? Then Obsidian has no haptics here.", "": "No haptics found on this device." }[how] ?? how);
+    }));
+  }
+};
+
 // src/view.ts
+var import_obsidian15 = require("obsidian");
 var VIEW_TYPE = "morellonomicon";
 var CAPSULE_TAU = 65;
 var KEYBOARD_GAP = 8;
@@ -7785,6 +7933,7 @@ var OVERLAY_SCROLL = 220;
 var ARRIVE_MS = 240;
 var VEIL_DELAY_MS = 250;
 var VEIL_MIN_MS = 500;
+var AHEAD_MS = 600;
 var BOOT_PICTURES_MS = 7e3;
 function arrive(page2, anim) {
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || !page2.animate) return;
@@ -7869,6 +8018,20 @@ var MnView = class extends import_obsidian15.ItemView {
     let lastTop = null;
     let raf = 0, last = 0;
     const readout = h(app, "div", "mn-kbread is-hidden");
+    const cold = h(app, "button", "mn-picread is-hidden");
+    const showCold = () => {
+      const list2 = misses();
+      cold.toggleClass("is-hidden", !this.plugin.settings.picDebug);
+      cold.setText(`cold ${list2.length}`);
+      cold.toggleClass("is-bad", list2.length > 0);
+    };
+    cold.addEventListener("click", (e) => {
+      e.preventDefault();
+      const list2 = misses();
+      new import_obsidian15.Notice(list2.length ? list2.map((m) => `${m.page}: ${m.url.replace(/^https?:\/\/[^/]+\//, "")}`).join("\n") : "No cold pictures on this page.", 1e4);
+    });
+    this.register(onMiss(showCold));
+    showCold();
     const visibleBottom = () => {
       const tells = [window.innerHeight];
       if (vv) tells.push(vv.offsetTop + vv.height);
@@ -8072,6 +8235,7 @@ var MnView = class extends import_obsidian15.ItemView {
         e.preventDefault();
         this.tapTab(id);
       });
+      b.addEventListener("pointerdown", () => this.fetchAhead(id, { key: "root", title: "" }, "now"), { passive: true });
     }
     slideSeg(this.tabsEl, "main-tabs", { item: ".mn-tab" });
     this.modeBtn.empty();
@@ -8144,6 +8308,7 @@ var MnView = class extends import_obsidian15.ItemView {
     if (this.shown) this.scrolls.set(this.shown, this.scrollEl.scrollTop);
     const key = this.key();
     const f = this.router.top();
+    setMissPage(routeKey(this.router.tab, f) + (f.params ? ` ${Object.values(f.params).join(" ")}` : ""));
     let out;
     try {
       const store = this.plugin.store;
@@ -8163,7 +8328,7 @@ var MnView = class extends import_obsidian15.ItemView {
           if (sub) rememberSub(id2, sub);
           this.push({ key: "champion", title: store.champion(id2)?.name ?? id2, params: { id: id2 } });
         },
-        openAugment: (id2, champ) => this.push({ key: "augment", title: store.augment(id2)?.name ?? "Augment", params: champ ? { id: id2, champ } : { id: id2 } }),
+        openAugment: (id2, champ2) => this.push({ key: "augment", title: store.augment(id2)?.name ?? "Augment", params: champ2 ? { id: id2, champ: champ2 } : { id: id2 } }),
         openItem: (id2) => this.push({ key: "item", title: store.item(id2)?.name ?? "Item", params: { id: id2 } }),
         openNote: (path) => this.push({ key: "note", title: path.split("/").pop()?.replace(/\.md$/, "") ?? "Note", params: { path } })
       });
@@ -8197,6 +8362,10 @@ var MnView = class extends import_obsidian15.ItemView {
       this.appEl.toggleClass("is-sub", this.router.depth() > 0 && !OVERLAY_PAGES.has(f.key));
       this.markScrolled();
       requestAnimationFrame(() => requestAnimationFrame(() => this.appEl.removeClass("is-switching")));
+      const tab = this.router.tab;
+      window.setTimeout(() => {
+        if (id === this.drawId) for (const nf of ROUTES[routeKey(tab, f)].next?.(this.needCtx(), f) ?? []) this.fetchAhead(tab, nf, "soon");
+      }, AHEAD_MS);
       if (anim === "none") return;
       arrive(page2.el, anim);
     };
@@ -8218,6 +8387,16 @@ var MnView = class extends import_obsidian15.ItemView {
       if (loaded) this.hideVeil();
       else this.holdVeil(page2, wait, id);
     });
+  }
+  needCtx() {
+    return { app: this.app, plugin: this.plugin };
+  }
+  // Fetches what a page shows from the network before it is opened (its route's needs; media.ts)
+  fetchAhead(tab, f, soon) {
+    try {
+      void Promise.resolve(ROUTES[routeKey(tab, f)].needs(this.needCtx(), f)).then((n) => want(n, soon)).catch(() => void 0);
+    } catch {
+    }
   }
   // Puts the loading veil over the page until `until`, then (never sooner than half a second after it appeared) takes it off
   holdVeil(page2, until, id) {
@@ -8301,7 +8480,10 @@ var MorellonomiconPlugin = class extends import_obsidian16.Plugin {
         this.lastChange = Date.now();
         this.views().forEach((v) => v.refresh());
       });
-      void this.whenBooted().then(() => warmPictures([...this.store.champions().map((c) => c.icon), ...this.store.augments().map((a) => a.icon), ...this.store.items().map((i) => i.icon)]));
+      void this.whenBooted().then(() => {
+        void warm([...this.store.champions().map((c) => c.icon), ...this.store.augments().map((a) => a.icon), ...this.store.items().map((i) => i.icon)], "idle");
+        for (const tab of MODES[this.settings.mode].tabs) void Promise.resolve(ROUTES[tab].needs({ app: this.app, plugin: this }, { key: "root", title: "" })).then((n) => want(n, "idle")).catch(() => void 0);
+      });
       if (this.settings.openOnStartup) void this.activate(true);
       this.updateBody();
     });

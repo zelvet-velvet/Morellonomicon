@@ -3,7 +3,9 @@ import { DAMAGE_COLOR, DAMAGE_ICON, augIcon, scalingParts, warmPictures, blockUn
 import { TAG_GROUPS, damageLines, iconFilter, profileAxes, profileRadar, reachOf, styleChart, tagFilter, tagRow } from "./profile";
 import { buildTab } from "./build";
 import { cardArt } from "./roster";
-import type { PageCtx, PageOut } from "./index";
+import type { NeedCtx, PageCtx, PageOut } from "./index";
+import type { Frame } from "../router";
+import { warm, type Need } from "../media";
 import { badgeColor, badgeText, changesBlock, entryDir, marker } from "./changes";
 import { metaLine } from "./fresh";
 import { skillStrip } from "./skills";
@@ -191,6 +193,12 @@ const EDGE_PULL = 0.3;      // past the first or last page the pages follow the 
 const WHEEL_PX = 12, WHEEL_GAP_MS = 450;   // a trackpad swipe: its least move, and the pause before the next one turns a page
 const TAP_SIDE = 0.22;      // a tap within this share of the width from a side switches the play style that way (強化, 全部強化)
 const PAGES: [Part, string, string][] = [["overview", "概覽", "id-card"], ["skills", "技能", "keyboard"], ["build", "出裝", "shopping-bag"], ["augments", "強化", "sparkles"], ["tips", "技巧", "lightbulb"]];
+// What the champion page and its sub pages show from the network (their routes in pages/index.ts): the art behind them and the face.
+// The ability clips load in the page's own shelf as it opens; icons in the pages (items, augments) are fetched at start-up.
+export function championNeeds({ plugin }: NeedCtx, frame: Frame): Need[] {
+    const c = plugin.store.champion(String(frame.params?.id ?? ""));
+    return c ? [cardArt(c.id), c.icon] : [];
+}
 export function championCard(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const c = store.champion(String(ctx.frame.params?.id ?? ""));
@@ -211,7 +219,7 @@ export function championCard(ctx: PageCtx): PageOut {
     const im = h(head, "img", "mn-card-img"); im.src = c.icon; im.alt = "";
     // the art card loads as a block of its own: the splash picture (a CSS background, so it is fetched here) and the icon
     const splash = bg.style.backgroundImage.slice(5, -2);
-    blockUntil(hero, Promise.all([new Promise<void>((r) => { const x = new Image(); x.onload = x.onerror = () => r(); x.src = splash; }), new Promise<void>((r) => { if (im.complete) r(); else { im.addEventListener("load", () => r(), { once: true }); im.addEventListener("error", () => r(), { once: true }); } })]).then(() => undefined), 200);   // (no loading look when the pictures come from the cache)
+    blockUntil(hero, Promise.all([warm([splash], "now"), new Promise<void>((r) => { if (im.complete) r(); else { im.addEventListener("load", () => r(), { once: true }); im.addEventListener("error", () => r(), { once: true }); } })]).then(() => undefined), 200);   // (no loading look when the pictures come from the cache)
     const who = h(head, "div", "mn-card-who");
     h(who, "h1", "mn-title", c.name);
     h(who, "div", "mn-card-sub", c.title);
