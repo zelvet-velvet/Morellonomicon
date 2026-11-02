@@ -93,7 +93,8 @@ const held = new Map<string, HTMLImageElement>();      // icons, fetched and dec
 const heldBig = new Map<string, HTMLImageElement>();   // splashes, loading art, wallpapers
 const asked = new Set<string>();                    // every address ever asked for ahead (for the miss readout)
 const waiting = new Map<string, { rank: number; keep: boolean; done: Array<() => void> }>();
-let running = 0;
+let running = 0, prefetching = 0;
+const PREFETCH_PARALLEL = 1;   // background prefetch: one picture at a time, so it never crowds the page's own loading or a swipe
 const saveData = () => !!(navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
 
 export const isWarm = (url: string): boolean => !!(held.get(url) ?? heldBig.get(url))?.complete;
@@ -101,14 +102,16 @@ export const isWarm = (url: string): boolean => !!(held.get(url) ?? heldBig.get(
 function pump(): void {
     while (running < PARALLEL && waiting.size) {
         let best: string | null = null, rank = 9;
-        for (const [u, w] of waiting) if (w.rank < rank) { best = u; rank = w.rank; if (rank === 0) break; }
+        for (const [u, w] of waiting) if (w.rank < rank && (w.keep || prefetching < PREFETCH_PARALLEL)) { best = u; rank = w.rank; if (rank === 0) break; }
         if (best === null) return;
         const job = waiting.get(best)!;
         waiting.delete(best);
         running++;
+        const bg = !job.keep;
+        if (bg) prefetching++;
         const url = best;
         const im = new Image();
-        const finish = () => { running--; job.done.forEach((d) => d()); pump(); };
+        const finish = () => { running--; if (bg) prefetching--; job.done.forEach((d) => d()); pump(); };
         im.onload = () => {
             if (!job.keep) { finish(); return; }   // prefetch: only into the browser's cache, not kept decoded
             void (im.decode ? im.decode() : Promise.resolve()).catch(() => undefined).then(() => {

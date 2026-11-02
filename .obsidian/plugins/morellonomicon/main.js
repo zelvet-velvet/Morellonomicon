@@ -621,12 +621,14 @@ var heldBig = /* @__PURE__ */ new Map();
 var asked = /* @__PURE__ */ new Set();
 var waiting = /* @__PURE__ */ new Map();
 var running = 0;
+var prefetching = 0;
+var PREFETCH_PARALLEL = 1;
 var saveData = () => !!navigator.connection?.saveData;
 var isWarm = (url) => !!(held.get(url) ?? heldBig.get(url))?.complete;
 function pump() {
   while (running < PARALLEL && waiting.size) {
     let best = null, rank = 9;
-    for (const [u, w] of waiting) if (w.rank < rank) {
+    for (const [u, w] of waiting) if (w.rank < rank && (w.keep || prefetching < PREFETCH_PARALLEL)) {
       best = u;
       rank = w.rank;
       if (rank === 0) break;
@@ -635,10 +637,13 @@ function pump() {
     const job = waiting.get(best);
     waiting.delete(best);
     running++;
+    const bg = !job.keep;
+    if (bg) prefetching++;
     const url = best;
     const im = new Image();
     const finish = () => {
       running--;
+      if (bg) prefetching--;
       job.done.forEach((d) => d());
       pump();
     };
