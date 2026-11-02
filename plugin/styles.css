@@ -393,8 +393,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-deckwrap { --mn-lift: 44px; --mn-pile: 34px; position: relative; height: 520px; margin: calc(-1 * var(--mn-lift)) -16px 0; }
 /* a topic full screen, the Picks swipe card's size (Layouts: Handbook · card): no pile room above or below; Back and the glossary's i
    float on the card's upper corners */
-.mn-deckpage.is-full .mn-deckwrap { --mn-lift: 0px; --mn-pile: 0px; margin: 0; }
-.mn-deckpage.is-full .mn-slide { padding: 0 4px; }
+.mn-deckpage.is-full .mn-deckwrap { --mn-lift: 6px; --mn-pile: 16px; margin: 0; }   /* room for the pile: the cards under the top one sit up to 12 px lower */
+.mn-deckpage.is-full .mn-slide { padding: 0 16px; }   /* and lean (a little, deck.ts DECK_FAN): their corners stay inside, never cut flat by the screen edge */
 .mn-app .mn-deck-float { position: absolute; z-index: 20; top: 12px; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%;
     background: rgba(0, 0, 0, 0.38); color: #fff; box-shadow: none; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 .mn-deck-float.is-back { left: 16px; }

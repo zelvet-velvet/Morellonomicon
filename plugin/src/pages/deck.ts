@@ -35,6 +35,7 @@ const DECK_GRACE_MS = 120; // the cards are held out of sight this long while th
 const LOOK_MIN_MS = 500;   // once the blur shows, it stays at least this long, so a load just past the grace time does not read as a blink
 const DECK_WAIT_MS = 8000;   // the pile waits this long at most for the topic's pictures and clips
 const NEAR_BEHIND = 1;   // cards already seen that are still painted (the one that comes back on a right swipe)
+const DECK_FAN = 0.45;    // the pile leans this share of its usual angle (full screen has little room around the card)
 const NEAR_AHEAD = 2;    // cards under the top one that are painted (the pile shows two)
 export const DECK_BELOW = 10;   // px kept free under the deck (the room for the pile's lower edges is inside the deck, --mn-pile)
 
@@ -158,9 +159,9 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         const resetPeek = () => { peek.style.opacity = ""; peek.removeClass("is-ready"); };
         const pile = cardPile(pager, sec, {
             scroll: ".mn-sl-words",
-            // full screen leaves no room under the card for a pile: tilted or lowered, the cards under it only showed as thin slivers
-            // beside the top card's lower corners, cut flat by the screen edge; so they lie straight, right under the top card
-            flat: true,
+            // full screen: the pile leans less (its corners stay inside the room left around the card, styles.css), so the cards under
+            // the top one show whole instead of as slivers cut flat by the screen edge
+            fan: DECK_FAN,
             // only the cards near the top are painted, and only the ones in view play their clip: a topic with many clips otherwise
             // has them all running under the top card, which makes some swipes smooth and others not
             onLayout: (cur) => {

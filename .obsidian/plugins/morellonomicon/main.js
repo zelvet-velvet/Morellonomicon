@@ -2899,7 +2899,7 @@ function cardPile(pager, sec, o) {
       deg = s * u * TILT;
     } else {
       const k = Math.min(FAN.length - 1, Math.floor(u)), a = FAN[k], b = FAN[Math.min(FAN.length - 1, k + 1)];
-      deg = o.flat ? 0 : a + (b - a) * (u - k);
+      deg = o.flat ? 0 : (a + (b - a) * (u - k)) * (o.fan ?? 1);
       y = o.flat ? 0 : Math.min(u, 2) * STEP_Y;
       if (u > 2) op = String(Math.max(0, 3 - u));
     }
@@ -3066,6 +3066,7 @@ var DECK_GRACE_MS = 120;
 var LOOK_MIN_MS = 500;
 var DECK_WAIT_MS = 8e3;
 var NEAR_BEHIND = 1;
+var DECK_FAN = 0.45;
 var NEAR_AHEAD = 2;
 var DECK_BELOW = 10;
 function parseSlides(md) {
@@ -3184,9 +3185,9 @@ function deckPage(ctx, file) {
     };
     const pile = cardPile(pager, sec, {
       scroll: ".mn-sl-words",
-      // full screen leaves no room under the card for a pile: tilted or lowered, the cards under it only showed as thin slivers
-      // beside the top card's lower corners, cut flat by the screen edge; so they lie straight, right under the top card
-      flat: true,
+      // full screen: the pile leans less (its corners stay inside the room left around the card, styles.css), so the cards under
+      // the top one show whole instead of as slivers cut flat by the screen edge
+      fan: DECK_FAN,
       // only the cards near the top are painted, and only the ones in view play their clip: a topic with many clips otherwise
       // has them all running under the top card, which makes some swipes smooth and others not
       onLayout: (cur) => {
