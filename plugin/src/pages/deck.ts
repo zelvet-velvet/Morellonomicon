@@ -31,7 +31,8 @@ interface Slide { title: string; icon: string; visual: string; text: string }
 const GLOSSARY = "名詞表";   // the plain-list guide note the i button opens
 const STRIP = 6;   // icons in a strip
 const WAIT_CARDS = 3;      // the pile waits for this many cards' pictures and clips; the others keep loading behind them
-const LOOK_MIN_MS = 500;   // the cards stay blurred at least this long, so a fast load does not read as a blink
+const DECK_GRACE_MS = 120; // the cards are held out of sight this long while their pictures are checked; ready by then: no loading look at all
+const LOOK_MIN_MS = 500;   // once the blur shows, it stays at least this long, so a load just past the grace time does not read as a blink
 const DECK_WAIT_MS = 8000;   // the pile waits this long at most for the topic's pictures and clips
 const NEAR_BEHIND = 1;   // cards already seen that are still painted (the one that comes back on a right swipe)
 const NEAR_AHEAD = 2;    // cards under the top one that are painted (the pile shows two)
@@ -93,11 +94,12 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
     const peek = h(wrap, "div", "mn-peek");   // behind the cards: what pulling the last card leads to; fills the whole card area, the pulled card uncovers it
     const peekIn = h(peek, "div", "mn-peek-in");   // the text sits at the right side, where the card leaves first
     const pager = h(wrap, "div", "mn-pager");
-    // blurred from the very first frame, with a soft band of light sliding over it, until the topic's pictures and clips are in
-    pager.addClass("is-wait");
-    const band = h(wrap, "div", "mn-artload");
-    trackBand(band);
-    const since = Date.now();
+    // A real load only (Design Rules, "Loading look"): the cards are held out of sight (not blurred) while their pictures and clips are
+    // checked. A topic whose first cards are already there (cached, or fetched ahead from its tile) fades in sharp; only one still
+    // loading after DECK_GRACE_MS gets the blur and the soft band of light, until its pictures and clips are in.
+    pager.addClass("is-pre");
+    const t0 = Date.now();
+    let band: HTMLElement | null = null, since = 0;
     // the deck owns sideways swipes: Obsidian's own edge swipes (open a sidebar) must not take them
     for (const ev of ["touchstart", "touchmove"]) pager.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
     // cards fill the screen down to the tab bar
@@ -183,10 +185,22 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         // while swiping. Clips under the top card are told to play meanwhile: a phone may not fetch a paused clip at all.
         sec.forEach((c) => c.querySelectorAll("video").forEach((v) => { void v.play().catch(() => undefined); }));
         const loaded = whenMediaLoaded(sec.slice(0, WAIT_CARDS), DECK_WAIT_MS);
-        // the cards were blurred from the start (see the top); they sharpen when loaded, never before half a second so it is no blink
+        let ready = false;
+        const slow = window.setTimeout(() => {
+            if (ready) return;
+            pager.addClass("is-wait");
+            pager.removeClass("is-pre");
+            band = h(wrap, "div", "mn-artload");
+            trackBand(band);
+            since = Date.now();
+        }, Math.max(0, DECK_GRACE_MS - (Date.now() - t0)));
         void loaded.then(() => {
+            ready = true;
+            window.clearTimeout(slow);
             pile.layout(false);
-            window.setTimeout(() => { pager.removeClass("is-wait"); endBand(band); }, Math.max(0, LOOK_MIN_MS - (Date.now() - since)));
+            const b = band;
+            if (!b) { pager.removeClass("is-pre"); return; }   // in before the grace time: shows sharp, no loading look
+            window.setTimeout(() => { pager.removeClass("is-wait"); endBand(b); }, Math.max(0, LOOK_MIN_MS - (Date.now() - since)));   // never sooner than half a second, so it is no blink
         });
         const onResize = () => pile.layout(false);
         window.addEventListener("resize", onResize);

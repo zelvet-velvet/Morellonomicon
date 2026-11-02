@@ -773,12 +773,12 @@ function releaseVideos(root) {
 }
 function whenMediaLoaded(roots, ms) {
   const media2 = roots.flatMap((r) => Array.from(r.querySelectorAll("img, video")));
-  const ready = (m) => !m.isConnected || (m instanceof HTMLVideoElement ? m.readyState >= 2 || !!m.error : m.complete);
+  const ready = (m) => !m.isConnected || (m instanceof HTMLVideoElement ? m.readyState >= 2 || !!m.error || m.currentSrc.startsWith("blob:") || m.src.startsWith("blob:") : m.complete);
   return new Promise((done) => {
     const t0 = Date.now();
     const tick = () => {
       if (media2.every(ready) || Date.now() - t0 > ms) done();
-      else window.setTimeout(tick, 150);
+      else window.setTimeout(tick, 50);
     };
     tick();
   });
@@ -3041,6 +3041,7 @@ function cardPile(pager, sec, o) {
 var GLOSSARY = "\u540D\u8A5E\u8868";
 var STRIP = 6;
 var WAIT_CARDS = 3;
+var DECK_GRACE_MS = 120;
 var LOOK_MIN_MS = 500;
 var DECK_WAIT_MS = 8e3;
 var NEAR_BEHIND = 1;
@@ -3104,10 +3105,9 @@ function deckPage(ctx, file) {
   const peek = h(wrap, "div", "mn-peek");
   const peekIn = h(peek, "div", "mn-peek-in");
   const pager = h(wrap, "div", "mn-pager");
-  pager.addClass("is-wait");
-  const band = h(wrap, "div", "mn-artload");
-  trackBand(band);
-  const since = Date.now();
+  pager.addClass("is-pre");
+  const t0 = Date.now();
+  let band = null, since = 0;
   for (const ev of ["touchstart", "touchmove"]) pager.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
   const fit = () => {
     const scroll = el.closest(".mn-scroll");
@@ -3186,9 +3186,9 @@ function deckPage(ctx, file) {
       last: {
         move: (px) => {
           peek.style.opacity = String(Math.min(1, px / 30));
-          const ready = px >= GO_AT;
-          peek.toggleClass("is-ready", ready);
-          return ready;
+          const ready2 = px >= GO_AT;
+          peek.toggleClass("is-ready", ready2);
+          return ready2;
         },
         reset: resetPeek,
         go
@@ -3199,11 +3199,27 @@ function deckPage(ctx, file) {
       void v.play().catch(() => void 0);
     }));
     const loaded = whenMediaLoaded(sec.slice(0, WAIT_CARDS), DECK_WAIT_MS);
+    let ready = false;
+    const slow = window.setTimeout(() => {
+      if (ready) return;
+      pager.addClass("is-wait");
+      pager.removeClass("is-pre");
+      band = h(wrap, "div", "mn-artload");
+      trackBand(band);
+      since = Date.now();
+    }, Math.max(0, DECK_GRACE_MS - (Date.now() - t0)));
     void loaded.then(() => {
+      ready = true;
+      window.clearTimeout(slow);
       pile.layout(false);
+      const b = band;
+      if (!b) {
+        pager.removeClass("is-pre");
+        return;
+      }
       window.setTimeout(() => {
         pager.removeClass("is-wait");
-        endBand(band);
+        endBand(b);
       }, Math.max(0, LOOK_MIN_MS - (Date.now() - since)));
     });
     const onResize = () => pile.layout(false);

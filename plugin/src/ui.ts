@@ -68,10 +68,11 @@ export function releaseVideos(root: HTMLElement): void {
 // Checked on a short timer rather than events, because a clip whose sources all fail is removed without any event.
 export function whenMediaLoaded(roots: HTMLElement[], ms: number): Promise<void> {
     const media = roots.flatMap((r) => Array.from(r.querySelectorAll<HTMLImageElement | HTMLVideoElement>("img, video")));
-    const ready = (m: HTMLImageElement | HTMLVideoElement) => !m.isConnected || (m instanceof HTMLVideoElement ? m.readyState >= 2 || !!m.error : m.complete);
+    // a clip played from memory (downloaded ahead, a blob: address) needs no network: it only decodes and fades in by itself, so it counts as in
+    const ready = (m: HTMLImageElement | HTMLVideoElement) => !m.isConnected || (m instanceof HTMLVideoElement ? m.readyState >= 2 || !!m.error || m.currentSrc.startsWith("blob:") || m.src.startsWith("blob:") : m.complete);
     return new Promise((done) => {
         const t0 = Date.now();
-        const tick = () => { if (media.every(ready) || Date.now() - t0 > ms) done(); else window.setTimeout(tick, 150); };
+        const tick = () => { if (media.every(ready) || Date.now() - t0 > ms) done(); else window.setTimeout(tick, 50); };
         tick();
     });
 }
