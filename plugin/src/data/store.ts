@@ -51,7 +51,7 @@ export interface AugTierStyle { name: string; tiers: AugTier[]; none: { id: numb
 // A champion's Mayhem builds (Dev Tools/Build Model.md, tools/build_tiers.py): up to five strong sets of the first three items, each
 // in one play style (`games` false: from the reasoning alone); per style the choices for items four to six (what each adds: `need`,
 // `when` for a situational one), boots and the item to take with 命定武器; and hand builds the games cannot show
-export interface BuildPick { id: number; reason: string; need?: string; when?: string }
+export interface BuildPick { id: number; reason: string; need?: string; when?: string; grows?: string[] }
 export interface BuildCore { style: string; items: number[]; reasons: string[]; games: boolean }
 export interface BuildStyle { name: string; late: BuildPick[]; boots: BuildPick | null; destiny?: BuildPick }
 export interface ChampBuilds { cores: BuildCore[]; styles: Record<string, BuildStyle>; special: { name: string; items: number[]; note: string }[] }

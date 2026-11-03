@@ -1,4 +1,4 @@
-import type { BuildPick, ChampBuilds, Champion } from "../data/store";
+import type { ChampBuilds, Champion } from "../data/store";
 import { chip, empty, h, moreLink, goes } from "../ui";
 import { metaLine } from "./fresh";
 import type { PageCtx } from "./index";
@@ -64,90 +64,105 @@ const LATE = 5;   // choices shown for items four to six
 // the border the game puts on the item 命定武器 grows (CommunityDragon, shown by address)
 const DESTINY_FRAME = "https://raw.communitydragon.org/latest/game/assets/items/itemmodifiers/strawberry_weapon_evolve_border.png";
 
-// The Mayhem builds (tools/build_tiers.py), like a build site: strong sets of the first three items (a play style each; the chosen
-// one shows why each item), then for its play style the choices for items four to six with what each adds, boots, the item to take
-// with 命定武器, and hand builds the games cannot show (鎖子甲 ×6)
+// The Mayhem builds (tools/build_tiers.py) on one screen, like a build site: the first-three sets as tiles (a play style each), then
+// for the chosen tile's style five choices for items four to six with what each adds, the boots and the item for 命定武器 with what
+// it grows; one line under them says what the last tapped icon does (a tap on the line opens the item)
 function mayhemBuilds(body: HTMLElement, c: Champion, ctx: PageCtx, b: ChampBuilds): void {
-    const many = new Set(b.cores.map((k) => k.style)).size > 1;
-    section(body, "前三件");
-    const list = h(body, "div", "mn-mb-cores");
-    const rest = h(body, "div", "mn-mb-rest");
+    const store = ctx.plugin.store;
+    const box = h(body, "div", "mn-mb");
+    h(box, "div", "mn-mb-h", "前三件");
+    const grid = h(box, "div", "mn-mb-cores");
+    const rest = h(box, "div", "mn-mb-rest");
+    const say = h(box, "button", "mn-mb-say");
+    let lit: HTMLElement | null = null;
+    // the line: the item's name, then why (when to buy it first, for a situational one)
+    const explain = (id: number, text: string, icon: HTMLElement) => {
+        lit?.removeClass("is-lit");
+        lit = icon;
+        icon.addClass("is-lit");
+        say.empty();
+        h(say, "b", "", store.item(id)?.name ?? `#${id}`);
+        say.appendText(`　${text}`);
+        say.dataset.id = String(id);
+    };
+    say.addEventListener("click", (e) => { e.preventDefault(); const id = Number(say.dataset.id); if (id) ctx.openItem(id); });
     let on = 0;
-    const rows = b.cores.map((core, n) => {
-        const row = h(list, "div", "mn-mb-core" + (n === 0 ? " is-on" : ""));
-        const head = h(row, "button", "mn-mb-head");
-        const icons = h(head, "span", "mn-mb-icons");
-        core.items.forEach((id, i) => {
-            if (i) h(icons, "span", "mn-mb-arrow", "›");
-            itemIcon(icons, c, ctx, id);
+    const tiles = b.cores.map((core, n) => {
+        const tile = h(grid, "div", "mn-mb-core" + (n === 0 ? " is-on" : ""));
+        h(tile, "div", "mn-mb-style", b.styles[core.style]?.name ?? "");
+        const icons = h(tile, "div", "mn-mb-icons");
+        const ics = core.items.map((id, i) => {
+            const ic = itemIcon(icons, c, ctx, id);
+            ic.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); choose(n); explain(id, core.reasons[i] + (core.games ? "" : "（依技能組推算）"), ic); });
+            return ic;
         });
-        if (many) h(head, "span", "mn-mb-style", b.styles[core.style]?.name ?? "");
-        const why = h(row, "div", "mn-mb-why");
-        core.items.forEach((id, i) => {
-            const line = h(why, "div", "mn-mb-line");
-            h(line, "b", "", ctx.plugin.store.item(id)?.name ?? `#${id}`);
-            line.appendText(`　${core.reasons[i]}`);
-        });
-        if (!core.games) h(why, "div", "mn-mb-line is-note", "依技能組推算，對局裡少見");
-        head.addEventListener("click", (e) => {
-            e.preventDefault();
-            if (on === n) return;
-            rows[on].removeClass("is-on");
-            row.addClass("is-on");
-            on = n;
-            drawRest();
-        });
-        return row;
+        tile.addEventListener("click", (e) => { e.preventDefault(); choose(n); explain(core.items[0], core.reasons[0], ics[0]); });
+        return tile;
     });
+    const choose = (n: number) => {
+        if (on === n) return;
+        tiles[on].removeClass("is-on");
+        tiles[n].addClass("is-on");
+        on = n;
+        drawRest();
+    };
     const drawRest = () => {
         rest.empty();
         const core = b.cores[on];
         const st = b.styles[core.style];
         if (!st) return;
         const late = st.late.filter((p) => !core.items.includes(p.id)).slice(0, LATE);
-        if (late.length) { section(rest, "第四到六件"); for (const p of late) pickRow(rest, c, ctx, p, p.need ?? ""); }
-        if (st.boots) { section(rest, "鞋子"); pickRow(rest, c, ctx, st.boots, ""); }
-        if (st.destiny) { section(rest, "命定武器"); pickRow(rest, c, ctx, { ...st.destiny, reason: `拿到命定武器時第一件出它：${st.destiny.reason}` }, "", true); }
+        if (late.length) {
+            h(rest, "div", "mn-mb-h", "第四到六件");
+            const row = h(rest, "div", "mn-mb-late");
+            for (const p of late) cell(row, p.id, p.when ? "看情況" : p.need ?? "", p.when ? `${p.when}：${p.reason}` : p.reason);
+        }
+        const two = h(rest, "div", "mn-mb-two");
+        if (st.boots) {
+            const half = h(two, "div", "mn-mb-half");
+            h(half, "div", "mn-mb-h", "鞋子");
+            cell(half, st.boots.id, st.boots.need ?? "", st.boots.reason, false, "side");
+        }
+        if (st.destiny) {
+            const half = h(two, "div", "mn-mb-half");
+            h(half, "div", "mn-mb-h", "命定武器");
+            const grows = (st.destiny.grows ?? []).slice(0, 3);
+            cell(half, st.destiny.id, "擊殺成長", `拿到命定武器時第一件出它，每次參與擊殺${grows.length ? grows.join("、") : "屬性"}永久提升。${st.destiny.reason}`,
+                true, "side", grows.join("、"));
+        }
+    };
+    // an icon with a word under it; a tap explains it on the line
+    // ("side": the words beside the icon, the second one under the first)
+    const cell = (parent: HTMLElement, id: number, word: string, text: string, destiny = false, side = "", sub = "") => {
+        const btn = h(parent, "button", "mn-mb-cell" + (side ? " is-side" : ""));
+        const ic = itemIcon(btn, c, ctx, id, destiny);
+        const words = h(btn, "span", "mn-mb-words");
+        h(words, "span", "mn-mb-word", word);
+        if (sub) h(words, "span", "mn-mb-sub", sub);
+        btn.addEventListener("click", (e) => { e.preventDefault(); explain(id, text, ic); });
     };
     drawRest();
-    if (b.special.length) {
-        const sp = h(body, "div", "mn-mb-special");
-        section(sp, "特殊出裝");
-        for (const s of b.special) {
-            const card = h(sp, "div", "mn-mb-sp");
-            h(card, "div", "mn-mb-sp-t", s.name);
-            const icons = h(card, "div", "mn-mb-icons");
-            for (const id of s.items) itemIcon(icons, c, ctx, id);
-            h(card, "div", "mn-mb-line", s.note);
-        }
+    for (const s of b.special) {   // hand builds the games cannot show (鎖子甲 ×6): one row, its note on the line
+        h(box, "div", "mn-mb-h", "特殊出裝");
+        const row = h(box, "button", "mn-mb-special");
+        const icons = h(row, "span", "mn-mb-icons");
+        for (const id of s.items) itemIcon(icons, c, ctx, id);
+        h(row, "span", "mn-mb-word", s.name);
+        row.addEventListener("click", (e) => { e.preventDefault(); explain(s.items[0], s.note, icons.firstElementChild as HTMLElement); });
     }
+    explain(b.cores[0].items[0], b.cores[0].reasons[0], tiles[0].querySelector(".mn-mb-ic") as HTMLElement);
+    box.append(say);
 }
 
+// an item picture; 命定武器's gets the game's rainbow border drawn over it
 function itemIcon(parent: HTMLElement, c: Champion, ctx: PageCtx, id: number, destiny = false): HTMLElement {
     const item = ctx.plugin.store.item(id);
     const box = h(parent, "span", "mn-mb-ic" + (destiny ? " is-destiny" : ""));
     const im = h(box, "img");
     im.src = item?.icon || art.item(c.patch, id);
     im.alt = item?.name ?? "";
-    if (destiny) { const f = h(box, "img", "mn-mb-frame"); f.src = DESTINY_FRAME; f.alt = ""; }
+    if (destiny) box.style.setProperty("--mn-frame", `url("${DESTINY_FRAME}")`);
     return box;
-}
-
-// one item with what it adds (a word in the accent) and why; a tap opens the item
-function pickRow(parent: HTMLElement, c: Champion, ctx: PageCtx, p: BuildPick, need: string, destiny = false): void {
-    const item = ctx.plugin.store.item(p.id);
-    const row = h(parent, "button", "mn-rb-row");
-    itemIcon(row, c, ctx, p.id, destiny);
-    const text = h(row, "span", "mn-rb-text");
-    const name = h(text, "span", "mn-rb-name", item?.name ?? `#${p.id}`);
-    if (need) h(name, "span", "mn-rb-need", need);
-    const why = h(text, "span", "mn-rb-why");
-    if (p.when) h(why, "span", "mn-rb-when", `${p.when}：`);
-    why.appendText(p.reason);
-    if (item) {
-        row.addEventListener("click", (e) => { e.preventDefault(); ctx.openItem(item.id); });
-        goes(row, { key: "item", params: { id: item.id } });
-    }
 }
 
 function setCard(body: HTMLElement, c: Champion, ctx: PageCtx, b: Champion["builds"][number]): void {

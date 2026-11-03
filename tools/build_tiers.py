@@ -26,7 +26,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # python3 -I does not add the script folder
 import vault_paths  # noqa: E402
-from augment_tiers import Champ, STYLES as AUG_STYLES, frontmatter, latest_cache  # noqa: E402
+from augment_tiers import Champ, frontmatter, latest_cache  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "_data" / "item-builds.json"
@@ -135,6 +135,7 @@ KINDS = {
     2503: ("MAGE MHP", "技能燒傷敵人，燒越多人法強越高"),
     3003: ("MAGE", "疊滿魔力後法術強度更高"),
     3157: ("MAGE MHP", "主動凝滯，躲掉切入"),
+    3146: ("MAGE BRU", "物攻加魔攻、全能吸血，主動電擊緩速"),
     3102: ("MAGE", "擋下一個敵方技能"),
     3137: ("MAGE", "魔法穿透，擊殺後治療隊友"),
     4628: ("MAGE", "遠距離的技能揭露敵人"),
@@ -162,14 +163,16 @@ KINDS = {
 }
 BOOTS = {
     3006: ("CRIT OHAD OHAP", "攻速"),
-    3020: ("MAGE MHP", "魔法穿透"),
-    3158: ("LETH ENCH MAGE", "技能和召喚師技能冷卻更短"),
-    3111: ("BRU TANK", "韌性和魔防，少被控"),
-    3047: ("TANK BRU", "減少普攻傷害"),
-    3009: ("", "跑速最高"),
-    3008: ("", "參與擊殺後吸血"),
-    1001: ("", "便宜，錢先留給裝備"),
+    3020: ("MAGE MHP", "法穿"),
+    3158: ("LETH ENCH MAGE", "技能急速"),
+    3111: ("BRU TANK", "韌性魔防"),
+    3047: ("TANK BRU", "擋普攻"),
+    3009: ("", "跑速"),
+    3008: ("", "擊殺吸血"),
+    1001: ("", "省錢"),
 }
+BOOT_WHY = {3006: "攻速，普攻更快", 3020: "法穿，技能打得更痛", 3158: "技能和召喚師技能冷卻更短", 3111: "韌性和魔防，少被控",
+            3047: "減少受到的普攻傷害", 3009: "跑速最高，走位和追人", 3008: "參與擊殺後吸血", 1001: "最便宜，錢先留給裝備"}
 # when to buy it, not every game: never in the main build, an alternative with this line in front
 WHEN = {3033: "敵方回血多時", 6609: "敵方回血多時", 3165: "敵方回血多時", 3075: "敵方回血多時", 6695: "敵方護盾多時",
         3157: "被切入時", 3102: "敵方有關鍵控場時", 3139: "被控就會死時", 3156: "敵方法師多時", 3091: "敵方魔法傷害多時",
@@ -198,15 +201,35 @@ MANA_FLOW = {3003, 3004, 3119, 2526, 6657}
 ULT_ITEMS = {3118, 2512, 3073, 6696, 3050}
 ALLY_HEAL = {6617, 2526, 6621, 3504, 6616, 6620, 2524}
 
-# ---- what each play style wants -------------------------------------------------------------------------------------------------
-# hand styles (resg's games show these builds; one list each, the page switches between them). Champions not here use the augment
-# styles (augment_tiers.STYLES) or one style read from the note.
-STYLES = {
-    "Varus": [("lethality", "穿甲 Q", {"LETH": 2}), ("onhit", "攻速特效 W", {"OHAD": 2, "OHAP": 1}), ("ap", "法術 W", {"OHAP": 2, "MAGE": 1})],
-    "Katarina": [("onhit", "攻速特效", {"OHAD": 2, "OHAP": 2, "BRU": 1})],
-    "Udyr": [("ap", "法術 R", {"MHP": 2, "MAGE": 1}), ("tank", "坦克", {"TANK": 2, "BRU": 1})],
-    "Malphite": [("tank", "坦克", {"TANK": 2, "SUP": 1}), ("ap", "法術", {"MAGE": 2, "MHP": 1})],
-}
+# ---- play styles ----------------------------------------------------------------------------------------------------------------
+# A play style is a family of items (an item's family is its first kind). A champion's styles are the families players start with
+# (the first item, STYLE_MIN of its games or more) or build a strong first-three set of, plus the style its note reads as; each
+# style wants its own kinds (2) and some others (1).
+FAMILIES = {"法術": ("MAGE", "MHP"), "攻速特效": ("OHAD", "OHAP"), "暴擊": ("CRIT",), "穿甲": ("LETH",), "戰士": ("BRU",),
+            "坦克": ("TANK", "SUP"), "輔助": ("ENCH",)}
+FAMILY_WANTS = {"法術": {"MAGE": 2, "MHP": 2, "OHAP": 1}, "攻速特效": {"OHAD": 2, "OHAP": 2, "BRU": 1, "CRIT": 1},
+                "暴擊": {"CRIT": 2, "OHAD": 1}, "穿甲": {"LETH": 2, "BRU": 1}, "戰士": {"BRU": 2, "TANK": 1, "LETH": 1},
+                "坦克": {"TANK": 2, "SUP": 1, "BRU": 1}, "輔助": {"ENCH": 2, "SUP": 1, "MAGE": 1}}
+STYLE_MIN = 0.03
+STYLE_FLOOR = -0.05    # a style whose best set does this much worse than the champion is not shown (only broken ones)
+MAX_STYLES = 4
+STYLE_NAMES = {"Varus": {"穿甲": "穿甲 Q", "攻速特效": "攻速特效 W", "法術": "法術 W"}}   # the style's word when the kit names it better
+
+
+def family(kinds):
+    k = kinds.split()[0] if kinds else ""
+    return next((f for f, ks in FAMILIES.items() if k in ks), "")
+
+
+def set_family(ids, ranged=False):
+    """A set's family: the one two of its items share, else its first item's (a ranged champion's 戰士 items make a 穿甲 set)."""
+    fams = [family(KINDS[i][0]) for i in ids if i in KINDS]
+    if ranged:
+        fams = ["穿甲" if f == "戰士" else f for f in fams]
+    for f in fams:
+        if fams.count(f) >= 2:
+            return f
+    return fams[0] if fams else ""
 
 
 def wants_of(c):
@@ -297,7 +320,7 @@ def items():
         if fm.get("reward") or (not boots and (fm.get("into") or fm.get("gold_total", 0) < 2200)):
             continue
         if i in KINDS or i in BOOTS:
-            out[i] = {"id": i, "name": fm.get("name", ""), "boots": boots}
+            out[i] = {"id": i, "name": fm.get("name", ""), "boots": boots, "desc": fm.get("desc", "")}
     alias = {}
     dd = sorted((p for p in DDRAGON.glob("*/item.json")), key=lambda p: [int(x) for x in p.parent.name.split(".")])
     if dd:   # resg counts ARAM's own copies (126697 傲慢): the item note of that name
@@ -346,19 +369,39 @@ def main():
             sums[i][3] = own
         seen = {i: (g, w / g - own, pr) for i, (g, w, pr, own) in sums.items() if g}
         order = first_items(d, alias)
-        hand = STYLES.get(note["id"])
-        styles = [(Champ(note), key, name, w) for key, name, w in hand] if hand else \
-                 [(c, c.style, c.style_name, None) for c in (Champ(note, s) for s in AUG_STYLES.get(note["id"], [("main", "主流", {})]))]
+        c = Champ(note)
+        sets = merged_sets(d, alias, pool, c.ranged)
+        total = d.get("champion", {}).get("tm") or 1
+        share = defaultdict(float)   # how often each family is the first item
+        firsts = defaultdict(list)
+        for row in d.get("ia", {}).get("combos", {}).get("1", []) if d else []:
+            i = alias.get(row[1][0], row[1][0])
+            if i in KINDS and i in pool:
+                starts = defaultdict(int)   # an item of two kinds (蒐集者) counts for the family of the sets it starts
+                for st in sets:
+                    if st["items"][0] == i:
+                        starts[st["family"]] += st["games"]
+                fam = max(starts, key=starts.get) if starts else set_family([i], c.ranged)
+                share[fam] += row[2] / total
+                firsts[fam].append(i)
+        for st in sets:
+            share[st["family"]] += 0.0   # a family with a strong set counts even when few start with it
+        w = wants_of(c)
+        own_family = family(max(w, key=w.get))
+        fams = [f for f in sorted(share, key=lambda f: -share[f]) if share[f] >= STYLE_MIN or any(x["family"] == f and x["games"] >= CORE_MIN for x in sets)]
+        if own_family not in fams:
+            fams.append(own_family)
+        fams = [f for f in fams if f][:MAX_STYLES]
         champ_out, fits, style_rows = {"styles": {}}, defaultdict(lambda: -2), {}
-        for c, key, name, w in styles:
-            wants = w or wants_of(c)
+        for fam in fams:
+            wants = FAMILY_WANTS[fam]
+            name = STYLE_NAMES.get(note["id"], {}).get(fam, fam)
             scored = []
             for i, it in pool.items():
                 kinds, line = (BOOTS if it["boots"] else KINDS)[i]
                 if it["boots"]:
-                    f, why = (1, line) if not kinds or any(wants.get(k, 0) > 0 for k in kinds.split()) else (-2, "不是這個打法的鞋子")
-                    if not kinds:
-                        f = 0
+                    f = max((wants.get(k, 0) for k in kinds.split()), default=0)
+                    f, why = (f, line) if f > 0 or not kinds else (-2, "不是這個打法的鞋子")
                 else:
                     f, why = fit(c, wants, i, kinds, line)
                 fits[i] = max(fits[i], f)
@@ -370,26 +413,30 @@ def main():
             scored.sort(key=lambda r: -r["value"])
             by_id = {r["id"]: r for r in scored}
             boots = max((r for r in scored if r["boots"] and r["fit"] >= 0), key=lambda r: (r["fit"], r["value"]), default=None)
-            reasoned = []   # the style's best three by the reasoning, for a style the games have no set for
-            taken = set()
+            # the style's own set when the games have none: its most built first item, then the two best by the reasoning
+            start = [i for i in firsts.get(fam, []) if by_id[i]["fit"] >= 1][:1]
+            made, taken = [by_id[i] for i in start], set().union(*[next((g for g in UNIQUE if i in g), {i}) for i in start])
             for r in scored:
-                if r["boots"] or r["fit"] < 1 or r["id"] in WHEN or len(reasoned) >= 3 or (seen and not r["games"]):
+                if len(made) >= 3:
+                    break
+                if r["boots"] or r["fit"] < 1 or r["id"] in WHEN or r in made or (seen and not r["games"]):
                     continue
                 group = next((g for g in UNIQUE if r["id"] in g), {r["id"]})
                 if not group & taken:
-                    reasoned.append(r)
+                    made.append(r)
                     taken |= group
-            reasoned.sort(key=lambda r: (order.get(r["id"], 99), -r["value"]))
-            style_rows[key] = (name, by_id, reasoned)
-            champ_out["styles"][key] = {"name": name, "late": late_items(scored),
-                                        "boots": {"id": boots["id"], "reason": boots["why"]} if boots else None}
+            style_rows[fam] = (name, by_id, made, bool(start))
+            champ_out["styles"][fam] = {"name": name, "late": late_items(scored),
+                                        "boots": {"id": boots["id"], "reason": BOOT_WHY.get(boots["id"], boots["why"]), "need": boots["why"]} if boots else None}
             if note["id"] in TEST:
                 review.append((note.get("name", note["id"]), name, scored))
-        champ_out["cores"] = cores(d, alias, style_rows)
+        champ_out["cores"] = cores(d, sets, style_rows, fams, own_family)
         for core in champ_out["cores"]:
             st = champ_out["styles"][core["style"]]
-            st.setdefault("destiny", {"id": core["items"][0], "reason": style_rows[core["style"]][1][core["items"][0]]["why"]})
+            first = core["items"][0]
+            st.setdefault("destiny", {"id": first, "reason": style_rows[core["style"]][1][first]["why"], "grows": grows(pool[first]["desc"])})
         champ_out["special"] = SPECIAL.get(note["id"], [])
+        champ_out["styles"] = {k: v for k, v in champ_out["styles"].items() if any(x["style"] == k for x in champ_out["cores"])}
         if note["id"] in TEST:
             review.append((note.get("name", note["id"]), "cores", champ_out["cores"]))
         for i, (g, gap, pr) in seen.items():
@@ -411,53 +458,77 @@ def main():
     print(f"{len(out)} champions, {sum(len(v['cores']) for v in out.values())} core sets; questions: " + ", ".join(f"{k} {v}" for k, v in kinds.items()))
 
 
-def cores(d, alias, style_rows):
-    """Up to CORES sets of the first three items: resg's most built first-three orders (one set per three items, its most built
-    order), kept when one play style has a reason for all three, strongest first (the set's win rate against the champion's own,
-    pulled toward it when the games are few, plus how often it is built); every play style gets its best set, made from the
-    reasoning alone when the games have none."""
-    own = d.get("champion", {}).get("wr")
-    total = d.get("champion", {}).get("tm") or 1
+def merged_sets(d, alias, pool, ranged=False):
+    """resg's most built first-three orders, one per set of three items (its most built order), with games, wins and family."""
     sets = {}
     for row in d.get("ia", {}).get("combos", {}).get("3", []) if d else []:
         ids = [alias.get(i, i) for i in row[1]]
-        k = frozenset(ids)
-        s = sets.setdefault(k, {"items": ids, "games": 0, "wins": 0, "top": 0})
+        if not all(i in pool for i in ids):
+            continue
+        s = sets.setdefault(frozenset(ids), {"items": ids, "games": 0, "wins": 0, "top": 0})
         s["games"] += row[2]
         s["wins"] += row[3] if row[3] else round(row[4] / 10000 * row[2])
         if row[2] > s["top"]:
             s["items"], s["top"] = ids, row[2]
+    out = list(sets.values())
+    for s in out:
+        s["family"] = set_family(s["items"], ranged)
+    return out
+
+
+def cores(d, sets, style_rows, fams, fams_own):
+    """Up to CORES sets of the first three items, every play style's best first (in the order of its share), then the strongest of
+    the rest: a set is kept when its style has a reason for all three; strength is its win rate against the champion's own, pulled
+    toward it when the games are few, plus how often it is built. A style the games have no set for gets the one made for it."""
+    own = d.get("champion", {}).get("wr")
+    total = d.get("champion", {}).get("tm") or 1
     found = []
-    for s in sets.values():
-        if s["games"] < CORE_MIN or own is None:
+    for s in sets:
+        if s["games"] < CORE_MIN or own is None or s["family"] not in style_rows:
             continue
-        best = None
-        for key, (name, by_id, _) in style_rows.items():
-            fits = [by_id[i]["fit"] if i in by_id and not by_id[i]["boots"] else -2 for i in s["items"]]
-            if min(fits) >= 1 and (best is None or sum(fits) > best[1]):
-                best = (key, sum(fits))
-        if not best:
+        by_id = style_rows[s["family"]][1]
+        fits = [by_id[i]["fit"] for i in s["items"]]
+        if min(fits) < 1:
             continue
         gap = (s["wins"] - own * s["games"]) / (s["games"] + CORE_PRIOR)
-        found.append({"style": best[0], "items": s["items"], "value": gap + POP_CORE * s["games"] / total + 0.005 * best[1]})
+        found.append({"style": s["family"], "items": s["items"], "value": gap + POP_CORE * s["games"] / total + 0.005 * sum(fits), "games": True, "gap": gap})
     found.sort(key=lambda c: -c["value"])
+    # a style whose every set loses clearly (not the note's own) is left out
+    fams = [f for f in fams if f == fams_own or not [c for c in found if c["style"] == f] or max(c["gap"] for c in found if c["style"] == f) >= STYLE_FLOOR]
+    found = [c for c in found if c["style"] in fams]
     picked = []
-    for key, (name, by_id, reasoned) in style_rows.items():   # each play style's best set first
-        mine = [c for c in found if c["style"] == key]
+    for fam in fams:
+        mine = [c for c in found if c["style"] == fam]
+        made = style_rows[fam][2]
         if mine:
             picked.append(mine[0])
-        elif len(reasoned) == 3:
-            picked.append({"style": key, "items": [r["id"] for r in reasoned], "value": -1.0})
+        elif len(made) == 3:
+            picked.append({"style": fam, "items": [r["id"] for r in made], "value": -1.0, "games": style_rows[fam][3]})
     for c in found:
         if len(picked) >= CORES:
             break
         if c not in picked:
             picked.append(c)
-    picked.sort(key=lambda c: -c["value"])
+    rank = {f: n for n, f in enumerate(fams)}
+    picked.sort(key=lambda c: (rank[c["style"]], -c["value"]))
+    return [{"style": c["style"], "items": c["items"], "reasons": [style_rows[c["style"]][1][i]["why"] for i in c["items"]], "games": c["games"]}
+            for c in picked[:max(CORES, len(fams))]]
+
+
+STAT_WORDS = [("物理攻擊", "物攻"), ("魔法攻擊", "魔攻"), ("攻擊速度", "攻速"), ("暴擊率", "暴擊"), ("技能加速", "技能急速"), ("物理致命", "穿甲"),
+              ("魔法穿透", "法穿"), ("物理穿透", "物穿"), ("物理防禦", "物防"), ("魔法防禦", "魔防"), ("生命", "生命"), ("魔力", "魔力"),
+              ("跑速", "跑速"), ("全能吸血", "吸血"), ("普攻吸血", "吸血"), ("治療及護盾強度", "治療護盾"), ("韌性", "韌性")]
+
+
+def grows(desc):
+    """The stats 命定武器 grows on this item: the item's own stats (the numbers before its first passive)."""
     out = []
-    for c in picked[:max(CORES, len(style_rows))]:
-        by_id = style_rows[c["style"]][1]
-        out.append({"style": c["style"], "items": c["items"], "reasons": [by_id[i]["why"] for i in c["items"]], "games": c["value"] > -1})
+    for part in desc.split(" / "):
+        if not part[:1].isdigit():
+            break
+        word = next((w for k, w in STAT_WORDS if k in part), None)
+        if word and word not in out and "基礎" not in part:
+            out.append(word)
     return out
 
 
@@ -469,7 +540,8 @@ def late_items(scored):
     def take(r):
         out.append({"id": r["id"], "reason": r["why"], "need": need_of(r["id"]), "when": WHEN.get(r["id"], "")})
     for need, n in (("輸出", 3), ("生存", 2), ("穿透", 1), ("功能", 1), ("機動", 1), ("重創", 1)):
-        for r in [r for r in cand if need_of(r["id"]) == need and r["id"] not in {o["id"] for o in out}][:n]:
+        own = 2 if need == "輸出" else 1   # damage from the style's own items; survival and the rest from any it can use
+        for r in [r for r in cand if need_of(r["id"]) == need and r["fit"] >= own and r["id"] not in {o["id"] for o in out}][:n]:
             take(r)
     for r in cand:
         if len(out) >= LATE_KEEP:
