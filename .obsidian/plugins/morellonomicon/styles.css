@@ -1740,7 +1740,10 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* 出裝's Mayhem builds on a fixed five-column grid: the style words, how it plays (two lines), the tapped item (three lines), then
    three rows of alike item cells (icon, name in two lines, what it is for); every box has a fixed height, so switching moves nothing */
 .mn-cpa-page.is-build .mn-cpa-body > .mn-mbp { flex: 1 0 auto; }
-.mn-mbp { display: flex; flex-direction: column; justify-content: center; gap: 14px; min-height: 100%; }
+.mn-mbp { display: flex; flex-direction: column; gap: 14px; min-height: 100%; }
+.mn-mbp > .mn-tsw { flex: none; }   /* the style words stay at the top, as on 強化; the rest is centred in the room under them */
+.mn-mbp > .mn-mbp-how { margin-top: auto; }
+.mn-mbp > .mn-mbp-grid { margin-bottom: auto; }
 .mn-mbp-how { height: 3em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 15px; line-height: 1.5; color: var(--mn-text); font-weight: 600; text-align: center; }
 .mn-mbp-say { height: 84px; overflow: hidden; display: flex; flex-direction: column; gap: 3px; }
 .mn-mbp-tn { display: flex; align-items: baseline; gap: 10px; }
