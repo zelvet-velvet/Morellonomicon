@@ -26,7 +26,9 @@ How the app tiers ARAM Mayhem augments for each champion: **why the champion's k
 
 > [!info]+ Hand lists (top of `tools/augment_tiers.py`), for what the notes do not tag
 > - Mechanics: `SPIN` (一轉就贏), `CHANNEL` (別轉台), `TERRAIN` (劃地為王), `SUMMON` (士兵術師), `PERMA` (堆層暴龍), `KNOCKBACK` (連鎖反應), `ATTACK_BUFF` (abilities that buff attacks for a while), `ONHIT_PASSIVE` (passives that stack per hit: 蜜蜂來襲, 幻影武器), `ULT_STANCE` (ultimates that are a long buff: 大絕覺醒), `ULT_SPAM`, `DOT`, `BIG_MODEL` (巨人殺手), `ULT_KEY` (champions picked for their ultimate), `SPAMMER` (basic abilities are the damage), `AP_ATTACKER`.
-> - How a champion is built in Mayhem when the note's archetypes say otherwise: `AP_PLAY` (Kai'Sa, Kog'Maw, Udyr, Shaco, Twisted Fate, Volibear), `BRUISER_PLAY` (Hecarim, Xin Zhao), `TANK_PLAY`, `MAGE_PLAY` (Seraphine), `NO_ATTACK`.
+> - How a champion is built in Mayhem when the note's archetypes say otherwise: `BRUISER_PLAY` (Hecarim, Xin Zhao), `TANK_PLAY` (Poppy), `MAGE_PLAY` (Seraphine), `NO_ATTACK` (Singed), `NO_CC` (Tahm Kench: his stun needs three stacks, W is hard to land).
+> - **Two builds** (`STYLES`): Kai'Sa (物攻射手 / 法術 W), Kog'Maw (物攻射手 / 法術 E、R), Udyr (物攻 Q / 法術 R), Shaco (物攻刺客 / 法術 W、R), Twisted Fate (物攻暴擊 / 法術 Q、W), Ashe (物攻射手 / 法術 R), Bard (攻速特效 / 法師). Each build has its own tier list (the page switches between them); resg.top does not split games by build, so an augment only the other build has a reason for stops at B and is not asked about.
+> - `PAIR`: one champion and augment from Zaviel's answers (Malphite W + 裝甲衝擊, Qiyana WQWQ + 輸出超負荷, Hecarim 祕術拳擊 + 幻影武器, the fixed abilities of 共鳴施放 / 法術逬裂 / 三連射 …). `DMG_BUFF` / `SURVIVE`: assassins want damage or survival even without a kit reason. `MELEE_RANGE`: melee attackers whose abilities buff attacks (Irelia, Tryndamere, Trundle) take range augments.
 > - `GENERIC`: augments that give everyone the same (gold, stat anvils, random rewards, snowball, summoner spells); no champion needs a reason, so they are never asked about.
 > - Item upgrades (`ITEM_UPGRADE`) get at most +1: they only help if that item is built.
 
@@ -54,8 +56,8 @@ How the app tiers ARAM Mayhem augments for each champion: **why the champion's k
 
 > [!todo]+ Zaviel's checks from 2026-10-31, against the 2026-11-03 tiers
 > - [x] 祕術拳擊 high for Master Yi, Yasuo, Yone, Fiora (all S); low for Jinx (C) and Katarina (C).
-> - [ ] 祕術拳擊 high for Ezreal: C in the games (below his own win rate). Asked.
-> - [ ] Malphite: 巨像之勇氣 and 殘忍 high: both C in the games. Asked.
+> - [x] 祕術拳擊 for Ezreal: Zaviel (2026-11-03): late game his Q cooldown is already low, he needs damage and on-hit instead; now neutral (C in the games).
+> - [x] Malphite: built as a tank with 鎖子甲 ×6 early; W resets his attack, so 裝甲衝擊 and the W augments are S; 巨像之勇氣 and 殘忍 stay low in the games.
 > - [x] Katarina: haste augments (循環利用, 靈光一閃) and 衝鋒 low (C).
 > - [x] Jinx: attack speed high (手腳麻利 A); 基本功夫 low (C).
 > - [x] 大地覺醒 weak for everyone (C, B at best).

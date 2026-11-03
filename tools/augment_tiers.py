@@ -39,7 +39,7 @@ SPECIFIC = 0.04        # a pair doing this much better than the augment does eve
 SURE_GAMES = 3000      # resg's own 高 confidence: questions come only from pairs this well sampled
 PENTAKILL = {3170, 3171, 3172, 3173}
 RARITY = {1: "銀", 2: "金", 3: "稜鏡"}
-TEST = ["Katarina", "Jinx", "Ezreal", "Malphite", "Soraka", "Darius", "MasterYi", "Lux", "Kaisa", "Garen", "Fiora", "Yasuo", "Yone"]
+TEST = ["Katarina", "Jinx", "Ezreal", "Malphite", "Soraka", "Darius", "MasterYi", "Lux", "Kaisa", "Garen", "Fiora", "Yasuo", "Yone", "Udyr", "TwistedFate"]
 
 # ---- mechanics the champion notes do not tag (Data Dragon ids) ---------------------------------------------------------------
 SPIN = {"Garen", "Darius", "Katarina", "MonkeyKing", "Tryndamere", "Renekton", "Draven"}
@@ -65,7 +65,7 @@ SPAMMER = {"Ezreal", "Cassiopeia", "Ryze", "Lux", "Xerath", "Ziggs", "Brand", "K
            "Qiyana", "Ambessa", "Sylas"}
 # passives that stack on every hit (an ability or bee that applies on-hit fills them faster)
 ONHIT_PASSIVE = {"TahmKench", "Volibear", "Ekko", "Senna", "Fizz", "Braum", "Vi", "Kayle", "Varus", "Kalista", "Vayne", "Gnar", "KogMaw",
-                 "Teemo", "Locke", "Kennen", "Kaisa", "Sylas"}
+                 "Teemo", "Locke", "Kennen", "Kaisa", "Sylas", "Bard"}
 # ultimates that are a long buff or form the champion fights inside (basic abilities spammed during it)
 ULT_STANCE = {"Hecarim", "Jax", "Alistar", "Rakan", "Shyvana", "Riven", "Olaf", "Trundle", "Renekton", "Nasus", "Kayle", "MasterYi",
               "Volibear", "Vayne", "Twitch", "Shaco", "Elise", "Nidalee", "Jayce", "Udyr", "Gnar", "Kled"}
@@ -79,17 +79,55 @@ BIG_MODEL = {"Gragas", "Nasus", "Galio", "Darius", "Urgot", "Garen", "Olaf", "Nu
              "Ornn", "Skarner", "DrMundo", "Volibear", "Sejuani", "TahmKench", "Singed", "Thresh"}
 # augments that give the same to everyone (gold, anvils, random rewards, snowball): no champion needs a reason for them
 GENERIC = {1053, 1062, 1243, 1329, 1337, 1389, 1392, 1402, 12317, 1002, 1238, 1384, 1403, 1237, 1404, 2032, 2034, 2043, 2080, 1358, 2088,
-           1116, 1348, 1347, 3004, 3071, 3079, 1401, 1105, 1305, 1026, 1333, 1020, 1301, 1322, 2137, 3121, 1057, 1060, 1046, 1416, 1034,
+           1116, 1348, 1347, 3004, 3071, 1401, 1105, 1305, 1026, 1333, 1020, 1301, 1322, 2137, 3121, 1057, 1060, 1046, 1416, 1034,
            1025, 1386, 1154, 3081}
 # how champions are built in Mayhem where the note's archetypes say otherwise
-AP_PLAY = {"Kaisa", "KogMaw", "Udyr", "Shaco", "TwistedFate", "Volibear"}   # played AP: attack-speed and AD augments miss
 BRUISER_PLAY = {"Hecarim", "XinZhao"}                                     # played as damage bruisers, not tanks
-TANK_PLAY = {"Poppy", "Udyr"}                                             # played as tanks: AD augments miss
+TANK_PLAY = {"Poppy"}                                                     # played as a tank: AD augments miss
 MAGE_PLAY = {"Seraphine"}                                                 # played as a mage, not an enchanter
-NO_ATTACK = {"Singed", "TwistedFate"}                                      # rarely basic attack
+NO_ATTACK = {"Singed"}                                                    # rarely basic attacks
+NO_CC = {"TahmKench"}            # his stun needs three passive stacks and W is hard to land: no reliable hard crowd control (Zaviel)
+# champions played in two builds (Zaviel, 2026-11-03): one tier list each, the page switches between them; the games are shared
+_AD = {"ap": False, "ad": True, "crit": True, "onhit": True, "attacker": True, "spammer": False, "ap_attacker": False,
+       "stack": {"攻擊力", "攻速", "暴擊"}}
+_AP = {"ap": True, "ad": False, "crit": False, "onhit": False, "attacker": False, "marksman": False, "ap_attacker": False,
+       "spammer": True, "stack": {"法術強度", "技能急速"}}
+STYLES = {
+    "Kaisa": [("ad", "物攻射手", {**_AD, "marksman": True}), ("ap", "法術 W", _AP)],
+    "KogMaw": [("ad", "物攻射手", {**_AD, "marksman": True}), ("ap", "法術 E、R", {**_AP, "ult_spam": True})],
+    "Udyr": [("ad", "物攻 Q", {**_AD, "crit": False, "onhit_passive": True}), ("ap", "法術 R", {**_AP, "ult_spam": True})],
+    "Shaco": [("ad", "物攻刺客", {**_AD, "onhit": False, "dot": False}), ("ap", "法術 W、R", {**_AP, "dot": True})],
+    "TwistedFate": [("ad", "物攻暴擊", {**_AD, "marksman": True}), ("ap", "法術 Q、W", _AP)],
+    "Bard": [("onhit", "攻速特效", {"attacker": True, "onhit": True, "ap_attacker": True, "enchanter": False, "stack": {"攻速", "法術強度"}}),
+             ("ap", "法師", {**_AP, "enchanter": False, "ally": True})],
+    "Ashe": [("ad", "物攻射手", {}), ("ap", "法術 R", {**_AP, "spammer": False, "ult_key": True})],
+}
+# melee champions whose abilities buff their attacks: range augments make those attacks land (Zaviel)
+MELEE_RANGE = {"Irelia", "Tryndamere", "Trundle"}
+# damage or survival augments an assassin wants even when its kit has no special use for them (Zaviel)
+DMG_BUFF = {1195, 1026, 1084, 1028, 3116, 1325, 1211, 2098, 1007, 3132, 2083}
+SURVIVE = {1138, 2132, 1333, 1315, 2107, 1344, 1063, 1020}
+# one champion and augment, from Zaviel's answers (2026-11-03); "Id/style" for one build only
+PAIR = {
+    (3049, "Malphite"): (2, "W 重置普攻，配鎖子甲觸發裝甲衝擊"), (3171, "Malphite"): (2, "W 重置普攻，常觸發普攻強化"),
+    (1150, "Malphite"): (2, "W 重置普攻，常觸發普攻強化"),
+    (3049, "Sylas"): (2, "位移接被動普攻，配鎖子甲觸發"),
+    (2123, "Qiyana"): (2, "W 重置 Q，WQWQ 連放"),
+    (1058, "Hecarim"): (2, "Q 冷卻短，普攻減冷卻一直放 Q"), (1029, "Hecarim"): (2, "技能觸發命中，配祕術拳擊一直放 Q"),
+    (1058, "Volibear"): (2, "技能、普攻都在打，冷卻一直轉"),
+    (1054, "XinZhao"): (2, "被動第三下普攻回血吃魔攻，普攻越多越肉"),
+    (2098, "Amumu"): (2, "W、大絕範圍大，四面都打到破綻"),
+    (1058, "Ezreal"): (0, "後期 Q 冷卻已經很短"),
+    (1019, "Yasuo"): (0, "E 冷卻本來就極短"),
+    (2062, "TwistedFate"): (2, "固定強化 Q，分身多丟一次牌"), (2072, "Nidalee"): (2, "固定強化 Q，標槍分裂"),
+    (2054, "Cassiopeia"): (2, "固定強化 E，多打兩人"), (2054, "Jhin"): (2, "固定強化 Q，多彈兩人"),
+    (1029, "KogMaw/ap"): (2, "E、R 也吃 W 的 %生命傷害"),
+    (3086, "Udyr/ad"): (2, "Q 強化普攻吃命中效果，蜜蜂一次四下"),
+    (2087, "Ashe/ap"): (2, "大絕冷卻長，每次減很多"),
+}
 # AP champions whose basic attacks carry the damage
 AP_ATTACKER = {"Kayle", "KogMaw", "Teemo", "Kaisa", "Varus", "Nilah", "Azir", "Gwen", "Diana", "Shyvana", "Katarina", "Ekko", "Lillia",
-               "Corki", "Ezreal", "Kennen", "Twitch"}
+               "Corki", "Ezreal", "Kennen", "Twitch", "Bard"}
 
 
 # ---- reading the notes -------------------------------------------------------------------------------------------------------
@@ -122,7 +160,9 @@ def cooldown(skill):
 class Champ:
     """What the rules ask about a champion, from its note and the hand lists."""
 
-    def __init__(self, note):
+    def __init__(self, note, style=("main", "主流", {})):
+        self.style, self.style_name = style[0], style[1]
+        self.label = note.get("name", note["id"]) + ("" if style[0] == "main" else f"（{style[1]}）")
         self.id = note["id"]
         self.key = int(note["key"])
         self.name = note.get("name", self.id)
@@ -134,15 +174,12 @@ class Champ:
         self.ap = dt == "魔法" or (dt == "混合" and "法術強度" in note.get("stack", []))
         self.ad = dt == "物理" or (dt == "混合" and "攻擊力" in note.get("stack", []))
         self.stack = set(note.get("stack", []) or [])
-        if self.id in AP_PLAY:
-            self.ap, self.ad = True, False
-            self.stack = (self.stack - {"攻速", "暴擊", "攻擊力"}) | {"法術強度"}
         self.mana = note.get("resource") == "魔力"
         skills = note.get("skills", [])
         self.tags = set(note.get("features", []))
         count = lambda tag: sum(tag in s.get("tags", []) for s in skills)
         self.dashes = count("位移")
-        self.cc = count("控場")
+        self.cc = 0 if self.id in NO_CC else count("控場")
         self.slows = count("緩速")
         self.empowers = count("強化普攻")
         self.heals = count("治療") + count("吸血")
@@ -151,12 +188,12 @@ class Champ:
         self.enchanter = self.ally and "輔助" in arch
         self.onhit = ("攻速" in self.stack or bool(note.get("onhit"))) and self.id not in NO_ATTACK
         self.crit = "暴擊" in self.stack
-        self.marksman = "射手" in arch and self.id not in AP_PLAY and self.id not in NO_ATTACK
+        self.marksman = "射手" in arch and self.id not in NO_ATTACK
         self.tank = ("坦克" in arch or self.id in TANK_PLAY) and self.id not in BRUISER_PLAY
         self.hp = "生命" in self.stack or self.tank
         self.resists = bool({"護甲", "魔防"} & self.stack) or self.tank
         self.haste = "技能急速" in self.stack
-        self.attacker = (self.marksman or self.onhit or self.id in ATTACK_BUFF) and self.id not in NO_ATTACK and self.id not in AP_PLAY
+        self.attacker = (self.marksman or self.onhit or self.id in ATTACK_BUFF) and self.id not in NO_ATTACK
         self.skill_tags = {s["key"]: set(s.get("tags", [])) for s in skills}
         cds = {s["key"]: cooldown(s) for s in skills}
         self.dash_cds = [cds[s["key"]] for s in skills if "位移" in s.get("tags", []) and cds.get(s["key"])]
@@ -178,6 +215,8 @@ class Champ:
         self.dot = self.id in DOT
         self.ult_spam = self.id in ULT_SPAM
         self.big = self.id in BIG_MODEL
+        for k, v in style[2].items():   # the build's own answers win over the note
+            setattr(self, k, v)
 
 
 # ---- the reasoning: one rule per augment ---------------------------------------------------------------------------------------
@@ -384,7 +423,7 @@ GEN = {
     2055: "技能多發飛彈", 2062: "分身重放技能", 2072: "飛彈分裂", 2087: "放技能減其他技能冷卻", 2098: "破綻真實傷害",
     2099: "擊殺後閃現重置技能", 2104: "治療護盾累積成炸彈", 2107: "死後復活", 2115: "黏住敵人拉過來", 2123: "放技能重置一個技能",
     2134: "大絕放能量場", 2135: "持續技能疊釘子", 2141: "九頭蛇全買", 3016: "第三下普攻真實傷害", 3018: "攻速轉暴擊傷害",
-    3053: "大絕加生命、緩速", 3079: "死亡之舞召喚師技能", 3149: "治療護盾多兩個隊友", 12317: "全部換成稜鏡增幅",
+    3053: "大絕加生命、緩速", 3079: "瞬移後 5 秒不死，沒收頭就死", 3149: "治療護盾多兩個隊友", 12317: "全部換成稜鏡增幅",
     1002: "道具急速", 1005: "靠近受傷隊友加速、補量提高", 1013: "大量生命，傷害降低", 1020: "低血回血", 1029: "技能觸發命中效果",
     1036: "普攻燃燒", 1038: "黑闇收割＋先發制人", 1047: "暴擊率", 1061: "自動回力鏢", 1063: "位移後疊雙抗", 1067: "放技能回血",
     1068: "技能急速", 1071: "加射程", 1072: "技能標記讓隊友追傷", 1074: "普攻降敵方傷害", 1077: "暴擊回血", 1084: "雙穿透",
@@ -431,7 +470,7 @@ RULES = {
     1045: lambda c: fit_spells(c, "技能燒人、越燒冷卻越短"),
     1048: lambda c: (2, "出暴擊裝又靠技能輸出") if c.crit and (c.spammer or c.short_cds >= 2) else fit_ap(c, "魔攻提高暴擊率，技能可暴擊"),
     1053: lambda c: (0, None),
-    1054: lambda c: (2, "普攻和技能都多，雙修兩邊都疊") if c.ap_attacker and not c.id in AP_PLAY else (0, None),
+    1054: lambda c: (2, "普攻和技能都多，雙修兩邊都疊") if c.ap_attacker else (0, None),
     1058: lambda c: (2, "近戰普攻接技能，冷卻一直轉") if c.melee and c.attacker and (c.short_cds or c.empowers) else (0, "射手的技能不是主要輸出") if c.marksman else (0, None),
     1062: lambda c: (0, None),
     1066: lambda c: (0, None),
@@ -439,12 +478,12 @@ RULES = {
     1081: lambda c: (2, "靠普攻輸出，普攻疊跑速再轉攻速") if c.attacker and not c.spammer else (0, None),
     1088: lambda c: fit_ult(c, "大絕連放兩次", cd_matter=False),
     1095: lambda c: fit_ally(c, "每次補人都附雙抗"),
-    1115: lambda c: (2, "射程是生命線，多打好多下") if c.marksman and not c.spammer else (0, None),
+    1115: lambda c: (2, "射程是生命線，多打好多下") if c.marksman and not c.spammer else (2, "近戰普攻手，技能強化普攻，射程讓普攻更好打") if c.id in MELEE_RANGE or (c.melee and c.attacker and (c.attack_buff or c.empowers)) else (0, None),
     1134: lambda c: (2, "遠程普攻手，變近戰換大量屬性") if c.ranged and c.attacker else (-2, "本來就是近戰") if c.melee else (0, None),
     1154: lambda c: (2, "後期普攻核心，鍋鏟收益大") if (c.marksman or c.attack_buff) and not c.tank else (0, None),
     1156: lambda c: fit_ap(c, "法帽、中婭本來就要出"),
     1194: lambda c: (2, "大絕常放又多段，常把人變小動物") if c.ult_spam else (0, None),
-    1195: lambda c: (2, "體型大，縮小後很難被技能打中") if c.big else (1, "近戰黏人，縮小又加跑速") if c.melee else (0, None),
+    1195: lambda c: (2, "體型大，縮小後很難被技能打中") if c.big else (1, "輸出英雄，吃傷害加成") if not c.tank and not c.enchanter else (0, None),
     1225: lambda c: (2, "命中效果普攻手，多一箭再觸發命中效果") if c.onhit and c.attacker else fit_attack(c, "普攻多一支箭"),
     1243: lambda c: (0, None),
     1310: lambda c: (2, "繞後刺客，背刺好觸發") if "刺客" in c.roles and c.melee else (1, "近戰常繞後") if c.melee else (0, None),
@@ -489,7 +528,7 @@ RULES = {
     3018: lambda c: (-2, "暴擊率本來就翻倍，攻速才是 Q 的冷卻") if c.id in ("Yasuo", "Yone") else (-2, "攻速是跳躍和疊矛的關鍵") if c.id == "Kalista" else fit_crit(c, "攻速換暴擊傷害"),
     3048: lambda c: fit_spellblade(c, "技能後普攻彈射"),
     3053: lambda c: fit_tank(c, "大絕衝進去又肉又緩") if c.ult_key or c.tank else fit_ult(c, "大絕加生命"),
-    3079: lambda c: fit_melee_fighter(c, "死亡之舞拖傷害"),
+    3079: lambda c: (2, "高輸出，5 秒不死內收頭") if c.marksman or "刺客" in c.roles else (-1, "輸出不夠，5 秒內收不到頭會死") if c.tank or c.enchanter else (0, None),
     3149: lambda c: fit_ally(c, "一次補三個人"),
     12317: lambda c: (0, None),
     # 金
@@ -506,7 +545,7 @@ RULES = {
     1064: lambda c: (0, None),
     1067: lambda c: fit_spells(c, "放技能就回血"),
     1068: lambda c: fit_haste(c, "技能急速"),
-    1071: lambda c: (2, "射程是生命線") if c.marksman and not c.spammer else (0, None),
+    1071: lambda c: (2, "射程是生命線，多打好多下") if c.marksman and not c.spammer else (2, "近戰普攻手，技能強化普攻，射程讓普攻更好打") if c.id in MELEE_RANGE or (c.melee and c.attacker and (c.attack_buff or c.empowers)) else (0, None),
     1072: lambda c: fit_spells(c, "技能標記讓隊友追傷"),
     1074: lambda c: fit_attack(c, "普攻讓對方傷害變低"),
     1077: lambda c: fit_crit(c, "暴擊回血"),
@@ -567,7 +606,7 @@ RULES = {
     2126: lambda c: fit_duration(c, "持續期間普攻減冷卻"),
     2129: lambda c: only(c.terrain, "會造地形，地形邊追加傷害", "沒有地形技能"),
     2132: lambda c: fit_ap(c, "魔攻越高吸越多"),
-    2133: lambda c: fit_spellblade(c, "技能後普攻加傷"),
+    2133: lambda c: (2, "補盾強度轉成傷害") if c.enchanter else fit_spellblade(c, "技能後普攻加傷"),
     2137: lambda c: (0, None),
     2139: lambda c: fit_tank(c, "挨打累積反擊"),
     2140: lambda c: (2, "近戰物攻，九頭蛇本來就要出") if c.melee and c.ad else (-2, "不出九頭蛇"),
@@ -616,7 +655,7 @@ RULES = {
     1112: lambda c: fit_ult(c, "大絕期間免控", cd_matter=False),
     1136: lambda c: fit_cc(c, "控人疊適性"),
     1138: lambda c: (1, "近戰纏鬥吃吸血") if c.melee else (0, None),
-    1170: lambda c: (1, "射程多一點") if c.marksman and not c.spammer else (0, None),
+    1170: lambda c: (1, "射程是生命線，多一點射程") if c.marksman and not c.spammer else (1, "近戰普攻手，技能強化普攻，射程讓普攻更好打") if c.id in MELEE_RANGE or (c.melee and c.attacker and (c.attack_buff or c.empowers)) else (0, None),
     1181: lambda c: (2, "堆生命又常普攻") if c.hp and c.melee and (c.attacker or c.empowers) else fit_hp(c, "普攻吃最大生命"),
     1187: lambda c: (0, None),
     1204: lambda c: only(c.perma, "技能有永久堆層，疊得快一倍", "沒有永久堆層"),
@@ -673,6 +712,22 @@ RULES = {
 ITEM_UPGRADE = {2143, 1996, 2140, 2141, 1336, 1320, 1318, 3150, 1156, 1152, 1319, 2157, 1361, 1379}
 
 
+def reasoning(i, c):
+    """The fit and reason of augment i for champion c: a pair answer first, then the augment's rule, then the general answers."""
+    pair = PAIR.get((i, f"{c.id}/{c.style}")) or PAIR.get((i, c.id))
+    if pair:
+        return pair
+    fit, why = RULES[i](c)
+    if i in ITEM_UPGRADE:
+        fit = min(fit, 1)
+    if fit <= 0 and "刺客" in c.roles and not (c.style == "ap" and c.id in STYLES):
+        if i in DMG_BUFF:
+            return 1, "刺客要傷害加成"
+        if i in SURVIVE:
+            return 1, "刺客切進去要保命"
+    return fit, why
+
+
 def tier_rows(rows):
     """Tiers within each rarity: by rank (TIERS), held back by the score floor; a fit of -2 is always C."""
     for grp in {r["group"] for r in rows}:
@@ -685,6 +740,8 @@ def tier_rows(rows):
                     if share < cut and r["value"] >= TIER_FLOOR[t]:
                         r["tier"] = t
                         break
+            if r.get("other") and r["tier"] in ("S", "A"):
+                r["tier"] = "B"   # the other build's augment: it does not reach S or A here
 
 
 def latest_cache():
@@ -720,50 +777,52 @@ def main():
         note = frontmatter(path)
         if note.get("type") != "champion":
             continue
-        c = Champ(note)
-        champs[c.id] = c
-        f = cache / "champions" / f"{c.key}.json"
+        key = int(note["key"])
+        f = cache / "champions" / f"{key}.json"
         data = json.loads(f.read_text(encoding="utf-8")) if f.exists() else {}
         own = data.get("champion", {}).get("wr")
         games = {r[0]: (r[2], r[3]) for r in data.get("ra", [])}
-        rows = []
-        for i in rated:
-            fit, why = RULES[i](c)
-            if i in ITEM_UPGRADE:
-                fit = min(fit, 1)
-            prior = base_gap[i] + FIT_PRIOR * fit
-            g, w = games.get(i, (0, 0))
-            seen = (w / g - own) if g and own is not None else None
-            gap = ((g * seen + PRIOR_GAMES * prior) / (g + PRIOR_GAMES)) if seen is not None else prior
-            score = gap + FIT_SCORE * fit
-            if fit > 0 and seen is not None and g >= SURE_GAMES and seen - base_gap[i] <= -SPECIFIC:
-                why_shown = None   # the games say the kit does not make it work: show what it does, not why it should
-            else:
-                why_shown = why if fit > 0 else None
-            reason = why_shown or GEN.get(i, "")
-            group = "五殺" if i in PENTAKILL else augs[i]["rarity"]
-            rows.append({"id": i, "group": group, "tier": "", "value": round(score, 4), "score": 0.0, "when": "", "reason": reason,
-                         "fit": fit, "why": why or "", "games": g, "seen": seen, "base": base_gap[i]})
-        tier_rows(rows)
-        for r in rows:
-            if r["games"] < SURE_GAMES or r["seen"] is None:
-                continue
-            if r["id"] in GENERIC:
-                continue
-            if r["tier"] in ("S", "A") and r["fit"] <= 0 and r["seen"] - r["base"] >= SPECIFIC:
-                questions.append(("strong", c, augs[r["id"]], r["fit"], r["why"], r["seen"], r["games"]))
-            elif r["fit"] >= 2 and r["seen"] - r["base"] <= -SPECIFIC:
-                questions.append(("weak", c, augs[r["id"]], r["fit"], r["why"], r["seen"], r["games"]))
-        # score: 0-1 within the rarity, for the plugin's order inside a tier
-        for grp in {r["group"] for r in rows}:
-            part = [r for r in rows if r["group"] == grp]
-            lo, hi = min(r["value"] for r in part), max(r["value"] for r in part)
-            for r in part:
-                r["score"] = round((r["value"] - lo) / (hi - lo), 3) if hi > lo else 0.5
-        rows.sort(key=lambda r: -r["value"])
-        out[c.id] = {"main": {"name": "主流", "tiers": [{k: r[k] for k in ("id", "group", "tier", "value", "score", "when", "reason")} for r in rows],
-                              "none": []}}
-        c.rows = rows
+        builds = [Champ(note, style) for style in STYLES.get(note["id"], [("main", "主流", {})])]
+        for c in builds:
+            champs[f"{c.id}/{c.style}"] = c
+            rows = []
+            for i in rated:
+                fit, why = reasoning(i, c)
+                # two builds share the games: an augment only the other build has a reason for is that build's result
+                other = fit <= 0 and any(reasoning(i, o)[0] > 0 for o in builds if o is not c)
+                prior = base_gap[i] + FIT_PRIOR * fit
+                g, w = games.get(i, (0, 0))
+                seen = (w / g - own) if g and own is not None else None
+                gap = ((g * seen + PRIOR_GAMES * prior) / (g + PRIOR_GAMES)) if seen is not None else prior
+                score = gap + FIT_SCORE * fit
+                if fit > 0 and seen is not None and g >= SURE_GAMES and seen - base_gap[i] <= -SPECIFIC:
+                    why_shown = None   # the games say the kit does not make it work: show what it does, not why it should
+                else:
+                    why_shown = why if fit > 0 else None
+                reason = why_shown or GEN.get(i, "")
+                group = "五殺" if i in PENTAKILL else augs[i]["rarity"]
+                rows.append({"id": i, "group": group, "tier": "", "value": round(score, 4), "score": 0.0, "when": "", "reason": reason,
+                             "fit": fit, "why": why or "", "games": g, "seen": seen, "base": base_gap[i], "other": other})
+            tier_rows(rows)
+            for r in rows:
+                if r["games"] < SURE_GAMES or r["seen"] is None:
+                    continue
+                if r["id"] in GENERIC or r["other"]:
+                    continue
+                if r["tier"] in ("S", "A") and r["fit"] <= 0 and r["seen"] - r["base"] >= SPECIFIC:
+                    questions.append(("strong", c, augs[r["id"]], r["fit"], r["why"], r["seen"], r["games"]))
+                elif r["fit"] >= 2 and r["seen"] - r["base"] <= -SPECIFIC:
+                    questions.append(("weak", c, augs[r["id"]], r["fit"], r["why"], r["seen"], r["games"]))
+            # score: 0-1 within the rarity, for the plugin's order inside a tier
+            for grp in {r["group"] for r in rows}:
+                part = [r for r in rows if r["group"] == grp]
+                lo, hi = min(r["value"] for r in part), max(r["value"] for r in part)
+                for r in part:
+                    r["score"] = round((r["value"] - lo) / (hi - lo), 3) if hi > lo else 0.5
+            rows.sort(key=lambda r: -r["value"])
+            out.setdefault(c.id, {})[c.style] = {"name": c.style_name, "tiers": [{k: r[k] for k in ("id", "group", "tier", "value", "score", "when", "reason")} for r in rows],
+                                                 "none": []}
+            c.rows = rows
 
     OUT_TIERS.write_text(json.dumps({"source": f"resg.top {meta['version']} ({meta['collectedAt'][:10]})", "patch": meta["version"],
                                      "augments": len(rated), "unrated": unrated, "champions": out}, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -784,13 +843,11 @@ def review(champs, augs, meta, n, unrated):
            f"Written by `tools/augment_tiers.py` (do not edit): the test champions' tiers, {n} augments rated, {len(unrated)} not. "
            f"Fit is the reasoning (−2 useless … +2 the kit is what the augment rewards); games and the gap come from resg.top {meta['version']} "
            f"(collected {meta['collectedAt'][:10]}), shown here only for review; the score is the gap pulled toward the augment's result on "
-           f"every champion when games are few, plus the fit. Tiers per rarity: S ≥ +3, A ≥ +1.5, B ≥ 0 points.", ""]
+           f"every champion when games are few, plus the fit. Tiers by rank within each rarity (S top 8%, A to 20%, B to 45%), S and A above "
+           f"the champion's own win rate.", ""]
     order = {"稜鏡": 0, "金": 1, "銀": 2, "五殺": 3}
-    for cid in TEST:
-        c = champs.get(cid)
-        if not c:
-            continue
-        out += [f"## {c.name}", "", "| Rarity | Tier | Augment | Fit | Games | Gap | Score | Reason |", "| --- | --- | --- | --- | --- | --- | --- | --- |"]
+    for c in sorted((c for c in champs.values() if c.id in TEST), key=lambda c: (TEST.index(c.id), c.style)):
+        out += [f"## {c.label}", "", "| Rarity | Tier | Augment | Fit | Games | Gap | Score | Reason |", "| --- | --- | --- | --- | --- | --- | --- | --- |"]
         for r in sorted(c.rows, key=lambda r: (order.get(r["group"], 4), "SABC".index(r["tier"]), -r["value"])):
             gap = f"{r['seen'] * 100:+.1f}" if r["seen"] is not None else "—"
             why = r["why"] if r["fit"] <= 0 and r["why"] else r["reason"]
@@ -812,11 +869,11 @@ def ask(questions, augs, meta):
     out += ["## Strong in games, no reason yet", "", "Grouped by augment, the champions it wins most for first.", ""]
     for i, qs in sorted(by_aug.items(), key=lambda kv: -len(kv[1])):
         a = augs[i]
-        out.append(f"- **[[{a['name']}]]** ({a['rarity']}, {len(qs)}): " + "、".join(f"{q[1].name} {q[5] * 100:+.1f}" for q in qs[:25])
+        out.append(f"- **[[{a['name']}]]** ({a['rarity']}, {len(qs)}): " + "、".join(f"{q[1].label} {q[5] * 100:+.1f}" for q in qs[:25])
                    + (" …" if len(qs) > 25 else ""))
     out += ["", "## The reasoning says yes, the games say no", ""]
     for q in weak:
-        out.append(f"- {q[1].name} · [[{q[2]['name']}]]: {q[4]} — {q[5] * 100:+.1f} in {q[6]} games")
+        out.append(f"- {q[1].label} · [[{q[2]['name']}]]: {q[4]} — {q[5] * 100:+.1f} in {q[6]} games")
     OUT_QUESTIONS.write_text("\n".join(out) + "\n", encoding="utf-8")
 
 
