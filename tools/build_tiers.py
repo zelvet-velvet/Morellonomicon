@@ -45,7 +45,7 @@ CORE_MIN = 300         # games a set needs
 CORE_PRIOR = 1000      # games the champion's own win rate counts as in a set's result
 POP_CORE = 0.1         # how often the set is built (share of the champion's games) adds up to that many points
 LATE = 5               # items four to six per style
-SWAPS = 3              # items other pairs of the style have in place of one of the first two
+ALT_PAIRS = 2          # other first-two pairs of the style shown under the core pair
 THIRDS = 3             # choices for the third item
 SURE_GAMES = 5000
 SPECIFIC = 0.04
@@ -420,11 +420,11 @@ def main():
                 core, from_games = fill_core(sd.get("sig", []), sd["scored"]), False
             if len(core) < 2:
                 continue
-            swaps = []   # the items other pairs of this style have in place of one of the core's
+            alts = []   # other first-two pairs of this style (best first), shown as sets under the core pair
             for st in mine[1:]:
-                other = [i for i in st["items"] if i not in core]
-                if len(other) == 1 and other[0] not in swaps:
-                    swaps.append(other[0])
+                if set(st["items"]) != set(core) and all(set(st["items"]) != set(a) for a in alts):
+                    alts.append(st["items"])
+            alts = alts[:ALT_PAIRS]
             # the third item: what players add to this pair most (resg's first-three sets that start with it), kept when it fits
             third = defaultdict(int)
             for st in triples:
@@ -433,20 +433,20 @@ def main():
             thirds = sorted(third, key=lambda i: -third[i])[:THIRDS]
             if not thirds:   # none in the games: the best by the reasoning
                 thirds = [i for i in fill_core(core, sd["scored"], 3)[2:]]
-            swaps = [i for i in swaps if i not in thirds]
+            shown = set(core) | set(thirds) | {i for a in alts for i in a}
             boots = max((r for r in sd["scored"] if r["boots"] and r["fit"] >= 0), key=lambda r: (r["fit"], r["value"]), default=None)
             first = core[0]
             champ_out["styles"].append({
                 "name": sd["name"], "why": sd.get("why", ""), "games": from_games, "status": sd.get("status", ""),
                 "core": [{"id": i, "reason": by_id[i]["why"]} for i in core],
-                "third": [{"id": i, "reason": by_id[i]["why"]} for i in thirds],
-                "swaps": [{"id": i, "reason": by_id[i]["why"]} for i in swaps[:SWAPS]],
-                "late": [o for o in late_items(sd["scored"]) if o["id"] not in core + thirds + swaps[:SWAPS]][:LATE],
+                "alts": [[{"id": i, "reason": by_id[i]["why"]} for i in a] for a in alts],
+                "third": [{"id": i, "reason": by_id[i]["why"], "need": need_of(i)} for i in thirds],
+                "late": [o for o in late_items(sd["scored"]) if o["id"] not in shown][:LATE],
                 "boots": {"id": boots["id"], "reason": BOOT_WHY.get(boots["id"], boots["why"]), "need": boots["why"]} if boots else None,
                 "destiny": {"id": first, "reason": by_id[first]["why"], "grows": grows(pool[first]["desc"])},
             })
             if note["id"] in TEST:
-                review.append((note.get("name", note["id"]), sd["name"], sd["scored"], core, swaps[:SWAPS], from_games))
+                review.append((note.get("name", note["id"]), sd["name"], sd["scored"], core, alts, from_games))
         champ_out["styles"] = champ_out["styles"][:MAX_STYLES]
         out[note["id"]] = champ_out
         for i, (g, gap, pr) in seen.items():
@@ -653,9 +653,10 @@ def write_review(review, pool, meta):
            f"Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit is the reasoning (−2 not this style's item … +2); "
            f"games, pick rate and the gap come from resg.top {meta['version']} (collected {meta['collectedAt'][:10]}), shown here only for "
            "review. [[Build Model]] explains the rules.", ""]
-    for champ, style, rows, core, swaps, from_games in review:
-        out += [f"## {champ} · {style}", "", "**First three**: " + " › ".join(f"[[{pool[i]['name']}]]" for i in core)
-                + ("" if from_games else " (reasoning only)") + ("; swaps " + "、".join(f"[[{pool[i]['name']}]]" for i in swaps) if swaps else ""), "",
+    for champ, style, rows, core, alts, from_games in review:
+        pair = lambda ids: " + ".join(f"[[{pool[i]['name']}]]" for i in ids)
+        out += [f"## {champ} · {style}", "", "**First two**: " + pair(core)
+                + ("" if from_games else " (reasoning only)") + ("; or " + "、".join(pair(a) for a in alts) if alts else ""), "",
                 "| Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |", "| --- | --- | --- | --- | --- | --- | --- | --- |"]
         for r in [r for r in rows if r["fit"] >= 1 or r["pr"] >= 0.05][:24]:
             out.append(f"| [[{pool[r['id']]['name']}]] | {r['fit']:+d} | {r['games']} | {r['pr'] * 100:.0f}% | {pct(r['gap'])} | {pct(r['base'])} | "
