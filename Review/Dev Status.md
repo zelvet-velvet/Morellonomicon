@@ -10,6 +10,9 @@ sticker: lucide//activity
 
 ## 🚀 Today's Progress (2026-11-03)
 > [!abstract]+ Today
+> - **Augment tiers rebuilt**: every augment tiered per champion from a reasoning rule on the kit, checked against resg.top's 16.21 Mayhem games; no resg numbers stored, unexplained pairs in [[Augment Questions]].
+> - **Zaviel's augment answers**: two tier lists for dual-build champions (Kai'Sa, Kog'Maw, Udyr, Shaco, TF, Ashe, Bard, Miss Fortune); Malphite, Nasus, Qiyana, Hecarim and more explained.
+> - **Augments by rarity**: each tier lists 稜鏡, 金, 銀, then 五殺; the 強化 page keeps the best S augments that fit before ordering them.
 > - **Handbook pile without corner slivers**: the full-screen deck leaves a little room around the card and the pile leans less, so the cards under it show whole instead of cut flat at the screen edge.
 > - **Gentler background prefetch**: the portraits cached after start-up come one at a time, so they never crowd a page or a swipe.
 
