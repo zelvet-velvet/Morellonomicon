@@ -45,7 +45,8 @@ CORE_MIN = 300         # games a set needs
 CORE_PRIOR = 1000      # games the champion's own win rate counts as in a set's result
 POP_CORE = 0.1         # how often the set is built (share of the champion's games) adds up to that many points
 LATE = 5               # items four to six per style
-SWAPS = 3              # items other sets of the style have in place of one of the first three
+SWAPS = 3              # items other pairs of the style have in place of one of the first two
+THIRDS = 3             # choices for the third item
 SURE_GAMES = 5000
 SPECIFIC = 0.04
 TEST = ["Varus", "Katarina", "Udyr", "Jinx", "Annie", "Malphite", "Soraka", "Darius", "Ezreal", "Yasuo", "Kaisa", "Lux", "Garen",
@@ -372,7 +373,8 @@ def main():
             sums[i][3] = own
         seen = {i: (g, w / g - own, pr) for i, (g, w, pr, own) in sums.items() if g}
         c = Champ(note)
-        sets = merged_sets(d, alias, pool, c.ranged)
+        sets = merged_sets(d, alias, pool, c.ranged, "2")   # the first two: they keep more of a champion's play styles
+        triples = merged_sets(d, alias, pool, c.ranged, "3")
         own_wr = d.get("champion", {}).get("wr")
         total = d.get("champion", {}).get("tm") or 1
         for st in sets:   # strength: the set's win rate against the champion's own, pulled toward it when the games are few
@@ -405,30 +407,41 @@ def main():
                     score = 1
                 if best is None or score > best[1]:
                     best = (n, score)
-            st["style"] = best[0] if best else None
+            st["style"], st["match"] = (best[0], best[1]) if best else (None, 0)
         for n, sd in enumerate(defs):
             by_id = scoreds[n]
-            mine = sorted((st for st in sets if st["style"] == n and st["games"] >= CORE_MIN), key=lambda st: -st["value"])
-            if sd.get("auto") and mine and max(st["gap"] for st in mine) < STYLE_FLOOR and n > 0:
+            # the pair holding most of the style's core items first, then the strongest
+            mine = sorted((st for st in sets if st["style"] == n and st["games"] >= CORE_MIN), key=lambda st: (-st["match"], -st["value"]))
+            if sd.get("auto") and mine and max(st["gap"] for st in mine) < STYLE_FLOOR and n > 0:   # noqa: E501
                 continue   # a style the games call broken (not the champion's first)
             if mine:
                 core, from_games = mine[0]["items"], True
             else:
                 core, from_games = fill_core(sd.get("sig", []), sd["scored"]), False
-            if len(core) < 3:
+            if len(core) < 2:
                 continue
-            swaps = []   # the items other sets of this style have in place of one of the core's
+            swaps = []   # the items other pairs of this style have in place of one of the core's
             for st in mine[1:]:
                 other = [i for i in st["items"] if i not in core]
                 if len(other) == 1 and other[0] not in swaps:
                     swaps.append(other[0])
+            # the third item: what players add to this pair most (resg's first-three sets that start with it), kept when it fits
+            third = defaultdict(int)
+            for st in triples:
+                if set(st["items"][:2]) == set(core) and by_id[st["items"][2]]["fit"] >= 1 and st["items"][2] not in WHEN:
+                    third[st["items"][2]] += st["games"]
+            thirds = sorted(third, key=lambda i: -third[i])[:THIRDS]
+            if not thirds:   # none in the games: the best by the reasoning
+                thirds = [i for i in fill_core(core, sd["scored"], 3)[2:]]
+            swaps = [i for i in swaps if i not in thirds]
             boots = max((r for r in sd["scored"] if r["boots"] and r["fit"] >= 0), key=lambda r: (r["fit"], r["value"]), default=None)
             first = core[0]
             champ_out["styles"].append({
                 "name": sd["name"], "why": sd.get("why", ""), "games": from_games, "status": sd.get("status", ""),
                 "core": [{"id": i, "reason": by_id[i]["why"]} for i in core],
+                "third": [{"id": i, "reason": by_id[i]["why"]} for i in thirds],
                 "swaps": [{"id": i, "reason": by_id[i]["why"]} for i in swaps[:SWAPS]],
-                "late": [o for o in late_items(sd["scored"]) if o["id"] not in core and o["id"] not in swaps[:SWAPS]][:LATE],
+                "late": [o for o in late_items(sd["scored"]) if o["id"] not in core + thirds + swaps[:SWAPS]][:LATE],
                 "boots": {"id": boots["id"], "reason": BOOT_WHY.get(boots["id"], boots["why"]), "need": boots["why"]} if boots else None,
                 "destiny": {"id": first, "reason": by_id[first]["why"], "grows": grows(pool[first]["desc"])},
             })
@@ -454,10 +467,10 @@ def main():
     print(f"{len(out)} champions, {sum(len(v['styles']) for v in out.values())} builds; questions: " + ", ".join(f"{k} {v}" for k, v in kinds.items()))
 
 
-def merged_sets(d, alias, pool, ranged=False):
-    """resg's most built first-three orders, one per set of three items (its most built order), with games, wins and family."""
+def merged_sets(d, alias, pool, ranged=False, k="2"):
+    """resg's most built first-two (k "2") or first-three orders, one per set (its most built order), with games, wins and family."""
     sets = {}
-    for row in d.get("ia", {}).get("combos", {}).get("3", []) if d else []:
+    for row in d.get("ia", {}).get("combos", {}).get(k, []) if d else []:
         ids = [alias.get(i, i) for i in row[1]]
         if not all(i in pool for i in ids):
             continue
@@ -562,13 +575,13 @@ def score_items(c, sd, pool, seen, base):
     return scored
 
 
-def fill_core(sig, scored):
-    """A style's first three when no set of the games has its core items: those items, then the best by the reasoning."""
-    core, taken = list(sig[:3]), set()
+def fill_core(sig, scored, n=2):
+    """A style's first n items when no set of the games has its core items: those items, then the best by the reasoning."""
+    core, taken = list(sig[:n]), set()
     for i in core:
         taken |= next((g for g in UNIQUE if i in g), {i})
     for r in scored:
-        if len(core) >= 3:
+        if len(core) >= n:
             break
         if r["boots"] or r["fit"] < 1 or r["id"] in WHEN or r["id"] in core or not r["games"]:
             continue

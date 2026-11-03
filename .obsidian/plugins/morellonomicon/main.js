@@ -2167,9 +2167,13 @@ function mayhemBuilds(page2, c, ctx, b) {
       const ic = cell(core, p, `\u7B2C ${i + 1} \u4EF6`);
       first ?? (first = ic);
     });
+    if (st.third.length) {
+      const third = line("\u7B2C\u4E09");
+      for (const p of st.third) cell(third, p, "\u7B2C\u4E09\u4EF6", { text: `\u6838\u5FC3\u5169\u4EF6\u4E4B\u5F8C\u6700\u5E38\u63A5\u7684\u7B2C\u4E09\u4EF6\uFF1A${p.reason}` });
+    }
     if (st.swaps.length) {
       const swap = line("\u53EF\u63DB");
-      for (const p of st.swaps) cell(swap, p, "\u53EF\u63DB", { text: `\u53EF\u4EE5\u63DB\u6389\u524D\u4E09\u4EF6\u7684\u5176\u4E2D\u4E00\u4EF6\uFF1A${p.reason}` });
+      for (const p of st.swaps) cell(swap, p, "\u53EF\u63DB", { text: `\u53EF\u4EE5\u63DB\u6389\u6838\u5FC3\u5169\u4EF6\u7684\u5176\u4E2D\u4E00\u4EF6\uFF1A${p.reason}` });
     }
     if (st.late.length) {
       const late = line("\u5F8C\u7E8C");
@@ -7605,9 +7609,9 @@ function inboxBlock(plugin, source, el, ctx) {
     const card = root.createDiv({ cls: "mn-inb-card" });
     const head2 = card.createDiv({ cls: "mn-inb-head" });
     const who = head2.createDiv({ cls: "mn-inb-who" });
-    const top = box.kind === "tip" ? [e.hero || "\uFF08\u82F1\u96C4\uFF09", e.type] : [e.style || "\uFF08\u73A9\u6CD5\uFF09", e.items];
+    const top = box.kind === "tip" ? [e.hero || "\uFF08\u82F1\u96C4\uFF09", e.type] : [e.style || "\uFF08\u73A9\u6CD5\uFF09"];
     who.createDiv({ cls: "mn-inb-t", text: top.filter(Boolean).join(" \xB7 ") });
-    const sub = box.kind === "tip" ? e.title || e.text || "" : e.champs || e.why || "";
+    const sub = box.kind === "tip" ? e.title || e.text || "" : e.why || "";
     if (sub) who.createDiv({ cls: "mn-inb-s", text: sub });
     if (e.mode) head2.createSpan({ cls: "mn-inb-st is-mode", text: e.mode });
     head2.createSpan({ cls: "mn-inb-st" + (e.status === "\u5DF2\u9A57\u8B49" ? " is-ok" : ""), text: e.status || STATUS2[0] });

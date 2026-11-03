@@ -101,9 +101,9 @@ function inboxBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLElemen
         const card = root.createDiv({ cls: "mn-inb-card" });
         const head = card.createDiv({ cls: "mn-inb-head" });
         const who = head.createDiv({ cls: "mn-inb-who" });
-        const top = box.kind === "tip" ? [e.hero || "（英雄）", e.type] : [e.style || "（玩法）", e.items];   // the mode is a tag beside the status
+        const top = box.kind === "tip" ? [e.hero || "（英雄）", e.type] : [e.style || "（玩法）"];   // the mode is a tag beside the status
         who.createDiv({ cls: "mn-inb-t", text: top.filter(Boolean).join(" · ") });
-        const sub = box.kind === "tip" ? (e.title || e.text || "") : (e.champs || e.why || "");
+        const sub = box.kind === "tip" ? (e.title || e.text || "") : (e.why || "");   // a play style: its name over how it plays
         if (sub) who.createDiv({ cls: "mn-inb-s", text: sub });
         if (e.mode) head.createSpan({ cls: "mn-inb-st is-mode", text: e.mode });
         head.createSpan({ cls: "mn-inb-st" + (e.status === "已驗證" ? " is-ok" : ""), text: e.status || STATUS[0] });

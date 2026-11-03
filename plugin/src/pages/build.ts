@@ -64,8 +64,8 @@ function section(body: HTMLElement, title: string): void { h(body, "div", "mn-gh
 const DESTINY_FRAME = "https://raw.communitydragon.org/latest/game/assets/items/itemmodifiers/strawberry_weapon_evolve_border.png";
 
 // The Mayhem builds (tools/build_tiers.py), laid out like 技能: the play styles as words and how the chosen one plays at the top, what
-// the tapped item does under them, and the items as a bar at the bottom (at the thumb): 核心 (the first three, then 換 for items other
-// sets put in their place), 後續 (items four to six, a word each for what it adds), 鞋子 and 命定武器
+// the tapped item does under them, and the items as a bar at the bottom (at the thumb): 核心 (the first two), 第三 (choices for the
+// third), 可換 (items other pairs put in place of one of the two), 後續 (items four to six, a word each for what it adds), 鞋子 and 命定武器
 function mayhemBuilds(page: HTMLElement, c: Champion, ctx: PageCtx, b: ChampBuilds): void {
     const store = ctx.plugin.store;
     const root = h(page, "div", "mn-mbp");
@@ -109,9 +109,13 @@ function mayhemBuilds(page: HTMLElement, c: Champion, ctx: PageCtx, b: ChampBuil
             const ic = cell(core, p, `第 ${i + 1} 件`);
             first ??= ic;
         });
+        if (st.third.length) {
+            const third = line("第三");
+            for (const p of st.third) cell(third, p, "第三件", { text: `核心兩件之後最常接的第三件：${p.reason}` });
+        }
         if (st.swaps.length) {
             const swap = line("可換");
-            for (const p of st.swaps) cell(swap, p, "可換", { text: `可以換掉前三件的其中一件：${p.reason}` });
+            for (const p of st.swaps) cell(swap, p, "可換", { text: `可以換掉核心兩件的其中一件：${p.reason}` });
         }
         if (st.late.length) {
             const late = line("後續");
