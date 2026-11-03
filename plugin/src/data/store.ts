@@ -44,8 +44,8 @@ function withOnHit(skills: Skill[], keys: string[]): Skill[] {
 }
 
 export interface Skill { key: string; name: string; damage: string[]; tags: string[]; icon: string; desc: string; upgrade: string; range: string; rows: SkillRow[]; levels: number[] }   // levels: a passive's numbers are by champion level (Lv 1, 6, 11 ...), not by rank
-// One play style's augment tiers from the augment model (Dev Tools/Augment Model.md): per rarity (`group`; 五殺 is the Pentakill
-// band's set), S / A / B / C, the reason (輸出 +23%) and 前期強 / 後期強
+// One play style's augment tiers (Dev Tools/Augment Model.md, tools/augment_tiers.py): per rarity (`group`; 五殺 is the Pentakill
+// band's set), S / A / B / C and the reason (why the champion's kit makes it work); `when` (前期強 / 後期強) is empty for now
 export interface AugTier { id: number; group: string; tier: string; value: number; score: number; when: string; reason: string }
 export interface AugTierStyle { name: string; tiers: AugTier[]; none: { id: number; value: number }[] }
 
@@ -123,8 +123,8 @@ export class Store {
     gameText: Record<string, { text: string; partial: boolean }> = {};   // augment id -> the game's own description (tools/fetch_augment_text.py)
     augData: Record<string, AugmentData> = {};   // augment id -> numbers, levels, tags (tools/fetch_augment_data.py)
     augmentData(id: number): AugmentData | undefined { return this.augData[String(id)]; }
-    augTiers: Record<string, Record<string, AugTierStyle>> = {};   // champion id -> play style -> the augment model's tiers (tools/augment_model.py)
-    augUnrated: Record<string, string> = {};   // augment id -> why the model cannot value it (a quest, random, an item upgrade...)
+    augTiers: Record<string, Record<string, AugTierStyle>> = {};   // champion id -> play style -> the augment tiers (tools/augment_tiers.py)
+    augUnrated: Record<string, string> = {};   // augment id -> why it has no tier (disabled, no games, no rule yet)
     itemRoles: Record<string, string[]> | null = null;   // item id -> the shop's class tabs it is under (_data/item-roles.json, the League wiki)
 
     // false until the data files (_data/*.json) have been read once after start-up

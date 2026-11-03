@@ -169,9 +169,9 @@ var Store = class {
     // augment id -> the game's own description (tools/fetch_augment_text.py)
     this.augData = {};
     this.augTiers = {};
-    // champion id -> play style -> the augment model's tiers (tools/augment_model.py)
+    // champion id -> play style -> the augment tiers (tools/augment_tiers.py)
     this.augUnrated = {};
-    // augment id -> why the model cannot value it (a quest, random, an item upgrade...)
+    // augment id -> why it has no tier (disabled, no games, no rule yet)
     this.itemRoles = null;
     // item id -> the shop's class tabs it is under (_data/item-roles.json, the League wiki)
     // false until the data files (_data/*.json) have been read once after start-up
@@ -5483,7 +5483,7 @@ function overviewAll(body, c, ctx) {
 }
 var TIER_ORDER = ["S", "A", "B", "C"];
 var AUG_COLS = 4;
-var MODEL_NOTE = "\u4F9D\u82F1\u96C4\u7684\u6280\u80FD\u6578\u503C\u4F30\u7B97\uFF1A\u5728\u7B2C 3\u30017\u300111\u300115 \u7D1A\u9078\u5230\u6642\uFF0C\u8B93\u9019\u4F4D\u82F1\u96C4\u8B8A\u5F37\u591A\u5C11\uFF0C\u548C\u540C\u7A00\u6709\u5EA6\u7684\u5176\u4ED6\u5F37\u5316\u6BD4\u8F03\u3002\u4E0D\u662F\u52DD\u7387\u3002\u9EDE\u5F37\u5316\u770B\u539F\u56E0\u3002";
+var MODEL_NOTE = "\u4F9D\u82F1\u96C4\u7684\u6280\u80FD\u6A5F\u5236\u63A8\u7406\u5408\u4E0D\u5408\uFF0C\u518D\u5C0D\u7167 resg.top \u7684\u5927\u6DF7\u6230\u5C0D\u5C40\u6821\u6B63\uFF0C\u548C\u540C\u7A00\u6709\u5EA6\u7684\u5176\u4ED6\u5F37\u5316\u6BD4\u8F03\u3002\u9EDE\u5F37\u5316\u770B\u539F\u56E0\u3002";
 function tierPicks(store, c, style) {
   const out = [];
   for (const name of c.pinned) {

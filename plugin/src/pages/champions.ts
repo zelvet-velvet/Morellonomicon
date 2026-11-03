@@ -428,7 +428,7 @@ function overviewAll(body: HTMLElement, c: Champion, ctx: PageCtx): void {
 // note's `pinned` come first, its `avoid` are left out. Without the model's file, the augments matched by their effect text stand in.
 const TIER_ORDER = ["S", "A", "B", "C"];
 const AUG_COLS = 4;   // icons per row in the champion page family's augment grid
-const MODEL_NOTE = "依英雄的技能數值估算：在第 3、7、11、15 級選到時，讓這位英雄變強多少，和同稀有度的其他強化比較。不是勝率。點強化看原因。";
+const MODEL_NOTE = "依英雄的技能機制推理合不合，再對照 resg.top 的大混戰對局校正，和同稀有度的其他強化比較。點強化看原因。";
 function tierPicks(store: Store, c: Champion, style: AugTierStyle): (AugmentPick & { tier: string })[] {
     const out: (AugmentPick & { tier: string })[] = [];
     for (const name of c.pinned) {
