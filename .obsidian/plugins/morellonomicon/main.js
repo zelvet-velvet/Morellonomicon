@@ -5482,6 +5482,7 @@ function overviewAll(body, c, ctx) {
   body.addClass("is-centred");
 }
 var TIER_ORDER = ["S", "A", "B", "C"];
+var RARITY_ORDER = ["\u7A1C\u93E1", "\u91D1", "\u9280", "\u4E94\u6BBA"];
 var AUG_COLS = 4;
 var MODEL_NOTE = "\u4F9D\u82F1\u96C4\u7684\u6280\u80FD\u6A5F\u5236\u63A8\u7406\u5408\u4E0D\u5408\uFF0C\u518D\u5C0D\u7167 resg.top \u7684\u5927\u6DF7\u6230\u5C0D\u5C40\u6821\u6B63\uFF0C\u548C\u540C\u7A00\u6709\u5EA6\u7684\u5176\u4ED6\u5F37\u5316\u6BD4\u8F03\u3002\u9EDE\u5F37\u5316\u770B\u539F\u56E0\u3002";
 function tierPicks(store, c, style) {
@@ -5490,7 +5491,11 @@ function tierPicks(store, c, style) {
     const a = store.augments().find((x) => x.name === name);
     if (a) out.push({ a, why: "\u7F6E\u9802", score: 100, tier: "S" });
   }
-  const rows = [...style.tiers].sort((x, y) => TIER_ORDER.indexOf(x.tier) - TIER_ORDER.indexOf(y.tier) || y.score - x.score);
+  const rank = (g) => {
+    const i = RARITY_ORDER.indexOf(g);
+    return i < 0 ? RARITY_ORDER.length : i;
+  };
+  const rows = [...style.tiers].sort((x, y) => TIER_ORDER.indexOf(x.tier) - TIER_ORDER.indexOf(y.tier) || rank(x.group) - rank(y.group) || y.score - x.score);
   for (const t of rows) {
     const a = store.augment(t.id);
     if (!a || c.avoid.includes(a.name) || c.pinned.includes(a.name)) continue;

@@ -423,10 +423,11 @@ function overviewAll(body: HTMLElement, c: Champion, ctx: PageCtx): void {
 }
 
 // The augment model's tiers (Dev Tools/Augment Model.md), in the champion page family's style (Design Rules): one ranking by tier,
-// then score, rarity only in the icon's frame; icon grids with names only (the reason is on the augment's page); the play style as
+// then rarity (稜鏡, 金, 銀, 五殺), then score, the rarity also in the icon's frame; icon grids with names only (the reason is on the augment's page); the play style as
 // words. The 強化 page is a glance (its S augments, as many whole rows as fit, no scrolling); 全部強化 has every tier. The champion
 // note's `pinned` come first, its `avoid` are left out. Without the model's file, the augments matched by their effect text stand in.
 const TIER_ORDER = ["S", "A", "B", "C"];
+const RARITY_ORDER = ["稜鏡", "金", "銀", "五殺"];   // inside a tier: prismatic first, then gold, silver, the Pentakill set
 const AUG_COLS = 4;   // icons per row in the champion page family's augment grid
 const MODEL_NOTE = "依英雄的技能機制推理合不合，再對照 resg.top 的大混戰對局校正，和同稀有度的其他強化比較。點強化看原因。";
 function tierPicks(store: Store, c: Champion, style: AugTierStyle): (AugmentPick & { tier: string })[] {
@@ -435,7 +436,8 @@ function tierPicks(store: Store, c: Champion, style: AugTierStyle): (AugmentPick
         const a = store.augments().find((x) => x.name === name);
         if (a) out.push({ a, why: "置頂", score: 100, tier: "S" });
     }
-    const rows = [...style.tiers].sort((x, y) => TIER_ORDER.indexOf(x.tier) - TIER_ORDER.indexOf(y.tier) || y.score - x.score);
+    const rank = (g: string) => { const i = RARITY_ORDER.indexOf(g); return i < 0 ? RARITY_ORDER.length : i; };
+    const rows = [...style.tiers].sort((x, y) => TIER_ORDER.indexOf(x.tier) - TIER_ORDER.indexOf(y.tier) || rank(x.group) - rank(y.group) || y.score - x.score);
     for (const t of rows) {
         const a = store.augment(t.id);
         if (!a || c.avoid.includes(a.name) || c.pinned.includes(a.name)) continue;
