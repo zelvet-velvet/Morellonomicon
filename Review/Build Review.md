@@ -9,7 +9,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 伊澤瑞爾 · 魔法彎刀法師
 
-**First two**: [[巫妖之禍]] + [[黯影之炎]]; or [[巫妖之禍]] + [[大天使之杖]]、[[惡意]] + [[黯影之炎]]
+**First two**: [[巫妖之禍]] + [[黯影之炎]]; or [[巫妖之禍]] + [[大天使之杖]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -71,7 +71,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 伊澤瑞爾 · 魔法彎刀射手
 
-**First two**: [[奪魄之鐮]] + [[無盡之刃]]; or [[奪魄之鐮]] + [[魔劍正宗]]、[[奪魄之鐮]] + [[多明尼克的問候]]
+**First two**: [[奪魄之鐮]] + [[無盡之刃]]; or [[奪魄之鐮]] + [[魔劍正宗]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -102,7 +102,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 凱莎 · 爆發法師
 
-**First two**: [[盧登回音]] + [[黯影之炎]]; or [[盧登回音]] + [[暮夜與黎明]]、[[盧登回音]] + [[死亡之帽]]
+**First two**: [[盧登回音]] + [[黯影之炎]]; or [[盧登回音]] + [[暮夜與黎明]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -226,7 +226,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 卡特蓮娜 · AP 刺客
 
-**First two**: [[黯影之炎]] + [[雷霆風暴]]; or [[巫妖之禍]] + [[黯影之炎]]、[[海克斯科技槍刃]] + [[黯影之炎]]
+**First two**: [[黯影之炎]] + [[雷霆風暴]]; or [[巫妖之禍]] + [[黯影之炎]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -257,7 +257,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 卡特蓮娜 · 海妖特效
 
-**First two**: [[海妖殺手]] + [[殞落王者之劍]]; or [[海妖殺手]] + [[死亡之舞]]、[[海妖殺手]] + [[步履破壞者]]
+**First two**: [[海妖殺手]] + [[殞落王者之劍]]; or [[海妖殺手]] + [[死亡之舞]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -319,7 +319,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 吉茵珂絲 · 暴擊射手
 
-**First two**: [[雲陶狂箭]] + [[無盡之刃]]; or [[雲陶狂箭]] + [[海克斯光學C44]]、[[無盡之刃]] + [[芮蘭颶風箭]]
+**First two**: [[雲陶狂箭]] + [[無盡之刃]]; or [[雲陶狂箭]] + [[海克斯光學C44]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -381,7 +381,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 吉茵珂絲 · 暴擊斬殺
 
-**First two**: [[蒐集者]] + [[無盡之刃]]; or [[蒐集者]] + [[多明尼克的問候]]、[[蒐集者]] + [[芮蘭颶風箭]]
+**First two**: [[蒐集者]] + [[無盡之刃]]; or [[蒐集者]] + [[多明尼克的問候]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -412,7 +412,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 墨菲特 · 坦克
 
-**First two**: [[雄心之鋼]] + [[好戰者鎧甲]]; or [[雄心之鋼]] + [[荊棘之甲]]、[[雄心之鋼]] + [[千變萬化之賈克修]]
+**First two**: [[雄心之鋼]] + [[好戰者鎧甲]]; or [[雄心之鋼]] + [[荊棘之甲]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -474,7 +474,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 墨菲特 · 大絕法師
 
-**First two**: [[惡意]] + [[黯影之炎]]; or [[惡意]] + [[死亡之帽]]、[[惡意]] + [[中婭沙漏]]
+**First two**: [[惡意]] + [[黯影之炎]]; or [[惡意]] + [[死亡之帽]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -536,7 +536,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 安妮 · 爆發法師
 
-**First two**: [[盧登回音]] + [[黯影之炎]]; or [[盧登回音]] + [[雷霆風暴]]、[[盧登回音]] + [[惡意]]
+**First two**: [[盧登回音]] + [[黯影之炎]]; or [[盧登回音]] + [[雷霆風暴]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -598,7 +598,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 安妮 · 大絕法師
 
-**First two**: [[惡意]] + [[黯影之炎]]; or [[惡意]] + [[死亡之帽]]、[[惡意]] + [[瑞萊的冰晶節杖]]
+**First two**: [[惡意]] + [[黯影之炎]]; or [[惡意]] + [[死亡之帽]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -660,7 +660,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 拉克絲 · 爆發法師
 
-**First two**: [[盧登回音]] + [[黯影之炎]]; or [[盧登回音]] + [[死亡之帽]]、[[盧登回音]] + [[大天使之杖]]
+**First two**: [[盧登回音]] + [[黯影之炎]]; or [[盧登回音]] + [[死亡之帽]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -691,7 +691,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 拉克絲 · 燒傷法師
 
-**First two**: [[黑焰火炬]] + [[黎安卓的折磨]]; or [[黑焰火炬]] + [[死亡之帽]]、[[黑焰火炬]] + [[黯影之炎]]
+**First two**: [[黑焰火炬]] + [[黎安卓的折磨]]; or [[黑焰火炬]] + [[死亡之帽]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -722,7 +722,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 拉克絲 · 大絕法師
 
-**First two**: [[惡意]] + [[黯影之炎]]; or [[惡意]] + [[死亡之帽]]、[[惡意]] + [[雷霆風暴]]
+**First two**: [[惡意]] + [[黯影之炎]]; or [[惡意]] + [[死亡之帽]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -784,7 +784,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 易大師 · 暴擊斬殺
 
-**First two**: [[蒐集者]] + [[無盡之刃]]; or [[蒐集者]] + [[奪魄之鐮]]、[[蒐集者]] + [[多明尼克的問候]]
+**First two**: [[蒐集者]] + [[無盡之刃]]; or [[蒐集者]] + [[奪魄之鐮]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -815,7 +815,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 法洛士 · 穿甲消耗
 
-**First two**: [[傲慢]] + [[魔劍正宗]]; or [[傲慢]] + [[電流旋風劍]]、[[傲慢]] + [[蒐集者]]
+**First two**: [[傲慢]] + [[魔劍正宗]]; or [[傲慢]] + [[電流旋風劍]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -846,7 +846,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 法洛士 · AD 特效
 
-**First two**: [[殞落王者之劍]] + [[鬼索的狂暴之刃]]; or [[殞落王者之劍]] + [[芮蘭颶風箭]]、[[史提克彈簧刀]] + [[鬼索的狂暴之刃]]
+**First two**: [[殞落王者之劍]] + [[鬼索的狂暴之刃]]; or [[殞落王者之劍]] + [[芮蘭颶風箭]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -939,7 +939,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 烏迪爾 · 燒傷法師
 
-**First two**: [[黑焰火炬]] + [[黎安卓的折磨]]; or [[黎安卓的折磨]] + [[黯影之炎]]、[[黑焰火炬]] + [[黯影之炎]]
+**First two**: [[黑焰火炬]] + [[黎安卓的折磨]]; or [[黎安卓的折磨]] + [[黯影之炎]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -970,7 +970,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 烏迪爾 · 大絕法師
 
-**First two**: [[惡意]] + [[黯影之炎]]; or [[惡意]] + [[黎安卓的折磨]]、[[黯影之炎]] + [[死亡之帽]]
+**First two**: [[惡意]] + [[黯影之炎]]; or [[惡意]] + [[黎安卓的折磨]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1063,7 +1063,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 犽宿 · 暴擊射手
 
-**First two**: [[雲陶狂箭]] + [[無盡之刃]]; or [[雲陶狂箭]] + [[殞落王者之劍]]、[[幻影之舞]] + [[無盡之刃]]
+**First two**: [[雲陶狂箭]] + [[無盡之刃]]; or [[雲陶狂箭]] + [[殞落王者之劍]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1094,7 +1094,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 犽宿 · 風牆暴擊
 
-**First two**: [[雲陶狂箭]] + [[殞落之祭]]; or [[殞落之祭]] + [[幻影之舞]]、[[殞落之祭]] + [[無盡之刃]]
+**First two**: [[雲陶狂箭]] + [[殞落之祭]]; or [[殞落之祭]] + [[幻影之舞]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1125,7 +1125,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 索拉卡 · 輔助補師
 
-**First two**: [[月之石再生裝置]] + [[低語之環]]; or [[月之石再生裝置]] + [[流水之杖]]、[[月之石再生裝置]] + [[熾灼魔器]]
+**First two**: [[月之石再生裝置]] + [[低語之環]]; or [[月之石再生裝置]] + [[流水之杖]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1152,7 +1152,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 蓋倫 · 坦克
 
-**First two**: [[雄心之鋼]] + [[好戰者鎧甲]]; or [[雄心之鋼]] + [[荊棘之甲]]、[[雄心之鋼]] + [[無盡絕望]]
+**First two**: [[雄心之鋼]] + [[好戰者鎧甲]]; or [[雄心之鋼]] + [[荊棘之甲]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1183,7 +1183,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 逆命 · 爆發法師
 
-**First two**: [[盧登回音]] + [[黯影之炎]]; or [[盧登回音]] + [[死亡之帽]]、[[盧登回音]] + [[黎安卓的折磨]]
+**First two**: [[盧登回音]] + [[黯影之炎]]; or [[盧登回音]] + [[死亡之帽]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1214,7 +1214,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 逆命 · 燒傷法師
 
-**First two**: [[黑焰火炬]] + [[黎安卓的折磨]]; or [[黑焰火炬]] + [[死亡之帽]]、[[黑焰火炬]] + [[黯影之炎]]
+**First two**: [[黑焰火炬]] + [[黎安卓的折磨]]; or [[黑焰火炬]] + [[死亡之帽]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1307,7 +1307,7 @@ Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit
 
 ## 達瑞斯 · 坦克
 
-**First two**: [[雄心之鋼]] + [[好戰者鎧甲]]; or [[雄心之鋼]] + [[死亡之舞]]、[[雄心之鋼]] + [[狂霸血甲]]
+**First two**: [[雄心之鋼]] + [[好戰者鎧甲]]; or [[雄心之鋼]] + [[死亡之舞]]
 
 | Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- |

@@ -45,7 +45,7 @@ CORE_MIN = 300         # games a set needs
 CORE_PRIOR = 1000      # games the champion's own win rate counts as in a set's result
 POP_CORE = 0.1         # how often the set is built (share of the champion's games) adds up to that many points
 LATE = 5               # items four to six per style
-ALT_PAIRS = 2          # other first-two pairs of the style shown under the core pair
+ALT_PAIRS = 1          # other first-two pairs of the style shown beside the core pair
 THIRDS = 3             # choices for the third item
 SURE_GAMES = 5000
 SPECIFIC = 0.04
@@ -438,8 +438,8 @@ def main():
             first = core[0]
             champ_out["styles"].append({
                 "name": sd["name"], "why": sd.get("why", ""), "games": from_games, "status": sd.get("status", ""),
-                "core": [{"id": i, "reason": by_id[i]["why"]} for i in core],
-                "alts": [[{"id": i, "reason": by_id[i]["why"]} for i in a] for a in alts],
+                "core": [{"id": i, "reason": by_id[i]["why"], "need": need_of(i)} for i in core],
+                "alts": [[{"id": i, "reason": by_id[i]["why"], "need": need_of(i)} for i in a] for a in alts],
                 "third": [{"id": i, "reason": by_id[i]["why"], "need": need_of(i)} for i in thirds],
                 "late": [o for o in late_items(sd["scored"]) if o["id"] not in shown][:LATE],
                 "boots": {"id": boots["id"], "reason": BOOT_WHY.get(boots["id"], boots["why"]), "need": boots["why"]} if boots else None,
