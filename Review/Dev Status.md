@@ -12,7 +12,7 @@ sticker: lucide//activity
 > [!abstract]+ Today
 > - **Augment tiers rebuilt**: every augment tiered per champion from a reasoning rule on the kit, checked against resg.top's 16.21 Mayhem games; no resg numbers stored, unexplained pairs in [[Augment Questions]].
 > - **Zaviel's augment answers**: two tier lists for dual-build champions (Kai'Sa, Kog'Maw, Udyr, Shaco, TF, Ashe, Bard, Miss Fortune); Malphite, Nasus, Qiyana, Hecarim and more explained.
-> - **Mayhem builds like a build site**: 出裝 fits one screen: first-three-item tiles for every play style the games show (Katarina on-hit, AP and 雄心之鋼), five icons for items four to six by what they add, boots, the 命定武器 pick in its rainbow border with what it grows, special builds (鎖子甲 ×6), one line explaining the tapped icon; checked against resg.top's games, model in [[Build Model]]. ARAM's own items now have notes.
+> - **Mayhem builds per play style**: 出裝 is laid out like 技能 (styles and how it plays on top, the tapped item's why, the item bar at the bottom: 核心, 可換, 後續 by need, 鞋子, 命定武器 in its rainbow border); styles come from [[玩法出裝]] (drafts for Katarina, Varus, Udyr, Kai'Sa, Ezreal) or the games, checked against resg.top, model in [[Build Model]]. ARAM's own items now have notes.
 > - **Augments by rarity**: each tier lists 稜鏡, 金, 銀, then 五殺; the 強化 page keeps the best S augments that fit before ordering them.
 > - **Handbook pile without corner slivers**: the full-screen deck leaves a little room around the card and the pile leans less, so the cards under it show whole instead of cut flat at the screen edge.
 > - **Gentler background prefetch**: the portraits cached after start-up come one at a time, so they never crowd a page or a swipe.

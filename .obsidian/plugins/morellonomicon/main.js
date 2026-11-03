@@ -2073,7 +2073,11 @@ function buildTab(page2, c, ctx) {
   const alt = mine.filter((b) => b.kind === "alt");
   const synergy = mine.filter((b) => b.kind === "synergy");
   const reasoned = mode === "mayhem" ? store.itemBuilds[c.id] : void 0;
-  if (reasoned?.cores.length) mayhemBuilds(body, c, ctx, reasoned);
+  if (reasoned?.styles.length) {
+    body.remove();
+    mayhemBuilds(page2, c, ctx, reasoned);
+    return;
+  }
   if (stats2 || meta.length) {
     section(body, "\u5E38\u7528");
     if (stats2) {
@@ -2100,7 +2104,7 @@ function buildTab(page2, c, ctx) {
     section(body, "\u642D\u914D");
     for (const b of synergy) setCard(body, c, ctx, b);
   }
-  if (!stats2 && !mine.length && !reasoned?.cores.length) empty(body, { icon: "package-open", title: "No builds of ours yet", text: "Our own builds and ideas for this champion will appear here." });
+  if (!stats2 && !mine.length) empty(body, { icon: "package-open", title: "No builds of ours yet", text: "Our own builds and ideas for this champion will appear here." });
   if (mode === "mayhem") liveStats(h(page2, "div", "mn-bt-live"), c);
 }
 var OPGG_SLUG = { MonkeyKing: "wukong" };
@@ -2114,116 +2118,79 @@ function liveStats(body, c) {
 function section(body, title) {
   h(body, "div", "mn-gh", title);
 }
-var LATE = 5;
 var DESTINY_FRAME = "https://raw.communitydragon.org/latest/game/assets/items/itemmodifiers/strawberry_weapon_evolve_border.png";
-function mayhemBuilds(body, c, ctx, b) {
+function mayhemBuilds(page2, c, ctx, b) {
   const store = ctx.plugin.store;
-  const box = h(body, "div", "mn-mb");
-  h(box, "div", "mn-mb-h", "\u524D\u4E09\u4EF6");
-  const grid = h(box, "div", "mn-mb-cores");
-  const rest = h(box, "div", "mn-mb-rest");
-  const say = h(box, "button", "mn-mb-say");
+  const root = h(page2, "div", "mn-mbp");
+  if (b.styles.length > 1) textSwitch(root, b.styles.map((s, i) => [String(i), s.name]), "0", (id) => draw(Number(id)));
+  const how = h(root, "div", "mn-mbp-how");
+  const say = h(root, "div", "mn-mbp-say");
+  const bar = h(root, "div", "mn-mbp-bar");
   let lit = null;
-  const explain = (id, text, icon2) => {
+  const explain = (p, word, icon2, text = p.reason) => {
     lit?.removeClass("is-lit");
     lit = icon2;
     icon2.addClass("is-lit");
     say.empty();
-    h(say, "b", "", store.item(id)?.name ?? `#${id}`);
-    say.appendText(`\u3000${text}`);
-    say.dataset.id = String(id);
-  };
-  say.addEventListener("click", (e) => {
-    e.preventDefault();
-    const id = Number(say.dataset.id);
-    if (id) ctx.openItem(id);
-  });
-  let on = 0;
-  const tiles = b.cores.map((core, n) => {
-    const tile2 = h(grid, "div", "mn-mb-core" + (n === 0 ? " is-on" : ""));
-    h(tile2, "div", "mn-mb-style", b.styles[core.style]?.name ?? "");
-    const icons = h(tile2, "div", "mn-mb-icons");
-    const ics = core.items.map((id, i) => {
-      const ic = itemIcon(icons, c, ctx, id);
-      ic.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        choose(n);
-        explain(id, core.reasons[i] + (core.games ? "" : "\uFF08\u4F9D\u6280\u80FD\u7D44\u63A8\u7B97\uFF09"), ic);
-      });
-      return ic;
-    });
-    tile2.addEventListener("click", (e) => {
+    const head2 = h(say, "div", "mn-mbp-name");
+    const name = h(head2, "button", "mn-mbp-open", store.item(p.id)?.name ?? `#${p.id}`);
+    name.addEventListener("click", (e) => {
       e.preventDefault();
-      choose(n);
-      explain(core.items[0], core.reasons[0], ics[0]);
+      ctx.openItem(p.id);
     });
-    return tile2;
-  });
-  const choose = (n) => {
-    if (on === n) return;
-    tiles[on].removeClass("is-on");
-    tiles[n].addClass("is-on");
-    on = n;
-    drawRest();
+    if (word) h(head2, "span", "mn-mbp-word", word);
+    h(say, "div", "mn-mbp-text", p.when ? `${p.when}\uFF1A${text}` : text);
   };
-  const drawRest = () => {
-    rest.empty();
-    const core = b.cores[on];
-    const st = b.styles[core.style];
-    if (!st) return;
-    const late = st.late.filter((p) => !core.items.includes(p.id)).slice(0, LATE);
-    if (late.length) {
-      h(rest, "div", "mn-mb-h", "\u7B2C\u56DB\u5230\u516D\u4EF6");
-      const row2 = h(rest, "div", "mn-mb-late");
-      for (const p of late) cell(row2, p.id, p.when ? "\u770B\u60C5\u6CC1" : p.need ?? "", p.when ? `${p.when}\uFF1A${p.reason}` : p.reason);
-    }
-    const two = h(rest, "div", "mn-mb-two");
-    if (st.boots) {
-      const half = h(two, "div", "mn-mb-half");
-      h(half, "div", "mn-mb-h", "\u978B\u5B50");
-      cell(half, st.boots.id, st.boots.need ?? "", st.boots.reason, false, "side");
-    }
-    if (st.destiny) {
-      const half = h(two, "div", "mn-mb-half");
-      h(half, "div", "mn-mb-h", "\u547D\u5B9A\u6B66\u5668");
-      const grows = (st.destiny.grows ?? []).slice(0, 3);
-      cell(
-        half,
-        st.destiny.id,
-        "\u64CA\u6BBA\u6210\u9577",
-        `\u62FF\u5230\u547D\u5B9A\u6B66\u5668\u6642\u7B2C\u4E00\u4EF6\u51FA\u5B83\uFF0C\u6BCF\u6B21\u53C3\u8207\u64CA\u6BBA${grows.length ? grows.join("\u3001") : "\u5C6C\u6027"}\u6C38\u4E45\u63D0\u5347\u3002${st.destiny.reason}`,
-        true,
-        "side",
-        grows.join("\u3001")
-      );
-    }
-  };
-  const cell = (parent, id, word, text, destiny = false, side = "", sub = "") => {
-    const btn = h(parent, "button", "mn-mb-cell" + (side ? " is-side" : ""));
-    const ic = itemIcon(btn, c, ctx, id, destiny);
-    const words = h(btn, "span", "mn-mb-words");
-    h(words, "span", "mn-mb-word", word);
-    if (sub) h(words, "span", "mn-mb-sub", sub);
+  const cell = (row2, p, word, opts = {}) => {
+    const btn = h(row2, "button", "mn-mbp-cell");
+    const ic = itemIcon(btn, c, ctx, p.id, opts.destiny);
+    if (opts.caption !== void 0) h(btn, "span", "mn-mbp-cap", opts.caption);
     btn.addEventListener("click", (e) => {
       e.preventDefault();
-      explain(id, text, ic);
+      explain(p, word, ic, opts.text);
     });
+    return ic;
   };
-  drawRest();
-  for (const s of b.special) {
-    h(box, "div", "mn-mb-h", "\u7279\u6B8A\u51FA\u88DD");
-    const row2 = h(box, "button", "mn-mb-special");
-    const icons = h(row2, "span", "mn-mb-icons");
-    for (const id of s.items) itemIcon(icons, c, ctx, id);
-    h(row2, "span", "mn-mb-word", s.name);
-    row2.addEventListener("click", (e) => {
-      e.preventDefault();
-      explain(s.items[0], s.note, icons.firstElementChild);
+  const line = (label) => {
+    const r = h(bar, "div", "mn-mbp-row");
+    h(r, "span", "mn-mbp-label", label);
+    return h(r, "div", "mn-mbp-icons");
+  };
+  const draw = (n) => {
+    const st = b.styles[n];
+    how.setText(st.why || (st.games ? "" : "\u4F9D\u6280\u80FD\u7D44\u63A8\u7B97\u7684\u51FA\u88DD"));
+    bar.empty();
+    const core = line("\u6838\u5FC3");
+    let first = null;
+    st.core.forEach((p, i) => {
+      if (i) h(core, "span", "mn-mbp-arrow", "\u203A");
+      const ic = cell(core, p, `\u7B2C ${i + 1} \u4EF6`);
+      first ?? (first = ic);
     });
-  }
-  explain(b.cores[0].items[0], b.cores[0].reasons[0], tiles[0].querySelector(".mn-mb-ic"));
-  box.append(say);
+    if (st.swaps.length) {
+      const swap = line("\u53EF\u63DB");
+      for (const p of st.swaps) cell(swap, p, "\u53EF\u63DB", { text: `\u53EF\u4EE5\u63DB\u6389\u524D\u4E09\u4EF6\u7684\u5176\u4E2D\u4E00\u4EF6\uFF1A${p.reason}` });
+    }
+    if (st.late.length) {
+      const late = line("\u5F8C\u7E8C");
+      for (const p of st.late) cell(late, p, p.when ? "\u770B\u60C5\u6CC1" : p.need ?? "", { caption: p.when ? "\u770B\u60C5\u6CC1" : p.need ?? "" });
+    }
+    const last = line("\u978B\u5B50");
+    if (st.boots) cell(last, st.boots, st.boots.need ?? "", { caption: st.boots.need ?? "" });
+    const grows = (st.destiny.grows ?? []).slice(0, 3);
+    h(last, "span", "mn-mbp-label is-inner", "\u547D\u5B9A");
+    cell(last, st.destiny, "\u547D\u5B9A\u6B66\u5668", {
+      destiny: true,
+      caption: grows.slice(0, 2).join("\u3001"),
+      text: `\u62FF\u5230\u547D\u5B9A\u6B66\u5668\u6642\u7B2C\u4E00\u4EF6\u51FA\u5B83\uFF0C\u6BCF\u6B21\u53C3\u8207\u64CA\u6BBA${grows.length ? grows.join("\u3001") : "\u5C6C\u6027"}\u6C38\u4E45\u63D0\u5347\u3002${st.destiny.reason}`
+    });
+    for (const s of b.special) {
+      const row2 = line("\u7279\u6B8A");
+      for (const id of s.items) cell(row2, { id, reason: s.note }, s.name);
+    }
+    if (first) explain(st.core[0], "\u7B2C 1 \u4EF6", first);
+  };
+  draw(0);
 }
 function itemIcon(parent, c, ctx, id, destiny = false) {
   const item = ctx.plugin.store.item(id);
@@ -7567,11 +7534,11 @@ var FIELDS = {
     { key: "status", label: "\u72C0\u614B", type: "select", options: STATUS2 }
   ],
   build: [
-    { key: "style", label: "\u73A9\u6CD5", type: "text" },
+    { key: "hero", label: "\u82F1\u96C4", type: "champ" },
+    { key: "style", label: "\u73A9\u6CD5", type: "text", hint: "\u4F8B\u5982 AP \u523A\u5BA2\u3001AD \u7279\u6548\u3001\u96C4\u5FC3 AD" },
+    { key: "items", label: "\u6838\u5FC3", type: "items", multi: true, max: 3, hint: "\u7167\u8CFC\u8CB7\u9806\u5E8F\uFF1B\u5BEB 1\u20133 \u4EF6\u4EE3\u8868\u9019\u500B\u73A9\u6CD5\u7684\u88DD\u5099" },
+    { key: "why", label: "\u600E\u9EBC\u73A9", type: "area", hint: "\u4E00\u53E5\u8A71\uFF0C\u51FA\u88DD\u9801\u6700\u4E0A\u9762\u90A3\u884C" },
     { key: "mode", label: "\u6A21\u5F0F", type: "select", options: MODES2 },
-    { key: "items", label: "\u524D\u4E09\u4EF6", type: "items", multi: true, max: 3, hint: "\u7167\u8CFC\u8CB7\u9806\u5E8F" },
-    { key: "why", label: "\u70BA\u4EC0\u9EBC", type: "area" },
-    { key: "champs", label: "\u9069\u5408\u7684\u82F1\u96C4", type: "champ", multi: true, hint: "\u8209\u5E7E\u500B\u5C31\u597D" },
     { key: "patch", label: "\u7248\u672C", type: "text" },
     { key: "date", label: "\u65E5\u671F", type: "date" },
     { key: "source", label: "\u4F86\u6E90", type: "text", hint: "\u7DB2\u7AD9\u548C\u7DB2\u5740\uFF08\u6578\u5B57\u4E0D\u7167\u6284\uFF09" },
@@ -7638,7 +7605,7 @@ function inboxBlock(plugin, source, el, ctx) {
     const card = root.createDiv({ cls: "mn-inb-card" });
     const head2 = card.createDiv({ cls: "mn-inb-head" });
     const who = head2.createDiv({ cls: "mn-inb-who" });
-    const top = box.kind === "tip" ? [e.hero || "\uFF08\u82F1\u96C4\uFF09", e.type, e.mode] : [e.style || "\uFF08\u73A9\u6CD5\uFF09", e.mode];
+    const top = box.kind === "tip" ? [e.hero || "\uFF08\u82F1\u96C4\uFF09", e.type, e.mode] : [e.hero || "\uFF08\u82F1\u96C4\uFF09", e.style || "\uFF08\u73A9\u6CD5\uFF09", e.mode];
     who.createDiv({ cls: "mn-inb-t", text: top.filter(Boolean).join(" \xB7 ") });
     const sub = box.kind === "tip" ? e.title || e.text || "" : e.items || e.why || "";
     if (sub) who.createDiv({ cls: "mn-inb-s", text: sub });

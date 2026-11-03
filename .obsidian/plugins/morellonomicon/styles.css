@@ -945,8 +945,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
    own keep that fill. (button + class + state outranks Obsidian's button:not(.clickable-icon):hover.) */
 .mn-app button { -webkit-tap-highlight-color: transparent; }
 .mn-app button:not(.mn-seg-b.is-on):is(:hover, :active, :focus, :focus-visible) { box-shadow: none; outline: none; }   /* a chosen segment keeps its own shadow */
-.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-mb-cell, .mn-mb-special, .mn-mb-say, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face, .mn-btn, .mn-more-link, .mn-aug-tile, .mn-tsw-b),
-.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-mb-cell, .mn-mb-special, .mn-mb-say, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face, .mn-btn, .mn-more-link, .mn-aug-tile, .mn-tsw-b):is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }
+.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-mbp-cell, .mn-mbp-open, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face, .mn-btn, .mn-more-link, .mn-aug-tile, .mn-tsw-b),
+.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-mbp-cell, .mn-mbp-open, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face, .mn-btn, .mn-more-link, .mn-aug-tile, .mn-tsw-b):is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }
 /* the press look of an icon button or a text link (Back, the palette and mode buttons, 全部 ›, an augment): it fades and shrinks a
    little while held, never a grey disc that sticks after the tap and covers the title next to it (Design Rules, Controls) */
 .mn-app button:is(.mn-btn, .mn-more-link, .mn-aug-tile) { transition: opacity 0.12s, transform 0.12s; }
@@ -1735,36 +1735,32 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 :is(.mn-champ, .mn-part) .mn-chg { background: none; border: 0; border-radius: 0; }
 :is(.mn-champ, .mn-part) .mn-chg-diff { background: none; padding: 0 0 0 10px; border-left: 2px solid var(--mn-line); border-radius: 0; }
 .mn-bt-links { display: flex; justify-content: center; gap: 18px; }
-/* 出裝's Mayhem builds, one screen: set tiles in two columns (the chosen one lit), five icons for items four to six and boots /
-   命定武器 side by side, each with a word under it, and the line that says what the tapped icon does; no panels, no item names */
-.mn-mb { display: flex; flex-direction: column; gap: 6px; }
-.mn-mb-h { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: var(--mn-muted); margin-top: 6px; }
-.mn-mb-cores { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.mn-mb-core { padding: 6px 8px 8px; border-radius: 12px; border: 1px solid transparent; cursor: pointer; }
-.mn-mb-core.is-on { border-color: color-mix(in srgb, var(--mn-accent) 55%, transparent); background: color-mix(in srgb, var(--mn-accent) 10%, transparent); }
-.mn-mb-style { font-size: 12px; font-weight: 700; color: var(--mn-muted); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mn-mb-core.is-on .mn-mb-style { color: var(--mn-accent); }
-.mn-mb-icons { display: flex; gap: 4px; }
-.mn-mb-ic { position: relative; display: block; width: 34px; height: 34px; flex: none; border-radius: 5px; }
-.mn-mb-ic img { display: block; width: 100%; height: 100%; border-radius: 5px; border: 1px solid color-mix(in srgb, #d9b15c 45%, transparent); box-sizing: border-box; }
-.mn-mb-ic.is-lit { box-shadow: 0 0 0 2px var(--mn-accent); }
+/* 出裝's Mayhem builds, laid out like 技能: the play style words and how it plays on top, the tapped item's name, word and why under
+   them, the item bar at the bottom (核心 › › , 可換, 後續 with a word under each, 鞋子 and 命定); no panels */
+.mn-cpa-page.is-build .mn-cpa-body > .mn-mbp { flex: 1 0 auto; }
+.mn-mbp { display: flex; flex-direction: column; gap: 10px; min-height: 100%; }
+.mn-mbp-how { font-size: 15px; line-height: 1.5; color: var(--mn-text); font-weight: 600; }
+.mn-mbp-how:empty { display: none; }
+.mn-mbp-say { display: flex; flex-direction: column; gap: 4px; }
+.mn-mbp-name { display: flex; align-items: baseline; gap: 10px; }
+.mn-app .mn-mbp-open { width: auto; height: auto; padding: 0; border: 0; background: none; box-shadow: none; font-size: 18px; font-weight: 800; color: var(--mn-text); }
+.mn-mbp-word { font-size: 12.5px; font-weight: 700; color: var(--mn-accent); }
+.mn-mbp-text { font-size: 14px; line-height: 1.55; color: var(--mn-muted); }
+.mn-mbp-bar { margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding-top: 8px; }
+.mn-mbp-row { display: grid; grid-template-columns: 34px 1fr; align-items: start; gap: 8px; }
+.mn-mbp-row > .mn-mbp-label { line-height: 42px; }
+.mn-mbp-label { font-size: 12px; font-weight: 700; color: var(--mn-muted); }
+.mn-mbp-label.is-inner { margin-left: 14px; line-height: 42px; }
+.mn-mbp-icons { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+.mn-mbp-arrow { align-self: center; color: var(--mn-muted); font-size: 15px; margin: 0 -3px; }
+.mn-app .mn-mbp-cell { display: flex; flex-direction: column; align-items: center; gap: 3px; width: auto; height: auto; padding: 0; border: 0; background: none; box-shadow: none; }
+.mn-mbp-cap { font-size: 11px; font-weight: 600; color: var(--mn-accent); white-space: nowrap; }
+.mn-mbp .mn-mb-ic { width: 42px; height: 42px; }
+.mn-mb-ic { position: relative; display: block; width: 34px; height: 34px; flex: none; border-radius: 6px; transition: transform 0.12s, box-shadow 0.12s; }
+.mn-mb-ic img { display: block; width: 100%; height: 100%; border-radius: 6px; border: 1px solid color-mix(in srgb, #d9b15c 45%, transparent); box-sizing: border-box; }
+.mn-mb-ic.is-lit { box-shadow: 0 0 0 2px var(--mn-accent); transform: translateY(-2px); }
 .mn-mb-ic.is-destiny img { border: 0; }
-.mn-mb-ic.is-destiny::after { content: ""; position: absolute; inset: 0; background: var(--mn-frame) center / 100% 100% no-repeat; border-radius: 5px; pointer-events: none; }
-.mn-mb-rest { display: flex; flex-direction: column; gap: 6px; }
-.mn-mb-late { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-.mn-mb-two { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.mn-mb-half { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
-.mn-app .mn-mb-cell, .mn-app .mn-mb-special { display: flex; flex-direction: column; align-items: center; gap: 3px; width: auto; height: auto; padding: 0; border: 0; background: none; box-shadow: none; }
-.mn-app .mn-mb-special { flex-direction: row; gap: 10px; }
-.mn-mb-cell .mn-mb-ic { width: 40px; height: 40px; }
-.mn-app .mn-mb-cell.is-side { flex-direction: row; gap: 10px; }
-.mn-mb-words { display: flex; flex-direction: column; align-items: center; }
-.mn-mb-cell.is-side .mn-mb-words { align-items: flex-start; }
-.mn-mb-sub { font-size: 11.5px; color: var(--mn-muted); white-space: nowrap; }
-.mn-mb-word { font-size: 11.5px; font-weight: 600; color: var(--mn-accent); white-space: nowrap; }
-.mn-app .mn-mb-say { display: block; width: 100%; height: auto; min-height: 2.9em; margin-top: 6px; padding: 8px 10px; border: 0; border-radius: 10px; box-shadow: none;
-    background: color-mix(in srgb, var(--mn-text) 6%, transparent); text-align: left; white-space: normal; font-size: 12.5px; line-height: 1.45; color: var(--mn-muted); }
-.mn-mb-say b { color: var(--mn-text); font-weight: 700; }
+.mn-mb-ic.is-destiny::after { content: ""; position: absolute; inset: 0; background: var(--mn-frame) center / 100% 100% no-repeat; border-radius: 6px; pointer-events: none; }
 
 /* 速查: the end view waits soft and dim behind the last card while it is dragged, then comes up sharp */
 .mn-rq-under.is-preview.is-in { opacity: 0.5; transform: scale(0.96); filter: blur(6px) saturate(0.8); }

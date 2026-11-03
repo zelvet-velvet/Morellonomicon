@@ -48,13 +48,12 @@ export interface Skill { key: string; name: string; damage: string[]; tags: stri
 // band's set), S / A / B / C and the reason (why the champion's kit makes it work); `when` (前期強 / 後期強) is empty for now
 export interface AugTier { id: number; group: string; tier: string; value: number; score: number; when: string; reason: string }
 export interface AugTierStyle { name: string; tiers: AugTier[]; none: { id: number; value: number }[] }
-// A champion's Mayhem builds (Dev Tools/Build Model.md, tools/build_tiers.py): up to five strong sets of the first three items, each
-// in one play style (`games` false: from the reasoning alone); per style the choices for items four to six (what each adds: `need`,
-// `when` for a situational one), boots and the item to take with 命定武器; and hand builds the games cannot show
+// A champion's Mayhem builds (Dev Tools/Build Model.md, tools/build_tiers.py): one per play style (Zaviel's in Inbox/玩法出裝.md, else
+// found in the games): how it plays, the first three items (`games` false: from the reasoning alone), items other sets have in place
+// of one of them, items four to six with what each adds, boots and the item to take with 命定武器; and hand builds the games cannot show
 export interface BuildPick { id: number; reason: string; need?: string; when?: string; grows?: string[] }
-export interface BuildCore { style: string; items: number[]; reasons: string[]; games: boolean }
-export interface BuildStyle { name: string; late: BuildPick[]; boots: BuildPick | null; destiny?: BuildPick }
-export interface ChampBuilds { cores: BuildCore[]; styles: Record<string, BuildStyle>; special: { name: string; items: number[]; note: string }[] }
+export interface BuildStyle { name: string; why: string; games: boolean; status: string; core: BuildPick[]; swaps: BuildPick[]; late: BuildPick[]; boots: BuildPick | null; destiny: BuildPick }
+export interface ChampBuilds { styles: BuildStyle[]; special: { name: string; items: number[]; note: string }[] }
 
 export interface Augment {
     id: number; name: string; rarity: string; icon: string; effect: string; partial: boolean; fits: string[]; tier: string; path: string;
