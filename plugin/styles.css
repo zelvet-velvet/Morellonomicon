@@ -1764,7 +1764,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-mb-ic img { display: block; width: 100%; height: 100%; border-radius: 6px; border: 1px solid color-mix(in srgb, #d9b15c 45%, transparent); box-sizing: border-box; }
 .mn-mb-ic.is-lit { box-shadow: 0 0 0 2px var(--mn-accent); transform: translateY(-2px); }
 .mn-mb-ic.is-destiny img { border: 0; }
-.mn-mb-ic.is-destiny::after { content: ""; position: absolute; inset: 0; background: var(--mn-frame) center / 100% 100% no-repeat; border-radius: 6px; pointer-events: none; }
+.mn-mb-ic.is-destiny::after { content: ""; position: absolute; inset: -6px; background: var(--mn-frame) center / 100% 100% no-repeat; pointer-events: none; }   /* the rainbow frame around the picture, not over it */
 
 /* 速查: the end view waits soft and dim behind the last card while it is dragged, then comes up sharp */
 .mn-rq-under.is-preview.is-in { opacity: 0.5; transform: scale(0.96); filter: blur(6px) saturate(0.8); }
