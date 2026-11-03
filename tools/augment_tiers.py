@@ -124,6 +124,12 @@ PAIR = {
     (1029, "KogMaw/ap"): (2, "E、R 也吃 W 的 %生命傷害"),
     (3086, "Udyr/ad"): (2, "Q 強化普攻吃命中效果，蜜蜂一次四下"),
     (2087, "Ashe/ap"): (2, "大絕冷卻長，每次減很多"),
+    # Nasus: his Q is the damage (it can crit); no dash, so range gets Q onto people; he needs to survive to keep stacking
+    (2111, "Nasus"): (2, "Q 強化普攻，加傷又濺射"), (1336, "Nasus"): (2, "Q 可暴擊，無盡之刃升級加傷"),
+    (1103, "Nasus"): (2, "Q 冷卻越短疊得越快"),
+    (1115, "Nasus"): (2, "沒有位移，射程讓 Q 打得到人"), (1071, "Nasus"): (2, "沒有位移，射程讓 Q 打得到人"),
+    (1170, "Nasus"): (1, "沒有位移，射程讓 Q 打得到人"),
+    **{(i, "Nasus"): (1, "前排疊 Q 要活得久") for i in SURVIVE},
 }
 # AP champions whose basic attacks carry the damage
 AP_ATTACKER = {"Kayle", "KogMaw", "Teemo", "Kaisa", "Varus", "Nilah", "Azir", "Gwen", "Diana", "Shyvana", "Katarina", "Ekko", "Lillia",
