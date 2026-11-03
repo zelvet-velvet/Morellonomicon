@@ -7534,10 +7534,10 @@ var FIELDS = {
     { key: "status", label: "\u72C0\u614B", type: "select", options: STATUS2 }
   ],
   build: [
-    { key: "hero", label: "\u82F1\u96C4", type: "champ" },
-    { key: "style", label: "\u73A9\u6CD5", type: "text", hint: "\u4F8B\u5982 AP \u523A\u5BA2\u3001AD \u7279\u6548\u3001\u96C4\u5FC3 AD" },
-    { key: "items", label: "\u6838\u5FC3", type: "items", multi: true, max: 3, hint: "\u7167\u8CFC\u8CB7\u9806\u5E8F\uFF1B\u5BEB 1\u20133 \u4EF6\u4EE3\u8868\u9019\u500B\u73A9\u6CD5\u7684\u88DD\u5099" },
+    { key: "style", label: "\u73A9\u6CD5", type: "text", hint: "\u4F8B\u5982 AP \u523A\u5BA2\u3001\u71D2\u50B7\u6CD5\u5E2B\u3001\u96C4\u5FC3\u6230\u58EB" },
+    { key: "items", label: "\u6838\u5FC3", type: "items", multi: true, max: 2, hint: "\u7167\u8CFC\u8CB7\u9806\u5E8F\uFF1B1\u20132 \u4EF6\u4EE3\u8868\u9019\u500B\u73A9\u6CD5\u7684\u88DD\u5099" },
     { key: "why", label: "\u600E\u9EBC\u73A9", type: "area", hint: "\u4E00\u53E5\u8A71\uFF0C\u51FA\u88DD\u9801\u6700\u4E0A\u9762\u90A3\u884C" },
+    { key: "champs", label: "\u9069\u5408\u7684\u82F1\u96C4", type: "champ", multi: true, hint: "\u5217\u5728\u9019\u88E1\u7684\u82F1\u96C4\u51FA\u88DD\u9801\u5C31\u6709\u9019\u500B\u73A9\u6CD5" },
     { key: "mode", label: "\u6A21\u5F0F", type: "select", options: MODES2 },
     { key: "patch", label: "\u7248\u672C", type: "text" },
     { key: "date", label: "\u65E5\u671F", type: "date" },
@@ -7605,9 +7605,9 @@ function inboxBlock(plugin, source, el, ctx) {
     const card = root.createDiv({ cls: "mn-inb-card" });
     const head2 = card.createDiv({ cls: "mn-inb-head" });
     const who = head2.createDiv({ cls: "mn-inb-who" });
-    const top = box.kind === "tip" ? [e.hero || "\uFF08\u82F1\u96C4\uFF09", e.type, e.mode] : [e.hero || "\uFF08\u82F1\u96C4\uFF09", e.style || "\uFF08\u73A9\u6CD5\uFF09", e.mode];
+    const top = box.kind === "tip" ? [e.hero || "\uFF08\u82F1\u96C4\uFF09", e.type, e.mode] : [e.style || "\uFF08\u73A9\u6CD5\uFF09", e.items, e.mode];
     who.createDiv({ cls: "mn-inb-t", text: top.filter(Boolean).join(" \xB7 ") });
-    const sub = box.kind === "tip" ? e.title || e.text || "" : e.items || e.why || "";
+    const sub = box.kind === "tip" ? e.title || e.text || "" : e.champs || e.why || "";
     if (sub) who.createDiv({ cls: "mn-inb-s", text: sub });
     head2.createSpan({ cls: "mn-inb-st" + (e.status === "\u5DF2\u9A57\u8B49" ? " is-ok" : ""), text: e.status || STATUS2[0] });
     const form = card.createDiv({ cls: "mn-inb-form" });

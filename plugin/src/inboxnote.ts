@@ -28,10 +28,10 @@ const FIELDS: Record<Kind, Field[]> = {
         { key: "status", label: "狀態", type: "select", options: STATUS },
     ],
     build: [
-        { key: "hero", label: "英雄", type: "champ" },
-        { key: "style", label: "玩法", type: "text", hint: "例如 AP 刺客、AD 特效、雄心 AD" },
-        { key: "items", label: "核心", type: "items", multi: true, max: 3, hint: "照購買順序；寫 1–3 件代表這個玩法的裝備" },
+        { key: "style", label: "玩法", type: "text", hint: "例如 AP 刺客、燒傷法師、雄心戰士" },
+        { key: "items", label: "核心", type: "items", multi: true, max: 2, hint: "照購買順序；1–2 件代表這個玩法的裝備" },
         { key: "why", label: "怎麼玩", type: "area", hint: "一句話，出裝頁最上面那行" },
+        { key: "champs", label: "適合的英雄", type: "champ", multi: true, hint: "列在這裡的英雄出裝頁就有這個玩法" },
         { key: "mode", label: "模式", type: "select", options: MODES },
         { key: "patch", label: "版本", type: "text" },
         { key: "date", label: "日期", type: "date" },
@@ -50,7 +50,7 @@ const parse = (source: string): Box | null => {
     } catch { return null; }
 };
 // one entry per line, so a change shows as one changed line in git (Inbox/玩法出裝.md is read as it is by tools/build_tiers.py: each
-// entry is one of a champion's builds on 出裝)
+// entry is a play style, a build on 出裝 for every champion it lists)
 const serialise = (b: Box): string =>
     `{"kind": "${b.kind}", "entries": [` + (b.entries.length ? "\n" + b.entries.map((e) => "  " + JSON.stringify(e)).join(",\n") + "\n" : "") + "]}";
 
@@ -101,9 +101,9 @@ function inboxBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLElemen
         const card = root.createDiv({ cls: "mn-inb-card" });
         const head = card.createDiv({ cls: "mn-inb-head" });
         const who = head.createDiv({ cls: "mn-inb-who" });
-        const top = box.kind === "tip" ? [e.hero || "（英雄）", e.type, e.mode] : [e.hero || "（英雄）", e.style || "（玩法）", e.mode];
+        const top = box.kind === "tip" ? [e.hero || "（英雄）", e.type, e.mode] : [e.style || "（玩法）", e.items, e.mode];
         who.createDiv({ cls: "mn-inb-t", text: top.filter(Boolean).join(" · ") });
-        const sub = box.kind === "tip" ? (e.title || e.text || "") : (e.items || e.why || "");
+        const sub = box.kind === "tip" ? (e.title || e.text || "") : (e.champs || e.why || "");
         if (sub) who.createDiv({ cls: "mn-inb-s", text: sub });
         head.createSpan({ cls: "mn-inb-st" + (e.status === "已驗證" ? " is-ok" : ""), text: e.status || STATUS[0] });
         const form = card.createDiv({ cls: "mn-inb-form" });

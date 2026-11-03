@@ -473,7 +473,7 @@ def merged_sets(d, alias, pool, ranged=False):
 
 
 def hand_styles(pool):
-    """The builds Zaviel wrote in Inbox/玩法出裝.md (Mayhem): champion name -> [{name, why, sig: core item ids, status}]."""
+    """The play styles in Inbox/玩法出裝.md (Mayhem), each for the champions it lists: champion name -> [{name, why, sig, status}]."""
     path = ROOT / "Inbox" / "玩法出裝.md"
     if not path.exists():
         return {}
@@ -485,11 +485,13 @@ def hand_styles(pool):
     for i, it in pool.items():
         by_name.setdefault(it["name"], i)
     out = defaultdict(list)
+    split = lambda v: [n.strip() for n in re.split(r"[、,，]", v or "") if n.strip()]
     for e in json.loads(m.group(1)).get("entries", []):
-        if e.get("mode", "大混戰") != "大混戰" or not e.get("hero") or not e.get("style"):
+        if e.get("mode", "大混戰") != "大混戰" or not e.get("style"):
             continue
-        sig = [by_name[n] for n in re.split(r"[、,，]", e.get("items", "")) if n.strip() in by_name for n in [n.strip()]]
-        out[e["hero"]].append({"name": e["style"], "why": e.get("why", ""), "sig": sig, "status": e.get("status", "")})
+        sig = [by_name[n] for n in split(e.get("items")) if n in by_name]
+        for hero in split(e.get("champs")) + split(e.get("hero")):   # a play style for every champion it lists
+            out[hero].append({"name": e["style"], "why": e.get("why", ""), "sig": sig, "status": e.get("status", "")})
     return out
 
 
