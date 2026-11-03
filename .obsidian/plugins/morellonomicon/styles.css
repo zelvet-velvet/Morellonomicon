@@ -1388,6 +1388,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-inb-s { color: var(--text-muted); font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mn-inb-st { flex: none; border-radius: 999px; padding: 1px 10px; font-size: 0.8em; font-weight: 700; color: var(--color-yellow); background: color-mix(in srgb, var(--color-yellow) 15%, transparent); }
 .mn-inb-st.is-ok { color: var(--color-green); background: color-mix(in srgb, var(--color-green) 15%, transparent); }
+.mn-inb-st.is-mode { color: var(--text-muted); background: color-mix(in srgb, var(--text-muted) 14%, transparent); }   /* the mode, beside the status */
+.mn-inb-st.is-mode + .mn-inb-st { margin-left: -4px; }
 .mn-inb-form { display: none; flex-direction: column; gap: 8px; padding: 4px 12px 12px; border-top: 1px solid var(--background-modifier-border); }
 .mn-inb-card.is-open .mn-inb-form { display: flex; }
 .mn-inb-row { display: flex; flex-direction: column; gap: 3px; }

@@ -7605,10 +7605,11 @@ function inboxBlock(plugin, source, el, ctx) {
     const card = root.createDiv({ cls: "mn-inb-card" });
     const head2 = card.createDiv({ cls: "mn-inb-head" });
     const who = head2.createDiv({ cls: "mn-inb-who" });
-    const top = box.kind === "tip" ? [e.hero || "\uFF08\u82F1\u96C4\uFF09", e.type, e.mode] : [e.style || "\uFF08\u73A9\u6CD5\uFF09", e.items, e.mode];
+    const top = box.kind === "tip" ? [e.hero || "\uFF08\u82F1\u96C4\uFF09", e.type] : [e.style || "\uFF08\u73A9\u6CD5\uFF09", e.items];
     who.createDiv({ cls: "mn-inb-t", text: top.filter(Boolean).join(" \xB7 ") });
     const sub = box.kind === "tip" ? e.title || e.text || "" : e.champs || e.why || "";
     if (sub) who.createDiv({ cls: "mn-inb-s", text: sub });
+    if (e.mode) head2.createSpan({ cls: "mn-inb-st is-mode", text: e.mode });
     head2.createSpan({ cls: "mn-inb-st" + (e.status === "\u5DF2\u9A57\u8B49" ? " is-ok" : ""), text: e.status || STATUS2[0] });
     const form = card.createDiv({ cls: "mn-inb-form" });
     const isOpen = opened.get(ctx.sourcePath) === e.id;
