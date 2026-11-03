@@ -1,5 +1,5 @@
 import type { AugTierStyle, Augment, Champion, Item, Store } from "../data/store";
-import { DAMAGE_COLOR, DAMAGE_ICON, augIcon, scalingParts, warmPictures, blockUntil, layoutBlock, chip, empty, fgrid, group, h, icon, moreLink, page, row, segmented, roleChip, LANES, laneChip, slideSeg, textSwitch, tierHead, tip, fixedPage, goes } from "../ui";
+import { DAMAGE_COLOR, DAMAGE_ICON, augIcon, scalingParts, warmPictures, blockUntil, layoutBlock, chip, empty, fgrid, group, h, icon, moreLink, page, row, segmented, roleChip, LANES, laneChip, slideSeg, styleSwitch, tierHead, tip, fixedPage, goes } from "../ui";
 import { TAG_GROUPS, damageLines, iconFilter, profileAxes, profileRadar, reachOf, styleChart, tagFilter, tagRow } from "./profile";
 import { buildTab } from "./build";
 import { cardArt, cardPictures } from "./roster";
@@ -192,7 +192,6 @@ const TURN_PART = 0.22;     // a swipe past this part of the width turns the pag
 const FLICK_PX_MS = 0.35;   // or a quick flick (px per ms)
 const EDGE_PULL = 0.3;      // past the first or last page the pages follow the finger this much
 const WHEEL_PX = 12, WHEEL_GAP_MS = 450;   // a trackpad swipe: its least move, and the pause before the next one turns a page
-const TAP_SIDE = 0.22;      // a tap within this share of the width from a side switches the play style that way (強化, 全部強化)
 const PAGES: [Part, string, string][] = [["overview", "概覽", "id-card"], ["skills", "技能", "keyboard"], ["build", "出裝", "shopping-bag"], ["augments", "強化", "sparkles"], ["tips", "技巧", "lightbulb"]];
 // What the champion page and its sub pages show from the network (their routes in pages/index.ts): the art behind them and the face.
 // The ability clips load in the page's own shelf as it opens; icons in the pages (items, augments) are fetched at start-up.
@@ -446,21 +445,6 @@ function tierPicks(store: Store, c: Champion, style: AugTierStyle): TierPick[] {
         out.push({ a, why: t.reason, score: t.score, tier: t.tier, group: t.group, value: t.value });
     }
     return out;
-}
-// the play style as words (only when there is more than one); `draw` redraws with the chosen one. A tap on the left or right side of
-// the page (not on an augment) switches to the style before or after, like turning a story
-function styleSwitch(body: HTMLElement, styles: AugTierStyle[], draw: (s: AugTierStyle) => void): void {
-    if (styles.length < 2) return;
-    let at = 0;
-    const words = textSwitch(body, styles.map((s, i) => [String(i), s.name]), "0", (id) => { at = Number(id); draw(styles[at]); });
-    body.addEventListener("click", (e) => {
-        if ((e.target as HTMLElement).closest("button, a, input, video, img, .mn-tsw")) return;
-        const r = body.getBoundingClientRect();
-        const x = (e.clientX - r.left) / (r.width || 1);
-        const to = x < TAP_SIDE ? at - 1 : x > 1 - TAP_SIDE ? at + 1 : at;
-        if (to === at || to < 0 || to >= styles.length) return;
-        (words.children[to] as HTMLElement | undefined)?.click();   // the word's own tap: it marks itself and redraws
-    });
 }
 // 強化 (the champion page): a glance at its S augments. One screen: as many whole rows as fit between the switch and 全部強化 ›
 function augmentsTop(body: HTMLElement, c: Champion, ctx: PageCtx, more: () => void): void {

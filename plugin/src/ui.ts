@@ -701,6 +701,22 @@ export const textSwitch = (parent: HTMLElement, options: [string, string][], val
     }
     return box;
 };
+// The play style as words (強化, 全部強化, 出裝) (only when there is more than one); `draw` redraws with the chosen one. A tap on the left or right side of
+// the page (not on an augment or item) switches to the style before or after, like turning a story
+const TAP_SIDE = 0.22;   // a tap within this share of the width from a side switches the play style that way
+export function styleSwitch<T extends { name: string }>(body: HTMLElement, styles: T[], draw: (s: T) => void): void {
+    if (styles.length < 2) return;
+    let at = 0;
+    const words = textSwitch(body, styles.map((s, i) => [String(i), s.name]), "0", (id) => { at = Number(id); draw(styles[at]); });
+    body.addEventListener("click", (e) => {
+        if ((e.target as HTMLElement).closest("button, a, input, video, img, .mn-tsw")) return;
+        const r = body.getBoundingClientRect();
+        const x = (e.clientX - r.left) / (r.width || 1);
+        const to = x < TAP_SIDE ? at - 1 : x > 1 - TAP_SIDE ? at + 1 : at;
+        if (to === at || to < 0 || to >= styles.length) return;
+        (words.children[to] as HTMLElement | undefined)?.click();   // the word's own tap: it marks itself and redraws
+    });
+}
 // A section heading of the champion page family: a tier letter in its colour (S / A / B / C), or a word
 export const TIER_COLOR: Record<string, string> = { S: "var(--color-orange)", A: "var(--color-yellow)", B: "var(--color-green)", C: "var(--mn-muted)" };
 export const tierHead = (parent: HTMLElement, label: string): HTMLElement => {

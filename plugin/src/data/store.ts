@@ -48,6 +48,10 @@ export interface Skill { key: string; name: string; damage: string[]; tags: stri
 // band's set), S / A / B / C and the reason (why the champion's kit makes it work); `when` (前期強 / 後期強) is empty for now
 export interface AugTier { id: number; group: string; tier: string; value: number; score: number; when: string; reason: string }
 export interface AugTierStyle { name: string; tiers: AugTier[]; none: { id: number; value: number }[] }
+// One play style's build (Dev Tools/Build Model.md, tools/build_tiers.py): five items in the order they are bought, boots, and
+// alternatives (`when` says when to buy a situational one), each with the reason the kit makes it work
+export interface BuildPick { id: number; reason: string; when?: string }
+export interface BuildStyle { name: string; main: BuildPick[]; boots: BuildPick | null; alt: BuildPick[] }
 
 export interface Augment {
     id: number; name: string; rarity: string; icon: string; effect: string; partial: boolean; fits: string[]; tier: string; path: string;
@@ -124,6 +128,7 @@ export class Store {
     augData: Record<string, AugmentData> = {};   // augment id -> numbers, levels, tags (tools/fetch_augment_data.py)
     augmentData(id: number): AugmentData | undefined { return this.augData[String(id)]; }
     augTiers: Record<string, Record<string, AugTierStyle>> = {};   // champion id -> play style -> the augment tiers (tools/augment_tiers.py)
+    itemBuilds: Record<string, Record<string, BuildStyle>> = {};   // champion id -> play style -> the Mayhem build (tools/build_tiers.py)
     augUnrated: Record<string, string> = {};   // augment id -> why it has no tier (disabled, no games, no rule yet)
     itemRoles: Record<string, string[]> | null = null;   // item id -> the shop's class tabs it is under (_data/item-roles.json, the League wiki)
 
@@ -159,6 +164,10 @@ export class Store {
             this.augTiers = d.champions ?? {};
             this.augUnrated = d.unrated ?? {};
         } catch { this.augTiers = {}; this.augUnrated = {}; }
+        try {
+            const path = normalizePath("_data/item-builds.json");
+            this.itemBuilds = (await this.app.vault.adapter.exists(path)) ? ((JSON.parse(await this.app.vault.adapter.read(path)) as { champions?: Record<string, Record<string, BuildStyle>> }).champions ?? {}) : {};
+        } catch { this.itemBuilds = {}; }
         try {
             const path = normalizePath("_data/item-roles.json");
             this.itemRoles = (await this.app.vault.adapter.exists(path)) ? ((JSON.parse(await this.app.vault.adapter.read(path)) as { items: Record<string, string[]> }).items ?? null) : null;

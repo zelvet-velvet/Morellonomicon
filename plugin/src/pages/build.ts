@@ -1,5 +1,5 @@
-import type { Champion } from "../data/store";
-import { chip, empty, h, moreLink, goes } from "../ui";
+import type { BuildPick, BuildStyle, Champion } from "../data/store";
+import { chip, empty, h, moreLink, goes, styleSwitch } from "../ui";
 import { metaLine } from "./fresh";
 import type { PageCtx } from "./index";
 import { art } from "../media";
@@ -8,7 +8,8 @@ const TOP_SETS = 3;
 const TOP_ITEMS = 8;
 const pct = (wins: number, games: number) => (games ? Math.round((wins / games) * 100) : 0);
 
-// The Build sub-tab: what people really build (counted from matches), our own picks, fun alternatives, and builds for playing with a teammate.
+// The Build sub-tab: the Mayhem build worked out from the kit (main build and alternatives, per play style), what people really build
+// (counted from matches), our own picks, fun alternatives, and builds for playing with a teammate.
 export function buildTab(page: HTMLElement, c: Champion, ctx: PageCtx): void {
     // the builds in one part (the champion page centres it down the page), the Live stats links after it (at the page's foot)
     const body = h(page, "div", "mn-bt-main");
@@ -19,6 +20,8 @@ export function buildTab(page: HTMLElement, c: Champion, ctx: PageCtx): void {
     const meta = mine.filter((b) => b.kind === "meta");
     const alt = mine.filter((b) => b.kind === "alt");
     const synergy = mine.filter((b) => b.kind === "synergy");
+    const reasoned = mode === "mayhem" ? Object.values(store.itemBuilds[c.id] ?? {}) : [];
+    if (reasoned.length) reasonedBuild(body, c, ctx, reasoned);
 
     if (stats || meta.length) {
         section(body, "常用");
@@ -40,7 +43,7 @@ export function buildTab(page: HTMLElement, c: Champion, ctx: PageCtx): void {
     }
     if (alt.length) { section(body, "有趣替代"); for (const b of alt) setCard(body, c, ctx, b); }
     if (synergy.length) { section(body, "搭配"); for (const b of synergy) setCard(body, c, ctx, b); }
-    if (!stats && !mine.length) empty(body, { icon: "package-open", title: "No builds of ours yet", text: "Our own builds and ideas for this champion will appear here." });
+    if (!stats && !mine.length && !reasoned.length) empty(body, { icon: "package-open", title: "No builds of ours yet", text: "Our own builds and ideas for this champion will appear here." });
     if (mode === "mayhem") liveStats(h(page, "div", "mn-bt-live"), c);
 }
 
@@ -56,6 +59,39 @@ function liveStats(body: HTMLElement, c: Champion): void {
 }
 
 function section(body: HTMLElement, title: string): void { h(body, "div", "mn-gh", title); }
+
+// 主出裝 and 替代 (tools/build_tiers.py): one row per item, its picture, name and why it works for this champion; a tap opens the item
+function reasonedBuild(body: HTMLElement, c: Champion, ctx: PageCtx, styles: BuildStyle[]): void {
+    const wrap = h(body, "div", "mn-rb");
+    styleSwitch(wrap, styles, (s) => draw(s));
+    const box = h(wrap, "div", "mn-rb-box");
+    const draw = (style: BuildStyle) => {
+        box.empty();
+        section(box, "主出裝");
+        style.main.forEach((p, i) => buildRow(box, c, ctx, p, String(i + 1)));
+        if (style.boots) buildRow(box, c, ctx, style.boots, "鞋");
+        if (style.alt.length) { section(box, "替代"); for (const p of style.alt) buildRow(box, c, ctx, p, ""); }
+    };
+    draw(styles[0]);
+}
+
+function buildRow(parent: HTMLElement, c: Champion, ctx: PageCtx, p: BuildPick, mark: string): void {
+    const item = ctx.plugin.store.item(p.id);
+    const row = h(parent, "button", "mn-rb-row");
+    h(row, "span", "mn-rb-mark", mark);
+    const im = h(row, "img");
+    im.src = item?.icon || art.item(c.patch, p.id);
+    im.alt = "";
+    const text = h(row, "span", "mn-rb-text");
+    h(text, "span", "mn-rb-name", item?.name ?? `#${p.id}`);
+    const why = h(text, "span", "mn-rb-why");
+    if (p.when) h(why, "span", "mn-rb-when", `${p.when}：`);
+    why.appendText(p.reason);
+    if (item) {
+        row.addEventListener("click", (e) => { e.preventDefault(); ctx.openItem(item.id); });
+        goes(row, { key: "item", params: { id: item.id } });
+    }
+}
 
 function setCard(body: HTMLElement, c: Champion, ctx: PageCtx, b: Champion["builds"][number]): void {
     const card = h(body, "div", "mn-set");

@@ -170,6 +170,8 @@ var Store = class {
     this.augData = {};
     this.augTiers = {};
     // champion id -> play style -> the augment tiers (tools/augment_tiers.py)
+    this.itemBuilds = {};
+    // champion id -> play style -> the Mayhem build (tools/build_tiers.py)
     this.augUnrated = {};
     // augment id -> why it has no tier (disabled, no games, no rule yet)
     this.itemRoles = null;
@@ -226,6 +228,12 @@ var Store = class {
     } catch {
       this.augTiers = {};
       this.augUnrated = {};
+    }
+    try {
+      const path = (0, import_obsidian.normalizePath)("_data/item-builds.json");
+      this.itemBuilds = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)).champions ?? {} : {};
+    } catch {
+      this.itemBuilds = {};
     }
     try {
       const path = (0, import_obsidian.normalizePath)("_data/item-roles.json");
@@ -1434,6 +1442,23 @@ var textSwitch = (parent, options, value, onChange) => {
   }
   return box;
 };
+var TAP_SIDE = 0.22;
+function styleSwitch(body, styles, draw) {
+  if (styles.length < 2) return;
+  let at = 0;
+  const words = textSwitch(body, styles.map((s, i) => [String(i), s.name]), "0", (id) => {
+    at = Number(id);
+    draw(styles[at]);
+  });
+  body.addEventListener("click", (e) => {
+    if (e.target.closest("button, a, input, video, img, .mn-tsw")) return;
+    const r = body.getBoundingClientRect();
+    const x = (e.clientX - r.left) / (r.width || 1);
+    const to = x < TAP_SIDE ? at - 1 : x > 1 - TAP_SIDE ? at + 1 : at;
+    if (to === at || to < 0 || to >= styles.length) return;
+    words.children[to]?.click();
+  });
+}
 var TIER_COLOR = { S: "var(--color-orange)", A: "var(--color-yellow)", B: "var(--color-green)", C: "var(--mn-muted)" };
 var tierHead = (parent, label) => {
   const el = h(parent, "div", "mn-tier-h", label);
@@ -2047,6 +2072,8 @@ function buildTab(page2, c, ctx) {
   const meta = mine.filter((b) => b.kind === "meta");
   const alt = mine.filter((b) => b.kind === "alt");
   const synergy = mine.filter((b) => b.kind === "synergy");
+  const reasoned = mode === "mayhem" ? Object.values(store.itemBuilds[c.id] ?? {}) : [];
+  if (reasoned.length) reasonedBuild(body, c, ctx, reasoned);
   if (stats2 || meta.length) {
     section(body, "\u5E38\u7528");
     if (stats2) {
@@ -2073,7 +2100,7 @@ function buildTab(page2, c, ctx) {
     section(body, "\u642D\u914D");
     for (const b of synergy) setCard(body, c, ctx, b);
   }
-  if (!stats2 && !mine.length) empty(body, { icon: "package-open", title: "No builds of ours yet", text: "Our own builds and ideas for this champion will appear here." });
+  if (!stats2 && !mine.length && !reasoned.length) empty(body, { icon: "package-open", title: "No builds of ours yet", text: "Our own builds and ideas for this champion will appear here." });
   if (mode === "mayhem") liveStats(h(page2, "div", "mn-bt-live"), c);
 }
 var OPGG_SLUG = { MonkeyKing: "wukong" };
@@ -2086,6 +2113,42 @@ function liveStats(body, c) {
 }
 function section(body, title) {
   h(body, "div", "mn-gh", title);
+}
+function reasonedBuild(body, c, ctx, styles) {
+  const wrap = h(body, "div", "mn-rb");
+  styleSwitch(wrap, styles, (s) => draw(s));
+  const box = h(wrap, "div", "mn-rb-box");
+  const draw = (style) => {
+    box.empty();
+    section(box, "\u4E3B\u51FA\u88DD");
+    style.main.forEach((p, i) => buildRow(box, c, ctx, p, String(i + 1)));
+    if (style.boots) buildRow(box, c, ctx, style.boots, "\u978B");
+    if (style.alt.length) {
+      section(box, "\u66FF\u4EE3");
+      for (const p of style.alt) buildRow(box, c, ctx, p, "");
+    }
+  };
+  draw(styles[0]);
+}
+function buildRow(parent, c, ctx, p, mark) {
+  const item = ctx.plugin.store.item(p.id);
+  const row2 = h(parent, "button", "mn-rb-row");
+  h(row2, "span", "mn-rb-mark", mark);
+  const im = h(row2, "img");
+  im.src = item?.icon || art.item(c.patch, p.id);
+  im.alt = "";
+  const text = h(row2, "span", "mn-rb-text");
+  h(text, "span", "mn-rb-name", item?.name ?? `#${p.id}`);
+  const why = h(text, "span", "mn-rb-why");
+  if (p.when) h(why, "span", "mn-rb-when", `${p.when}\uFF1A`);
+  why.appendText(p.reason);
+  if (item) {
+    row2.addEventListener("click", (e) => {
+      e.preventDefault();
+      ctx.openItem(item.id);
+    });
+    goes(row2, { key: "item", params: { id: item.id } });
+  }
 }
 function setCard(body, c, ctx, b) {
   const card = h(body, "div", "mn-set");
@@ -5252,7 +5315,6 @@ var FLICK_PX_MS = 0.35;
 var EDGE_PULL = 0.3;
 var WHEEL_PX = 12;
 var WHEEL_GAP_MS = 450;
-var TAP_SIDE = 0.22;
 var PAGES = [["overview", "\u6982\u89BD", "id-card"], ["skills", "\u6280\u80FD", "keyboard"], ["build", "\u51FA\u88DD", "shopping-bag"], ["augments", "\u5F37\u5316", "sparkles"], ["tips", "\u6280\u5DE7", "lightbulb"]];
 function championNeeds({ plugin }, frame) {
   const c = plugin.store.champion(String(frame.params?.id ?? ""));
@@ -5503,22 +5565,6 @@ function tierPicks(store, c, style) {
     out.push({ a, why: t.reason, score: t.score, tier: t.tier, group: t.group, value: t.value });
   }
   return out;
-}
-function styleSwitch(body, styles, draw) {
-  if (styles.length < 2) return;
-  let at = 0;
-  const words = textSwitch(body, styles.map((s, i) => [String(i), s.name]), "0", (id) => {
-    at = Number(id);
-    draw(styles[at]);
-  });
-  body.addEventListener("click", (e) => {
-    if (e.target.closest("button, a, input, video, img, .mn-tsw")) return;
-    const r = body.getBoundingClientRect();
-    const x = (e.clientX - r.left) / (r.width || 1);
-    const to = x < TAP_SIDE ? at - 1 : x > 1 - TAP_SIDE ? at + 1 : at;
-    if (to === at || to < 0 || to >= styles.length) return;
-    words.children[to]?.click();
-  });
 }
 function augmentsTop(body, c, ctx, more) {
   const styles = Object.values(ctx.plugin.store.augTiers[c.id] ?? {});

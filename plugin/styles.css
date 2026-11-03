@@ -945,8 +945,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
    own keep that fill. (button + class + state outranks Obsidian's button:not(.clickable-icon):hover.) */
 .mn-app button { -webkit-tap-highlight-color: transparent; }
 .mn-app button:not(.mn-seg-b.is-on):is(:hover, :active, :focus, :focus-visible) { box-shadow: none; outline: none; }   /* a chosen segment keeps its own shadow */
-.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face, .mn-btn, .mn-more-link, .mn-aug-tile, .mn-tsw-b),
-.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face, .mn-btn, .mn-more-link, .mn-aug-tile, .mn-tsw-b):is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }
+.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-rb-row, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face, .mn-btn, .mn-more-link, .mn-aug-tile, .mn-tsw-b),
+.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-rb-row, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face, .mn-btn, .mn-more-link, .mn-aug-tile, .mn-tsw-b):is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }
 /* the press look of an icon button or a text link (Back, the palette and mode buttons, 全部 ›, an augment): it fades and shrinks a
    little while held, never a grey disc that sticks after the tap and covers the title next to it (Design Rules, Controls) */
 .mn-app button:is(.mn-btn, .mn-more-link, .mn-aug-tile) { transition: opacity 0.12s, transform 0.12s; }
@@ -1735,6 +1735,17 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 :is(.mn-champ, .mn-part) .mn-chg { background: none; border: 0; border-radius: 0; }
 :is(.mn-champ, .mn-part) .mn-chg-diff { background: none; padding: 0 0 0 10px; border-left: 2px solid var(--mn-line); border-radius: 0; }
 .mn-bt-links { display: flex; justify-content: center; gap: 18px; }
+/* 出裝's reasoned build: a row per item (place, picture, name over why), no panel; the alternatives' when in the accent */
+.mn-rb-box { display: flex; flex-direction: column; }
+.mn-rb-box > .mn-gh { margin: 14px 0 4px; }
+.mn-rb-box > .mn-gh:first-child { margin-top: 4px; }
+.mn-app .mn-rb-row { display: grid; grid-template-columns: 16px 36px 1fr; align-items: center; gap: 10px; width: 100%; height: auto; padding: 6px 0; border: 0; background: none; box-shadow: none; text-align: left; }
+.mn-rb-mark { font-size: 12px; font-weight: 700; color: var(--mn-muted); text-align: center; font-variant-numeric: tabular-nums; }
+.mn-rb-row img { width: 36px; height: 36px; border-radius: 4px; border: 1px solid color-mix(in srgb, #d9b15c 45%, transparent); }
+.mn-rb-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.mn-rb-name { font-size: 14px; font-weight: 700; color: var(--mn-text); }
+.mn-rb-why { font-size: 12.5px; line-height: 1.4; color: var(--mn-muted); white-space: normal; }
+.mn-rb-when { color: var(--mn-accent); font-weight: 600; }
 
 /* 速查: the end view waits soft and dim behind the last card while it is dragged, then comes up sharp */
 .mn-rq-under.is-preview.is-in { opacity: 0.5; transform: scale(0.96); filter: blur(6px) saturate(0.8); }
