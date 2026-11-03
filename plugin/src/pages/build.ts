@@ -1,5 +1,5 @@
-import type { BuildPick, BuildStyle, Champion } from "../data/store";
-import { chip, empty, h, moreLink, goes, styleSwitch } from "../ui";
+import type { BuildPick, ChampBuilds, Champion } from "../data/store";
+import { chip, empty, h, moreLink, goes } from "../ui";
 import { metaLine } from "./fresh";
 import type { PageCtx } from "./index";
 import { art } from "../media";
@@ -20,8 +20,8 @@ export function buildTab(page: HTMLElement, c: Champion, ctx: PageCtx): void {
     const meta = mine.filter((b) => b.kind === "meta");
     const alt = mine.filter((b) => b.kind === "alt");
     const synergy = mine.filter((b) => b.kind === "synergy");
-    const reasoned = mode === "mayhem" ? Object.values(store.itemBuilds[c.id] ?? {}) : [];
-    if (reasoned.length) reasonedBuild(body, c, ctx, reasoned);
+    const reasoned = mode === "mayhem" ? store.itemBuilds[c.id] : undefined;
+    if (reasoned?.cores.length) mayhemBuilds(body, c, ctx, reasoned);
 
     if (stats || meta.length) {
         section(body, "常用");
@@ -43,7 +43,7 @@ export function buildTab(page: HTMLElement, c: Champion, ctx: PageCtx): void {
     }
     if (alt.length) { section(body, "有趣替代"); for (const b of alt) setCard(body, c, ctx, b); }
     if (synergy.length) { section(body, "搭配"); for (const b of synergy) setCard(body, c, ctx, b); }
-    if (!stats && !mine.length && !reasoned.length) empty(body, { icon: "package-open", title: "No builds of ours yet", text: "Our own builds and ideas for this champion will appear here." });
+    if (!stats && !mine.length && !reasoned?.cores.length) empty(body, { icon: "package-open", title: "No builds of ours yet", text: "Our own builds and ideas for this champion will appear here." });
     if (mode === "mayhem") liveStats(h(page, "div", "mn-bt-live"), c);
 }
 
@@ -60,30 +60,87 @@ function liveStats(body: HTMLElement, c: Champion): void {
 
 function section(body: HTMLElement, title: string): void { h(body, "div", "mn-gh", title); }
 
-// 主出裝 and 替代 (tools/build_tiers.py): one row per item, its picture, name and why it works for this champion; a tap opens the item
-function reasonedBuild(body: HTMLElement, c: Champion, ctx: PageCtx, styles: BuildStyle[]): void {
-    const wrap = h(body, "div", "mn-rb");
-    styleSwitch(wrap, styles, (s) => draw(s));
-    const box = h(wrap, "div", "mn-rb-box");
-    const draw = (style: BuildStyle) => {
-        box.empty();
-        section(box, "主出裝");
-        style.main.forEach((p, i) => buildRow(box, c, ctx, p, String(i + 1)));
-        if (style.boots) buildRow(box, c, ctx, style.boots, "鞋");
-        if (style.alt.length) { section(box, "替代"); for (const p of style.alt) buildRow(box, c, ctx, p, ""); }
+const LATE = 5;   // choices shown for items four to six
+// the border the game puts on the item 命定武器 grows (CommunityDragon, shown by address)
+const DESTINY_FRAME = "https://raw.communitydragon.org/latest/game/assets/items/itemmodifiers/strawberry_weapon_evolve_border.png";
+
+// The Mayhem builds (tools/build_tiers.py), like a build site: strong sets of the first three items (a play style each; the chosen
+// one shows why each item), then for its play style the choices for items four to six with what each adds, boots, the item to take
+// with 命定武器, and hand builds the games cannot show (鎖子甲 ×6)
+function mayhemBuilds(body: HTMLElement, c: Champion, ctx: PageCtx, b: ChampBuilds): void {
+    const many = new Set(b.cores.map((k) => k.style)).size > 1;
+    section(body, "前三件");
+    const list = h(body, "div", "mn-mb-cores");
+    const rest = h(body, "div", "mn-mb-rest");
+    let on = 0;
+    const rows = b.cores.map((core, n) => {
+        const row = h(list, "div", "mn-mb-core" + (n === 0 ? " is-on" : ""));
+        const head = h(row, "button", "mn-mb-head");
+        const icons = h(head, "span", "mn-mb-icons");
+        core.items.forEach((id, i) => {
+            if (i) h(icons, "span", "mn-mb-arrow", "›");
+            itemIcon(icons, c, ctx, id);
+        });
+        if (many) h(head, "span", "mn-mb-style", b.styles[core.style]?.name ?? "");
+        const why = h(row, "div", "mn-mb-why");
+        core.items.forEach((id, i) => {
+            const line = h(why, "div", "mn-mb-line");
+            h(line, "b", "", ctx.plugin.store.item(id)?.name ?? `#${id}`);
+            line.appendText(`　${core.reasons[i]}`);
+        });
+        if (!core.games) h(why, "div", "mn-mb-line is-note", "依技能組推算，對局裡少見");
+        head.addEventListener("click", (e) => {
+            e.preventDefault();
+            if (on === n) return;
+            rows[on].removeClass("is-on");
+            row.addClass("is-on");
+            on = n;
+            drawRest();
+        });
+        return row;
+    });
+    const drawRest = () => {
+        rest.empty();
+        const core = b.cores[on];
+        const st = b.styles[core.style];
+        if (!st) return;
+        const late = st.late.filter((p) => !core.items.includes(p.id)).slice(0, LATE);
+        if (late.length) { section(rest, "第四到六件"); for (const p of late) pickRow(rest, c, ctx, p, p.need ?? ""); }
+        if (st.boots) { section(rest, "鞋子"); pickRow(rest, c, ctx, st.boots, ""); }
+        if (st.destiny) { section(rest, "命定武器"); pickRow(rest, c, ctx, { ...st.destiny, reason: `拿到命定武器時第一件出它：${st.destiny.reason}` }, "", true); }
     };
-    draw(styles[0]);
+    drawRest();
+    if (b.special.length) {
+        const sp = h(body, "div", "mn-mb-special");
+        section(sp, "特殊出裝");
+        for (const s of b.special) {
+            const card = h(sp, "div", "mn-mb-sp");
+            h(card, "div", "mn-mb-sp-t", s.name);
+            const icons = h(card, "div", "mn-mb-icons");
+            for (const id of s.items) itemIcon(icons, c, ctx, id);
+            h(card, "div", "mn-mb-line", s.note);
+        }
+    }
 }
 
-function buildRow(parent: HTMLElement, c: Champion, ctx: PageCtx, p: BuildPick, mark: string): void {
+function itemIcon(parent: HTMLElement, c: Champion, ctx: PageCtx, id: number, destiny = false): HTMLElement {
+    const item = ctx.plugin.store.item(id);
+    const box = h(parent, "span", "mn-mb-ic" + (destiny ? " is-destiny" : ""));
+    const im = h(box, "img");
+    im.src = item?.icon || art.item(c.patch, id);
+    im.alt = item?.name ?? "";
+    if (destiny) { const f = h(box, "img", "mn-mb-frame"); f.src = DESTINY_FRAME; f.alt = ""; }
+    return box;
+}
+
+// one item with what it adds (a word in the accent) and why; a tap opens the item
+function pickRow(parent: HTMLElement, c: Champion, ctx: PageCtx, p: BuildPick, need: string, destiny = false): void {
     const item = ctx.plugin.store.item(p.id);
     const row = h(parent, "button", "mn-rb-row");
-    h(row, "span", "mn-rb-mark", mark);
-    const im = h(row, "img");
-    im.src = item?.icon || art.item(c.patch, p.id);
-    im.alt = "";
+    itemIcon(row, c, ctx, p.id, destiny);
     const text = h(row, "span", "mn-rb-text");
-    h(text, "span", "mn-rb-name", item?.name ?? `#${p.id}`);
+    const name = h(text, "span", "mn-rb-name", item?.name ?? `#${p.id}`);
+    if (need) h(name, "span", "mn-rb-need", need);
     const why = h(text, "span", "mn-rb-why");
     if (p.when) h(why, "span", "mn-rb-when", `${p.when}：`);
     why.appendText(p.reason);

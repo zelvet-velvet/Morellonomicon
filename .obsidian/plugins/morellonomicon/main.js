@@ -171,7 +171,7 @@ var Store = class {
     this.augTiers = {};
     // champion id -> play style -> the augment tiers (tools/augment_tiers.py)
     this.itemBuilds = {};
-    // champion id -> play style -> the Mayhem build (tools/build_tiers.py)
+    // champion id -> its Mayhem builds (tools/build_tiers.py)
     this.augUnrated = {};
     // augment id -> why it has no tier (disabled, no games, no rule yet)
     this.itemRoles = null;
@@ -2072,8 +2072,8 @@ function buildTab(page2, c, ctx) {
   const meta = mine.filter((b) => b.kind === "meta");
   const alt = mine.filter((b) => b.kind === "alt");
   const synergy = mine.filter((b) => b.kind === "synergy");
-  const reasoned = mode === "mayhem" ? Object.values(store.itemBuilds[c.id] ?? {}) : [];
-  if (reasoned.length) reasonedBuild(body, c, ctx, reasoned);
+  const reasoned = mode === "mayhem" ? store.itemBuilds[c.id] : void 0;
+  if (reasoned?.cores.length) mayhemBuilds(body, c, ctx, reasoned);
   if (stats2 || meta.length) {
     section(body, "\u5E38\u7528");
     if (stats2) {
@@ -2100,7 +2100,7 @@ function buildTab(page2, c, ctx) {
     section(body, "\u642D\u914D");
     for (const b of synergy) setCard(body, c, ctx, b);
   }
-  if (!stats2 && !mine.length && !reasoned.length) empty(body, { icon: "package-open", title: "No builds of ours yet", text: "Our own builds and ideas for this champion will appear here." });
+  if (!stats2 && !mine.length && !reasoned?.cores.length) empty(body, { icon: "package-open", title: "No builds of ours yet", text: "Our own builds and ideas for this champion will appear here." });
   if (mode === "mayhem") liveStats(h(page2, "div", "mn-bt-live"), c);
 }
 var OPGG_SLUG = { MonkeyKing: "wukong" };
@@ -2114,31 +2114,92 @@ function liveStats(body, c) {
 function section(body, title) {
   h(body, "div", "mn-gh", title);
 }
-function reasonedBuild(body, c, ctx, styles) {
-  const wrap = h(body, "div", "mn-rb");
-  styleSwitch(wrap, styles, (s) => draw(s));
-  const box = h(wrap, "div", "mn-rb-box");
-  const draw = (style) => {
-    box.empty();
-    section(box, "\u4E3B\u51FA\u88DD");
-    style.main.forEach((p, i) => buildRow(box, c, ctx, p, String(i + 1)));
-    if (style.boots) buildRow(box, c, ctx, style.boots, "\u978B");
-    if (style.alt.length) {
-      section(box, "\u66FF\u4EE3");
-      for (const p of style.alt) buildRow(box, c, ctx, p, "");
+var LATE = 5;
+var DESTINY_FRAME = "https://raw.communitydragon.org/latest/game/assets/items/itemmodifiers/strawberry_weapon_evolve_border.png";
+function mayhemBuilds(body, c, ctx, b) {
+  const many = new Set(b.cores.map((k) => k.style)).size > 1;
+  section(body, "\u524D\u4E09\u4EF6");
+  const list2 = h(body, "div", "mn-mb-cores");
+  const rest = h(body, "div", "mn-mb-rest");
+  let on = 0;
+  const rows = b.cores.map((core, n) => {
+    const row2 = h(list2, "div", "mn-mb-core" + (n === 0 ? " is-on" : ""));
+    const head2 = h(row2, "button", "mn-mb-head");
+    const icons = h(head2, "span", "mn-mb-icons");
+    core.items.forEach((id, i) => {
+      if (i) h(icons, "span", "mn-mb-arrow", "\u203A");
+      itemIcon(icons, c, ctx, id);
+    });
+    if (many) h(head2, "span", "mn-mb-style", b.styles[core.style]?.name ?? "");
+    const why = h(row2, "div", "mn-mb-why");
+    core.items.forEach((id, i) => {
+      const line = h(why, "div", "mn-mb-line");
+      h(line, "b", "", ctx.plugin.store.item(id)?.name ?? `#${id}`);
+      line.appendText(`\u3000${core.reasons[i]}`);
+    });
+    if (!core.games) h(why, "div", "mn-mb-line is-note", "\u4F9D\u6280\u80FD\u7D44\u63A8\u7B97\uFF0C\u5C0D\u5C40\u88E1\u5C11\u898B");
+    head2.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (on === n) return;
+      rows[on].removeClass("is-on");
+      row2.addClass("is-on");
+      on = n;
+      drawRest();
+    });
+    return row2;
+  });
+  const drawRest = () => {
+    rest.empty();
+    const core = b.cores[on];
+    const st = b.styles[core.style];
+    if (!st) return;
+    const late = st.late.filter((p) => !core.items.includes(p.id)).slice(0, LATE);
+    if (late.length) {
+      section(rest, "\u7B2C\u56DB\u5230\u516D\u4EF6");
+      for (const p of late) pickRow(rest, c, ctx, p, p.need ?? "");
+    }
+    if (st.boots) {
+      section(rest, "\u978B\u5B50");
+      pickRow(rest, c, ctx, st.boots, "");
+    }
+    if (st.destiny) {
+      section(rest, "\u547D\u5B9A\u6B66\u5668");
+      pickRow(rest, c, ctx, { ...st.destiny, reason: `\u62FF\u5230\u547D\u5B9A\u6B66\u5668\u6642\u7B2C\u4E00\u4EF6\u51FA\u5B83\uFF1A${st.destiny.reason}` }, "", true);
     }
   };
-  draw(styles[0]);
+  drawRest();
+  if (b.special.length) {
+    const sp = h(body, "div", "mn-mb-special");
+    section(sp, "\u7279\u6B8A\u51FA\u88DD");
+    for (const s of b.special) {
+      const card = h(sp, "div", "mn-mb-sp");
+      h(card, "div", "mn-mb-sp-t", s.name);
+      const icons = h(card, "div", "mn-mb-icons");
+      for (const id of s.items) itemIcon(icons, c, ctx, id);
+      h(card, "div", "mn-mb-line", s.note);
+    }
+  }
 }
-function buildRow(parent, c, ctx, p, mark) {
+function itemIcon(parent, c, ctx, id, destiny = false) {
+  const item = ctx.plugin.store.item(id);
+  const box = h(parent, "span", "mn-mb-ic" + (destiny ? " is-destiny" : ""));
+  const im = h(box, "img");
+  im.src = item?.icon || art.item(c.patch, id);
+  im.alt = item?.name ?? "";
+  if (destiny) {
+    const f = h(box, "img", "mn-mb-frame");
+    f.src = DESTINY_FRAME;
+    f.alt = "";
+  }
+  return box;
+}
+function pickRow(parent, c, ctx, p, need, destiny = false) {
   const item = ctx.plugin.store.item(p.id);
   const row2 = h(parent, "button", "mn-rb-row");
-  h(row2, "span", "mn-rb-mark", mark);
-  const im = h(row2, "img");
-  im.src = item?.icon || art.item(c.patch, p.id);
-  im.alt = "";
+  itemIcon(row2, c, ctx, p.id, destiny);
   const text = h(row2, "span", "mn-rb-text");
-  h(text, "span", "mn-rb-name", item?.name ?? `#${p.id}`);
+  const name = h(text, "span", "mn-rb-name", item?.name ?? `#${p.id}`);
+  if (need) h(name, "span", "mn-rb-need", need);
   const why = h(text, "span", "mn-rb-why");
   if (p.when) h(why, "span", "mn-rb-when", `${p.when}\uFF1A`);
   why.appendText(p.reason);

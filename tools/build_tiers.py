@@ -39,8 +39,11 @@ FIT_PRIOR = 0.005      # each fit point moves the prior half a point
 FIT_SCORE = 0.03       # and the score 3 points more: the reasoning decides, the games order what it allows
 POP = 0.04             # how often the champion builds it (0-1) adds up to 4 points: the main build is also what people build
 UNSEEN = -0.03         # an item not in the champion's 50 most built: hardly anyone builds it (never in the main build)
-MAIN = 5
-ALTS = 4
+CORES = 5              # sets of the first three items shown
+CORE_MIN = 300         # games a set needs
+CORE_PRIOR = 1000      # games the champion's own win rate counts as in a set's result
+POP_CORE = 0.1         # how often the set is built (share of the champion's games) adds up to that many points
+LATE_KEEP = 9          # items four to six kept per style (the page shows LATE of them, after leaving out the set's own)
 SURE_GAMES = 5000
 SPECIFIC = 0.04
 TEST = ["Varus", "Katarina", "Udyr", "Jinx", "Annie", "Malphite", "Soraka", "Darius", "Ezreal", "Yasuo", "Kaisa", "Lux", "Garen",
@@ -172,6 +175,19 @@ WHEN = {3033: "敵方回血多時", 6609: "敵方回血多時", 3165: "敵方回
         3157: "被切入時", 3102: "敵方有關鍵控場時", 3139: "被控就會死時", 3156: "敵方法師多時", 3091: "敵方魔法傷害多時",
         4401: "敵方魔法傷害多時", 2504: "敵方魔法爆發多時", 3143: "敵方暴擊射手多時", 6673: "被切入時", 3814: "敵方有關鍵技能時",
         3222: "敵方控場多時", 3047: "敵方普攻多時"}
+# what an item four to six adds: the page's word on it (the rest is 輸出)
+NEEDS = {
+    "生存": {3157, 3102, 3139, 3156, 6673, 3053, 6333, 2525, 3814, 2504, 4401, 6665, 3143, 3075, 3110, 3065, 3083, 3742, 2502, 3190, 6692,
+            3072, 3091, 6610, 3084, 3039},
+    "穿透": {3135, 3036, 3071, 8010, 3153, 3137, 6694, 6695},
+    "重創": {3033, 3165, 6609},
+    "機動": {3142, 3046, 3152, 4629, 4004, 3095, 6631},
+    "功能": {3116, 4005, 2524, 3050, 6662, 8020, 3109, 3222, 2065, 3107, 6617, 3504, 6616},
+}
+# hand builds the games cannot show (bought items that are not finished, an odd count), Zaviel's answers
+SPECIAL = {
+    "Malphite": [{"name": "鎖子甲 ×6", "items": [1031] * 6, "note": "先買六件鎖子甲：W 和 E 都吃物防，最便宜的物防讓傷害和坦度一起來，之後再一件件合成坦裝。"}],
+}
 # one of each: the passives do not stack
 UNIQUE = [{6673, 3053, 3156, 2525}, {3078, 3508, 3100, 6662, 2510}, {3003, 3004, 3119, 2526}, {3748, 3074, 6698, 6631},
           {3068, 6664}, {3033, 6609, 3165, 3075}, {3814, 3102}]
@@ -333,7 +349,7 @@ def main():
         hand = STYLES.get(note["id"])
         styles = [(Champ(note), key, name, w) for key, name, w in hand] if hand else \
                  [(c, c.style, c.style_name, None) for c in (Champ(note, s) for s in AUG_STYLES.get(note["id"], [("main", "主流", {})]))]
-        champ_out, fits = {}, defaultdict(lambda: -2)
+        champ_out, fits, style_rows = {"styles": {}}, defaultdict(lambda: -2), {}
         for c, key, name, w in styles:
             wants = w or wants_of(c)
             scored = []
@@ -352,32 +368,30 @@ def main():
                 scored.append({"id": i, "fit": f, "why": why, "games": g, "gap": gap, "base": base.get(i, 0.0), "pr": pr,
                                "value": shrunk + FIT_SCORE * f + POP * pr, "boots": it["boots"]})
             scored.sort(key=lambda r: -r["value"])
-            main_build, taken = [], set()
+            by_id = {r["id"]: r for r in scored}
+            boots = max((r for r in scored if r["boots"] and r["fit"] >= 0), key=lambda r: (r["fit"], r["value"]), default=None)
+            reasoned = []   # the style's best three by the reasoning, for a style the games have no set for
+            taken = set()
             for r in scored:
-                if r["boots"] or r["fit"] < 1 or r["id"] in WHEN or len(main_build) >= MAIN or (seen and not r["games"]):
+                if r["boots"] or r["fit"] < 1 or r["id"] in WHEN or len(reasoned) >= 3 or (seen and not r["games"]):
                     continue
                 group = next((g for g in UNIQUE if r["id"] in g), {r["id"]})
-                if group & taken:
-                    continue
-                main_build.append(r)
-                taken |= group
-            main_build.sort(key=lambda r: (order.get(r["id"], 99), -r["value"]))
-            boots = max((r for r in scored if r["boots"] and r["fit"] >= 0), key=lambda r: (r["fit"], r["value"]), default=None)
-            alts = [r for r in scored if not r["boots"] and r["fit"] >= 1 and r not in main_build]
-            plain = [r for r in alts if r["id"] not in WHEN][:ALTS - 1]
-            when = [r for r in alts if r["id"] in WHEN and not (next((g for g in UNIQUE if r["id"] in g), set()) & {m["id"] for m in plain})][:max(1, ALTS - len(plain))]
-            alt = (plain + when)[:ALTS]
-            champ_out[key] = {
-                "name": name,
-                "main": [{"id": r["id"], "reason": r["why"]} for r in main_build],
-                "boots": {"id": boots["id"], "reason": boots["why"]} if boots else None,
-                "alt": [{"id": r["id"], "reason": r["why"], "when": WHEN.get(r["id"], "")} for r in alt],
-            }
+                if not group & taken:
+                    reasoned.append(r)
+                    taken |= group
+            reasoned.sort(key=lambda r: (order.get(r["id"], 99), -r["value"]))
+            style_rows[key] = (name, by_id, reasoned)
+            champ_out["styles"][key] = {"name": name, "late": late_items(scored),
+                                        "boots": {"id": boots["id"], "reason": boots["why"]} if boots else None}
             if note["id"] in TEST:
-                review.append((note.get("name", note["id"]), name, main_build, boots, alt, scored))
-            for r in main_build + ([boots] if boots else []):
-                if r["games"] >= SURE_GAMES and r["gap"] is not None and r["gap"] - r["base"] <= -SPECIFIC:
-                    questions.append(("weak", note.get("name"), name, pool[r["id"]]["name"], r["why"], r["gap"], r["games"]))
+                review.append((note.get("name", note["id"]), name, scored))
+        champ_out["cores"] = cores(d, alias, style_rows)
+        for core in champ_out["cores"]:
+            st = champ_out["styles"][core["style"]]
+            st.setdefault("destiny", {"id": core["items"][0], "reason": style_rows[core["style"]][1][core["items"][0]]["why"]})
+        champ_out["special"] = SPECIAL.get(note["id"], [])
+        if note["id"] in TEST:
+            review.append((note.get("name", note["id"]), "cores", champ_out["cores"]))
         for i, (g, gap, pr) in seen.items():
             if i not in pool or fits[i] > 0 or g < SURE_GAMES or (i in BOOTS and not BOOTS[i][0]):
                 continue
@@ -394,7 +408,80 @@ def main():
     kinds = defaultdict(int)
     for q in questions:
         kinds[q[0]] += 1
-    print(f"{len(out)} champions, {sum(len(v) for v in out.values())} builds; questions: " + ", ".join(f"{k} {v}" for k, v in kinds.items()))
+    print(f"{len(out)} champions, {sum(len(v['cores']) for v in out.values())} core sets; questions: " + ", ".join(f"{k} {v}" for k, v in kinds.items()))
+
+
+def cores(d, alias, style_rows):
+    """Up to CORES sets of the first three items: resg's most built first-three orders (one set per three items, its most built
+    order), kept when one play style has a reason for all three, strongest first (the set's win rate against the champion's own,
+    pulled toward it when the games are few, plus how often it is built); every play style gets its best set, made from the
+    reasoning alone when the games have none."""
+    own = d.get("champion", {}).get("wr")
+    total = d.get("champion", {}).get("tm") or 1
+    sets = {}
+    for row in d.get("ia", {}).get("combos", {}).get("3", []) if d else []:
+        ids = [alias.get(i, i) for i in row[1]]
+        k = frozenset(ids)
+        s = sets.setdefault(k, {"items": ids, "games": 0, "wins": 0, "top": 0})
+        s["games"] += row[2]
+        s["wins"] += row[3] if row[3] else round(row[4] / 10000 * row[2])
+        if row[2] > s["top"]:
+            s["items"], s["top"] = ids, row[2]
+    found = []
+    for s in sets.values():
+        if s["games"] < CORE_MIN or own is None:
+            continue
+        best = None
+        for key, (name, by_id, _) in style_rows.items():
+            fits = [by_id[i]["fit"] if i in by_id and not by_id[i]["boots"] else -2 for i in s["items"]]
+            if min(fits) >= 1 and (best is None or sum(fits) > best[1]):
+                best = (key, sum(fits))
+        if not best:
+            continue
+        gap = (s["wins"] - own * s["games"]) / (s["games"] + CORE_PRIOR)
+        found.append({"style": best[0], "items": s["items"], "value": gap + POP_CORE * s["games"] / total + 0.005 * best[1]})
+    found.sort(key=lambda c: -c["value"])
+    picked = []
+    for key, (name, by_id, reasoned) in style_rows.items():   # each play style's best set first
+        mine = [c for c in found if c["style"] == key]
+        if mine:
+            picked.append(mine[0])
+        elif len(reasoned) == 3:
+            picked.append({"style": key, "items": [r["id"] for r in reasoned], "value": -1.0})
+    for c in found:
+        if len(picked) >= CORES:
+            break
+        if c not in picked:
+            picked.append(c)
+    picked.sort(key=lambda c: -c["value"])
+    out = []
+    for c in picked[:max(CORES, len(style_rows))]:
+        by_id = style_rows[c["style"]][1]
+        out.append({"style": c["style"], "items": c["items"], "reasons": [by_id[i]["why"] for i in c["items"]], "games": c["value"] > -1})
+    return out
+
+
+def late_items(scored):
+    """Items four to six: the best item for each need the champion has (damage, survival, penetration, utility, mobility, anti-heal),
+    then the best of the rest; the page leaves out the chosen set's own items and shows the first LATE."""
+    cand = [r for r in scored if not r["boots"] and r["fit"] >= 1]
+    out = []
+    def take(r):
+        out.append({"id": r["id"], "reason": r["why"], "need": need_of(r["id"]), "when": WHEN.get(r["id"], "")})
+    for need, n in (("輸出", 3), ("生存", 2), ("穿透", 1), ("功能", 1), ("機動", 1), ("重創", 1)):
+        for r in [r for r in cand if need_of(r["id"]) == need and r["id"] not in {o["id"] for o in out}][:n]:
+            take(r)
+    for r in cand:
+        if len(out) >= LATE_KEEP:
+            break
+        if r["id"] not in {o["id"] for o in out}:
+            take(r)
+    rank = {r["id"]: n for n, r in enumerate(cand)}
+    return sorted(out, key=lambda o: rank[o["id"]])[:LATE_KEEP]
+
+
+def need_of(i):
+    return next((need for need, ids in NEEDS.items() if i in ids), "輸出")
 
 
 def first_items(d, alias):
@@ -417,13 +504,13 @@ def write_review(review, pool, meta):
            f"Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit is the reasoning (−2 not this style's item … +2); "
            f"games, pick rate and the gap come from resg.top {meta['version']} (collected {meta['collectedAt'][:10]}), shown here only for "
            "review. [[Build Model]] explains the rules.", ""]
-    for champ, style, main_build, boots, alt, scored in review:
-        out += [f"## {champ} · {style}", ""]
-        out.append("**Main**: " + " › ".join(f"[[{pool[r['id']]['name']}]]" for r in main_build)
-                   + (f" + [[{pool[boots['id']]['name']}]]" if boots else ""))
-        out.append("**Alternatives**: " + "、".join(f"[[{pool[r['id']]['name']}]]" + (f" ({WHEN[r['id']]})" if r["id"] in WHEN else "") for r in alt))
-        out += ["", "| Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |", "| --- | --- | --- | --- | --- | --- | --- | --- |"]
-        for r in [r for r in scored if r["fit"] >= 1 or r["pr"] >= 0.05][:24]:
+    for champ, style, rows in review:
+        if style == "cores":
+            out += [f"**{champ} · first three**: " + "; ".join(f"{r['style']}: " + " › ".join(f"[[{pool[i]['name']}]]" for i in r["items"])
+                                                    + ("" if r["games"] else " (reasoning only)") for r in rows), ""]
+            continue
+        out += [f"## {champ} · {style}", "", "| Item | Fit | Games | Picked | Gap | Everywhere | Score | Reason |", "| --- | --- | --- | --- | --- | --- | --- | --- |"]
+        for r in [r for r in rows if r["fit"] >= 1 or r["pr"] >= 0.05][:24]:
             out.append(f"| [[{pool[r['id']]['name']}]] | {r['fit']:+d} | {r['games']} | {r['pr'] * 100:.0f}% | {pct(r['gap'])} | {pct(r['base'])} | "
                        f"{r['value'] * 100:+.1f} | {r['why']} |")
         out.append("")
@@ -448,9 +535,6 @@ def write_questions(questions, meta):
         by_item[q[3]].append(q)
     for item, qs in sorted(by_item.items(), key=lambda kv: -len(kv[1])):
         out.append(f"- **[[{item}]]** ({len(qs)}): " + "、".join(f"{q[1]} {pct(q[5])}" for q in qs[:25]) + (" …" if len(qs) > 25 else ""))
-    out += ["", "## In the main build, the games say no", ""]
-    for q in sorted((q for q in questions if q[0] == "weak"), key=lambda q: q[5]):
-        out.append(f"- {q[1]}（{q[2]}）· [[{q[3]}]]: {q[4]} — {pct(q[5])} in {q[6]} games")
     OUT_QUESTIONS.write_text("\n".join(out) + "\n", encoding="utf-8")
 
 

@@ -22,11 +22,13 @@ How the app builds each champion's ARAM Mayhem items (出裝): **why the champio
 ---
 ## 🛒 The build
 
-> [!info]+ What the page shows (出裝, Mayhem mode)
-> - **主出裝**: the five best items with a fit of +1 or more, one of each unique passive (命脈, 魔法彎刀, 魔力之流, 劈砍, 獻祭, 重創, 法術護盾), in the order players buy them (resg.top's most common first items); then the boots: the style's own boots (狂戰士護脛 for attackers, 法師之靴 for mages, 愛歐尼亞之靴 for casters and enchanters, 水星之靴 / 鍍板鋼蓋 for fighters and tanks) first, the plain ones only when none fits.
-> - **替代**: the next three items, and one situational item with when to buy it (`WHEN`: 重創 敵方回血多時, 中婭沙漏 被切入時, 女妖面紗 敵方有關鍵控場時 …). Situational items never go in the main build.
-> - A switch between play styles when there are two or more. The champion note's hand-written `builds` show under it.
-> - No resg number is shown: only items and reasons.
+> [!info]+ What the page shows (出裝, Mayhem mode), like a build site
+> - **前三件**: up to five strong sets of the first three items. They come from resg.top's most built first-three orders (one per set of three, in its most built order), kept when one play style has a reason for all three, strongest first: the set's win rate against the champion's own, pulled toward it when the games are few (`CORE_PRIOR`), plus how often it is built (`POP_CORE`). Every play style gets its best set (made from the reasoning alone, marked 依技能組推算, when the games have none), so AP / AD / on-hit builds share one list, each set labelled with its style. Tapping a set lights it and opens why each of its items works.
+> - **第四到六件**: for the chosen set's play style, five choices, the set's own items left out, each with what it adds (`NEEDS`: 輸出, 生存, 穿透, 功能, 機動, 重創) and why: the best for each need first, then the best of the rest. Situational ones say when (`WHEN`: 重創 敵方回血多時, 中婭沙漏 被切入時 …).
+> - **鞋子**: the style's own boots (狂戰士護脛 for attackers, 法師之靴 for mages, 愛歐尼亞之靴 for casters and enchanters, 水星之靴 / 鍍板鋼蓋 for fighters and tanks) first, the plain ones only when none fits.
+> - **命定武器**: the item to take when the augment 命定武器 comes (it grows the first legendary item): the chosen style's first item, drawn with the game's rainbow border for it (`strawberry_weapon_evolve_border`, the item modifier 命定武器 uses in CommunityDragon's item data, shown by address).
+> - **特殊出裝**: hand builds the games cannot show (`SPECIAL`: Malphite's 鎖子甲 ×6).
+> - The champion note's hand-written `builds` show under them. No resg number is shown: only items and reasons.
 
 ---
 ## ❓ Questions
@@ -34,7 +36,6 @@ How the app builds each champion's ARAM Mayhem items (出裝): **why the champio
 > [!info]+ [[Build Questions]]
 > - **Built often, no reason**: items a champion builds in a quarter of its games that none of its styles has a reason for: usually a play style the script does not know yet (Rell's tank items before tank supports were tanks, Locke's AP).
 > - **Strong in games, no reason**: items doing 4 points better on the champion than everywhere, with no reason.
-> - **In the main build, the games say no**.
 > - Explain the champion's build and it becomes a style in `STYLES`, an item kind or a condition.
 
 ---
@@ -42,6 +43,6 @@ How the app builds each champion's ARAM Mayhem items (出裝): **why the champio
 
 > [!example]+ Files
 > - `tools/build_tiers.py` reads the item notes (finished items: no `into`, 2200 gold or more, not an augment reward), the champion notes (through `augment_tiers.Champ`) and resg.top's cache from `tools/fetch_resg.py`; ARAM's own copies (126697 傲慢) count as the item note of that name.
-> - Writes `_data/item-builds.json` (read by the plugin), [[Build Review]] (the test champions with fit, games, pick rate and gap, for review) and [[Build Questions]].
+> - Writes `_data/item-builds.json` (read by the plugin), [[Build Review]] (the test champions' sets, and every item with fit, games, pick rate and gap, for review) and [[Build Questions]].
 > - Runs in `tools/update_patch.py` after the augment tiers. By hand: `python3 -I tools/fetch_resg.py && python3 -I tools/build_tiers.py`.
 > - Source: [resg.top](https://www.resg.top/), patch 16.21, collected 2026-11-02.
