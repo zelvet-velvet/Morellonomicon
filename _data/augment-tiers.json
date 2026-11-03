@@ -47919,6 +47919,15 @@
       "reason": "命中效果裝的傷害也加"
      },
      {
+      "id": 1194,
+      "group": "稜鏡",
+      "tier": "A",
+      "value": 0.0423,
+      "score": 0.807,
+      "when": "",
+      "reason": "大絕打到人就變小動物，大絕不會被打斷"
+     },
+     {
       "id": 1333,
       "group": "銀",
       "tier": "S",
@@ -47926,15 +47935,6 @@
       "score": 0.948,
       "when": "",
       "reason": "刺客切進去要保命"
-     },
-     {
-      "id": 1194,
-      "group": "稜鏡",
-      "tier": "A",
-      "value": 0.0361,
-      "score": 0.78,
-      "when": "",
-      "reason": "大絕把人變小動物"
      },
      {
       "id": 3116,
@@ -48168,7 +48168,7 @@
       "value": 0.0125,
       "score": 0.723,
       "when": "",
-      "reason": "大絕是招牌，大絕期間免控"
+      "reason": "大絕期間免控，傷害打滿"
      },
      {
       "id": 3081,
@@ -58291,6 +58291,15 @@
       "reason": "隨機變大或變小"
      },
      {
+      "id": 3053,
+      "group": "稜鏡",
+      "tier": "S",
+      "value": 0.0388,
+      "score": 0.897,
+      "when": "",
+      "reason": "大絕是招牌，緩速區讓 Q 更好中"
+     },
+     {
       "id": 1319,
       "group": "銀",
       "tier": "S",
@@ -58320,7 +58329,7 @@
      {
       "id": 2141,
       "group": "稜鏡",
-      "tier": "S",
+      "tier": "A",
       "value": 0.0336,
       "score": 0.871,
       "when": "",
@@ -58343,15 +58352,6 @@
       "score": 0.941,
       "when": "",
       "reason": "物攻英雄，物攻再加 15%"
-     },
-     {
-      "id": 3053,
-      "group": "稜鏡",
-      "tier": "A",
-      "value": 0.0321,
-      "score": 0.863,
-      "when": "",
-      "reason": "大絕加生命、緩速"
      },
      {
       "id": 1324,
@@ -95610,8 +95610,8 @@
    }
   },
   "MissFortune": {
-   "main": {
-    "name": "主流",
+   "ad": {
+    "name": "物攻射手",
     "tiers": [
      {
       "id": 3049,
@@ -95652,7 +95652,7 @@
      {
       "id": 1388,
       "group": "稜鏡",
-      "tier": "S",
+      "tier": "B",
       "value": 0.0359,
       "score": 0.895,
       "when": "",
@@ -95697,7 +95697,7 @@
      {
       "id": 3086,
       "group": "金",
-      "tier": "S",
+      "tier": "B",
       "value": 0.0295,
       "score": 0.745,
       "when": "",
@@ -95706,7 +95706,7 @@
      {
       "id": 1113,
       "group": "金",
-      "tier": "S",
+      "tier": "B",
       "value": 0.0269,
       "score": 0.724,
       "when": "",
@@ -95814,7 +95814,7 @@
      {
       "id": 3172,
       "group": "五殺",
-      "tier": "S",
+      "tier": "B",
       "value": 0.0174,
       "score": 1.0,
       "when": "",
@@ -95832,7 +95832,7 @@
      {
       "id": 1038,
       "group": "金",
-      "tier": "A",
+      "tier": "B",
       "value": 0.0162,
       "score": 0.637,
       "when": "",
@@ -95859,7 +95859,7 @@
      {
       "id": 1373,
       "group": "金",
-      "tier": "A",
+      "tier": "B",
       "value": 0.0148,
       "score": 0.626,
       "when": "",
@@ -95877,7 +95877,7 @@
      {
       "id": 2103,
       "group": "金",
-      "tier": "A",
+      "tier": "B",
       "value": 0.0146,
       "score": 0.624,
       "when": "",
@@ -97655,6 +97655,2082 @@
       "score": 0.0,
       "when": "",
       "reason": "擊退撞人追加傷害"
+     },
+     {
+      "id": 12317,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0678,
+      "score": 0.369,
+      "when": "",
+      "reason": "全部換成稜鏡增幅"
+     },
+     {
+      "id": 2123,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0716,
+      "score": 0.35,
+      "when": "",
+      "reason": "放技能重置一個技能"
+     },
+     {
+      "id": 1337,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.1405,
+      "score": 0.0,
+      "when": "",
+      "reason": "攻城換道具"
+     }
+    ],
+    "none": []
+   },
+   "ap": {
+    "name": "法術 E",
+    "tiers": [
+     {
+      "id": 1095,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": 0.0566,
+      "score": 1.0,
+      "when": "",
+      "reason": "治療護盾附帶雙抗"
+     },
+     {
+      "id": 1134,
+      "group": "稜鏡",
+      "tier": "B",
+      "value": 0.0455,
+      "score": 0.944,
+      "when": "",
+      "reason": "遠程變近戰，大量屬性"
+     },
+     {
+      "id": 1388,
+      "group": "稜鏡",
+      "tier": "S",
+      "value": 0.0422,
+      "score": 0.927,
+      "when": "",
+      "reason": "靠技能輸出，技能急速"
+     },
+     {
+      "id": 3049,
+      "group": "金",
+      "tier": "B",
+      "value": 0.0389,
+      "score": 1.0,
+      "when": "",
+      "reason": "技能後普攻吃護甲傷害"
+     },
+     {
+      "id": 1105,
+      "group": "銀",
+      "tier": "S",
+      "value": 0.0358,
+      "score": 1.0,
+      "when": "",
+      "reason": "沒挨打時大加速"
+     },
+     {
+      "id": 1113,
+      "group": "金",
+      "tier": "S",
+      "value": 0.033,
+      "score": 0.942,
+      "when": "",
+      "reason": "遠距離丟 E，命中就減冷卻"
+     },
+     {
+      "id": 3086,
+      "group": "金",
+      "tier": "S",
+      "value": 0.0325,
+      "score": 0.937,
+      "when": "",
+      "reason": "技能命中多，技能丟蜂巢觸發命中效果"
+     },
+     {
+      "id": 1053,
+      "group": "稜鏡",
+      "tier": "S",
+      "value": 0.0322,
+      "score": 0.876,
+      "when": "",
+      "reason": "隨機變大或變小"
+     },
+     {
+      "id": 3081,
+      "group": "金",
+      "tier": "B",
+      "value": 0.0316,
+      "score": 0.928,
+      "when": "",
+      "reason": "道具隨擊殺成長"
+     },
+     {
+      "id": 1420,
+      "group": "金",
+      "tier": "S",
+      "value": 0.0309,
+      "score": 0.921,
+      "when": "",
+      "reason": "自動補血、加速"
+     },
+     {
+      "id": 1028,
+      "group": "銀",
+      "tier": "S",
+      "value": 0.0295,
+      "score": 0.932,
+      "when": "",
+      "reason": "多段傷害快速疊滿"
+     },
+     {
+      "id": 1333,
+      "group": "銀",
+      "tier": "S",
+      "value": 0.0255,
+      "score": 0.889,
+      "when": "",
+      "reason": "低血大護盾逃跑"
+     },
+     {
+      "id": 1195,
+      "group": "稜鏡",
+      "tier": "S",
+      "value": 0.0253,
+      "score": 0.841,
+      "when": "",
+      "reason": "輸出英雄，吃傷害加成"
+     },
+     {
+      "id": 2100,
+      "group": "金",
+      "tier": "S",
+      "value": 0.0236,
+      "score": 0.849,
+      "when": "",
+      "reason": "技能命中任務換急速"
+     },
+     {
+      "id": 1310,
+      "group": "稜鏡",
+      "tier": "S",
+      "value": 0.0235,
+      "score": 0.832,
+      "when": "",
+      "reason": "背刺、詐死、死亡爆炸"
+     },
+     {
+      "id": 1389,
+      "group": "稜鏡",
+      "tier": "A",
+      "value": 0.0219,
+      "score": 0.824,
+      "when": "",
+      "reason": "巴龍之手"
+     },
+     {
+      "id": 1373,
+      "group": "金",
+      "tier": "S",
+      "value": 0.0209,
+      "score": 0.822,
+      "when": "",
+      "reason": "靠技能輸出，擊殺疊急速"
+     },
+     {
+      "id": 2103,
+      "group": "金",
+      "tier": "S",
+      "value": 0.0208,
+      "score": 0.821,
+      "when": "",
+      "reason": "遠距離丟技能降隕石"
+     },
+     {
+      "id": 3172,
+      "group": "五殺",
+      "tier": "S",
+      "value": 0.0204,
+      "score": 1.0,
+      "when": "",
+      "reason": "E 常放，急速、補量一起加"
+     },
+     {
+      "id": 1038,
+      "group": "金",
+      "tier": "A",
+      "value": 0.0194,
+      "score": 0.808,
+      "when": "",
+      "reason": "爆發型，先手打一套"
+     },
+     {
+      "id": 2076,
+      "group": "銀",
+      "tier": "S",
+      "value": 0.0193,
+      "score": 0.823,
+      "when": "",
+      "reason": "技能打人疊雙抗"
+     },
+     {
+      "id": 2062,
+      "group": "稜鏡",
+      "tier": "A",
+      "value": 0.0186,
+      "score": 0.807,
+      "when": "",
+      "reason": "分身重放技能"
+     },
+     {
+      "id": 1154,
+      "group": "稜鏡",
+      "tier": "B",
+      "value": 0.0183,
+      "score": 0.806,
+      "when": "",
+      "reason": "擊殺任務換黃金鍋鏟"
+     },
+     {
+      "id": 1030,
+      "group": "稜鏡",
+      "tier": "A",
+      "value": 0.0178,
+      "score": 0.803,
+      "when": "",
+      "reason": "魔攻英雄，魔攻越高技能越快"
+     },
+     {
+      "id": 3129,
+      "group": "金",
+      "tier": "A",
+      "value": 0.0177,
+      "score": 0.791,
+      "when": "",
+      "reason": "下一次普攻加傷回血"
+     },
+     {
+      "id": 1335,
+      "group": "稜鏡",
+      "tier": "A",
+      "value": 0.0173,
+      "score": 0.801,
+      "when": "",
+      "reason": "打人額外傷害和金錢"
+     },
+     {
+      "id": 3163,
+      "group": "金",
+      "tier": "C",
+      "value": 0.0159,
+      "score": 0.773,
+      "when": "",
+      "reason": "補隊友累積蝴蝶"
+     },
+     {
+      "id": 1026,
+      "group": "銀",
+      "tier": "S",
+      "value": 0.0149,
+      "score": 0.776,
+      "when": "",
+      "reason": "比對方快就增傷"
+     },
+     {
+      "id": 1005,
+      "group": "金",
+      "tier": "C",
+      "value": 0.0146,
+      "score": 0.76,
+      "when": "",
+      "reason": "靠近受傷隊友加速、補量提高"
+     },
+     {
+      "id": 1156,
+      "group": "稜鏡",
+      "tier": "A",
+      "value": 0.0146,
+      "score": 0.787,
+      "when": "",
+      "reason": "魔攻英雄，法帽、中婭本來就要出"
+     },
+     {
+      "id": 3121,
+      "group": "銀",
+      "tier": "S",
+      "value": 0.0124,
+      "score": 0.749,
+      "when": "",
+      "reason": "擊殺掉蜜果"
+     },
+     {
+      "id": 1180,
+      "group": "金",
+      "tier": "A",
+      "value": 0.0119,
+      "score": 0.733,
+      "when": "",
+      "reason": "魔攻英雄，魔攻越高盾越厚"
+     },
+     {
+      "id": 1004,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": 0.0115,
+      "score": 0.771,
+      "when": "",
+      "reason": "技能傷害、急速大增，沒有大絕"
+     },
+     {
+      "id": 3078,
+      "group": "金",
+      "tier": "B",
+      "value": 0.0113,
+      "score": 0.728,
+      "when": "",
+      "reason": "技能後普攻加攻速傷害"
+     },
+     {
+      "id": 1062,
+      "group": "稜鏡",
+      "tier": "A",
+      "value": 0.0111,
+      "score": 0.769,
+      "when": "",
+      "reason": "三種龍魂"
+     },
+     {
+      "id": 2104,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": 0.01,
+      "score": 0.764,
+      "when": "",
+      "reason": "治療護盾累積成炸彈"
+     },
+     {
+      "id": 2073,
+      "group": "銀",
+      "tier": "A",
+      "value": 0.0093,
+      "score": 0.715,
+      "when": "",
+      "reason": "技能冷卻短、常放，技能吸血"
+     },
+     {
+      "id": 2018,
+      "group": "銀",
+      "tier": "A",
+      "value": 0.0087,
+      "score": 0.709,
+      "when": "",
+      "reason": "靠技能輸出，冷卻縮短"
+     },
+     {
+      "id": 2141,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": 0.0073,
+      "score": 0.75,
+      "when": "",
+      "reason": "九頭蛇全買"
+     },
+     {
+      "id": 1204,
+      "group": "銀",
+      "tier": "C",
+      "value": 0.0059,
+      "score": 0.679,
+      "when": "",
+      "reason": "永久堆層加倍"
+     },
+     {
+      "id": 1098,
+      "group": "金",
+      "tier": "A",
+      "value": 0.0056,
+      "score": 0.671,
+      "when": "",
+      "reason": "靠技能輸出，急速轉跑速"
+     },
+     {
+      "id": 1041,
+      "group": "稜鏡",
+      "tier": "B",
+      "value": 0.0054,
+      "score": 0.74,
+      "when": "",
+      "reason": "變大、加生命和適性"
+     },
+     {
+      "id": 1390,
+      "group": "金",
+      "tier": "A",
+      "value": 0.0052,
+      "score": 0.667,
+      "when": "",
+      "reason": "技能常打到人，魔攻疊很快"
+     },
+     {
+      "id": 1315,
+      "group": "銀",
+      "tier": "C",
+      "value": 0.0043,
+      "score": 0.662,
+      "when": "",
+      "reason": "位移後上盾"
+     },
+     {
+      "id": 1067,
+      "group": "金",
+      "tier": "A",
+      "value": 0.0038,
+      "score": 0.654,
+      "when": "",
+      "reason": "技能冷卻短、常放，放技能就回血"
+     },
+     {
+      "id": 1056,
+      "group": "銀",
+      "tier": "A",
+      "value": 0.0036,
+      "score": 0.654,
+      "when": "",
+      "reason": "常放技能吃魔力，魔力轉生命"
+     },
+     {
+      "id": 2127,
+      "group": "銀",
+      "tier": "A",
+      "value": 0.0033,
+      "score": 0.651,
+      "when": "",
+      "reason": "道具傷害增加"
+     },
+     {
+      "id": 1015,
+      "group": "稜鏡",
+      "tier": "B",
+      "value": 0.003,
+      "score": 0.728,
+      "when": "",
+      "reason": "治療轉成傷害"
+     },
+     {
+      "id": 1413,
+      "group": "稜鏡",
+      "tier": "B",
+      "value": 0.003,
+      "score": 0.728,
+      "when": "",
+      "reason": "大絕是招牌，大絕後嘲諷"
+     },
+     {
+      "id": 1045,
+      "group": "稜鏡",
+      "tier": "B",
+      "value": 0.0029,
+      "score": 0.728,
+      "when": "",
+      "reason": "技能冷卻短、常放，技能燒人、越燒冷卻越短"
+     },
+     {
+      "id": 1073,
+      "group": "銀",
+      "tier": "C",
+      "value": 0.0026,
+      "score": 0.643,
+      "when": "",
+      "reason": "位移後大加速"
+     },
+     {
+      "id": 1063,
+      "group": "金",
+      "tier": "C",
+      "value": 0.0023,
+      "score": 0.639,
+      "when": "",
+      "reason": "位移後疊雙抗"
+     },
+     {
+      "id": 2136,
+      "group": "銀",
+      "tier": "A",
+      "value": 0.0022,
+      "score": 0.639,
+      "when": "",
+      "reason": "技能冷卻短、常放，技能疊增傷"
+     },
+     {
+      "id": 1072,
+      "group": "金",
+      "tier": "B",
+      "value": 0.0021,
+      "score": 0.637,
+      "when": "",
+      "reason": "技能冷卻短、常放，技能標記讓隊友追傷"
+     },
+     {
+      "id": 2083,
+      "group": "金",
+      "tier": "B",
+      "value": 0.0021,
+      "score": 0.637,
+      "when": "",
+      "reason": "爆發高，常打出牙齒"
+     },
+     {
+      "id": 3051,
+      "group": "銀",
+      "tier": "B",
+      "value": 0.0019,
+      "score": 0.636,
+      "when": "",
+      "reason": "放技能上盾"
+     },
+     {
+      "id": 1415,
+      "group": "銀",
+      "tier": "B",
+      "value": 0.0017,
+      "score": 0.634,
+      "when": "",
+      "reason": "技能冷卻短、常放，技能附帶飛彈"
+     },
+     {
+      "id": 1037,
+      "group": "銀",
+      "tier": "B",
+      "value": 0.0015,
+      "score": 0.632,
+      "when": "",
+      "reason": "治療護盾強度"
+     },
+     {
+      "id": 1181,
+      "group": "銀",
+      "tier": "B",
+      "value": 0.001,
+      "score": 0.626,
+      "when": "",
+      "reason": "普攻吃最大生命"
+     },
+     {
+      "id": 1068,
+      "group": "金",
+      "tier": "B",
+      "value": 0.0008,
+      "score": 0.624,
+      "when": "",
+      "reason": "靠技能輸出，技能急速"
+     },
+     {
+      "id": 1097,
+      "group": "銀",
+      "tier": "B",
+      "value": 0.0007,
+      "score": 0.623,
+      "when": "",
+      "reason": "魔攻英雄，魔攻"
+     },
+     {
+      "id": 1061,
+      "group": "金",
+      "tier": "B",
+      "value": 0.0003,
+      "score": 0.619,
+      "when": "",
+      "reason": "自動回力鏢"
+     },
+     {
+      "id": 1060,
+      "group": "銀",
+      "tier": "B",
+      "value": -0.0009,
+      "score": 0.606,
+      "when": "",
+      "reason": "癒水龍魂"
+     },
+     {
+      "id": 1319,
+      "group": "銀",
+      "tier": "B",
+      "value": -0.0016,
+      "score": 0.598,
+      "when": "",
+      "reason": "升級獻祭"
+     },
+     {
+      "id": 1324,
+      "group": "稜鏡",
+      "tier": "B",
+      "value": -0.0016,
+      "score": 0.705,
+      "when": "",
+      "reason": "雙抗轉治療護盾強度"
+     },
+     {
+      "id": 1384,
+      "group": "金",
+      "tier": "B",
+      "value": -0.0022,
+      "score": 0.594,
+      "when": "",
+      "reason": "直接拿錢"
+     },
+     {
+      "id": 1152,
+      "group": "金",
+      "tier": "B",
+      "value": -0.0029,
+      "score": 0.587,
+      "when": "",
+      "reason": "心之鋼任務"
+     },
+     {
+      "id": 1034,
+      "group": "銀",
+      "tier": "B",
+      "value": -0.0033,
+      "score": 0.58,
+      "when": "",
+      "reason": "法術護盾"
+     },
+     {
+      "id": 1305,
+      "group": "銀",
+      "tier": "B",
+      "value": -0.0033,
+      "score": 0.58,
+      "when": "",
+      "reason": "跑速、緩速抗性"
+     },
+     {
+      "id": 1133,
+      "group": "金",
+      "tier": "B",
+      "value": -0.0034,
+      "score": 0.582,
+      "when": "",
+      "reason": "技能冷卻短、常放，技能打人附帶飛彈"
+     },
+     {
+      "id": 3123,
+      "group": "金",
+      "tier": "B",
+      "value": -0.0038,
+      "score": 0.578,
+      "when": "",
+      "reason": "一個技能可暴擊"
+     },
+     {
+      "id": 1353,
+      "group": "金",
+      "tier": "B",
+      "value": -0.0042,
+      "score": 0.575,
+      "when": "",
+      "reason": "擊殺疊生命"
+     },
+     {
+      "id": 2125,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.005,
+      "score": 0.562,
+      "when": "",
+      "reason": "持續技能加跑速"
+     },
+     {
+      "id": 2098,
+      "group": "稜鏡",
+      "tier": "B",
+      "value": -0.0051,
+      "score": 0.687,
+      "when": "",
+      "reason": "破綻真實傷害"
+     },
+     {
+      "id": 3132,
+      "group": "金",
+      "tier": "B",
+      "value": -0.0052,
+      "score": 0.565,
+      "when": "",
+      "reason": "輸出英雄，加攻擊換一點跑速"
+     },
+     {
+      "id": 1402,
+      "group": "稜鏡",
+      "tier": "B",
+      "value": -0.0052,
+      "score": 0.686,
+      "when": "",
+      "reason": "四個能力值鐵砧"
+     },
+     {
+      "id": 1318,
+      "group": "銀",
+      "tier": "B",
+      "value": -0.0054,
+      "score": 0.557,
+      "when": "",
+      "reason": "魔攻英雄，中婭本來就要出"
+     },
+     {
+      "id": 3094,
+      "group": "銀",
+      "tier": "B",
+      "value": -0.0056,
+      "score": 0.555,
+      "when": "",
+      "reason": "魔攻英雄，魔攻"
+     },
+     {
+      "id": 3134,
+      "group": "銀",
+      "tier": "B",
+      "value": -0.0058,
+      "score": 0.553,
+      "when": "",
+      "reason": "被包圍加攻速雙抗"
+     },
+     {
+      "id": 1314,
+      "group": "銀",
+      "tier": "B",
+      "value": -0.0061,
+      "score": 0.55,
+      "when": "",
+      "reason": "有盾時加適性"
+     },
+     {
+      "id": 3025,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0063,
+      "score": 0.548,
+      "when": "",
+      "reason": "護盾附幽靈加速"
+     },
+     {
+      "id": 1151,
+      "group": "金",
+      "tier": "B",
+      "value": -0.0067,
+      "score": 0.55,
+      "when": "",
+      "reason": "E 常放，急速大增"
+     },
+     {
+      "id": 1205,
+      "group": "銀",
+      "tier": "B",
+      "value": -0.0068,
+      "score": 0.542,
+      "when": "",
+      "reason": "魔攻英雄，魔攻再加 15%"
+     },
+     {
+      "id": 2132,
+      "group": "金",
+      "tier": "B",
+      "value": -0.0071,
+      "score": 0.546,
+      "when": "",
+      "reason": "魔攻英雄，魔攻越高吸越多"
+     },
+     {
+      "id": 1214,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0073,
+      "score": 0.537,
+      "when": "",
+      "reason": "旋轉技能增傷"
+     },
+     {
+      "id": 1403,
+      "group": "金",
+      "tier": "B",
+      "value": -0.0074,
+      "score": 0.543,
+      "when": "",
+      "reason": "三個能力值鐵砧"
+     },
+     {
+      "id": 1332,
+      "group": "稜鏡",
+      "tier": "B",
+      "value": -0.0075,
+      "score": 0.675,
+      "when": "",
+      "reason": "技能多又有吸血，扣的血吸得回來"
+     },
+     {
+      "id": 3131,
+      "group": "金",
+      "tier": "B",
+      "value": -0.0076,
+      "score": 0.541,
+      "when": "",
+      "reason": "低血加攻速吸血"
+     },
+     {
+      "id": 2034,
+      "group": "金",
+      "tier": "B",
+      "value": -0.0079,
+      "score": 0.538,
+      "when": "",
+      "reason": "雪球帶鯊魚"
+     },
+     {
+      "id": 1308,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0085,
+      "score": 0.524,
+      "when": "",
+      "reason": "自動妖火"
+     },
+     {
+      "id": 3149,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0094,
+      "score": 0.665,
+      "when": "",
+      "reason": "治療護盾多兩個隊友"
+     },
+     {
+      "id": 1057,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0096,
+      "score": 0.512,
+      "when": "",
+      "reason": "裂地龍魂"
+     },
+     {
+      "id": 3075,
+      "group": "金",
+      "tier": "B",
+      "value": -0.0098,
+      "score": 0.519,
+      "when": "",
+      "reason": "技能增傷附後跳"
+     },
+     {
+      "id": 2072,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0102,
+      "score": 0.661,
+      "when": "",
+      "reason": "飛彈分裂"
+     },
+     {
+      "id": 1138,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0105,
+      "score": 0.503,
+      "when": "",
+      "reason": "全能吸血"
+     },
+     {
+      "id": 1013,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0107,
+      "score": 0.51,
+      "when": "",
+      "reason": "大量生命，傷害降低"
+     },
+     {
+      "id": 1329,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0107,
+      "score": 0.659,
+      "when": "",
+      "reason": "超大雪球"
+     },
+     {
+      "id": 1416,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0109,
+      "score": 0.498,
+      "when": "",
+      "reason": "海克斯科技龍魂"
+     },
+     {
+      "id": 1404,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.011,
+      "score": 0.497,
+      "when": "",
+      "reason": "兩個能力值鐵砧"
+     },
+     {
+      "id": 1007,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0115,
+      "score": 0.492,
+      "when": "",
+      "reason": "物攻 +20%"
+     },
+     {
+      "id": 2032,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0118,
+      "score": 0.5,
+      "when": "",
+      "reason": "致死時變鯊魚誘餌"
+     },
+     {
+      "id": 3079,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.012,
+      "score": 0.652,
+      "when": "",
+      "reason": "瞬移後 5 秒不死，沒收頭就死"
+     },
+     {
+      "id": 2111,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0124,
+      "score": 0.494,
+      "when": "",
+      "reason": "強化普攻增傷、濺射"
+     },
+     {
+      "id": 2054,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0129,
+      "score": 0.647,
+      "when": "",
+      "reason": "技能多打兩人"
+     },
+     {
+      "id": 1006,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0129,
+      "score": 0.647,
+      "when": "",
+      "reason": "多段閃現突進"
+     },
+     {
+      "id": 1116,
+      "group": "金",
+      "tier": "C",
+      "value": -0.013,
+      "score": 0.488,
+      "when": "",
+      "reason": "三次閃現"
+     },
+     {
+      "id": 1238,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0131,
+      "score": 0.487,
+      "when": "",
+      "reason": "一件隨機稜鏡增幅"
+     },
+     {
+      "id": 1092,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0133,
+      "score": 0.485,
+      "when": "",
+      "reason": "道具和持續傷害可暴擊"
+     },
+     {
+      "id": 2026,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0134,
+      "score": 0.472,
+      "when": "",
+      "reason": "追殘血加速"
+     },
+     {
+      "id": 3150,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0136,
+      "score": 0.482,
+      "when": "",
+      "reason": "魔攻英雄，雷霆風暴本來就要出"
+     },
+     {
+      "id": 1025,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0139,
+      "score": 0.466,
+      "when": "",
+      "reason": "死亡時爆炸"
+     },
+     {
+      "id": 1401,
+      "group": "金",
+      "tier": "C",
+      "value": -0.014,
+      "score": 0.478,
+      "when": "",
+      "reason": "變大擊飛的召喚師技能"
+     },
+     {
+      "id": 1076,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0142,
+      "score": 0.463,
+      "when": "",
+      "reason": "補隊友時周圍傷害"
+     },
+     {
+      "id": 2009,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0143,
+      "score": 0.462,
+      "when": "",
+      "reason": "攻速、暴擊率"
+     },
+     {
+      "id": 1331,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0144,
+      "score": 0.64,
+      "when": "",
+      "reason": "衝向隊友互相上盾"
+     },
+     {
+      "id": 1344,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0147,
+      "score": 0.638,
+      "when": "",
+      "reason": "大絕是招牌，大絕後大護盾"
+     },
+     {
+      "id": 3118,
+      "group": "金",
+      "tier": "C",
+      "value": -0.015,
+      "score": 0.468,
+      "when": "",
+      "reason": "大絕是招牌，擊殺返還大絕冷卻"
+     },
+     {
+      "id": 2157,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0155,
+      "score": 0.449,
+      "when": "",
+      "reason": "升級死亡之舞"
+     },
+     {
+      "id": 1048,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0157,
+      "score": 0.633,
+      "when": "",
+      "reason": "魔攻英雄，魔攻提高暴擊率，技能可暴擊"
+     },
+     {
+      "id": 2129,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0166,
+      "score": 0.452,
+      "when": "",
+      "reason": "地形技能追加傷害"
+     },
+     {
+      "id": 1243,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0168,
+      "score": 0.628,
+      "when": "",
+      "reason": "兩件隨機增幅"
+     },
+     {
+      "id": 2102,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0174,
+      "score": 0.444,
+      "when": "",
+      "reason": "身上燃燒"
+     },
+     {
+      "id": 1046,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0179,
+      "score": 0.423,
+      "when": "",
+      "reason": "赤燄龍魂"
+     },
+     {
+      "id": 2138,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0179,
+      "score": 0.423,
+      "when": "",
+      "reason": "技能命中加雙抗"
+     },
+     {
+      "id": 1421,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0184,
+      "score": 0.619,
+      "when": "",
+      "reason": "自動衝刺魅惑"
+     },
+     {
+      "id": 1020,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0185,
+      "score": 0.433,
+      "when": "",
+      "reason": "低血回血"
+     },
+     {
+      "id": 1237,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0187,
+      "score": 0.415,
+      "when": "",
+      "reason": "一件隨機金級增幅"
+     },
+     {
+      "id": 2131,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0201,
+      "score": 0.4,
+      "when": "",
+      "reason": "有引導技能，引導時上盾"
+     },
+     {
+      "id": 1187,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0201,
+      "score": 0.4,
+      "when": "",
+      "reason": "閃現爆炸"
+     },
+     {
+      "id": 2107,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0204,
+      "score": 0.609,
+      "when": "",
+      "reason": "死後復活"
+     },
+     {
+      "id": 1322,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0209,
+      "score": 0.41,
+      "when": "",
+      "reason": "擊殺後加速"
+     },
+     {
+      "id": 1027,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0217,
+      "score": 0.603,
+      "when": "",
+      "reason": "位移後留下爆炸"
+     },
+     {
+      "id": 1379,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0219,
+      "score": 0.602,
+      "when": "",
+      "reason": "升級破曉綻放之劍"
+     },
+     {
+      "id": 2064,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0219,
+      "score": 0.4,
+      "when": "",
+      "reason": "沒有位移，多一個衝刺"
+     },
+     {
+      "id": 3170,
+      "group": "五殺",
+      "tier": "C",
+      "value": -0.0224,
+      "score": 0.266,
+      "when": "",
+      "reason": "Q 常放，急速、補量一起加"
+     },
+     {
+      "id": 3004,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0225,
+      "score": 0.394,
+      "when": "",
+      "reason": "大鬧一場召喚師技能"
+     },
+     {
+      "id": 1044,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.023,
+      "score": 0.368,
+      "when": "",
+      "reason": "緩速更強"
+     },
+     {
+      "id": 2043,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0235,
+      "score": 0.384,
+      "when": "",
+      "reason": "進草叢回血"
+     },
+     {
+      "id": 1141,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0236,
+      "score": 0.383,
+      "when": "",
+      "reason": "補隊友加強"
+     },
+     {
+      "id": 2099,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0239,
+      "score": 0.592,
+      "when": "",
+      "reason": "擊殺後閃現重置技能"
+     },
+     {
+      "id": 2139,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0242,
+      "score": 0.377,
+      "when": "",
+      "reason": "受傷累積反擊"
+     },
+     {
+      "id": 2140,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0243,
+      "score": 0.376,
+      "when": "",
+      "reason": "升級狂怒九頭蛇"
+     },
+     {
+      "id": 2137,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0247,
+      "score": 0.372,
+      "when": "",
+      "reason": "靠近隊友上盾"
+     },
+     {
+      "id": 1136,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0252,
+      "score": 0.345,
+      "when": "",
+      "reason": "控人疊適性"
+     },
+     {
+      "id": 3053,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0252,
+      "score": 0.585,
+      "when": "",
+      "reason": "大絕加生命、緩速"
+     },
+     {
+      "id": 1104,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0253,
+      "score": 0.366,
+      "when": "",
+      "reason": "召喚物強化"
+     },
+     {
+      "id": 2133,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0255,
+      "score": 0.364,
+      "when": "",
+      "reason": "技能後普攻加射程、傷害"
+     },
+     {
+      "id": 2016,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0261,
+      "score": 0.335,
+      "when": "",
+      "reason": "普攻吃最大魔力"
+     },
+     {
+      "id": 3116,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0262,
+      "score": 0.357,
+      "when": "",
+      "reason": "打滿五層爆傷害回血"
+     },
+     {
+      "id": 1320,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0262,
+      "score": 0.334,
+      "when": "",
+      "reason": "升級收藏家"
+     },
+     {
+      "id": 2087,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0262,
+      "score": 0.58,
+      "when": "",
+      "reason": "放技能減其他技能冷卻"
+     },
+     {
+      "id": 1348,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0263,
+      "score": 0.333,
+      "when": "",
+      "reason": "兩個閃現"
+     },
+     {
+      "id": 1194,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0263,
+      "score": 0.579,
+      "when": "",
+      "reason": "大絕把人變小動物"
+     },
+     {
+      "id": 1347,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0265,
+      "score": 0.331,
+      "when": "",
+      "reason": "光盾＋鬼步"
+     },
+     {
+      "id": 1018,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0267,
+      "score": 0.577,
+      "when": "",
+      "reason": "控到人就上盾"
+     },
+     {
+      "id": 1129,
+      "group": "金",
+      "tier": "C",
+      "value": -0.027,
+      "score": 0.349,
+      "when": "",
+      "reason": "普攻吃魔攻"
+     },
+     {
+      "id": 3085,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0272,
+      "score": 0.323,
+      "when": "",
+      "reason": "放技能加攻速"
+     },
+     {
+      "id": 1080,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0281,
+      "score": 0.314,
+      "when": "",
+      "reason": "暴擊率變閃避"
+     },
+     {
+      "id": 3088,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0283,
+      "score": 0.337,
+      "when": "",
+      "reason": "技能標記普攻引爆"
+     },
+     {
+      "id": 1077,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0288,
+      "score": 0.332,
+      "when": "",
+      "reason": "暴擊回血"
+     },
+     {
+      "id": 1375,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0291,
+      "score": 0.329,
+      "when": "",
+      "reason": "控人疊生命"
+     },
+     {
+      "id": 1051,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0294,
+      "score": 0.3,
+      "when": "",
+      "reason": "第四下普攻飛彈"
+     },
+     {
+      "id": 1206,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0298,
+      "score": 0.295,
+      "when": "",
+      "reason": "魔攻轉物攻"
+     },
+     {
+      "id": 1211,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0299,
+      "score": 0.321,
+      "when": "",
+      "reason": "大絕是招牌，大絕後全力輸出再引爆"
+     },
+     {
+      "id": 2115,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0301,
+      "score": 0.56,
+      "when": "",
+      "reason": "黏住敵人拉過來"
+     },
+     {
+      "id": 1301,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0304,
+      "score": 0.316,
+      "when": "",
+      "reason": "自動團隊無敵"
+     },
+     {
+      "id": 1118,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0308,
+      "score": 0.312,
+      "when": "",
+      "reason": "治療護盾可暴擊"
+     },
+     {
+      "id": 1084,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0308,
+      "score": 0.312,
+      "when": "",
+      "reason": "爆發輸出吃穿透"
+     },
+     {
+      "id": 2065,
+      "group": "金",
+      "tier": "C",
+      "value": -0.031,
+      "score": 0.31,
+      "when": "",
+      "reason": "技能範圍恐懼"
+     },
+     {
+      "id": 2091,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0312,
+      "score": 0.308,
+      "when": "",
+      "reason": "自動圓形斧擊"
+     },
+     {
+      "id": 3173,
+      "group": "五殺",
+      "tier": "C",
+      "value": -0.0315,
+      "score": 0.11,
+      "when": "",
+      "reason": "大絕是招牌，大絕增強"
+     },
+     {
+      "id": 1323,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0317,
+      "score": 0.552,
+      "when": "",
+      "reason": "控人降彗星"
+     },
+     {
+      "id": 1150,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0318,
+      "score": 0.302,
+      "when": "",
+      "reason": "W 常放，急速大增"
+     },
+     {
+      "id": 1029,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0318,
+      "score": 0.302,
+      "when": "",
+      "reason": "技能觸發命中效果"
+     },
+     {
+      "id": 2088,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0321,
+      "score": 0.271,
+      "when": "",
+      "reason": "雪球增傷"
+     },
+     {
+      "id": 3036,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0321,
+      "score": 0.299,
+      "when": "",
+      "reason": "常放技能吃魔力，兩招連打追加傷害"
+     },
+     {
+      "id": 3055,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0322,
+      "score": 0.27,
+      "when": "",
+      "reason": "大絕是招牌，大絕急速"
+     },
+     {
+      "id": 1225,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0323,
+      "score": 0.549,
+      "when": "",
+      "reason": "普攻多一支箭"
+     },
+     {
+      "id": 1019,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0326,
+      "score": 0.547,
+      "when": "",
+      "reason": "位移技能急速大增"
+     },
+     {
+      "id": 1001,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0333,
+      "score": 0.544,
+      "when": "",
+      "reason": "打久了變大變強"
+     },
+     {
+      "id": 1358,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0335,
+      "score": 0.285,
+      "when": "",
+      "reason": "彈珠雪球"
+     },
+     {
+      "id": 1996,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0343,
+      "score": 0.277,
+      "when": "",
+      "reason": "升級魔法彎刀類道具"
+     },
+     {
+      "id": 1326,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0348,
+      "score": 0.272,
+      "when": "",
+      "reason": "擊殺後隱形"
+     },
+     {
+      "id": 1349,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.035,
+      "score": 0.535,
+      "when": "",
+      "reason": "大絕重置基礎技能"
+     },
+     {
+      "id": 3063,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.035,
+      "score": 0.24,
+      "when": "",
+      "reason": "生命轉物理致命"
+     },
+     {
+      "id": 1022,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0356,
+      "score": 0.233,
+      "when": "",
+      "reason": "攻速 +60%"
+     },
+     {
+      "id": 1112,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.036,
+      "score": 0.229,
+      "when": "",
+      "reason": "大絕是招牌，大絕期間免控"
+     },
+     {
+      "id": 2004,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0367,
+      "score": 0.527,
+      "when": "",
+      "reason": "補隊友累積衝擊波"
+     },
+     {
+      "id": 1058,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0367,
+      "score": 0.527,
+      "when": "",
+      "reason": "普攻減技能冷卻"
+     },
+     {
+      "id": 2005,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0368,
+      "score": 0.526,
+      "when": "",
+      "reason": "技能多段打到多人"
+     },
+     {
+      "id": 1311,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0377,
+      "score": 0.244,
+      "when": "",
+      "reason": "多耗魔力換傷害"
+     },
+     {
+      "id": 3171,
+      "group": "五殺",
+      "tier": "C",
+      "value": -0.0379,
+      "score": 0.0,
+      "when": "",
+      "reason": "W 常放，急速、補量一起加"
+     },
+     {
+      "id": 1079,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0383,
+      "score": 0.519,
+      "when": "",
+      "reason": "致命節奏＋征服者"
+     },
+     {
+      "id": 1071,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0392,
+      "score": 0.229,
+      "when": "",
+      "reason": "加射程"
+     },
+     {
+      "id": 2077,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0393,
+      "score": 0.228,
+      "when": "",
+      "reason": "禁錮技能加傷害回血"
+     },
+     {
+      "id": 2055,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0397,
+      "score": 0.511,
+      "when": "",
+      "reason": "技能多發飛彈"
+     },
+     {
+      "id": 2134,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0397,
+      "score": 0.511,
+      "when": "",
+      "reason": "大絕是招牌，大絕後站在場內輸出"
+     },
+     {
+      "id": 2096,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0403,
+      "score": 0.218,
+      "when": "",
+      "reason": "持續技能加射程攻速"
+     },
+     {
+      "id": 2144,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0405,
+      "score": 0.18,
+      "when": "",
+      "reason": "技能護盾加強"
+     },
+     {
+      "id": 1325,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0406,
+      "score": 0.507,
+      "when": "",
+      "reason": "遠程輸出，站後面不怕少血"
+     },
+     {
+      "id": 1149,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0407,
+      "score": 0.214,
+      "when": "",
+      "reason": "裂地衝擊＋冰川增幅"
+     },
+     {
+      "id": 1081,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.041,
+      "score": 0.505,
+      "when": "",
+      "reason": "普攻疊跑速、跑速轉攻速"
+     },
+     {
+      "id": 1011,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0411,
+      "score": 0.504,
+      "when": "",
+      "reason": "大絕是招牌，放大絕時無敵"
+     },
+     {
+      "id": 1088,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0412,
+      "score": 0.504,
+      "when": "",
+      "reason": "大絕是招牌，大絕連放兩次"
+     },
+     {
+      "id": 1002,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0413,
+      "score": 0.208,
+      "when": "",
+      "reason": "道具急速"
+     },
+     {
+      "id": 1115,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0413,
+      "score": 0.503,
+      "when": "",
+      "reason": "大幅加射程"
+     },
+     {
+      "id": 1036,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0423,
+      "score": 0.198,
+      "when": "",
+      "reason": "普攻燃燒"
+     },
+     {
+      "id": 3071,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0425,
+      "score": 0.196,
+      "when": "",
+      "reason": "銅管爆破召喚師技能"
+     },
+     {
+      "id": 1103,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0428,
+      "score": 0.193,
+      "when": "",
+      "reason": "Q 常放，急速大增"
+     },
+     {
+      "id": 1047,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0428,
+      "score": 0.193,
+      "when": "",
+      "reason": "暴擊率"
+     },
+     {
+      "id": 1336,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0434,
+      "score": 0.188,
+      "when": "",
+      "reason": "升級無盡之刃"
+     },
+     {
+      "id": 3052,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0469,
+      "score": 0.112,
+      "when": "",
+      "reason": "遠距離普攻增傷"
+     },
+     {
+      "id": 1170,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.047,
+      "score": 0.111,
+      "when": "",
+      "reason": "加射程"
+     },
+     {
+      "id": 1328,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0472,
+      "score": 0.15,
+      "when": "",
+      "reason": "暴擊疊攻速"
+     },
+     {
+      "id": 1087,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0472,
+      "score": 0.108,
+      "when": "",
+      "reason": "普攻多一發飛彈"
+     },
+     {
+      "id": 1392,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0475,
+      "score": 0.472,
+      "when": "",
+      "reason": "雪球衝刺無敵"
+     },
+     {
+      "id": 2080,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0478,
+      "score": 0.144,
+      "when": "",
+      "reason": "雪球擊飛"
+     },
+     {
+      "id": 1074,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0508,
+      "score": 0.115,
+      "when": "",
+      "reason": "普攻降敵方傷害"
+     },
+     {
+      "id": 2116,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0521,
+      "score": 0.102,
+      "when": "",
+      "reason": "技能冷卻短、常放，技能命中換增傷"
+     },
+     {
+      "id": 2143,
+      "group": "金",
+      "tier": "C",
+      "value": -0.054,
+      "score": 0.083,
+      "when": "",
+      "reason": "升級突破天際"
+     },
+     {
+      "id": 3018,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0555,
+      "score": 0.431,
+      "when": "",
+      "reason": "攻速轉暴擊傷害"
+     },
+     {
+      "id": 1386,
+      "group": "銀",
+      "tier": "C",
+      "value": -0.0573,
+      "score": 0.0,
+      "when": "",
+      "reason": "勾索擺盪"
+     },
+     {
+      "id": 1054,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0576,
+      "score": 0.421,
+      "when": "",
+      "reason": "普攻疊魔攻、技能疊物攻"
+     },
+     {
+      "id": 2135,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0616,
+      "score": 0.4,
+      "when": "",
+      "reason": "持續技能疊釘子"
+     },
+     {
+      "id": 2078,
+      "group": "金",
+      "tier": "C",
+      "value": -0.0624,
+      "score": 0.0,
+      "when": "",
+      "reason": "擊退撞人追加傷害"
+     },
+     {
+      "id": 3016,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0627,
+      "score": 0.395,
+      "when": "",
+      "reason": "第三下普攻真實傷害"
+     },
+     {
+      "id": 2010,
+      "group": "稜鏡",
+      "tier": "C",
+      "value": -0.0648,
+      "score": 0.384,
+      "when": "",
+      "reason": "暴擊多一次命中效果"
      },
      {
       "id": 12317,
@@ -104025,6 +106101,15 @@
       "reason": "低血加攻速吸血"
      },
      {
+      "id": 2055,
+      "group": "稜鏡",
+      "tier": "A",
+      "value": 0.0248,
+      "score": 0.72,
+      "when": "",
+      "reason": "固定強化 Q，多發飛彈"
+     },
+     {
       "id": 1310,
       "group": "稜鏡",
       "tier": "A",
@@ -104086,15 +106171,6 @@
       "score": 0.798,
       "when": "",
       "reason": "遠距離丟技能降隕石"
-     },
-     {
-      "id": 2055,
-      "group": "稜鏡",
-      "tier": "A",
-      "value": 0.0182,
-      "score": 0.687,
-      "when": "",
-      "reason": "技能多發飛彈"
      },
      {
       "id": 1180,
@@ -120629,6 +122705,15 @@
       "reason": "隨機變大或變小"
      },
      {
+      "id": 1054,
+      "group": "稜鏡",
+      "tier": "A",
+      "value": 0.0421,
+      "score": 0.87,
+      "when": "",
+      "reason": "Q 和被動吃魔攻，一直普攻疊到上千魔攻"
+     },
+     {
       "id": 3081,
       "group": "金",
       "tier": "S",
@@ -120654,15 +122739,6 @@
       "score": 0.909,
       "when": "",
       "reason": "靠普攻輸出，放技能加攻速"
-     },
-     {
-      "id": 1054,
-      "group": "稜鏡",
-      "tier": "A",
-      "value": 0.0357,
-      "score": 0.838,
-      "when": "",
-      "reason": "普攻疊魔攻、技能疊物攻"
      },
      {
       "id": 1206,
@@ -128975,6 +131051,15 @@
       "reason": "隨機變大或變小"
      },
      {
+      "id": 1087,
+      "group": "銀",
+      "tier": "S",
+      "value": 0.0405,
+      "score": 0.907,
+      "when": "",
+      "reason": "多一發觸發命中，被動回血更多"
+     },
+     {
       "id": 1041,
       "group": "稜鏡",
       "tier": "A",
@@ -129072,15 +131157,6 @@
       "score": 0.689,
       "when": "",
       "reason": "自動補血、加速"
-     },
-     {
-      "id": 1087,
-      "group": "銀",
-      "tier": "S",
-      "value": 0.0275,
-      "score": 0.798,
-      "when": "",
-      "reason": "普攻多一發飛彈"
      },
      {
       "id": 1019,
@@ -209909,6 +211985,15 @@
       "reason": "遠程變近戰，大量屬性"
      },
      {
+      "id": 1006,
+      "group": "稜鏡",
+      "tier": "S",
+      "value": 0.0575,
+      "score": 0.839,
+      "when": "",
+      "reason": "閃到四面八方，被動霰彈腿全觸發"
+     },
+     {
       "id": 1095,
       "group": "稜鏡",
       "tier": "C",
@@ -209927,15 +212012,6 @@
       "reason": "堆生命，普攻吃最大生命"
      },
      {
-      "id": 1006,
-      "group": "稜鏡",
-      "tier": "S",
-      "value": 0.0453,
-      "score": 0.785,
-      "when": "",
-      "reason": "多段閃現突進"
-     },
-     {
       "id": 3051,
       "group": "銀",
       "tier": "S",
@@ -209952,6 +212028,15 @@
       "score": 0.757,
       "when": "",
       "reason": "體型大，縮小後很難被技能打中"
+     },
+     {
+      "id": 1087,
+      "group": "銀",
+      "tier": "S",
+      "value": 0.0375,
+      "score": 0.861,
+      "when": "",
+      "reason": "W 攻速固定又快，飛彈一直觸發"
      },
      {
       "id": 1315,
@@ -210055,7 +212140,7 @@
      {
       "id": 2127,
       "group": "銀",
-      "tier": "S",
+      "tier": "A",
       "value": 0.0285,
       "score": 0.787,
       "when": "",
@@ -210069,15 +212154,6 @@
       "score": 0.772,
       "when": "",
       "reason": "有護盾"
-     },
-     {
-      "id": 1087,
-      "group": "銀",
-      "tier": "A",
-      "value": 0.0261,
-      "score": 0.767,
-      "when": "",
-      "reason": "普攻多一發飛彈"
      },
      {
       "id": 1015,
@@ -253617,6 +255693,15 @@
       "reason": "沒挨打時大加速"
      },
      {
+      "id": 2072,
+      "group": "稜鏡",
+      "tier": "S",
+      "value": 0.0386,
+      "score": 0.793,
+      "when": "",
+      "reason": "固定強化 Q，飛彈分裂"
+     },
+     {
       "id": 3051,
       "group": "銀",
       "tier": "S",
@@ -253628,7 +255713,7 @@
      {
       "id": 1389,
       "group": "稜鏡",
-      "tier": "S",
+      "tier": "A",
       "value": 0.0366,
       "score": 0.783,
       "when": "",
@@ -253660,15 +255745,6 @@
       "score": 0.763,
       "when": "",
       "reason": "三種龍魂"
-     },
-     {
-      "id": 2072,
-      "group": "稜鏡",
-      "tier": "A",
-      "value": 0.0322,
-      "score": 0.761,
-      "when": "",
-      "reason": "飛彈分裂"
      },
      {
       "id": 1420,
@@ -257764,9 +259840,27 @@
       "reason": "魔攻英雄，法帽、中婭本來就要出"
      },
      {
-      "id": 1015,
+      "id": 2072,
       "group": "稜鏡",
       "tier": "S",
+      "value": 0.0378,
+      "score": 0.911,
+      "when": "",
+      "reason": "固定強化 Q，飛彈分裂"
+     },
+     {
+      "id": 2055,
+      "group": "稜鏡",
+      "tier": "S",
+      "value": 0.0362,
+      "score": 0.904,
+      "when": "",
+      "reason": "固定強化 Q，多發飛彈"
+     },
+     {
+      "id": 1015,
+      "group": "稜鏡",
+      "tier": "A",
       "value": 0.036,
       "score": 0.903,
       "when": "",
@@ -257818,15 +259912,6 @@
       "reason": "道具隨擊殺成長"
      },
      {
-      "id": 2072,
-      "group": "稜鏡",
-      "tier": "S",
-      "value": 0.0314,
-      "score": 0.884,
-      "when": "",
-      "reason": "飛彈分裂"
-     },
-     {
       "id": 1324,
       "group": "稜鏡",
       "tier": "A",
@@ -257843,15 +259928,6 @@
       "score": 0.665,
       "when": "",
       "reason": "自動補血、加速"
-     },
-     {
-      "id": 2055,
-      "group": "稜鏡",
-      "tier": "A",
-      "value": 0.0296,
-      "score": 0.876,
-      "when": "",
-      "reason": "技能多發飛彈"
      },
      {
       "id": 1053,
@@ -262057,7 +264133,7 @@
      {
       "id": 1151,
       "group": "金",
-      "tier": "S",
+      "tier": "B",
       "value": 0.0234,
       "score": 0.696,
       "when": "",
@@ -263969,6 +266045,15 @@
       "reason": "用魔力，放技能上盾"
      },
      {
+      "id": 2018,
+      "group": "銀",
+      "tier": "S",
+      "value": 0.0382,
+      "score": 0.929,
+      "when": "",
+      "reason": "不出攻速，冷卻縮短讓 E、R 更常放"
+     },
+     {
       "id": 3131,
       "group": "金",
       "tier": "B",
@@ -263987,13 +266072,13 @@
       "reason": "遠距離命中降隕石"
      },
      {
-      "id": 2018,
-      "group": "銀",
+      "id": 1151,
+      "group": "金",
       "tier": "S",
-      "value": 0.0319,
-      "score": 0.865,
+      "value": 0.0315,
+      "score": 0.836,
       "when": "",
-      "reason": "攻速轉技能急速"
+      "reason": "E 冷卻短，配大法師 E、R 輪流放"
      },
      {
       "id": 1081,
@@ -264075,15 +266160,6 @@
       "score": 0.546,
       "when": "",
       "reason": "背刺、詐死、死亡爆炸"
-     },
-     {
-      "id": 1151,
-      "group": "金",
-      "tier": "S",
-      "value": 0.0234,
-      "score": 0.764,
-      "when": "",
-      "reason": "E 技能急速"
      },
      {
       "id": 1077,
@@ -307578,22 +309654,22 @@
       "reason": "近戰連段快，五層很快打滿"
      },
      {
+      "id": 1388,
+      "group": "稜鏡",
+      "tier": "S",
+      "value": 0.0745,
+      "score": 1.0,
+      "when": "",
+      "reason": "急速夠高，Q 一直放"
+     },
+     {
       "id": 1058,
       "group": "稜鏡",
       "tier": "S",
       "value": 0.0712,
-      "score": 1.0,
-      "when": "",
-      "reason": "Q 冷卻短，普攻減冷卻一直放 Q"
-     },
-     {
-      "id": 1388,
-      "group": "稜鏡",
-      "tier": "S",
-      "value": 0.0681,
       "score": 0.988,
       "when": "",
-      "reason": "技能急速，擊殺再加"
+      "reason": "Q 冷卻短，普攻減冷卻一直放 Q"
      },
      {
       "id": 3051,
@@ -307609,7 +309685,7 @@
       "group": "稜鏡",
       "tier": "S",
       "value": 0.0622,
-      "score": 0.966,
+      "score": 0.955,
       "when": "",
       "reason": "隨機變大或變小"
      },
@@ -307618,7 +309694,7 @@
       "group": "稜鏡",
       "tier": "S",
       "value": 0.059,
-      "score": 0.955,
+      "score": 0.943,
       "when": "",
       "reason": "大絕是持續強化，期間基礎技能狂放"
      },
@@ -307627,7 +309703,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": 0.059,
-      "score": 0.955,
+      "score": 0.943,
       "when": "",
       "reason": "遠程變近戰，大量屬性"
      },
@@ -307636,7 +309712,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": 0.0566,
-      "score": 0.946,
+      "score": 0.934,
       "when": "",
       "reason": "治療護盾附帶雙抗"
      },
@@ -307645,7 +309721,7 @@
       "group": "稜鏡",
       "tier": "A",
       "value": 0.0548,
-      "score": 0.939,
+      "score": 0.927,
       "when": "",
       "reason": "有短冷卻技能，技能傷害、急速大增"
      },
@@ -307663,7 +309739,7 @@
       "group": "稜鏡",
       "tier": "A",
       "value": 0.0372,
-      "score": 0.873,
+      "score": 0.863,
       "when": "",
       "reason": "近戰繞後切入，破綻好打"
      },
@@ -307699,9 +309775,18 @@
       "group": "稜鏡",
       "tier": "A",
       "value": 0.0346,
-      "score": 0.864,
+      "score": 0.853,
       "when": "",
       "reason": "巴龍之手"
+     },
+     {
+      "id": 2005,
+      "group": "稜鏡",
+      "tier": "A",
+      "value": 0.0328,
+      "score": 0.846,
+      "when": "",
+      "reason": "黏在人身上，連打英雄很快觸發"
      },
      {
       "id": 1420,
@@ -307717,7 +309802,7 @@
       "group": "稜鏡",
       "tier": "A",
       "value": 0.0279,
-      "score": 0.839,
+      "score": 0.828,
       "when": "",
       "reason": "近戰鬥士，衝進去不怕死"
      },
@@ -307731,20 +309816,11 @@
       "reason": "低血大護盾逃跑"
      },
      {
-      "id": 2005,
-      "group": "稜鏡",
-      "tier": "A",
-      "value": 0.0264,
-      "score": 0.833,
-      "when": "",
-      "reason": "連打英雄自動掃射"
-     },
-     {
       "id": 1045,
       "group": "稜鏡",
       "tier": "A",
       "value": 0.025,
-      "score": 0.828,
+      "score": 0.818,
       "when": "",
       "reason": "有短冷卻技能，技能燒人、越燒冷卻越短"
      },
@@ -307780,7 +309856,7 @@
       "group": "稜鏡",
       "tier": "A",
       "value": 0.0204,
-      "score": 0.811,
+      "score": 0.801,
       "when": "",
       "reason": "有補血或護盾，雙抗越高補量越多"
      },
@@ -307798,7 +309874,7 @@
       "group": "稜鏡",
       "tier": "A",
       "value": 0.0201,
-      "score": 0.809,
+      "score": 0.8,
       "when": "",
       "reason": "近戰鬥士，閃進人群連砍"
      },
@@ -307816,7 +309892,7 @@
       "group": "稜鏡",
       "tier": "B",
       "value": 0.0173,
-      "score": 0.799,
+      "score": 0.789,
       "when": "",
       "reason": "2 個硬控技能，控人就上大盾"
      },
@@ -307861,7 +309937,7 @@
       "group": "稜鏡",
       "tier": "B",
       "value": 0.0145,
-      "score": 0.789,
+      "score": 0.779,
       "when": "",
       "reason": "近戰常繞後"
      },
@@ -307888,7 +309964,7 @@
       "group": "稜鏡",
       "tier": "B",
       "value": 0.0123,
-      "score": 0.78,
+      "score": 0.771,
       "when": "",
       "reason": "2 個硬控技能，控人降彗星"
      },
@@ -307897,7 +309973,7 @@
       "group": "稜鏡",
       "tier": "B",
       "value": 0.0122,
-      "score": 0.78,
+      "score": 0.771,
       "when": "",
       "reason": "普攻多一支箭"
      },
@@ -307915,7 +309991,7 @@
       "group": "稜鏡",
       "tier": "B",
       "value": 0.0117,
-      "score": 0.778,
+      "score": 0.769,
       "when": "",
       "reason": "輸出英雄，吃傷害加成"
      },
@@ -307924,7 +310000,7 @@
       "group": "稜鏡",
       "tier": "B",
       "value": 0.0113,
-      "score": 0.777,
+      "score": 0.767,
       "when": "",
       "reason": "有位移技能，每次位移都炸一次"
      },
@@ -307933,7 +310009,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": 0.01,
-      "score": 0.772,
+      "score": 0.762,
       "when": "",
       "reason": "治療護盾累積成炸彈"
      },
@@ -308032,7 +310108,7 @@
       "group": "稜鏡",
       "tier": "B",
       "value": 0.0013,
-      "score": 0.739,
+      "score": 0.73,
       "when": "",
       "reason": "四個能力值鐵砧"
      },
@@ -308050,7 +310126,7 @@
       "group": "稜鏡",
       "tier": "B",
       "value": 0.0002,
-      "score": 0.735,
+      "score": 0.726,
       "when": "",
       "reason": "三種龍魂"
      },
@@ -308086,7 +310162,7 @@
       "group": "稜鏡",
       "tier": "B",
       "value": -0.0005,
-      "score": 0.733,
+      "score": 0.724,
       "when": "",
       "reason": "兩件隨機增幅"
      },
@@ -308248,7 +310324,7 @@
       "group": "稜鏡",
       "tier": "B",
       "value": -0.0063,
-      "score": 0.711,
+      "score": 0.702,
       "when": "",
       "reason": "大絕後大護盾"
      },
@@ -308284,7 +310360,7 @@
       "group": "稜鏡",
       "tier": "B",
       "value": -0.0069,
-      "score": 0.709,
+      "score": 0.7,
       "when": "",
       "reason": "大幅加射程"
      },
@@ -308320,7 +310396,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0075,
-      "score": 0.707,
+      "score": 0.698,
       "when": "",
       "reason": "法帽任務"
      },
@@ -308329,7 +310405,7 @@
       "group": "稜鏡",
       "tier": "B",
       "value": -0.0088,
-      "score": 0.702,
+      "score": 0.693,
       "when": "",
       "reason": "技能多打兩人"
      },
@@ -308365,7 +310441,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0094,
-      "score": 0.699,
+      "score": 0.691,
       "when": "",
       "reason": "治療護盾多兩個隊友"
      },
@@ -308383,7 +310459,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0102,
-      "score": 0.696,
+      "score": 0.688,
       "when": "",
       "reason": "飛彈分裂"
      },
@@ -308392,7 +310468,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0104,
-      "score": 0.696,
+      "score": 0.687,
       "when": "",
       "reason": "致命節奏＋征服者"
      },
@@ -308401,7 +310477,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0109,
-      "score": 0.694,
+      "score": 0.685,
       "when": "",
       "reason": "升級破曉綻放之劍"
      },
@@ -308410,7 +310486,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0111,
-      "score": 0.693,
+      "score": 0.685,
       "when": "",
       "reason": "普攻疊魔攻、技能疊物攻"
      },
@@ -308455,7 +310531,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0123,
-      "score": 0.689,
+      "score": 0.68,
       "when": "",
       "reason": "普攻疊跑速、跑速轉攻速"
      },
@@ -308482,7 +310558,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.014,
-      "score": 0.682,
+      "score": 0.674,
       "when": "",
       "reason": "大絕後範圍嘲諷"
      },
@@ -308500,7 +310576,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0141,
-      "score": 0.682,
+      "score": 0.674,
       "when": "",
       "reason": "魔攻轉技能急速"
      },
@@ -308509,7 +310585,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0142,
-      "score": 0.682,
+      "score": 0.673,
       "when": "",
       "reason": "大絕加生命、緩速"
      },
@@ -308536,7 +310612,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0144,
-      "score": 0.681,
+      "score": 0.673,
       "when": "",
       "reason": "衝向隊友互相上盾"
      },
@@ -308626,7 +310702,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0187,
-      "score": 0.665,
+      "score": 0.657,
       "when": "",
       "reason": "瞬移後 5 秒不死，沒收頭就死"
      },
@@ -308725,7 +310801,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0212,
-      "score": 0.655,
+      "score": 0.648,
       "when": "",
       "reason": "擊殺任務換黃金鍋鏟"
      },
@@ -308752,7 +310828,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0215,
-      "score": 0.654,
+      "score": 0.646,
       "when": "",
       "reason": "九頭蛇全買"
      },
@@ -308761,7 +310837,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0218,
-      "score": 0.653,
+      "score": 0.645,
       "when": "",
       "reason": "打人額外傷害和金錢"
      },
@@ -308779,7 +310855,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0231,
-      "score": 0.648,
+      "score": 0.641,
       "when": "",
       "reason": "放技能重置一個技能"
      },
@@ -308860,7 +310936,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0258,
-      "score": 0.638,
+      "score": 0.631,
       "when": "",
       "reason": "第三下普攻真實傷害"
      },
@@ -308950,7 +311026,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0307,
-      "score": 0.62,
+      "score": 0.613,
       "when": "",
       "reason": "扣血放技能換魔攻吸血"
      },
@@ -309022,7 +311098,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0336,
-      "score": 0.609,
+      "score": 0.602,
       "when": "",
       "reason": "自動衝刺魅惑"
      },
@@ -309058,7 +311134,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0347,
-      "score": 0.605,
+      "score": 0.598,
       "when": "",
       "reason": "有強化普攻的技能，持續期間普攻疊釘子"
      },
@@ -309076,7 +311152,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0354,
-      "score": 0.603,
+      "score": 0.595,
       "when": "",
       "reason": "放技能減其他技能冷卻"
      },
@@ -309112,7 +311188,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0367,
-      "score": 0.598,
+      "score": 0.59,
       "when": "",
       "reason": "補隊友累積衝擊波"
      },
@@ -309148,7 +311224,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.038,
-      "score": 0.593,
+      "score": 0.586,
       "when": "",
       "reason": "大絕放能量場"
      },
@@ -309157,7 +311233,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0383,
-      "score": 0.592,
+      "score": 0.585,
       "when": "",
       "reason": "變大、加生命和適性"
      },
@@ -309184,7 +311260,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0397,
-      "score": 0.587,
+      "score": 0.579,
       "when": "",
       "reason": "技能多發飛彈"
      },
@@ -309193,7 +311269,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0404,
-      "score": 0.584,
+      "score": 0.577,
       "when": "",
       "reason": "收頭後閃過去重置技能再收"
      },
@@ -309211,7 +311287,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0413,
-      "score": 0.581,
+      "score": 0.573,
       "when": "",
       "reason": "出肉裝，黏住全場再拉過來"
      },
@@ -309220,7 +311296,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0413,
-      "score": 0.581,
+      "score": 0.573,
       "when": "",
       "reason": "超大雪球"
      },
@@ -309247,7 +311323,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0426,
-      "score": 0.576,
+      "score": 0.569,
       "when": "",
       "reason": "治療轉成傷害"
      },
@@ -309265,7 +311341,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0434,
-      "score": 0.573,
+      "score": 0.566,
       "when": "",
       "reason": "近戰鬥士，長時間纏鬥疊滿層"
      },
@@ -309337,7 +311413,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0463,
-      "score": 0.562,
+      "score": 0.555,
       "when": "",
       "reason": "暴擊多一次命中效果"
      },
@@ -309355,7 +311431,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0469,
-      "score": 0.56,
+      "score": 0.553,
       "when": "",
       "reason": "大絕時無敵"
      },
@@ -309364,7 +311440,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0485,
-      "score": 0.554,
+      "score": 0.547,
       "when": "",
       "reason": "分身重放技能"
      },
@@ -309382,7 +311458,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0532,
-      "score": 0.536,
+      "score": 0.53,
       "when": "",
       "reason": "攻速轉暴擊傷害"
      },
@@ -309391,7 +311467,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0538,
-      "score": 0.534,
+      "score": 0.527,
       "when": "",
       "reason": "全部換成稜鏡增幅"
      },
@@ -309445,7 +311521,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0609,
-      "score": 0.507,
+      "score": 0.501,
       "when": "",
       "reason": "大絕再放一次"
      },
@@ -309508,7 +311584,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0661,
-      "score": 0.488,
+      "score": 0.482,
       "when": "",
       "reason": "雪球衝刺無敵"
      },
@@ -309526,7 +311602,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0696,
-      "score": 0.475,
+      "score": 0.469,
       "when": "",
       "reason": "技能可以暴擊"
      },
@@ -309544,7 +311620,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0751,
-      "score": 0.455,
+      "score": 0.449,
       "when": "",
       "reason": "位移技能急速大增"
      },
@@ -309571,7 +311647,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0802,
-      "score": 0.435,
+      "score": 0.43,
       "when": "",
       "reason": "生命換真實傷害"
      },
@@ -309580,7 +311656,7 @@
       "group": "稜鏡",
       "tier": "C",
       "value": -0.0822,
-      "score": 0.428,
+      "score": 0.423,
       "when": "",
       "reason": "大絕把人變小動物"
      },
@@ -317977,6 +320053,15 @@
       "reason": "治療護盾附帶雙抗"
      },
      {
+      "id": 3075,
+      "group": "金",
+      "tier": "S",
+      "value": 0.0424,
+      "score": 0.878,
+      "when": "",
+      "reason": "強化 Q 加傷，後跳保命"
+     },
+     {
       "id": 1315,
       "group": "銀",
       "tier": "S",
@@ -317993,15 +320078,6 @@
       "score": 0.749,
       "when": "",
       "reason": "技能冷卻短、常放，技能傷害、急速大增"
-     },
-     {
-      "id": 3075,
-      "group": "金",
-      "tier": "S",
-      "value": 0.0362,
-      "score": 0.837,
-      "when": "",
-      "reason": "技能增傷附後跳"
      },
      {
       "id": 1045,
@@ -320053,6 +322129,15 @@
       "reason": "治療護盾附帶雙抗"
      },
      {
+      "id": 3075,
+      "group": "金",
+      "tier": "S",
+      "value": 0.0424,
+      "score": 0.891,
+      "when": "",
+      "reason": "強化 Q 加傷，後跳保命"
+     },
+     {
       "id": 1315,
       "group": "銀",
       "tier": "S",
@@ -320078,15 +322163,6 @@
       "score": 0.749,
       "when": "",
       "reason": "靠基礎技能輸出，大絕可以捨棄"
-     },
-     {
-      "id": 3075,
-      "group": "金",
-      "tier": "S",
-      "value": 0.0362,
-      "score": 0.855,
-      "when": "",
-      "reason": "技能增傷附後跳"
      },
      {
       "id": 1045,
@@ -330569,6 +332645,15 @@
       "reason": "靠技能輸出，擊殺疊急速"
      },
      {
+      "id": 1421,
+      "group": "稜鏡",
+      "tier": "A",
+      "value": 0.0281,
+      "score": 0.768,
+      "when": "",
+      "reason": "效果像他的大絕，等於兩個大絕"
+     },
+     {
       "id": 1331,
       "group": "稜鏡",
       "tier": "A",
@@ -330711,15 +332796,6 @@
       "score": 0.734,
       "when": "",
       "reason": "補血護盾給隊友，補隊友時打周圍"
-     },
-     {
-      "id": 1421,
-      "group": "稜鏡",
-      "tier": "A",
-      "value": 0.0172,
-      "score": 0.72,
-      "when": "",
-      "reason": "自動衝刺魅惑"
      },
      {
       "id": 3081,
@@ -345115,6 +347191,15 @@
       "reason": "補血、護盾多，治療護盾強度"
      },
      {
+      "id": 2005,
+      "group": "稜鏡",
+      "tier": "A",
+      "value": 0.0333,
+      "score": 0.866,
+      "when": "",
+      "reason": "黏在人身上，連打英雄很快觸發"
+     },
+     {
       "id": 3081,
       "group": "金",
       "tier": "S",
@@ -345203,15 +347288,6 @@
       "score": 0.633,
       "when": "",
       "reason": "堆生命，下一次普攻吃生命加傷回血"
-     },
-     {
-      "id": 2005,
-      "group": "稜鏡",
-      "tier": "A",
-      "value": 0.0256,
-      "score": 0.825,
-      "when": "",
-      "reason": "連打英雄自動掃射"
      },
      {
       "id": 1062,
@@ -353409,6 +355485,15 @@
       "reason": "巴龍之手"
      },
      {
+      "id": 2123,
+      "group": "稜鏡",
+      "tier": "S",
+      "value": 0.0349,
+      "score": 0.847,
+      "when": "",
+      "reason": "E 重置 Q，EQEQ 連放"
+     },
+     {
       "id": 1420,
       "group": "金",
       "tier": "S",
@@ -353416,15 +355501,6 @@
       "score": 0.89,
       "when": "",
       "reason": "自動補血、加速"
-     },
-     {
-      "id": 2123,
-      "group": "稜鏡",
-      "tier": "S",
-      "value": 0.0288,
-      "score": 0.827,
-      "when": "",
-      "reason": "放技能重置一個技能"
      },
      {
       "id": 1333,

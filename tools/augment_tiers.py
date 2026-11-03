@@ -100,6 +100,7 @@ STYLES = {
     "TwistedFate": [("ad", "物攻暴擊", {**_AD, "marksman": True}), ("ap", "法術 Q、W", _AP)],
     "Bard": [("onhit", "攻速特效", {"attacker": True, "onhit": True, "ap_attacker": True, "enchanter": False, "stack": {"攻速", "法術強度"}}),
              ("ap", "法師", {**_AP, "enchanter": False, "ally": True})],
+    "MissFortune": [("ad", "物攻射手", {}), ("ap", "法術 E", {**_AP, "ult_key": True})],
     "Ashe": [("ad", "物攻射手", {}), ("ap", "法術 R", {**_AP, "spammer": False, "ult_key": True})],
 }
 # melee champions whose abilities buff their attacks: range augments make those attacks land (Zaviel)
@@ -130,6 +131,22 @@ PAIR = {
     (1115, "Nasus"): (2, "沒有位移，射程讓 Q 打得到人"), (1071, "Nasus"): (2, "沒有位移，射程讓 Q 打得到人"),
     (1170, "Nasus"): (1, "沒有位移，射程讓 Q 打得到人"),
     **{(i, "Nasus"): (1, "前排疊 Q 要活得久") for i in SURVIVE},
+    (1087, "Briar"): (2, "多一發觸發命中，被動回血更多"), (1087, "Urgot"): (2, "W 攻速固定又快，飛彈一直觸發"),
+    (2005, "Renekton"): (2, "黏在人身上，連打英雄很快觸發"), (2005, "Hecarim"): (2, "黏在人身上，連打英雄很快觸發"),
+    (2072, "Veigar"): (2, "固定強化 Q，飛彈分裂"), (2072, "Ekko"): (2, "固定強化 Q，飛彈分裂"),
+    (2055, "Ekko"): (2, "固定強化 Q，多發飛彈"), (2055, "Velkoz"): (2, "固定強化 Q，多發飛彈"),
+    (2123, "Ryze"): (2, "E 重置 Q，EQEQ 連放"),
+    (3075, "TwistedFate"): (2, "強化 Q 加傷，後跳保命"),
+    (1151, "Ashe/ap"): (2, "E 冷卻短，配大法師 E、R 輪流放"),
+    (2018, "Ashe/ap"): (2, "不出攻速，冷卻縮短讓 E、R 更常放"),
+    (1388, "Hecarim"): (2, "急速夠高，Q 一直放"),
+    (1006, "Urgot"): (2, "閃到四面八方，被動霰彈腿全觸發"),
+    (1054, "Yunara"): (2, "Q 和被動吃魔攻，一直普攻疊到上千魔攻"),
+    (1194, "Katarina"): (2, "大絕打到人就變小動物，大絕不會被打斷"),
+    (1112, "Katarina"): (2, "大絕期間免控，傷害打滿"),
+    (3053, "Aatrox"): (2, "大絕是招牌，緩速區讓 Q 更好中"),
+    (1421, "Rakan"): (2, "效果像他的大絕，等於兩個大絕"),
+    (1113, "MissFortune/ap"): (2, "遠距離丟 E，命中就減冷卻"),
 }
 # AP champions whose basic attacks carry the damage
 AP_ATTACKER = {"Kayle", "KogMaw", "Teemo", "Kaisa", "Varus", "Nilah", "Azir", "Gwen", "Diana", "Shyvana", "Katarina", "Ekko", "Lillia",
