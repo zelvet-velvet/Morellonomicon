@@ -2119,80 +2119,128 @@ function section(body, title) {
   h(body, "div", "mn-gh", title);
 }
 var DESTINY_FRAME = "https://raw.communitydragon.org/latest/game/assets/items/itemmodifiers/strawberry_weapon_evolve_border.png";
+var POOL_ORDER = ["\u8F38\u51FA", "\u751F\u5B58", "\u7A7F\u900F", "\u529F\u80FD", "\u6A5F\u52D5", "\u91CD\u5275", "\u770B\u60C5\u6CC1"];
 function mayhemBuilds(page2, c, ctx, b) {
   const store = ctx.plugin.store;
+  const name = (id) => store.item(id)?.name ?? `#${id}`;
   const root = h(page2, "div", "mn-mbp");
   styleSwitch(root, b.styles, (s) => draw(b.styles.indexOf(s)));
   const how = h(root, "div", "mn-mbp-how");
-  const say = h(root, "div", "mn-mbp-say");
-  const bar = h(root, "div", "mn-mbp-bar");
-  let lit = null;
-  const explain = (p, word, icon2, text = p.reason) => {
-    lit?.removeClass("is-lit");
-    lit = icon2;
-    icon2.addClass("is-lit");
-    say.empty();
-    const head2 = h(say, "div", "mn-mbp-name");
-    const name = h(head2, "button", "mn-mbp-open", store.item(p.id)?.name ?? `#${p.id}`);
-    name.addEventListener("click", (e) => {
-      e.preventDefault();
-      ctx.openItem(p.id);
-    });
-    if (word) h(head2, "span", "mn-mbp-word", word);
-    h(say, "div", "mn-mbp-text", p.when ? `${p.when}\uFF1A${text}` : text);
-  };
-  const cell = (row2, p, word, opts = {}) => {
-    const btn = h(row2, "button", "mn-mbp-cell");
-    const ic = itemIcon(btn, c, ctx, p.id, opts.destiny);
-    if (opts.caption !== void 0) h(btn, "span", "mn-mbp-cap", opts.caption);
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      explain(p, word, ic, opts.text);
-    });
-    return ic;
-  };
-  const line = (label) => {
-    const r = h(bar, "div", "mn-mbp-row");
-    h(r, "span", "mn-mbp-label", label);
-    return h(r, "div", "mn-mbp-icons");
-  };
+  const box = h(root, "div", "mn-mbp-box");
+  const head2 = (parent, label) => h(parent, "div", "mn-mbp-h", label);
+  const open = (el, id) => el.addEventListener("click", (e) => {
+    e.preventDefault();
+    ctx.openItem(id);
+  });
   const draw = (n) => {
     const st = b.styles[n];
     how.setText(st.why || (st.games ? "" : "\u4F9D\u6280\u80FD\u7D44\u63A8\u7B97\u7684\u51FA\u88DD"));
-    bar.empty();
-    const core = line("\u6838\u5FC3");
-    let first = null;
-    st.core.forEach((p, i) => {
-      if (i) h(core, "span", "mn-mbp-arrow", "\u203A");
-      const ic = cell(core, p, `\u7B2C ${i + 1} \u4EF6`);
-      first ?? (first = ic);
-    });
+    box.empty();
+    const pairs = [st.core, ...st.alts ?? []];
+    const set = h(box, "div", "mn-mbp-sec");
+    head2(set, "\u524D\u5169\u4EF6");
+    const big = h(set, "div", "mn-mbp-pair");
+    const others = h(set, "div", "mn-mbp-alts");
+    const showPair = (k) => {
+      big.empty();
+      pairs[k].forEach((p, i) => {
+        if (i) h(big, "span", "mn-mbp-plus", "+");
+        const btn = h(big, "button", "mn-mbp-big");
+        itemIcon(btn, c, ctx, p.id);
+        h(btn, "span", "mn-mbp-bn", name(p.id));
+        open(btn, p.id);
+      });
+      others.empty();
+      if (pairs.length < 2) return;
+      h(others, "span", "mn-mbp-or", "\u4E5F\u53EF\u4EE5");
+      pairs.forEach((pair, j) => {
+        if (j === k) return;
+        const btn = h(others, "button", "mn-mbp-alt");
+        pair.forEach((p, i) => {
+          if (i) h(btn, "span", "mn-mbp-plus is-small", "+");
+          itemIcon(btn, c, ctx, p.id);
+        });
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          showPair(j);
+        });
+      });
+    };
+    showPair(0);
     if (st.third.length) {
-      const third = line("\u7B2C\u4E09");
-      for (const p of st.third) cell(third, p, "\u7B2C\u4E09\u4EF6", { text: `\u6838\u5FC3\u5169\u4EF6\u4E4B\u5F8C\u6700\u5E38\u63A5\u7684\u7B2C\u4E09\u4EF6\uFF1A${p.reason}` });
+      const sec = h(box, "div", "mn-mbp-sec");
+      head2(sec, "\u7B2C\u4E09\u4EF6");
+      for (const p of st.third) {
+        const row2 = h(sec, "button", "mn-mbp-third");
+        itemIcon(row2, c, ctx, p.id);
+        const words = h(row2, "div", "mn-mbp-tw");
+        const top = h(words, "div", "mn-mbp-tn");
+        h(top, "span", "", name(p.id));
+        if (p.need) h(top, "span", "mn-mbp-word", p.need);
+        h(words, "div", "mn-mbp-text", p.reason);
+        open(row2, p.id);
+      }
     }
-    if (st.swaps.length) {
-      const swap = line("\u53EF\u63DB");
-      for (const p of st.swaps) cell(swap, p, "\u53EF\u63DB", { text: `\u53EF\u4EE5\u63DB\u6389\u6838\u5FC3\u5169\u4EF6\u7684\u5176\u4E2D\u4E00\u4EF6\uFF1A${p.reason}` });
-    }
+    let lit = null;
+    const say = h(box, "div", "mn-mbp-say");
+    const explain = (p, ic, word, text = p.reason) => {
+      lit?.removeClass("is-lit");
+      lit = ic;
+      ic.addClass("is-lit");
+      say.empty();
+      const top = h(say, "div", "mn-mbp-tn");
+      const nm = h(top, "button", "mn-mbp-open", name(p.id));
+      open(nm, p.id);
+      if (word) h(top, "span", "mn-mbp-word", word);
+      h(say, "div", "mn-mbp-text", p.when ? `${p.when}\uFF1A${text}` : text);
+    };
+    const cell = (row2, p, word, caption, opts = {}) => {
+      const btn = h(row2, "button", "mn-mbp-cell");
+      const ic = itemIcon(btn, c, ctx, p.id, opts.destiny);
+      if (caption) h(btn, "span", "mn-mbp-cap", caption);
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        explain(p, ic, word, opts.text);
+      });
+      return ic;
+    };
+    let firstPool = null;
     if (st.late.length) {
-      const late = line("\u5F8C\u7E8C");
-      for (const p of st.late) cell(late, p, p.when ? "\u770B\u60C5\u6CC1" : p.need ?? "", { caption: p.when ? "\u770B\u60C5\u6CC1" : p.need ?? "" });
+      const sec = h(box, "div", "mn-mbp-sec");
+      head2(sec, "4\u20136 \u4EF6");
+      const groups = /* @__PURE__ */ new Map();
+      for (const p of st.late) {
+        const k = p.when ? "\u770B\u60C5\u6CC1" : p.need || "\u8F38\u51FA";
+        groups.set(k, [...groups.get(k) ?? [], p]);
+      }
+      const keys = [...groups.keys()].sort((a, z) => POOL_ORDER.indexOf(a) - POOL_ORDER.indexOf(z));
+      for (const k of keys) {
+        const row2 = h(sec, "div", "mn-mbp-grp");
+        h(row2, "span", "mn-mbp-label", k);
+        const icons = h(row2, "div", "mn-mbp-icons");
+        for (const p of groups.get(k) ?? []) {
+          const ic = cell(icons, p, k, p.when ? p.when.replace(/時$/, "") : "");
+          firstPool ?? (firstPool = [p, ic, k]);
+        }
+      }
     }
-    const last = line("\u978B\u5B50");
-    if (st.boots) cell(last, st.boots, st.boots.need ?? "", { caption: st.boots.need ?? "" });
+    box.appendChild(say);
+    const foot = h(box, "div", "mn-mbp-foot");
+    let firstFoot = null;
+    if (st.boots) firstFoot = [st.boots, cell(foot, st.boots, "\u978B\u5B50", st.boots.need ?? ""), "\u978B\u5B50"];
     const grows = (st.destiny.grows ?? []).slice(0, 3);
-    h(last, "span", "mn-mbp-label is-inner", "\u547D\u5B9A");
-    cell(last, st.destiny, "\u547D\u5B9A\u6B66\u5668", {
+    cell(foot, st.destiny, "\u547D\u5B9A\u6B66\u5668", `\u547D\u5B9A ${grows.slice(0, 2).join("\u3001")}`.trim(), {
       destiny: true,
-      caption: grows.slice(0, 2).join("\u3001"),
       text: `\u62FF\u5230\u547D\u5B9A\u6B66\u5668\u6642\u7B2C\u4E00\u4EF6\u51FA\u5B83\uFF0C\u6BCF\u6B21\u53C3\u8207\u64CA\u6BBA${grows.length ? grows.join("\u3001") : "\u5C6C\u6027"}\u6C38\u4E45\u63D0\u5347\u3002${st.destiny.reason}`
     });
     for (const s of b.special) {
-      const row2 = line("\u7279\u6B8A");
-      for (const id of s.items) cell(row2, { id, reason: s.note }, s.name);
+      const sec = h(box, "div", "mn-mbp-sec");
+      head2(sec, s.name);
+      const row2 = h(sec, "div", "mn-mbp-icons is-center");
+      for (const id of s.items) cell(row2, { id, reason: s.note }, s.name, "");
     }
-    if (first) explain(st.core[0], "\u7B2C 1 \u4EF6", first);
+    const start = firstPool ?? firstFoot;
+    if (start) explain(start[0], start[1], start[2]);
   };
   draw(0);
 }

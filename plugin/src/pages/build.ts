@@ -63,75 +63,126 @@ function section(body: HTMLElement, title: string): void { h(body, "div", "mn-gh
 // the border the game puts on the item 命定武器 grows (CommunityDragon, shown by address)
 const DESTINY_FRAME = "https://raw.communitydragon.org/latest/game/assets/items/itemmodifiers/strawberry_weapon_evolve_border.png";
 
-// The Mayhem builds (tools/build_tiers.py), laid out like 技能: the play styles as words and how the chosen one plays at the top, what
-// the tapped item does under them, and the items as a bar at the bottom (at the thumb): 核心 (the first two), 第三 (choices for the
-// third), 可換 (items other pairs put in place of one of the two), 後續 (items four to six, a word each for what it adds), 鞋子 and 命定武器
+// The Mayhem builds (tools/build_tiers.py), read top to bottom in buying order (Layouts, 出裝, option A 三段, Zaviel 2026-11-03): the
+// play style words (a tap on a side switches too) and how it plays; 前兩件, the pair as a set (big), with 也可以, other pairs of the
+// style (small; a tap swaps one into the big pair); 第三件, a row each: icon, name, what it is for and why; 4–6 件, grouped by what
+// they add, a tap shows the item's why under them; 鞋子 and 命定武器 at the foot. A tap on a pair's or a third item's name opens it.
+const POOL_ORDER = ["輸出", "生存", "穿透", "功能", "機動", "重創", "看情況"];
 function mayhemBuilds(page: HTMLElement, c: Champion, ctx: PageCtx, b: ChampBuilds): void {
     const store = ctx.plugin.store;
+    const name = (id: number) => store.item(id)?.name ?? `#${id}`;
     const root = h(page, "div", "mn-mbp");
     styleSwitch(root, b.styles, (s) => draw(b.styles.indexOf(s)));   // the words, and a tap on the page's left or right side
     const how = h(root, "div", "mn-mbp-how");
-    const say = h(root, "div", "mn-mbp-say");
-    const bar = h(root, "div", "mn-mbp-bar");
-    let lit: HTMLElement | null = null;
-    // the top: the tapped item's name, what it adds (a word) and why; a tap on the name opens the item
-    const explain = (p: BuildPick, word: string, icon: HTMLElement, text = p.reason) => {
-        lit?.removeClass("is-lit");
-        lit = icon;
-        icon.addClass("is-lit");
-        say.empty();
-        const head = h(say, "div", "mn-mbp-name");
-        const name = h(head, "button", "mn-mbp-open", store.item(p.id)?.name ?? `#${p.id}`);
-        name.addEventListener("click", (e) => { e.preventDefault(); ctx.openItem(p.id); });
-        if (word) h(head, "span", "mn-mbp-word", word);
-        h(say, "div", "mn-mbp-text", p.when ? `${p.when}：${text}` : text);
-    };
-    const cell = (row: HTMLElement, p: BuildPick, word: string, opts: { text?: string; destiny?: boolean; caption?: string } = {}) => {
-        const btn = h(row, "button", "mn-mbp-cell");
-        const ic = itemIcon(btn, c, ctx, p.id, opts.destiny);
-        if (opts.caption !== undefined) h(btn, "span", "mn-mbp-cap", opts.caption);
-        btn.addEventListener("click", (e) => { e.preventDefault(); explain(p, word, ic, opts.text); });
-        return ic;
-    };
-    const line = (label: string) => {
-        const r = h(bar, "div", "mn-mbp-row");
-        h(r, "span", "mn-mbp-label", label);
-        return h(r, "div", "mn-mbp-icons");
-    };
+    const box = h(root, "div", "mn-mbp-box");
+    const head = (parent: HTMLElement, label: string) => h(parent, "div", "mn-mbp-h", label);
+    const open = (el: HTMLElement, id: number) => el.addEventListener("click", (e) => { e.preventDefault(); ctx.openItem(id); });
     const draw = (n: number) => {
         const st = b.styles[n];
         how.setText(st.why || (st.games ? "" : "依技能組推算的出裝"));
-        bar.empty();
-        const core = line("核心");
-        let first: HTMLElement | null = null;
-        st.core.forEach((p, i) => {
-            if (i) h(core, "span", "mn-mbp-arrow", "›");
-            const ic = cell(core, p, `第 ${i + 1} 件`);
-            first ??= ic;
-        });
+        box.empty();
+
+        // 前兩件: the big pair, the other pairs under it
+        const pairs = [st.core, ...(st.alts ?? [])];
+        const set = h(box, "div", "mn-mbp-sec");
+        head(set, "前兩件");
+        const big = h(set, "div", "mn-mbp-pair");
+        const others = h(set, "div", "mn-mbp-alts");
+        const showPair = (k: number) => {
+            big.empty();
+            pairs[k].forEach((p, i) => {
+                if (i) h(big, "span", "mn-mbp-plus", "+");
+                const btn = h(big, "button", "mn-mbp-big");
+                itemIcon(btn, c, ctx, p.id);
+                h(btn, "span", "mn-mbp-bn", name(p.id));
+                open(btn, p.id);
+            });
+            others.empty();
+            if (pairs.length < 2) return;
+            h(others, "span", "mn-mbp-or", "也可以");
+            pairs.forEach((pair, j) => {
+                if (j === k) return;
+                const btn = h(others, "button", "mn-mbp-alt");
+                pair.forEach((p, i) => { if (i) h(btn, "span", "mn-mbp-plus is-small", "+"); itemIcon(btn, c, ctx, p.id); });
+                btn.addEventListener("click", (e) => { e.preventDefault(); showPair(j); });
+            });
+        };
+        showPair(0);
+
+        // 第三件: a row each, what it is for and why
         if (st.third.length) {
-            const third = line("第三");
-            for (const p of st.third) cell(third, p, "第三件", { text: `核心兩件之後最常接的第三件：${p.reason}` });
+            const sec = h(box, "div", "mn-mbp-sec");
+            head(sec, "第三件");
+            for (const p of st.third) {
+                const row = h(sec, "button", "mn-mbp-third");
+                itemIcon(row, c, ctx, p.id);
+                const words = h(row, "div", "mn-mbp-tw");
+                const top = h(words, "div", "mn-mbp-tn");
+                h(top, "span", "", name(p.id));
+                if (p.need) h(top, "span", "mn-mbp-word", p.need);
+                h(words, "div", "mn-mbp-text", p.reason);
+                open(row, p.id);
+            }
         }
-        if (st.swaps.length) {
-            const swap = line("可換");
-            for (const p of st.swaps) cell(swap, p, "可換", { text: `可以換掉核心兩件的其中一件：${p.reason}` });
-        }
+
+        // 4–6 件: grouped by what they add; a tap shows the why under the pool
+        let lit: HTMLElement | null = null;
+        const say = h(box, "div", "mn-mbp-say");
+        const explain = (p: BuildPick, ic: HTMLElement, word: string, text = p.reason) => {
+            lit?.removeClass("is-lit");
+            lit = ic;
+            ic.addClass("is-lit");
+            say.empty();
+            const top = h(say, "div", "mn-mbp-tn");
+            const nm = h(top, "button", "mn-mbp-open", name(p.id));
+            open(nm, p.id);
+            if (word) h(top, "span", "mn-mbp-word", word);
+            h(say, "div", "mn-mbp-text", p.when ? `${p.when}：${text}` : text);
+        };
+        const cell = (row: HTMLElement, p: BuildPick, word: string, caption: string, opts: { text?: string; destiny?: boolean } = {}) => {
+            const btn = h(row, "button", "mn-mbp-cell");
+            const ic = itemIcon(btn, c, ctx, p.id, opts.destiny);
+            if (caption) h(btn, "span", "mn-mbp-cap", caption);
+            btn.addEventListener("click", (e) => { e.preventDefault(); explain(p, ic, word, opts.text); });
+            return ic;
+        };
+        let firstPool: [BuildPick, HTMLElement, string] | null = null;
         if (st.late.length) {
-            const late = line("後續");
-            for (const p of st.late) cell(late, p, p.when ? "看情況" : p.need ?? "", { caption: p.when ? "看情況" : p.need ?? "" });
+            const sec = h(box, "div", "mn-mbp-sec");
+            head(sec, "4–6 件");
+            const groups = new Map<string, BuildPick[]>();
+            for (const p of st.late) {
+                const k = p.when ? "看情況" : p.need || "輸出";
+                groups.set(k, [...(groups.get(k) ?? []), p]);
+            }
+            const keys = [...groups.keys()].sort((a, z) => POOL_ORDER.indexOf(a) - POOL_ORDER.indexOf(z));
+            for (const k of keys) {
+                const row = h(sec, "div", "mn-mbp-grp");
+                h(row, "span", "mn-mbp-label", k);
+                const icons = h(row, "div", "mn-mbp-icons");
+                for (const p of groups.get(k) ?? []) {
+                    const ic = cell(icons, p, k, p.when ? p.when.replace(/時$/, "") : "");
+                    firstPool ??= [p, ic, k];
+                }
+            }
         }
-        const last = line("鞋子");
-        if (st.boots) cell(last, st.boots, st.boots.need ?? "", { caption: st.boots.need ?? "" });
+        box.appendChild(say);   // the why sits under the pool
+
+        // 鞋子 and 命定武器
+        const foot = h(box, "div", "mn-mbp-foot");
+        let firstFoot: [BuildPick, HTMLElement, string] | null = null;
+        if (st.boots) firstFoot = [st.boots, cell(foot, st.boots, "鞋子", st.boots.need ?? ""), "鞋子"];
         const grows = (st.destiny.grows ?? []).slice(0, 3);
-        h(last, "span", "mn-mbp-label is-inner", "命定");
-        cell(last, st.destiny, "命定武器", { destiny: true, caption: grows.slice(0, 2).join("、"),
+        cell(foot, st.destiny, "命定武器", `命定 ${grows.slice(0, 2).join("、")}`.trim(), { destiny: true,
             text: `拿到命定武器時第一件出它，每次參與擊殺${grows.length ? grows.join("、") : "屬性"}永久提升。${st.destiny.reason}` });
         for (const s of b.special) {   // hand builds the games cannot show (鎖子甲 ×6)
-            const row = line("特殊");
-            for (const id of s.items) cell(row, { id, reason: s.note }, s.name);
+            const sec = h(box, "div", "mn-mbp-sec");
+            head(sec, s.name);
+            const row = h(sec, "div", "mn-mbp-icons is-center");
+            for (const id of s.items) cell(row, { id, reason: s.note }, s.name, "");
         }
-        if (first) explain(st.core[0], "第 1 件", first);
+        const start = firstPool ?? firstFoot;
+        if (start) explain(start[0], start[1], start[2]);
     };
     draw(0);
 }

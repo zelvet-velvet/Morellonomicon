@@ -52,7 +52,8 @@ export interface AugTierStyle { name: string; tiers: AugTier[]; none: { id: numb
 // found in the games): how it plays, the first two items (`games` false: from the reasoning alone), choices for the third, items
 // other pairs have in place of one of the two, items four to six with what each adds, boots and the item to take with 命定武器; and hand builds the games cannot show
 export interface BuildPick { id: number; reason: string; need?: string; when?: string; grows?: string[] }
-export interface BuildStyle { name: string; why: string; games: boolean; status: string; core: BuildPick[]; third: BuildPick[]; swaps: BuildPick[]; late: BuildPick[]; boots: BuildPick | null; destiny: BuildPick }
+// alts: other first-two pairs of the style
+export interface BuildStyle { name: string; why: string; games: boolean; status: string; core: BuildPick[]; alts?: BuildPick[][]; third: BuildPick[]; late: BuildPick[]; boots: BuildPick | null; destiny: BuildPick }
 export interface ChampBuilds { styles: BuildStyle[]; special: { name: string; items: number[]; note: string }[] }
 
 export interface Augment {

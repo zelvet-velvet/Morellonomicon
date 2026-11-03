@@ -945,8 +945,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
    own keep that fill. (button + class + state outranks Obsidian's button:not(.clickable-icon):hover.) */
 .mn-app button { -webkit-tap-highlight-color: transparent; }
 .mn-app button:not(.mn-seg-b.is-on):is(:hover, :active, :focus, :focus-visible) { box-shadow: none; outline: none; }   /* a chosen segment keeps its own shadow */
-.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-mbp-cell, .mn-mbp-open, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face, .mn-btn, .mn-more-link, .mn-aug-tile, .mn-tsw-b),
-.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-mbp-cell, .mn-mbp-open, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face, .mn-btn, .mn-more-link, .mn-aug-tile, .mn-tsw-b):is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }
+.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-mbp-cell, .mn-mbp-open, .mn-mbp-big, .mn-mbp-alt, .mn-mbp-third, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face, .mn-btn, .mn-more-link, .mn-aug-tile, .mn-tsw-b),
+.mn-app button:is(.mn-sl-ic, .mn-skill-box, .mn-ip-more, .mn-tree-item, .mn-item, .mn-mbp-cell, .mn-mbp-open, .mn-mbp-big, .mn-mbp-alt, .mn-mbp-third, .mn-tip-v, .mn-lg-btn, .mn-ftg, .mn-scc, .mn-tg:not(.is-on), .mn-tile, .mn-face, .mn-btn, .mn-more-link, .mn-aug-tile, .mn-tsw-b):is(:hover, :active, :focus, :focus-visible) { background-color: transparent; }
 /* the press look of an icon button or a text link (Back, the palette and mode buttons, 全部 ›, an augment): it fades and shrinks a
    little while held, never a grey disc that sticks after the tap and covers the title next to it (Design Rules, Controls) */
 .mn-app button:is(.mn-btn, .mn-more-link, .mn-aug-tile) { transition: opacity 0.12s, transform 0.12s; }
@@ -1737,27 +1737,44 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 :is(.mn-champ, .mn-part) .mn-chg { background: none; border: 0; border-radius: 0; }
 :is(.mn-champ, .mn-part) .mn-chg-diff { background: none; padding: 0 0 0 10px; border-left: 2px solid var(--mn-line); border-radius: 0; }
 .mn-bt-links { display: flex; justify-content: center; gap: 18px; }
-/* 出裝's Mayhem builds, laid out like 技能: the play style words and how it plays on top, the tapped item's name, word and why under
-   them, the item bar at the bottom (核心 › › , 可換, 後續 with a word under each, 鞋子 and 命定); no panels */
+/* 出裝's Mayhem builds, read in buying order (Layouts option A 三段): the style words and how it plays, 前兩件 (the pair big, other pairs
+   small under it), 第三件 rows, the 4–6 pool grouped by what it adds with the tapped item's why, 鞋子 and 命定; centred, no panels */
 .mn-cpa-page.is-build .mn-cpa-body > .mn-mbp { flex: 1 0 auto; }
-.mn-mbp { display: flex; flex-direction: column; gap: 10px; min-height: 100%; }
-.mn-mbp-how { font-size: 15px; line-height: 1.5; color: var(--mn-text); font-weight: 600; }
+.mn-mbp { display: flex; flex-direction: column; justify-content: center; gap: 12px; min-height: 100%; }
+.mn-mbp-how { font-size: 15px; line-height: 1.5; color: var(--mn-text); font-weight: 600; text-align: center; }
 .mn-mbp-how:empty { display: none; }
-.mn-mbp-say { display: flex; flex-direction: column; gap: 4px; }
-.mn-mbp-name { display: flex; align-items: baseline; gap: 10px; }
-.mn-app .mn-mbp-open { width: auto; height: auto; padding: 0; border: 0; background: none; box-shadow: none; font-size: 18px; font-weight: 800; color: var(--mn-text); }
-.mn-mbp-word { font-size: 12.5px; font-weight: 700; color: var(--mn-accent); }
-.mn-mbp-text { font-size: 14px; line-height: 1.55; color: var(--mn-muted); }
-.mn-mbp-bar { margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding-top: 8px; }
-.mn-mbp-row { display: grid; grid-template-columns: 34px 1fr; align-items: start; gap: 8px; }
-.mn-mbp-row > .mn-mbp-label { line-height: 42px; }
-.mn-mbp-label { font-size: 12px; font-weight: 700; color: var(--mn-muted); }
-.mn-mbp-label.is-inner { margin-left: 14px; line-height: 42px; }
-.mn-mbp-icons { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
-.mn-mbp-arrow { align-self: center; color: var(--mn-muted); font-size: 15px; margin: 0 -3px; }
+.mn-mbp-box { display: flex; flex-direction: column; gap: 14px; }
+.mn-mbp-sec { display: flex; flex-direction: column; gap: 8px; }
+.mn-mbp-h { display: flex; align-items: center; gap: 10px; font-size: 12.5px; font-weight: 800; color: var(--mn-muted); }
+.mn-mbp-h::after { content: ""; flex: 1; height: 1px; background: var(--mn-line); }
+.mn-mbp-pair { display: flex; justify-content: center; align-items: flex-start; gap: 14px; }
+.mn-app .mn-mbp-big { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 96px; height: auto; padding: 0; border: 0; background: none; box-shadow: none; }
+.mn-mbp .mn-mbp-big .mn-mb-ic { width: 56px; height: 56px; }
+.mn-mbp-bn { font-size: 13px; font-weight: 700; color: var(--mn-text); line-height: 1.3; text-align: center; white-space: normal; }
+.mn-mbp-plus { align-self: center; margin-top: -18px; font-size: 20px; font-weight: 700; color: var(--mn-muted); }
+.mn-mbp-plus.is-small { margin: 0 1px; font-size: 13px; }
+.mn-mbp-alts { display: flex; justify-content: center; align-items: center; gap: 14px; flex-wrap: wrap; }
+.mn-mbp-alts:empty { display: none; }
+.mn-mbp-or { font-size: 12px; font-weight: 700; color: var(--mn-muted); }
+.mn-app .mn-mbp-alt { display: flex; align-items: center; gap: 2px; width: auto; height: auto; padding: 0; border: 0; background: none; box-shadow: none; }
+.mn-mbp .mn-mbp-alt .mn-mb-ic { width: 32px; height: 32px; }
+.mn-app .mn-mbp-third { display: flex; align-items: center; gap: 12px; width: 100%; height: auto; padding: 0; border: 0; background: none; box-shadow: none; text-align: left; }
+.mn-mbp-tw { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.mn-mbp-tn { display: flex; align-items: baseline; gap: 8px; font-size: 14.5px; font-weight: 700; color: var(--mn-text); }
+.mn-app .mn-mbp-open { width: auto; height: auto; padding: 0; border: 0; background: none; box-shadow: none; font-size: 14.5px; font-weight: 700; color: var(--mn-text); }
+.mn-mbp-word { font-size: 12px; font-weight: 700; color: var(--mn-accent); }
+.mn-mbp-text { font-size: 13px; line-height: 1.45; color: var(--mn-muted); white-space: normal; }
+.mn-mbp-grp { display: grid; grid-template-columns: 44px 1fr; align-items: start; gap: 8px; }
+.mn-mbp-grp > .mn-mbp-label { line-height: 40px; }
+.mn-mbp-label { font-size: 12px; font-weight: 700; color: var(--mn-accent); }
+.mn-mbp-icons { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+.mn-mbp-icons.is-center { justify-content: center; }
+.mn-mbp-say { display: flex; flex-direction: column; gap: 2px; min-height: 42px; }
+.mn-mbp-say:empty { display: none; }
+.mn-mbp-foot { display: flex; justify-content: center; align-items: flex-start; gap: 28px; }
 .mn-app .mn-mbp-cell { display: flex; flex-direction: column; align-items: center; gap: 3px; width: auto; height: auto; padding: 0; border: 0; background: none; box-shadow: none; }
-.mn-mbp-cap { font-size: 11px; font-weight: 600; color: var(--mn-accent); white-space: nowrap; }
-.mn-mbp .mn-mb-ic { width: 42px; height: 42px; }
+.mn-mbp-cap { font-size: 11px; font-weight: 600; color: var(--mn-muted); white-space: nowrap; }
+.mn-mbp .mn-mb-ic { width: 40px; height: 40px; }
 .mn-mb-ic { position: relative; display: block; width: 34px; height: 34px; flex: none; border-radius: 6px; transition: transform 0.12s, box-shadow 0.12s; }
 .mn-mb-ic img { display: block; width: 100%; height: 100%; border-radius: 6px; border: 1px solid color-mix(in srgb, #d9b15c 45%, transparent); box-sizing: border-box; }
 .mn-mb-ic.is-lit { box-shadow: 0 0 0 2px var(--mn-accent); transform: translateY(-2px); }
