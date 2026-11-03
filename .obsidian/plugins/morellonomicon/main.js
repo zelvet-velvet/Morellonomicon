@@ -2122,7 +2122,7 @@ var DESTINY_FRAME = "https://raw.communitydragon.org/latest/game/assets/items/it
 function mayhemBuilds(page2, c, ctx, b) {
   const store = ctx.plugin.store;
   const root = h(page2, "div", "mn-mbp");
-  if (b.styles.length > 1) textSwitch(root, b.styles.map((s, i) => [String(i), s.name]), "0", (id) => draw(Number(id)));
+  styleSwitch(root, b.styles, (s) => draw(b.styles.indexOf(s)));
   const how = h(root, "div", "mn-mbp-how");
   const say = h(root, "div", "mn-mbp-say");
   const bar = h(root, "div", "mn-mbp-bar");

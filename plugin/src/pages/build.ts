@@ -1,5 +1,5 @@
 import type { BuildPick, ChampBuilds, Champion } from "../data/store";
-import { chip, empty, h, moreLink, goes, textSwitch } from "../ui";
+import { chip, empty, h, moreLink, goes, styleSwitch } from "../ui";
 import { metaLine } from "./fresh";
 import type { PageCtx } from "./index";
 import { art } from "../media";
@@ -69,7 +69,7 @@ const DESTINY_FRAME = "https://raw.communitydragon.org/latest/game/assets/items/
 function mayhemBuilds(page: HTMLElement, c: Champion, ctx: PageCtx, b: ChampBuilds): void {
     const store = ctx.plugin.store;
     const root = h(page, "div", "mn-mbp");
-    if (b.styles.length > 1) textSwitch(root, b.styles.map((s, i) => [String(i), s.name]), "0", (id) => draw(Number(id)));
+    styleSwitch(root, b.styles, (s) => draw(b.styles.indexOf(s)));   // the words, and a tap on the page's left or right side
     const how = h(root, "div", "mn-mbp-how");
     const say = h(root, "div", "mn-mbp-say");
     const bar = h(root, "div", "mn-mbp-bar");
