@@ -430,18 +430,20 @@ const TIER_ORDER = ["S", "A", "B", "C"];
 const RARITY_ORDER = ["稜鏡", "金", "銀", "五殺"];   // inside a tier: prismatic first, then gold, silver, the Pentakill set
 const AUG_COLS = 4;   // icons per row in the champion page family's augment grid
 const MODEL_NOTE = "依英雄的技能機制推理合不合，再對照 resg.top 的大混戰對局校正，和同稀有度的其他強化比較。點強化看原因。";
-function tierPicks(store: Store, c: Champion, style: AugTierStyle): (AugmentPick & { tier: string })[] {
-    const out: (AugmentPick & { tier: string })[] = [];
+type TierPick = AugmentPick & { tier: string; group: string; value: number };
+const rarityRank = (g: string) => { const i = RARITY_ORDER.indexOf(g); return i < 0 ? RARITY_ORDER.length : i; };
+function tierPicks(store: Store, c: Champion, style: AugTierStyle): TierPick[] {
+    const out: TierPick[] = [];
     for (const name of c.pinned) {
         const a = store.augments().find((x) => x.name === name);
-        if (a) out.push({ a, why: "置頂", score: 100, tier: "S" });
+        if (a) out.push({ a, why: "置頂", score: 100, tier: "S", group: "", value: Infinity });
     }
-    const rank = (g: string) => { const i = RARITY_ORDER.indexOf(g); return i < 0 ? RARITY_ORDER.length : i; };
+    const rank = rarityRank;
     const rows = [...style.tiers].sort((x, y) => TIER_ORDER.indexOf(x.tier) - TIER_ORDER.indexOf(y.tier) || rank(x.group) - rank(y.group) || y.score - x.score);
     for (const t of rows) {
         const a = store.augment(t.id);
         if (!a || c.avoid.includes(a.name) || c.pinned.includes(a.name)) continue;
-        out.push({ a, why: t.reason, score: t.score, tier: t.tier });
+        out.push({ a, why: t.reason, score: t.score, tier: t.tier, group: t.group, value: t.value });
     }
     return out;
 }
@@ -469,15 +471,21 @@ function augmentsTop(body: HTMLElement, c: Champion, ctx: PageCtx, more: () => v
     const box = h(body, "div", "mn-cv-glance");
     const draw = (style: AugTierStyle) => {
         box.empty();
-        const picks = tierPicks(ctx.plugin.store, c, style).filter((p) => p.tier === "S");
+        // the best S augments across rarities (pinned first, then the score shared by all rarities), so the rows that fit keep them
+        const picks = tierPicks(ctx.plugin.store, c, style).filter((p) => p.tier === "S").sort((x, y) => y.value - x.value);
         if (!picks.length) { h(box, "p", "mn-cpa-empty", "沒有特別適合的強化。"); return; }
         const grid = augmentTiles(box, picks, ctx, { bare: true, champ: c.id });
-        // whole rows only: the last row goes while the grid does not fit (laid out even while the page is off to the side)
+        // whole rows only: the last row goes while the grid does not fit (laid out even while the page is off to the side); the ones
+        // kept are then shown by rarity (稜鏡, 金, 銀, 五殺), pinned first
         requestAnimationFrame(() => {
             while (box.scrollHeight > box.clientHeight + 1 && grid.childElementCount > AUG_COLS) {
                 const last = ((grid.childElementCount - 1) % AUG_COLS) + 1;
                 for (let i = 0; i < last; i++) grid.lastElementChild?.remove();
             }
+            const kept = picks.slice(0, grid.childElementCount);
+            kept.sort((x, y) => (x.value === Infinity ? -1 : 0) - (y.value === Infinity ? -1 : 0) || rarityRank(x.group) - rarityRank(y.group) || y.value - x.value);
+            box.empty();
+            augmentTiles(box, kept, ctx, { bare: true, champ: c.id });
         });
     };
     draw(styles[0]);

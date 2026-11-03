@@ -5485,21 +5485,22 @@ var TIER_ORDER = ["S", "A", "B", "C"];
 var RARITY_ORDER = ["\u7A1C\u93E1", "\u91D1", "\u9280", "\u4E94\u6BBA"];
 var AUG_COLS = 4;
 var MODEL_NOTE = "\u4F9D\u82F1\u96C4\u7684\u6280\u80FD\u6A5F\u5236\u63A8\u7406\u5408\u4E0D\u5408\uFF0C\u518D\u5C0D\u7167 resg.top \u7684\u5927\u6DF7\u6230\u5C0D\u5C40\u6821\u6B63\uFF0C\u548C\u540C\u7A00\u6709\u5EA6\u7684\u5176\u4ED6\u5F37\u5316\u6BD4\u8F03\u3002\u9EDE\u5F37\u5316\u770B\u539F\u56E0\u3002";
+var rarityRank = (g) => {
+  const i = RARITY_ORDER.indexOf(g);
+  return i < 0 ? RARITY_ORDER.length : i;
+};
 function tierPicks(store, c, style) {
   const out = [];
   for (const name of c.pinned) {
     const a = store.augments().find((x) => x.name === name);
-    if (a) out.push({ a, why: "\u7F6E\u9802", score: 100, tier: "S" });
+    if (a) out.push({ a, why: "\u7F6E\u9802", score: 100, tier: "S", group: "", value: Infinity });
   }
-  const rank = (g) => {
-    const i = RARITY_ORDER.indexOf(g);
-    return i < 0 ? RARITY_ORDER.length : i;
-  };
+  const rank = rarityRank;
   const rows = [...style.tiers].sort((x, y) => TIER_ORDER.indexOf(x.tier) - TIER_ORDER.indexOf(y.tier) || rank(x.group) - rank(y.group) || y.score - x.score);
   for (const t of rows) {
     const a = store.augment(t.id);
     if (!a || c.avoid.includes(a.name) || c.pinned.includes(a.name)) continue;
-    out.push({ a, why: t.reason, score: t.score, tier: t.tier });
+    out.push({ a, why: t.reason, score: t.score, tier: t.tier, group: t.group, value: t.value });
   }
   return out;
 }
@@ -5530,7 +5531,7 @@ function augmentsTop(body, c, ctx, more) {
   const box = h(body, "div", "mn-cv-glance");
   const draw = (style) => {
     box.empty();
-    const picks = tierPicks(ctx.plugin.store, c, style).filter((p) => p.tier === "S");
+    const picks = tierPicks(ctx.plugin.store, c, style).filter((p) => p.tier === "S").sort((x, y) => y.value - x.value);
     if (!picks.length) {
       h(box, "p", "mn-cpa-empty", "\u6C92\u6709\u7279\u5225\u9069\u5408\u7684\u5F37\u5316\u3002");
       return;
@@ -5541,6 +5542,10 @@ function augmentsTop(body, c, ctx, more) {
         const last = (grid.childElementCount - 1) % AUG_COLS + 1;
         for (let i = 0; i < last; i++) grid.lastElementChild?.remove();
       }
+      const kept = picks.slice(0, grid.childElementCount);
+      kept.sort((x, y) => (x.value === Infinity ? -1 : 0) - (y.value === Infinity ? -1 : 0) || rarityRank(x.group) - rarityRank(y.group) || y.value - x.value);
+      box.empty();
+      augmentTiles(box, kept, ctx, { bare: true, champ: c.id });
     });
   };
   draw(styles[0]);
