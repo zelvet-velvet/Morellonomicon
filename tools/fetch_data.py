@@ -388,7 +388,9 @@ def wanted_item(item_id, it, shop=None, normal_names=()):
         return False
     if len(item_id) > 4:
         return not item_id.startswith((ARAM_TWIN_PREFIX,) + RIFT_DUPLICATE_PREFIXES) and it["name"] not in normal_names
-    return shop is None or item_id in shop
+    # ARAM's own items (終末戰戟, 生命之索, 鬼使彎刀) are off CommunityDragon's shop list but sold in ARAM and Mayhem
+    aram_only = maps.get(ARAM_MAP) and not maps.get(RIFT_MAP) and "Consumable" not in it.get("tags", [])
+    return shop is None or item_id in shop or bool(aram_only)
 
 
 def shop_ids():
