@@ -9,6 +9,9 @@ sticker: lucide//activity
 > Kept by `/cmd-sync` / `/cmd-rollover` / `/cmd-notes-sync` (skills, table in `AGENTS.md`); the day notes in `Review/Log/` by `/cmd-journal`. Run `python3 -I tools/vault_status.py show` before reading this note; read only the section you change.
 
 ## 🚀 Today's Progress (2026-11-03)
+> [!abstract]+ Today
+> - **Handbook pile without corner slivers**: the full-screen deck leaves a little room around the card and the pile leans less, so the cards under it show whole instead of cut flat at the screen edge.
+> - **Gentler background prefetch**: the portraits cached after start-up come one at a time, so they never crowd a page or a swipe.
 
 ## 📅 Yesterday's Progress (2026-11-02)
 > [!abstract]- Yesterday
