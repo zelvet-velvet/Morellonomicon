@@ -1746,14 +1746,14 @@ function profileAxes(c) {
 }
 var uid = 0;
 function profileRadar(parent, axes, color, max = 10) {
-  const W2 = 300, H2 = 204, cx = W2 / 2, cy = 102, R = 66, LABEL = 22, n = axes.length;
+  const W = 300, H = 204, cx = W / 2, cy = 102, R = 66, LABEL = 22, n = axes.length;
   const pt = (i, r) => {
     const a = -Math.PI / 2 + i * 2 * Math.PI / n;
     return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
   };
   const poly = (r) => axes.map((_, i) => pt(i, r(i)).map((v) => v.toFixed(1)).join(",")).join(" ");
   const val = (i) => R * Math.max(0, Math.min(max, axes[i].value)) / max;
-  const root = svg(parent, "svg", { viewBox: `0 0 ${W2} ${H2}` }, "mn-radar mn-pro");
+  const root = svg(parent, "svg", { viewBox: `0 0 ${W} ${H}` }, "mn-radar mn-pro");
   root.style.setProperty("--rd", color);
   const id = `mn-grad-${++uid}`;
   const defs = svg(root, "defs");
@@ -6834,13 +6834,17 @@ function registerIconsNote(plugin) {
 
 // src/layoutnote.ts
 var import_obsidian10 = require("obsidian");
-var W = 390;
-var H = 844;
+var PW = 390;
+var PH = 844;
 var SCALE = 0.78;
 var SNAP = 2;
 var MARGIN = 16;
 var TABBAR = 64;
 var STATUS = 47;
+var SIDE_SAFE = 47;
+var SIDE_HOME = 21;
+var RAIL = 132;
+var SIDE_SCALE_PHONE = 0.42;
 var CARRIER = "\u4E2D\u83EF\u96FB\u4FE1";
 var SEP = " \xB7 ";
 var KINDS3 = {
@@ -6862,6 +6866,11 @@ var REPEAT_MS = 110;
 var uid2 = () => Math.random().toString(36).slice(2, 8);
 var snap = (v) => Math.round(v / SNAP) * SNAP;
 var clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+var dims = (page2) => page2.side ? { W: PH, H: PW } : { W: PW, H: PH };
+var roomOf = (page2) => {
+  const bar = page2.tabbar !== false;
+  return page2.side ? { x0: SIDE_SAFE, x1: PH - (bar ? RAIL : SIDE_SAFE) - MARGIN, y0: 0, y1: PW - SIDE_HOME } : { x0: MARGIN, x1: PW - MARGIN, y0: STATUS + 1, y1: PH - (bar ? TABBAR : 0) };
+};
 function parse3(source) {
   try {
     const v = JSON.parse(source || "[]");
@@ -6930,6 +6939,7 @@ function layoutBlock2(plugin, source, el, ctx) {
     Object.assign(page2, v);
     if (!page2.note) delete page2.note;
     if (!v.mock) delete page2.mock;
+    if (!v.side) delete page2.side;
     selected = null;
     draw();
   };
@@ -6995,7 +7005,9 @@ function layoutBlock2(plugin, source, el, ctx) {
     add.addEventListener("click", () => addPage("New page"));
   };
   const drawPage = (parent, page2) => {
-    const fig = parent.createDiv({ cls: "mn-lay-page" + (page2.mock ? " is-mock" : changedSinceSync(page2) ? " is-changed" : "") + (dirty(page2) ? " is-dirty" : "") });
+    const { W, H } = dims(page2), R = roomOf(page2);
+    const sc = page2.side && import_obsidian10.Platform.isMobile ? SIDE_SCALE_PHONE : SCALE;
+    const fig = parent.createDiv({ cls: "mn-lay-page" + (page2.side ? " is-side" : "") + (page2.mock ? " is-mock" : changedSinceSync(page2) ? " is-changed" : "") + (dirty(page2) ? " is-dirty" : "") });
     const head2 = fig.createDiv({ cls: "mn-lay-head" });
     const name = head2.createEl("input", { cls: "mn-lay-name", attr: { value: subOf(page2), placeholder: "Main page", spellcheck: "false" } });
     name.addEventListener("change", () => {
@@ -7035,6 +7047,19 @@ function layoutBlock2(plugin, source, el, ctx) {
       changed(page2);
       draw();
     }, page2.mock ? " is-mock" : "");
+    tool("smartphone", page2.side ? "Sideways: tap to turn upright" : "Upright: tap to turn sideways", true, () => {
+      if (page2.side) delete page2.side;
+      else page2.side = true;
+      const d = dims(page2);
+      for (const b of page2.blocks) {
+        b.w = Math.min(b.w, d.W);
+        b.h = Math.min(b.h, d.H);
+        b.x = clamp(b.x, 0, d.W - b.w);
+        b.y = clamp(b.y, 0, d.H - b.h);
+      }
+      changed(page2);
+      draw();
+    }, page2.side ? " is-side" : "");
     tool("save", "Save this page into the note", dirty(page2), () => savePage(page2), dirty(page2) ? " is-dirty" : "");
     const addB = head2.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": "Add a block" } });
     icon(addB, "square-plus");
@@ -7046,9 +7071,9 @@ function layoutBlock2(plugin, source, el, ctx) {
       }
       const pop = kindGrid(fig, "", (k) => {
         pop.remove();
-        const low = page2.blocks.reduce((m, x) => Math.max(m, x.y + x.h), STATUS + 8);
-        const y = clamp(snap(low + 8), 0, H - TABBAR - 80);
-        const b = { id: uid2(), label: `New ${KINDS3[k].name.split(" / ")[0]}`, kind: k, x: MARGIN, y, w: W - 2 * MARGIN, h: 80 };
+        const low = page2.blocks.reduce((m, x) => Math.max(m, x.y + x.h), R.y0 + 7);
+        const y = clamp(snap(low + 8), 0, R.y1 - 80);
+        const b = { id: uid2(), label: `New ${KINDS3[k].name.split(" / ")[0]}`, kind: k, x: R.x0, y, w: R.x1 - R.x0, h: 80 };
         page2.blocks.push(b);
         selected = { page: page2, block: b };
         changed(page2);
@@ -7079,24 +7104,30 @@ function layoutBlock2(plugin, source, el, ctx) {
       draw();
     });
     const phone = fig.createDiv({ cls: "mn-lay-phone" });
-    phone.style.width = `${W * SCALE}px`;
-    phone.style.height = `${H * SCALE}px`;
+    phone.style.width = `${W * sc}px`;
+    phone.style.height = `${H * sc}px`;
     const screen2 = phone.createDiv({ cls: "mn-lay-screen" });
-    screen2.style.transform = `scale(${SCALE})`;
+    screen2.style.transform = `scale(${sc})`;
     screen2.style.width = `${W}px`;
     screen2.style.height = `${H}px`;
-    const sb = screen2.createDiv({ cls: "mn-lay-status" });
-    sb.style.height = `${STATUS}px`;
-    sb.createSpan({ cls: "mn-lay-carrier", text: CARRIER });
-    sb.createDiv({ cls: "mn-lay-notch" });
-    const sig = sb.createDiv({ cls: "mn-lay-sig" });
-    const bars = sig.createSpan({ cls: "mn-lay-bars" });
-    for (let i = 0; i < 4; i++) bars.createEl("i");
-    sig.createSpan({ text: "5G" });
-    sig.createSpan({ cls: "mn-lay-batt" }).createEl("i");
+    if (page2.side) {
+      screen2.createDiv({ cls: "mn-lay-notch is-side" });
+      for (const c of ["is-l", "is-b", ...page2.tabbar !== false ? [] : ["is-r"]]) screen2.createDiv({ cls: "mn-lay-safe " + c });
+    } else {
+      const sb = screen2.createDiv({ cls: "mn-lay-status" });
+      sb.style.height = `${STATUS}px`;
+      sb.createSpan({ cls: "mn-lay-carrier", text: CARRIER });
+      sb.createDiv({ cls: "mn-lay-notch" });
+      const sig = sb.createDiv({ cls: "mn-lay-sig" });
+      const bars = sig.createSpan({ cls: "mn-lay-bars" });
+      for (let i = 0; i < 4; i++) bars.createEl("i");
+      sig.createSpan({ text: "5G" });
+      sig.createSpan({ cls: "mn-lay-batt" }).createEl("i");
+    }
     if (page2.tabbar !== false) {
-      const tb = screen2.createDiv({ cls: "mn-lay-tabbar" });
-      tb.style.height = `${TABBAR}px`;
+      const tb = screen2.createDiv({ cls: "mn-lay-tabbar" + (page2.side ? " is-side" : "") });
+      if (page2.side) tb.style.width = `${RAIL}px`;
+      else tb.style.height = `${TABBAR}px`;
       for (const t of MODES[plugin.settings.mode].tabs) {
         const c = tb.createSpan();
         icon(c, TAB_ICON[t]);
@@ -7128,7 +7159,7 @@ function layoutBlock2(plugin, source, el, ctx) {
         let moved = false;
         z.setPointerCapture(e.pointerId);
         const move = (m) => {
-          const dx = (m.clientX - x0) / SCALE, dy = (m.clientY - y0) / SCALE;
+          const dx = (m.clientX - x0) / sc, dy = (m.clientY - y0) / sc;
           if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
           if (resize) {
             b.w = clamp(snap(start.w + dx), 16, W - b.x);
@@ -7175,6 +7206,7 @@ function layoutBlock2(plugin, source, el, ctx) {
     return g;
   };
   const inspector = (fig, page2, b) => {
+    const { W, H } = dims(page2), R = roomOf(page2);
     openWin?.remove();
     const win = document.body.createDiv({ cls: "mn-lay-win" });
     openWin = win;
@@ -7265,7 +7297,7 @@ function layoutBlock2(plugin, source, el, ctx) {
         commit();
       }));
     });
-    const SAFE_TOP = STATUS + 1, SAFE_BOTTOM = H - (page2.tabbar !== false ? TABBAR : 0);
+    const SAFE_TOP = R.y0, SAFE_BOTTOM = R.y1;
     const align = win.createDiv({ cls: "mn-lay-align" });
     const al = (ic, label, act) => {
       const btn = align.createEl("button", { cls: "mn-lay-wbtn", attr: { "aria-label": label, title: label } });
@@ -7276,13 +7308,13 @@ function layoutBlock2(plugin, source, el, ctx) {
       });
     };
     al("align-start-vertical", "Align left (16 px margin)", () => {
-      b.x = MARGIN;
+      b.x = R.x0;
     });
     al("align-center-vertical", "Centre across", () => {
-      b.x = Math.round((W - b.w) / 2);
+      b.x = Math.round((R.x0 + R.x1 - b.w) / 2);
     });
     al("align-end-vertical", "Align right (16 px margin)", () => {
-      b.x = W - MARGIN - b.w;
+      b.x = R.x1 - b.w;
     });
     align.createSpan({ cls: "mn-lay-asep" });
     al("align-start-horizontal", "Align top (under the status bar)", () => {
@@ -7296,8 +7328,8 @@ function layoutBlock2(plugin, source, el, ctx) {
     });
     align.createSpan({ cls: "mn-lay-asep" });
     al("stretch-horizontal", "Full width (16 px margins)", () => {
-      b.x = MARGIN;
-      b.w = W - 2 * MARGIN;
+      b.x = R.x0;
+      b.w = R.x1 - R.x0;
     });
     al("layout-grid", "Snap every edge to 4 px", () => {
       const r = (v) => Math.round(v / 4) * 4;

@@ -8,12 +8,16 @@ import { icon } from "./ui";
 // its corner dragged to resize it, and tapped to rename it, change its kind, write a note or delete it; pages can be added, renamed and
 // removed. Each page keeps its own steps (back / forward), can be reset to what is saved, and is written into the note with its save
 // button, so Claude reads the exact layout from the repo. Unsaved pages survive the note being redrawn (they live in memory until saved).
-const W = 390, H = 844;          // the phone, in CSS px (an iPhone 14)
+const PW = 390, PH = 844;        // the phone, in CSS px (an iPhone 14); a sideways page is PH × PW
 const SCALE = 0.78;              // drawn at this size
 const SNAP = 2;                  // px the blocks snap to
 const MARGIN = 16;               // the side margins (Design Rules)
 const TABBAR = 64;               // the app's tab bar at the bottom of every page (drawn, not a block)
 const STATUS = 47;               // the phone's status bar with the notch at the top (drawn, not a block)
+// a phone turned sideways (owner, 2026-11-05): no status bar, the notch side and the far side keep their safe space, the home
+// indicator keeps a strip at the bottom, and the tab bar is a column on the right (as the app draws it: rail + its safe space)
+const SIDE_SAFE = 47, SIDE_HOME = 21, RAIL = 132;
+const SIDE_SCALE_PHONE = 0.42;  // 844 → 354 px, inside a phone's note
 const CARRIER = "中華電信";
 const SEP = " · ";               // a page's group and its own name (Home · linked)
 export const KINDS: Record<string, { color: string; name: string }> = {
@@ -24,7 +28,7 @@ export const KINDS: Record<string, { color: string; name: string }> = {
 const LAYER: Record<string, number> = { hero: 0, float: 3 };   // the rest are 1
 const SYNCED = "mn-layout-synced";   // the note's copy of the layout as Claude last synced it: changed pages are marked against it
 interface Block { id: string; label: string; kind: string; x: number; y: number; w: number; h: number; note?: string }
-interface Page { id: string; name: string; note?: string; tabbar?: boolean; mock?: boolean; blocks: Block[] }   // mock: a proposal by Claude, not built yet (a light blue frame)
+interface Page { id: string; name: string; note?: string; tabbar?: boolean; mock?: boolean; side?: boolean; blocks: Block[] }   // mock: a proposal by Claude, not built yet (a light blue frame); side: the phone turned sideways
 
 // each page's unsaved state and steps, by note and page id: kept here so a redraw of the note (after a save) does not lose them
 interface Steps { past: string[]; future: string[]; last: string; home: string }   // home: the mn-layout block the page belongs to
@@ -37,6 +41,15 @@ const REPEAT_MS = 110;           // a held − / + repeats this often
 const uid = () => Math.random().toString(36).slice(2, 8);
 const snap = (v: number) => Math.round(v / SNAP) * SNAP;
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+// a page's screen size and its room: the margins (16 px inside the safe space) across, under the status bar and over the tab
+// bar down (sideways: the tab bar is the rail on the right, the bottom keeps the home indicator's strip)
+const dims = (page: Page) => (page.side ? { W: PH, H: PW } : { W: PW, H: PH });
+const roomOf = (page: Page) => {
+    const bar = page.tabbar !== false;
+    return page.side
+        ? { x0: SIDE_SAFE, x1: PH - (bar ? RAIL : SIDE_SAFE) - MARGIN, y0: 0, y1: PW - SIDE_HOME }
+        : { x0: MARGIN, x1: PW - MARGIN, y0: STATUS + 1, y1: PH - (bar ? TABBAR : 0) };
+};
 
 function parse(source: string): Page[] {
     try { const v = JSON.parse(source || "[]") as Page[]; return Array.isArray(v) ? v : []; } catch { return []; }
@@ -90,7 +103,7 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
         if (now === s.last) return;
         s.past.push(s.last); s.last = now; s.future = [];
     };
-    const goTo = (page: Page, json: string) => { const v = JSON.parse(json) as Page; Object.assign(page, v); if (!page.note) delete page.note; if (!v.mock) delete page.mock; selected = null; draw(); };
+    const goTo = (page: Page, json: string) => { const v = JSON.parse(json) as Page; Object.assign(page, v); if (!page.note) delete page.note; if (!v.mock) delete page.mock; if (!v.side) delete page.side; selected = null; draw(); };
     const dirty = (page: Page) => (steps.get(page.id)?.last ?? JSON.stringify(page)) !== savedJson(page.id);
     // save one page: the note gets this page as it is now, the other pages as they were saved
     const savePage = (page: Page) => {
@@ -151,7 +164,10 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
     };
 
     const drawPage = (parent: HTMLElement, page: Page) => {
-        const fig = parent.createDiv({ cls: "mn-lay-page" + (page.mock ? " is-mock" : changedSinceSync(page) ? " is-changed" : "") + (dirty(page) ? " is-dirty" : "") });
+        const { W, H } = dims(page), R = roomOf(page);
+        // sideways pages are drawn smaller on a phone so the whole screen fits the note's width
+        const sc = page.side && Platform.isMobile ? SIDE_SCALE_PHONE : SCALE;
+        const fig = parent.createDiv({ cls: "mn-lay-page" + (page.side ? " is-side" : "") + (page.mock ? " is-mock" : changedSinceSync(page) ? " is-changed" : "") + (dirty(page) ? " is-dirty" : "") });
         const head = fig.createDiv({ cls: "mn-lay-head" });
         const name = head.createEl("input", { cls: "mn-lay-name", attr: { value: subOf(page), placeholder: "Main page", spellcheck: "false" } });
         name.addEventListener("change", () => { page.name = named(groupOf(page), name.value.trim()); changed(page); draw(); });
@@ -174,6 +190,13 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
             if (page.mock) delete page.mock; else page.mock = true;
             changed(page); draw();
         }, page.mock ? " is-mock" : "");
+        // turn the phone: the blocks keep their place, pulled inside the new screen (move them into the room left)
+        tool("smartphone", page.side ? "Sideways: tap to turn upright" : "Upright: tap to turn sideways", true, () => {
+            if (page.side) delete page.side; else page.side = true;
+            const d = dims(page);
+            for (const b of page.blocks) { b.w = Math.min(b.w, d.W); b.h = Math.min(b.h, d.H); b.x = clamp(b.x, 0, d.W - b.w); b.y = clamp(b.y, 0, d.H - b.h); }
+            changed(page); draw();
+        }, page.side ? " is-side" : "");
         tool("save", "Save this page into the note", dirty(page), () => savePage(page), dirty(page) ? " is-dirty" : "");
         // + block: a grid of the kinds (colour and name) opens under the button; the block comes in that kind, below the lowest one
         const addB = head.createEl("button", { cls: "mn-lay-btn", attr: { "aria-label": "Add a block" } });
@@ -183,9 +206,9 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
             if (open) { open.remove(); return; }
             const pop = kindGrid(fig, "", (k) => {
                 pop.remove();
-                const low = page.blocks.reduce((m, x) => Math.max(m, x.y + x.h), STATUS + 8);
-                const y = clamp(snap(low + 8), 0, H - TABBAR - 80);
-                const b: Block = { id: uid(), label: `New ${KINDS[k].name.split(" / ")[0]}`, kind: k, x: MARGIN, y, w: W - 2 * MARGIN, h: 80 };
+                const low = page.blocks.reduce((m, x) => Math.max(m, x.y + x.h), R.y0 + 7);
+                const y = clamp(snap(low + 8), 0, R.y1 - 80);
+                const b: Block = { id: uid(), label: `New ${KINDS[k].name.split(" / ")[0]}`, kind: k, x: R.x0, y, w: R.x1 - R.x0, h: 80 };
                 page.blocks.push(b); selected = { page, block: b }; changed(page); draw();
             });
             pop.addClass("is-add");
@@ -204,26 +227,32 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
         note.addEventListener("change", () => { page.note = note.value.trim() || undefined; changed(page); draw(); });
 
         const phone = fig.createDiv({ cls: "mn-lay-phone" });
-        phone.style.width = `${W * SCALE}px`;
-        phone.style.height = `${H * SCALE}px`;
+        phone.style.width = `${W * sc}px`;
+        phone.style.height = `${H * sc}px`;
         const screen = phone.createDiv({ cls: "mn-lay-screen" });
-        screen.style.transform = `scale(${SCALE})`;
+        screen.style.transform = `scale(${sc})`;
         screen.style.width = `${W}px`;
         screen.style.height = `${H}px`;
         // the phone around the page: the status bar with the notch (carrier at the left; signal, 5G and battery at the right) and the
         // app's tab bar with its icons, in the current mode's order
-        const sb = screen.createDiv({ cls: "mn-lay-status" });
-        sb.style.height = `${STATUS}px`;
-        sb.createSpan({ cls: "mn-lay-carrier", text: CARRIER });
-        sb.createDiv({ cls: "mn-lay-notch" });
-        const sig = sb.createDiv({ cls: "mn-lay-sig" });
-        const bars = sig.createSpan({ cls: "mn-lay-bars" });
-        for (let i = 0; i < 4; i++) bars.createEl("i");
-        sig.createSpan({ text: "5G" });
-        sig.createSpan({ cls: "mn-lay-batt" }).createEl("i");
+        // sideways: no status bar, the notch on the left edge, the safe strips shaded
+        if (page.side) {
+            screen.createDiv({ cls: "mn-lay-notch is-side" });
+            for (const c of ["is-l", "is-b", ...(page.tabbar !== false ? [] : ["is-r"])]) screen.createDiv({ cls: "mn-lay-safe " + c });
+        } else {
+            const sb = screen.createDiv({ cls: "mn-lay-status" });
+            sb.style.height = `${STATUS}px`;
+            sb.createSpan({ cls: "mn-lay-carrier", text: CARRIER });
+            sb.createDiv({ cls: "mn-lay-notch" });
+            const sig = sb.createDiv({ cls: "mn-lay-sig" });
+            const bars = sig.createSpan({ cls: "mn-lay-bars" });
+            for (let i = 0; i < 4; i++) bars.createEl("i");
+            sig.createSpan({ text: "5G" });
+            sig.createSpan({ cls: "mn-lay-batt" }).createEl("i");
+        }
         if (page.tabbar !== false) {
-            const tb = screen.createDiv({ cls: "mn-lay-tabbar" });
-            tb.style.height = `${TABBAR}px`;
+            const tb = screen.createDiv({ cls: "mn-lay-tabbar" + (page.side ? " is-side" : "") });
+            if (page.side) tb.style.width = `${RAIL}px`; else tb.style.height = `${TABBAR}px`;
             for (const t of MODES[plugin.settings.mode].tabs) { const c = tb.createSpan(); icon(c, TAB_ICON[t]); c.createSpan({ text: TAB_LABEL[t] }); }
         }
 
@@ -246,7 +275,7 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
                 let moved = false;
                 z.setPointerCapture(e.pointerId);
                 const move = (m: PointerEvent) => {
-                    const dx = (m.clientX - x0) / SCALE, dy = (m.clientY - y0) / SCALE;
+                    const dx = (m.clientX - x0) / sc, dy = (m.clientY - y0) / sc;
                     if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
                     if (resize) { b.w = clamp(snap(start.w + dx), 16, W - b.x); b.h = clamp(snap(start.h + dy), 12, H - b.y); }
                     else { b.x = clamp(snap(start.x + dx), 0, W - b.w); b.y = clamp(snap(start.y + dy), 0, H - b.h); }
@@ -289,6 +318,7 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
     // phone's top left; X and Y are the block's top-left corner; an edge keeps the opposite edge where it is. Then the note (it grows
     // with its text) and the duplicate and delete icons.
     const inspector = (fig: HTMLElement, page: Page, b: Block) => {
+        const { W, H } = dims(page), R = roomOf(page);
         // the window floats at the right side of the screen on a computer, in the middle on a phone (on the document body, so no
         // parent's scrolling or transform moves it); where it was dragged to wins. It closes when the note scrolls, unless you are typing in it.
         openWin?.remove();
@@ -357,22 +387,22 @@ function layoutBlock(plugin: MorellonomiconPlugin, source: string, el: HTMLEleme
         });
 
         // alignment, like a design tool's top row: to the page's margins and middle (the screen between the status bar and the tab bar)
-        const SAFE_TOP = STATUS + 1, SAFE_BOTTOM = H - (page.tabbar !== false ? TABBAR : 0);
+        const SAFE_TOP = R.y0, SAFE_BOTTOM = R.y1;
         const align = win.createDiv({ cls: "mn-lay-align" });
         const al = (ic: string, label: string, act: () => void) => {
             const btn = align.createEl("button", { cls: "mn-lay-wbtn", attr: { "aria-label": label, title: label } });
             icon(btn, ic);
             btn.addEventListener("click", () => { act(); commit(); });
         };
-        al("align-start-vertical", "Align left (16 px margin)", () => { b.x = MARGIN; });
-        al("align-center-vertical", "Centre across", () => { b.x = Math.round((W - b.w) / 2); });
-        al("align-end-vertical", "Align right (16 px margin)", () => { b.x = W - MARGIN - b.w; });
+        al("align-start-vertical", "Align left (16 px margin)", () => { b.x = R.x0; });
+        al("align-center-vertical", "Centre across", () => { b.x = Math.round((R.x0 + R.x1 - b.w) / 2); });
+        al("align-end-vertical", "Align right (16 px margin)", () => { b.x = R.x1 - b.w; });
         align.createSpan({ cls: "mn-lay-asep" });
         al("align-start-horizontal", "Align top (under the status bar)", () => { b.y = SAFE_TOP; });
         al("align-center-horizontal", "Centre down", () => { b.y = Math.round((SAFE_TOP + SAFE_BOTTOM - b.h) / 2); });
         al("align-end-horizontal", "Align bottom (over the tab bar)", () => { b.y = SAFE_BOTTOM - b.h; });
         align.createSpan({ cls: "mn-lay-asep" });
-        al("stretch-horizontal", "Full width (16 px margins)", () => { b.x = MARGIN; b.w = W - 2 * MARGIN; });
+        al("stretch-horizontal", "Full width (16 px margins)", () => { b.x = R.x0; b.w = R.x1 - R.x0; });
         al("layout-grid", "Snap every edge to 4 px", () => { const r = (v: number) => Math.round(v / 4) * 4; const x2 = r(b.x + b.w), y2 = r(b.y + b.h); b.x = r(b.x); b.y = r(b.y); b.w = Math.max(4, x2 - b.x); b.h = Math.max(4, y2 - b.y); });
 
         // position and size as a box diagram (like a browser's box model): the screen's outline with the block in it, its distance to each

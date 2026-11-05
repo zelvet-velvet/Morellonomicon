@@ -1447,8 +1447,8 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-lay input.mn-lay-gname { flex: 1; min-width: 0; height: 44px; font-size: 26px; font-weight: 800; border: 0; background: none; box-shadow: none; padding: 0 2px; }
 .mn-lay-pages { display: flex; flex-wrap: wrap; gap: 28px 24px; align-items: flex-start; }
 .mn-lay-page { display: flex; flex-direction: column; gap: 6px; width: min(100%, 320px); }
-.mn-lay-head { display: flex; align-items: center; gap: 4px; }
-.mn-lay input.mn-lay-name { flex: 1; min-width: 0; height: 32px; font-size: 16px; font-weight: 800; border: 0; background: none; padding: 0 2px; }
+.mn-lay-head { display: flex; flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 4px; }   /* name on its own line, the page buttons on the line under it, from the left */
+.mn-lay input.mn-lay-name { flex: 1 1 100%; min-width: 0; height: 32px; font-size: 16px; font-weight: 800; border: 0; background: none; padding: 0 2px; }
 .mn-lay button.mn-lay-btn { width: 32px; height: 32px; padding: 0; display: grid; place-items: center; background: none; box-shadow: none; color: var(--text-muted); }
 .mn-lay button.mn-lay-btn.is-armed { color: var(--color-red); }
 .mn-lay textarea.mn-lay-pnote { width: 100%; resize: vertical; font-size: 12.5px; color: var(--text-muted); }
@@ -1460,6 +1460,14 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* the phone's status bar (iPhone with a notch): carrier at the left, signal / 5G / battery at the right, a little below the notch's middle */
 .mn-lay-status { position: absolute; z-index: 6; left: 0; right: 0; top: 0; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; padding: 4px 18px 0 20px; color: #f2f2f2; font-size: 13px; font-weight: 600; pointer-events: none; }
 .mn-lay-notch { position: absolute; left: 50%; top: 0; width: 180px; height: 28px; margin-left: -90px; border-radius: 0 0 18px 18px; background: #2c2f38; }
+/* a sideways page (844 × 390): wider figure, the rail on the right, the notch on the left edge, the safe strips shaded */
+.mn-lay-page.is-side { width: min(100%, 680px); }
+.mn-lay-tabbar.is-side { left: auto; top: 0; flex-direction: column; justify-content: space-evenly; border-top: 0; border-left: 4px solid var(--lay-line); box-sizing: border-box; padding-right: 47px; }
+.mn-lay-notch.is-side { left: 0; top: 50%; width: 28px; height: 180px; margin: -90px 0 0; border-radius: 0 18px 18px 0; z-index: 6; }
+.mn-lay-safe { position: absolute; pointer-events: none; background: repeating-linear-gradient(45deg, transparent 0 6px, var(--lay-line) 6px 7px); opacity: .6; }
+.mn-lay-safe.is-l { left: 0; top: 0; bottom: 0; width: 47px; }
+.mn-lay-safe.is-r { right: 0; top: 0; bottom: 0; width: 47px; }
+.mn-lay-safe.is-b { left: 0; right: 0; bottom: 0; height: 21px; }
 .mn-lay-sig { display: flex; align-items: center; gap: 6px; }
 .mn-lay-bars { display: flex; align-items: flex-end; gap: 2px; height: 10px; }
 .mn-lay-bars i { width: 3px; border-radius: 1px; background: #f2f2f2; }
@@ -1491,6 +1499,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* a mock (a proposal by Claude, not built yet): a light blue frame */
 .mn-lay-page.is-mock .mn-lay-phone { border-color: #5ac8fa; box-shadow: 0 0 0 3px rgba(90, 200, 250, 0.3); }
 .mn-lay-page.is-mock input.mn-lay-name, .mn-lay button.mn-lay-btn.is-mock { color: #5ac8fa; }
+.mn-lay button.mn-lay-btn.is-side { color: var(--interactive-accent); }
 .mn-lay-synced { font-size: 12px; color: var(--text-faint); }
 /* typing in a search capsule: it slides up above the keyboard (a transform set by view.ts) */
 .mn-rq-dock.is-typing { z-index: 50; }
