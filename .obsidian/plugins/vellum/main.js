@@ -329,6 +329,7 @@ var view = /* @__PURE__ */ new Map();
 var reopen = /* @__PURE__ */ new Map();
 var VIEW = "vellum-editor";
 var editors = /* @__PURE__ */ new Map();
+var live = /* @__PURE__ */ new Set();
 var windows = /* @__PURE__ */ new Map();
 var VellumWindow = class extends import_obsidian2.ItemView {
   constructor() {
@@ -339,7 +340,7 @@ var VellumWindow = class extends import_obsidian2.ItemView {
     return VIEW;
   }
   getDisplayText() {
-    return "Vellum" + (this.key ? " \xB7 " + (this.key.split(":")[1] ?? "").replace(/^.*\//, "").replace(/\.md$/, "") : "");
+    return "Vellum" + (this.key ? " \xB7 " + (this.key.split(":")[1] ?? "").replace(/\.md$/, "") : "");
   }
   getIcon() {
     return "pencil-ruler";
@@ -352,7 +353,7 @@ var VellumWindow = class extends import_obsidian2.ItemView {
     if (k && k !== this.key) {
       this.key = k;
       windows.set(k, this);
-      const ed = editors.get(k);
+      const ed = editors.get(k) ?? (k.includes(".md:") ? void 0 : await folderEditor(k.replace(/^vellum:/, "")));
       if (ed) ed.mount(this.contentEl);
       else {
         this.contentEl.empty();
@@ -368,6 +369,7 @@ var VellumWindow = class extends import_obsidian2.ItemView {
 };
 var Editor = class {
   // store: the folder the doc is kept in (src: in the block), with the doc as read; none = the JSON in the block itself
+  // el / ctx: the ```vellum block it is drawn in; none = opened straight on a folder (the ribbon, a command)
   constructor(plugin, host, source, el, ctx, store, loaded) {
     this.plugin = plugin;
     this.el = el;
@@ -381,6 +383,8 @@ var Editor = class {
     this.tab = "style";
     this.root = null;
     this.stale = null;
+    // a screen as a small picture (the rail's rows): drawn again only when the screen changed
+    this.thumbs = /* @__PURE__ */ new Map();
     this.keepTop = 0;
     this.getters = /* @__PURE__ */ new Map();
     this.theme = { colors: { ...BASE_THEME.colors, ...host.theme?.colors }, fonts: { ...BASE_THEME.fonts, ...host.theme?.fonts } };
@@ -388,7 +392,7 @@ var Editor = class {
     const { doc, error } = loaded ?? parseDoc(source);
     this.doc = doc;
     this.saved = serialiseDoc(doc);
-    this.card = el.createDiv({ cls: "vl vl-card" });
+    this.card = el ? el.createDiv({ cls: "vl vl-card" }) : createDiv({ cls: "vl vl-card" });
     if (error && !store) {
       this.card.createDiv({ cls: "vl-err", text: error + " Fix it in the source view." });
       return;
@@ -410,10 +414,14 @@ var Editor = class {
     };
     window.addEventListener("resize", onResize);
     const key = this.draftKey();
+    editors.set(key, this);
+    live.add(this);
+    if (!el || !ctx) return;
     const life = new import_obsidian2.MarkdownRenderChild(el);
     life.onunload = () => {
       window.removeEventListener("resize", onResize);
       if (editors.get(key) === this) editors.delete(key);
+      live.delete(this);
       if (!this.root?.isConnected) return;
       reopen.set(key, { at: Date.now(), sel: this.sel, past: this.past, future: this.future });
       this.root.remove();
@@ -423,7 +431,6 @@ var Editor = class {
       }, 3e3);
     };
     ctx.addChild(life);
-    editors.set(key, this);
     this.drawCard();
     const back = reopen.get(key);
     if (back && Date.now() - back.at < 3e3) {
@@ -550,6 +557,7 @@ var Editor = class {
       }, (e) => new import_obsidian2.Notice(`Vellum: not saved (${e.message}). Your work is kept.`));
       return;
     }
+    if (!this.ctx || !this.el) return;
     const file = this.plugin.app.vault.getAbstractFileByPath(this.ctx.sourcePath);
     const info = this.ctx.getSectionInfo(this.el);
     if (!(file instanceof import_obsidian2.TFile) || !info) {
@@ -850,6 +858,7 @@ var Editor = class {
       e.createSpan({ text: "No screens yet." });
       e.createEl("button", { cls: "vl-act", text: "+ Add a screen" }).addEventListener("click", () => this.addPage());
     }
+    this.drawRail();
     const cur = this.current();
     if (cur) {
       if (this.v.fit) {
@@ -860,7 +869,6 @@ var Editor = class {
       }
       this.drawPage(cur);
     }
-    this.drawRail();
     this.drawZoom();
   }
   // the screens rail: every page as a row, sub pages indented under the page they open from (with how you get there);
@@ -871,23 +879,63 @@ var Editor = class {
     r.empty();
     r.toggleClass("is-on", this.v.rail);
     if (!this.v.rail) return;
+    if (!import_obsidian2.Platform.isMobile) {
+      r.style.width = `${Number(localStorage.getItem("vellum:railW")) || 248}px`;
+      const g = r.createDiv({ cls: "vl-rgrip", attr: { title: "Drag to resize" } });
+      g.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        g.setPointerCapture(e.pointerId);
+        g.addClass("is-on");
+        const x0 = e.clientX, w0 = r.offsetWidth;
+        const mv = (m) => {
+          r.style.width = `${Math.min(520, Math.max(180, w0 + m.clientX - x0))}px`;
+        };
+        const up = () => {
+          g.removeEventListener("pointermove", mv);
+          g.removeEventListener("pointerup", up);
+          g.removeClass("is-on");
+          try {
+            localStorage.setItem("vellum:railW", String(r.offsetWidth));
+          } catch {
+          }
+          if (this.v.fit) this.drawPages();
+        };
+        g.addEventListener("pointermove", mv);
+        g.addEventListener("pointerup", up);
+      });
+    }
     const box = r.createDiv({ cls: "vl-railbox" });
-    box.createDiv({ cls: "vl-sech", text: "Screens" });
+    box.createDiv({ cls: "vl-sech", text: `Screens \xB7 ${this.doc.pages.length}` });
     const list = box.createDiv({ cls: "vl-plist" });
-    const pages = this.doc.pages, cur = this.current(), seen = /* @__PURE__ */ new Set();
+    const pages = this.doc.pages, cur = this.current(), seen = /* @__PURE__ */ new Set(), fold = this.folds();
     const row = (p, depth) => {
       if (seen.has(p.id)) return;
       seen.add(p.id);
+      const kids = childrenOf(pages, p.id).filter((c) => !seen.has(c.id));
       const w = list.createDiv({ cls: "vl-prow" + (p.id === cur?.id ? " is-on" : "") + (p.mock ? " is-mock" : "") });
-      w.style.paddingLeft = `${8 + depth * 14}px`;
+      const ind = w.createDiv({ cls: "vl-pind" });
+      for (let i = 0; i < depth; i++) ind.createSpan({ cls: "vl-pguide" });
+      if (kids.length) {
+        const ch = w.createEl("button", { cls: "vl-pchev", attr: { "aria-label": fold.has(p.id) ? "Unfold" : "Fold" } });
+        (0, import_obsidian2.setIcon)(ch, fold.has(p.id) ? "chevron-right" : "chevron-down");
+        ch.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (fold.has(p.id)) fold.delete(p.id);
+          else fold.add(p.id);
+          this.keepFolds(fold);
+          this.drawRail();
+        });
+      } else w.createSpan({ cls: "vl-pchev is-leaf" });
+      w.appendChild(this.thumb(p));
       const t = w.createDiv({ cls: "vl-ptext" });
       t.createDiv({ cls: "vl-pn", text: p.name + (p.mock ? " \xB7 mock" : "") });
       if (p.link) t.createDiv({ cls: "vl-pl", text: p.link });
       w.addEventListener("click", () => this.openPage(p));
-      const add = this.btn(w, "plus", `Add a page opened from ${p.name}`, () => this.addPage(p));
+      const add = this.btn(w, "plus", `Add a screen opened from ${p.name}`, () => this.addPage(p));
       add.addClass("vl-padd");
       add.addEventListener("click", (e) => e.stopPropagation());
-      for (const c of childrenOf(pages, p.id)) row(c, depth + 1);
+      if (!fold.has(p.id)) for (const c of kids) row(c, depth + 1);
+      else for (const c of subtreeOf(pages, p.id)) if (c !== p.id) seen.add(c);
     };
     for (const p of childrenOf(pages)) row(p, 0);
     for (const p of pages) row(p, 0);
@@ -937,6 +985,37 @@ var Editor = class {
       };
       window.setTimeout(() => R.doc.addEventListener("pointerdown", off, true));
     });
+  }
+  // folded branches of the tree, kept on the device per doc
+  folds() {
+    try {
+      return new Set(JSON.parse(localStorage.getItem(`vellum:fold:${this.draftKey()}`) ?? "[]"));
+    } catch {
+      return /* @__PURE__ */ new Set();
+    }
+  }
+  keepFolds(f) {
+    try {
+      localStorage.setItem(`vellum:fold:${this.draftKey()}`, JSON.stringify([...f]));
+    } catch {
+    }
+  }
+  thumb(p) {
+    const sig = JSON.stringify(p) + this.doc.device, hit = this.thumbs.get(p.id);
+    if (hit && hit.sig === sig) return hit.el;
+    const d = deviceOf(p.device ?? this.doc.device), sc = screenOf(d, p.side), TW = 22, k = TW / sc.W;
+    const el = createDiv({ cls: "vl-pthumb" });
+    el.style.width = `${TW}px`;
+    el.style.height = `${Math.round(sc.H * k)}px`;
+    const scr = el.createDiv({ cls: "vl-screen is-show" });
+    Object.assign(scr.style, { width: `${sc.W}px`, height: `${sc.H}px`, transform: `scale(${k})` });
+    if (p.bg) scr.style.background = colorOf(this.theme, p.bg);
+    const keep = this.sel;
+    this.sel = null;
+    for (const b of p.blocks) this.drawBlock(scr, p, b, true);
+    this.sel = keep;
+    this.thumbs.set(p.id, { sig, el });
+    return el;
   }
   // the map in the note's card: every page as a small screen; main pages along the top, each page's sub pages under it,
   // joined by lines (with how you get there); a click opens the editor on that page
@@ -1757,7 +1836,19 @@ var Editor = class {
   }
 };
 var label = (it) => it.type === "text" ? (it.v ?? "").split("\n")[0].slice(0, 24) || "(empty text)" : it.type === "row" || it.type === "col" ? `${it.items?.length ?? 0} items` : it.type === "ellipse" ? "circle" : it.type;
+var ref = null;
+async function folderEditor(dir) {
+  if (!ref) return void 0;
+  const ex = editors.get(`vellum:${dir}`);
+  if (ex) return ex;
+  const store = new FolderStore(ref.plugin.app, dir);
+  return new Editor(ref.plugin, ref.host(), "", void 0, void 0, store, await store.load());
+}
+async function openVellum(dir, page) {
+  (await folderEditor(dir))?.openWs(page);
+}
 function registerVellum(plugin, host = {}) {
+  ref = { plugin, host: () => typeof host === "function" ? host() : host };
   plugin.registerView(VIEW, (leaf) => new VellumWindow(leaf));
   plugin.registerMarkdownCodeBlockProcessor("vellum", async (source, el, ctx) => {
     const h = typeof host === "function" ? host() : host, dir = srcOf(source);
@@ -1770,7 +1861,7 @@ function registerVellum(plugin, host = {}) {
   });
   const due = /* @__PURE__ */ new Map();
   const touched = (path) => {
-    for (const ed of new Set(editors.values())) {
+    for (const ed of live) {
       const st = ed.store;
       if (!st || !st.watches(path) || Date.now() < st.ownUntil) continue;
       window.clearTimeout(due.get(ed));
@@ -1789,7 +1880,7 @@ function registerVellum(plugin, host = {}) {
 }
 
 // src/main.ts
-var DEFAULTS = { colors: { ...BASE_THEME.colors }, fonts: { ...BASE_THEME.fonts } };
+var DEFAULTS = { folder: "Screens", colors: { ...BASE_THEME.colors }, fonts: { ...BASE_THEME.fonts } };
 var VellumPlugin = class extends import_obsidian3.Plugin {
   constructor() {
     super(...arguments);
@@ -1797,8 +1888,19 @@ var VellumPlugin = class extends import_obsidian3.Plugin {
   }
   async onload() {
     const saved = await this.loadData();
-    this.settings = { colors: { ...DEFAULTS.colors, ...saved?.colors }, fonts: { ...DEFAULTS.fonts, ...saved?.fonts } };
+    this.settings = { folder: saved?.folder || DEFAULTS.folder, colors: { ...DEFAULTS.colors, ...saved?.colors }, fonts: { ...DEFAULTS.fonts, ...saved?.fonts } };
     registerVellum(this, () => ({ theme: this.theme() }));
+    this.addRibbonIcon("pencil-ruler", "Open Vellum", () => {
+      void openVellum(this.settings.folder);
+    });
+    this.addCommand({ id: "open", name: "Open the screens", callback: () => {
+      void openVellum(this.settings.folder);
+    } });
+    this.addCommand({ id: "open-folder", name: "Open screens from another folder", callback: () => new FolderPick(this.app, async (f) => {
+      this.settings.folder = f.path;
+      await this.save();
+      void openVellum(f.path);
+    }).open() });
     this.addSettingTab(new VellumSettings(this.app, this));
   }
   theme() {
@@ -1816,7 +1918,11 @@ var VellumSettings = class extends import_obsidian3.PluginSettingTab {
   display() {
     const { containerEl: c } = this, s = this.plugin.settings;
     c.empty();
-    c.createEl("p", { cls: "setting-item-description", text: "The named colours and fonts items use (any CSS value, CSS variables too). Reopen a note to see a change." });
+    new import_obsidian3.Setting(c).setName("Screens folder").setDesc("What the ribbon button opens: one JSON file per screen (made on the first save). A ```vellum block with src: <folder> shows any folder in a note too.").addText((t) => t.setPlaceholder("Screens").setValue(s.folder).onChange(async (v) => {
+      s.folder = v.trim().replace(/\/+$/, "") || DEFAULTS.folder;
+      await this.plugin.save();
+    }));
+    c.createEl("p", { cls: "setting-item-description", text: "The named colours and fonts items use (any CSS value, CSS variables too). Reopen the editor to see a change." });
     new import_obsidian3.Setting(c).setName("Colours").setHeading();
     for (const name of Object.keys(s.colors)) {
       const row = new import_obsidian3.Setting(c).setName(name);
@@ -1850,9 +1956,25 @@ var VellumSettings = class extends import_obsidian3.PluginSettingTab {
       }));
     }
     new import_obsidian3.Setting(c).setName("Follow the Obsidian theme").setDesc("Put every colour and font back to the defaults.").addButton((b) => b.setButtonText("Reset").setWarning().onClick(async () => {
-      this.plugin.settings = structuredClone(DEFAULTS);
+      this.plugin.settings = { ...structuredClone(DEFAULTS), folder: s.folder };
       await this.plugin.save();
       this.display();
     }));
+  }
+};
+var FolderPick = class extends import_obsidian3.FuzzySuggestModal {
+  constructor(app, pick) {
+    super(app);
+    this.pick = pick;
+    this.setPlaceholder("A folder of screens");
+  }
+  getItems() {
+    return this.app.vault.getAllLoadedFiles().filter((f) => f instanceof import_obsidian3.TFolder && f.path !== "/");
+  }
+  getItemText(f) {
+    return f.path;
+  }
+  onChooseItem(f) {
+    this.pick(f);
   }
 };
