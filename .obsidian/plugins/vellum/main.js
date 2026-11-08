@@ -840,7 +840,7 @@ var Editor = class {
     sv.addEventListener("click", () => {
       if (this.dirty) this.save();
     });
-    if (!import_obsidian2.Platform.isMobile) {
+    if (!import_obsidian2.Platform.isMobile && !this.v.show && !this.v.map) {
       r.createSpan({ cls: "vl-zsep" });
       this.btn(r, this.v.panel === false ? "vellum-side-right" : "sidebar-right", this.v.panel === false ? "Expand the settings" : "Collapse the settings", () => {
         this.setView({ panel: this.v.panel === false });
