@@ -787,13 +787,12 @@ var Editor = class {
     sv.addEventListener("click", () => {
       if (this.dirty) this.save();
     });
-    if (!import_obsidian2.Platform.isMobile) {
+    if (!import_obsidian2.Platform.isMobile && this.v.panel === false && !this.v.map && !this.v.show) {
       r.createSpan({ cls: "vl-zsep" });
-      const pt = this.btn(r, "panel-right", this.v.panel === false ? "Show the settings" : "Hide the settings", () => {
-        this.setView({ panel: this.v.panel === false });
+      this.btn(r, "panel-right-open", "Show the settings", () => {
+        this.setView({ panel: true });
         this.draw();
       });
-      pt.toggleClass("is-on", this.v.panel !== false);
     }
     this.drawZoom();
   }
