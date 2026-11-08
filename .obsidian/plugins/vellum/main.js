@@ -23,10 +23,10 @@ __export(main_exports, {
   default: () => VellumPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian2 = require("obsidian");
+var import_obsidian3 = require("obsidian");
 
 // src/editor.ts
-var import_obsidian = require("obsidian");
+var import_obsidian2 = require("obsidian");
 
 // src/devices.ts
 var DEVICES = [
@@ -229,6 +229,100 @@ var drawItem = (t, parent, it, inFlow, lineUp = "left") => {
   return el;
 };
 
+// src/store.ts
+var import_obsidian = require("obsidian");
+var srcOf = (source) => {
+  const m = /^\s*src:\s*(.+?)\s*$/m.exec(source);
+  return m && !source.trim().startsWith("{") ? (0, import_obsidian.normalizePath)(m[1].replace(/^["']|["']$/g, "")) : null;
+};
+var DOC = "_doc.json";
+var pageText = (p) => {
+  const { blocks, ...meta } = p;
+  const head = JSON.stringify(meta).slice(0, -1);
+  return blocks.length ? `${head}, "blocks": [
+` + blocks.map((b) => "  " + JSON.stringify(b)).join(",\n") + "\n]}\n" : `${head}, "blocks": []}
+`;
+};
+var fileName = (name) => name.replace(/[\\/:*?"<>|#^[\]]/g, "-").replace(/\s+/g, " ").trim().slice(0, 80) || "Screen";
+var FolderStore = class {
+  // our own writes, not outside changes
+  constructor(app, dir) {
+    this.app = app;
+    this.dir = dir;
+    this.files = /* @__PURE__ */ new Map();
+    // page id → its file, as loaded or last saved
+    this.ownUntil = 0;
+  }
+  watches(path) {
+    return path === this.dir || path.startsWith(this.dir + "/");
+  }
+  async load() {
+    const folder = this.app.vault.getAbstractFileByPath(this.dir);
+    this.files.clear();
+    const id = this.dir.split("/").pop() || uid();
+    if (!(folder instanceof import_obsidian.TFolder)) return { doc: { id, device: "iphone-16-pro", pages: [] } };
+    let meta = {};
+    const pages = [], bad = [];
+    for (const f of folder.children) {
+      if (!(f instanceof import_obsidian.TFile) || f.extension !== "json") continue;
+      const text = await this.app.vault.read(f);
+      if (f.name === DOC) {
+        try {
+          meta = JSON.parse(text);
+        } catch {
+          bad.push(f.name);
+        }
+        continue;
+      }
+      const { doc, error } = parseDoc(`{"pages": [${text}]}`);
+      if (error || !doc.pages[0]) {
+        bad.push(f.name);
+        continue;
+      }
+      pages.push(doc.pages[0]);
+      this.files.set(doc.pages[0].id, f.path);
+    }
+    const order = meta.order ?? [];
+    const at = (p) => {
+      const i = order.indexOf(p.id);
+      return i < 0 ? order.length : i;
+    };
+    pages.sort((a, b) => at(a) - at(b) || a.name.localeCompare(b.name));
+    return { doc: { id: meta.id ?? id, device: meta.device ?? "iphone-16-pro", pages }, error: bad.length ? `Not read (fix the JSON): ${bad.join(", ")}` : void 0 };
+  }
+  async save(doc) {
+    const v = this.app.vault;
+    this.ownUntil = Date.now() + 2e3;
+    if (!(v.getAbstractFileByPath(this.dir) instanceof import_obsidian.TFolder)) await v.createFolder(this.dir);
+    const ours = new Set(this.files.values()), target = /* @__PURE__ */ new Map(), taken = /* @__PURE__ */ new Set();
+    for (const p of doc.pages) {
+      const base = fileName(p.name);
+      let path = (0, import_obsidian.normalizePath)(`${this.dir}/${base}.json`), n = 2;
+      while (taken.has(path) || v.getAbstractFileByPath(path) && !ours.has(path)) path = (0, import_obsidian.normalizePath)(`${this.dir}/${base} ${n++}.json`);
+      taken.add(path);
+      target.set(p.id, path);
+    }
+    for (const p of doc.pages) {
+      const path = target.get(p.id), f = v.getAbstractFileByPath(path), text = pageText(p);
+      if (f instanceof import_obsidian.TFile) {
+        if (await v.read(f) !== text) await v.modify(f, text);
+      } else await v.create(path, text);
+    }
+    for (const path of ours) {
+      if (taken.has(path)) continue;
+      const f = v.getAbstractFileByPath(path);
+      if (f instanceof import_obsidian.TFile) await this.app.fileManager.trashFile(f);
+    }
+    this.files = target;
+    const meta = JSON.stringify({ id: doc.id, device: doc.device, order: doc.pages.map((p) => p.id) }, null, 2) + "\n";
+    const m = v.getAbstractFileByPath(`${this.dir}/${DOC}`);
+    if (m instanceof import_obsidian.TFile) {
+      if (await v.read(m) !== meta) await v.modify(m, meta);
+    } else await v.create(`${this.dir}/${DOC}`, meta);
+    this.ownUntil = Date.now() + 1500;
+  }
+};
+
 // src/editor.ts
 var SNAP = 4;
 var view = /* @__PURE__ */ new Map();
@@ -236,7 +330,7 @@ var reopen = /* @__PURE__ */ new Map();
 var VIEW = "vellum-editor";
 var editors = /* @__PURE__ */ new Map();
 var windows = /* @__PURE__ */ new Map();
-var VellumWindow = class extends import_obsidian.ItemView {
+var VellumWindow = class extends import_obsidian2.ItemView {
   constructor() {
     super(...arguments);
     this.key = "";
@@ -273,10 +367,12 @@ var VellumWindow = class extends import_obsidian.ItemView {
   }
 };
 var Editor = class {
-  constructor(plugin, host, source, el, ctx) {
+  // store: the folder the doc is kept in (src: in the block), with the doc as read; none = the JSON in the block itself
+  constructor(plugin, host, source, el, ctx, store, loaded) {
     this.plugin = plugin;
     this.el = el;
     this.ctx = ctx;
+    this.store = store;
     this.past = [];
     this.future = [];
     this.sel = null;
@@ -289,14 +385,15 @@ var Editor = class {
     this.getters = /* @__PURE__ */ new Map();
     this.theme = { colors: { ...BASE_THEME.colors, ...host.theme?.colors }, fonts: { ...BASE_THEME.fonts, ...host.theme?.fonts } };
     this.kinds = host.kinds ?? BASE_KINDS;
-    const { doc, error } = parseDoc(source);
+    const { doc, error } = loaded ?? parseDoc(source);
     this.doc = doc;
     this.saved = serialiseDoc(doc);
     this.card = el.createDiv({ cls: "vl vl-card" });
-    if (error) {
+    if (error && !store) {
       this.card.createDiv({ cls: "vl-err", text: error + " Fix it in the source view." });
       return;
     }
+    if (error) new import_obsidian2.Notice(`Vellum (${store.dir}): ${error}`);
     const draft = this.draftGet();
     if (draft) {
       try {
@@ -313,7 +410,7 @@ var Editor = class {
     };
     window.addEventListener("resize", onResize);
     const key = this.draftKey();
-    const life = new import_obsidian.MarkdownRenderChild(el);
+    const life = new import_obsidian2.MarkdownRenderChild(el);
     life.onunload = () => {
       window.removeEventListener("resize", onResize);
       if (editors.get(key) === this) editors.delete(key);
@@ -321,7 +418,7 @@ var Editor = class {
       reopen.set(key, { at: Date.now(), sel: this.sel, past: this.past, future: this.future });
       this.root.remove();
       this.root = null;
-      if (!import_obsidian.Platform.isMobile) window.setTimeout(() => {
+      if (!import_obsidian2.Platform.isMobile) window.setTimeout(() => {
         if (!editors.has(key)) windows.get(key)?.leaf.detach();
       }, 3e3);
     };
@@ -337,7 +434,7 @@ var Editor = class {
       this.fixSel();
       const w = windows.get(key);
       if (w) this.mount(w.contentEl);
-      else if (import_obsidian.Platform.isMobile) this.openWs();
+      else if (import_obsidian2.Platform.isMobile) this.openWs();
     }
   }
   // the theme's colours as --vl-* on an element (the card in the note, the workspace on the body)
@@ -347,7 +444,7 @@ var Editor = class {
   }
   // ---- state, undo, drafts, save
   get v() {
-    return view.get(this.doc.id) ?? { zoom: 0.75, fit: true, show: false, rail: !import_obsidian.Platform.isMobile && window.innerWidth >= 1e3 };
+    return view.get(this.doc.id) ?? { zoom: 0.75, fit: true, show: false, rail: !import_obsidian2.Platform.isMobile && window.innerWidth >= 1e3 };
   }
   setView(p) {
     view.set(this.doc.id, { ...this.v, ...p });
@@ -359,7 +456,7 @@ var Editor = class {
     return serialiseDoc(this.doc) !== this.saved;
   }
   draftKey() {
-    return `vellum:${this.ctx.sourcePath}:${this.doc.id}`;
+    return this.store ? `vellum:${this.store.dir}` : `vellum:${this.ctx.sourcePath}:${this.doc.id}`;
   }
   draftGet() {
     try {
@@ -439,17 +536,31 @@ var Editor = class {
     this.draw();
   }
   save() {
+    if (this.store) {
+      const text2 = serialiseDoc(this.doc), st = this.store;
+      st.save(this.doc).then(() => {
+        this.saved = text2;
+        try {
+          localStorage.removeItem(this.draftKey());
+        } catch {
+        }
+        this.drawBar();
+        this.drawCard();
+        this.hint(`Saved to ${st.dir}`);
+      }, (e) => new import_obsidian2.Notice(`Vellum: not saved (${e.message}). Your work is kept.`));
+      return;
+    }
     const file = this.plugin.app.vault.getAbstractFileByPath(this.ctx.sourcePath);
     const info = this.ctx.getSectionInfo(this.el);
-    if (!(file instanceof import_obsidian.TFile) || !info) {
-      new import_obsidian.Notice("Vellum: could not find this block in the note");
+    if (!(file instanceof import_obsidian2.TFile) || !info) {
+      new import_obsidian2.Notice("Vellum: could not find this block in the note");
       return;
     }
     const text = serialiseDoc(this.doc);
     void this.plugin.app.vault.process(file, (data) => {
       const lines = data.split("\n");
       if (lines[info.lineStart]?.trim() !== "```vellum" || !lines[info.lineEnd]?.trim().startsWith("```")) {
-        new import_obsidian.Notice("Vellum: the note changed, not saved. Your work is kept; reopen the note.");
+        new import_obsidian2.Notice("Vellum: the note changed, not saved. Your work is kept; reopen the note.");
         return data;
       }
       lines.splice(info.lineStart + 1, info.lineEnd - info.lineStart - 1, ...text.split("\n"));
@@ -465,6 +576,19 @@ var Editor = class {
       });
       return lines.join("\n");
     });
+  }
+  // the folder changed outside (the agent, a sync): taken as it is; unsaved work here is offered back, never lost
+  async outside() {
+    if (!this.store) return;
+    const { doc } = await this.store.load(), text = serialiseDoc(doc);
+    if (text === this.saved) return;
+    if (this.dirty) this.stale = this.doc;
+    this.doc = doc;
+    this.saved = text;
+    this.fixSel();
+    this.draftPut();
+    this.drawCard();
+    if (this.root?.isConnected) this.draw();
   }
   // ---- what is chosen
   page(id = this.sel?.page) {
@@ -494,9 +618,9 @@ var Editor = class {
     const head = c.createDiv({ cls: "vl-chead" });
     const t = head.createDiv({ cls: "vl-ctitle" });
     t.createSpan({ cls: "vl-cname", text: "Vellum" });
-    t.createSpan({ cls: "vl-cinfo", text: `${this.doc.pages.length} screen${this.doc.pages.length === 1 ? "" : "s"} \xB7 ${deviceOf(this.doc.device).name}` + (this.dirty ? " \xB7 unsaved edits on this device" : "") });
+    t.createSpan({ cls: "vl-cinfo", text: `${this.doc.pages.length} screen${this.doc.pages.length === 1 ? "" : "s"} \xB7 ${deviceOf(this.doc.device).name}` + (this.store ? ` \xB7 ${this.store.dir}` : "") + (this.dirty ? " \xB7 unsaved edits on this device" : "") });
     const o = head.createEl("button", { cls: "vl-open mod-cta" });
-    (0, import_obsidian.setIcon)(o.createSpan(), "pencil-ruler");
+    (0, import_obsidian2.setIcon)(o.createSpan(), "pencil-ruler");
     o.appendText("Open editor");
     o.addEventListener("click", () => this.openWs());
     const m = c.createDiv({ cls: "vl-map" });
@@ -506,7 +630,7 @@ var Editor = class {
   // computer: its own window (a pop-out, focused if already open); phone: over the whole screen
   openWs(page) {
     if (page) this.setView({ page, fit: true });
-    if (import_obsidian.Platform.isMobile) {
+    if (import_obsidian2.Platform.isMobile) {
       if (!this.root?.isConnected) this.mount(document.body);
       else this.draw();
       return;
@@ -529,9 +653,14 @@ var Editor = class {
     this.root?.remove();
     container.empty();
     const pop = container !== document.body;
-    const R = this.root = container.createDiv({ cls: "vl vl-ws" + (import_obsidian.Platform.isMobile ? " is-phone" : "") + (pop ? " is-pop" : ""), attr: { tabindex: "-1" } });
+    const R = this.root = container.createDiv({ cls: "vl vl-ws" + (import_obsidian2.Platform.isMobile ? " is-phone" : "") + (pop ? " is-pop" : ""), attr: { tabindex: "-1" } });
     this.paint(R);
-    R.addEventListener("keydown", (e) => this.key(e), true);
+    const onKey = (e) => {
+      if (!R.isConnected) return R.win.removeEventListener("keydown", onKey, true);
+      const a = R.doc.activeElement;
+      if (a && (R === a || R.contains(a))) this.key(e);
+    };
+    R.win.addEventListener("keydown", onKey, true);
     if (pop) {
       let raf = 0;
       new ResizeObserver(() => {
@@ -558,7 +687,7 @@ var Editor = class {
   }
   closeWs() {
     const w = windows.get(this.draftKey());
-    if (w && !import_obsidian.Platform.isMobile) w.leaf.detach();
+    if (w && !import_obsidian2.Platform.isMobile) w.leaf.detach();
     else this.unmount();
   }
   draw() {
@@ -587,7 +716,7 @@ var Editor = class {
       if (e.target === this.wall && this.sel) this.choose(null);
     });
     this.zbar = mid.createDiv({ cls: "vl-zbar" });
-    this.side = import_obsidian.Platform.isMobile ? R : body;
+    this.side = import_obsidian2.Platform.isMobile ? R : body;
     this.drawPanel();
     this.drawPages();
   }
@@ -622,7 +751,7 @@ var Editor = class {
   openPage(p) {
     this.setView({ page: p.id });
     this.sel = null;
-    if (import_obsidian.Platform.isMobile) this.setView({ rail: false });
+    if (import_obsidian2.Platform.isMobile) this.setView({ rail: false });
     this.draw();
   }
   // the top bar: close and where you are on the left, undo / redo / save on the right; nothing else
@@ -631,12 +760,12 @@ var Editor = class {
     if (!b?.isConnected) return;
     b.empty();
     const l = b.createDiv({ cls: "vl-tl" });
-    if (import_obsidian.Platform.isMobile) this.btn(l, "x", "Close the editor (Esc)", () => this.closeWs()).addClass("vl-x");
+    if (import_obsidian2.Platform.isMobile) this.btn(l, "x", "Close the editor (Esc)", () => this.closeWs()).addClass("vl-x");
     const cur = this.current();
     const rt = l.createEl("button", { cls: "vl-railbtn" + (this.v.rail ? " is-on" : ""), attr: { title: "Screens" } });
-    (0, import_obsidian.setIcon)(rt.createSpan(), import_obsidian.Platform.isMobile ? "layers" : "panel-left");
+    (0, import_obsidian2.setIcon)(rt.createSpan(), import_obsidian2.Platform.isMobile ? "layers" : "panel-left");
     rt.createSpan({ cls: "vl-pg", text: cur?.name ?? "No screens" });
-    if (import_obsidian.Platform.isMobile) (0, import_obsidian.setIcon)(rt.createSpan({ cls: "vl-chev" }), "chevron-down");
+    if (import_obsidian2.Platform.isMobile) (0, import_obsidian2.setIcon)(rt.createSpan({ cls: "vl-chev" }), "chevron-down");
     rt.addEventListener("click", () => {
       this.setView({ rail: !this.v.rail });
       this.draw();
@@ -645,12 +774,12 @@ var Editor = class {
     this.btn(r, "undo-2", "Undo (Ctrl+Z)", () => this.undo(), !this.past.length);
     this.btn(r, "redo-2", "Redo (Ctrl+Shift+Z)", () => this.redo(), !this.future.length);
     const sv = r.createEl("button", { cls: "vl-save is-savebtn" + (this.dirty ? " is-dirty" : ""), attr: { title: "Save into the note (Ctrl+S)" } });
-    (0, import_obsidian.setIcon)(sv.createSpan(), this.dirty ? "save" : "check");
+    (0, import_obsidian2.setIcon)(sv.createSpan(), this.dirty ? "save" : "check");
     sv.appendText(this.dirty ? "Save" : "Saved");
     sv.addEventListener("click", () => {
       if (this.dirty) this.save();
     });
-    if (!import_obsidian.Platform.isMobile) {
+    if (!import_obsidian2.Platform.isMobile) {
       r.createSpan({ cls: "vl-zsep" });
       const pt = this.btn(r, "panel-right", this.v.panel === false ? "Show the settings" : "Hide the settings", () => {
         this.setView({ panel: this.v.panel === false });
@@ -707,7 +836,7 @@ var Editor = class {
   }
   btn(parent, icon, label2, act, off = false) {
     const x = parent.createEl("button", { cls: "vl-btn" + (off ? " is-off" : ""), attr: { "aria-label": label2, title: label2 } });
-    (0, import_obsidian.setIcon)(x, icon);
+    (0, import_obsidian2.setIcon)(x, icon);
     x.addEventListener("click", () => {
       if (!off) act();
     });
@@ -725,7 +854,7 @@ var Editor = class {
     if (cur) {
       if (this.v.fit) {
         const dev = deviceOf(cur.device ?? this.doc.device), { W, H } = screenOf(dev, cur.side);
-        const ph = import_obsidian.Platform.isMobile;
+        const ph = import_obsidian2.Platform.isMobile;
         const sw = this.wall.clientWidth - (ph ? 44 : 64), sh = this.wall.clientHeight - (ph ? 100 : 120);
         if (sw > 0 && sh > 0) view.set(this.doc.id, { ...this.v, zoom: Math.max(0.2, Math.min(2, Math.floor(Math.min(sw / W, sh / H) * 100) / 100)) });
       }
@@ -763,7 +892,7 @@ var Editor = class {
     for (const p of childrenOf(pages)) row(p, 0);
     for (const p of pages) row(p, 0);
     const na = box.createEl("button", { cls: "vl-act vl-newp" });
-    (0, import_obsidian.setIcon)(na.createSpan(), "plus");
+    (0, import_obsidian2.setIcon)(na.createSpan(), "plus");
     na.appendText("New screen");
     na.addEventListener("click", () => this.addPage());
     const foot = box.createDiv({ cls: "vl-rfoot" });
@@ -771,7 +900,7 @@ var Editor = class {
     const devc = deviceOf(this.doc.device);
     const dev = foot.createEl("button", { cls: "vl-dev" });
     dev.createSpan({ text: devc.name });
-    (0, import_obsidian.setIcon)(dev.createSpan({ cls: "vl-chev" }), "chevron-down");
+    (0, import_obsidian2.setIcon)(dev.createSpan({ cls: "vl-chev" }), "chevron-down");
     dev.addEventListener("click", () => {
       const R = this.root;
       const open = R.querySelector(".vl-menu");
@@ -1013,7 +1142,7 @@ var Editor = class {
       }
       const again = target?.item && before?.item === target.item;
       this.choose(target);
-      if (again && import_obsidian.Platform.isMobile) this.writeItem(b, target.item);
+      if (again && import_obsidian2.Platform.isMobile) this.writeItem(b, target.item);
     };
     scr.addEventListener("pointermove", move);
     scr.addEventListener("pointerup", up);
@@ -1027,7 +1156,7 @@ var Editor = class {
     if (!b || !f) return;
     this.choose({ page: p.id, block: b.id, item: f.item.id });
     if (f.item.type !== "text") return;
-    if (import_obsidian.Platform.isMobile) {
+    if (import_obsidian2.Platform.isMobile) {
       this.writeItem(b, f.item.id);
       return;
     }
@@ -1152,14 +1281,14 @@ var Editor = class {
     this.getters.clear();
     this.drawBar();
     this.panelBody();
-    if (import_obsidian.Platform.isMobile && this.v.fit && this.pending === null) this.drawPages();
+    if (import_obsidian2.Platform.isMobile && this.v.fit && this.pending === null) this.drawPages();
   }
   panelBody() {
-    if (!this.side?.isConnected || this.v.show || !this.sel && import_obsidian.Platform.isMobile || !import_obsidian.Platform.isMobile && this.v.panel === false) return;
+    if (!this.side?.isConnected || this.v.show || !this.sel && import_obsidian2.Platform.isMobile || !import_obsidian2.Platform.isMobile && this.v.panel === false) return;
     const p = this.page() ?? this.current();
     if (!p) return;
-    const P = this.panel = this.side.createDiv({ cls: "vl-panel" + (import_obsidian.Platform.isMobile ? " is-sheet" : "") });
-    if (!import_obsidian.Platform.isMobile) {
+    const P = this.panel = this.side.createDiv({ cls: "vl-panel" + (import_obsidian2.Platform.isMobile ? " is-sheet" : "") });
+    if (!import_obsidian2.Platform.isMobile) {
       const pw = Number(localStorage.getItem("vellum:panelW")) || 300;
       P.style.width = `${pw}px`;
       const g = P.createDiv({ cls: "vl-pgrip", attr: { title: "Drag to resize" } });
@@ -1201,7 +1330,7 @@ var Editor = class {
       crumb(label(f.item), this.sel, true);
     }
     if (this.sel) this.btn(head, "x", "Let go (Esc)", () => this.choose(null)).addClass("vl-close");
-    if (!import_obsidian.Platform.isMobile) this.btn(head, "panel-right-close", "Hide the settings", () => {
+    if (!import_obsidian2.Platform.isMobile) this.btn(head, "panel-right-close", "Hide the settings", () => {
       this.setView({ panel: false });
       this.draw();
     }).addClass(this.sel ? "vl-fold" : "vl-close");
@@ -1284,7 +1413,7 @@ var Editor = class {
     return g;
   }
   text(parent, get, set, o = {}) {
-    if (import_obsidian.Platform.isMobile) {
+    if (import_obsidian2.Platform.isMobile) {
       const t = parent.createDiv({ cls: "vl-text vl-tap" + (get() ? "" : " is-empty"), text: get() || o.placeholder || "" });
       t.addEventListener("click", () => this.writer(o.title ?? o.placeholder ?? "Text", get(), (v) => this.edit(() => set(v)), !!o.area));
       return t;
@@ -1358,7 +1487,7 @@ var Editor = class {
     const g = parent.createDiv({ cls: "vl-acts" });
     for (const [icon, text, act] of list) {
       const x = g.createEl("button", { cls: "vl-act" });
-      (0, import_obsidian.setIcon)(x.createSpan(), icon);
+      (0, import_obsidian2.setIcon)(x.createSpan(), icon);
       x.appendText(text);
       x.addEventListener("click", act);
     }
@@ -1630,14 +1759,38 @@ var Editor = class {
 var label = (it) => it.type === "text" ? (it.v ?? "").split("\n")[0].slice(0, 24) || "(empty text)" : it.type === "row" || it.type === "col" ? `${it.items?.length ?? 0} items` : it.type === "ellipse" ? "circle" : it.type;
 function registerVellum(plugin, host = {}) {
   plugin.registerView(VIEW, (leaf) => new VellumWindow(leaf));
-  plugin.registerMarkdownCodeBlockProcessor("vellum", (source, el, ctx) => {
-    new Editor(plugin, typeof host === "function" ? host() : host, source, el, ctx);
+  plugin.registerMarkdownCodeBlockProcessor("vellum", async (source, el, ctx) => {
+    const h = typeof host === "function" ? host() : host, dir = srcOf(source);
+    if (!dir) {
+      new Editor(plugin, h, source, el, ctx);
+      return;
+    }
+    const store = new FolderStore(plugin.app, dir);
+    new Editor(plugin, h, source, el, ctx, store, await store.load());
   });
+  const due = /* @__PURE__ */ new Map();
+  const touched = (path) => {
+    for (const ed of new Set(editors.values())) {
+      const st = ed.store;
+      if (!st || !st.watches(path) || Date.now() < st.ownUntil) continue;
+      window.clearTimeout(due.get(ed));
+      due.set(ed, window.setTimeout(() => {
+        due.delete(ed);
+        void ed.outside();
+      }, 400));
+    }
+  };
+  const v = plugin.app.vault;
+  for (const ev of ["create", "modify", "delete"]) plugin.registerEvent(v.on(ev, (f) => touched(f.path)));
+  plugin.registerEvent(v.on("rename", (f, old) => {
+    touched(f.path);
+    touched(old);
+  }));
 }
 
 // src/main.ts
 var DEFAULTS = { colors: { ...BASE_THEME.colors }, fonts: { ...BASE_THEME.fonts } };
-var VellumPlugin = class extends import_obsidian2.Plugin {
+var VellumPlugin = class extends import_obsidian3.Plugin {
   constructor() {
     super(...arguments);
     this.settings = structuredClone(DEFAULTS);
@@ -1655,7 +1808,7 @@ var VellumPlugin = class extends import_obsidian2.Plugin {
     await this.saveData(this.settings);
   }
 };
-var VellumSettings = class extends import_obsidian2.PluginSettingTab {
+var VellumSettings = class extends import_obsidian3.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -1664,9 +1817,9 @@ var VellumSettings = class extends import_obsidian2.PluginSettingTab {
     const { containerEl: c } = this, s = this.plugin.settings;
     c.empty();
     c.createEl("p", { cls: "setting-item-description", text: "The named colours and fonts items use (any CSS value, CSS variables too). Reopen a note to see a change." });
-    new import_obsidian2.Setting(c).setName("Colours").setHeading();
+    new import_obsidian3.Setting(c).setName("Colours").setHeading();
     for (const name of Object.keys(s.colors)) {
-      const row = new import_obsidian2.Setting(c).setName(name);
+      const row = new import_obsidian3.Setting(c).setName(name);
       const sw = row.nameEl.createSpan({ cls: "vl-set-sw" });
       sw.style.background = s.colors[name];
       row.addText((t) => t.setValue(s.colors[name]).onChange(async (v) => {
@@ -1681,7 +1834,7 @@ var VellumSettings = class extends import_obsidian2.PluginSettingTab {
       }));
     }
     let fresh = "";
-    new import_obsidian2.Setting(c).setName("Add a colour").setDesc("A new name items can use.").addText((t) => t.setPlaceholder("name").onChange((v) => {
+    new import_obsidian3.Setting(c).setName("Add a colour").setDesc("A new name items can use.").addText((t) => t.setPlaceholder("name").onChange((v) => {
       fresh = v.trim();
     })).addButton((b) => b.setButtonText("Add").onClick(async () => {
       if (!fresh || fresh in s.colors) return;
@@ -1689,14 +1842,14 @@ var VellumSettings = class extends import_obsidian2.PluginSettingTab {
       await this.plugin.save();
       this.display();
     }));
-    new import_obsidian2.Setting(c).setName("Fonts").setHeading();
+    new import_obsidian3.Setting(c).setName("Fonts").setHeading();
     for (const name of Object.keys(s.fonts)) {
-      new import_obsidian2.Setting(c).setName(name).addText((t) => t.setValue(s.fonts[name]).onChange(async (v) => {
+      new import_obsidian3.Setting(c).setName(name).addText((t) => t.setValue(s.fonts[name]).onChange(async (v) => {
         s.fonts[name] = v.trim();
         await this.plugin.save();
       }));
     }
-    new import_obsidian2.Setting(c).setName("Follow the Obsidian theme").setDesc("Put every colour and font back to the defaults.").addButton((b) => b.setButtonText("Reset").setWarning().onClick(async () => {
+    new import_obsidian3.Setting(c).setName("Follow the Obsidian theme").setDesc("Put every colour and font back to the defaults.").addButton((b) => b.setButtonText("Reset").setWarning().onClick(async () => {
       this.plugin.settings = structuredClone(DEFAULTS);
       await this.plugin.save();
       this.display();
