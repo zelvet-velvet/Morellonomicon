@@ -787,7 +787,7 @@ var Editor = class {
         this.draw();
       });
     } else {
-      this.btn(l, this.v.rail ? "panel-left" : "sidebar-left", this.v.rail ? "Collapse the screens" : "Expand the screens", () => {
+      this.btn(l, this.v.rail ? "vellum-side-left" : "sidebar-left", this.v.rail ? "Collapse the screens" : "Expand the screens", () => {
         this.setView({ rail: !this.v.rail });
         this.draw();
       }).addClass("vl-side-toggle");
@@ -804,7 +804,7 @@ var Editor = class {
     });
     if (!import_obsidian2.Platform.isMobile) {
       r.createSpan({ cls: "vl-zsep" });
-      this.btn(r, this.v.panel === false ? "sidebar-right" : "panel-right", this.v.panel === false ? "Expand the settings" : "Collapse the settings", () => {
+      this.btn(r, this.v.panel === false ? "sidebar-right" : "vellum-side-right", this.v.panel === false ? "Expand the settings" : "Collapse the settings", () => {
         this.setView({ panel: this.v.panel === false });
         this.draw();
       }).addClass("vl-side-toggle");
@@ -1989,6 +1989,9 @@ async function openVellum(dir, page) {
 }
 function registerVellum(plugin, host = {}) {
   ref = { plugin, host: () => typeof host === "function" ? host() : host };
+  const frame = (x) => `<g transform="scale(4.1667)" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3H3C1.89543 3 1 3.89543 1 5V19C1 20.1046 1.89543 21 3 21H21C22.1046 21 23 20.1046 23 19V5C23 3.89543 22.1046 3 21 3Z"/><path d="M${x} 4V20"/></g>`;
+  (0, import_obsidian2.addIcon)("vellum-side-left", frame(7));
+  (0, import_obsidian2.addIcon)("vellum-side-right", frame(17));
   plugin.registerView(VIEW, (leaf) => new VellumWindow(leaf));
   plugin.registerMarkdownCodeBlockProcessor("vellum", async (source, el, ctx) => {
     const h = typeof host === "function" ? host() : host, dir = srcOf(source);
