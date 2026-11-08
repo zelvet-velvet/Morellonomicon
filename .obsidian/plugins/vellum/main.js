@@ -787,7 +787,7 @@ var Editor = class {
         this.draw();
       });
     } else {
-      this.btn(l, this.v.rail ? "vellum-side-left" : "sidebar-left", this.v.rail ? "Collapse the screens" : "Expand the screens", () => {
+      this.btn(l, this.v.rail ? "sidebar-left" : "vellum-side-left", this.v.rail ? "Collapse the screens" : "Expand the screens", () => {
         this.setView({ rail: !this.v.rail });
         this.draw();
       }).addClass("vl-side-toggle");
@@ -804,7 +804,7 @@ var Editor = class {
     });
     if (!import_obsidian2.Platform.isMobile) {
       r.createSpan({ cls: "vl-zsep" });
-      this.btn(r, this.v.panel === false ? "sidebar-right" : "vellum-side-right", this.v.panel === false ? "Expand the settings" : "Collapse the settings", () => {
+      this.btn(r, this.v.panel === false ? "vellum-side-right" : "sidebar-right", this.v.panel === false ? "Expand the settings" : "Collapse the settings", () => {
         this.setView({ panel: this.v.panel === false });
         this.draw();
       }).addClass("vl-side-toggle");
