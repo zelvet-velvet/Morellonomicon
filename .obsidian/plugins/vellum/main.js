@@ -904,6 +904,7 @@ var Editor = class {
   drawRail() {
     const r = this.rail;
     if (!r?.isConnected) return;
+    this.unpeek();
     r.empty();
     r.toggleClass("is-on", this.v.rail);
     if (!this.v.rail) return;
@@ -937,6 +938,8 @@ var Editor = class {
       });
     }
     const box = r.createDiv({ cls: "vl-railbox" });
+    box.addEventListener("scroll", () => this.unpeek(), { passive: true });
+    box.addEventListener("mouseleave", () => this.unpeek());
     const pics = localStorage.getItem("vellum:pics") === "1";
     const hd = box.createDiv({ cls: "vl-railhead" });
     hd.createDiv({ cls: "vl-sech", text: `Screens \xB7 ${this.doc.pages.length}` });
@@ -1050,13 +1053,9 @@ var Editor = class {
   peekOn(row, p) {
     let t = 0;
     if (!import_obsidian2.Platform.isMobile) {
-      row.addEventListener("mouseenter", () => {
-        t = window.setTimeout(() => this.peek(p, row), 280);
-      });
-      row.addEventListener("mouseleave", () => {
-        window.clearTimeout(t);
-        this.unpeek();
-      });
+      row.addEventListener("mouseenter", () => this.peek(p, row));
+      row.addEventListener("mouseleave", () => this.unpeek());
+      row.addEventListener("pointerdown", () => this.unpeek());
       return;
     }
     let shown = false;
