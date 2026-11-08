@@ -787,7 +787,7 @@ var Editor = class {
         this.draw();
       });
     } else {
-      this.btn(l, this.v.rail ? "panel-left-close" : "panel-left-open", this.v.rail ? "Collapse the screens" : "Expand the screens", () => {
+      this.btn(l, this.v.rail ? "panel-left" : "sidebar-left", this.v.rail ? "Collapse the screens" : "Expand the screens", () => {
         this.setView({ rail: !this.v.rail });
         this.draw();
       }).addClass("vl-side-toggle");
@@ -804,7 +804,7 @@ var Editor = class {
     });
     if (!import_obsidian2.Platform.isMobile) {
       r.createSpan({ cls: "vl-zsep" });
-      this.btn(r, this.v.panel === false ? "panel-right-open" : "panel-right-close", this.v.panel === false ? "Expand the settings" : "Collapse the settings", () => {
+      this.btn(r, this.v.panel === false ? "sidebar-right" : "panel-right", this.v.panel === false ? "Expand the settings" : "Collapse the settings", () => {
         this.setView({ panel: this.v.panel === false });
         this.draw();
       }).addClass("vl-side-toggle");
