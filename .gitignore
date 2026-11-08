@@ -10,6 +10,8 @@ __pycache__/
 # Obsidian Git is committed too, so a fresh clone already has it (its settings stay per device)
 !.obsidian/plugins/obsidian-git/
 .obsidian/plugins/obsidian-git/data.json
+# Vellum (layout editor, github.com/zelvet-velvet/vellum) is committed so the phone has it; update: python3 tools/install_plugins.py vellum
+!.obsidian/plugins/vellum/
 .obsidian/workspace.json
 .obsidian/workspaces.json
 **/.makemd/
