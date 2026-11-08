@@ -30,8 +30,9 @@ var import_obsidian2 = require("obsidian");
 
 // src/devices.ts
 var DEVICES = [
-  { id: "iphone-16-pro", brand: "Apple", name: "iPhone 16 Pro", w: 402, h: 874, radius: 62, cut: "island", top: 62, bottom: 34, side: { left: 62, bottom: 21 } },
-  { id: "iphone-16-pro-max", brand: "Apple", name: "iPhone 16 Pro Max", w: 440, h: 956, radius: 62, cut: "island", top: 62, bottom: 34, side: { left: 62, bottom: 21 } },
+  { id: "iphone-air", brand: "Apple", name: "iPhone Air", w: 420, h: 912, radius: 62, cut: "island", top: 68, bottom: 34, side: { left: 68, bottom: 21 } },
+  { id: "iphone-16-pro", brand: "Apple", name: "iPhone 16 Pro / 17 / 17 Pro", w: 402, h: 874, radius: 62, cut: "island", top: 62, bottom: 34, side: { left: 62, bottom: 21 } },
+  { id: "iphone-16-pro-max", brand: "Apple", name: "iPhone 16 Pro Max / 17 Pro Max", w: 440, h: 956, radius: 62, cut: "island", top: 62, bottom: 34, side: { left: 62, bottom: 21 } },
   { id: "iphone-16", brand: "Apple", name: "iPhone 16", w: 393, h: 852, radius: 55, cut: "island", top: 59, bottom: 34, side: { left: 59, bottom: 21 } },
   { id: "iphone-14", brand: "Apple", name: "iPhone 13 / 14", w: 390, h: 844, radius: 47, cut: "notch", top: 47, bottom: 34, side: { left: 47, bottom: 21 } },
   { id: "iphone-12-pro-max", brand: "Apple", name: "iPhone 12 Pro Max", w: 428, h: 926, radius: 53, cut: "notch", top: 47, bottom: 34, side: { left: 47, bottom: 21 } },
@@ -39,9 +40,15 @@ var DEVICES = [
   { id: "iphone-12-mini", brand: "Apple", name: "iPhone 12 mini", w: 375, h: 812, radius: 44, cut: "notch", top: 50, bottom: 34, side: { left: 50, bottom: 21 } },
   { id: "iphone-se", brand: "Apple", name: "iPhone SE", w: 375, h: 667, radius: 0, cut: "none", top: 20, bottom: 0, side: { left: 0, bottom: 0 } },
   { id: "pixel-8", brand: "Google", name: "Pixel 8", w: 412, h: 915, radius: 40, cut: "hole", top: 32, bottom: 24, side: { left: 32, bottom: 24 } },
-  { id: "galaxy-s24", brand: "Samsung", name: "Galaxy S24", w: 360, h: 780, radius: 36, cut: "hole", top: 32, bottom: 24, side: { left: 32, bottom: 24 } }
+  { id: "galaxy-s24", brand: "Samsung", name: "Galaxy S24 / S25", w: 360, h: 780, radius: 36, cut: "hole", top: 32, bottom: 24, side: { left: 32, bottom: 24 } }
 ];
-var deviceOf = (id) => DEVICES.find((d) => d.id === id) ?? DEVICES[0];
+DEVICES.push({ id: "galaxy-s25-ultra", brand: "Samsung", name: "Galaxy S25 Ultra", w: 412, h: 891, radius: 24, cut: "hole", top: 32, bottom: 24, side: { left: 32, bottom: 24 } });
+var customDevice = (w, h) => ({ id: `custom-${w}x${h}`, brand: "Custom", name: `Custom ${w} \xD7 ${h}`, w, h, radius: 40, cut: "none", top: 44, bottom: 24, side: { left: 0, bottom: 20 } });
+var deviceOf = (id) => {
+  const m = /^custom-(\d{3,4})x(\d{3,4})$/.exec(id ?? "");
+  if (m) return customDevice(Number(m[1]), Number(m[2]));
+  return DEVICES.find((d) => d.id === id) ?? DEVICES[0];
+};
 var screenOf = (d, side) => side ? { W: d.h, H: d.w, safe: { top: 0, left: d.side.left, right: d.side.left, bottom: d.side.bottom } } : { W: d.w, H: d.h, safe: { top: d.top, left: 0, right: 0, bottom: d.bottom } };
 
 // src/model.ts
@@ -343,7 +350,7 @@ var VellumWindow = class extends import_obsidian2.ItemView {
     return "Vellum" + (this.key ? " \xB7 " + (this.key.split(":")[1] ?? "").replace(/\.md$/, "") : "");
   }
   getIcon() {
-    return "pencil-ruler";
+    return "vellum";
   }
   getState() {
     return { key: this.key };
@@ -871,8 +878,9 @@ var Editor = class {
       const BASE = 110, room = this.wall.clientWidth - 64;
       let tw = BASE * (this.v.mapZoom ?? 1);
       if (this.v.mapFit !== false) {
-        const slots = this.drawMap(box, BASE, pick);
-        tw = Math.max(48, Math.min(200, Math.floor(room / Math.max(1, slots) - 40)));
+        const { slots, rows } = this.drawMap(box, BASE, pick), d = deviceOf(this.doc.device), ratio = d.h / d.w;
+        const byW = room / Math.max(1, slots) - 40, byH = ((this.wall.clientHeight - 150) / Math.max(1, rows) - 86) / ratio;
+        tw = Math.max(48, Math.min(200, Math.floor(Math.min(byW, byH))));
         this.setView({ mapZoom: Math.round(tw / BASE * 100) / 100 });
       }
       this.drawMap(box, tw, pick);
@@ -1010,6 +1018,24 @@ var Editor = class {
           });
         });
       }
+      m.createDiv({ cls: "vl-menuh", text: "Custom" });
+      const cu = m.createDiv({ cls: "vl-custom" });
+      const now = deviceOf(this.doc.device);
+      const wi = cu.createEl("input", { attr: { type: "number", min: "240", max: "1600", placeholder: "W", value: devc.brand === "Custom" ? String(now.w) : "" } });
+      cu.createSpan({ text: "\xD7" });
+      const hi = cu.createEl("input", { attr: { type: "number", min: "320", max: "2400", placeholder: "H", value: devc.brand === "Custom" ? String(now.h) : "" } });
+      const ok = cu.createEl("button", { cls: "vl-act", text: "Use" });
+      ok.addEventListener("click", () => {
+        const w = Math.round(Number(wi.value)), h = Math.round(Number(hi.value));
+        if (!(w >= 240 && w <= 1600 && h >= 320 && h <= 2400)) {
+          new import_obsidian2.Notice("Vellum: a width of 240\u20131600 and a height of 320\u20132400 points");
+          return;
+        }
+        m.remove();
+        this.edit(() => {
+          this.doc.device = customDevice(w, h).id;
+        });
+      });
       const off = (e) => {
         if (!m.isConnected) return R.doc.removeEventListener("pointerdown", off, true);
         if (!m.contains(e.target) && !dev.contains(e.target)) {
@@ -1126,7 +1152,7 @@ var Editor = class {
     m.empty();
     if (!this.doc.pages.length) {
       m.createDiv({ cls: "vl-empty", text: "No screens yet: open the editor to add one." });
-      return 0;
+      return { slots: 0, rows: 0 };
     }
     const pages = this.doc.pages, cur = this.root?.isConnected ? this.current() : void 0;
     const GAP = 40, LABEL = 46, slotW = TW + GAP;
@@ -1204,7 +1230,7 @@ var Editor = class {
       if (p.id === cur?.id) t.addClass("is-on");
     }
     this.sel = keep;
-    return x;
+    return { slots: x, rows: depthMax + 1 };
   }
   drawPage(p) {
     const dev = deviceOf(p.device ?? this.doc.device), { W, H, safe } = screenOf(dev, p.side), z = this.v.zoom, show = this.v.show;
@@ -1227,7 +1253,13 @@ var Editor = class {
       sb.style.setProperty("--ear", `${(W - cutW) / 2}px`);
       sb.createDiv({ cls: "vl-ear" }).createSpan({ cls: "vl-time", text: "9:41" });
       const r = sb.createDiv({ cls: "vl-ear" });
-      r.innerHTML = '<svg class="vl-bars" viewBox="0 0 18 12" width="18" height="12"><rect x="0" y="7.5" width="3" height="4.5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2.5" width="3" height="9.5" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><span class="vl-net">5G</span><svg class="vl-batt" viewBox="0 0 28 13" width="28" height="13"><rect x="0.5" y="0.5" width="24" height="12" rx="3.8" fill="none" stroke="currentColor" opacity="0.4"/><rect x="2" y="2" width="16" height="9" rx="2.4"/><path d="M26 4.5v4a2.2 2.2 0 0 0 0-4z" opacity="0.45"/></svg>';
+      const bars = r.createSvg("svg", { cls: "vl-bars", attr: { viewBox: "0 0 18 12", width: 18, height: 12 } });
+      for (const [x, y, h] of [[0, 7.5, 4.5], [5, 5, 7], [10, 2.5, 9.5], [15, 0, 12]]) bars.createSvg("rect", { attr: { x, y, width: 3, height: h, rx: 1 } });
+      r.createSpan({ cls: "vl-net", text: "5G" });
+      const batt = r.createSvg("svg", { cls: "vl-batt", attr: { viewBox: "0 0 28 13", width: 28, height: 13 } });
+      batt.createSvg("rect", { attr: { x: 0.5, y: 0.5, width: 24, height: 12, rx: 3.8, fill: "none", stroke: "currentColor", opacity: 0.4 } });
+      batt.createSvg("rect", { attr: { x: 2, y: 2, width: 16, height: 9, rx: 2.4 } });
+      batt.createSvg("path", { attr: { d: "M26 4.5v4a2.2 2.2 0 0 0 0-4z", opacity: 0.45 } });
     }
     if (dev.cut !== "none") scr.createDiv({ cls: `vl-cut is-${dev.cut}` + (p.side ? " is-side" : "") });
     if (safe.bottom) scr.createDiv({ cls: "vl-home" });
@@ -1985,6 +2017,7 @@ function registerVellum(plugin, host = {}) {
 }
 
 // src/main.ts
+var ICON = `<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><rect x="34" y="8" width="44" height="84" rx="10"/><path d="M14 32 h38 l10 10 v48 h-48 z"/></g><circle cx="38" cy="61" r="7" fill="currentColor"/>`;
 var DEFAULTS = { folder: "Screens", colors: { ...BASE_THEME.colors }, fonts: { ...BASE_THEME.fonts } };
 var VellumPlugin = class extends import_obsidian3.Plugin {
   constructor() {
@@ -1994,8 +2027,9 @@ var VellumPlugin = class extends import_obsidian3.Plugin {
   async onload() {
     const saved = await this.loadData();
     this.settings = { folder: saved?.folder || DEFAULTS.folder, colors: { ...DEFAULTS.colors, ...saved?.colors }, fonts: { ...DEFAULTS.fonts, ...saved?.fonts } };
+    (0, import_obsidian3.addIcon)("vellum", ICON);
     registerVellum(this, () => ({ theme: this.theme() }));
-    this.addRibbonIcon("pencil-ruler", "Open Vellum", () => {
+    this.addRibbonIcon("vellum", "Open Vellum", () => {
       void openVellum(this.settings.folder);
     });
     this.addCommand({ id: "open", name: "Open the screens", callback: () => {
