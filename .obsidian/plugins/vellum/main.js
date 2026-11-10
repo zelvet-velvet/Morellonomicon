@@ -422,7 +422,24 @@ var FolderStore = class {
 };
 
 // src/editor.ts
-var SNAP = 4;
+var SNAP_DEFAULT = { on: true, dist: 6, grid: 4, margins: [16], frame: true, others: true, guides: true };
+var snap = { ...SNAP_DEFAULT };
+var keepSnap = () => {
+};
+var setSnap = (c, save) => {
+  snap = c;
+  keepSnap = save;
+};
+var grid = () => Math.max(1, snap.grid || 1);
+var near = (pts, lines, reach) => {
+  let best = null;
+  for (const q of pts) for (const l of lines) {
+    const d = l - q;
+    if (Math.abs(d) <= reach && (!best || Math.abs(d) < Math.abs(best.d))) best = { d, at: l };
+  }
+  return best;
+};
+var toD = (a, L, W, bw) => Math.round(a < 0 ? L : a > 0 ? bw - L - W : L + W / 2 - bw / 2);
 var view = /* @__PURE__ */ new Map();
 var reopen = /* @__PURE__ */ new Map();
 var VIEW = "vellum-editor";
@@ -465,6 +482,17 @@ var VellumWindow = class extends import_obsidian3.ItemView {
     editors.get(this.key)?.unmount();
   }
 };
+var raise = (win) => {
+  const ew = win.electronWindow;
+  try {
+    if (ew?.isMinimized?.()) ew.restore?.();
+    ew?.show?.();
+    ew?.moveTop?.();
+    ew?.focus?.();
+  } catch {
+  }
+  win.focus();
+};
 var Editor = class {
   // store: the folder the doc is kept in (src: in the block), with the doc as read; none = the JSON in the block itself
   // el / ctx: the ```vellum block it is drawn in; none = opened straight on a folder (the ribbon, a command)
@@ -481,6 +509,7 @@ var Editor = class {
     this.tab = "style";
     this.root = null;
     this.stale = null;
+    this.railTop = 0;
     // a screen as a small picture (the rail's rows): drawn again only when the screen changed
     this.thumbs = /* @__PURE__ */ new Map();
     this.keepTop = 0;
@@ -780,10 +809,12 @@ var Editor = class {
       else this.draw();
       return;
     }
-    const key = this.draftKey(), w = windows.get(key);
+    const key = this.draftKey();
+    const w = windows.get(key) ?? this.plugin.app.workspace.getLeavesOfType(VIEW).map((l) => l.view).find((v) => v instanceof VellumWindow && v.key === key);
     if (w) {
       if (page) this.draw();
-      w.contentEl.win.focus();
+      void this.plugin.app.workspace.revealLeaf(w.leaf);
+      raise(w.contentEl.win);
       return;
     }
     let size;
@@ -924,6 +955,15 @@ var Editor = class {
       l.createSpan({ cls: "vl-pg vl-pgname", text: cur?.name ?? "No screens" });
     }
     const r = b.createDiv({ cls: "vl-tr" });
+    this.btn(r, "settings", "Vellum settings (colours, fonts, snapping)", () => {
+      const set = this.plugin.app.setting;
+      if (!set) return;
+      set.open();
+      set.openTabById(this.plugin.manifest.id);
+      const up = () => raise(set.win ?? window);
+      up();
+      for (const ms of [120, 400]) window.setTimeout(up, ms);
+    });
     this.btn(r, "undo-2", "Undo (Ctrl+Z)", () => this.undo(), !this.past.length);
     this.btn(r, "redo-2", "Redo (Ctrl+Shift+Z)", () => this.redo(), !this.future.length);
     const sv = r.createEl("button", { cls: "vl-save is-savebtn" + (this.dirty ? " is-dirty" : ""), attr: { "aria-label": "Save into the note (Ctrl+S)" } });
@@ -972,6 +1012,13 @@ var Editor = class {
         this.thumbs.clear();
         this.draw();
       });
+    }
+    if (!this.v.map && !this.v.show) {
+      this.btn(pill, "magnet", snap.on ? "Snapping on: to edges, middles and other items (Alt while dragging: off; details in Settings \u2192 Vellum)" : "Snapping off: the grid only", () => {
+        snap.on = !snap.on;
+        keepSnap();
+        this.drawZoom();
+      }).toggleClass("is-on", snap.on);
     }
     pill.createSpan({ cls: "vl-zsep" });
     this.btn(pill, "minus", "Zoom out (Ctrl+wheel)", () => this.zoomBy(1 / 1.25));
@@ -1090,7 +1137,10 @@ var Editor = class {
       });
     }
     const box = r.createDiv({ cls: "vl-railbox" });
-    box.addEventListener("scroll", () => this.unpeek(), { passive: true });
+    box.addEventListener("scroll", () => {
+      this.railTop = box.scrollTop;
+      this.unpeek();
+    }, { passive: true });
     box.addEventListener("mouseleave", () => this.unpeek());
     const pics = localStorage.getItem("vellum:pics") === "1";
     const hd = box.createDiv({ cls: "vl-railhead" });
@@ -1200,6 +1250,7 @@ var Editor = class {
       };
       window.setTimeout(() => R.doc.addEventListener("pointerdown", off, true));
     });
+    box.scrollTop = this.railTop;
   }
   // a large look at a screen without opening it: the pointer resting on its row (computer), a long press (phone)
   peekOn(row, p) {
@@ -1472,9 +1523,127 @@ var Editor = class {
           d.style.left = `${(ax + 1) * 50}%`;
           d.style.top = `${(ay + 1) * 50}%`;
         }
+        if (it && b.items.includes(it) && RESIZE.includes(it.type)) this.itemGrips(el, b, it);
       } else el.createDiv({ cls: "vl-grip", attr: { "data-grip": "1" } });
     }
     return el;
+  }
+  // a chosen picture / shape (placed in its block, not in a row): a handle at both bottom corners to resize it
+  itemGrips(bEl, b, it) {
+    const box = this.itemBox(bEl, b, it);
+    if (!box) return;
+    for (const c of ["bl", "br"]) {
+      const g = bEl.createDiv({ cls: `vl-igrip is-${c}`, attr: { "data-igrip": c, "aria-label": "Resize (Shift: keep the shape, Alt: 1 px)" } });
+      g.style.left = `${c === "bl" ? box.L : box.L + box.W}px`;
+      g.style.top = `${box.T + box.H}px`;
+    }
+  }
+  // an item's box in its block's points, as drawn (hug and fill too)
+  itemBox(bEl, b, it) {
+    const iEl = bEl.querySelector(`[data-id="${it.id}"]`), br = bEl.getBoundingClientRect();
+    if (!iEl || !br.width) return null;
+    const ir = iEl.getBoundingClientRect(), k = br.width / b.w;
+    return { L: (ir.left - br.left) / k, T: (ir.top - br.top) / k, W: ir.width / k, H: ir.height / k };
+  }
+  // the lines a box snaps to: an item's in its block (block points), a block's on the screen
+  itemLines(bEl, b, it) {
+    const x = [], y = [];
+    if (snap.frame) {
+      x.push(0, b.w / 2, b.w);
+      y.push(0, b.h / 2, b.h);
+      for (const m of snap.margins) {
+        x.push(m, b.w - m);
+        y.push(m, b.h - m);
+      }
+    }
+    if (snap.others) for (const o of b.items) {
+      if (o === it) continue;
+      const r = this.itemBox(bEl, b, o);
+      if (!r) continue;
+      x.push(r.L, r.L + r.W / 2, r.L + r.W);
+      y.push(r.T, r.T + r.H / 2, r.T + r.H);
+    }
+    return { x, y };
+  }
+  blockLines(p, b) {
+    const { W, H, safe } = screenOf(deviceOf(p.device ?? this.doc.device), this.land), x = [], y = [];
+    if (snap.frame) {
+      const l = safe.left, r = W - safe.right, t = safe.top, bo = H - safe.bottom;
+      x.push(0, W / 2, W, l, r);
+      y.push(0, H / 2, H, t, bo);
+      for (const m of snap.margins) {
+        x.push(l + m, r - m);
+        y.push(t + m, bo - m);
+      }
+    }
+    if (snap.others) for (const { block: o } of this.layers(p)) {
+      if (o.id === b.id) continue;
+      x.push(o.x, o.x + o.w / 2, o.x + o.w);
+      y.push(o.y, o.y + o.h / 2, o.y + o.h);
+    }
+    return { x, y };
+  }
+  // the lines a drag snapped to, across the screen (screen points); none = cleared
+  guides(scr, xs = [], ys = []) {
+    scr.querySelectorAll(".vl-guide").forEach((g) => g.remove());
+    if (!snap.guides) return;
+    for (const v of xs) {
+      const g = scr.createDiv({ cls: "vl-guide is-v" });
+      g.style.left = `${v}px`;
+    }
+    for (const v of ys) {
+      const g = scr.createDiv({ cls: "vl-guide is-h" });
+      g.style.top = `${v}px`;
+    }
+  }
+  // drag a corner: w / h change live (snapped like blocks, Alt 1 px, Shift keeps the shape); the opposite edge stays put,
+  // whatever the item's gravity (its offset follows); a "fill" size becomes a number
+  resizeItem(e, p, b, scr, corner) {
+    const it = this.item()?.item, bEl = scr.querySelector(`[data-block="${b.id}"]`);
+    const box0 = it && bEl ? this.itemBox(bEl, b, it) : null;
+    if (!it || !box0) return;
+    const L0 = Math.round(box0.L), T0 = Math.round(box0.T), W0 = Math.round(box0.W), H0 = Math.round(box0.H);
+    const [ax, ay] = axes(it.g), x0 = e.clientX, y0 = e.clientY, z = this.v.zoom;
+    let moved = false;
+    const lines = this.itemLines(bEl, b, it);
+    scr.setPointerCapture(e.pointerId);
+    const move = (m) => {
+      const dx = (m.clientX - x0) / z, dy = (m.clientY - y0) / z;
+      if (!moved && Math.abs(dx) + Math.abs(dy) < 2) return;
+      if (!moved) {
+        moved = true;
+        this.begin();
+      }
+      const sn = (v) => Math.max(4, m.altKey ? Math.round(v) : Math.round(v / grid()) * grid());
+      const on = snap.on && !m.altKey, reach = snap.dist / z, gx = [], gy = [];
+      const gX = on ? near([corner === "br" ? L0 + W0 + dx : L0 + dx], lines.x, reach) : null;
+      if (gX) gx.push(gX.at);
+      const W = gX ? Math.max(4, Math.round(corner === "br" ? gX.at - L0 : L0 + W0 - gX.at)) : sn(corner === "br" ? W0 + dx : W0 - dx);
+      const gY = on && !m.shiftKey ? near([T0 + H0 + dy], lines.y, reach) : null;
+      if (gY) gy.push(gY.at);
+      const H = m.shiftKey && W0 && H0 ? Math.max(4, Math.round(W * H0 / W0)) : gY ? Math.max(4, Math.round(gY.at - T0)) : sn(H0 + dy);
+      const L = corner === "br" ? L0 : L0 + W0 - W;
+      it.w = W;
+      it.h = H;
+      it.dx = ax < 0 ? L : ax > 0 ? b.w - L - W : Math.round(L + W / 2 - b.w / 2);
+      it.dy = ay < 0 ? T0 : ay > 0 ? b.h - T0 - H : Math.round(T0 + H / 2 - b.h / 2);
+      this.redrawBlock(scr, p, b);
+      this.guides(scr, gx.map((v) => v + b.x), gy.map((v) => v + b.y));
+      this.livePanel();
+    };
+    const up = () => {
+      scr.removeEventListener("pointermove", move);
+      scr.removeEventListener("pointerup", up);
+      scr.removeEventListener("pointercancel", up);
+      this.guides(scr);
+      if (moved) {
+        this.end();
+        this.drawPanel();
+      }
+    };
+    scr.addEventListener("pointermove", move);
+    scr.addEventListener("pointerup", up);
+    scr.addEventListener("pointercancel", up);
   }
   // ---- pointer: a tap chooses, a drag moves (snaps to 4 px, Alt for 1 px)
   down(e, p, scr) {
@@ -1491,11 +1660,17 @@ var Editor = class {
       this.choose(l ? { page: p.id, block: l.block.id } : { page: p.id });
       return;
     }
+    const ig = t.closest("[data-igrip]");
+    if (ig && this.sel?.item && this.sel.block === b.id) {
+      this.resizeItem(e, p, b, scr, ig.dataset.igrip);
+      return;
+    }
     const blockChosen = before?.page === p.id && before.block === b.id;
     const target = pickId && blockChosen ? { page: p.id, block: b.id, item: pickId } : { page: p.id, block: b.id };
     const dragItem = target?.item ? findItem(b.items, dragId)?.item : void 0;
     const x0 = e.clientX, y0 = e.clientY, z = this.v.zoom, start = { ...b }, istart = dragItem ? { dx: dragItem.dx ?? 0, dy: dragItem.dy ?? 0 } : null;
     let moved = false;
+    let ib = null, lines = { x: [], y: [] };
     scr.setPointerCapture(e.pointerId);
     const move = (m) => {
       const dx = (m.clientX - x0) / z, dy = (m.clientY - y0) / z;
@@ -1503,30 +1678,55 @@ var Editor = class {
       if (!moved) {
         moved = true;
         this.begin();
+        const be = scr.querySelector(`[data-block="${b.id}"]`);
+        if (dragItem && be) {
+          ib = this.itemBox(be, b, dragItem);
+          lines = this.itemLines(be, b, dragItem);
+        } else lines = this.blockLines(p, b);
         if (!blockChosen || target?.item !== this.sel?.item) {
           this.sel = target;
           this.drawPanel();
         }
       }
-      const sn = (v) => m.altKey ? Math.round(v) : Math.round(v / SNAP) * SNAP;
+      const sn = (v) => m.altKey ? Math.round(v) : Math.round(v / grid()) * grid();
+      const on = snap.on && !m.altKey, reach = snap.dist / z, gx = [], gy = [];
+      const pick = (pts, ls, out) => {
+        const g = on ? near(pts, ls, reach) : null;
+        if (g) out.push(g.at);
+        return g;
+      };
+      let ox = 0, oy = 0;
       if (dragItem && istart) {
         const [ax, ay] = axes(dragItem.g);
-        if (dragItem.w !== "fill") dragItem.dx = sn(istart.dx + (ax > 0 ? -dx : dx));
-        if (dragItem.h !== "fill") dragItem.dy = sn(istart.dy + (ay > 0 ? -dy : dy));
+        ox = b.x;
+        oy = b.y;
+        if (dragItem.w !== "fill") {
+          const L = (ib?.L ?? 0) + dx, W = ib?.W ?? 0, g = ib ? pick([L, L + W / 2, L + W], lines.x, gx) : null;
+          dragItem.dx = g ? toD(ax, L + g.d, W, b.w) : sn(istart.dx + (ax > 0 ? -dx : dx));
+        }
+        if (dragItem.h !== "fill") {
+          const T = (ib?.T ?? 0) + dy, H = ib?.H ?? 0, g = ib ? pick([T, T + H / 2, T + H], lines.y, gy) : null;
+          dragItem.dy = g ? toD(ay, T + g.d, H, b.h) : sn(istart.dy + (ay > 0 ? -dy : dy));
+        }
       } else if (grip) {
-        b.w = Math.max(8, sn(start.w + dx));
-        b.h = Math.max(8, sn(start.h + dy));
+        const gR = pick([start.x + start.w + dx], lines.x, gx), gB = pick([start.y + start.h + dy], lines.y, gy);
+        b.w = Math.max(8, gR ? Math.round(gR.at - start.x) : sn(start.w + dx));
+        b.h = Math.max(8, gB ? Math.round(gB.at - start.y) : sn(start.h + dy));
       } else {
-        b.x = sn(start.x + dx);
-        b.y = sn(start.y + dy);
+        const L = start.x + dx, T = start.y + dy;
+        const g1 = pick([L, L + b.w / 2, L + b.w], lines.x, gx), g2 = pick([T, T + b.h / 2, T + b.h], lines.y, gy);
+        b.x = g1 ? Math.round(L + g1.d) : sn(L);
+        b.y = g2 ? Math.round(T + g2.d) : sn(T);
       }
       this.redrawBlock(scr, p, b);
+      this.guides(scr, gx.map((v) => v + ox), gy.map((v) => v + oy));
       this.livePanel();
     };
     const up = () => {
       scr.removeEventListener("pointermove", move);
       scr.removeEventListener("pointerup", up);
       scr.removeEventListener("pointercancel", up);
+      this.guides(scr);
       if (moved) {
         this.end();
         return;
@@ -1616,7 +1816,7 @@ var Editor = class {
     }
     const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
     if (d && this.sel?.block) {
-      this.nudge(d[0] * (e.shiftKey ? SNAP : 1), d[1] * (e.shiftKey ? SNAP : 1));
+      this.nudge(d[0] * (e.shiftKey ? grid() : 1), d[1] * (e.shiftKey ? grid() : 1));
       return true;
     }
     return false;
@@ -2219,25 +2419,7 @@ var Editor = class {
         it.fill = v;
       });
     } else if (it.type === "img") {
-      const s = this.section(body, "Picture");
-      this.text(s, () => it.src ?? "", (v) => {
-        it.src = v;
-      }, { placeholder: "https://\u2026 or a vault path", title: "Picture address" });
-      this.chips(s, [["cover", "Cover: fills the box, cropped", "crop"], ["contain", "Contain: all of it, inside the box", "minimize-2"], ["fill", "Stretch: the box's shape", "move-diagonal-2"]], it.fit ?? "cover", (v) => {
-        it.fit = v;
-      });
-      const ps = this.section(body, "Position");
-      this.text(ps, () => it.pos ?? "", (v) => {
-        if (v.trim()) it.pos = v;
-        else delete it.pos;
-      }, { placeholder: "center \xB7 center 30% \xB7 left top", title: "Picture position (CSS object-position)" });
-      const r = this.section(body, "Box").createDiv({ cls: "vl-nums" });
-      this.num(r, "Radius", () => it.r ?? 0, (v) => {
-        it.r = v || void 0;
-      }, { min: 0 });
-      this.num(r, "Opacity", () => it.op ?? 100, (v) => {
-        it.op = v >= 100 ? void 0 : v;
-      }, { min: 0, max: 100 });
+      this.picturePanel(body, b, it);
     } else if (it.type === "icon") {
       const s = this.section(body, "Icon");
       const sug = createDiv({ cls: "vl-chips is-icons vl-iconpick" });
@@ -2296,7 +2478,173 @@ var Editor = class {
       this.itemList(c, b, it.items ?? (it.items = []));
       this.addButtons(c, b, it.items, ["text", "rect", "ellipse", "img", "icon", "row", "col"]);
       this.shapeStyle(body, it, true);
-    } else this.shapeStyle(body, it, false);
+    } else {
+      this.shapeStyle(body, it, false);
+      this.sizeNums(body, it, b.items.includes(it));
+    }
+  }
+  // a picture's settings: the whole picture with the part the box shows framed (click or drag it to choose that part),
+  // its address (or a picture of the vault), how it fits, the focus as a 3 × 3 grid, its size
+  picturePanel(body, b, it) {
+    const s = this.section(body, "Picture");
+    const prev = s.createDiv({ cls: "vl-imgprev" }), info = s.createDiv({ cls: "vl-frameinfo" });
+    const fit = () => it.fit ?? "cover";
+    const box = () => {
+      const el = (this.wall ?? document).querySelector(`.vl-it[data-id="${it.id}"]`);
+      return { W: el?.offsetWidth || (typeof it.w === "number" ? it.w : 80), H: el?.offsetHeight || (typeof it.h === "number" ? it.h : 80) };
+    };
+    let im = null, crop = null;
+    const layout = () => {
+      if (!im || !crop || !im.naturalWidth) return;
+      const nw = im.naturalWidth, nh = im.naturalHeight, PW = prev.clientWidth || 240;
+      const ph = Math.min(180, PW * nh / nw), pw = ph * nw / nh, k = pw / nw;
+      Object.assign(im.style, { width: `${pw}px`, height: `${ph}px` });
+      prev.style.height = `${ph}px`;
+      const { W, H } = box();
+      info.setText(`Picture ${nw} \xD7 ${nh} px \xB7 box ${W} \xD7 ${H}`);
+      if (fit() !== "cover") {
+        crop.hide();
+        return;
+      }
+      const sc = Math.max(W / nw, H / nh), vw = W / sc, vh = H / sc, [fx, fy] = focusOf(it.pos);
+      crop.show();
+      Object.assign(crop.style, { left: `${(PW - pw) / 2 + (nw - vw) * fx * k}px`, top: `${(nh - vh) * fy * k}px`, width: `${vw * k}px`, height: `${vh * k}px` });
+    };
+    const draw = () => {
+      prev.empty();
+      prev.removeClass("is-empty", "is-broken");
+      prev.style.height = "";
+      im = crop = null;
+      const url = pictureUrl(it.src);
+      if (!url) {
+        prev.addClass("is-empty");
+        (0, import_obsidian3.setIcon)(prev.createDiv(), "image");
+        info.setText("No picture yet: an https address or a vault path.");
+        return;
+      }
+      info.setText("Loading\u2026");
+      im = prev.createEl("img", { attr: { alt: "", draggable: "false" } });
+      crop = prev.createDiv({ cls: "vl-imgcrop" });
+      crop.hide();
+      im.addEventListener("load", layout, { once: true });
+      im.addEventListener("error", () => {
+        prev.empty();
+        prev.addClass("is-broken");
+        (0, import_obsidian3.setIcon)(prev.createDiv(), "image-off");
+        info.setText("This address can not be loaded.");
+      }, { once: true });
+      im.src = url;
+      if (im.complete && im.naturalWidth) layout();
+    };
+    draw();
+    prev.addEventListener("pointerdown", (e) => {
+      if (!im?.naturalWidth || fit() === "fill") return;
+      e.preventDefault();
+      prev.setPointerCapture(e.pointerId);
+      this.begin();
+      const at = (m) => {
+        const r2 = im.getBoundingClientRect(), nw = im.naturalWidth, nh = im.naturalHeight, { W, H } = box();
+        const cx = Math.min(1, Math.max(0, (m.clientX - r2.left) / r2.width)), cy = Math.min(1, Math.max(0, (m.clientY - r2.top) / r2.height));
+        let fx = cx, fy = cy;
+        if (fit() === "cover") {
+          const sc = Math.max(W / nw, H / nh), vw = W / sc, vh = H / sc;
+          fx = nw - vw > 1 ? Math.min(1, Math.max(0, (cx * nw - vw / 2) / (nw - vw))) : 0.5;
+          fy = nh - vh > 1 ? Math.min(1, Math.max(0, (cy * nh - vh / 2) / (nh - vh))) : 0.5;
+        }
+        const pc = (v) => Math.round(v * 100);
+        if (pc(fx) === 50 && pc(fy) === 50) delete it.pos;
+        else it.pos = `${pc(fx)}% ${pc(fy)}%`;
+        this.draftPut();
+        this.drawPages();
+        layout();
+      };
+      at(e);
+      const up = () => {
+        prev.removeEventListener("pointermove", at);
+        prev.removeEventListener("pointerup", up);
+        this.end();
+        this.drawPanel();
+      };
+      prev.addEventListener("pointermove", at);
+      prev.addEventListener("pointerup", up);
+    });
+    const row = s.createDiv({ cls: "vl-srcrow" });
+    let t = 0;
+    this.text(row, () => it.src ?? "", (v) => {
+      it.src = v;
+      window.clearTimeout(t);
+      t = window.setTimeout(draw, 400);
+    }, { placeholder: "https://\u2026 or a vault path", title: "Picture address" });
+    this.btn(row, "folder-open", "A picture of the vault", () => new ImagePick(this.plugin.app, (f) => this.edit(() => {
+      it.src = f.path;
+    })).open());
+    const fs = this.section(body, "Fit");
+    this.chips(fs, [["cover", "Cover"], ["contain", "Contain"], ["fill", "Stretch"]], fit(), (v) => {
+      it.fit = v;
+    });
+    fs.createDiv({ cls: "vl-frameinfo", text: { cover: "Fills the box; the edges are cut off.", contain: "All of the picture, inside the box.", fill: "Pulled to the box's shape." }[fit()] });
+    if (fit() !== "fill") {
+      const ps = this.section(body, "Focus");
+      const wrap = ps.createDiv({ cls: "vl-gwrap" });
+      const grid2 = wrap.createDiv({ cls: "vl-grav" });
+      const [fx, fy] = focusOf(it.pos);
+      for (const y of [0, 0.5, 1]) for (const x of [0, 0.5, 1]) {
+        const name = `${["left", "center", "right"][x * 2]} ${["top", "center", "bottom"][y * 2]}`;
+        const d = grid2.createEl("button", { cls: fx === x && fy === y ? "is-on" : "", attr: { "aria-label": name === "center center" ? "Middle" : name } });
+        d.createSpan();
+        d.addEventListener("click", () => this.edit(() => {
+          if (x === 0.5 && y === 0.5) delete it.pos;
+          else it.pos = name;
+        }));
+      }
+      const side = wrap.createDiv({ cls: "vl-secb" });
+      side.createDiv({ cls: "vl-frameinfo", text: "Or click the picture above. Exact (CSS object-position):" });
+      this.text(side, () => it.pos ?? "", (v) => {
+        if (v.trim()) it.pos = v;
+        else delete it.pos;
+      }, { placeholder: "center \xB7 50% 30%", title: "Focus" });
+    }
+    this.sizeNums(body, it, b.items.includes(it));
+    this.actions(body.lastElementChild?.querySelector(".vl-secb") ?? body, [["ratio", "Height from the picture's shape", () => {
+      if (!im?.naturalWidth) {
+        new import_obsidian3.Notice("Vellum: the picture is not loaded yet");
+        return;
+      }
+      const W = typeof it.w === "number" ? it.w : box().W, H = Math.round(W * im.naturalHeight / im.naturalWidth);
+      this.edit(() => {
+        it.w = W;
+        it.h = H;
+      });
+    }]]);
+    const r = this.section(body, "Corners and opacity").createDiv({ cls: "vl-nums" });
+    this.num(r, "Radius", () => it.r ?? 0, (v) => {
+      it.r = v || void 0;
+    }, { min: 0 });
+    this.num(r, "Opacity", () => it.op ?? 100, (v) => {
+      it.op = v >= 100 ? void 0 : v;
+    }, { min: 0, max: 100 });
+  }
+  // exact size and offset as numbers (a hug / fill size shows as drawn; typing a number fixes it); the corner handles change them too
+  sizeNums(body, it, top) {
+    const r = this.section(body, "Size and place").createDiv({ cls: "vl-nums" });
+    const drawn = (axis) => {
+      const el = (this.wall ?? document).querySelector(`.vl-it[data-id="${it.id}"]`);
+      return el ? axis === "w" ? el.offsetWidth : el.offsetHeight : 40;
+    };
+    this.num(r, "W", () => typeof it.w === "number" ? it.w : drawn("w"), (v) => {
+      it.w = v;
+    }, { min: 1 });
+    this.num(r, "H", () => typeof it.h === "number" ? it.h : drawn("h"), (v) => {
+      it.h = v;
+    }, { min: 1 });
+    if (top) {
+      this.num(r, "X", () => it.dx ?? 0, (v) => {
+        it.dx = v;
+      });
+      this.num(r, "Y", () => it.dy ?? 0, (v) => {
+        it.dy = v;
+      });
+    }
   }
   shapeStyle(body, it, box) {
     if (!box) this.chips(this.section(body, "Shape"), [["rect", "Rectangle", "square"], ["ellipse", "Circle", "circle"]], it.type, (v) => {
@@ -2326,9 +2674,9 @@ var Editor = class {
       const s = this.section(body, "Anchor");
       s.parentElement?.setAttr("aria-label", "The point of the block it keeps when the block grows");
       const wrap = s.createDiv({ cls: "vl-gwrap" });
-      const grid = wrap.createDiv({ cls: "vl-grav" });
+      const grid2 = wrap.createDiv({ cls: "vl-grav" });
       for (const g of GRAVITIES) {
-        const d = grid.createEl("button", { cls: g === (it.g ?? "tl") ? "is-on" : "", attr: { "aria-label": g } });
+        const d = grid2.createEl("button", { cls: g === (it.g ?? "tl") ? "is-on" : "", attr: { "aria-label": g } });
         d.createSpan();
         d.addEventListener("click", () => this.edit(() => {
           it.g = g;
@@ -2367,6 +2715,41 @@ var Editor = class {
     }
   }
 };
+var focusOf = (pos) => {
+  const w = (pos ?? "").trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const kw = { left: [0, "x"], right: [1, "x"], top: [0, "y"], bottom: [1, "y"], center: [0.5, ""] };
+  let x = 0.5, y = 0.5, i = 0;
+  for (const t of w.slice(0, 2)) {
+    const k = kw[t], n = /^(-?\d+(?:\.\d+)?)%$/.exec(t);
+    if (k) {
+      if (k[1] === "y") y = k[0];
+      else if (k[1] === "x") x = k[0];
+    } else if (n) {
+      if (i === 0 && w.length > 1) x = Number(n[1]) / 100;
+      else if (i === 0) x = Number(n[1]) / 100;
+      else y = Number(n[1]) / 100;
+    }
+    i++;
+  }
+  return [x, y];
+};
+var ImagePick = class extends import_obsidian3.FuzzySuggestModal {
+  constructor(app, pick) {
+    super(app);
+    this.pick = pick;
+    this.setPlaceholder("A picture of the vault");
+  }
+  getItems() {
+    return this.app.vault.getFiles().filter((f) => /^(png|jpe?g|gif|webp|svg|avif|bmp)$/i.test(f.extension));
+  }
+  getItemText(f) {
+    return f.path;
+  }
+  onChooseItem(f) {
+    this.pick(f);
+  }
+};
+var RESIZE = ["img", "rect", "ellipse"];
 var label = (it) => it.type === "text" ? (it.v ?? "").split("\n")[0].slice(0, 24) || "(empty text)" : it.type === "row" || it.type === "col" ? `${it.items?.length ?? 0} items` : it.type === "img" ? (it.src ?? "").split(/[/?#]/).filter(Boolean).pop()?.slice(0, 24) || "picture" : it.type === "icon" ? it.name || "icon" : it.type === "ellipse" ? "circle" : it.type;
 var icons = null;
 var iconNames = () => icons ?? (icons = [...new Set((0, import_obsidian3.getIconIds)().map((n) => n.replace(/^lucide-/, "")))].sort());
@@ -2423,7 +2806,7 @@ function registerVellum(plugin, host = {}) {
 
 // src/main.ts
 var ICON = `<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><rect x="34" y="8" width="44" height="84" rx="10"/><path d="M14 32 h38 l10 10 v48 h-48 z"/></g><circle cx="38" cy="61" r="7" fill="currentColor"/>`;
-var DEFAULTS = { folder: "Screens", colors: { ...BASE_THEME.colors }, fonts: { ...BASE_THEME.fonts } };
+var DEFAULTS = { folder: "Screens", colors: { ...BASE_THEME.colors }, fonts: { ...BASE_THEME.fonts }, snap: { ...SNAP_DEFAULT } };
 var VellumPlugin = class extends import_obsidian4.Plugin {
   constructor() {
     super(...arguments);
@@ -2431,9 +2814,12 @@ var VellumPlugin = class extends import_obsidian4.Plugin {
   }
   async onload() {
     const saved = await this.loadData();
-    this.settings = { folder: saved?.folder || DEFAULTS.folder, colors: { ...DEFAULTS.colors, ...saved?.colors }, fonts: { ...DEFAULTS.fonts, ...saved?.fonts } };
+    this.settings = { folder: saved?.folder || DEFAULTS.folder, colors: { ...DEFAULTS.colors, ...saved?.colors }, fonts: { ...DEFAULTS.fonts, ...saved?.fonts }, snap: { ...SNAP_DEFAULT, ...saved?.snap } };
     (0, import_obsidian4.addIcon)("vellum", ICON);
     registerVellum(this, () => ({ theme: this.theme() }));
+    setSnap(this.settings.snap, () => {
+      void this.save();
+    });
     this.addRibbonIcon("vellum", "Open Vellum", () => {
       void openVellum(this.settings.folder);
     });
@@ -2459,52 +2845,192 @@ var VellumSettings = class extends import_obsidian4.PluginSettingTab {
     super(app, plugin);
     this.plugin = plugin;
   }
+  save() {
+    void this.plugin.save();
+  }
+  // a card: a heading (a click unfolds it; folded at first, the open ones kept on the device) with a short summary at its
+  // right, and its body
+  card(c, key, title, summary) {
+    const KEY = "vellum:setopen";
+    let open = [];
+    try {
+      open = JSON.parse(localStorage.getItem(KEY) ?? "[]");
+    } catch {
+    }
+    const card = c.createDiv({ cls: "vls-card" + (open.includes(key) ? "" : " is-folded") });
+    const head = card.createDiv({ cls: "vls-head", attr: { role: "button", tabindex: "0" } });
+    (0, import_obsidian4.setIcon)(head.createSpan({ cls: "vls-chev" }), "chevron-down");
+    head.createSpan({ cls: "vls-title", text: title });
+    head.createSpan({ cls: "vls-sum", text: summary });
+    const flip = () => {
+      card.toggleClass("is-folded", !card.hasClass("is-folded"));
+      open = card.hasClass("is-folded") ? open.filter((k) => k !== key) : [.../* @__PURE__ */ new Set([...open, key])];
+      try {
+        localStorage.setItem(KEY, JSON.stringify(open));
+      } catch {
+      }
+    };
+    head.addEventListener("click", flip);
+    head.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        flip();
+      }
+    });
+    return card.createDiv({ cls: "vls-body" });
+  }
+  // a row: its name (and a line under it) on the left, the control on the right
+  row(parent, name, desc) {
+    const r = parent.createDiv({ cls: "vls-row" });
+    const l = r.createDiv({ cls: "vls-label" });
+    l.createDiv({ cls: "vls-name", text: name });
+    if (desc) l.createDiv({ cls: "vls-desc", text: desc });
+    return r.createDiv({ cls: "vls-ctl" });
+  }
+  input(parent, value, set, o = {}) {
+    const i = parent.createEl("input", { cls: "vls-input" + (o.cls ? " " + o.cls : ""), attr: { type: o.type ?? "text", placeholder: o.placeholder ?? "", spellcheck: "false" } });
+    i.value = value;
+    i.addEventListener("input", () => set(i.value));
+    return i;
+  }
   display() {
     const { containerEl: c } = this, s = this.plugin.settings;
     c.empty();
-    new import_obsidian4.Setting(c).setName("Screens folder").setDesc("What the ribbon button opens: one JSON file per screen (made on the first save). A ```vellum block with src: <folder> shows any folder in a note too.").addText((t) => t.setPlaceholder("Screens").setValue(s.folder).onChange(async (v) => {
+    c.addClass("vl-settings");
+    c.createDiv({ cls: "vls-intro", text: "Colours and fonts follow your Obsidian theme until you change them. Reopen the editor to see a change of look; snapping applies at once." });
+    const sc = this.card(c, "screens", "Screens", s.folder);
+    this.input(this.row(sc, "Screens folder", "What the ribbon button opens: one JSON file per screen, made on the first save."), s.folder, (v) => {
       s.folder = v.trim().replace(/\/+$/, "") || DEFAULTS.folder;
-      await this.plugin.save();
-    }));
-    c.createEl("p", { cls: "setting-item-description", text: "The named colours and fonts items use (any CSS value, CSS variables too). Reopen the editor to see a change." });
-    new import_obsidian4.Setting(c).setName("Colours").setHeading();
-    for (const name of Object.keys(s.colors)) {
-      const row = new import_obsidian4.Setting(c).setName(name);
-      const sw = row.nameEl.createSpan({ cls: "vl-set-sw" });
+      this.save();
+    }, { placeholder: "Screens" });
+    const names = Object.keys(s.colors);
+    const co = this.card(c, "colours", "Colours", `${names.length} named`);
+    const list = co.createDiv({ cls: "vls-tokens" });
+    for (const name of names) {
+      const t = list.createDiv({ cls: "vls-token" });
+      const sw = t.createDiv({ cls: "vls-sw", attr: { "aria-label": "Pick a colour" } });
       sw.style.background = s.colors[name];
-      row.addText((t) => t.setValue(s.colors[name]).onChange(async (v) => {
+      const pick = sw.createEl("input", { attr: { type: "color", tabindex: "-1" } });
+      t.createDiv({ cls: "vls-tname", text: name });
+      const val = this.input(t, s.colors[name], (v) => {
         s.colors[name] = v.trim();
         sw.style.background = v;
-        await this.plugin.save();
-      }));
-      if (!(name in DEFAULTS.colors)) row.addExtraButton((b) => b.setIcon("trash").setTooltip("Remove").onClick(async () => {
-        delete s.colors[name];
-        await this.plugin.save();
-        this.display();
-      }));
+        this.save();
+      }, { cls: "is-mono" });
+      pick.addEventListener("click", () => {
+        pick.value = toHex(getComputedStyle(sw).backgroundColor);
+      });
+      pick.addEventListener("input", () => {
+        s.colors[name] = pick.value;
+        val.value = pick.value;
+        sw.style.background = pick.value;
+        this.save();
+      });
+      if (name in DEFAULTS.colors) t.createDiv();
+      else {
+        const x = t.createEl("button", { cls: "vls-x clickable-icon", attr: { "aria-label": `Remove ${name}` } });
+        (0, import_obsidian4.setIcon)(x, "x");
+        x.addEventListener("click", () => {
+          delete s.colors[name];
+          this.save();
+          this.display();
+        });
+      }
     }
+    const add = co.createDiv({ cls: "vls-add" });
     let fresh = "";
-    new import_obsidian4.Setting(c).setName("Add a colour").setDesc("A new name items can use.").addText((t) => t.setPlaceholder("name").onChange((v) => {
+    const ni = this.input(add, "", (v) => {
       fresh = v.trim();
-    })).addButton((b) => b.setButtonText("Add").onClick(async () => {
-      if (!fresh || fresh in s.colors) return;
+    }, { placeholder: "A new colour name" });
+    const ab = add.createEl("button", { text: "Add colour" });
+    const doAdd = () => {
+      if (!fresh || fresh in s.colors) {
+        ni.focus();
+        return;
+      }
       s.colors[fresh] = "#888888";
-      await this.plugin.save();
+      this.save();
       this.display();
-    }));
-    new import_obsidian4.Setting(c).setName("Fonts").setHeading();
+    };
+    ab.addEventListener("click", doAdd);
+    ni.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") doAdd();
+    });
+    const fo = this.card(c, "fonts", "Fonts", `${Object.keys(s.fonts).length} named`);
+    const fl = fo.createDiv({ cls: "vls-tokens" });
     for (const name of Object.keys(s.fonts)) {
-      new import_obsidian4.Setting(c).setName(name).addText((t) => t.setValue(s.fonts[name]).onChange(async (v) => {
+      const t = fl.createDiv({ cls: "vls-token" });
+      const aa = t.createDiv({ cls: "vls-aa", text: "Aa" });
+      aa.style.fontFamily = s.fonts[name];
+      t.createDiv({ cls: "vls-tname", text: name });
+      this.input(t, s.fonts[name], (v) => {
         s.fonts[name] = v.trim();
-        await this.plugin.save();
-      }));
+        aa.style.fontFamily = v;
+        this.save();
+      }, { cls: "is-mono" });
+      t.createDiv();
     }
-    new import_obsidian4.Setting(c).setName("Follow the Obsidian theme").setDesc("Put every colour and font back to the defaults.").addButton((b) => b.setButtonText("Reset").setWarning().onClick(async () => {
-      this.plugin.settings = { ...structuredClone(DEFAULTS), folder: s.folder };
-      await this.plugin.save();
+    const sn = s.snap;
+    const sp = this.card(c, "snapping", "Snapping", sn.on ? "On" : "Off");
+    const master = this.row(sp, "Snap while dragging", "Blocks and items snap to the lines near them. Alt turns it off for one drag; the magnet under the phone switches it too.");
+    const rest = sp.createDiv({ cls: "vls-group" + (sn.on ? "" : " is-off") });
+    new import_obsidian4.ToggleComponent(master).setValue(sn.on).onChange((v) => {
+      sn.on = v;
+      rest.toggleClass("is-off", !v);
+      sp.parentElement?.querySelector(".vls-sum")?.setText(v ? "On" : "Off");
+      this.save();
+    });
+    const to = this.row(rest, "Snap to", "The frame: an item's block, or a block's screen and safe area.");
+    const pill = (text, on, flip) => {
+      const b = to.createEl("button", { cls: "vls-pill" + (on() ? " is-on" : ""), text });
+      b.addEventListener("click", () => {
+        flip();
+        b.toggleClass("is-on", on());
+        this.save();
+      });
+    };
+    pill("The frame", () => sn.frame, () => {
+      sn.frame = !sn.frame;
+    });
+    pill("Other items", () => sn.others, () => {
+      sn.others = !sn.others;
+    });
+    const di = this.row(rest, "Distance", "How near a line pulls, in screen pixels.");
+    const dv = di.createSpan({ cls: "vls-val", text: `${sn.dist} px` });
+    new import_obsidian4.SliderComponent(di).setLimits(2, 16, 1).setValue(sn.dist).onChange((v) => {
+      sn.dist = v;
+      dv.setText(`${v} px`);
+      this.save();
+    });
+    di.appendChild(dv);
+    this.input(this.row(rest, "Grid", "Points a drag steps by when no line is near (1: free); Shift + arrow keys too."), String(sn.grid), (v) => {
+      const n = Math.round(Number(v));
+      if (n >= 1 && n <= 64) {
+        sn.grid = n;
+        this.save();
+      }
+    }, { cls: "is-num", type: "number" });
+    this.input(this.row(rest, "Margins", "Lines this far inside each edge, comma separated."), sn.margins.join(", "), (v) => {
+      sn.margins = v.split(/[,\s]+/).map(Number).filter((n) => n > 0 && n < 400);
+      this.save();
+    }, { cls: "is-short", placeholder: "16, 24" });
+    new import_obsidian4.ToggleComponent(this.row(rest, "Guide lines", "Show the line a drag snapped to.")).setValue(sn.guides).onChange((v) => {
+      sn.guides = v;
+      this.save();
+    });
+    const foot = c.createDiv({ cls: "vls-foot" });
+    foot.createSpan({ text: "Back to your Obsidian theme's colours and fonts." });
+    const rb = foot.createEl("button", { cls: "mod-warning", text: "Reset look" });
+    rb.addEventListener("click", () => {
+      this.plugin.settings = { ...structuredClone(DEFAULTS), folder: s.folder, snap: s.snap };
+      this.save();
       this.display();
-    }));
+    });
   }
+};
+var toHex = (rgb) => {
+  const m = rgb.match(/\d+(\.\d+)?/g);
+  return m && m.length >= 3 ? "#" + m.slice(0, 3).map((n) => Math.round(Number(n)).toString(16).padStart(2, "0")).join("") : "#888888";
 };
 var FolderPick = class extends import_obsidian4.FuzzySuggestModal {
   constructor(app, pick) {
