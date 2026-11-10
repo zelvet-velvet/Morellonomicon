@@ -1,0 +1,33 @@
+{
+ "id": "morellonomicon",
+ "device": "iphone-14",
+ "order": [
+  "home--not-linked",
+  "home--linked",
+  "最近對戰",
+  "champions",
+  "cv3-look",
+  "cv3-skill",
+  "cv3-build",
+  "cv3-aug",
+  "cv3-tips",
+  "cv2-all-look",
+  "cv2-all-aug",
+  "items",
+  "items--item-page",
+  "augments",
+  "augments--augment-page",
+  "patch",
+  "picks",
+  "picks--swipe-card",
+  "picks--liked",
+  "handbook",
+  "handbook--glossary",
+  "handbook--card",
+  "card-clip",
+  "card-combo",
+  "card-levels",
+  "card-ability",
+  "card-champs"
+ ]
+}
