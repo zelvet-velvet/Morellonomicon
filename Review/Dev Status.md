@@ -11,6 +11,7 @@ sticker: lucide//activity
 ## 🚀 Today's Progress (2026-11-10)
 > [!abstract]+ Today
 > - **Design Rules split**: a short core for every page with a "building X → read" index, plus topic notes (Pages, Pictures, Champion Page, Controls, Search, Motion); checked against the code, missing shared timings and behaviours added.
+> - **App pages in Vellum**: all 27 pages captured from the running app into [[Vellum]] screens (Katarina for the champion pages), with real pictures and icons; the Handbook card is a frame with five stage templates (Vellum 0.7.0 test build).
 
 ## 📅 Yesterday's Progress (2026-11-03)
 > [!abstract]- Yesterday
