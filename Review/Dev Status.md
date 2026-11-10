@@ -9,6 +9,8 @@ sticker: lucide//activity
 > Kept by `/cmd-sync` / `/cmd-rollover` / `/cmd-notes-sync` (skills, table in `AGENTS.md`); the day notes in `Review/Log/` by `/cmd-journal`. Run `python3 -I tools/vault_status.py show` before reading this note; read only the section you change.
 
 ## 🚀 Today's Progress (2026-11-10)
+> [!abstract]+ Today
+> - **Design Rules split**: a short core for every page with a "building X → read" index, plus topic notes (Pages, Pictures, Champion Page, Controls, Search, Motion); checked against the code, missing shared timings and behaviours added.
 
 ## 📅 Yesterday's Progress (2026-11-03)
 > [!abstract]- Yesterday
