@@ -23,10 +23,10 @@ __export(main_exports, {
   default: () => VellumPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian3 = require("obsidian");
+var import_obsidian4 = require("obsidian");
 
 // src/editor.ts
-var import_obsidian2 = require("obsidian");
+var import_obsidian3 = require("obsidian");
 
 // src/devices.ts
 var DEVICES = [
@@ -72,6 +72,7 @@ var parseDoc = (source) => {
         }
         delete q.side;
       }
+      if (q.inherit !== true) delete q.inherit;
       return q;
     });
     return { doc: { id: typeof v.id === "string" ? v.id : uid(), device: typeof v.device === "string" ? v.device : empty.device, pages } };
@@ -108,6 +109,10 @@ var newItem = (type) => {
       return { id, type, g: "tl", dx: 16, dy: 16, gap: 8, cross: "center", items: [{ id: uid(), type: "text", v: "One", size: 13 }, { id: uid(), type: "text", v: "Two", size: 13 }] };
     case "col":
       return { id, type, g: "tl", dx: 16, dy: 16, gap: 4, items: [{ id: uid(), type: "text", v: "Line one", size: 15 }, { id: uid(), type: "text", v: "Line two", size: 13, color: "dim" }] };
+    case "img":
+      return { id, type, g: "tl", dx: 16, dy: 16, w: 120, h: 80, src: "", fit: "cover", r: 8 };
+    case "icon":
+      return { id, type, g: "tl", dx: 16, dy: 16, name: "sparkles", size: 20 };
   }
 };
 var childrenOf = (pages, id) => pages.filter((p) => id ? p.parent === id : !p.parent || !pages.some((q) => q.id === p.parent));
@@ -122,8 +127,30 @@ var subtreeOf = (pages, id) => {
   }
   return out;
 };
+var frameOf = (pages, p) => p.inherit && p.parent ? pages.find((q) => q.id === p.parent && q.id !== p.id) : void 0;
+var layersOf = (pages, p, land, seen = /* @__PURE__ */ new Set()) => {
+  const own = (land ? p.land : p.blocks) ?? [], par = frameOf(pages, p);
+  if (!par || seen.has(p.id)) return own.map((block) => ({ block }));
+  seen.add(p.id);
+  const base = layersOf(pages, par, land, seen).map((l) => ({ block: l.block, from: l.from ?? par.id }));
+  const mine = new Map(own.map((b) => [b.id, b]));
+  const out = base.map((l) => {
+    const b = mine.get(l.block.id);
+    return b ? { block: b, over: l.from } : l;
+  });
+  for (const b of own) if (!base.some((l) => l.block.id === b.id)) out.push({ block: b });
+  return out;
+};
+var drawnBlocks = (pages, p, land) => layersOf(pages, p, land).map((l) => l.block);
+var bgOf = (pages, p, seen = /* @__PURE__ */ new Set()) => {
+  if (p.bg || seen.has(p.id)) return p.bg;
+  seen.add(p.id);
+  const f = frameOf(pages, p);
+  return f ? bgOf(pages, f, seen) : void 0;
+};
 
 // src/render.ts
+var import_obsidian = require("obsidian");
 var BASE_THEME = {
   colors: {
     paper: "var(--background-primary)",
@@ -147,6 +174,15 @@ var BASE_KINDS = [
 ];
 var colorOf = (t, c) => !c || c === "none" ? "transparent" : t.colors[c] ?? c;
 var fontOf = (t, f) => f ? t.fonts[f] ?? f : t.fonts.ui;
+var resolve = (src) => src;
+var setPictureResolver = (fn) => {
+  resolve = fn;
+};
+var pictureUrl = (src) => {
+  const s = (src ?? "").trim();
+  return !s ? "" : /^(https?|data|app|blob|file):/i.test(s) ? s : resolve(s.replace(/^\/+/, ""));
+};
+var loaded = /* @__PURE__ */ new Set();
 var px = (v) => `${Math.round(v * 100) / 100}px`;
 var place = (el, it) => {
   const [ax, ay] = axes(it.g);
@@ -225,6 +261,54 @@ var drawItem = (t, parent, it, inFlow, lineUp = "left") => {
       if (it.w === "hug" || it.w === void 0) s.width = "40px";
       break;
     }
+    case "img": {
+      s.borderRadius = px(it.r ?? 0);
+      if (it.w === "hug" || it.w === void 0) s.width = "80px";
+      if (it.h === "hug" || it.h === void 0) s.height = "80px";
+      (0, import_obsidian.setIcon)(el.createDiv({ cls: "vl-imgph" }), "image");
+      const url = pictureUrl(it.src);
+      if (!url) break;
+      const im = el.createEl("img", { attr: { alt: "", draggable: "false", decoding: "async" } });
+      im.style.objectFit = it.fit ?? "cover";
+      im.style.objectPosition = it.pos?.trim() || "center";
+      const ok = () => {
+        loaded.add(url);
+        el.addClass("is-loaded");
+      };
+      const bad = () => {
+        loaded.delete(url);
+        im.remove();
+        el.removeClass("is-loaded");
+        el.addClass("is-broken");
+        const ph = el.querySelector(".vl-imgph");
+        if (ph) {
+          ph.empty();
+          (0, import_obsidian.setIcon)(ph, "image-off");
+        }
+      };
+      im.addEventListener("load", ok, { once: true });
+      im.addEventListener("error", bad, { once: true });
+      if (loaded.has(url)) el.addClass("is-loaded");
+      im.src = url;
+      if (im.complete && im.naturalWidth) ok();
+      break;
+    }
+    case "icon": {
+      const sz = px(it.size ?? 20);
+      s.width = sz;
+      s.height = sz;
+      s.color = colorOf(t, it.color ?? "text");
+      s.setProperty("--icon-size", sz);
+      if (it.sw) s.setProperty("--icon-stroke", px(it.sw));
+      const name = (it.name ?? "").trim();
+      if (name) (0, import_obsidian.setIcon)(el, name);
+      if (!el.querySelector("svg")) {
+        el.empty();
+        el.addClass("is-unknown");
+        el.setText("?");
+      }
+      break;
+    }
     case "row":
     case "col": {
       s.display = "flex";
@@ -246,10 +330,10 @@ var drawItem = (t, parent, it, inFlow, lineUp = "left") => {
 };
 
 // src/store.ts
-var import_obsidian = require("obsidian");
+var import_obsidian2 = require("obsidian");
 var srcOf = (source) => {
   const m = /^\s*src:\s*(.+?)\s*$/m.exec(source);
-  return m && !source.trim().startsWith("{") ? (0, import_obsidian.normalizePath)(m[1].replace(/^["']|["']$/g, "")) : null;
+  return m && !source.trim().startsWith("{") ? (0, import_obsidian2.normalizePath)(m[1].replace(/^["']|["']$/g, "")) : null;
 };
 var DOC = "_doc.json";
 var pageText = (p) => {
@@ -274,11 +358,11 @@ var FolderStore = class {
     const folder = this.app.vault.getAbstractFileByPath(this.dir);
     this.files.clear();
     const id = this.dir.split("/").pop() || uid();
-    if (!(folder instanceof import_obsidian.TFolder)) return { doc: { id, device: "iphone-16-pro", pages: [] } };
+    if (!(folder instanceof import_obsidian2.TFolder)) return { doc: { id, device: "iphone-16-pro", pages: [] } };
     let meta = {};
     const pages = [], bad = [];
     for (const f of folder.children) {
-      if (!(f instanceof import_obsidian.TFile) || f.extension !== "json") continue;
+      if (!(f instanceof import_obsidian2.TFile) || f.extension !== "json") continue;
       const text = await this.app.vault.read(f);
       if (f.name === DOC) {
         try {
@@ -307,30 +391,30 @@ var FolderStore = class {
   async save(doc) {
     const v = this.app.vault;
     this.ownUntil = Date.now() + 2e3;
-    if (!(v.getAbstractFileByPath(this.dir) instanceof import_obsidian.TFolder)) await v.createFolder(this.dir);
+    if (!(v.getAbstractFileByPath(this.dir) instanceof import_obsidian2.TFolder)) await v.createFolder(this.dir);
     const ours = new Set(this.files.values()), target = /* @__PURE__ */ new Map(), taken = /* @__PURE__ */ new Set();
     for (const p of doc.pages) {
       const base = fileName(p.name);
-      let path = (0, import_obsidian.normalizePath)(`${this.dir}/${base}.json`), n = 2;
-      while (taken.has(path) || v.getAbstractFileByPath(path) && !ours.has(path)) path = (0, import_obsidian.normalizePath)(`${this.dir}/${base} ${n++}.json`);
+      let path = (0, import_obsidian2.normalizePath)(`${this.dir}/${base}.json`), n = 2;
+      while (taken.has(path) || v.getAbstractFileByPath(path) && !ours.has(path)) path = (0, import_obsidian2.normalizePath)(`${this.dir}/${base} ${n++}.json`);
       taken.add(path);
       target.set(p.id, path);
     }
     for (const p of doc.pages) {
       const path = target.get(p.id), f = v.getAbstractFileByPath(path), text = pageText(p);
-      if (f instanceof import_obsidian.TFile) {
+      if (f instanceof import_obsidian2.TFile) {
         if (await v.read(f) !== text) await v.modify(f, text);
       } else await v.create(path, text);
     }
     for (const path of ours) {
       if (taken.has(path)) continue;
       const f = v.getAbstractFileByPath(path);
-      if (f instanceof import_obsidian.TFile) await this.app.fileManager.trashFile(f);
+      if (f instanceof import_obsidian2.TFile) await this.app.fileManager.trashFile(f);
     }
     this.files = target;
     const meta = JSON.stringify({ id: doc.id, device: doc.device, order: doc.pages.map((p) => p.id) }, null, 2) + "\n";
     const m = v.getAbstractFileByPath(`${this.dir}/${DOC}`);
-    if (m instanceof import_obsidian.TFile) {
+    if (m instanceof import_obsidian2.TFile) {
       if (await v.read(m) !== meta) await v.modify(m, meta);
     } else await v.create(`${this.dir}/${DOC}`, meta);
     this.ownUntil = Date.now() + 1500;
@@ -345,7 +429,7 @@ var VIEW = "vellum-editor";
 var editors = /* @__PURE__ */ new Map();
 var live = /* @__PURE__ */ new Set();
 var windows = /* @__PURE__ */ new Map();
-var VellumWindow = class extends import_obsidian2.ItemView {
+var VellumWindow = class extends import_obsidian3.ItemView {
   constructor() {
     super(...arguments);
     this.key = "";
@@ -384,7 +468,7 @@ var VellumWindow = class extends import_obsidian2.ItemView {
 var Editor = class {
   // store: the folder the doc is kept in (src: in the block), with the doc as read; none = the JSON in the block itself
   // el / ctx: the ```vellum block it is drawn in; none = opened straight on a folder (the ribbon, a command)
-  constructor(plugin, host, source, el, ctx, store, loaded) {
+  constructor(plugin, host, source, el, ctx, store, loaded2) {
     this.plugin = plugin;
     this.el = el;
     this.ctx = ctx;
@@ -408,7 +492,7 @@ var Editor = class {
     this.gapSide = "l";
     this.theme = { colors: { ...BASE_THEME.colors, ...host.theme?.colors }, fonts: { ...BASE_THEME.fonts, ...host.theme?.fonts } };
     this.kinds = host.kinds ?? BASE_KINDS;
-    const { doc, error } = loaded ?? parseDoc(source);
+    const { doc, error } = loaded2 ?? parseDoc(source);
     this.doc = doc;
     this.saved = serialiseDoc(doc);
     this.card = el ? el.createDiv({ cls: "vl vl-card" }) : createDiv({ cls: "vl vl-card" });
@@ -416,7 +500,7 @@ var Editor = class {
       this.card.createDiv({ cls: "vl-err", text: error + " Fix it in the source view." });
       return;
     }
-    if (error) new import_obsidian2.Notice(`Vellum (${store.dir}): ${error}`);
+    if (error) new import_obsidian3.Notice(`Vellum (${store.dir}): ${error}`);
     const draft = this.draftGet();
     if (draft) {
       try {
@@ -436,7 +520,7 @@ var Editor = class {
     editors.set(key, this);
     live.add(this);
     if (!el || !ctx) return;
-    const life = new import_obsidian2.MarkdownRenderChild(el);
+    const life = new import_obsidian3.MarkdownRenderChild(el);
     life.onunload = () => {
       window.removeEventListener("resize", onResize);
       if (editors.get(key) === this) editors.delete(key);
@@ -445,7 +529,7 @@ var Editor = class {
       reopen.set(key, { at: Date.now(), sel: this.sel, past: this.past, future: this.future });
       this.root.remove();
       this.root = null;
-      if (!import_obsidian2.Platform.isMobile) window.setTimeout(() => {
+      if (!import_obsidian3.Platform.isMobile) window.setTimeout(() => {
         if (!editors.has(key)) windows.get(key)?.leaf.detach();
       }, 3e3);
     };
@@ -460,7 +544,7 @@ var Editor = class {
       this.fixSel();
       const w = windows.get(key);
       if (w) this.mount(w.contentEl);
-      else if (import_obsidian2.Platform.isMobile) this.openWs();
+      else if (import_obsidian3.Platform.isMobile) this.openWs();
     }
   }
   // the theme's colours as --vl-* on an element (the card in the note, the workspace on the body)
@@ -470,7 +554,7 @@ var Editor = class {
   }
   // ---- state, undo, drafts, save
   get v() {
-    return view.get(this.doc.id) ?? { zoom: 0.75, fit: true, show: false, rail: !import_obsidian2.Platform.isMobile && window.innerWidth >= 1e3 };
+    return view.get(this.doc.id) ?? { zoom: 0.75, fit: true, show: false, rail: !import_obsidian3.Platform.isMobile && window.innerWidth >= 1e3 };
   }
   setView(p) {
     view.set(this.doc.id, { ...this.v, ...p });
@@ -573,21 +657,21 @@ var Editor = class {
         this.drawBar();
         this.drawCard();
         this.hint(`Saved to ${st.dir}`);
-      }, (e) => new import_obsidian2.Notice(`Vellum: not saved (${e.message}). Your work is kept.`));
+      }, (e) => new import_obsidian3.Notice(`Vellum: not saved (${e.message}). Your work is kept.`));
       return;
     }
     if (!this.ctx || !this.el) return;
     const file = this.plugin.app.vault.getAbstractFileByPath(this.ctx.sourcePath);
     const info = this.ctx.getSectionInfo(this.el);
-    if (!(file instanceof import_obsidian2.TFile) || !info) {
-      new import_obsidian2.Notice("Vellum: could not find this block in the note");
+    if (!(file instanceof import_obsidian3.TFile) || !info) {
+      new import_obsidian3.Notice("Vellum: could not find this block in the note");
       return;
     }
     const text = serialiseDoc(this.doc);
     void this.plugin.app.vault.process(file, (data) => {
       const lines = data.split("\n");
       if (lines[info.lineStart]?.trim() !== "```vellum" || !lines[info.lineEnd]?.trim().startsWith("```")) {
-        new import_obsidian2.Notice("Vellum: the note changed, not saved. Your work is kept; reopen the note.");
+        new import_obsidian3.Notice("Vellum: the note changed, not saved. Your work is kept; reopen the note.");
         return data;
       }
       lines.splice(info.lineStart + 1, info.lineEnd - info.lineStart - 1, ...text.split("\n"));
@@ -634,14 +718,14 @@ var Editor = class {
     if (!p.land && make) p.land = [];
     return p.land ?? [];
   }
-  // landscape from portrait: full-width blocks stretch to the new width, the rest keep their place under the status bar
+  // landscape from portrait: full-width blocks stretch to the new width, the rest keep their place under the status bar;
+  // each keeps its id (a block of a frame and its overrides are the same block in both layouts)
   makeLand(p) {
     this.edit(() => {
       const d = deviceOf(p.device ?? this.doc.device), up = screenOf(d, false), sd = screenOf(d, true);
       const roomUp = up.W - up.safe.left - up.safe.right, roomSd = sd.W - sd.safe.left - sd.safe.right;
       p.land = p.blocks.map((b) => {
         const c = JSON.parse(JSON.stringify(b));
-        c.id = uid();
         const m = b.x - up.safe.left, wide = b.w >= roomUp - 2 * m - 4;
         c.x = sd.safe.left + m;
         c.w = wide ? Math.max(8, roomSd - 2 * m) : b.w;
@@ -649,6 +733,14 @@ var Editor = class {
         return c;
       });
     });
+  }
+  // the blocks drawn on a page (its frame's under its own) in the layout on show; layer(): the chosen one among them
+  layers(p) {
+    return layersOf(this.doc.pages, p, this.land);
+  }
+  layer() {
+    const p = this.page();
+    return p && this.sel?.block ? this.layers(p).find((l) => l.block.id === this.sel?.block) : void 0;
   }
   item() {
     const b = this.block();
@@ -661,7 +753,7 @@ var Editor = class {
   }
   fixSel() {
     if (!this.page()) this.sel = null;
-    else if (this.sel?.block && !this.block()) this.sel = { page: this.sel.page };
+    else if (this.sel?.block && !this.layer()) this.sel = { page: this.sel.page };
     else if (this.sel?.item && !this.item()) this.sel = { page: this.sel.page, block: this.sel.block };
   }
   // ---- the card in the note: the screens as a small map, Open
@@ -673,7 +765,7 @@ var Editor = class {
     t.createSpan({ cls: "vl-cname", text: "Vellum" });
     t.createSpan({ cls: "vl-cinfo", text: `${this.doc.pages.length} screen${this.doc.pages.length === 1 ? "" : "s"} \xB7 ${deviceOf(this.doc.device).name}` + (this.store ? ` \xB7 ${this.store.dir}` : "") + (this.dirty ? " \xB7 unsaved edits on this device" : "") });
     const o = head.createEl("button", { cls: "vl-open mod-cta" });
-    (0, import_obsidian2.setIcon)(o.createSpan(), "pencil-ruler");
+    (0, import_obsidian3.setIcon)(o.createSpan(), "pencil-ruler");
     o.appendText("Open editor");
     o.addEventListener("click", () => this.openWs());
     const m = c.createDiv({ cls: "vl-map" });
@@ -683,7 +775,7 @@ var Editor = class {
   // computer: its own window (a pop-out, focused if already open); phone: over the whole screen
   openWs(page) {
     if (page) this.setView({ page, fit: true });
-    if (import_obsidian2.Platform.isMobile) {
+    if (import_obsidian3.Platform.isMobile) {
       if (!this.root?.isConnected) this.mount(document.body);
       else this.draw();
       return;
@@ -706,7 +798,7 @@ var Editor = class {
     this.root?.remove();
     container.empty();
     const pop = container !== document.body;
-    const R = this.root = container.createDiv({ cls: "vl vl-ws" + (import_obsidian2.Platform.isMobile ? " is-phone" : "") + (pop ? " is-pop" : ""), attr: { tabindex: "-1" } });
+    const R = this.root = container.createDiv({ cls: "vl vl-ws" + (import_obsidian3.Platform.isMobile ? " is-phone" : "") + (pop ? " is-pop" : ""), attr: { tabindex: "-1" } });
     this.paint(R);
     const onKey = (e) => {
       if (!R.isConnected) return R.win.removeEventListener("keydown", onKey, true);
@@ -740,7 +832,7 @@ var Editor = class {
   }
   closeWs() {
     const w = windows.get(this.draftKey());
-    if (w && !import_obsidian2.Platform.isMobile) w.leaf.detach();
+    if (w && !import_obsidian3.Platform.isMobile) w.leaf.detach();
     else this.unmount();
   }
   draw() {
@@ -769,7 +861,7 @@ var Editor = class {
       if (e.target === this.wall && this.sel) this.choose(null);
     });
     this.zbar = mid.createDiv({ cls: "vl-zbar" });
-    this.side = import_obsidian2.Platform.isMobile ? R : body;
+    this.side = import_obsidian3.Platform.isMobile ? R : body;
     this.drawPanel();
     this.drawPages();
   }
@@ -804,7 +896,7 @@ var Editor = class {
   openPage(p) {
     this.setView({ page: p.id });
     this.sel = null;
-    if (import_obsidian2.Platform.isMobile) this.setView({ rail: false });
+    if (import_obsidian3.Platform.isMobile) this.setView({ rail: false });
     this.draw();
   }
   // the top bar: close and where you are on the left, undo / redo / save on the right; nothing else
@@ -813,13 +905,13 @@ var Editor = class {
     if (!b?.isConnected) return;
     b.empty();
     const l = b.createDiv({ cls: "vl-tl" });
-    if (import_obsidian2.Platform.isMobile) this.btn(l, "x", "Close the editor (Esc)", () => this.closeWs()).addClass("vl-x");
+    if (import_obsidian3.Platform.isMobile) this.btn(l, "x", "Close the editor (Esc)", () => this.closeWs()).addClass("vl-x");
     const cur = this.current();
-    if (import_obsidian2.Platform.isMobile) {
+    if (import_obsidian3.Platform.isMobile) {
       const rt = l.createEl("button", { cls: "vl-railbtn" + (this.v.rail ? " is-on" : ""), attr: { "aria-label": "Screens" } });
-      (0, import_obsidian2.setIcon)(rt.createSpan(), "layers");
+      (0, import_obsidian3.setIcon)(rt.createSpan(), "layers");
       rt.createSpan({ cls: "vl-pg", text: cur?.name ?? "No screens" });
-      (0, import_obsidian2.setIcon)(rt.createSpan({ cls: "vl-chev" }), "chevron-down");
+      (0, import_obsidian3.setIcon)(rt.createSpan({ cls: "vl-chev" }), "chevron-down");
       rt.addEventListener("click", () => {
         this.setView({ rail: !this.v.rail });
         this.draw();
@@ -835,12 +927,12 @@ var Editor = class {
     this.btn(r, "undo-2", "Undo (Ctrl+Z)", () => this.undo(), !this.past.length);
     this.btn(r, "redo-2", "Redo (Ctrl+Shift+Z)", () => this.redo(), !this.future.length);
     const sv = r.createEl("button", { cls: "vl-save is-savebtn" + (this.dirty ? " is-dirty" : ""), attr: { "aria-label": "Save into the note (Ctrl+S)" } });
-    (0, import_obsidian2.setIcon)(sv.createSpan(), this.dirty ? "save" : "check");
+    (0, import_obsidian3.setIcon)(sv.createSpan(), this.dirty ? "save" : "check");
     sv.appendText(this.dirty ? "Save" : "Saved");
     sv.addEventListener("click", () => {
       if (this.dirty) this.save();
     });
-    if (!import_obsidian2.Platform.isMobile && !this.v.show && !this.v.map) {
+    if (!import_obsidian3.Platform.isMobile && !this.v.show && !this.v.map) {
       r.createSpan({ cls: "vl-zsep" });
       this.btn(r, this.v.panel === false ? "vellum-side-right" : "sidebar-right", this.v.panel === false ? "Expand the settings" : "Collapse the settings", () => {
         this.setView({ panel: this.v.panel === false });
@@ -871,7 +963,7 @@ var Editor = class {
     const ori = pill.createDiv({ cls: "vl-seg is-ori" });
     for (const [land, icon, label2] of [[false, "rectangle-vertical", "Portrait"], [true, "rectangle-horizontal", "Landscape"]]) {
       const x = ori.createEl("button", { cls: this.land === land ? "is-on" : "", attr: { "aria-label": label2 } });
-      (0, import_obsidian2.setIcon)(x, icon);
+      (0, import_obsidian3.setIcon)(x, icon);
       if (!x.querySelector("svg")) x.setText(label2);
       x.addEventListener("click", () => {
         if (this.land === land) return;
@@ -913,7 +1005,7 @@ var Editor = class {
   }
   btn(parent, icon, label2, act, off = false) {
     const x = parent.createEl("button", { cls: "vl-btn" + (off ? " is-off" : ""), attr: { "aria-label": label2 } });
-    (0, import_obsidian2.setIcon)(x, icon);
+    (0, import_obsidian3.setIcon)(x, icon);
     x.addEventListener("click", () => {
       if (!off) act();
     });
@@ -951,7 +1043,7 @@ var Editor = class {
     if (cur) {
       if (this.v.fit) {
         const dev = deviceOf(cur.device ?? this.doc.device), { W, H } = screenOf(dev, this.land);
-        const ph = import_obsidian2.Platform.isMobile;
+        const ph = import_obsidian3.Platform.isMobile;
         const sw = this.wall.clientWidth - (ph ? 44 : 64), sh = this.wall.clientHeight - (ph ? 100 : 120);
         if (sw > 0 && sh > 0) view.set(this.doc.id, { ...this.v, zoom: Math.max(0.2, Math.min(2, Math.floor(Math.min(sw / W, sh / H) * 100) / 100)) });
       }
@@ -968,7 +1060,7 @@ var Editor = class {
     r.empty();
     r.toggleClass("is-on", this.v.rail);
     if (!this.v.rail) return;
-    if (!import_obsidian2.Platform.isMobile) {
+    if (!import_obsidian3.Platform.isMobile) {
       r.style.width = `${Number(localStorage.getItem("vellum:railW")) || 248}px`;
       const g = r.createDiv({ cls: "vl-rgrip" });
       g.addEventListener("pointerdown", (e) => {
@@ -1021,7 +1113,7 @@ var Editor = class {
       for (let i = 0; i < depth; i++) ind.createSpan({ cls: "vl-pguide" });
       if (kids.length) {
         const ch = w.createEl("button", { cls: "vl-pchev", attr: { "aria-label": fold.has(p.id) ? "Unfold" : "Fold" } });
-        (0, import_obsidian2.setIcon)(ch, fold.has(p.id) ? "chevron-right" : "chevron-down");
+        (0, import_obsidian3.setIcon)(ch, fold.has(p.id) ? "chevron-right" : "chevron-down");
         ch.addEventListener("click", (e) => {
           e.stopPropagation();
           if (fold.has(p.id)) fold.delete(p.id);
@@ -1045,7 +1137,7 @@ var Editor = class {
     for (const p of childrenOf(pages)) row(p, 0);
     for (const p of pages) row(p, 0);
     const na = box.createEl("button", { cls: "vl-act vl-newp" });
-    (0, import_obsidian2.setIcon)(na.createSpan(), "plus");
+    (0, import_obsidian3.setIcon)(na.createSpan(), "plus");
     na.appendText("New screen");
     na.addEventListener("click", () => this.addPage());
     const foot = box.createDiv({ cls: "vl-rfoot" });
@@ -1053,7 +1145,7 @@ var Editor = class {
     const devc = deviceOf(this.doc.device);
     const dev = foot.createEl("button", { cls: "vl-dev" });
     dev.createSpan({ text: devc.name });
-    (0, import_obsidian2.setIcon)(dev.createSpan({ cls: "vl-chev" }), "chevron-down");
+    (0, import_obsidian3.setIcon)(dev.createSpan({ cls: "vl-chev" }), "chevron-down");
     dev.addEventListener("click", () => {
       const R = this.root;
       const open = R.querySelector(".vl-menu");
@@ -1091,7 +1183,7 @@ var Editor = class {
       ok.addEventListener("click", () => {
         const w = Math.round(Number(wi.value)), h = Math.round(Number(hi.value));
         if (!(w >= 240 && w <= 1600 && h >= 320 && h <= 2400)) {
-          new import_obsidian2.Notice("Vellum: a width of 240\u20131600 and a height of 320\u20132400 points");
+          new import_obsidian3.Notice("Vellum: a width of 240\u20131600 and a height of 320\u20132400 points");
           return;
         }
         m.remove();
@@ -1112,7 +1204,7 @@ var Editor = class {
   // a large look at a screen without opening it: the pointer resting on its row (computer), a long press (phone)
   peekOn(row, p) {
     let t = 0;
-    if (!import_obsidian2.Platform.isMobile) {
+    if (!import_obsidian3.Platform.isMobile) {
       row.addEventListener("mouseenter", () => this.peek(p, row));
       row.addEventListener("mouseleave", () => this.unpeek());
       row.addEventListener("pointerdown", () => this.unpeek());
@@ -1146,12 +1238,12 @@ var Editor = class {
     const R = this.root;
     if (!R?.isConnected) return;
     this.unpeek();
-    const W = import_obsidian2.Platform.isMobile ? Math.min(300, R.clientWidth * 0.72) : 240;
+    const W = import_obsidian3.Platform.isMobile ? Math.min(300, R.clientWidth * 0.72) : 240;
     const box = R.createDiv({ cls: "vl-peek" });
     box.createDiv({ cls: "vl-peekname", text: p.name });
     box.appendChild(this.pic(p, W));
     const rr = R.getBoundingClientRect(), wr = row.getBoundingClientRect(), br = this.rail.getBoundingClientRect();
-    if (import_obsidian2.Platform.isMobile) {
+    if (import_obsidian3.Platform.isMobile) {
       box.style.left = `${(rr.width - W) / 2 - 8}px`;
       box.style.top = `${Math.max(56, (rr.height - box.offsetHeight) / 2)}px`;
     } else {
@@ -1171,10 +1263,11 @@ var Editor = class {
     el.style.borderRadius = `${Math.max(3, d.radius * k)}px`;
     const scr = el.createDiv({ cls: "vl-screen is-show" });
     Object.assign(scr.style, { width: `${sc.W}px`, height: `${sc.H}px`, transform: `scale(${k})` });
-    if (p.bg) scr.style.background = colorOf(this.theme, p.bg);
+    const bg = bgOf(this.doc.pages, p);
+    if (bg) scr.style.background = colorOf(this.theme, bg);
     const keep = this.sel;
     this.sel = null;
-    for (const b of this.blocks(p)) this.drawBlock(scr, p, b, true);
+    for (const b of drawnBlocks(this.doc.pages, p, this.land)) this.drawBlock(scr, p, b, true);
     this.sel = keep;
     return el;
   }
@@ -1198,7 +1291,7 @@ var Editor = class {
   }
   thumb(p) {
     const tw = this.picW(this.rail?.offsetWidth || Number(localStorage.getItem("vellum:railW")) || 248);
-    const sig = JSON.stringify(p) + this.doc.device + tw + this.land, hit = this.thumbs.get(p.id);
+    const sig = JSON.stringify(p) + JSON.stringify(drawnBlocks(this.doc.pages, p, this.land)) + bgOf(this.doc.pages, p) + this.doc.device + tw + this.land, hit = this.thumbs.get(p.id);
     if (hit && hit.sig === sig) return hit.el;
     const el = this.pic(p, tw);
     this.thumbs.set(p.id, { sig, el });
@@ -1278,12 +1371,13 @@ var Editor = class {
       ph.style.height = `${d.h}px`;
       ph.style.borderRadius = `${d.d.radius * d.k}px`;
       const scr = ph.createDiv({ cls: "vl-screen is-show" });
-      if (p.bg) {
-        scr.style.background = colorOf(this.theme, p.bg);
+      const bg = bgOf(pages, p);
+      if (bg) {
+        scr.style.background = colorOf(this.theme, bg);
         ph.style.background = scr.style.background;
       }
       Object.assign(scr.style, { width: `${d.sc.W}px`, height: `${d.sc.H}px`, transform: `scale(${d.k})` });
-      for (const b of this.blocks(p)) this.drawBlock(scr, p, b, true);
+      for (const b of drawnBlocks(pages, p, this.land)) this.drawBlock(scr, p, b, true);
       t.createDiv({ cls: "vl-tname", text: p.name });
       t.addEventListener("click", () => pick(p));
       if (p.id === cur?.id) t.addClass("is-on");
@@ -1300,8 +1394,9 @@ var Editor = class {
     phone.style.height = `${H * z}px`;
     phone.style.borderRadius = `${dev.radius * z}px`;
     const scr = phone.createDiv({ cls: "vl-screen" + (show ? " is-show" : "") });
-    if (p.bg) {
-      scr.style.background = colorOf(this.theme, p.bg);
+    const bg = bgOf(this.doc.pages, p);
+    if (bg) {
+      scr.style.background = colorOf(this.theme, bg);
       phone.style.background = scr.style.background;
     }
     Object.assign(scr.style, { width: `${W}px`, height: `${H}px`, transform: `scale(${z})`, borderRadius: `${dev.radius}px` });
@@ -1328,8 +1423,9 @@ var Editor = class {
         s.style[k === "top" || k === "bottom" ? "height" : "width"] = `${v}px`;
       }
     }
-    for (const b of this.blocks(p)) this.drawBlock(scr, p, b, show);
-    if (this.land && !p.land) {
+    const layers = this.layers(p);
+    for (const l of layers) this.drawBlock(scr, p, l.block, show, show ? void 0 : l);
+    if (this.land && !p.land && !layers.length) {
       const mk = scr.createDiv({ cls: "vl-mkland" });
       mk.createDiv({ text: "No landscape layout yet" });
       const go = mk.createEl("button", { cls: "mod-cta", text: "Make landscape from portrait" });
@@ -1346,18 +1442,26 @@ var Editor = class {
   // one block again, in its place (a drag keeps its screen element, which holds the pointer)
   redrawBlock(scr, p, b) {
     const old = scr.querySelector(`[data-block="${b.id}"]`);
-    const el = this.drawBlock(scr, p, b, false);
+    const el = this.drawBlock(scr, p, b, false, this.layers(p).find((l) => l.block === b));
     if (old) old.replaceWith(el);
   }
-  drawBlock(scr, p, b, show) {
+  // l (editing): where the block comes from: a frame's (inherited: faded, locked) or an override of one (a small mark)
+  drawBlock(scr, p, b, show, l) {
     const kind = this.kinds.find((k) => k.id === b.kind) ?? this.kinds[0];
     const sel = this.sel?.page === p.id && this.sel.block === b.id;
-    const el = scr.createDiv({ cls: "vl-block" + (sel ? " is-sel" : ""), attr: { "data-block": b.id } });
+    const inh = !!l?.from && !l.over;
+    const el = scr.createDiv({ cls: "vl-block" + (sel ? " is-sel" : "") + (inh ? " is-inh" : "") + (l?.over ? " is-over" : ""), attr: { "data-block": b.id } });
     Object.assign(el.style, { left: `${b.x}px`, top: `${b.y}px`, width: `${b.w}px`, height: `${b.h}px` });
     el.style.setProperty("--k", kind?.color ?? "var(--text-faint)");
-    if (!show) el.createDiv({ cls: "vl-tag", text: b.name });
+    if (!show) {
+      const tag = el.createDiv({ cls: "vl-tag" });
+      if (inh) (0, import_obsidian3.setIcon)(tag.createSpan({ cls: "vl-tagi" }), "lock");
+      tag.appendText(b.name + (inh ? ` \xB7 ${this.page(l.from)?.name ?? "frame"}` : ""));
+    }
     for (const it of b.items) drawItem(this.theme, el, it);
-    if (sel) {
+    if (l?.over && !show) (0, import_obsidian3.setIcon)(el.createDiv({ cls: "vl-overmark", attr: { "aria-label": `Overrides ${this.page(l.over)?.name ?? "the frame"}'s ${b.name}` } }), "layers-2");
+    if (sel && inh) {
+    } else if (sel) {
       const id = this.sel?.item;
       if (id) {
         el.querySelector(`[data-id="${id}"]`)?.addClass("is-sel");
@@ -1383,7 +1487,8 @@ var Editor = class {
     const pickId = itEl?.dataset.id, dragId = topEl?.dataset.id;
     const before = this.sel;
     if (!b) {
-      this.choose({ page: p.id });
+      const l = bEl ? this.layers(p).find((x) => x.block.id === bEl.dataset.block) : void 0;
+      this.choose(l ? { page: p.id, block: l.block.id } : { page: p.id });
       return;
     }
     const blockChosen = before?.page === p.id && before.block === b.id;
@@ -1428,7 +1533,7 @@ var Editor = class {
       }
       const again = target?.item && before?.item === target.item;
       this.choose(target);
-      if (again && import_obsidian2.Platform.isMobile) this.writeItem(b, target.item);
+      if (again && import_obsidian3.Platform.isMobile) this.writeItem(b, target.item);
     };
     scr.addEventListener("pointermove", move);
     scr.addEventListener("pointerup", up);
@@ -1442,7 +1547,7 @@ var Editor = class {
     if (!b || !f) return;
     this.choose({ page: p.id, block: b.id, item: f.item.id });
     if (f.item.type !== "text") return;
-    if (import_obsidian2.Platform.isMobile) {
+    if (import_obsidian3.Platform.isMobile) {
       this.writeItem(b, f.item.id);
       return;
     }
@@ -1531,6 +1636,7 @@ var Editor = class {
   }
   duplicate() {
     const f = this.item(), b = this.block(), p = this.page();
+    if (this.sel?.block && !b) return;
     if (f) this.edit(() => {
       const c = cloneItem(f.item);
       f.list.splice(f.list.indexOf(f.item) + 1, 0, c);
@@ -1568,14 +1674,14 @@ var Editor = class {
     this.getters.clear();
     this.drawBar();
     this.panelBody();
-    if (import_obsidian2.Platform.isMobile && this.v.fit && this.pending === null) this.drawPages();
+    if (import_obsidian3.Platform.isMobile && this.v.fit && this.pending === null) this.drawPages();
   }
   panelBody() {
-    if (!this.side?.isConnected || this.v.show || !this.sel && import_obsidian2.Platform.isMobile || !import_obsidian2.Platform.isMobile && this.v.panel === false || this.v.map) return;
+    if (!this.side?.isConnected || this.v.show || !this.sel && import_obsidian3.Platform.isMobile || !import_obsidian3.Platform.isMobile && this.v.panel === false || this.v.map) return;
     const p = this.page() ?? this.current();
     if (!p) return;
-    const P = this.panel = this.side.createDiv({ cls: "vl-panel" + (import_obsidian2.Platform.isMobile ? " is-sheet" : "") });
-    if (!import_obsidian2.Platform.isMobile) {
+    const P = this.panel = this.side.createDiv({ cls: "vl-panel" + (import_obsidian3.Platform.isMobile ? " is-sheet" : "") });
+    if (!import_obsidian3.Platform.isMobile) {
       const pw = Number(localStorage.getItem("vellum:panelW")) || 300;
       P.style.width = `${pw}px`;
       const g = P.createDiv({ cls: "vl-pgrip" });
@@ -1601,7 +1707,7 @@ var Editor = class {
         g.addEventListener("pointerup", up);
       });
     }
-    const b = this.block(), f = this.item();
+    const b = this.block(), f = this.item(), inh = !b ? this.layer() : void 0;
     const head = P.createDiv({ cls: "vl-crumb" });
     const crumb = (text, s, on) => {
       const c = head.createEl("button", { text, cls: on ? "is-on" : "" });
@@ -1611,6 +1717,9 @@ var Editor = class {
     if (b) {
       head.createSpan({ text: "\u203A" });
       crumb(b.name, { page: p.id, block: b.id }, !f);
+    } else if (inh) {
+      head.createSpan({ text: "\u203A" });
+      crumb(inh.block.name, { page: p.id, block: inh.block.id }, true);
     }
     if (f) {
       head.createSpan({ text: "\u203A" });
@@ -1620,6 +1729,7 @@ var Editor = class {
     const body = P.createDiv({ cls: "vl-pbody" });
     if (f && b) this.itemPanel(body, b, f.item, b.items.includes(f.item));
     else if (b) this.blockPanel(body, p, b);
+    else if (inh) this.framePanel(body, p, inh);
     else this.pagePanel(body, p);
     body.scrollTop = this.keepTop;
     this.keepTop = 0;
@@ -1694,7 +1804,7 @@ var Editor = class {
         s.style.background = swatch(v);
       }
       if (icon) {
-        (0, import_obsidian2.setIcon)(c, icon);
+        (0, import_obsidian3.setIcon)(c, icon);
         if (!c.querySelector("svg")) {
           c.setText(text);
           c.removeClass("is-icon");
@@ -1705,7 +1815,7 @@ var Editor = class {
     return g;
   }
   text(parent, get, set, o = {}) {
-    if (import_obsidian2.Platform.isMobile) {
+    if (import_obsidian3.Platform.isMobile) {
       const t = parent.createDiv({ cls: "vl-text vl-tap" + (get() ? "" : " is-empty"), text: get() || o.placeholder || "" });
       t.addEventListener("click", () => this.writer(o.title ?? o.placeholder ?? "Text", get(), (v) => this.edit(() => set(v)), !!o.area));
       return t;
@@ -1779,7 +1889,7 @@ var Editor = class {
     const g = parent.createDiv({ cls: "vl-acts" });
     for (const [icon, text, act] of list) {
       const x = g.createEl("button", { cls: "vl-act" });
-      (0, import_obsidian2.setIcon)(x.createSpan(), icon);
+      (0, import_obsidian3.setIcon)(x.createSpan(), icon);
       x.appendText(text);
       x.addEventListener("click", act);
     }
@@ -1793,8 +1903,9 @@ var Editor = class {
       if (v === "mock") p.mock = true;
       else delete p.mock;
     });
-    this.colors(this.section(body, "Screen colour"), p.bg ?? "paper", (v) => {
-      if (v === "paper") delete p.bg;
+    const fr = frameOf(this.doc.pages, p), was = fr && bgOf(this.doc.pages, fr) || "paper";
+    this.colors(this.section(body, "Screen colour"), p.bg ?? was, (v) => {
+      if (v === was) delete p.bg;
       else p.bg = v;
     });
     const st = this.section(body, "Opened from");
@@ -1808,12 +1919,18 @@ var Editor = class {
       else {
         delete p.parent;
         delete p.link;
+        delete p.inherit;
       }
     }));
     if (p.parent) this.text(st, () => p.link ?? "", (v) => {
       if (v.trim()) p.link = v;
       else delete p.link;
     }, { placeholder: "How you get there: tap a row, + button\u2026" });
+    const par = this.page(p.parent);
+    if (par) this.chips(st, [["own", "Own blocks only"], ["frame", `On ${par.name}'s frame`]], p.inherit ? "frame" : "own", (v) => {
+      if (v === "frame") p.inherit = true;
+      else delete p.inherit;
+    });
     const n = this.section(body, "Note");
     this.text(n, () => p.note ?? "", (v) => {
       if (v.trim()) p.note = v;
@@ -1825,7 +1942,7 @@ var Editor = class {
       const c = this.kindChip(g, k, false);
       c.addEventListener("click", () => this.edit(() => {
         const dev = deviceOf(p.device ?? this.doc.device), { W, safe } = screenOf(dev, this.land);
-        const low = this.blocks(p).reduce((m, x) => Math.max(m, x.y + x.h), safe.top);
+        const low = drawnBlocks(this.doc.pages, p, this.land).reduce((m, x) => Math.max(m, x.y + x.h), safe.top);
         const nb = { id: uid(), name: k.name.split(" / ")[0], kind: k.id, x: 16 + safe.left, y: low + 8, w: W - 32 - safe.left - safe.right, h: 80, items: [] };
         this.blocks(p, true).push(nb);
         this.sel = { page: p.id, block: nb.id };
@@ -1835,6 +1952,7 @@ var Editor = class {
       delete p.land;
       this.sel = { page: p.id };
     })]]);
+    else if (this.land && p.blocks.length) this.actions(body, [["rectangle-horizontal", "Make landscape from portrait", () => this.makeLand(p)]]);
     this.actions(body, [["copy", "Duplicate page", () => this.duplicate()], ["trash-2", "Delete page", () => this.edit(() => {
       this.doc.pages.splice(this.doc.pages.indexOf(p), 1);
       this.sel = null;
@@ -1849,16 +1967,43 @@ var Editor = class {
     for (const k of this.kinds) this.kindChip(g, k, k.id === b.kind).addEventListener("click", () => this.edit(() => {
       b.kind = k.id;
     }));
+    const l = this.layers(p).find((x) => x.block === b);
+    if (l?.over) {
+      const o = this.section(body, "Override");
+      o.createDiv({ cls: "vl-frameinfo", text: `Takes the place of ${this.page(l.over)?.name ?? "the frame"}'s ${b.name} on this screen.` });
+      this.actions(o, [["undo-2", "Back to the frame", () => this.edit(() => {
+        const own = this.blocks(p);
+        own.splice(own.indexOf(b), 1);
+        this.sel = { page: p.id, block: b.id };
+      })]]);
+    }
     this.placeTool(this.section(body, "Place"), p, b);
     const it = this.section(body, "Items");
     this.itemList(it, b, b.items);
-    this.addButtons(it, b, b.items, ["text", "rect", "ellipse", "line", "row", "col"]);
+    this.addButtons(it, b, b.items, ["text", "rect", "ellipse", "line", "img", "icon", "row", "col"]);
     const n = this.section(body, "Note");
     this.text(n, () => b.note ?? "", (v) => {
       if (v.trim()) b.note = v;
       else delete b.note;
     }, { area: true, placeholder: "What goes here, what is wrong (for the agent)" });
     this.actions(body, [["copy", "Duplicate", () => this.duplicate()], ["trash-2", "Delete", () => this.remove()]]);
+  }
+  // a frame's block on a page that inherits it: locked here; copy it in to change it here, or edit it where it belongs
+  framePanel(body, p, l) {
+    const owner = this.page(l.from), s = this.section(body, "From the frame");
+    s.createDiv({ cls: "vl-frameinfo", text: `${l.block.name} belongs to ${owner?.name ?? "the frame"}: drawn here under this screen's own blocks, locked. Override it to change it on this screen only.` });
+    const acts = [["copy-plus", "Override here", () => this.edit(() => {
+      const c = JSON.parse(JSON.stringify(l.block));
+      this.blocks(p, true).push(c);
+      this.sel = { page: p.id, block: c.id };
+    })]];
+    if (owner) acts.push(["arrow-up-right", `Edit in ${owner.name}`, () => {
+      this.setView({ page: owner.id });
+      this.sel = { page: owner.id, block: l.block.id };
+      if (import_obsidian3.Platform.isMobile) this.setView({ rail: false });
+      this.draw();
+    }]);
+    this.actions(body, acts);
   }
   placeTool(pl, p, b) {
     const dev = deviceOf(p.device ?? this.doc.device), { W, H, safe } = screenOf(dev, this.land);
@@ -1960,7 +2105,7 @@ var Editor = class {
     const k = this.gapSide;
     const step = (e, d) => this.edit(() => setGap(k, gap[k]() + d * (e.shiftKey ? 8 : 1)));
     const minus = st.createEl("button", { cls: "vl-stepbtn", attr: { "aria-label": "Less (Shift: 8)" } });
-    (0, import_obsidian2.setIcon)(minus, "minus");
+    (0, import_obsidian3.setIcon)(minus, "minus");
     minus.addEventListener("click", (e) => step(e, -1));
     const v = st.createEl("input", { cls: "vl-stepval", attr: { type: "number", "aria-label": `${names[k]} gap` } });
     v.value = String(gap[k]());
@@ -1969,14 +2114,14 @@ var Editor = class {
       if (!Number.isNaN(n)) this.edit(() => setGap(k, Math.round(n)));
     });
     const plus = st.createEl("button", { cls: "vl-stepbtn", attr: { "aria-label": "More (Shift: 8)" } });
-    (0, import_obsidian2.setIcon)(plus, "plus");
+    (0, import_obsidian3.setIcon)(plus, "plus");
     plus.addEventListener("click", (e) => step(e, 1));
   }
   // a block kind: its icon in its colour, its name in the tooltip
   kindChip(g, k, on) {
     const c = g.createEl("button", { cls: "vl-chip is-icon is-kind" + (on ? " is-on" : ""), attr: { "aria-label": k.name } });
     c.style.setProperty("--k", k.color);
-    (0, import_obsidian2.setIcon)(c, k.icon ?? "square");
+    (0, import_obsidian3.setIcon)(c, k.icon ?? "square");
     if (!c.querySelector("svg")) c.setText(k.name);
     return c;
   }
@@ -2006,7 +2151,7 @@ var Editor = class {
     });
   }
   addButtons(parent, b, list, types) {
-    const names = { text: ["type", "Text"], rect: ["square", "Rect"], ellipse: ["circle", "Circle"], line: ["minus", "Line"], row: ["columns-3", "Row"], col: ["rows-3", "Column"] };
+    const names = { text: ["type", "Text"], rect: ["square", "Rect"], ellipse: ["circle", "Circle"], line: ["minus", "Line"], img: ["image", "Picture"], icon: ["smile-plus", "Icon"], row: ["columns-3", "Row"], col: ["rows-3", "Column"] };
     this.actions(parent, types.map((t) => [names[t][0], names[t][1], () => this.edit(() => {
       const it = newItem(t);
       if (list !== b.items) {
@@ -2073,6 +2218,61 @@ var Editor = class {
       this.colors(this.section(body, "Colour"), it.fill ?? "line", (v) => {
         it.fill = v;
       });
+    } else if (it.type === "img") {
+      const s = this.section(body, "Picture");
+      this.text(s, () => it.src ?? "", (v) => {
+        it.src = v;
+      }, { placeholder: "https://\u2026 or a vault path", title: "Picture address" });
+      this.chips(s, [["cover", "Cover: fills the box, cropped", "crop"], ["contain", "Contain: all of it, inside the box", "minimize-2"], ["fill", "Stretch: the box's shape", "move-diagonal-2"]], it.fit ?? "cover", (v) => {
+        it.fit = v;
+      });
+      const ps = this.section(body, "Position");
+      this.text(ps, () => it.pos ?? "", (v) => {
+        if (v.trim()) it.pos = v;
+        else delete it.pos;
+      }, { placeholder: "center \xB7 center 30% \xB7 left top", title: "Picture position (CSS object-position)" });
+      const r = this.section(body, "Box").createDiv({ cls: "vl-nums" });
+      this.num(r, "Radius", () => it.r ?? 0, (v) => {
+        it.r = v || void 0;
+      }, { min: 0 });
+      this.num(r, "Opacity", () => it.op ?? 100, (v) => {
+        it.op = v >= 100 ? void 0 : v;
+      }, { min: 0, max: 100 });
+    } else if (it.type === "icon") {
+      const s = this.section(body, "Icon");
+      const sug = createDiv({ cls: "vl-chips is-icons vl-iconpick" });
+      const fill = () => {
+        sug.empty();
+        const q = (it.name ?? "").trim().toLowerCase(), all = iconNames();
+        const hits = q ? all.filter((n) => n.includes(q)).sort((a, z) => Number(!a.startsWith(q)) - Number(!z.startsWith(q)) || a.length - z.length) : all;
+        for (const n of hits.slice(0, 48)) {
+          const c = sug.createEl("button", { cls: "vl-chip is-icon" + (n === it.name ? " is-on" : ""), attr: { "aria-label": n } });
+          (0, import_obsidian3.setIcon)(c, n);
+          c.addEventListener("click", () => this.edit(() => {
+            it.name = n;
+          }));
+        }
+        if (!hits.length) sug.createDiv({ cls: "vl-frameinfo", text: "No icon by that name: it shows as a ?" });
+      };
+      this.text(s, () => it.name ?? "", (v) => {
+        it.name = v.trim();
+        fill();
+      }, { placeholder: "A Lucide name: sparkles, house\u2026", title: "Icon name" });
+      s.appendChild(sug);
+      fill();
+      const r = s.createDiv({ cls: "vl-nums" });
+      this.num(r, "Size", () => it.size ?? 20, (v) => {
+        it.size = v;
+      }, { min: 4, max: 400 });
+      this.num(r, "Stroke", () => it.sw ?? 0, (v) => {
+        it.sw = v || void 0;
+      }, { step: 0.25, min: 0, max: 4 });
+      this.num(r, "Opacity", () => it.op ?? 100, (v) => {
+        it.op = v >= 100 ? void 0 : v;
+      }, { min: 0, max: 100 });
+      this.colors(this.section(body, "Colour"), it.color ?? "text", (v) => {
+        it.color = v === "text" ? void 0 : v;
+      });
     } else if (it.type === "row" || it.type === "col") {
       const s = this.section(body, it.type === "row" ? "Row" : "Column");
       this.chips(s, [["row", "Across", "arrow-right"], ["col", "Down", "arrow-down"]], it.type, (v) => {
@@ -2094,7 +2294,7 @@ var Editor = class {
       });
       const c = this.section(body, "Items in it");
       this.itemList(c, b, it.items ?? (it.items = []));
-      this.addButtons(c, b, it.items, ["text", "rect", "ellipse", "row", "col"]);
+      this.addButtons(c, b, it.items, ["text", "rect", "ellipse", "img", "icon", "row", "col"]);
       this.shapeStyle(body, it, true);
     } else this.shapeStyle(body, it, false);
   }
@@ -2143,6 +2343,10 @@ var Editor = class {
         it.dy = v;
       });
     }
+    if (it.type === "icon") {
+      this.section(body, "Size").createDiv({ cls: "vl-frameinfo", text: "An icon is as big as its Size (Style)." });
+      return;
+    }
     for (const [axis, name] of [["w", "Width"], ["h", "Height"]]) {
       const s = this.section(body, name);
       const cur = it[axis];
@@ -2163,7 +2367,9 @@ var Editor = class {
     }
   }
 };
-var label = (it) => it.type === "text" ? (it.v ?? "").split("\n")[0].slice(0, 24) || "(empty text)" : it.type === "row" || it.type === "col" ? `${it.items?.length ?? 0} items` : it.type === "ellipse" ? "circle" : it.type;
+var label = (it) => it.type === "text" ? (it.v ?? "").split("\n")[0].slice(0, 24) || "(empty text)" : it.type === "row" || it.type === "col" ? `${it.items?.length ?? 0} items` : it.type === "img" ? (it.src ?? "").split(/[/?#]/).filter(Boolean).pop()?.slice(0, 24) || "picture" : it.type === "icon" ? it.name || "icon" : it.type === "ellipse" ? "circle" : it.type;
+var icons = null;
+var iconNames = () => icons ?? (icons = [...new Set((0, import_obsidian3.getIconIds)().map((n) => n.replace(/^lucide-/, "")))].sort());
 var ref = null;
 async function folderEditor(dir) {
   if (!ref) return void 0;
@@ -2177,9 +2383,14 @@ async function openVellum(dir, page) {
 }
 function registerVellum(plugin, host = {}) {
   ref = { plugin, host: () => typeof host === "function" ? host() : host };
+  const vault = plugin.app.vault;
+  setPictureResolver((src) => {
+    const path = (0, import_obsidian3.normalizePath)(src), f = vault.getAbstractFileByPath(path);
+    return f instanceof import_obsidian3.TFile ? vault.getResourcePath(f) : vault.adapter.getResourcePath(path);
+  });
   const frame = (x) => `<g transform="scale(4.1667)" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3H3C1.89543 3 1 3.89543 1 5V19C1 20.1046 1.89543 21 3 21H21C22.1046 21 23 20.1046 23 19V5C23 3.89543 22.1046 3 21 3Z"/><path d="M${x} 4V20"/></g>`;
-  (0, import_obsidian2.addIcon)("vellum-side-left", frame(7));
-  (0, import_obsidian2.addIcon)("vellum-side-right", frame(17));
+  (0, import_obsidian3.addIcon)("vellum-side-left", frame(7));
+  (0, import_obsidian3.addIcon)("vellum-side-right", frame(17));
   plugin.registerView(VIEW, (leaf) => new VellumWindow(leaf));
   plugin.registerMarkdownCodeBlockProcessor("vellum", async (source, el, ctx) => {
     const h = typeof host === "function" ? host() : host, dir = srcOf(source);
@@ -2213,7 +2424,7 @@ function registerVellum(plugin, host = {}) {
 // src/main.ts
 var ICON = `<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><rect x="34" y="8" width="44" height="84" rx="10"/><path d="M14 32 h38 l10 10 v48 h-48 z"/></g><circle cx="38" cy="61" r="7" fill="currentColor"/>`;
 var DEFAULTS = { folder: "Screens", colors: { ...BASE_THEME.colors }, fonts: { ...BASE_THEME.fonts } };
-var VellumPlugin = class extends import_obsidian3.Plugin {
+var VellumPlugin = class extends import_obsidian4.Plugin {
   constructor() {
     super(...arguments);
     this.settings = structuredClone(DEFAULTS);
@@ -2221,7 +2432,7 @@ var VellumPlugin = class extends import_obsidian3.Plugin {
   async onload() {
     const saved = await this.loadData();
     this.settings = { folder: saved?.folder || DEFAULTS.folder, colors: { ...DEFAULTS.colors, ...saved?.colors }, fonts: { ...DEFAULTS.fonts, ...saved?.fonts } };
-    (0, import_obsidian3.addIcon)("vellum", ICON);
+    (0, import_obsidian4.addIcon)("vellum", ICON);
     registerVellum(this, () => ({ theme: this.theme() }));
     this.addRibbonIcon("vellum", "Open Vellum", () => {
       void openVellum(this.settings.folder);
@@ -2243,7 +2454,7 @@ var VellumPlugin = class extends import_obsidian3.Plugin {
     await this.saveData(this.settings);
   }
 };
-var VellumSettings = class extends import_obsidian3.PluginSettingTab {
+var VellumSettings = class extends import_obsidian4.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -2251,14 +2462,14 @@ var VellumSettings = class extends import_obsidian3.PluginSettingTab {
   display() {
     const { containerEl: c } = this, s = this.plugin.settings;
     c.empty();
-    new import_obsidian3.Setting(c).setName("Screens folder").setDesc("What the ribbon button opens: one JSON file per screen (made on the first save). A ```vellum block with src: <folder> shows any folder in a note too.").addText((t) => t.setPlaceholder("Screens").setValue(s.folder).onChange(async (v) => {
+    new import_obsidian4.Setting(c).setName("Screens folder").setDesc("What the ribbon button opens: one JSON file per screen (made on the first save). A ```vellum block with src: <folder> shows any folder in a note too.").addText((t) => t.setPlaceholder("Screens").setValue(s.folder).onChange(async (v) => {
       s.folder = v.trim().replace(/\/+$/, "") || DEFAULTS.folder;
       await this.plugin.save();
     }));
     c.createEl("p", { cls: "setting-item-description", text: "The named colours and fonts items use (any CSS value, CSS variables too). Reopen the editor to see a change." });
-    new import_obsidian3.Setting(c).setName("Colours").setHeading();
+    new import_obsidian4.Setting(c).setName("Colours").setHeading();
     for (const name of Object.keys(s.colors)) {
-      const row = new import_obsidian3.Setting(c).setName(name);
+      const row = new import_obsidian4.Setting(c).setName(name);
       const sw = row.nameEl.createSpan({ cls: "vl-set-sw" });
       sw.style.background = s.colors[name];
       row.addText((t) => t.setValue(s.colors[name]).onChange(async (v) => {
@@ -2273,7 +2484,7 @@ var VellumSettings = class extends import_obsidian3.PluginSettingTab {
       }));
     }
     let fresh = "";
-    new import_obsidian3.Setting(c).setName("Add a colour").setDesc("A new name items can use.").addText((t) => t.setPlaceholder("name").onChange((v) => {
+    new import_obsidian4.Setting(c).setName("Add a colour").setDesc("A new name items can use.").addText((t) => t.setPlaceholder("name").onChange((v) => {
       fresh = v.trim();
     })).addButton((b) => b.setButtonText("Add").onClick(async () => {
       if (!fresh || fresh in s.colors) return;
@@ -2281,28 +2492,28 @@ var VellumSettings = class extends import_obsidian3.PluginSettingTab {
       await this.plugin.save();
       this.display();
     }));
-    new import_obsidian3.Setting(c).setName("Fonts").setHeading();
+    new import_obsidian4.Setting(c).setName("Fonts").setHeading();
     for (const name of Object.keys(s.fonts)) {
-      new import_obsidian3.Setting(c).setName(name).addText((t) => t.setValue(s.fonts[name]).onChange(async (v) => {
+      new import_obsidian4.Setting(c).setName(name).addText((t) => t.setValue(s.fonts[name]).onChange(async (v) => {
         s.fonts[name] = v.trim();
         await this.plugin.save();
       }));
     }
-    new import_obsidian3.Setting(c).setName("Follow the Obsidian theme").setDesc("Put every colour and font back to the defaults.").addButton((b) => b.setButtonText("Reset").setWarning().onClick(async () => {
+    new import_obsidian4.Setting(c).setName("Follow the Obsidian theme").setDesc("Put every colour and font back to the defaults.").addButton((b) => b.setButtonText("Reset").setWarning().onClick(async () => {
       this.plugin.settings = { ...structuredClone(DEFAULTS), folder: s.folder };
       await this.plugin.save();
       this.display();
     }));
   }
 };
-var FolderPick = class extends import_obsidian3.FuzzySuggestModal {
+var FolderPick = class extends import_obsidian4.FuzzySuggestModal {
   constructor(app, pick) {
     super(app);
     this.pick = pick;
     this.setPlaceholder("A folder of screens");
   }
   getItems() {
-    return this.app.vault.getAllLoadedFiles().filter((f) => f instanceof import_obsidian3.TFolder && f.path !== "/");
+    return this.app.vault.getAllLoadedFiles().filter((f) => f instanceof import_obsidian4.TFolder && f.path !== "/");
   }
   getItemText(f) {
     return f.path;
