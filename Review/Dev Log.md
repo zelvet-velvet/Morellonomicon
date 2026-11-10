@@ -12,6 +12,7 @@ What changed and when, in short: **one note per day** in `Log/` (newest first), 
 ## 📆 Days
 
 ### 2026
+- [[2026-11-10]]: [[Design Rules]] split into a core note and topic notes ([[Pages]], [[Pictures]], [[Champion Page]], [[Controls]], [[Search]], [[Motion]])
 - [[2026-11-08]]: the Vellum layout editor plugin and an empty [[Dev Tools/Vellum|Vellum]] note to start from
 - [[2026-11-03]]: augment tiers rebuilt from per-augment reasoning checked against resg.top games, [[Augment Questions]]; Handbook pile without corner slivers
 - [[2026-11-02]]: project management like agent-worklog-vault: `AGENTS.md`, commands as skills, `tools/vault_status.py`, [[Progress Archive]], a shorter [[LLM Guide]]; pictures fetched ahead from one place (`media.ts`, needs per page, Picture readout)
