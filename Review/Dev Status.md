@@ -9,6 +9,8 @@ sticker: lucide//activity
 > Kept by `/cmd-sync` / `/cmd-rollover` / `/cmd-notes-sync` (skills, table in `AGENTS.md`); the day notes in `Review/Log/` by `/cmd-journal`. Run `python3 -I tools/vault_status.py show` before reading this note; read only the section you change.
 
 ## 🚀 Today's Progress (2026-11-11)
+> [!abstract]+ Today
+> - **Commit email privacy**: a work address removed from the history of [[Vellum]] and one private repo; git now defaults to the GitHub noreply address, and GitHub blocks pushes that expose a private email.
 
 ## 📅 Yesterday's Progress (2026-11-10)
 > [!abstract]- Yesterday
