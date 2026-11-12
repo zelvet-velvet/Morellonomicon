@@ -25,9 +25,9 @@
 .vl-page { flex: none; }
 .vl-pname { font-size: var(--font-ui-small); color: var(--text-muted); margin-bottom: 6px; }
 .vl-page.is-sel .vl-pname { color: var(--text-normal); font-weight: 600; }
-.vl-page.is-mock .vl-pname { color: var(--color-blue); }
+.vl-page.is-mock .vl-pname { color: var(--text-muted); font-style: italic; }
 .vl-phone { position: relative; overflow: hidden; box-shadow: 0 0 0 6px #1b1b1d, 0 0 0 7px #3a3a3e, 0 12px 30px rgba(0, 0, 0, 0.35); background: var(--vl-paper); }
-.vl-page.is-mock .vl-phone { box-shadow: 0 0 0 6px #1b1b1d, 0 0 0 7px var(--color-blue), 0 12px 30px rgba(0, 0, 0, 0.35); }
+.vl-page.is-mock .vl-phone { outline: 1.5px dashed var(--text-muted); outline-offset: 7px; }   /* a mock (a proposal): dashed, in the theme's muted colour */
 .vl-screen { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; background: var(--vl-paper); color: var(--vl-text); touch-action: none; }
 .vl-screen.is-show { touch-action: auto; }
 .vl-status { position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: space-between; align-items: center; color: var(--vl-text); pointer-events: none; z-index: 3; }
@@ -111,7 +111,12 @@ textarea.vl-text { resize: vertical; min-height: 44px; font-family: inherit; }
 .vl .vl-save { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; font-size: var(--font-ui-small); border: 1px solid var(--background-modifier-border); box-shadow: none; background: transparent; color: var(--text-faint); border-radius: 6px; }
 .vl .vl-save.is-dirty { background: var(--interactive-accent); border-color: var(--interactive-accent); color: var(--text-on-accent); }
 .vl-save svg { width: 14px; height: 14px; }
-.vl-hint { position: absolute; z-index: 25; padding: 6px 10px; border-radius: 6px; background: var(--background-secondary-alt, var(--background-secondary)); border: 1px solid var(--background-modifier-border); box-shadow: var(--shadow-s); font-size: var(--font-ui-smaller); color: var(--text-muted); white-space: nowrap; pointer-events: none; transition: opacity 0.4s; }
+/* a short note by its button: a mark and a few words, a small arrow up to the button; gone after a moment */
+.vl-hint { position: absolute; z-index: 25; display: flex; align-items: center; gap: 6px; padding: 5px 10px 5px 7px; border-radius: 8px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28); font-size: var(--font-ui-smaller); font-weight: 500; color: var(--text-normal); white-space: nowrap; pointer-events: none; transition: opacity 0.35s, transform 0.35s; animation: vl-hint-in 0.16s ease-out; }
+.vl-hint::before { content: ""; position: absolute; top: -5px; left: calc(var(--arrow, 50%) - 5px); width: 8px; height: 8px; transform: rotate(45deg); background: var(--background-primary); border-left: 1px solid var(--background-modifier-border); border-top: 1px solid var(--background-modifier-border); }
+.vl-hinti { display: flex; width: 16px; height: 16px; align-items: center; justify-content: center; border-radius: 50%; background: var(--background-modifier-hover); color: var(--text-muted); --icon-size: 11px; --icon-stroke: 3px; }
+.vl-hint.is-ok .vl-hinti { background: var(--interactive-accent); color: var(--text-on-accent); }
+@keyframes vl-hint-in { from { opacity: 0; transform: translateY(-3px); } }
 .vl-hint.is-out { opacity: 0; }
 .vl .vl-save.is-on { color: var(--text-normal); border-color: var(--text-faint); }
 /* the map of screens */
@@ -125,7 +130,7 @@ textarea.vl-text { resize: vertical; min-height: 44px; font-family: inherit; }
 .vl-tphone { position: relative; overflow: hidden; background: var(--vl-paper); box-shadow: 0 0 0 1px var(--background-modifier-border); transition: box-shadow 0.15s; }
 .vl-thumb:hover .vl-tphone { box-shadow: 0 0 0 2px var(--text-faint); }
 .vl-thumb.is-on .vl-tphone { box-shadow: 0 0 0 2px var(--interactive-accent); }
-.vl-thumb.is-mock .vl-tphone { box-shadow: 0 0 0 1px var(--color-blue); }
+.vl-thumb.is-mock .vl-tphone { outline: 1px dashed var(--text-muted); outline-offset: 2px; }
 .vl-tphone .vl-screen { pointer-events: none; }
 .vl-tname { font-size: 11px; line-height: 1.25; margin-top: 5px; color: var(--text-muted); text-align: center; overflow-wrap: anywhere; max-height: 2.5em; overflow: hidden; }
 .vl-thumb.is-main .vl-tname { color: var(--text-normal); font-weight: 600; }
@@ -160,7 +165,7 @@ body.is-mobile .vl-chead { align-items: flex-start; }
 .vl-open svg { width: 15px; height: 15px; }
 
 /* ---- the workspace: over the whole window */
-.vl-ws { position: fixed; inset: 0; z-index: var(--layer-modal); display: flex; flex-direction: column; background: var(--background-secondary); padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left); }
+.vl-ws { position: fixed; inset: 0; z-index: var(--layer-modal); display: flex; flex-direction: column; color: var(--text-normal); background: var(--background-secondary); padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left); }
 .vl-top { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 48px; padding: 0 10px; background: var(--background-primary); border-bottom: 1px solid var(--background-modifier-border); }
 .vl-tl, .vl-tr { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .vl-tr { flex: none; }
@@ -188,13 +193,12 @@ body.is-mobile .vl-chead { align-items: flex-start; }
 .vl-prow:hover { background: var(--background-modifier-hover); }
 .vl-prow.is-on { background: color-mix(in srgb, var(--interactive-accent) 14%, transparent); }
 .vl-prow.is-on .vl-pn { color: var(--interactive-accent); font-weight: 600; }
-.vl-prow.is-mock .vl-pn { color: var(--color-blue); }
+.vl-prow.is-mock .vl-pn { color: var(--text-muted); font-style: italic; }
 .vl-ptext { flex: 1; min-width: 0; padding: 5px 0; }
 .vl-pn { font-size: var(--font-ui-small); color: var(--text-normal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .vl-pl { font-size: 11px; color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .vl .vl-padd { width: 26px; height: 26px; opacity: 0; }
 .vl-prow:hover .vl-padd, .vl-ws.is-phone .vl-padd { opacity: 1; }
-.vl .vl-newp { margin: 8px 0 0; justify-content: center; height: 32px; border-style: dashed; color: var(--text-muted); }
 .vl-rfoot { margin-top: auto; padding: 16px 8px 4px; }
 .vl-rfoot .vl-dev { width: 100%; justify-content: space-between; }
 /* the pill at the foot of the stage */
@@ -256,7 +260,7 @@ body.is-mobile .vl-chead { align-items: flex-start; }
 .vl-rail.is-on { overflow: visible; }
 .vl-railbox { height: 100%; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; scrollbar-width: thin; }
 .vl-ws.is-phone .vl-railbox { height: auto; }
-.vl-rgrip, .vl-pgrip { width: 9px; background: transparent !important; z-index: 7; }
+.vl .vl-rgrip, .vl .vl-pgrip, .vl .vl-rgrip:hover, .vl .vl-pgrip:hover, .vl .vl-rgrip.is-on, .vl .vl-pgrip.is-on { width: 9px; background: transparent; z-index: 7; }   /* the line is drawn by ::after */
 .vl-rgrip { right: -5px; }
 .vl-pgrip { left: -5px; }
 .vl-rgrip::after, .vl-pgrip::after { content: ""; position: absolute; left: 4px; top: 0; bottom: 0; width: 2px; background: var(--interactive-accent); opacity: 0; transition: opacity 0.12s; }
@@ -338,7 +342,7 @@ body.is-mobile .vl-chead { align-items: flex-start; }
 .vl-srcrow { display: flex; gap: 4px; align-items: center; }
 .vl-srcrow > .vl-text { flex: 1; min-width: 0; }
 /* snapping: the lines a drag snapped to */
-.vl-guide { position: absolute; z-index: 8; pointer-events: none; background: var(--color-pink, #e93147); }
+.vl-guide { position: absolute; z-index: 8; pointer-events: none; background: var(--vlu-guide, var(--color-pink, #e93147)); }
 .vl-guide.is-v { top: 0; bottom: 0; width: 1px; margin-left: -0.5px; }
 .vl-guide.is-h { left: 0; right: 0; height: 1px; margin-top: -0.5px; }
 .vl .vl-zpill button.vl-btn.is-on { color: var(--interactive-accent); }
@@ -346,7 +350,7 @@ body.is-mobile .vl-chead { align-items: flex-start; }
 /* ---- the plugin's settings: folding cards of compact rows, everything centred on its line */
 .vl-settings { --vls-pad: 16px; --vls-line: color-mix(in srgb, var(--background-modifier-border) 70%, transparent); }
 .vls-intro { margin: 0 2px 16px; font-size: var(--font-ui-small); line-height: 1.5; color: var(--text-muted); }
-.vls-card { margin-bottom: 12px; border: 1px solid var(--background-modifier-border); border-radius: 10px; background: var(--background-primary); overflow: hidden; }
+.vls-card { margin-bottom: 12px; border: 1px solid var(--background-modifier-border); border-radius: 10px; background: var(--background-primary); overflow: clip; }
 .vls-head { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 var(--vls-pad) 0 12px; cursor: pointer; user-select: none; }
 .vls-head:hover { background: var(--background-modifier-hover); }
 .vls-head:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: -2px; }
@@ -368,15 +372,11 @@ body.is-mobile .vl-chead { align-items: flex-start; }
 .vl-settings input.vls-input.is-mono { font-family: var(--font-monospace); font-size: var(--font-ui-smaller); }
 .vl-settings input.vls-input.is-num { width: 72px; text-align: right; }
 .vl-settings input.vls-input.is-short { width: 120px; }
-.vls-val { min-width: 40px; text-align: right; font-size: var(--font-ui-smaller); font-variant-numeric: tabular-nums; color: var(--text-muted); }
 /* colours and fonts: one token per line (swatch or sample, name, value) */
 .vls-tokens { display: flex; flex-direction: column; }
 .vls-token { display: grid; grid-template-columns: 28px 76px minmax(0, 1fr) 28px; align-items: center; gap: 12px; min-height: 44px; padding: 6px var(--vls-pad); box-sizing: border-box; }
 .vls-token + .vls-token { border-top: 1px solid var(--vls-line); }
 .vl-settings .vls-token input.vls-input { width: 100%; }
-.vls-sw { position: relative; width: 24px; height: 24px; border-radius: 7px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-normal) 22%, transparent); cursor: pointer; }
-.vls-sw:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-normal) 22%, transparent), 0 0 0 2px var(--background-modifier-border-hover); }
-.vls-sw > input[type="color"] { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; cursor: pointer; }
 .vls-tname { font-family: var(--font-monospace); font-size: var(--font-ui-smaller); color: var(--text-normal); overflow: hidden; text-overflow: ellipsis; }
 .vls-aa { font-size: 17px; line-height: 1; text-align: center; color: var(--text-normal); }
 .vls-x { width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; --icon-size: 14px; }
@@ -389,4 +389,344 @@ body.is-mobile .vl-chead { align-items: flex-start; }
     .vls-row { flex-wrap: wrap; gap: 8px; }
     .vls-row .vls-ctl { width: 100%; justify-content: flex-end; }
     .vls-token { grid-template-columns: 24px 64px minmax(0, 1fr) 28px; gap: 8px; }
+}
+/* a section whose title folds it */
+.vl-sech.is-fold { display: flex; align-items: center; gap: 4px; cursor: pointer; user-select: none; }
+.vl-sech.is-fold:hover { color: var(--text-muted); }
+.vl-secchev { display: inline-flex; margin-left: auto; transition: transform 0.15s ease; --icon-size: 14px; }
+.vl-sec.is-folded .vl-secchev { transform: rotate(-90deg); }
+.vl-sec.is-folded > .vl-secb { display: none; }
+/* the safe areas lit while their settings are hovered (all, or one side) */
+.vl-stage[data-safe] .vl-safe { transition: background-color 0.12s ease; }
+.vl-stage[data-safe="all"] .vl-safe,
+.vl-stage[data-safe="top"] .vl-safe.is-top, .vl-stage[data-safe="bottom"] .vl-safe.is-bottom,
+.vl-stage[data-safe="left"] .vl-safe.is-left, .vl-stage[data-safe="right"] .vl-safe.is-right { z-index: 9; background-color: color-mix(in srgb, var(--interactive-accent) 28%, transparent); box-shadow: inset 0 0 0 1px var(--interactive-accent); }
+/* the device stays at the foot of the screens list (it scrolls above it) */
+.vl-rfoot { position: sticky; bottom: -12px; z-index: 2; margin: auto -8px -12px; padding: 12px 16px; background: var(--background-primary); border-top: 1px solid var(--background-modifier-border); }
+.vl-railbox > * { flex-shrink: 0; }   /* a long list scrolls; nothing in it is squeezed to fit (New screen kept its height only when the list was short) */
+/* New screen: like the Save button (the accent, a 6 px corner, the icon bare beside the text), full width */
+.vl .vl-newp { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 34px; margin: 10px 0 14px; padding: 0 10px; box-sizing: border-box; border: 1px solid var(--interactive-accent); border-radius: 6px; box-shadow: none; background: var(--interactive-accent); color: var(--text-on-accent); font-size: var(--font-ui-small); line-height: 1; cursor: pointer; }
+.vl .vl-newp:hover { background: var(--interactive-accent-hover); border-color: var(--interactive-accent-hover); }
+.vl .vl-newp:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }
+.vl .vl-newp > span { display: inline-flex; align-items: center; }
+.vl .vl-newp > span svg { width: 14px; height: 14px; }
+
+/* number boxes: ▲▼ arrows at the right, hold-and-drag (the box lights while dragging, a bubble shows the value) */
+.vl-num, .vl-dimw { position: relative; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+.vl-arrows { display: flex; flex-direction: column; align-self: stretch; flex: none; border-left: 1px solid var(--background-modifier-border); }
+.vl .vl-arrow { flex: 1; width: 18px; min-height: 0; padding: 0; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--text-faint); --icon-size: 11px; --icon-stroke: 2.5px; }
+.vl .vl-arrow:hover { color: var(--text-normal); background: var(--background-modifier-hover); }
+.vl .vl-arrow + .vl-arrow { border-top: 1px solid var(--background-modifier-border); }
+.vl-dimw { display: flex; align-items: stretch; border: 1px solid var(--background-modifier-border); border-radius: 6px; overflow: hidden; background: var(--background-primary); }
+.vl .vl-dimw input { border: 0; border-radius: 0; background: transparent; width: 46px; }
+.vl-num.is-scrub, .vl-dimw.is-scrub, .vl-stepval.is-scrub { border-color: var(--interactive-accent); box-shadow: 0 0 0 1px var(--interactive-accent); }
+.vl-bubble { position: absolute; z-index: 40; transform: translate(-50%, -100%); min-width: 104px; padding: 7px 12px 6px; border-radius: 8px; background: var(--text-normal); color: var(--background-primary); box-shadow: 0 3px 0 var(--interactive-accent), 0 10px 24px rgba(0, 0, 0, 0.3); text-align: center; pointer-events: none; }
+.vl-bubble-k { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.75; }
+.vl-bubble-v { font-size: 26px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.vl-bubble-d { font-size: 11px; font-variant-numeric: tabular-nums; opacity: 0.8; }
+.vl-bubble.is-up .vl-bubble-d { color: var(--color-green); opacity: 1; }
+.vl-bubble.is-down .vl-bubble-d { color: var(--color-red); opacity: 1; }
+
+/* colours: a bar (the colour, its name or value; a tap opens the picker) and the palette row under it */
+.vl .vl-cbar { display: flex; align-items: center; gap: 10px; width: 100%; height: 36px; padding: 0 10px 0 6px; border: 1px solid var(--background-modifier-border); border-radius: 8px; background: var(--background-primary); box-shadow: none; cursor: pointer; }
+.vl .vl-cbar:hover { border-color: var(--background-modifier-border-hover); }
+.vl-cbar-sw { width: 24px; height: 24px; flex: none; border-radius: 6px; box-shadow: inset 0 0 0 1px rgba(127, 127, 127, 0.35);
+  background: linear-gradient(var(--c, transparent), var(--c, transparent)), repeating-conic-gradient(#9a9a9a 0 25%, #e2e2e2 0 50%) 0 0 / 8px 8px; }
+.vl-cbar-sw.is-none { background: linear-gradient(135deg, transparent 45%, var(--color-red) 45% 55%, transparent 55%), var(--background-primary); }
+.vl-cbar-tx { flex: 1; min-width: 0; text-align: left; font-family: var(--font-monospace); font-size: var(--font-ui-smaller); color: var(--text-normal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vl-cbar-tx.is-name { font-family: var(--font-interface); font-size: var(--font-ui-small); }
+.vl-cbar-ch { display: flex; color: var(--text-faint); --icon-size: 14px; }
+.vl-palette { margin-top: 6px; }
+.vl-csep { width: 1px; height: 18px; background: var(--background-modifier-border); margin: 0 2px; }
+.vl .vl-chip.vl-cbtn { width: 28px; height: 26px; border-radius: 7px; }
+
+/* the picker: floats by its bar; the colour square, hue and opacity bars, the exact value, recent colours */
+.vl-cpop { position: absolute; z-index: 35; width: 248px; max-width: calc(100% - 16px); padding: 12px; display: flex; flex-direction: column; gap: 10px; box-sizing: border-box;
+  border: 1px solid var(--background-modifier-border); border-radius: 12px; background: var(--background-primary); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35); }
+.vl-csq { position: relative; height: 150px; border-radius: 8px; cursor: crosshair; touch-action: none;
+  background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, var(--hue, red)); }
+.vl-cstrip { position: relative; height: 14px; border-radius: 7px; cursor: pointer; touch-action: none; }
+.vl-cstrip.is-hue { background: linear-gradient(90deg, #f00, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00); }
+.vl-cstrip.is-alpha { background: linear-gradient(90deg, transparent, var(--c, #000)), repeating-conic-gradient(#9a9a9a 0 25%, #e2e2e2 0 50%) 0 0 / 8px 8px; }
+.vl-cknob { position: absolute; top: 50%; width: 16px; height: 16px; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+  background: var(--c, transparent); border: 2.5px solid #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 2px 4px rgba(0, 0, 0, 0.35); box-sizing: border-box; }
+.vl-csq .vl-cknob { width: 18px; height: 18px; }
+.vl-cvals { display: flex; align-items: center; gap: 6px; }
+.vl-cfields { flex: 1; min-width: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; }
+.vl .vl-chex { width: 100%; height: 30px; font-family: var(--font-monospace); font-size: var(--font-ui-smaller); }
+.vl .vl-chex.is-bad { border-color: var(--text-error); }
+.vl .vl-cfields .vl-cnum { height: 30px; flex-direction: column; justify-content: center; gap: 0; padding-top: 2px; }
+.vl .vl-cfields .vl-cnum .vl-numl { font-size: 9px; line-height: 1; padding: 0; cursor: ns-resize; }
+.vl .vl-cfields .vl-cnum input { height: 18px; padding: 0 2px; text-align: center; font-size: var(--font-ui-smaller); }
+.vl-cmodes { display: flex; gap: 2px; padding: 2px; border-radius: 7px; background: var(--background-secondary); }
+.vl .vl-cmode { flex: 1; height: 22px; padding: 0; border: 0; border-radius: 5px; background: transparent; box-shadow: none; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--text-muted); }
+.vl .vl-cmode.is-on { background: var(--background-primary); color: var(--text-normal); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); }
+.vl-cfoot { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 8px; border-top: 1px solid var(--background-modifier-border); }
+.vl .vl-cdot { width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(127, 127, 127, 0.4);
+  background: linear-gradient(var(--c, transparent), var(--c, transparent)), repeating-conic-gradient(#9a9a9a 0 25%, #e2e2e2 0 50%) 0 0 / 6px 6px; }
+.vl .vl-cdot.is-none { background: linear-gradient(135deg, transparent 44%, var(--color-red) 44% 56%, transparent 56%), var(--background-primary); }
+/* a chosen block's name tag is a handle: a press chooses the block (not an item in it), a drag moves it */
+.vl-screen:not(.is-show) .vl-block.is-sel > .vl-tag { pointer-events: auto; cursor: move; padding: 1px 6px 2px; border-radius: 4px 4px 0 0; background: var(--k); color: var(--background-primary); transform: translate(-1px, -100%); }
+/* a number box's label is a drag handle (a mouse: drag up or right for more) */
+.vl .vl-drag { cursor: ns-resize; touch-action: none; -webkit-user-select: none; user-select: none; }
+.vl .vl-num .vl-drag:hover { color: var(--text-normal); }
+
+/* the panel's header actions: copy for the agent, duplicate, delete, let go */
+.vl-hacts { margin-left: auto; display: flex; align-items: center; gap: 0; align-self: flex-start; }
+.vl-hacts .vl-close { margin-left: 0; }
+
+/* Place: the phone diagram (drag the block, its corner to resize; distances on it, a click types one) */
+.vl-gdia { position: relative; display: flex; justify-content: center; padding: 14px 0; border-radius: 10px; border: 1px solid var(--background-modifier-border); background-color: var(--background-secondary);
+  background-image: linear-gradient(color-mix(in srgb, var(--text-faint) 12%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--text-faint) 12%, transparent) 1px, transparent 1px); background-size: 12px 12px; }
+.vl-gphone { position: relative; border: 1.5px solid var(--text-muted); border-radius: 12px; background: var(--background-primary); overflow: visible; }
+.vl-gsafe { position: absolute; background: repeating-linear-gradient(45deg, transparent 0 3px, color-mix(in srgb, var(--text-faint) 30%, transparent) 3px 4px); pointer-events: none; }
+.vl-gsafe.is-top { left: 0; right: 0; top: 0; border-radius: 10px 10px 0 0; } .vl-gsafe.is-bottom { left: 0; right: 0; bottom: 0; border-radius: 0 0 10px 10px; }
+.vl-gsafe.is-left { top: 0; bottom: 0; left: 0; } .vl-gsafe.is-right { top: 0; bottom: 0; right: 0; }
+.vl-gblk { position: absolute; border: 1px dashed var(--text-faint); border-radius: 2px; cursor: pointer; box-sizing: border-box; }
+.vl-gblk:hover { border-color: var(--text-muted); background: var(--background-modifier-hover); }
+.vl-gblk.is-me { border: 1.5px solid var(--interactive-accent); background: color-mix(in srgb, var(--interactive-accent) 18%, transparent); cursor: move; z-index: 2; touch-action: none; }
+.vl-ggrip { position: absolute; right: -5px; bottom: -5px; width: 9px; height: 9px; border-radius: 2px; background: var(--interactive-accent); cursor: nwse-resize; touch-action: none; }
+.vl .vl-gdist { position: absolute; z-index: 3; transform: translate(-50%, -50%); height: 18px; min-width: 22px; padding: 0 4px; border: 1px solid var(--background-modifier-border); border-radius: 5px; background: var(--background-primary); box-shadow: none;
+  font: 500 10.5px/1 var(--font-monospace); color: var(--interactive-accent); cursor: text; }
+.vl .vl-gdist:hover { border-color: var(--interactive-accent); }
+.vl .vl-gdin { position: absolute; z-index: 4; width: 56px; height: 22px; transform: translate(-50%, -50%); font: 500 12px var(--font-monospace); text-align: center; }
+.vl-gdlive { display: none; }
+.vl-nums.is-four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.vl .vl-pill { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid var(--background-modifier-border); border-radius: 14px; background: transparent; box-shadow: none; color: var(--text-muted); font-size: var(--font-ui-smaller); --icon-size: 13px; }
+.vl .vl-pill.is-on { border-color: var(--interactive-accent); color: var(--text-normal); background: color-mix(in srgb, var(--interactive-accent) 15%, transparent); }
+
+/* an item's place: the block drawn small, the item's box in it, the nine points (the chosen one lit), the line between */
+.vl-apv { position: relative; margin: 8px auto 10px; border: 1.5px solid var(--interactive-accent); border-radius: 6px; background: color-mix(in srgb, var(--interactive-accent) 8%, var(--background-primary)); }
+.vl-abox { position: absolute; border: 1px solid var(--text-muted); border-radius: 2px; background: color-mix(in srgb, var(--text-muted) 18%, transparent); pointer-events: none; }
+.vl .vl-adot { position: absolute; z-index: 2; width: 18px; height: 18px; padding: 0; transform: translate(-50%, -50%); border: 0; border-radius: 50%; background: transparent; box-shadow: none; display: grid; place-items: center; cursor: pointer; }
+.vl .vl-adot::after { content: ""; width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--text-muted); background: var(--background-primary); box-sizing: border-box; }
+.vl .vl-adot:hover::after { border-color: var(--text-normal); }
+.vl .vl-adot.is-on::after { width: 12px; height: 12px; border: 0; background: var(--interactive-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--interactive-accent) 30%, transparent); }
+.vl-aline { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.vl-aline line { stroke: var(--interactive-accent); stroke-width: 1.5; stroke-dasharray: 3 3; }
+/* a row: its label at the left, the control at the right */
+.vl-frow { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: center; gap: 8px; }
+.vl-frowl { font-size: var(--font-ui-smaller); color: var(--text-muted); }
+.vl-frowc { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; }
+.vl-frowc .vl-num { flex: 1; min-width: 90px; }
+/* the screens list as a flow: how you get to a screen sits on the connector into it */
+.vl-pedge { display: flex; align-items: center; gap: 4px; height: 18px; margin-top: 2px; padding-left: 6px; font-size: 11px; color: var(--text-faint); pointer-events: none; }
+.vl-pedgei { display: flex; color: var(--interactive-accent); opacity: 0.8; --icon-size: 11px; margin-left: 10px; }
+.vl-pedget { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+/* ===== the panel system: every tab ===== */
+/* sections: a summary in a folded section's title */
+.vl-sech { display: flex; align-items: center; gap: 6px; }
+.vl-sechint { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.vl-sec:not(.is-folded) > .vl-sech .vl-sechint { display: none; }
+/* number boxes: a small label on top (a drag handle), the whole value at the right with its unit; arrows over the box,
+   only on hover or while typing (the value moves aside for them) */
+.vl .vl-nums { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.vl .vl-nums.is-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.vl .vl-num { position: relative; display: flex; flex-direction: column; justify-content: center; gap: 1px; height: 42px; padding: 4px 9px 2px; border: 1px solid var(--background-modifier-border); border-radius: 7px; background: var(--background-modifier-form-field); overflow: visible; min-width: 0; }
+.vl .vl-num:focus-within { border-color: var(--interactive-accent); box-shadow: 0 0 0 1px var(--interactive-accent); }
+.vl .vl-num .vl-numl { padding: 0; font-size: 10px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vl .vl-num .vl-numl.vl-drag:hover, .vl .vl-num.is-scrub .vl-numl { color: var(--interactive-accent); }
+.vl-numv { display: flex; align-items: baseline; justify-content: flex-end; gap: 2px; min-width: 0; transition: padding 0.12s; }
+.vl .vl-num input { flex: 1; min-width: 0; width: 100%; height: 20px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; text-align: right; font: 500 14px/20px var(--font-monospace); font-variant-numeric: tabular-nums; color: var(--text-normal); }
+.vl .vl-num input:focus { box-shadow: none; }
+.vl .vl-num input::-webkit-inner-spin-button, .vl .vl-num input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.vl-numu { font-size: 11px; color: var(--text-faint); }
+.vl .vl-num > .vl-arrows { position: absolute; right: 3px; top: 3px; bottom: 3px; width: 16px; display: none; flex-direction: column; border: 0; border-radius: 4px; background: var(--background-modifier-hover); overflow: hidden; }
+.vl .vl-num:hover > .vl-arrows, .vl .vl-num:focus-within > .vl-arrows { display: flex; }
+.vl .vl-num.is-scrub { border-color: var(--interactive-accent); background: color-mix(in srgb, var(--interactive-accent) 12%, var(--background-modifier-form-field)); }
+/* the colour picker's own number boxes (label and input straight in the box) */
+.vl .vl-cfields .vl-cnum { height: 42px; padding: 4px 6px 2px; }
+.vl .vl-cfields .vl-cnum input { height: 20px; text-align: right; font-size: 13px; }
+/* a choice in words: a segmented control */
+.vl-seg2 { flex: 1; display: flex; gap: 2px; padding: 2px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-modifier-form-field); min-width: 0; }
+.vl .vl-seg2 > button { flex: 1; min-width: 0; height: 26px; padding: 0 6px; display: flex; align-items: center; justify-content: center; gap: 5px; border: 0; border-radius: 6px; background: transparent; box-shadow: none; font-size: var(--font-ui-smaller); color: var(--text-muted); white-space: nowrap; overflow: hidden; }
+.vl .vl-seg2 > button span:last-child { overflow: hidden; text-overflow: ellipsis; }
+.vl .vl-seg2 > button.is-on { background: var(--background-modifier-hover); color: var(--text-normal); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); }
+.vl .vl-seg2 > button:hover:not(.is-on) { color: var(--text-normal); }
+.vl-seg2i { display: flex; flex: none; --icon-size: 13px; }
+/* rows: a label at the left, the control at the right */
+.vl .vl-frow { grid-template-columns: 64px minmax(0, 1fr); min-height: 32px; }
+.vl .vl-frowc > .vl-text, .vl .vl-frowc > input.vl-text { flex: 1; min-width: 0; }
+.vl .vl-menu2 { flex: 1; min-width: 0; height: 32px; }
+.vl-kindi { display: flex; flex: none; width: 26px; height: 26px; align-items: center; justify-content: center; border-radius: 6px; color: var(--k); background: color-mix(in srgb, var(--k) 16%, transparent); --icon-size: 14px; }
+/* colours: the theme's as named tiles; the recent custom ones as tiles named by their hex */
+.vl-tiles2 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: 6px; }
+.vl .vl-ctile { height: auto; display: flex; flex-direction: column; align-items: stretch; gap: 3px; padding: 4px 4px 3px; border: 1px solid transparent; border-radius: 7px; background: transparent; box-shadow: none; min-width: 0; }
+.vl .vl-ctile:hover { background: var(--background-modifier-hover); }
+.vl .vl-ctile.is-on { border-color: var(--interactive-accent); background: color-mix(in srgb, var(--interactive-accent) 14%, transparent); }
+.vl-ctsw { height: 18px; border-radius: 4px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-normal) 16%, transparent); }
+.vl-ctsw.is-none { background: linear-gradient(135deg, transparent 46%, var(--text-faint) 46% 54%, transparent 54%), var(--background-modifier-form-field); }
+.vl-ctn { font-size: 10.5px; color: var(--text-muted); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vl .vl-ctile.is-on .vl-ctn { color: var(--text-normal); }
+.vl-recentl { margin: 8px 0 0 2px; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); }
+.vl-tiles2.is-recent { margin-top: 3px; }
+.vl-ctsw.is-check { background: linear-gradient(var(--c), var(--c)), repeating-conic-gradient(#9a9a9a 0 25%, #e2e2e2 0 50%) 0 0 / 6px 6px; }
+.vl-ctn.is-hex { font-family: var(--font-monospace); font-size: 10px; letter-spacing: 0.02em; }
+.vl-tiles2.is-pop { margin: 0; }
+/* adding: blocks by kind, items by type, as named tiles */
+.vl-addgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.vl .vl-addt { height: auto; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 2px 5px; border: 1px solid var(--background-modifier-border); border-radius: 7px; background: transparent; box-shadow: none; font-size: 10.5px; color: var(--text-muted); min-width: 0; }
+.vl .vl-addt span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vl .vl-addt:hover { color: var(--text-normal); background: var(--background-modifier-hover); }
+.vl-addgrid.is-items .vl-addt { border-style: dashed; }
+.vl-addi { display: flex; color: var(--k, var(--text-muted)); --icon-size: 15px; }
+/* the item list: a grip to reorder, the type, the name, a detail */
+.vl .vl-list { display: flex; flex-direction: column; gap: 1px; margin-bottom: 6px; }
+.vl .vl-list > .vl-row { display: flex; align-items: center; gap: 4px; border-radius: 6px; position: relative; }
+.vl .vl-list > .vl-row:hover { background: var(--background-modifier-hover); }
+.vl .vl-list > .vl-row.is-drop::before, .vl .vl-list.is-drop-end > .vl-row:last-child::after { content: ""; position: absolute; left: 4px; right: 4px; height: 2px; border-radius: 1px; background: var(--interactive-accent); }
+.vl .vl-list > .vl-row.is-drop::before { top: -1px; }
+.vl .vl-list.is-drop-end > .vl-row:last-child::after { bottom: -1px; }
+.vl .vl-list > .vl-row.is-moving { opacity: 0.5; }
+.vl-igrip2 { display: flex; padding: 6px 2px 6px 4px; color: var(--text-faint); cursor: grab; touch-action: none; --icon-size: 13px; }
+.vl .vl-rowmain { flex: 1; min-width: 0; height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 6px 0 0; border: 0; background: transparent; box-shadow: none; font-size: var(--font-ui-small); color: var(--text-normal); text-align: left; }
+.vl-rowty { display: flex; flex: none; width: 20px; height: 20px; align-items: center; justify-content: center; border-radius: 5px; border: 1px solid var(--background-modifier-border); background: var(--background-modifier-form-field); color: var(--text-muted); --icon-size: 11px; }
+.vl-rowtx { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vl-rowsub { margin-left: auto; flex: none; font-size: 11px; color: var(--text-faint); }
+/* a frame's block: locked, with the two ways out */
+.vl-lock { display: flex; gap: 10px; padding: 10px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-modifier-form-field); font-size: var(--font-ui-smaller); color: var(--text-muted); line-height: 1.45; }
+.vl-locki { display: flex; color: var(--interactive-accent); --icon-size: 16px; }
+/* the align bar under the phone diagram, as one segmented strip */
+.vl .vl-align { display: flex; align-items: center; gap: 2px; padding: 2px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-modifier-form-field); }
+.vl .vl-align .vl-btn { flex: 1; height: 26px; border-radius: 6px; }
+
+/* an item lit on the phone while the pointer rests on its row in the panel */
+.vl-screen:not(.is-show) .vl-it.is-hl { outline: 2px solid var(--interactive-accent); outline-offset: 2px; }   /* an outline: items with their own outline (an inset shadow) keep it */
+/* the number box as a tile: the value is text (hold and drag it, a click types); the field while typing */
+.vl .vl-num { cursor: default; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.vl .vl-num.is-scrub { cursor: ns-resize; }   /* the up-down cursor only while dragging */
+.vl .vl-num:focus-visible { outline: 2px solid var(--interactive-accent); outline-offset: 1px; }
+.vl .vl-num.is-typing { cursor: text; border-color: var(--interactive-accent); box-shadow: 0 0 0 1px var(--interactive-accent); }
+.vl-numt { font: 500 14px/20px var(--font-monospace); font-variant-numeric: tabular-nums; color: var(--text-normal); white-space: nowrap; }
+.vl .vl-numin { flex: 1; min-width: 0; width: 100%; height: 20px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; text-align: right; font: 500 14px/20px var(--font-monospace); color: var(--text-normal); }
+.vl .vl-numin:focus { box-shadow: none; }
+/* the drag bubble, as ZeLedger's: a large value that ticks on each step */
+.vl .vl-bubble { min-width: 120px; padding: 8px 14px 7px; }
+.vl .vl-bubble-v { font-size: 30px; line-height: 1.05; font-family: var(--font-monospace); }
+.vl .vl-bubble-v.is-tick { animation: vl-tick 0.12s ease-out; }
+@keyframes vl-tick { from { transform: scale(1.08); } }
+@media (prefers-reduced-motion: reduce) { .vl .vl-bubble-v.is-tick { animation: none; } }
+
+/* Opened from: the field and its list (the rail's tree, with a search) */
+.vl .vl-ppf { flex: 1; min-width: 0; height: 32px; padding: 0 8px; display: flex; align-items: center; justify-content: space-between; gap: 6px; background: var(--background-modifier-form-field); border: 1px solid var(--background-modifier-border); box-shadow: none; border-radius: var(--input-radius, 5px); font-size: var(--font-ui-small); color: var(--text-normal); }
+.vl .vl-ppf:hover { border-color: var(--background-modifier-border-hover); background: var(--background-modifier-form-field); }
+.vl-ppft { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vl-ppf .vl-chev { display: flex; flex: none; color: var(--text-faint); --icon-size: 14px; }
+.vl-pp { position: absolute; z-index: 26; padding: 4px; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 8px; box-shadow: var(--shadow-l); }
+.vl-ppfind { display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 8px; }
+.vl-ppfi { display: flex; flex: none; color: var(--text-faint); --icon-size: 14px; }
+.vl .vl-ppfind input { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; box-shadow: none; background: transparent; font-size: var(--font-ui-small); }
+.vl .vl-ppfind input:focus { border: 0; box-shadow: none; }
+.vl-ppsep { height: 1px; margin: 3px 4px; background: var(--background-modifier-border); }
+.vl-pplist { position: relative; overflow-y: auto; }
+.vl-ppr { display: flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 8px; border-radius: 5px; font-size: var(--font-ui-small); color: var(--text-normal); cursor: pointer; }
+.vl-pp.is-phone .vl-ppr { min-height: 44px; }
+.vl-ppr.is-active { background: var(--background-modifier-hover); }
+.vl-ppn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vl-ppm { color: var(--interactive-accent); font-weight: 600; }
+.vl-pptag { flex: none; font-size: var(--font-ui-smaller); color: var(--text-faint); }
+.vl-ppc { display: flex; flex: none; color: var(--interactive-accent); --icon-size: 14px; }
+.vl-ppr.is-on .vl-ppn { color: var(--interactive-accent); font-weight: 600; }
+.vl-ppr.is-mock .vl-ppn { color: var(--text-muted); font-style: italic; }
+.vl-ppr.is-ctx .vl-ppn, .vl-ppr.is-off .vl-ppn { color: var(--text-faint); }
+.vl-ppr.is-off { cursor: default; }
+.vl-ppnone { padding: 12px 8px; font-size: var(--font-ui-small); color: var(--text-muted); overflow-wrap: anywhere; }
+
+/* Settings: the colour cards. A preview on top, the colours under it in two columns */
+.vls-prev { padding: 12px var(--vls-pad) 6px; }
+.vls-pager { display: flex; align-items: center; gap: 8px; margin: 2px var(--vls-pad) 2px; padding: 4px; border-radius: 10px; background: var(--background-secondary); }
+.vl-settings button.vls-pgb { flex: none; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 8px; background: transparent; box-shadow: none; color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; --icon-size: 18px; }
+.vl-settings button.vls-pgb:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
+.vls-pgm { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.vls-pgn { font-size: var(--font-ui-small); font-weight: 600; color: var(--text-normal); }
+.vls-pgd { display: flex; gap: 6px; }
+.vl-settings button.vls-dot { width: 6px; height: 6px; min-height: 0; padding: 0; border: 0; border-radius: 50%; background: var(--text-faint); opacity: 0.5; box-shadow: none; cursor: pointer; }
+.vl-settings button.vls-dot.is-on { background: var(--interactive-accent); opacity: 1; }
+.vls-pages.is-paged { min-height: 236px; }
+.vls-beside .vls-pages.is-paged { min-height: 120px; }
+.vls-group:only-child { break-inside: auto; }
+.vls-prevcap { margin-top: 8px; text-align: center; font-size: var(--font-ui-smaller); color: var(--text-faint); }
+.vls-colbar { display: flex; align-items: center; gap: 8px; padding: 10px var(--vls-pad) 6px; font-size: var(--font-ui-smaller); color: var(--text-muted); }
+.vls-colbar > span { flex: 1; min-width: 0; }
+.vls-groups { columns: 2 240px; column-gap: 20px; padding: 0 calc(var(--vls-pad) - 8px) 8px; }
+.vls-group { break-inside: avoid; padding-bottom: 6px; }
+.vls-grp { padding: 10px 8px 4px; font-size: var(--font-ui-smaller); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); }
+.vls-colour { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 5px 8px; border-radius: 8px; break-inside: avoid; box-sizing: border-box; }
+.vls-colour:hover { background: var(--background-modifier-hover); }
+.vls-cname { flex: 1; min-width: 0; }
+.vls-cn { font-size: var(--font-ui-small); color: var(--text-normal); }
+.vls-cdesc { font-size: var(--font-ui-smaller); color: var(--text-muted); }
+.vls-cwarn { font-size: var(--font-ui-smaller); color: var(--text-error); }
+.vls-cwarn:empty { display: none; }
+/* the colour field: the colour, its value, the way back, in one box */
+.vls-cf { flex: none; display: flex; align-items: center; gap: 8px; width: 156px; height: 34px; padding: 0 4px 0 4px; box-sizing: border-box; border: 1px solid var(--background-modifier-border); border-radius: 9px; background: var(--background-modifier-form-field); }
+.vls-cf:hover { border-color: var(--background-modifier-border-hover); }
+.vls-cf:focus-within { border-color: var(--interactive-accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 25%, transparent); }
+.vls-cf.is-warn, .vls-cf.is-bad { border-color: var(--text-error); }
+.vl-settings button.vls-chip { flex: none; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 6px; overflow: hidden; cursor: pointer; box-shadow: none; background: repeating-conic-gradient(#9a9a9a 0 25%, #e2e2e2 0 50%) 0 0 / 8px 8px; }
+.vls-chip > span { display: block; width: 100%; height: 100%; border-radius: inherit; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-normal) 35%, transparent), inset 0 0 0 2px color-mix(in srgb, var(--background-primary) 60%, transparent); }
+.vls-chip:hover > span { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-normal) 60%, transparent), inset 0 0 0 2px color-mix(in srgb, var(--background-primary) 60%, transparent); }
+.vl-settings .vls-cf input.vls-cv { flex: 1; min-width: 0; width: auto; height: 26px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; font-family: var(--font-interface); font-size: var(--font-ui-small); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; color: var(--text-normal); }
+.vl-settings .vls-cf input.vls-cv::placeholder { color: var(--text-muted); letter-spacing: 0; }
+.vls-cf.is-custom input.vls-cv { font-weight: 500; }
+.vl-settings button.vls-cb { flex: none; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: transparent; box-shadow: none; color: var(--text-faint); cursor: pointer; display: flex; align-items: center; justify-content: center; --icon-size: 14px; }
+.vl-settings button.vls-cb:hover { color: var(--text-normal); background: var(--background-modifier-hover); }
+.vl-cpop.vls-pop { position: fixed; z-index: calc(var(--layer-modal) + 10); }
+.vls-pop input { width: 100%; height: 30px; font-family: var(--font-monospace); font-size: var(--font-ui-smaller); }
+.vls-pop input.is-bad { border-color: var(--text-error); }
+
+/* the editor preview: a top bar, the screens list, the stage, the panel */
+.vls-demo { border: 1px solid var(--background-modifier-border); border-radius: 12px; overflow: hidden; background: var(--background-primary); color: var(--text-normal); font-size: 12px; line-height: 1.3; }
+.vlsd-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; height: 36px; padding: 0 12px; border-bottom: 1px solid var(--background-modifier-border); color: var(--text-muted); }
+.vlsd-saves { display: flex; gap: 6px; }
+.vlsd-save { padding: 4px 12px; border-radius: 6px; font-weight: 600; background: var(--interactive-accent); color: var(--text-on-accent); }
+.vlsd-save.is-state { background: var(--interactive-accent-hover); }
+.vlsd-body { display: grid; grid-template-columns: 140px minmax(0, 1fr) 170px; height: 272px; }
+.vlsd-rail { padding: 10px 8px; border-right: 1px solid var(--background-modifier-border); display: flex; flex-direction: column; gap: 2px; }
+.vlsd-h { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-faint); padding: 2px 6px 6px; }
+.vlsd-r { padding: 5px 8px; border-radius: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vlsd-r.is-sub { margin-left: 14px; color: var(--text-muted); }
+.vlsd-r.is-on { background: color-mix(in srgb, var(--interactive-accent) 16%, transparent); color: var(--interactive-accent); font-weight: 600; }
+.vlsd-r.is-state { background: var(--background-modifier-hover); }
+.vlsd-stage { display: flex; align-items: center; justify-content: center; padding: 4px 8px; background: var(--background-secondary); min-width: 0; }
+.vlsd-side { padding: 10px 12px; border-left: 1px solid var(--background-modifier-border); display: flex; flex-direction: column; gap: 7px; color: var(--text-muted); }
+.vlsd-side .vlsd-h { padding: 0 0 2px; }
+.vlsd-in { height: 26px; margin-top: 3px; padding: 0 8px; display: flex; align-items: center; border-radius: 6px; border: 1px solid var(--background-modifier-border); background: var(--background-modifier-form-field); color: var(--text-normal); }
+.vlsd-in.is-state { border-color: var(--background-modifier-border-hover); }
+.vlsd-seg { display: flex; margin-top: 3px; border: 1px solid var(--background-modifier-border); border-radius: 6px; overflow: hidden; }
+.vlsd-seg span { flex: 1; text-align: center; padding: 4px 2px; }
+.vlsd-seg span.is-on { background: var(--interactive-accent); color: var(--text-on-accent); }
+.vlsd-del { margin-top: auto; color: var(--text-error); }
+/* a phone in the screen colours: 150 px, and larger on its own */
+.vlsd-phone { position: relative; flex: none; width: 150px; aspect-ratio: 9 / 19.5; border-radius: 22px; overflow: hidden; padding: 30px 11px 11px; box-sizing: border-box; display: flex; flex-direction: column; gap: 7px; font-size: 11px; line-height: 1.3; background: var(--vls-paper); color: var(--vls-text); box-shadow: 0 0 0 4px #1b1b1d, 0 0 0 5px #3a3a3e, 0 10px 24px rgba(0, 0, 0, 0.25); }
+.vlsd-title { font-size: 18px; font-weight: 700; }
+.vlsd-d { color: var(--vls-dim); }
+.vlsd-t { background: var(--vls-tile); border-radius: 8px; padding: 7px 8px; }
+.vlsd-line { border-top: 1px solid var(--vls-line); }
+.vlsd-loud { color: var(--vls-loud); font-weight: 600; }
+.vlsd-a { margin-top: auto; padding: 8px; border-radius: 8px; text-align: center; font-weight: 600; background: var(--vls-accent); color: #fff; }
+.vlsd-pair { position: relative; display: flex; gap: 6px; }
+.vlsd-pair .vlsd-t { flex: 1 1 0; min-width: 0; }
+.vlsd-t.is-drag { position: relative; box-shadow: 0 0 0 1.5px var(--interactive-accent); }
+.vlsd-grip { position: absolute; right: -4px; bottom: -4px; width: 7px; height: 7px; border-radius: 2px; background: var(--interactive-accent); }
+.vlsd-g { position: absolute; top: -0.5px; left: -11px; right: -11px; z-index: 1; border-top: 1px solid var(--vlu-guide, var(--color-pink, #e93147)); }
+.vlsd-g.is-v { top: 0; bottom: 0; left: auto; right: 10.5px; border-top: 0; border-left: 1px solid var(--vlu-guide, var(--color-pink, #e93147)); }
+.vlsd-solo { display: flex; justify-content: center; padding: 14px 8px; border-radius: 12px; background: var(--background-secondary); border: 1px solid var(--background-modifier-border); }
+.vlsd-stage .vlsd-phone { zoom: 0.8; }
+.vls-beside { display: grid; grid-template-columns: 200px minmax(0, 1fr); align-items: start; }
+.vls-beside > .vls-prev { padding-right: 0; }
+.vls-beside .vls-groups { padding-top: 6px; }
+.vls-demo .is-lit, .vlsd-solo .is-lit { outline: 2px solid var(--color-blue); outline-offset: 1px; }
+.vls-demo .is-lit.is-area, .vlsd-solo .is-lit.is-area { outline-offset: -2px; }
+.vls-body { container-type: inline-size; }
+@container (max-width: 560px) {
+    .vls-beside { grid-template-columns: minmax(0, 1fr); }
+    .vls-beside > .vls-prev { padding-right: var(--vls-pad); }
+    .vlsd-body { grid-template-columns: minmax(0, 1fr) 170px; }
+    .vlsd-rail { display: none; }
+}
+@container (max-width: 380px) {
+    .vlsd-body { grid-template-columns: minmax(0, 1fr); }
+    .vlsd-side { display: none; }
 }
