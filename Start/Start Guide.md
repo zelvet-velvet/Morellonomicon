@@ -27,11 +27,11 @@ The other community plugins in the list (Dataview, Templater, Style Settings…)
 
 ## 3. The daily loop
 
-1. Read [[Dev Status]]: what is today's work and what is ongoing.
+1. Read the work log (`LLM/DEV_STATUS.md` in the private morellonomicon-folio vault): what is today's work and what is ongoing.
 2. Work: write or generate notes (Traditional Chinese; see [[LLM Guide]] for the content rules).
-3. With Claude Code, type `/cmd-sync` to update Dev Status, and `/cmd-journal` to write the day note. When notes may be stale or Ongoing items are done, `/cmd-notes-sync` (finished items go to [[Progress Archive]]). At the end of the day, `/cmd-rollover`. The commands are skills in `.claude/skills/` (table in `AGENTS.md`).
+3. With Claude Code, type `/cmd-sync` to update the work log. When notes may be stale or Ongoing items are done, `/cmd-notes-sync` (finished items go to the folio's archive). At the end of the day, `/cmd-rollover`. The commands are skills of the folio, linked into `.claude/skills/` (table in `AGENTS.md`; `python3 ../morellonomicon-folio/Tools/setup/folio.py link` on a new machine).
 4. Commit and push to `main`: `type(scope): summary`, for example `feat(champions): add the first ten champions`.
 
 ## 4. Where things are
 
-See [[Home]] for the folder map. Content: `新手入門/`, `英雄/`, `強化/`, `模式/`. Progress: [[Dev Status]], [[Progress Archive]] and [[Dev Log]].
+See [[Home]] for the folder map. Content: `新手入門/`, `英雄/`, `強化/`, `模式/`. Progress: the morellonomicon-folio vault.

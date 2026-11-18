@@ -19,7 +19,7 @@ REGISTRY = "https://raw.githubusercontent.com/obsidianmd/obsidian-releases/maste
 ASSETS = ("main.js", "manifest.json", "styles.css")
 OPTIONAL = {"styles.css"}
 OWN_PLUGINS = {"morellonomicon"}   # built from plugin/ (npm run build && npm run install-vault), committed in the vault
-GITHUB_ONLY = {"vellum": "zelvet-velvet/vellum"}   # not in the community list yet: straight from their GitHub releases
+GITHUB_ONLY = {}   # plugin id -> GitHub repo, for plugins not in the community list (straight from their releases)
 
 
 def get(url):
