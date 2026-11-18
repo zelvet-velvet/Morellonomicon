@@ -144,30 +144,112 @@ def change_list(lines):
     return [c for c in out if c["changes"] or c["more"]]
 
 
+CHANGE_ANY = re.compile(r"^(.*?)[：:]\s*(.+?)\s*(?:⇒|→)\s*(.+)$")   # label：old ⇒ new (Riot also writes →)
+LABEL_TEXT = re.compile(r"^([^：:]{1,24})[：:]\s*(.+)$")              # label：words (a change without numbers)
+KNOWN = set()   # augment names from the augment notes: a name with a colon in it (升級：雷霆風暴) is still a name
+
+
+ALIASES = {}   # Riot's name -> the game's name (tools/data/augment-aliases.json)
+
+
+def note_name(name):
+    """The augment note's name for a name in Riot's notes (alias, or the colon dropped), else the name unchanged."""
+    if name in ALIASES:
+        return ALIASES[name]
+    for n in (name, name.replace("：", "").replace(":", ""), name.split("：")[-1].split(":")[-1]):
+        if n in KNOWN:
+            return n
+    return name
+
+
+def is_known(text):
+    """An augment name as Riot writes it: the note's name, or with its colon (升級：雷霆風暴 = 升級雷霆風暴, 任務：專精輔助 = 專精輔助)."""
+    t = text.replace(" ", "")
+    return t in ALIASES or t in KNOWN or t.replace("：", "").replace(":", "") in KNOWN or t.split("：")[-1].split(":")[-1] in KNOWN
+
+
+def known_names():
+    import vault_paths
+    folder = fd.ROOT / vault_paths.AUGMENTS
+    return {f.stem for f in folder.glob("*.md")} if folder.exists() else set()
+
+
+def entries(lines):
+    """Riot's Mayhem blocks list entries as a short name line (`新增 ` before a new one, a rarity before it in older notes), then
+    `label：old ⇒ new` lines, `label：words` lines or description sentences. A line ending in ： names a group for the lines under it."""
+    out, cur, group = [], None, ""
+    for _, text in lines:
+        text = text.strip()
+        if not text:
+            continue
+        m = CHANGE_ANY.match(text)
+        if m and cur is not None and not is_known(text):
+            label = f"{group} {m.group(1)}".strip() if group else m.group(1).strip()
+            cur["changes"].append({"label": label, "old": m.group(2).strip(), "new": m.group(3).strip()})
+            continue
+        if text.endswith(("：", ":")) and len(text) <= 24:
+            group = text[:-1].strip()
+            continue
+        rarity = next((r for r in RARITIES if text.startswith(r)), "")
+        name, is_new = text[len(rarity):].strip(), False
+        if name.startswith("新增 ") and not LABEL_TEXT.match(name):
+            name, is_new = name[3:].strip(), True
+        if is_known(name) or (name and len(name) <= NAME_MAX and not LABEL_TEXT.match(name) and not name.endswith(("。", "？", "?"))):
+            cur = {"name": name, "rarity": rarity, "new": is_new, "text": "", "changes": []}
+            out.append(cur)
+            group = ""
+            continue
+        lt = LABEL_TEXT.match(text)
+        if cur is None and lt:   # "超萌咖啡廳：補包效果變得特別強。": a name and its text on one line
+            out.append({"name": lt.group(1).strip(), "rarity": "", "new": False, "text": lt.group(2).strip(), "changes": []})
+        elif cur is not None and lt and not text.endswith("。"):
+            cur["changes"].append({"label": f"{group} {lt.group(1)}".strip() if group else lt.group(1).strip(), "old": "", "new": lt.group(2).strip()})
+        elif cur is not None:
+            cur["text"] = (cur["text"] + " " + text).strip()
+    return out
+
+
+def as_note_entry(e):
+    return {"name": e["name"], "changes": e["changes"][:MAX_CHANGES], "more": max(0, len(e["changes"]) - MAX_CHANGES)}
+
+
 def mayhem(lines):
-    """New augments (rarity, name, Riot's effect text), removed augment names, and any champion changes of the Mayhem section."""
-    new, removed, block, rarity = [], [], "", ""
-    pending = None
+    """The Mayhem section, block by block (h3 / h4): new augments (rarity, name, Riot's text), removed augment names, changed
+    augments and champion changes (name + label old ⇒ new lines), and 主秀英雄 (the patch's featured twists)."""
+    blocks, title = [], ""
     for tag, text in lines:
         if tag in ("h3", "h4"):
-            block, rarity, pending = text, "", None
-            continue
-        if "新增" in block and "增幅" in block or "全新增幅" in block:
-            for r in RARITIES:
-                if text.startswith(r):
-                    rarity, text = r, text[len(r):].strip()
-                    break
-            if not text:
-                continue
-            if len(text) <= NAME_MAX and not text.endswith("。"):
-                pending = {"rarity": rarity, "name": text, "text": ""}
-                new.append(pending)
-            elif pending is not None:
-                pending["text"] = (pending["text"] + " " + text).strip()
-        elif "移除" in block and "增幅" in block:
-            if len(text) <= NAME_MAX:
-                removed.append(text)
-    return new, removed
+            title = text
+            blocks.append((title, []))
+        elif blocks:
+            blocks[-1][1].append((tag, text))
+    new, removed, changed, champions, featured = [], [], [], [], []
+    rar = {"稜鏡級": "稜鏡", "金級": "金", "銀級": "銀"}
+    for title, body in blocks:
+        if "主秀" in title:
+            for e in entries(body):
+                text = e["text"] or "；".join(f"{c['label']}：{c['old']} ⇒ {c['new']}" if c["old"] else f"{c['label']}：{c['new']}" for c in e["changes"])
+                featured.append({"name": e["name"], "text": text, "new": e["new"]})
+        elif "英雄" in title:
+            champions += [as_note_entry(e) for e in entries(body) if e["changes"]]
+        elif "移除" in title and "增幅" in title:
+            removed += [note_name(t.strip()) for _, t in body if t.strip() and len(t.strip()) <= NAME_MAX]
+        elif "增幅" in title or title in rar or any(r in title for r in RARITIES):
+            all_new = "新增" in title or "全新" in title
+            block_rarity = next((v for k, v in rar.items() if k in title), "")
+            last_rarity = block_rarity
+            for e in entries(body):
+                if e["rarity"]:
+                    last_rarity = rar.get(e["rarity"], "")
+                e["name"] = note_name(e["name"])
+                if e["new"] or all_new:
+                    new.append({"rarity": last_rarity, "name": e["name"], "text": e["text"]})
+                elif e["changes"] or e["text"]:
+                    if e["text"] and not e["changes"]:
+                        e["changes"] = [{"label": "說明", "old": "", "new": e["text"]}]
+                    changed.append(as_note_entry(e))
+    return {"augments_new": new, "augments_removed": removed, "augments_changed": changed, "mayhem_champions": champions,
+            "mayhem_featured": featured}
 
 
 def main():
@@ -175,6 +257,8 @@ def main():
     ap.add_argument("--patches", type=int, default=12)
     ap.add_argument("--refresh", action="store_true", help="download the pages again")
     args = ap.parse_args()
+    KNOWN.update(known_names())
+    ALIASES.update({k: v for k, v in json.loads((Path(__file__).resolve().parent / "data" / "augment-aliases.json").read_text(encoding="utf-8")).items() if not k.startswith("_")})
     listing = articles(next_data(get(LIST_URL, "list.html", True)))
     out = []
     for a in listing[: args.patches]:
@@ -188,10 +272,15 @@ def main():
             elif title == "道具":
                 entry["items"] = change_list(lines)
             elif "大混戰" in title:
-                entry["augments_new"], entry["augments_removed"] = mayhem(lines)
-                entry["mayhem_champions"] = change_list(lines)
-        print(f"{a['patch']}: {len(entry.get('champions', []))} champions, {len(entry.get('items', []))} items, "
-              f"{len(entry.get('augments_new', []))} new / {len(entry.get('augments_removed', []))} removed augments")
+                entry.update(mayhem(lines))
+        print(f"{a['patch']}: {len(entry.get('champions', []))} champions, {len(entry.get('items', []))} items; Mayhem: "
+              f"{len(entry.get('augments_new', []))} new / {len(entry.get('augments_changed', []))} changed / "
+              f"{len(entry.get('augments_removed', []))} removed augments, {len(entry.get('mayhem_champions', []))} champions, "
+              f"{len(entry.get('mayhem_featured', []))} featured")
+        if a is listing[0] and KNOWN:   # only the newest patch: older notes name augments that have left the game
+            unknown = [x["name"] for x in entry.get("augments_new", []) + entry.get("augments_changed", []) if x["name"] not in KNOWN]
+            if unknown:
+                print(f"  ! augments not in {len(KNOWN)} notes (add to tools/data/augment-aliases.json if renamed): {', '.join(unknown)}")
         out.append(entry)
     path = fd.ROOT / "_data" / "patches.json"
     path.parent.mkdir(exist_ok=True)

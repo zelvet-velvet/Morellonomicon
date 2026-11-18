@@ -1,0 +1,4 @@
+{
+ "_comment": "Riot's patch notes name a few Mayhem augments differently from the game data (the augment notes in 強化/). fetch_patch_notes.py writes the game's name: patch-note name -> note name. Add a pair when it warns about an unknown augment.",
+ "堅定不移": "亦加堅定"
+}
