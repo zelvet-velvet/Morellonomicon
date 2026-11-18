@@ -92,8 +92,11 @@ class Client:
     def _call(self, path):
         url = self.base + path
         if sys.platform != "win32" and Path(WIN_CURL).exists():
-            r = subprocess.run([WIN_CURL, "-s", "-k", "-w", "\n%{http_code}", "-u", f"riot:{self.pw}", url],
-                               capture_output=True, timeout=60)
+            try:
+                r = subprocess.run([WIN_CURL, "-s", "-k", "-w", "\n%{http_code}", "-u", f"riot:{self.pw}", url],
+                                   capture_output=True, timeout=60)
+            except subprocess.TimeoutExpired:   # a stalled call (the client busy, Riot's history server slow): wait and retry
+                raise ClientGone("no answer in 60 s") from None   # from None: the traceback would print the client's password
             if r.returncode != 0:
                 raise ClientGone(f"curl exit {r.returncode}")
             body, _, code = r.stdout.decode("utf-8", "replace").rpartition("\n")
