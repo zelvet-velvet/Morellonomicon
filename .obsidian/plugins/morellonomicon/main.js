@@ -180,8 +180,9 @@ var Store = class {
     // false until the data files (_data/*.json) have been read once after start-up
     this.ready = false;
     // How strong each augment is across champions, from the augment model (tools/augment_tiers.py): per champion its best play
-    // style's tier; augments ranked by how many champions take it at S, then at A. `tier` is the overall letter by that rank (top 15%
-    // S, next 25% A, next 35% B, the rest C); `top` the best champions' ids. Unrated augments are not in the map.
+    // style's tier, only for the champions the game offers it to (an augment Riot keeps for tanks is judged on tanks). Augments are
+    // ranked by the share of those champions taking it at S (A counts half), then by how many are offered it. `tier` is the overall
+    // letter by that rank (top 15% S, next 25% A, next 35% B, the rest C); `top` the best champions' ids. Unrated augments are left out.
     this.augRank = null;
   }
   masteryOf(id) {
@@ -438,9 +439,10 @@ var Store = class {
       const users = [...m].sort((a2, b) => (TIER_ORDER[a2[1].tier] ?? 9) - (TIER_ORDER[b[1].tier] ?? 9) || b[1].score - a2[1].score);
       const s = users.filter(([, b]) => b.tier === "S").length, a = users.filter(([, b]) => b.tier === "A").length;
       if (!s && !a) continue;
-      list2.push({ id, s, a, rank: 0, tier: "C", top: users.slice(0, 3).map(([cid]) => cid) });
+      list2.push({ id, s, a, offered: users.length, rank: 0, tier: "C", top: users.slice(0, 3).map(([cid]) => cid) });
     }
-    list2.sort((x, y) => y.s - x.s || y.a - x.a);
+    const share = (x) => (x.s + x.a / 2) / Math.max(1, x.offered);
+    list2.sort((x, y) => share(y) - share(x) || y.offered - x.offered);
     list2.forEach((x, i) => {
       const at = i / Math.max(1, list2.length);
       x.rank = i + 1;
