@@ -294,10 +294,7 @@ export function augmentPage(ctx: PageCtx): PageOut {
 
     // who it suits: the augment model's best users (Dev Tools/Augment Model.md), the champions it is S for, then A
     if (modelUsers(el, store, a, ctx)) {
-        if (history.length) {
-            h(el, "div", "mn-gh", "版本紀錄");
-            h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "新增於" : "移除於"} ${x.patch}`).join(" · "));
-        }
+        augHistory(el, store, history);
         centreBelow(el, 1);   // under the banner, centred when short (an unrated augment)
         return { title: "", el };
     }
@@ -332,12 +329,19 @@ export function augmentPage(ctx: PageCtx): PageOut {
         }
         h(el, "div", "mn-gf", label);
     }
-    if (history.length) {
-        h(el, "div", "mn-gh", "版本紀錄");
-        h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "新增於" : "移除於"} ${x.patch}`).join(" · "));
-    }
+    augHistory(el, store, history);
     centreBelow(el, 1);
     return { title: "", el };   // the name is already the big heading
+}
+
+// 版本紀錄: when the augment came in or went, then Riot's own lines for each patch that changed it
+function augHistory(el: HTMLElement, store: Store, history: ReturnType<Store["augmentHistory"]>): void {
+    if (!history.length) return;
+    h(el, "div", "mn-gh", "版本紀錄");
+    const marks = history.filter((x) => x.what !== "changed");
+    if (marks.length) h(el, "div", "mn-ag-hist", marks.map((x) => `${x.what === "added" ? "新增於" : "移除於"} ${x.patch}`).join(" · "));
+    const changed = history.flatMap((x) => (x.what === "changed" && x.entry ? [{ patch: x.patch, url: store.riotNotes.find((n) => n.patch === x.patch)?.url ?? "", entry: x.entry }] : []));
+    if (changed.length) officialBlock(el, changed);
 }
 
 // Opened from a champion's 強化: how the augment fits that champion (its face, the tier in its colour, the reason, 前期強 / 後期強),

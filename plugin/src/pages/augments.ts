@@ -4,15 +4,17 @@ import type { PageCtx, PageOut } from "./index";
 export const RARITIES = ["銀", "金", "稜鏡"];
 export const RARITY_COLOR: Record<string, string> = { 銀: "var(--text-muted)", 金: "var(--color-yellow)", 稜鏡: "var(--color-purple)" };
 const RARITY_RANK: Record<string, number> = { 稜鏡: 0, 金: 1, 銀: 2 };   // strongest first
-const SORTS: [string, string][] = [["rarity", "稀有度"], ["name", "名稱"], ["new", "最新"]];
+const SORTS: [string, string][] = [["tier", "強度"], ["rarity", "稀有度"], ["name", "名稱"], ["new", "最新"]];
 const patchNo = (p: string): number => { const m = /(\d+)\.(\d+)/.exec(p); return m ? Number(m[1]) * 100 + Number(m[2]) : 0; };
 
 // first direction when a sort is picked: strongest first (↓), A first (↑), newest first (↓)
-const SORT_DIR: Record<string, 1 | -1> = { rarity: -1, name: 1, new: -1 };
-let sortBy = "rarity", sortDir: 1 | -1 = -1;   // kept while the app is open
+const SORT_DIR: Record<string, 1 | -1> = { tier: -1, rarity: -1, name: 1, new: -1 };
+let sortBy = "tier", sortDir: 1 | -1 = -1;   // kept while the app is open; 強度 first
 
-// ARAM Mayhem augments: search, a rarity filter, a sort (rarity, name, newest), one row each (the effect line shows when there is one).
-// An augment added in the latest patch carries a 新 tag.
+// ARAM Mayhem augments: search, a rarity filter, a sort (強度 by default, rarity, name, newest), one row each (the effect line shows when
+// there is one). 強度 is the augment model's rank across champions (store.augmentStrength): the row shows the overall tier and the faces
+// of the best champions; augments the model cannot rate go last. An augment added in the latest patch carries a 新 tag; one Riot changed
+// in it, 改.
 export function augmentsPage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const el = page("Augments");
@@ -20,7 +22,10 @@ export function augmentsPage(ctx: PageCtx): PageOut {
     if (!all.length) { empty(el, { icon: "database", title: "No augment notes yet", text: "Run python3 tools/fetch_augments.py" }); return { title: "Augments", el }; }
     let query = "", rarity = "";
     const latest = store.riotNotes[0]?.patch ?? "";
-    const addedIn = new Map(all.map((a) => [a.id, store.augmentHistory(a.name).find((x) => x.what === "added")?.patch ?? ""]));
+    const history = new Map(all.map((a) => [a.id, store.augmentHistory(a.name)]));
+    const addedIn = new Map(all.map((a) => [a.id, history.get(a.id)?.find((x) => x.what === "added")?.patch ?? ""]));
+    const changedNow = new Set(all.filter((a) => !!latest && history.get(a.id)?.some((x) => x.what === "changed" && x.patch === latest)).map((a) => a.id));
+    const strength = store.augmentStrength();
     const box = h(el, "div", "mn-search");
     icon(box, "search", "mn-search-ic");
     const search = h(box, "input");
@@ -40,13 +45,19 @@ export function augmentsPage(ctx: PageCtx): PageOut {
         const byName = (a: typeof hits[number], b: typeof hits[number]) => a.name.localeCompare(b.name, "zh-Hant");
         // each compares in its "↑" order; ↓ turns it round (rarity ↓ = 稜鏡 first, new ↓ = newest first), ties by name
         const d = sortDir;
-        if (sortBy === "rarity") hits.sort((a, b) => d * ((RARITY_RANK[b.rarity] ?? 9) - (RARITY_RANK[a.rarity] ?? 9)) || byName(a, b));
+        const rankOf = (a: typeof hits[number]) => strength.get(a.id)?.rank ?? 9999;
+        if (sortBy === "tier") hits.sort((a, b) => d * (rankOf(b) - rankOf(a)) || byName(a, b));
+        else if (sortBy === "rarity") hits.sort((a, b) => d * ((RARITY_RANK[b.rarity] ?? 9) - (RARITY_RANK[a.rarity] ?? 9)) || byName(a, b));
         else if (sortBy === "new") hits.sort((a, b) => d * (patchNo(addedIn.get(a.id) ?? "") - patchNo(addedIn.get(b.id) ?? "")) || byName(a, b));
         else hits.sort((a, b) => d * byName(a, b));
         const g = group(list);
         for (const a of hits) {
             const isNew = !!latest && addedIn.get(a.id) === latest;
-            row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || undefined, value: isNew ? `${a.rarity} · 新` : a.rarity, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
+            const tag = isNew ? " · 新" : changedNow.has(a.id) ? " · 改" : "";
+            const st = sortBy === "tier" ? strength.get(a.id) : undefined;
+            const faces = st?.top.map((cid) => store.champion(cid)?.icon).filter((x): x is string => !!x);
+            const value = sortBy !== "tier" ? a.rarity + tag : st ? st.tier + tag : "—" + tag;
+            row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || undefined, faces, value, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
         }
         if (!hits.length) empty(list, { icon: "search-x", title: "No match" });
         blockLoad(list);

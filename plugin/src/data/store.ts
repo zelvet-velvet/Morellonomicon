@@ -37,7 +37,11 @@ export interface PatchNote {
     patch: string; title: string; url: string; summary: string; image: string; date: string; sections: string[];
     champions?: NoteEntry[]; items?: NoteEntry[]; mayhem_champions?: NoteEntry[];
     augments_new?: { rarity: string; name: string; text: string }[]; augments_removed?: string[];
+    augments_changed?: NoteEntry[];   // Mayhem augments Riot changed in this patch (a text-only change has old "" and new = the text)
+    mayhem_featured?: { name: string; text: string; new: boolean }[];   // 主秀英雄: the patch's featured Mayhem twists
 }
+export interface AugStrength { id: number; s: number; a: number; rank: number; tier: string; top: string[] }
+const TIER_ORDER: Record<string, number> = { S: 0, A: 1, B: 2, C: 3 };
 // `onhit: [R]` (hand-written in a champion note): those abilities apply on-hit effects; they get the 攻擊特效 tag like any read tag
 function withOnHit(skills: Skill[], keys: string[]): Skill[] {
     return keys.length ? skills.map((s) => (keys.includes(s.key) && !s.tags.includes("攻擊特效") ? { ...s, tags: [...s.tags, "攻擊特效"] } : s)) : skills;
@@ -166,6 +170,7 @@ export class Store {
             const d = (await this.app.vault.adapter.exists(path)) ? JSON.parse(await this.app.vault.adapter.read(path)) as { champions?: Record<string, Record<string, AugTierStyle>>; unrated?: Record<string, string> } : {};
             this.augTiers = d.champions ?? {};
             this.augUnrated = d.unrated ?? {};
+            this.augRank = null;
         } catch { this.augTiers = {}; this.augUnrated = {}; }
         try {
             const path = normalizePath("_data/item-builds.json");
@@ -281,14 +286,51 @@ export class Store {
         return out;
     }
 
-    // In which patches an augment was added or removed
-    augmentHistory(name: string): { patch: string; what: "added" | "removed" }[] {
-        const out: { patch: string; what: "added" | "removed" }[] = [];
+    // In which patches an augment was added, changed or removed (newest first)
+    augmentHistory(name: string): { patch: string; what: "added" | "changed" | "removed"; entry?: NoteEntry }[] {
+        const out: { patch: string; what: "added" | "changed" | "removed"; entry?: NoteEntry }[] = [];
         for (const n of this.riotNotes) {
             if (n.augments_new?.some((a) => a.name === name)) out.push({ patch: n.patch, what: "added" });
+            const entry = n.augments_changed?.find((e) => e.name === name);
+            if (entry) out.push({ patch: n.patch, what: "changed", entry });
             if (n.augments_removed?.includes(name)) out.push({ patch: n.patch, what: "removed" });
         }
         return out;
+    }
+
+    // How strong each augment is across champions, from the augment model (tools/augment_tiers.py): per champion its best play
+    // style's tier; augments ranked by how many champions take it at S, then at A. `tier` is the overall letter by that rank (top 15%
+    // S, next 25% A, next 35% B, the rest C); `top` the best champions' ids. Unrated augments are not in the map.
+    private augRank: Map<number, AugStrength> | null = null;
+    augmentStrength(): Map<number, AugStrength> {
+        if (this.augRank) return this.augRank;
+        const best = new Map<number, Map<string, { tier: string; score: number }>>();
+        for (const [cid, styles] of Object.entries(this.augTiers)) {
+            for (const st of Object.values(styles)) {
+                for (const t of st.tiers) {
+                    const m = best.get(t.id) ?? new Map<string, { tier: string; score: number }>();
+                    const cur = m.get(cid);
+                    if (!cur || t.score > cur.score) m.set(cid, { tier: t.tier, score: t.score });
+                    best.set(t.id, m);
+                }
+            }
+        }
+        const list: AugStrength[] = [];
+        for (const [id, m] of best) {
+            if (this.augUnrated[String(id)]) continue;
+            const users = [...m].sort((a, b) => (TIER_ORDER[a[1].tier] ?? 9) - (TIER_ORDER[b[1].tier] ?? 9) || b[1].score - a[1].score);
+            const s = users.filter(([, b]) => b.tier === "S").length, a = users.filter(([, b]) => b.tier === "A").length;
+            if (!s && !a) continue;
+            list.push({ id, s, a, rank: 0, tier: "C", top: users.slice(0, 3).map(([cid]) => cid) });
+        }
+        list.sort((x, y) => y.s - x.s || y.a - x.a);
+        list.forEach((x, i) => {
+            const at = i / Math.max(1, list.length);
+            x.rank = i + 1;
+            x.tier = at < 0.15 ? "S" : at < 0.4 ? "A" : at < 0.75 ? "B" : "C";
+        });
+        this.augRank = new Map(list.map((x) => [x.id, x]));
+        return this.augRank;
     }
 
     augments(): Augment[] {

@@ -109,6 +109,7 @@ var TAB_LABEL = { home: "Home", champions: "Champions", picks: "Picks", augments
 var TAB_ICON = { home: "house", champions: "users", picks: "clipboard-edit", augments: "sparkles", patch: "newspaper", handbook: "book-open" };
 
 // src/data/store.ts
+var TIER_ORDER = { S: 0, A: 1, B: 2, C: 3 };
 function withOnHit(skills, keys) {
   return keys.length ? skills.map((s) => keys.includes(s.key) && !s.tags.includes("\u653B\u64CA\u7279\u6548") ? { ...s, tags: [...s.tags, "\u653B\u64CA\u7279\u6548"] } : s) : skills;
 }
@@ -178,6 +179,10 @@ var Store = class {
     // item id -> the shop's class tabs it is under (_data/item-roles.json, the League wiki)
     // false until the data files (_data/*.json) have been read once after start-up
     this.ready = false;
+    // How strong each augment is across champions, from the augment model (tools/augment_tiers.py): per champion its best play
+    // style's tier; augments ranked by how many champions take it at S, then at A. `tier` is the overall letter by that rank (top 15%
+    // S, next 25% A, next 35% B, the rest C); `top` the best champions' ids. Unrated augments are not in the map.
+    this.augRank = null;
   }
   masteryOf(id) {
     return this.mastery?.champions[id];
@@ -225,6 +230,7 @@ var Store = class {
       const d = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)) : {};
       this.augTiers = d.champions ?? {};
       this.augUnrated = d.unrated ?? {};
+      this.augRank = null;
     } catch {
       this.augTiers = {};
       this.augUnrated = {};
@@ -402,14 +408,46 @@ var Store = class {
     }
     return out;
   }
-  // In which patches an augment was added or removed
+  // In which patches an augment was added, changed or removed (newest first)
   augmentHistory(name) {
     const out = [];
     for (const n of this.riotNotes) {
       if (n.augments_new?.some((a) => a.name === name)) out.push({ patch: n.patch, what: "added" });
+      const entry = n.augments_changed?.find((e) => e.name === name);
+      if (entry) out.push({ patch: n.patch, what: "changed", entry });
       if (n.augments_removed?.includes(name)) out.push({ patch: n.patch, what: "removed" });
     }
     return out;
+  }
+  augmentStrength() {
+    if (this.augRank) return this.augRank;
+    const best = /* @__PURE__ */ new Map();
+    for (const [cid, styles] of Object.entries(this.augTiers)) {
+      for (const st of Object.values(styles)) {
+        for (const t of st.tiers) {
+          const m = best.get(t.id) ?? /* @__PURE__ */ new Map();
+          const cur = m.get(cid);
+          if (!cur || t.score > cur.score) m.set(cid, { tier: t.tier, score: t.score });
+          best.set(t.id, m);
+        }
+      }
+    }
+    const list2 = [];
+    for (const [id, m] of best) {
+      if (this.augUnrated[String(id)]) continue;
+      const users = [...m].sort((a2, b) => (TIER_ORDER[a2[1].tier] ?? 9) - (TIER_ORDER[b[1].tier] ?? 9) || b[1].score - a2[1].score);
+      const s = users.filter(([, b]) => b.tier === "S").length, a = users.filter(([, b]) => b.tier === "A").length;
+      if (!s && !a) continue;
+      list2.push({ id, s, a, rank: 0, tier: "C", top: users.slice(0, 3).map(([cid]) => cid) });
+    }
+    list2.sort((x, y) => y.s - x.s || y.a - x.a);
+    list2.forEach((x, i) => {
+      const at = i / Math.max(1, list2.length);
+      x.rank = i + 1;
+      x.tier = at < 0.15 ? "S" : at < 0.4 ? "A" : at < 0.75 ? "B" : "C";
+    });
+    this.augRank = new Map(list2.map((x) => [x.id, x]));
+    return this.augRank;
   }
   augments() {
     if (!this.augs) {
@@ -1651,13 +1689,13 @@ function slideSeg(seg, key = "", opt = {}) {
 var RARITIES = ["\u9280", "\u91D1", "\u7A1C\u93E1"];
 var RARITY_COLOR = { \u9280: "var(--text-muted)", \u91D1: "var(--color-yellow)", \u7A1C\u93E1: "var(--color-purple)" };
 var RARITY_RANK = { \u7A1C\u93E1: 0, \u91D1: 1, \u9280: 2 };
-var SORTS = [["rarity", "\u7A00\u6709\u5EA6"], ["name", "\u540D\u7A31"], ["new", "\u6700\u65B0"]];
+var SORTS = [["tier", "\u5F37\u5EA6"], ["rarity", "\u7A00\u6709\u5EA6"], ["name", "\u540D\u7A31"], ["new", "\u6700\u65B0"]];
 var patchNo2 = (p) => {
   const m = /(\d+)\.(\d+)/.exec(p);
   return m ? Number(m[1]) * 100 + Number(m[2]) : 0;
 };
-var SORT_DIR = { rarity: -1, name: 1, new: -1 };
-var sortBy = "rarity";
+var SORT_DIR = { tier: -1, rarity: -1, name: 1, new: -1 };
+var sortBy = "tier";
 var sortDir = -1;
 function augmentsPage(ctx) {
   const store = ctx.plugin.store;
@@ -1669,7 +1707,10 @@ function augmentsPage(ctx) {
   }
   let query = "", rarity = "";
   const latest = store.riotNotes[0]?.patch ?? "";
-  const addedIn = new Map(all.map((a) => [a.id, store.augmentHistory(a.name).find((x) => x.what === "added")?.patch ?? ""]));
+  const history = new Map(all.map((a) => [a.id, store.augmentHistory(a.name)]));
+  const addedIn = new Map(all.map((a) => [a.id, history.get(a.id)?.find((x) => x.what === "added")?.patch ?? ""]));
+  const changedNow = new Set(all.filter((a) => !!latest && history.get(a.id)?.some((x) => x.what === "changed" && x.patch === latest)).map((a) => a.id));
+  const strength = store.augmentStrength();
   const box = h(el, "div", "mn-search");
   icon(box, "search", "mn-search-ic");
   const search = h(box, "input");
@@ -1687,13 +1728,19 @@ function augmentsPage(ctx) {
     const hits = all.filter((a) => (!rarity || a.rarity === rarity) && (!q || a.name.toLowerCase().includes(q)));
     const byName = (a, b) => a.name.localeCompare(b.name, "zh-Hant");
     const d = sortDir;
-    if (sortBy === "rarity") hits.sort((a, b) => d * ((RARITY_RANK[b.rarity] ?? 9) - (RARITY_RANK[a.rarity] ?? 9)) || byName(a, b));
+    const rankOf = (a) => strength.get(a.id)?.rank ?? 9999;
+    if (sortBy === "tier") hits.sort((a, b) => d * (rankOf(b) - rankOf(a)) || byName(a, b));
+    else if (sortBy === "rarity") hits.sort((a, b) => d * ((RARITY_RANK[b.rarity] ?? 9) - (RARITY_RANK[a.rarity] ?? 9)) || byName(a, b));
     else if (sortBy === "new") hits.sort((a, b) => d * (patchNo2(addedIn.get(a.id) ?? "") - patchNo2(addedIn.get(b.id) ?? "")) || byName(a, b));
     else hits.sort((a, b) => d * byName(a, b));
     const g = group(list2);
     for (const a of hits) {
       const isNew = !!latest && addedIn.get(a.id) === latest;
-      row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || void 0, value: isNew ? `${a.rarity} \xB7 \u65B0` : a.rarity, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
+      const tag = isNew ? " \xB7 \u65B0" : changedNow.has(a.id) ? " \xB7 \u6539" : "";
+      const st = sortBy === "tier" ? strength.get(a.id) : void 0;
+      const faces = st?.top.map((cid) => store.champion(cid)?.icon).filter((x) => !!x);
+      const value = sortBy !== "tier" ? a.rarity + tag : st ? st.tier + tag : "\u2014" + tag;
+      row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || void 0, faces, value, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
     }
     if (!hits.length) empty(list2, { icon: "search-x", title: "No match" });
     blockLoad(list2);
@@ -2327,8 +2374,10 @@ function officialBlock(parent, list2) {
       const line = h(sec, "div", "mn-ent-ch");
       h(line, "div", "mn-ent-l", c.label);
       const vals = h(line, "div", "mn-ent-v");
-      h(vals, "span", "mn-chg-old", c.old);
-      h(vals, "span", "mn-chg-arrow", "\u2192");
+      if (c.old) {
+        h(vals, "span", "mn-chg-old", c.old);
+        h(vals, "span", "mn-chg-arrow", "\u2192");
+      }
       h(vals, "span", "mn-chg-new", c.new);
     }
     if (entry.more) h(sec, "div", "mn-gf", `\u9084\u6709 ${entry.more} \u9805,\u898B\u5168\u6587`);
@@ -4916,10 +4965,7 @@ function augmentPage(ctx) {
     row(links, { icon: "external-link", title: "OP.GG \u5F37\u5316\u5217\u8868", chevron: true, onTap: () => window.open("https://op.gg/lol/modes/aram-mayhem") });
   }
   if (modelUsers(el, store, a, ctx)) {
-    if (history.length) {
-      h(el, "div", "mn-gh", "\u7248\u672C\u7D00\u9304");
-      h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "\u65B0\u589E\u65BC" : "\u79FB\u9664\u65BC"} ${x.patch}`).join(" \xB7 "));
-    }
+    augHistory(el, store, history);
     centreBelow(el, 1);
     return { title: "", el };
   }
@@ -4961,12 +5007,17 @@ function augmentPage(ctx) {
     }
     h(el, "div", "mn-gf", label);
   }
-  if (history.length) {
-    h(el, "div", "mn-gh", "\u7248\u672C\u7D00\u9304");
-    h(el, "div", "mn-ag-hist", history.map((x) => `${x.what === "added" ? "\u65B0\u589E\u65BC" : "\u79FB\u9664\u65BC"} ${x.patch}`).join(" \xB7 "));
-  }
+  augHistory(el, store, history);
   centreBelow(el, 1);
   return { title: "", el };
+}
+function augHistory(el, store, history) {
+  if (!history.length) return;
+  h(el, "div", "mn-gh", "\u7248\u672C\u7D00\u9304");
+  const marks = history.filter((x) => x.what !== "changed");
+  if (marks.length) h(el, "div", "mn-ag-hist", marks.map((x) => `${x.what === "added" ? "\u65B0\u589E\u65BC" : "\u79FB\u9664\u65BC"} ${x.patch}`).join(" \xB7 "));
+  const changed = history.flatMap((x) => x.what === "changed" && x.entry ? [{ patch: x.patch, url: store.riotNotes.find((n) => n.patch === x.patch)?.url ?? "", entry: x.entry }] : []);
+  if (changed.length) officialBlock(el, changed);
 }
 function forChampion(el, store, a, cid) {
   const c = cid ? store.champion(cid) : void 0;
@@ -5603,7 +5654,7 @@ function overviewAll(body, c, ctx) {
   changesBlock(look, c, ctx);
   body.addClass("is-centred");
 }
-var TIER_ORDER = ["S", "A", "B", "C"];
+var TIER_ORDER2 = ["S", "A", "B", "C"];
 var RARITY_ORDER = ["\u7A1C\u93E1", "\u91D1", "\u9280", "\u4E94\u6BBA"];
 var AUG_COLS = 4;
 var MODEL_NOTE = "\u4F9D\u82F1\u96C4\u7684\u6280\u80FD\u6A5F\u5236\u63A8\u7406\u5408\u4E0D\u5408\uFF0C\u518D\u5C0D\u7167 resg.top \u7684\u5927\u6DF7\u6230\u5C0D\u5C40\u6821\u6B63\uFF0C\u548C\u540C\u7A00\u6709\u5EA6\u7684\u5176\u4ED6\u5F37\u5316\u6BD4\u8F03\u3002\u9EDE\u5F37\u5316\u770B\u539F\u56E0\u3002";
@@ -5618,7 +5669,7 @@ function tierPicks(store, c, style) {
     if (a) out.push({ a, why: "\u7F6E\u9802", score: 100, tier: "S", group: "", value: Infinity });
   }
   const rank = rarityRank;
-  const rows = [...style.tiers].sort((x, y) => TIER_ORDER.indexOf(x.tier) - TIER_ORDER.indexOf(y.tier) || rank(x.group) - rank(y.group) || y.score - x.score);
+  const rows = [...style.tiers].sort((x, y) => TIER_ORDER2.indexOf(x.tier) - TIER_ORDER2.indexOf(y.tier) || rank(x.group) - rank(y.group) || y.score - x.score);
   for (const t of rows) {
     const a = store.augment(t.id);
     if (!a || c.avoid.includes(a.name) || c.pinned.includes(a.name)) continue;
@@ -5669,7 +5720,7 @@ function augmentsAll(body, c, ctx) {
   const draw = (style) => {
     box.empty();
     const picks = tierPicks(store, c, style);
-    for (const tier of TIER_ORDER) {
+    for (const tier of TIER_ORDER2) {
       const these = picks.filter((p) => p.tier === tier);
       if (!these.length) continue;
       tierHead(box, tier);
@@ -6508,6 +6559,7 @@ function itemsPage(ctx) {
 }
 
 // src/pages/patch.ts
+var PATCH_ICON = { earlier: "newspaper", ours: "file-text", featured: "party-popper" };
 var LEGEND = "\u25B2 \u589E\u5F37 \xB7 \u25BC \u524A\u5F31 \xB7 \u25C6 \u6709\u589E\u6709\u6E1B \xB7 \u25CF \u8ABF\u6574\u3002\u65B9\u5411\u662F\u4F9D\u6578\u5B57\u8B8A\u5316\u63A8\u6E2C\u7684,\u4E0D\u662F\u5B98\u65B9\u6A19\u793A\u3002";
 function patchPage(ctx) {
   const store = ctx.plugin.store;
@@ -6543,12 +6595,12 @@ function patchPage(ctx) {
   if (latest && ctx.plugin.settings.mode === "mayhem") mayhemSection(el, ctx, latest);
   if (older.length) {
     const g2 = group(el, "Earlier patches");
-    for (const n of older) row(g2, { icon: "newspaper", title: n.title, sub: n.summary || void 0, value: n.date, chevron: true, clamp: true, onTap: () => window.open(n.url) });
+    for (const n of older) row(g2, { icon: PATCH_ICON.earlier, title: n.title, sub: n.summary || void 0, value: n.date, chevron: true, clamp: true, onTap: () => window.open(n.url) });
   }
   const mine = store.patchNotes();
   if (mine.length) {
     const g2 = group(el, "Our patch notes");
-    for (const n of mine) row(g2, { icon: "file-text", title: n.title, sub: n.summary || void 0, value: n.patch, chevron: true, onTap: () => ctx.openNote(n.file.path) });
+    for (const n of mine) row(g2, { icon: PATCH_ICON.ours, title: n.title, sub: n.summary || void 0, value: n.patch, chevron: true, onTap: () => ctx.openNote(n.file.path) });
   }
   const stale = store.staleEntries();
   const g = group(el, "Check these tricks");
@@ -6613,22 +6665,55 @@ function latestCard(el, n) {
   blockLoad(card);
 }
 function mayhemSection(el, ctx, n) {
-  const added = n.augments_new ?? [], removed = n.augments_removed ?? [];
-  if (!added.length && !removed.length) return;
-  const byName = new Map(ctx.plugin.store.augments().map((a) => [a.name, a]));
+  const store = ctx.plugin.store;
+  const added = n.augments_new ?? [], changed = n.augments_changed ?? [], removed = n.augments_removed ?? [];
+  const champs = n.mayhem_champions ?? [], featured = n.mayhem_featured ?? [];
+  if (!added.length && !changed.length && !removed.length && !champs.length && !featured.length) return;
+  const byName = new Map(store.augments().map((a) => [a.name, a]));
+  const unknown = (names) => {
+    if (!names.length) return;
+    const chips = h(el, "div", "mn-chips");
+    for (const x of names) chip(chips, x);
+  };
   if (added.length) {
     h(el, "div", "mn-gh", `Mayhem \xB7 ${added.length} new augments`);
     const grid = h(el, "div", "mn-grid");
     for (const a of added) {
       const mine = byName.get(a.name);
-      if (mine) tile(grid, mine.icon, a.name, () => ctx.openAugment(mine.id), { rarity: a.rarity });
+      if (mine) tile(grid, mine.icon, a.name, () => ctx.openAugment(mine.id), { rarity: mine.rarity });
     }
     blockLoad(grid);
+    unknown(added.filter((a) => !byName.has(a.name)).map((a) => a.name));
+  }
+  if (changed.length) {
+    h(el, "div", "mn-gh", `Mayhem \xB7 ${changed.length} augments changed`);
+    const grid = h(el, "div", "mn-grid");
+    for (const { e, dir } of byDir(changed)) {
+      const mine = byName.get(e.name);
+      if (mine) tile(grid, mine.icon, e.name, () => ctx.openAugment(mine.id), { rarity: mine.rarity, dir });
+    }
+    blockLoad(grid);
+    unknown(changed.filter((e) => !byName.has(e.name)).map((e) => e.name));
+    h(el, "div", "mn-gf", LEGEND);
+  }
+  if (champs.length) {
+    h(el, "div", "mn-gh", `Mayhem balance \xB7 ${champs.length} champions`);
+    const grid = h(el, "div", "mn-grid");
+    for (const { e, dir } of byDir(champs)) {
+      const c = store.champions().find((x) => x.name === e.name);
+      if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "overview"), { dir, go: { key: "champion", params: { id: c.id } } });
+    }
+    blockLoad(grid);
+    h(el, "div", "mn-gf", "\u5927\u6DF7\u6230\u5C08\u5C6C\u7684\u82F1\u96C4\u5E73\u8861\uFF08\u627F\u53D7\u50B7\u5BB3\u3001\u9020\u6210\u50B7\u5BB3\u7B49\uFF09\u3002" + LEGEND);
   }
   if (removed.length) {
     h(el, "div", "mn-gh", `Removed augments \xB7 ${removed.length}`);
     const chips = h(el, "div", "mn-chips");
     for (const r of removed) chip(chips, r, { color: RARITY_COLOR["\u9280"] });
+  }
+  if (featured.length) {
+    const g = group(el, "\u4E3B\u79C0\u82F1\u96C4");
+    for (const f of featured) row(g, { icon: PATCH_ICON.featured, title: f.new ? `${f.name} \xB7 \u65B0` : f.name, sub: f.text || void 0, clamp: true });
   }
 }
 

@@ -4,6 +4,9 @@ import { RARITY_COLOR } from "./augments";
 import { entryDir, marker, type OfficialDir } from "./changes";
 import type { PageCtx, PageOut } from "./index";
 
+// The Patch page's row icons (Dev Tools/Icons.md, "Patch page")
+export const PATCH_ICON = { earlier: "newspaper", ours: "file-text", featured: "party-popper" };
+
 const LEGEND = "▲ 增強 · ▼ 削弱 · ◆ 有增有減 · ● 調整。方向是依數字變化推測的,不是官方標示。";
 
 // The Patch tab: Riot's latest patch notes in short (blurb, headline image, a link to the full notes), then icon grids of what changed
@@ -47,12 +50,12 @@ export function patchPage(ctx: PageCtx): PageOut {
 
     if (older.length) {
         const g = group(el, "Earlier patches");
-        for (const n of older) row(g, { icon: "newspaper", title: n.title, sub: n.summary || undefined, value: n.date, chevron: true, clamp: true, onTap: () => window.open(n.url) });
+        for (const n of older) row(g, { icon: PATCH_ICON.earlier, title: n.title, sub: n.summary || undefined, value: n.date, chevron: true, clamp: true, onTap: () => window.open(n.url) });
     }
     const mine = store.patchNotes();
     if (mine.length) {
         const g = group(el, "Our patch notes");
-        for (const n of mine) row(g, { icon: "file-text", title: n.title, sub: n.summary || undefined, value: n.patch, chevron: true, onTap: () => ctx.openNote(n.file.path) });
+        for (const n of mine) row(g, { icon: PATCH_ICON.ours, title: n.title, sub: n.summary || undefined, value: n.patch, chevron: true, onTap: () => ctx.openNote(n.file.path) });
     }
 
     const stale = store.staleEntries();
@@ -98,22 +101,57 @@ function latestCard(el: HTMLElement, n: PatchNote): void {
     blockLoad(card);
 }
 
+// The Mayhem part of the patch: new augments, augments Riot changed (▲▼ like champions), the Mayhem balance changes per champion,
+// removed augments, and 主秀英雄 (the patch's featured twists) as short rows. An augment name the app does not know is a chip, never dropped.
 function mayhemSection(el: HTMLElement, ctx: PageCtx, n: PatchNote): void {
-    const added = n.augments_new ?? [], removed = n.augments_removed ?? [];
-    if (!added.length && !removed.length) return;
-    const byName = new Map(ctx.plugin.store.augments().map((a) => [a.name, a]));
+    const store = ctx.plugin.store;
+    const added = n.augments_new ?? [], changed = n.augments_changed ?? [], removed = n.augments_removed ?? [];
+    const champs = n.mayhem_champions ?? [], featured = n.mayhem_featured ?? [];
+    if (!added.length && !changed.length && !removed.length && !champs.length && !featured.length) return;
+    const byName = new Map(store.augments().map((a) => [a.name, a]));
+    const unknown = (names: string[]) => {
+        if (!names.length) return;
+        const chips = h(el, "div", "mn-chips");
+        for (const x of names) chip(chips, x);
+    };
     if (added.length) {
         h(el, "div", "mn-gh", `Mayhem · ${added.length} new augments`);
         const grid = h(el, "div", "mn-grid");
         for (const a of added) {
             const mine = byName.get(a.name);
-            if (mine) tile(grid, mine.icon, a.name, () => ctx.openAugment(mine.id), { rarity: a.rarity });
+            if (mine) tile(grid, mine.icon, a.name, () => ctx.openAugment(mine.id), { rarity: mine.rarity });
         }
         blockLoad(grid);
+        unknown(added.filter((a) => !byName.has(a.name)).map((a) => a.name));
+    }
+    if (changed.length) {
+        h(el, "div", "mn-gh", `Mayhem · ${changed.length} augments changed`);
+        const grid = h(el, "div", "mn-grid");
+        for (const { e, dir } of byDir(changed)) {
+            const mine = byName.get(e.name);
+            if (mine) tile(grid, mine.icon, e.name, () => ctx.openAugment(mine.id), { rarity: mine.rarity, dir });
+        }
+        blockLoad(grid);
+        unknown(changed.filter((e) => !byName.has(e.name)).map((e) => e.name));
+        h(el, "div", "mn-gf", LEGEND);
+    }
+    if (champs.length) {
+        h(el, "div", "mn-gh", `Mayhem balance · ${champs.length} champions`);
+        const grid = h(el, "div", "mn-grid");
+        for (const { e, dir } of byDir(champs)) {
+            const c = store.champions().find((x) => x.name === e.name);
+            if (c) tile(grid, c.icon, c.name, () => ctx.openChampion(c.id, "overview"), { dir, go: { key: "champion", params: { id: c.id } } });
+        }
+        blockLoad(grid);
+        h(el, "div", "mn-gf", "大混戰專屬的英雄平衡（承受傷害、造成傷害等）。" + LEGEND);
     }
     if (removed.length) {
         h(el, "div", "mn-gh", `Removed augments · ${removed.length}`);
         const chips = h(el, "div", "mn-chips");
         for (const r of removed) chip(chips, r, { color: RARITY_COLOR["銀"] });
+    }
+    if (featured.length) {
+        const g = group(el, "主秀英雄");
+        for (const f of featured) row(g, { icon: PATCH_ICON.featured, title: f.new ? `${f.name} · 新` : f.name, sub: f.text || undefined, clamp: true });
     }
 }

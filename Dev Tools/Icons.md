@@ -140,6 +140,16 @@ Patch | newspaper
 Handbook | book-open
 ```
 
+## 📰 Patch page
+> [!info]+ Where it lives
+> Source: `PATCH_ICON` in `plugin/src/pages/patch.ts`. The row icons of the Patch page.
+
+```mn-icons
+Earlier patches | newspaper
+Our patch notes | file-text
+主秀英雄 (Mayhem featured twists) | party-popper
+```
+
 ## 🦸 Champion page pages
 > [!info]+ Where it lives
 > Source: `CHAMPION_TABS` in `plugin/src/pages/champions.ts`. The pages of the champion page's swipe block (and the Handbook card that pictures them).

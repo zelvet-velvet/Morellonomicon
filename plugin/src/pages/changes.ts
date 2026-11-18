@@ -53,7 +53,7 @@ export function badgeColor(items: Change[]): string {
     return t.nerf ? DIR_COLOR.nerf : t.buff ? DIR_COLOR.buff : DIR_COLOR.change;
 }
 
-// Riot's own lines for one champion or item, one section per patch ("label old → new"); the full text is on Riot's page.
+// Riot's own lines for one champion, item or augment, one section per patch ("label old → new"); the full text is on Riot's page.
 export function officialBlock(parent: HTMLElement, list: { patch: string; url: string; entry: NoteEntry }[]): void {
     for (const { patch, url, entry } of list) {
         const sec = h(parent, "div", "mn-off");
@@ -65,8 +65,10 @@ export function officialBlock(parent: HTMLElement, list: { patch: string; url: s
             const line = h(sec, "div", "mn-ent-ch");
             h(line, "div", "mn-ent-l", c.label);
             const vals = h(line, "div", "mn-ent-v");
-            h(vals, "span", "mn-chg-old", c.old);
-            h(vals, "span", "mn-chg-arrow", "→");
+            if (c.old) {   // a text-only change (掉落率：進一步降低。) has no old value: only its words
+                h(vals, "span", "mn-chg-old", c.old);
+                h(vals, "span", "mn-chg-arrow", "→");
+            }
             h(vals, "span", "mn-chg-new", c.new);
         }
         if (entry.more) h(sec, "div", "mn-gf", `還有 ${entry.more} 項,見全文`);
