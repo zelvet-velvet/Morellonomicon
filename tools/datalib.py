@@ -121,6 +121,36 @@ def lcu_patches():
     return out
 
 
+def champion_names():
+    """Riot's numeric champion key -> the zh_TW name, from the champion notes' frontmatter."""
+    import re
+    import vault_paths
+    out = {}
+    for f in (ROOT / vault_paths.CHAMPIONS).glob("*.md"):
+        head = f.read_text(encoding="utf-8")[:600]
+        k, n = re.search(r"^key:\s*(\d+)", head, re.M), re.search(r'^name:\s*"?([^"\n]+)', head, re.M)
+        if k and n:
+            out[int(k.group(1))] = n.group(1)
+    return out
+
+
+def lcu_detail(patch):
+    """For one patch of our crawl: games per day (dated games only) and player samples per champion (every champion, 0 when unseen)."""
+    if not LCU_DB.exists():
+        return {"daily": [], "champions": {}}
+    db = sqlite3.connect(f"file:{LCU_DB.as_posix()}?mode=ro", uri=True)
+    try:
+        daily = db.execute("SELECT date(created, 'unixepoch', 'localtime'), count(*) FROM games WHERE patch=? AND created > 0 "
+                           "GROUP BY 1 ORDER BY 1", (patch,)).fetchall()
+        seen = dict(db.execute("SELECT champ, count(*) FROM players JOIN games USING (game_id) WHERE patch=? GROUP BY champ",
+                               (patch,)).fetchall())
+    finally:
+        db.close()
+    names = champion_names()
+    champs = {names.get(k, str(k)): seen.get(k, 0) for k in set(names) | set(seen)}
+    return {"daily": daily, "champions": champs}
+
+
 def resg_patches():
     """Per cached patch: when resg.top collected it and its game count (players / 10)."""
     out = {}

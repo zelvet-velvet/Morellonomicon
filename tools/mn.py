@@ -5,6 +5,8 @@
     python3 -I tools/mn.py status --json       # the same as JSON (for a dashboard)
     python3 -I tools/mn.py snapshot            # keep the current tiers and builds in _data/history/<patch>/
     python3 -I tools/mn.py snapshot --backfill # also the past patches, from git history (newest commit per patch)
+    python3 -I tools/mn.py report              # the dashboard: .cache/reports/status.html, opened in the browser (PC only)
+    python3 -I tools/mn.py report --no-open    # write it only
 
 update_patch.py runs `snapshot` after the tiers and builds are rebuilt. Standard library only; see tools/datalib.py.
 """
@@ -82,6 +84,26 @@ def cmd_status(args):
         print()
 
 
+def cmd_report(args):
+    """The dashboard: tools/data/report.html with the status and, per patch with our games, games per day and samples per
+    champion. Private (our crawl's counts), so it goes to the git-ignored .cache/reports/."""
+    s = dl.status()
+    s["detail"] = {r["patch"]: dl.lcu_detail(r["patch"]) for r in s["patches"] if r["lcu"]}
+    page = (Path(__file__).resolve().parent / "data" / "report.html").read_text(encoding="utf-8")
+    data = json.dumps(s, ensure_ascii=False).replace("</", "<\\/")
+    out = dl.ROOT / ".cache" / "reports" / "status.html"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(page.replace("DATA_JSON", data, 1), encoding="utf-8")
+    print(f"-> {out}")
+    if not args.no_open:
+        win = subprocess.run(["wslpath", "-w", str(out)], capture_output=True, text=True).stdout.strip() if Path("/mnt/c").exists() else ""
+        if win:
+            subprocess.run(["/mnt/c/Windows/explorer.exe", win])   # explorer returns 1 even when it opened the file
+        else:
+            import webbrowser
+            webbrowser.open(out.as_uri())
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -91,6 +113,9 @@ def main():
     p = sub.add_parser("snapshot", help="keep the current tiers and builds per patch")
     p.add_argument("--backfill", action="store_true", help="also past patches from git history")
     p.set_defaults(fn=cmd_snapshot)
+    p = sub.add_parser("report", help="the dashboard as a private HTML page")
+    p.add_argument("--no-open", action="store_true", help="write the page without opening it")
+    p.set_defaults(fn=cmd_report)
     args = ap.parse_args()
     args.fn(args)
 

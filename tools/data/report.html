@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mayhem Data</title>
+<!-- Template for `python3 -I tools/mn.py report`: the script fills in the data constant below and writes .cache/reports/status.html.
+     Private: it shows our own crawl's counts, so it stays on this PC (never committed). -->
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface-1: #fcfcfb;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
+  --series-1: #2a78d6; --series-wash: rgba(42,120,214,0.10);
+  --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
+  --on-good: #ffffff; --on-warning: #0b0b0b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface-1: #1a1a19;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+    --series-1: #3987e5; --series-wash: rgba(57,135,229,0.12);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface-1: #1a1a19;
+  --text-primary: #f0efec; --text-secondary: #c3c2b7;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+  --series-1: #3987e5; --series-wash: rgba(57,135,229,0.12);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--text-primary);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", "Microsoft JhengHei", sans-serif; }
+main { max-width: 1040px; margin: 0 auto; padding: 28px 16px 48px; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+h2 { font-size: 16px; margin: 0 0 2px; }
+.sub { color: var(--text-secondary); margin: 0; }
+.note { color: var(--muted); font-size: 13px; margin: 4px 0 0; }
+.alert { margin: 12px 0 0; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--surface-1); color: var(--text-secondary); display: flex; gap: 8px; align-items: center; }
+.alert b { color: var(--text-primary); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; margin: 20px 0 16px; }
+.seg { border: 1px solid var(--border); background: var(--surface-1); color: var(--text-primary); border-radius: 999px;
+  padding: 6px 14px; font: inherit; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.seg[aria-pressed="true"] { border-color: var(--series-1); box-shadow: inset 0 0 0 1px var(--series-1); font-weight: 600; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 16px; min-width: 0; }
+.tiles { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 12px; }
+.tile .k { color: var(--text-secondary); font-size: 13px; }
+.tile .v { font-size: 28px; font-weight: 650; margin-top: 2px; }
+.tile .v small { font-size: 15px; font-weight: 400; color: var(--text-secondary); }
+.tile .s { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.meter { height: 8px; border-radius: 4px; background: var(--grid); margin-top: 10px; overflow: hidden; }
+.meter > i { display: block; height: 100%; background: var(--series-1); border-radius: 4px; }
+.badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 2px 8px;
+  border-radius: 999px; white-space: nowrap; }
+.badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.st-Announced { background: var(--good); color: var(--on-good); }
+.st-Ready { background: var(--good); color: var(--on-good); }
+.st-Collecting { background: var(--warning); color: var(--on-warning); }
+.st-Archived, .st-Not { background: var(--grid); color: var(--text-secondary); }
+.charts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+svg text { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.bar { fill: var(--series-1); }
+.hit { fill: transparent; cursor: default; }
+.hit:hover + .bar, .bar.on { opacity: 0.8; }
+.empty { color: var(--muted); padding: 40px 0; text-align: center; }
+#tip { position: fixed; pointer-events: none; background: var(--surface-1); color: var(--text-primary);
+  border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 13px; max-width: 280px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12); display: none; z-index: 9; }
+#tip b { display: block; }
+#tip span { color: var(--text-secondary); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { color: var(--text-secondary); font-weight: 500; font-size: 13px; }
+td.n { font-variant-numeric: tabular-nums; text-align: right; }
+th.n { text-align: right; }
+.wrap { overflow-x: auto; }
+details { margin-top: 10px; }
+summary { cursor: pointer; color: var(--text-secondary); font-size: 13px; }
+.cols { columns: 4 160px; font-size: 13px; margin-top: 8px; }
+.cols div { display: flex; justify-content: space-between; gap: 8px; break-inside: avoid; padding: 1px 0; }
+.cols span { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+section { margin-top: 12px; }
+@media (max-width: 760px) {
+  .tiles { grid-template-columns: 1fr 1fr; }
+  .tiles .hero { grid-column: 1 / -1; }
+  .charts { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>Mayhem data</h1>
+  <p class="sub" id="head"></p>
+  <div id="alert"></div>
+  <div class="row" id="patches" role="group" aria-label="Patch"></div>
+  <div class="tiles" id="tiles"></div>
+  <div class="charts">
+    <div class="card"><h2>Games per day</h2><p class="note" id="daily-note">Our crawl, by the day the game was played.</p><div id="daily"></div>
+      <details><summary>Table</summary><div id="daily-table"></div></details></div>
+    <div class="card"><h2>Champions by player samples</h2><p class="note">How many champions have this many samples (one player in one game).</p><div id="cover"></div>
+      <details><summary>Every champion</summary><div class="cols" id="cover-table"></div></details></div>
+  </div>
+  <section class="card">
+    <h2>All patches</h2>
+    <p class="note" id="rule"></p>
+    <div class="wrap"><table id="all"></table></div>
+  </section>
+</main>
+<div id="tip" role="tooltip"></div>
+<script>
+const DATA = DATA_JSON;
+const $ = (id) => document.getElementById(id);
+const fmt = (n) => Number(n).toLocaleString("en-US");
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const badge = (state) => `<span class="badge st-${state.split(" ")[0]}">${esc(state)}</span>`;
+const need = DATA.lifecycle.ready_games;
+
+$("head").textContent = `Pages built from ${DATA.announced || "?"} · live patch ${DATA.live || "?"} · made ${DATA.made.replace("T", " ")}`;
+if (DATA.live && DATA.announced && DATA.live !== DATA.announced)
+  $("alert").innerHTML = `<div class="alert">⚠ <span>The pages show <b>${esc(DATA.announced)}</b> while <b>${esc(DATA.live)}</b> is live.</span></div>`;
+$("rule").textContent = `Ready at ${fmt(need)} of our games${DATA.lifecycle.decided ? "" : " (threshold not decided yet)"} · Announced: the pages are built from it · Archived: older, kept in history.`;
+
+// patch buttons: every patch with our games, newest first; the newest is picked
+const withGames = DATA.patches.filter((p) => p.lcu);
+let current = withGames[0]?.patch;
+function drawButtons() {
+  $("patches").innerHTML = withGames.map((p) =>
+    `<button class="seg" aria-pressed="${p.patch === current}" data-p="${p.patch}">${esc(p.patch)} ${badge(p.state)}</button>`).join("");
+  for (const b of $("patches").querySelectorAll("button")) b.onclick = () => { current = b.dataset.p; drawButtons(); draw(); };
+}
+
+function tiles(p) {
+  const l = p.lcu, pct = Math.min(100, Math.round((100 * l.games) / need));
+  const champs = Object.keys(DATA.detail[p.patch].champions).length;
+  const dates = l.first ? (l.first === l.last ? l.first : `${l.first} → ${l.last}`) : "no dates";
+  const vs = l.versions;
+  $("tiles").innerHTML = `
+    <div class="card tile hero"><div class="k">Games · ${badge(p.state)}${p.live ? " · live" : ""}</div>
+      <div class="v">${fmt(l.games)} <small>/ ${fmt(need)} to Ready</small></div>
+      <div class="meter" role="img" aria-label="${pct}% of the Ready threshold"><i style="width:${pct}%"></i></div>
+      <div class="s">${pct}% of the threshold</div></div>
+    <div class="card tile"><div class="k">Full games</div><div class="v">${fmt(l.full)}</div><div class="s">all ten players read</div></div>
+    <div class="card tile"><div class="k">Champions seen</div><div class="v">${l.champions}<small> / ${champs}</small></div><div class="s">${fmt(l.samples)} player samples</div></div>
+    <div class="card tile"><div class="k">Played</div><div class="v" style="font-size:17px">${esc(dates)}</div>
+      <div class="s">${l.undated ? fmt(l.undated) + " undated · " : ""}game version ${esc(vs[0])}${vs.length > 1 ? ` … ${esc(vs[vs.length - 1])} (${vs.length} builds)` : ""}</div></div>`;
+}
+
+// a column chart: one series, columns <= 24px, 4px rounded tops, hairline grid, hover tooltip per column
+function columns(host, rows, label) {
+  if (!rows.length) { host.innerHTML = `<div class="empty">No dated games for this patch.</div>`; return; }
+  const W = 480, H = 220, L = 40, B = 34, T = 10, R = 8;
+  const max = Math.max(...rows.map((r) => r.v), 1);
+  const step = niceStep(max), top = Math.ceil(max / step) * step;
+  const band = (W - L - R) / rows.length, bw = Math.min(24, band * 0.6);
+  const y = (v) => T + (H - T - B) * (1 - v / top);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}">`;
+  for (let v = 0; v <= top; v += step) s += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(${v ? "--grid" : "--axis"})" stroke-width="1"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${fmt(v)}</text>`;
+  const every = Math.ceil(rows.length / 8);
+  rows.forEach((r, i) => {
+    const cx = L + band * i + band / 2, x = cx - bw / 2, yt = y(r.v), h = y(0) - yt, rad = Math.min(4, h);
+    s += `<rect class="hit" x="${L + band * i}" y="${T}" width="${band}" height="${H - T - B}" data-i="${i}"/>`;
+    if (r.v > 0) s += `<path class="bar" d="M${x},${y(0)} V${yt + rad} Q${x},${yt} ${x + rad},${yt} H${x + bw - rad} Q${x + bw},${yt} ${x + bw},${yt + rad} V${y(0)} Z"/>`;
+    if (i % every === 0) s += `<text x="${cx}" y="${H - B + 16}" text-anchor="middle">${esc(r.k)}</text>`;
+  });
+  host.innerHTML = s + "</svg>";
+  for (const hit of host.querySelectorAll(".hit")) {
+    const r = rows[+hit.dataset.i];
+    hit.onmousemove = (e) => showTip(e, `<b>${esc(r.k)}</b><span>${esc(r.tip)}</span>`);
+    hit.onmouseleave = hideTip;
+  }
+}
+function niceStep(max) {
+  const raw = max / 4, p = 10 ** Math.floor(Math.log10(raw)), m = raw / p;
+  return Math.max(1, (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p);
+}
+function showTip(e, html) {
+  const t = $("tip"); t.innerHTML = html; t.style.display = "block";
+  const x = Math.min(e.clientX + 14, innerWidth - t.offsetWidth - 8), y = Math.max(8, e.clientY - t.offsetHeight - 10);
+  t.style.left = x + "px"; t.style.top = y + "px";
+}
+function hideTip() { $("tip").style.display = "none"; }
+
+const BUCKETS = [[0, 0, "0"], [1, 4, "1–4"], [5, 9, "5–9"], [10, 19, "10–19"], [20, 49, "20–49"], [50, 99, "50–99"], [100, 1e9, "100+"]];
+function draw() {
+  const p = withGames.find((x) => x.patch === current);
+  if (!p) { $("tiles").innerHTML = `<div class="card empty">No games crawled yet: run tools/fetch_lcu.py.</div>`; return; }
+  tiles(p);
+  const d = DATA.detail[p.patch];
+  const daily = d.daily.map(([k, v]) => ({ k: k.slice(5), v, tip: `${fmt(v)} games` }));
+  columns($("daily"), daily, `Games per day, patch ${p.patch}`);
+  $("daily-table").innerHTML = daily.length ? `<table><tr><th>Day</th><th class="n">Games</th></tr>${d.daily.map(([k, v]) => `<tr><td>${k}</td><td class="n">${fmt(v)}</td></tr>`).join("")}</table>` : "";
+  const champs = Object.entries(d.champions).sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0], "zh-Hant"));
+  const cover = BUCKETS.map(([lo, hi, k]) => {
+    const names = champs.filter(([, n]) => n >= lo && n <= hi).map(([c]) => c);
+    return { k, v: names.length, tip: names.length ? `${names.length} champions: ${names.slice(0, 12).join("、")}${names.length > 12 ? "…" : ""}` : "none" };
+  });
+  columns($("cover"), cover, `Champions by player samples, patch ${p.patch}`);
+  $("cover-table").innerHTML = champs.map(([c, n]) => `<div>${esc(c)}<span>${fmt(n)}</span></div>`).join("");
+}
+
+function allPatches() {
+  const rows = DATA.patches.map((p) => {
+    const l = p.lcu;
+    const dates = l ? (l.first ? `${l.first} → ${l.last}` : "no dates") : "—";
+    const ver = l ? l.versions[l.versions.length - 1] + (l.versions.length > 1 ? ` (${l.versions.length})` : "") : "—";
+    return `<tr><td><b>${esc(p.patch)}</b>${p.live ? " · live" : ""}</td><td>${badge(p.state)}</td>
+      <td class="n">${l ? fmt(l.games) : "—"}</td><td class="n">${l ? fmt(l.full) : "—"}</td><td>${esc(dates)}</td><td>${esc(ver)}</td>
+      <td class="n">${p.resg ? fmt(p.resg.games) : "—"}</td><td>${p.history.length ? esc(p.history.join(", ")) : "—"}</td></tr>`;
+  }).join("");
+  $("all").innerHTML = `<tr><th>Patch</th><th>State</th><th class="n">Our games</th><th class="n">Full</th><th>Played</th><th>Game version</th><th class="n">resg games</th><th>Kept</th></tr>${rows}`;
+}
+
+drawButtons();
+draw();
+allPatches();
+</script>
+</body>
+</html>
