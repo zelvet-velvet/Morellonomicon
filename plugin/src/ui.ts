@@ -441,7 +441,7 @@ export const augIcon = (parent: HTMLElement, src: string, rarity: string, cls = 
     return box;
 };
 
-export interface RowSpec { icon?: string; image?: string; rarity?: string; title: string; sub?: string; value?: string; faces?: string[]; chevron?: boolean; muted?: boolean; clamp?: boolean; onTap?: () => void }   // faces: small round pictures before the value (the augment list's best champions)
+export interface RowSpec { icon?: string; image?: string; rarity?: string; title: string; sub?: string; value?: string; thumbs?: string[]; chevron?: boolean; muted?: boolean; clamp?: boolean; onTap?: () => void }   // thumbs: small round pictures on the second line, in place of sub (the champions an augment suits)
 // A page whose content is shorter than the screen: everything after its first `keep` children (its title row or banner) goes into one
 // body that is centred down the screen (Design Rules, balance); a longer page still starts at the top
 export const centreBelow = (el: HTMLElement, keep: number): HTMLElement => {
@@ -458,8 +458,8 @@ export const row = (parent: HTMLElement, r: RowSpec): HTMLElement => {
     else if (r.icon) icon(el, r.icon, "mn-row-ic");
     const main = h(el, "div", "mn-row-main");
     h(main, "div", "mn-row-t", r.title);
-    if (r.sub) h(main, "div", "mn-row-s" + (r.clamp ? " is-clamp" : ""), r.sub);
-    if (r.faces?.length) { const f = h(el, "div", "mn-row-faces"); for (const src of r.faces) { const im = h(f, "img"); im.src = src; im.alt = ""; } }
+    if (r.thumbs?.length) { const f = h(main, "div", "mn-row-thumbs"); for (const src of r.thumbs) { const im = h(f, "img"); im.src = src; im.alt = ""; } }
+    else if (r.sub) h(main, "div", "mn-row-s" + (r.clamp ? " is-clamp" : ""), r.sub);
     if (r.value) h(el, "div", "mn-row-v", r.value);
     if (r.chevron) icon(el, "chevron-right", "mn-row-chev");
     if (r.onTap) { const fn = r.onTap; el.addEventListener("click", (e) => { e.preventDefault(); fn(); }); }

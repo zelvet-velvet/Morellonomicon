@@ -301,7 +301,7 @@ export class Store {
     // How strong each augment is across champions, from the augment model (tools/augment_tiers.py): per champion its best play
     // style's tier, only for the champions the game offers it to (an augment Riot keeps for tanks is judged on tanks). Augments are
     // ranked by the share of those champions taking it at S (A counts half), then by how many are offered it. `tier` is the overall
-    // letter by that rank (top 15% S, next 25% A, next 35% B, the rest C); `top` the best champions' ids. Unrated augments are left out.
+    // letter by that rank (top 15% S, next 25% A, next 35% B, the rest C); `top` the five champions it suits best. Unrated augments are left out.
     private augRank: Map<number, AugStrength> | null = null;
     augmentStrength(): Map<number, AugStrength> {
         if (this.augRank) return this.augRank;
@@ -322,7 +322,7 @@ export class Store {
             const users = [...m].sort((a, b) => (TIER_ORDER[a[1].tier] ?? 9) - (TIER_ORDER[b[1].tier] ?? 9) || b[1].score - a[1].score);
             const s = users.filter(([, b]) => b.tier === "S").length, a = users.filter(([, b]) => b.tier === "A").length;
             if (!s && !a) continue;
-            list.push({ id, s, a, offered: users.length, rank: 0, tier: "C", top: users.slice(0, 3).map(([cid]) => cid) });
+            list.push({ id, s, a, offered: users.length, rank: 0, tier: "C", top: users.slice(0, 5).map(([cid]) => cid) });
         }
         const share = (x: AugStrength) => (x.s + x.a / 2) / Math.max(1, x.offered);
         list.sort((x, y) => share(y) - share(x) || y.offered - x.offered);

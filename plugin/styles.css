@@ -306,6 +306,13 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 
 /* one-line row text, detail pages, full lists, notes */
 .mn-row-s.is-clamp { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* the champions an augment suits, on the row's second line (Augments, 強度): small round faces, side by side */
+.mn-row-thumbs { display: flex; gap: 4px; margin-top: 4px; }
+.mn-row-thumbs img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 1px var(--background-modifier-border); }
+/* a tier heading's count (Augments, 強度): quiet, after the letter */
+.mn-tier-h .mn-tier-n { order: 0; font-size: 13px; font-weight: 600; color: var(--mn-muted); }
+.mn-blk > .mn-tier-h { margin: 6px 4px 8px; }
+.mn-blk > .mn-tier-h:first-child { margin-top: 0; }
 .mn-muted { color: var(--mn-muted); }
 .mn-dhead { display: flex; gap: 14px; align-items: center; margin: 4px 0 12px; }
 .mn-dimg { width: 76px; height: 76px; border-radius: 18px; flex: none; background: var(--mn-card-hi); border: 1px solid var(--mn-line); }

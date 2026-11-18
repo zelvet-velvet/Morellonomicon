@@ -1,4 +1,4 @@
-import { chip, empty, group, h, icon, page, row, segmented, blockLoad } from "../ui";
+import { chip, empty, group, h, icon, page, row, segmented, blockLoad, tierHead } from "../ui";
 import type { PageCtx, PageOut } from "./index";
 
 export const RARITIES = ["銀", "金", "稜鏡"];
@@ -11,10 +11,11 @@ const patchNo = (p: string): number => { const m = /(\d+)\.(\d+)/.exec(p); retur
 const SORT_DIR: Record<string, 1 | -1> = { tier: -1, rarity: -1, name: 1, new: -1 };
 let sortBy = "tier", sortDir: 1 | -1 = -1;   // kept while the app is open; 強度 first
 
-// ARAM Mayhem augments: search, a rarity filter, a sort (強度 by default, rarity, name, newest), one row each (the effect line shows when
-// there is one). 強度 is the augment model's rank across champions (store.augmentStrength): the row shows the overall tier (how it is shown is being
-// picked: folio Spec/Screens, Augments options A–D); augments the model cannot rate go last. An augment added in the latest patch carries a 新 tag; one Riot changed
-// in it, 改.
+// ARAM Mayhem augments: search, a rarity filter, a sort (強度 by default, rarity, name, newest). 強度 (option C, chosen 2026-11-18) is the
+// augment model's rank across champions (store.augmentStrength): the list split under S / A / B / C headings with their counts, each row
+// showing the champions it suits best in place of the effect line; augments the model cannot rate come last under 未評級. The other
+// sorts are one list with the effect line. An augment added in the latest patch carries a 新 tag; one Riot changed in it, 改.
+const TIERS = ["S", "A", "B", "C"];
 export function augmentsPage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const el = page("Augments");
@@ -50,13 +51,27 @@ export function augmentsPage(ctx: PageCtx): PageOut {
         else if (sortBy === "rarity") hits.sort((a, b) => d * ((RARITY_RANK[b.rarity] ?? 9) - (RARITY_RANK[a.rarity] ?? 9)) || byName(a, b));
         else if (sortBy === "new") hits.sort((a, b) => d * (patchNo(addedIn.get(a.id) ?? "") - patchNo(addedIn.get(b.id) ?? "")) || byName(a, b));
         else hits.sort((a, b) => d * byName(a, b));
-        const g = group(list);
-        for (const a of hits) {
-            const isNew = !!latest && addedIn.get(a.id) === latest;
-            const tag = isNew ? " · 新" : changedNow.has(a.id) ? " · 改" : "";
-            const st = sortBy === "tier" ? strength.get(a.id) : undefined;
-            const value = sortBy !== "tier" ? a.rarity + tag : st ? st.tier + tag : "—" + tag;
-            row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || undefined, value, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
+        const tagOf = (a: typeof hits[number]) => (!!latest && addedIn.get(a.id) === latest ? " · 新" : changedNow.has(a.id) ? " · 改" : "");
+        const augRow = (g: HTMLElement, a: typeof hits[number], thumbs?: string[]) =>
+            row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: thumbs ? undefined : a.effect || undefined, thumbs, value: a.rarity + tagOf(a), chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
+        if (sortBy === "tier") {
+            // a heading per tier (the champion page's), then its rows; ↑ turns the tiers round (C first)
+            const order = d === -1 ? [...TIERS, ""] : ["", ...TIERS.slice().reverse()];
+            for (const t of order) {
+                const part = hits.filter((a) => (strength.get(a.id)?.tier ?? "") === t);
+                if (!part.length) continue;
+                const head = tierHead(list, t || "未評級");
+                h(head, "span", "mn-tier-n", `${part.length} 個強化`);
+                const g = group(list);
+                for (const a of part) {
+                    const st = strength.get(a.id);
+                    const thumbs = st?.top.map((cid) => store.champion(cid)?.icon).filter((x): x is string => !!x);
+                    augRow(g, a, thumbs?.length ? thumbs : undefined);
+                }
+            }
+        } else {
+            const g = group(list);
+            for (const a of hits) augRow(g, a);
         }
         if (!hits.length) empty(list, { icon: "search-x", title: "No match" });
         blockLoad(list);

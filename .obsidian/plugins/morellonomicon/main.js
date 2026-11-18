@@ -182,7 +182,7 @@ var Store = class {
     // How strong each augment is across champions, from the augment model (tools/augment_tiers.py): per champion its best play
     // style's tier, only for the champions the game offers it to (an augment Riot keeps for tanks is judged on tanks). Augments are
     // ranked by the share of those champions taking it at S (A counts half), then by how many are offered it. `tier` is the overall
-    // letter by that rank (top 15% S, next 25% A, next 35% B, the rest C); `top` the best champions' ids. Unrated augments are left out.
+    // letter by that rank (top 15% S, next 25% A, next 35% B, the rest C); `top` the five champions it suits best. Unrated augments are left out.
     this.augRank = null;
   }
   masteryOf(id) {
@@ -439,7 +439,7 @@ var Store = class {
       const users = [...m].sort((a2, b) => (TIER_ORDER[a2[1].tier] ?? 9) - (TIER_ORDER[b[1].tier] ?? 9) || b[1].score - a2[1].score);
       const s = users.filter(([, b]) => b.tier === "S").length, a = users.filter(([, b]) => b.tier === "A").length;
       if (!s && !a) continue;
-      list2.push({ id, s, a, offered: users.length, rank: 0, tier: "C", top: users.slice(0, 3).map(([cid]) => cid) });
+      list2.push({ id, s, a, offered: users.length, rank: 0, tier: "C", top: users.slice(0, 5).map(([cid]) => cid) });
     }
     const share = (x) => (x.s + x.a / 2) / Math.max(1, x.offered);
     list2.sort((x, y) => share(y) - share(x) || y.offered - x.offered);
@@ -1224,15 +1224,14 @@ var row = (parent, r) => {
   } else if (r.icon) icon(el, r.icon, "mn-row-ic");
   const main = h(el, "div", "mn-row-main");
   h(main, "div", "mn-row-t", r.title);
-  if (r.sub) h(main, "div", "mn-row-s" + (r.clamp ? " is-clamp" : ""), r.sub);
-  if (r.faces?.length) {
-    const f = h(el, "div", "mn-row-faces");
-    for (const src of r.faces) {
+  if (r.thumbs?.length) {
+    const f = h(main, "div", "mn-row-thumbs");
+    for (const src of r.thumbs) {
       const im = h(f, "img");
       im.src = src;
       im.alt = "";
     }
-  }
+  } else if (r.sub) h(main, "div", "mn-row-s" + (r.clamp ? " is-clamp" : ""), r.sub);
   if (r.value) h(el, "div", "mn-row-v", r.value);
   if (r.chevron) icon(el, "chevron-right", "mn-row-chev");
   if (r.onTap) {
@@ -1699,6 +1698,7 @@ var patchNo2 = (p) => {
 var SORT_DIR = { tier: -1, rarity: -1, name: 1, new: -1 };
 var sortBy = "tier";
 var sortDir = -1;
+var TIERS = ["S", "A", "B", "C"];
 function augmentsPage(ctx) {
   const store = ctx.plugin.store;
   const el = page("Augments");
@@ -1735,13 +1735,25 @@ function augmentsPage(ctx) {
     else if (sortBy === "rarity") hits.sort((a, b) => d * ((RARITY_RANK[b.rarity] ?? 9) - (RARITY_RANK[a.rarity] ?? 9)) || byName(a, b));
     else if (sortBy === "new") hits.sort((a, b) => d * (patchNo2(addedIn.get(a.id) ?? "") - patchNo2(addedIn.get(b.id) ?? "")) || byName(a, b));
     else hits.sort((a, b) => d * byName(a, b));
-    const g = group(list2);
-    for (const a of hits) {
-      const isNew = !!latest && addedIn.get(a.id) === latest;
-      const tag = isNew ? " \xB7 \u65B0" : changedNow.has(a.id) ? " \xB7 \u6539" : "";
-      const st = sortBy === "tier" ? strength.get(a.id) : void 0;
-      const value = sortBy !== "tier" ? a.rarity + tag : st ? st.tier + tag : "\u2014" + tag;
-      row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || void 0, value, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
+    const tagOf = (a) => !!latest && addedIn.get(a.id) === latest ? " \xB7 \u65B0" : changedNow.has(a.id) ? " \xB7 \u6539" : "";
+    const augRow = (g, a, thumbs) => row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: thumbs ? void 0 : a.effect || void 0, thumbs, value: a.rarity + tagOf(a), chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
+    if (sortBy === "tier") {
+      const order = d === -1 ? [...TIERS, ""] : ["", ...TIERS.slice().reverse()];
+      for (const t of order) {
+        const part = hits.filter((a) => (strength.get(a.id)?.tier ?? "") === t);
+        if (!part.length) continue;
+        const head2 = tierHead(list2, t || "\u672A\u8A55\u7D1A");
+        h(head2, "span", "mn-tier-n", `${part.length} \u500B\u5F37\u5316`);
+        const g = group(list2);
+        for (const a of part) {
+          const st = strength.get(a.id);
+          const thumbs = st?.top.map((cid) => store.champion(cid)?.icon).filter((x) => !!x);
+          augRow(g, a, thumbs?.length ? thumbs : void 0);
+        }
+      }
+    } else {
+      const g = group(list2);
+      for (const a of hits) augRow(g, a);
     }
     if (!hits.length) empty(list2, { icon: "search-x", title: "No match" });
     blockLoad(list2);
@@ -6424,7 +6436,7 @@ function gamesPage(ctx) {
   for (const g of prof.games) gameRow(ctx, list2, g, true);
   return { title: "\u6700\u8FD1\u5C0D\u6230", el };
 }
-var TIERS = ["\u8D77\u59CB", "\u978B\u5B50", "\u57FA\u672C", "\u53F2\u8A69", "\u50B3\u8AAA"];
+var TIERS2 = ["\u8D77\u59CB", "\u978B\u5B50", "\u57FA\u672C", "\u53F2\u8A69", "\u50B3\u8AAA"];
 var tierOf = (i) => i.tags.includes("Boots") ? "\u978B\u5B50" : !i.from.length && !i.into.length ? "\u8D77\u59CB" : !i.from.length ? "\u57FA\u672C" : i.into.length ? "\u53F2\u8A69" : "\u50B3\u8AAA";
 var has2 = (i, ...tags2) => tags2.some((x) => i.tags.includes(x));
 var ITEM_ROLES = [
@@ -6536,7 +6548,7 @@ function itemsPage(ctx) {
       h(host, "p", "mn-home-sub", "\u6C92\u6709\u7B26\u5408\u7684\u88DD\u5099");
       return;
     }
-    for (const tier of itemFlip ? [...TIERS].reverse() : TIERS) {
+    for (const tier of itemFlip ? [...TIERS2].reverse() : TIERS2) {
       const part = list2.filter((i) => tierOf(i) === tier).sort((x, y) => x.goldTotal - y.goldTotal);
       if (!part.length) continue;
       h(host, "div", "mn-shop-tier", tier);
