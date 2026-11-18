@@ -38,6 +38,8 @@ TIER_FLOOR = {"S": 0.0, "A": 0.0, "B": -0.01}   # and the score a tier needs at 
 SPECIFIC = 0.04        # a pair doing this much better than the augment does everywhere is the champion's own (asked when unexplained)
 SURE_GAMES = 3000      # resg's own 高 confidence: questions come only from pairs this well sampled
 PENTAKILL = {3170, 3171, 3172, 3173}
+NOT_OFFERED = 50       # an augment resg's volume says a champion should have this many games of, at 0 games: the game never offers it
+                       # to that champion (Riot's augment tags, e.g. 裝甲衝擊 only for tanks); it gets no tier on that champion
 RARITY = {1: "銀", 2: "金", 3: "稜鏡"}
 TEST = ["Katarina", "Jinx", "Ezreal", "Malphite", "Soraka", "Darius", "MasterYi", "Lux", "Kaisa", "Garen", "Fiora", "Yasuo", "Yone", "Udyr", "TwistedFate"]
 
@@ -805,11 +807,13 @@ def main():
         data = json.loads(f.read_text(encoding="utf-8")) if f.exists() else {}
         own = data.get("champion", {}).get("wr")
         games = {r[0]: (r[2], r[3]) for r in data.get("ra", [])}
+        played = data.get("champion", {}).get("tm", 0)
+        offered = [i for i in rated if games.get(i, (0, 0))[0] > 0 or played * overall[i].get("pr", 0) < NOT_OFFERED]
         builds = [Champ(note, style) for style in STYLES.get(note["id"], [("main", "主流", {})])]
         for c in builds:
             champs[f"{c.id}/{c.style}"] = c
             rows = []
-            for i in rated:
+            for i in offered:
                 fit, why = reasoning(i, c)
                 # two builds share the games: an augment only the other build has a reason for is that build's result
                 other = fit <= 0 and any(reasoning(i, o)[0] > 0 for o in builds if o is not c)
