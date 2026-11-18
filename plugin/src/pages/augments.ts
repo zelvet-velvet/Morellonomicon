@@ -12,8 +12,8 @@ const SORT_DIR: Record<string, 1 | -1> = { tier: -1, rarity: -1, name: 1, new: -
 let sortBy = "tier", sortDir: 1 | -1 = -1;   // kept while the app is open; 強度 first
 
 // ARAM Mayhem augments: search, a rarity filter, a sort (強度 by default, rarity, name, newest), one row each (the effect line shows when
-// there is one). 強度 is the augment model's rank across champions (store.augmentStrength): the row shows the overall tier and the faces
-// of the best champions; augments the model cannot rate go last. An augment added in the latest patch carries a 新 tag; one Riot changed
+// there is one). 強度 is the augment model's rank across champions (store.augmentStrength): the row shows the overall tier (how it is shown is being
+// picked: folio Spec/Screens, Augments options A–D); augments the model cannot rate go last. An augment added in the latest patch carries a 新 tag; one Riot changed
 // in it, 改.
 export function augmentsPage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
@@ -55,9 +55,8 @@ export function augmentsPage(ctx: PageCtx): PageOut {
             const isNew = !!latest && addedIn.get(a.id) === latest;
             const tag = isNew ? " · 新" : changedNow.has(a.id) ? " · 改" : "";
             const st = sortBy === "tier" ? strength.get(a.id) : undefined;
-            const faces = st?.top.map((cid) => store.champion(cid)?.icon).filter((x): x is string => !!x);
             const value = sortBy !== "tier" ? a.rarity + tag : st ? st.tier + tag : "—" + tag;
-            row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || undefined, faces, value, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
+            row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || undefined, value, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
         }
         if (!hits.length) empty(list, { icon: "search-x", title: "No match" });
         blockLoad(list);

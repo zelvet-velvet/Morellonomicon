@@ -1740,9 +1740,8 @@ function augmentsPage(ctx) {
       const isNew = !!latest && addedIn.get(a.id) === latest;
       const tag = isNew ? " \xB7 \u65B0" : changedNow.has(a.id) ? " \xB7 \u6539" : "";
       const st = sortBy === "tier" ? strength.get(a.id) : void 0;
-      const faces = st?.top.map((cid) => store.champion(cid)?.icon).filter((x) => !!x);
       const value = sortBy !== "tier" ? a.rarity + tag : st ? st.tier + tag : "\u2014" + tag;
-      row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || void 0, faces, value, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
+      row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.effect || void 0, value, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
     }
     if (!hits.length) empty(list2, { icon: "search-x", title: "No match" });
     blockLoad(list2);
