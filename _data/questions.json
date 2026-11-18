@@ -1,0 +1,2419 @@
+{
+ "augments": {
+  "patch": "16.22",
+  "strong": [
+   {
+    "augment": 3048,
+    "name": "彈跳蜜蜂",
+    "rarity": "稜鏡",
+    "champion": "Gangplank",
+    "champion_name": "剛普朗克",
+    "style": "",
+    "gap": 0.144,
+    "games": 3895
+   },
+   {
+    "augment": 1001,
+    "name": "泰坦的決意",
+    "rarity": "稜鏡",
+    "champion": "Urgot",
+    "champion_name": "烏爾加特",
+    "style": "",
+    "gap": 0.063,
+    "games": 12428
+   },
+   {
+    "augment": 3039,
+    "name": "救贖",
+    "rarity": "金",
+    "champion": "Lulu",
+    "champion_name": "露璐",
+    "style": "",
+    "gap": 0.055,
+    "games": 4256
+   },
+   {
+    "augment": 1311,
+    "name": "溢流",
+    "rarity": "金",
+    "champion": "Ryze",
+    "champion_name": "雷茲",
+    "style": "",
+    "gap": 0.043,
+    "games": 175554
+   },
+   {
+    "augment": 2100,
+    "name": "疾速追擊",
+    "rarity": "金",
+    "champion": "Shaco",
+    "champion_name": "薩科",
+    "style": "物攻刺客",
+    "gap": 0.036,
+    "games": 22590
+   },
+   {
+    "augment": 2100,
+    "name": "疾速追擊",
+    "rarity": "金",
+    "champion": "Shaco",
+    "champion_name": "薩科",
+    "style": "法術 W、R",
+    "gap": 0.036,
+    "games": 22590
+   },
+   {
+    "augment": 1061,
+    "name": "棒棒回力鏢",
+    "rarity": "金",
+    "champion": "Nidalee",
+    "champion_name": "奈德麗",
+    "style": "",
+    "gap": 0.034,
+    "games": 4341
+   },
+   {
+    "augment": 1087,
+    "name": "颱風",
+    "rarity": "銀",
+    "champion": "Volibear",
+    "champion_name": "弗力貝爾",
+    "style": "",
+    "gap": 0.033,
+    "games": 10296
+   },
+   {
+    "augment": 2100,
+    "name": "疾速追擊",
+    "rarity": "金",
+    "champion": "MissFortune",
+    "champion_name": "好運姐",
+    "style": "物攻射手",
+    "gap": 0.03,
+    "games": 45013
+   },
+   {
+    "augment": 2100,
+    "name": "疾速追擊",
+    "rarity": "金",
+    "champion": "MissFortune",
+    "champion_name": "好運姐",
+    "style": "法術 E",
+    "gap": 0.03,
+    "games": 45013
+   },
+   {
+    "augment": 1349,
+    "name": "大絕覺醒",
+    "rarity": "稜鏡",
+    "champion": "Rell",
+    "champion_name": "銳兒",
+    "style": "",
+    "gap": 0.023,
+    "games": 4253
+   },
+   {
+    "augment": 3063,
+    "name": "溺者贈禮",
+    "rarity": "銀",
+    "champion": "Jhin",
+    "champion_name": "燼",
+    "style": "",
+    "gap": 0.016,
+    "games": 11672
+   },
+   {
+    "augment": 3063,
+    "name": "溺者贈禮",
+    "rarity": "銀",
+    "champion": "Graves",
+    "champion_name": "葛雷夫",
+    "style": "",
+    "gap": 0.015,
+    "games": 13422
+   },
+   {
+    "augment": 3063,
+    "name": "溺者贈禮",
+    "rarity": "銀",
+    "champion": "Lucian",
+    "champion_name": "路西恩",
+    "style": "",
+    "gap": 0.015,
+    "games": 11999
+   },
+   {
+    "augment": 3063,
+    "name": "溺者贈禮",
+    "rarity": "銀",
+    "champion": "Draven",
+    "champion_name": "達瑞文",
+    "style": "",
+    "gap": 0.015,
+    "games": 7394
+   }
+  ],
+  "weak": [
+   {
+    "augment": 1328,
+    "name": "暴擊節奏",
+    "rarity": "金",
+    "champion": "TwistedFate",
+    "champion_name": "逆命",
+    "style": "物攻暴擊",
+    "gap": -0.128,
+    "games": 4490
+   },
+   {
+    "augment": 1225,
+    "name": "雙刀流",
+    "rarity": "稜鏡",
+    "champion": "TwistedFate",
+    "champion_name": "逆命",
+    "style": "物攻暴擊",
+    "gap": -0.108,
+    "games": 7217
+   },
+   {
+    "augment": 2010,
+    "name": "雙重命中",
+    "rarity": "稜鏡",
+    "champion": "TwistedFate",
+    "champion_name": "逆命",
+    "style": "物攻暴擊",
+    "gap": -0.104,
+    "games": 3972
+   },
+   {
+    "augment": 1079,
+    "name": "戰爭交響曲",
+    "rarity": "稜鏡",
+    "champion": "TwistedFate",
+    "champion_name": "逆命",
+    "style": "物攻暴擊",
+    "gap": -0.103,
+    "games": 3381
+   },
+   {
+    "augment": 1081,
+    "name": "輕舞飛揚",
+    "rarity": "稜鏡",
+    "champion": "TwistedFate",
+    "champion_name": "逆命",
+    "style": "物攻暴擊",
+    "gap": -0.102,
+    "games": 5055
+   },
+   {
+    "augment": 1019,
+    "name": "衝鋒",
+    "rarity": "稜鏡",
+    "champion": "Ambessa",
+    "champion_name": "安比薩",
+    "style": "",
+    "gap": -0.095,
+    "games": 13418
+   },
+   {
+    "augment": 1077,
+    "name": "靈魂虹吸",
+    "rarity": "金",
+    "champion": "TwistedFate",
+    "champion_name": "逆命",
+    "style": "物攻暴擊",
+    "gap": -0.094,
+    "games": 4069
+   },
+   {
+    "augment": 1113,
+    "name": "老練狙擊手",
+    "rarity": "金",
+    "champion": "Ryze",
+    "champion_name": "雷茲",
+    "style": "",
+    "gap": -0.094,
+    "games": 6839
+   },
+   {
+    "augment": 1087,
+    "name": "颱風",
+    "rarity": "銀",
+    "champion": "TwistedFate",
+    "champion_name": "逆命",
+    "style": "物攻暴擊",
+    "gap": -0.09,
+    "games": 6201
+   },
+   {
+    "augment": 3131,
+    "name": "屹立不退",
+    "rarity": "金",
+    "champion": "TwistedFate",
+    "champion_name": "逆命",
+    "style": "物攻暴擊",
+    "gap": -0.09,
+    "games": 5699
+   },
+   {
+    "augment": 1211,
+    "name": "殺戮時間",
+    "rarity": "金",
+    "champion": "Yasuo",
+    "champion_name": "犽宿",
+    "style": "",
+    "gap": -0.087,
+    "games": 4873
+   },
+   {
+    "augment": 2135,
+    "name": "針插",
+    "rarity": "稜鏡",
+    "champion": "XinZhao",
+    "champion_name": "趙信",
+    "style": "",
+    "gap": -0.086,
+    "games": 4497
+   },
+   {
+    "augment": 3016,
+    "name": "三度傷害",
+    "rarity": "稜鏡",
+    "champion": "Corki",
+    "champion_name": "庫奇",
+    "style": "",
+    "gap": -0.086,
+    "games": 4943
+   },
+   {
+    "augment": 1047,
+    "name": "痛恨一擊",
+    "rarity": "金",
+    "champion": "TwistedFate",
+    "champion_name": "逆命",
+    "style": "物攻暴擊",
+    "gap": -0.085,
+    "games": 5400
+   },
+   {
+    "augment": 2010,
+    "name": "雙重命中",
+    "rarity": "稜鏡",
+    "champion": "Shaco",
+    "champion_name": "薩科",
+    "style": "物攻刺客",
+    "gap": -0.084,
+    "games": 7584
+   },
+   {
+    "augment": 1413,
+    "name": "隨我同困",
+    "rarity": "稜鏡",
+    "champion": "TahmKench",
+    "champion_name": "貪啃奇",
+    "style": "",
+    "gap": -0.083,
+    "games": 5273
+   },
+   {
+    "augment": 1036,
+    "name": "煽風點火",
+    "rarity": "金",
+    "champion": "TwistedFate",
+    "champion_name": "逆命",
+    "style": "物攻暴擊",
+    "gap": -0.08,
+    "games": 6900
+   },
+   {
+    "augment": 3016,
+    "name": "三度傷害",
+    "rarity": "稜鏡",
+    "champion": "Lucian",
+    "champion_name": "路西恩",
+    "style": "",
+    "gap": -0.079,
+    "games": 10878
+   },
+   {
+    "augment": 3016,
+    "name": "三度傷害",
+    "rarity": "稜鏡",
+    "champion": "Draven",
+    "champion_name": "達瑞文",
+    "style": "",
+    "gap": -0.079,
+    "games": 3607
+   },
+   {
+    "augment": 1051,
+    "name": "亮起來！",
+    "rarity": "銀",
+    "champion": "TwistedFate",
+    "champion_name": "逆命",
+    "style": "物攻暴擊",
+    "gap": -0.078,
+    "games": 5283
+   },
+   {
+    "augment": 1088,
+    "name": "終極革新",
+    "rarity": "稜鏡",
+    "champion": "Yasuo",
+    "champion_name": "犽宿",
+    "style": "",
+    "gap": -0.078,
+    "games": 3781
+   },
+   {
+    "augment": 1181,
+    "name": "重型打手",
+    "rarity": "銀",
+    "champion": "Hecarim",
+    "champion_name": "赫克林",
+    "style": "",
+    "gap": -0.077,
+    "games": 5339
+   },
+   {
+    "augment": 1001,
+    "name": "泰坦的決意",
+    "rarity": "稜鏡",
+    "champion": "MasterYi",
+    "champion_name": "易大師",
+    "style": "",
+    "gap": -0.077,
+    "games": 6583
+   },
+   {
+    "augment": 1129,
+    "name": "射手法師",
+    "rarity": "金",
+    "champion": "Katarina",
+    "champion_name": "卡特蓮娜",
+    "style": "",
+    "gap": -0.075,
+    "games": 19816
+   },
+   {
+    "augment": 1205,
+    "name": "靈活轉換",
+    "rarity": "銀",
+    "champion": "Katarina",
+    "champion_name": "卡特蓮娜",
+    "style": "",
+    "gap": -0.073,
+    "games": 9034
+   },
+   {
+    "augment": 3016,
+    "name": "三度傷害",
+    "rarity": "稜鏡",
+    "champion": "Graves",
+    "champion_name": "葛雷夫",
+    "style": "",
+    "gap": -0.072,
+    "games": 3122
+   },
+   {
+    "augment": 1058,
+    "name": "祕術拳擊",
+    "rarity": "稜鏡",
+    "champion": "Shaco",
+    "champion_name": "薩科",
+    "style": "物攻刺客",
+    "gap": -0.07,
+    "games": 3920
+   },
+   {
+    "augment": 1036,
+    "name": "煽風點火",
+    "rarity": "金",
+    "champion": "Lucian",
+    "champion_name": "路西恩",
+    "style": "",
+    "gap": -0.069,
+    "games": 8735
+   },
+   {
+    "augment": 1022,
+    "name": "手腳麻利",
+    "rarity": "銀",
+    "champion": "TwistedFate",
+    "champion_name": "逆命",
+    "style": "物攻暴擊",
+    "gap": -0.069,
+    "games": 9729
+   },
+   {
+    "augment": 1113,
+    "name": "老練狙擊手",
+    "rarity": "金",
+    "champion": "Corki",
+    "champion_name": "庫奇",
+    "style": "",
+    "gap": -0.069,
+    "games": 4380
+   },
+   {
+    "augment": 2099,
+    "name": "昇華儀式",
+    "rarity": "稜鏡",
+    "champion": "Viego",
+    "champion_name": "維爾戈",
+    "style": "",
+    "gap": -0.069,
+    "games": 7530
+   },
+   {
+    "augment": 1180,
+    "name": "超強大腦",
+    "rarity": "金",
+    "champion": "Swain",
+    "champion_name": "斯溫",
+    "style": "",
+    "gap": -0.066,
+    "games": 4939
+   },
+   {
+    "augment": 3059,
+    "name": "沒有魔力也沒問題",
+    "rarity": "銀",
+    "champion": "Ryze",
+    "champion_name": "雷茲",
+    "style": "",
+    "gap": -0.064,
+    "games": 62940
+   },
+   {
+    "augment": 3016,
+    "name": "三度傷害",
+    "rarity": "稜鏡",
+    "champion": "MissFortune",
+    "champion_name": "好運姐",
+    "style": "物攻射手",
+    "gap": -0.064,
+    "games": 5015
+   },
+   {
+    "augment": 2010,
+    "name": "雙重命中",
+    "rarity": "稜鏡",
+    "champion": "Smolder",
+    "champion_name": "史矛德",
+    "style": "",
+    "gap": -0.064,
+    "games": 15797
+   },
+   {
+    "augment": 2010,
+    "name": "雙重命中",
+    "rarity": "稜鏡",
+    "champion": "Samira",
+    "champion_name": "煞蜜拉",
+    "style": "",
+    "gap": -0.063,
+    "games": 5154
+   },
+   {
+    "augment": 1019,
+    "name": "衝鋒",
+    "rarity": "稜鏡",
+    "champion": "Yone",
+    "champion_name": "犽凝",
+    "style": "",
+    "gap": -0.063,
+    "games": 13363
+   },
+   {
+    "augment": 2103,
+    "name": "超遠射擊",
+    "rarity": "金",
+    "champion": "Corki",
+    "champion_name": "庫奇",
+    "style": "",
+    "gap": -0.063,
+    "games": 5633
+   },
+   {
+    "augment": 2099,
+    "name": "昇華儀式",
+    "rarity": "稜鏡",
+    "champion": "Yone",
+    "champion_name": "犽凝",
+    "style": "",
+    "gap": -0.062,
+    "games": 10705
+   },
+   {
+    "augment": 3085,
+    "name": "活力流轉",
+    "rarity": "銀",
+    "champion": "TwistedFate",
+    "champion_name": "逆命",
+    "style": "物攻暴擊",
+    "gap": -0.061,
+    "games": 11339
+   },
+   {
+    "augment": 1019,
+    "name": "衝鋒",
+    "rarity": "稜鏡",
+    "champion": "Khazix",
+    "champion_name": "卡力斯",
+    "style": "",
+    "gap": -0.06,
+    "games": 6565
+   },
+   {
+    "augment": 1115,
+    "name": "頂狙武器",
+    "rarity": "稜鏡",
+    "champion": "Fiora",
+    "champion_name": "菲歐拉",
+    "style": "",
+    "gap": -0.06,
+    "games": 3213
+   },
+   {
+    "augment": 1019,
+    "name": "衝鋒",
+    "rarity": "稜鏡",
+    "champion": "Viego",
+    "champion_name": "維爾戈",
+    "style": "",
+    "gap": -0.06,
+    "games": 6299
+   },
+   {
+    "augment": 1328,
+    "name": "暴擊節奏",
+    "rarity": "金",
+    "champion": "Shaco",
+    "champion_name": "薩科",
+    "style": "物攻刺客",
+    "gap": -0.059,
+    "games": 12206
+   },
+   {
+    "augment": 1115,
+    "name": "頂狙武器",
+    "rarity": "稜鏡",
+    "champion": "Azir",
+    "champion_name": "阿祈爾",
+    "style": "",
+    "gap": -0.059,
+    "games": 3964
+   },
+   {
+    "augment": 1344,
+    "name": "最終型態",
+    "rarity": "稜鏡",
+    "champion": "TahmKench",
+    "champion_name": "貪啃奇",
+    "style": "",
+    "gap": -0.059,
+    "games": 6206
+   },
+   {
+    "augment": 3036,
+    "name": "雙招連擊",
+    "rarity": "金",
+    "champion": "TwistedFate",
+    "champion_name": "逆命",
+    "style": "法術 Q、W",
+    "gap": -0.058,
+    "games": 8413
+   },
+   {
+    "augment": 3134,
+    "name": "孤勇者",
+    "rarity": "銀",
+    "champion": "Shaco",
+    "champion_name": "薩科",
+    "style": "物攻刺客",
+    "gap": -0.058,
+    "games": 3938
+   },
+   {
+    "augment": 1081,
+    "name": "輕舞飛揚",
+    "rarity": "稜鏡",
+    "champion": "Lucian",
+    "champion_name": "路西恩",
+    "style": "",
+    "gap": -0.057,
+    "games": 10361
+   },
+   {
+    "augment": 1079,
+    "name": "戰爭交響曲",
+    "rarity": "稜鏡",
+    "champion": "Graves",
+    "champion_name": "葛雷夫",
+    "style": "",
+    "gap": -0.056,
+    "games": 8869
+   },
+   {
+    "augment": 1115,
+    "name": "頂狙武器",
+    "rarity": "稜鏡",
+    "champion": "Lucian",
+    "champion_name": "路西恩",
+    "style": "",
+    "gap": -0.056,
+    "games": 20398
+   },
+   {
+    "augment": 1004,
+    "name": "基本功夫",
+    "rarity": "稜鏡",
+    "champion": "Shaco",
+    "champion_name": "薩科",
+    "style": "法術 W、R",
+    "gap": -0.056,
+    "games": 16385
+   },
+   {
+    "augment": 1080,
+    "name": "毫髮無傷",
+    "rarity": "銀",
+    "champion": "TwistedFate",
+    "champion_name": "逆命",
+    "style": "物攻暴擊",
+    "gap": -0.055,
+    "games": 3182
+   },
+   {
+    "augment": 1048,
+    "name": "寶石手套",
+    "rarity": "稜鏡",
+    "champion": "Katarina",
+    "champion_name": "卡特蓮娜",
+    "style": "",
+    "gap": -0.055,
+    "games": 20944
+   },
+   {
+    "augment": 1079,
+    "name": "戰爭交響曲",
+    "rarity": "稜鏡",
+    "champion": "Jayce",
+    "champion_name": "杰西",
+    "style": "",
+    "gap": -0.055,
+    "games": 4905
+   },
+   {
+    "augment": 1115,
+    "name": "頂狙武器",
+    "rarity": "稜鏡",
+    "champion": "Irelia",
+    "champion_name": "伊瑞莉雅",
+    "style": "",
+    "gap": -0.055,
+    "games": 4492
+   },
+   {
+    "augment": 1058,
+    "name": "祕術拳擊",
+    "rarity": "稜鏡",
+    "champion": "Belveth",
+    "champion_name": "貝爾薇斯",
+    "style": "",
+    "gap": -0.054,
+    "games": 17843
+   },
+   {
+    "augment": 1015,
+    "name": "死亡循環",
+    "rarity": "稜鏡",
+    "champion": "Seraphine",
+    "champion_name": "瑟菈紛",
+    "style": "",
+    "gap": -0.053,
+    "games": 6412
+   },
+   {
+    "augment": 1071,
+    "name": "超狙武器",
+    "rarity": "金",
+    "champion": "Azir",
+    "champion_name": "阿祈爾",
+    "style": "",
+    "gap": -0.053,
+    "games": 5443
+   },
+   {
+    "augment": 3079,
+    "name": "死亡之舞",
+    "rarity": "稜鏡",
+    "champion": "Yone",
+    "champion_name": "犽凝",
+    "style": "",
+    "gap": -0.052,
+    "games": 8682
+   },
+   {
+    "augment": 1001,
+    "name": "泰坦的決意",
+    "rarity": "稜鏡",
+    "champion": "Rumble",
+    "champion_name": "藍寶",
+    "style": "",
+    "gap": -0.052,
+    "games": 3871
+   },
+   {
+    "augment": 1332,
+    "name": "不祥契約",
+    "rarity": "稜鏡",
+    "champion": "Katarina",
+    "champion_name": "卡特蓮娜",
+    "style": "",
+    "gap": -0.051,
+    "games": 7078
+   },
+   {
+    "augment": 1081,
+    "name": "輕舞飛揚",
+    "rarity": "稜鏡",
+    "champion": "Graves",
+    "champion_name": "葛雷夫",
+    "style": "",
+    "gap": -0.051,
+    "games": 4049
+   },
+   {
+    "augment": 3079,
+    "name": "死亡之舞",
+    "rarity": "稜鏡",
+    "champion": "Shaco",
+    "champion_name": "薩科",
+    "style": "物攻刺客",
+    "gap": -0.051,
+    "games": 4612
+   },
+   {
+    "augment": 3079,
+    "name": "死亡之舞",
+    "rarity": "稜鏡",
+    "champion": "Shaco",
+    "champion_name": "薩科",
+    "style": "法術 W、R",
+    "gap": -0.051,
+    "games": 4612
+   },
+   {
+    "augment": 1079,
+    "name": "戰爭交響曲",
+    "rarity": "稜鏡",
+    "champion": "MissFortune",
+    "champion_name": "好運姐",
+    "style": "物攻射手",
+    "gap": -0.051,
+    "games": 6219
+   },
+   {
+    "augment": 1225,
+    "name": "雙刀流",
+    "rarity": "稜鏡",
+    "champion": "Smolder",
+    "champion_name": "史矛德",
+    "style": "",
+    "gap": -0.05,
+    "games": 13422
+   },
+   {
+    "augment": 1054,
+    "name": "雙修大師",
+    "rarity": "稜鏡",
+    "champion": "Teemo",
+    "champion_name": "提摩",
+    "style": "",
+    "gap": -0.05,
+    "games": 11378
+   },
+   {
+    "augment": 1018,
+    "name": "巨像之勇氣",
+    "rarity": "稜鏡",
+    "champion": "Morgana",
+    "champion_name": "魔甘娜",
+    "style": "",
+    "gap": -0.05,
+    "games": 4175
+   },
+   {
+    "augment": 1006,
+    "name": "劍舞之心",
+    "rarity": "稜鏡",
+    "champion": "Shaco",
+    "champion_name": "薩科",
+    "style": "物攻刺客",
+    "gap": -0.05,
+    "games": 10852
+   },
+   {
+    "augment": 1077,
+    "name": "靈魂虹吸",
+    "rarity": "金",
+    "champion": "Shaco",
+    "champion_name": "薩科",
+    "style": "物攻刺客",
+    "gap": -0.05,
+    "games": 25650
+   },
+   {
+    "augment": 1225,
+    "name": "雙刀流",
+    "rarity": "稜鏡",
+    "champion": "Katarina",
+    "champion_name": "卡特蓮娜",
+    "style": "",
+    "gap": -0.05,
+    "games": 11430
+   },
+   {
+    "augment": 3134,
+    "name": "孤勇者",
+    "rarity": "銀",
+    "champion": "Hecarim",
+    "champion_name": "赫克林",
+    "style": "",
+    "gap": -0.05,
+    "games": 7034
+   },
+   {
+    "augment": 1115,
+    "name": "頂狙武器",
+    "rarity": "稜鏡",
+    "champion": "TwistedFate",
+    "champion_name": "逆命",
+    "style": "物攻暴擊",
+    "gap": -0.049,
+    "games": 16796
+   },
+   {
+    "augment": 1092,
+    "name": "見縫插針",
+    "rarity": "金",
+    "champion": "TwistedFate",
+    "champion_name": "逆命",
+    "style": "物攻暴擊",
+    "gap": -0.049,
+    "games": 13859
+   },
+   {
+    "augment": 3094,
+    "name": "巫妖思維",
+    "rarity": "銀",
+    "champion": "Katarina",
+    "champion_name": "卡特蓮娜",
+    "style": "",
+    "gap": -0.049,
+    "games": 4414
+   },
+   {
+    "augment": 1077,
+    "name": "靈魂虹吸",
+    "rarity": "金",
+    "champion": "Kaisa",
+    "champion_name": "凱莎",
+    "style": "物攻射手",
+    "gap": -0.048,
+    "games": 13534
+   },
+   {
+    "augment": 1071,
+    "name": "超狙武器",
+    "rarity": "金",
+    "champion": "Fiora",
+    "champion_name": "菲歐拉",
+    "style": "",
+    "gap": -0.048,
+    "games": 6867
+   },
+   {
+    "augment": 1056,
+    "name": "因心成體",
+    "rarity": "銀",
+    "champion": "Leona",
+    "champion_name": "雷歐娜",
+    "style": "",
+    "gap": -0.047,
+    "games": 6831
+   },
+   {
+    "augment": 1206,
+    "name": "轉換惡作劇",
+    "rarity": "銀",
+    "champion": "Shaco",
+    "champion_name": "薩科",
+    "style": "物攻刺客",
+    "gap": -0.047,
+    "games": 18520
+   },
+   {
+    "augment": 3094,
+    "name": "巫妖思維",
+    "rarity": "銀",
+    "champion": "Taliyah",
+    "champion_name": "塔莉雅",
+    "style": "",
+    "gap": -0.046,
+    "games": 3801
+   },
+   {
+    "augment": 2098,
+    "name": "吃過路兵",
+    "rarity": "稜鏡",
+    "champion": "Shaco",
+    "champion_name": "薩科",
+    "style": "物攻刺客",
+    "gap": -0.046,
+    "games": 4118
+   },
+   {
+    "augment": 2098,
+    "name": "吃過路兵",
+    "rarity": "稜鏡",
+    "champion": "Shaco",
+    "champion_name": "薩科",
+    "style": "法術 W、R",
+    "gap": -0.046,
+    "games": 4118
+   },
+   {
+    "augment": 1373,
+    "name": "縮小引擎",
+    "rarity": "金",
+    "champion": "Karthus",
+    "champion_name": "卡爾瑟斯",
+    "style": "",
+    "gap": -0.045,
+    "games": 97842
+   },
+   {
+    "augment": 1181,
+    "name": "重型打手",
+    "rarity": "銀",
+    "champion": "Singed",
+    "champion_name": "辛吉德",
+    "style": "",
+    "gap": -0.045,
+    "games": 3510
+   },
+   {
+    "augment": 1058,
+    "name": "祕術拳擊",
+    "rarity": "稜鏡",
+    "champion": "Viego",
+    "champion_name": "維爾戈",
+    "style": "",
+    "gap": -0.045,
+    "games": 8299
+   },
+   {
+    "augment": 1225,
+    "name": "雙刀流",
+    "rarity": "稜鏡",
+    "champion": "Teemo",
+    "champion_name": "提摩",
+    "style": "",
+    "gap": -0.045,
+    "games": 8995
+   },
+   {
+    "augment": 2131,
+    "name": "別轉台",
+    "rarity": "銀",
+    "champion": "Pantheon",
+    "champion_name": "潘森",
+    "style": "",
+    "gap": -0.044,
+    "games": 3255
+   },
+   {
+    "augment": 2102,
+    "name": "壓力鍋",
+    "rarity": "金",
+    "champion": "Nasus",
+    "champion_name": "納瑟斯",
+    "style": "",
+    "gap": -0.043,
+    "games": 7544
+   },
+   {
+    "augment": 2131,
+    "name": "別轉台",
+    "rarity": "銀",
+    "champion": "Karthus",
+    "champion_name": "卡爾瑟斯",
+    "style": "",
+    "gap": -0.043,
+    "games": 3614
+   },
+   {
+    "augment": 1080,
+    "name": "毫髮無傷",
+    "rarity": "銀",
+    "champion": "Shaco",
+    "champion_name": "薩科",
+    "style": "物攻刺客",
+    "gap": -0.042,
+    "games": 14806
+   },
+   {
+    "augment": 3094,
+    "name": "巫妖思維",
+    "rarity": "銀",
+    "champion": "Karma",
+    "champion_name": "卡瑪",
+    "style": "",
+    "gap": -0.042,
+    "games": 3499
+   },
+   {
+    "augment": 1225,
+    "name": "雙刀流",
+    "rarity": "稜鏡",
+    "champion": "Jayce",
+    "champion_name": "杰西",
+    "style": "",
+    "gap": -0.042,
+    "games": 6179
+   },
+   {
+    "augment": 1206,
+    "name": "轉換惡作劇",
+    "rarity": "銀",
+    "champion": "Kaisa",
+    "champion_name": "凱莎",
+    "style": "物攻射手",
+    "gap": -0.042,
+    "games": 7510
+   },
+   {
+    "augment": 1225,
+    "name": "雙刀流",
+    "rarity": "稜鏡",
+    "champion": "Lucian",
+    "champion_name": "路西恩",
+    "style": "",
+    "gap": -0.04,
+    "games": 34894
+   },
+   {
+    "augment": 1063,
+    "name": "俠盜恆毅",
+    "rarity": "金",
+    "champion": "Rengar",
+    "champion_name": "雷葛爾",
+    "style": "",
+    "gap": -0.04,
+    "games": 4017
+   },
+   {
+    "augment": 1388,
+    "name": "無限循環",
+    "rarity": "稜鏡",
+    "champion": "Corki",
+    "champion_name": "庫奇",
+    "style": "",
+    "gap": -0.04,
+    "games": 7585
+   },
+   {
+    "augment": 1015,
+    "name": "死亡循環",
+    "rarity": "稜鏡",
+    "champion": "Nasus",
+    "champion_name": "納瑟斯",
+    "style": "",
+    "gap": -0.04,
+    "games": 5456
+   },
+   {
+    "augment": 1056,
+    "name": "因心成體",
+    "rarity": "銀",
+    "champion": "Trundle",
+    "champion_name": "特朗德",
+    "style": "",
+    "gap": -0.04,
+    "games": 4711
+   },
+   {
+    "augment": 3049,
+    "name": "裝甲衝擊",
+    "rarity": "金",
+    "champion": "TahmKench",
+    "champion_name": "貪啃奇",
+    "style": "",
+    "gap": -0.04,
+    "games": 77158
+   },
+   {
+    "augment": 3131,
+    "name": "屹立不退",
+    "rarity": "金",
+    "champion": "Teemo",
+    "champion_name": "提摩",
+    "style": "",
+    "gap": -0.039,
+    "games": 8015
+   },
+   {
+    "augment": 3094,
+    "name": "巫妖思維",
+    "rarity": "銀",
+    "champion": "Syndra",
+    "champion_name": "星朵拉",
+    "style": "",
+    "gap": -0.039,
+    "games": 6826
+   },
+   {
+    "augment": 2131,
+    "name": "別轉台",
+    "rarity": "銀",
+    "champion": "Velkoz",
+    "champion_name": "威寇茲",
+    "style": "",
+    "gap": -0.038,
+    "games": 4636
+   },
+   {
+    "augment": 2098,
+    "name": "吃過路兵",
+    "rarity": "稜鏡",
+    "champion": "MasterYi",
+    "champion_name": "易大師",
+    "style": "",
+    "gap": -0.037,
+    "games": 4802
+   },
+   {
+    "augment": 1056,
+    "name": "因心成體",
+    "rarity": "銀",
+    "champion": "KSante",
+    "champion_name": "卡桑帝",
+    "style": "",
+    "gap": -0.037,
+    "games": 4132
+   },
+   {
+    "augment": 1013,
+    "name": "天界之身",
+    "rarity": "金",
+    "champion": "Warwick",
+    "champion_name": "沃維克",
+    "style": "",
+    "gap": -0.036,
+    "games": 3834
+   },
+   {
+    "augment": 1007,
+    "name": "蠻力重擊",
+    "rarity": "銀",
+    "champion": "Kaisa",
+    "champion_name": "凱莎",
+    "style": "物攻射手",
+    "gap": -0.036,
+    "games": 14631
+   },
+   {
+    "augment": 3094,
+    "name": "巫妖思維",
+    "rarity": "銀",
+    "champion": "Hwei",
+    "champion_name": "赫威",
+    "style": "",
+    "gap": -0.036,
+    "games": 4577
+   },
+   {
+    "augment": 1080,
+    "name": "毫髮無傷",
+    "rarity": "銀",
+    "champion": "Kaisa",
+    "champion_name": "凱莎",
+    "style": "物攻射手",
+    "gap": -0.036,
+    "games": 5616
+   },
+   {
+    "augment": 1045,
+    "name": "煉獄使者",
+    "rarity": "稜鏡",
+    "champion": "Syndra",
+    "champion_name": "星朵拉",
+    "style": "",
+    "gap": -0.036,
+    "games": 10612
+   },
+   {
+    "augment": 1388,
+    "name": "無限循環",
+    "rarity": "稜鏡",
+    "champion": "Ryze",
+    "champion_name": "雷茲",
+    "style": "",
+    "gap": -0.035,
+    "games": 22646
+   },
+   {
+    "augment": 1029,
+    "name": "幻影武器",
+    "rarity": "金",
+    "champion": "Sylas",
+    "champion_name": "賽勒斯",
+    "style": "",
+    "gap": -0.035,
+    "games": 28179
+   },
+   {
+    "augment": 1007,
+    "name": "蠻力重擊",
+    "rarity": "銀",
+    "champion": "Shaco",
+    "champion_name": "薩科",
+    "style": "物攻刺客",
+    "gap": -0.035,
+    "games": 30829
+   },
+   {
+    "augment": 3094,
+    "name": "巫妖思維",
+    "rarity": "銀",
+    "champion": "Leblanc",
+    "champion_name": "勒布朗",
+    "style": "",
+    "gap": -0.034,
+    "games": 4706
+   },
+   {
+    "augment": 1063,
+    "name": "俠盜恆毅",
+    "rarity": "金",
+    "champion": "Ekko",
+    "champion_name": "艾克",
+    "style": "",
+    "gap": -0.034,
+    "games": 3692
+   },
+   {
+    "augment": 1225,
+    "name": "雙刀流",
+    "rarity": "稜鏡",
+    "champion": "Yasuo",
+    "champion_name": "犽宿",
+    "style": "",
+    "gap": -0.033,
+    "games": 41106
+   },
+   {
+    "augment": 1225,
+    "name": "雙刀流",
+    "rarity": "稜鏡",
+    "champion": "Samira",
+    "champion_name": "煞蜜拉",
+    "style": "",
+    "gap": -0.033,
+    "games": 3567
+   },
+   {
+    "augment": 3131,
+    "name": "屹立不退",
+    "rarity": "金",
+    "champion": "Shaco",
+    "champion_name": "薩科",
+    "style": "物攻刺客",
+    "gap": -0.033,
+    "games": 15064
+   },
+   {
+    "augment": 1056,
+    "name": "因心成體",
+    "rarity": "銀",
+    "champion": "Rell",
+    "champion_name": "銳兒",
+    "style": "",
+    "gap": -0.032,
+    "games": 4664
+   },
+   {
+    "augment": 1225,
+    "name": "雙刀流",
+    "rarity": "稜鏡",
+    "champion": "Ezreal",
+    "champion_name": "伊澤瑞爾",
+    "style": "",
+    "gap": -0.032,
+    "games": 13030
+   },
+   {
+    "augment": 2132,
+    "name": "術士果汁盒",
+    "rarity": "金",
+    "champion": "Swain",
+    "champion_name": "斯溫",
+    "style": "",
+    "gap": -0.031,
+    "games": 57058
+   },
+   {
+    "augment": 1206,
+    "name": "轉換惡作劇",
+    "rarity": "銀",
+    "champion": "XinZhao",
+    "champion_name": "趙信",
+    "style": "",
+    "gap": -0.031,
+    "games": 8991
+   },
+   {
+    "augment": 1015,
+    "name": "死亡循環",
+    "rarity": "稜鏡",
+    "champion": "Volibear",
+    "champion_name": "弗力貝爾",
+    "style": "",
+    "gap": -0.031,
+    "games": 6813
+   },
+   {
+    "augment": 3094,
+    "name": "巫妖思維",
+    "rarity": "銀",
+    "champion": "Morgana",
+    "champion_name": "魔甘娜",
+    "style": "",
+    "gap": -0.031,
+    "games": 11691
+   },
+   {
+    "augment": 3094,
+    "name": "巫妖思維",
+    "rarity": "銀",
+    "champion": "Xerath",
+    "champion_name": "齊勒斯",
+    "style": "",
+    "gap": -0.031,
+    "games": 7904
+   },
+   {
+    "augment": 1225,
+    "name": "雙刀流",
+    "rarity": "稜鏡",
+    "champion": "Yone",
+    "champion_name": "犽凝",
+    "style": "",
+    "gap": -0.031,
+    "games": 44652
+   },
+   {
+    "augment": 1045,
+    "name": "煉獄使者",
+    "rarity": "稜鏡",
+    "champion": "Smolder",
+    "champion_name": "史矛德",
+    "style": "",
+    "gap": -0.03,
+    "games": 11234
+   },
+   {
+    "augment": 1015,
+    "name": "死亡循環",
+    "rarity": "稜鏡",
+    "champion": "Fiora",
+    "champion_name": "菲歐拉",
+    "style": "",
+    "gap": -0.03,
+    "games": 3014
+   },
+   {
+    "augment": 1225,
+    "name": "雙刀流",
+    "rarity": "稜鏡",
+    "champion": "Graves",
+    "champion_name": "葛雷夫",
+    "style": "",
+    "gap": -0.029,
+    "games": 13820
+   },
+   {
+    "augment": 1225,
+    "name": "雙刀流",
+    "rarity": "稜鏡",
+    "champion": "Udyr",
+    "champion_name": "烏迪爾",
+    "style": "物攻 Q",
+    "gap": -0.029,
+    "games": 3022
+   },
+   {
+    "augment": 1225,
+    "name": "雙刀流",
+    "rarity": "稜鏡",
+    "champion": "Udyr",
+    "champion_name": "烏迪爾",
+    "style": "法術 R",
+    "gap": -0.029,
+    "games": 3022
+   },
+   {
+    "augment": 3085,
+    "name": "活力流轉",
+    "rarity": "銀",
+    "champion": "MissFortune",
+    "champion_name": "好運姐",
+    "style": "物攻射手",
+    "gap": -0.029,
+    "games": 13025
+   },
+   {
+    "augment": 3048,
+    "name": "彈跳蜜蜂",
+    "rarity": "稜鏡",
+    "champion": "Gnar",
+    "champion_name": "吶兒",
+    "style": "",
+    "gap": -0.028,
+    "games": 4867
+   },
+   {
+    "augment": 1225,
+    "name": "雙刀流",
+    "rarity": "稜鏡",
+    "champion": "Corki",
+    "champion_name": "庫奇",
+    "style": "",
+    "gap": -0.027,
+    "games": 20736
+   },
+   {
+    "augment": 1045,
+    "name": "煉獄使者",
+    "rarity": "稜鏡",
+    "champion": "Nidalee",
+    "champion_name": "奈德麗",
+    "style": "",
+    "gap": -0.026,
+    "games": 11792
+   },
+   {
+    "augment": 1225,
+    "name": "雙刀流",
+    "rarity": "稜鏡",
+    "champion": "Fiora",
+    "champion_name": "菲歐拉",
+    "style": "",
+    "gap": -0.026,
+    "games": 4735
+   },
+   {
+    "augment": 1045,
+    "name": "煉獄使者",
+    "rarity": "稜鏡",
+    "champion": "Orianna",
+    "champion_name": "奧莉安娜",
+    "style": "",
+    "gap": -0.026,
+    "games": 8049
+   },
+   {
+    "augment": 1204,
+    "name": "堆層暴龍",
+    "rarity": "銀",
+    "champion": "Sion",
+    "champion_name": "賽恩",
+    "style": "",
+    "gap": -0.025,
+    "games": 8199
+   },
+   {
+    "augment": 1058,
+    "name": "祕術拳擊",
+    "rarity": "稜鏡",
+    "champion": "Udyr",
+    "champion_name": "烏迪爾",
+    "style": "物攻 Q",
+    "gap": -0.025,
+    "games": 4059
+   },
+   {
+    "augment": 3086,
+    "name": "蜜蜂來襲！！！",
+    "rarity": "金",
+    "champion": "Sylas",
+    "champion_name": "賽勒斯",
+    "style": "",
+    "gap": -0.024,
+    "games": 22695
+   },
+   {
+    "augment": 1041,
+    "name": "巨人",
+    "rarity": "稜鏡",
+    "champion": "Singed",
+    "champion_name": "辛吉德",
+    "style": "",
+    "gap": -0.024,
+    "games": 21254
+   },
+   {
+    "augment": 1063,
+    "name": "俠盜恆毅",
+    "rarity": "金",
+    "champion": "Galio",
+    "champion_name": "加里歐",
+    "style": "",
+    "gap": -0.024,
+    "games": 3837
+   },
+   {
+    "augment": 1315,
+    "name": "又快又穩",
+    "rarity": "銀",
+    "champion": "Poppy",
+    "champion_name": "波比",
+    "style": "",
+    "gap": -0.023,
+    "games": 3464
+   },
+   {
+    "augment": 1004,
+    "name": "基本功夫",
+    "rarity": "稜鏡",
+    "champion": "Malzahar",
+    "champion_name": "馬爾札哈",
+    "style": "",
+    "gap": -0.021,
+    "games": 3425
+   },
+   {
+    "augment": 1315,
+    "name": "又快又穩",
+    "rarity": "銀",
+    "champion": "Galio",
+    "champion_name": "加里歐",
+    "style": "",
+    "gap": -0.021,
+    "games": 4781
+   },
+   {
+    "augment": 1134,
+    "name": "拔劍吧",
+    "rarity": "稜鏡",
+    "champion": "KogMaw",
+    "champion_name": "寇格魔",
+    "style": "物攻射手",
+    "gap": -0.019,
+    "games": 3460
+   },
+   {
+    "augment": 1063,
+    "name": "俠盜恆毅",
+    "rarity": "金",
+    "champion": "Akali",
+    "champion_name": "阿卡莉",
+    "style": "",
+    "gap": -0.018,
+    "games": 3288
+   },
+   {
+    "augment": 1204,
+    "name": "堆層暴龍",
+    "rarity": "銀",
+    "champion": "Belveth",
+    "champion_name": "貝爾薇斯",
+    "style": "",
+    "gap": -0.017,
+    "games": 15357
+   },
+   {
+    "augment": 1004,
+    "name": "基本功夫",
+    "rarity": "稜鏡",
+    "champion": "Corki",
+    "champion_name": "庫奇",
+    "style": "",
+    "gap": -0.017,
+    "games": 10160
+   },
+   {
+    "augment": 3131,
+    "name": "屹立不退",
+    "rarity": "金",
+    "champion": "Kaisa",
+    "champion_name": "凱莎",
+    "style": "物攻射手",
+    "gap": -0.015,
+    "games": 20224
+   },
+   {
+    "augment": 3049,
+    "name": "裝甲衝擊",
+    "rarity": "金",
+    "champion": "Sett",
+    "champion_name": "賽特",
+    "style": "",
+    "gap": -0.012,
+    "games": 51628
+   },
+   {
+    "augment": 3131,
+    "name": "屹立不退",
+    "rarity": "金",
+    "champion": "Udyr",
+    "champion_name": "烏迪爾",
+    "style": "物攻 Q",
+    "gap": -0.011,
+    "games": 7942
+   },
+   {
+    "augment": 3051,
+    "name": "藍色屏障",
+    "rarity": "銀",
+    "champion": "MissFortune",
+    "champion_name": "好運姐",
+    "style": "法術 E",
+    "gap": -0.007,
+    "games": 6538
+   },
+   {
+    "augment": 3051,
+    "name": "藍色屏障",
+    "rarity": "銀",
+    "champion": "Lux",
+    "champion_name": "拉克絲",
+    "style": "",
+    "gap": -0.007,
+    "games": 6465
+   },
+   {
+    "augment": 1134,
+    "name": "拔劍吧",
+    "rarity": "稜鏡",
+    "champion": "Kalista",
+    "champion_name": "克黎思妲",
+    "style": "",
+    "gap": -0.007,
+    "games": 4935
+   },
+   {
+    "augment": 1004,
+    "name": "基本功夫",
+    "rarity": "稜鏡",
+    "champion": "Xerath",
+    "champion_name": "齊勒斯",
+    "style": "",
+    "gap": -0.005,
+    "games": 13086
+   },
+   {
+    "augment": 1134,
+    "name": "拔劍吧",
+    "rarity": "稜鏡",
+    "champion": "Kaisa",
+    "champion_name": "凱莎",
+    "style": "物攻射手",
+    "gap": -0.004,
+    "games": 15109
+   },
+   {
+    "augment": 3078,
+    "name": "轟鳴低音",
+    "rarity": "金",
+    "champion": "Shaco",
+    "champion_name": "薩科",
+    "style": "物攻刺客",
+    "gap": -0.0,
+    "games": 45432
+   },
+   {
+    "augment": 3078,
+    "name": "轟鳴低音",
+    "rarity": "金",
+    "champion": "Shaco",
+    "champion_name": "薩科",
+    "style": "法術 W、R",
+    "gap": -0.0,
+    "games": 45432
+   },
+   {
+    "augment": 3078,
+    "name": "轟鳴低音",
+    "rarity": "金",
+    "champion": "Alistar",
+    "champion_name": "亞歷斯塔",
+    "style": "",
+    "gap": -0.0,
+    "games": 6717
+   },
+   {
+    "augment": 1134,
+    "name": "拔劍吧",
+    "rarity": "稜鏡",
+    "champion": "Akshan",
+    "champion_name": "埃可尚",
+    "style": "",
+    "gap": 0.001,
+    "games": 8724
+   },
+   {
+    "augment": 3078,
+    "name": "轟鳴低音",
+    "rarity": "金",
+    "champion": "Gnar",
+    "champion_name": "吶兒",
+    "style": "",
+    "gap": 0.002,
+    "games": 21017
+   },
+   {
+    "augment": 3078,
+    "name": "轟鳴低音",
+    "rarity": "金",
+    "champion": "Qiyana",
+    "champion_name": "姬亞娜",
+    "style": "",
+    "gap": 0.002,
+    "games": 14995
+   },
+   {
+    "augment": 3078,
+    "name": "轟鳴低音",
+    "rarity": "金",
+    "champion": "Jayce",
+    "champion_name": "杰西",
+    "style": "",
+    "gap": 0.005,
+    "games": 37305
+   },
+   {
+    "augment": 1134,
+    "name": "拔劍吧",
+    "rarity": "稜鏡",
+    "champion": "Sivir",
+    "champion_name": "希維爾",
+    "style": "",
+    "gap": 0.005,
+    "games": 11308
+   },
+   {
+    "augment": 3048,
+    "name": "彈跳蜜蜂",
+    "rarity": "稜鏡",
+    "champion": "MasterYi",
+    "champion_name": "易大師",
+    "style": "",
+    "gap": 0.007,
+    "games": 6044
+   },
+   {
+    "augment": 1134,
+    "name": "拔劍吧",
+    "rarity": "稜鏡",
+    "champion": "Kindred",
+    "champion_name": "鏡爪",
+    "style": "",
+    "gap": 0.008,
+    "games": 9270
+   },
+   {
+    "augment": 3048,
+    "name": "彈跳蜜蜂",
+    "rarity": "稜鏡",
+    "champion": "Volibear",
+    "champion_name": "弗力貝爾",
+    "style": "",
+    "gap": 0.01,
+    "games": 5622
+   },
+   {
+    "augment": 3048,
+    "name": "彈跳蜜蜂",
+    "rarity": "稜鏡",
+    "champion": "Pantheon",
+    "champion_name": "潘森",
+    "style": "",
+    "gap": 0.013,
+    "games": 3542
+   },
+   {
+    "augment": 3048,
+    "name": "彈跳蜜蜂",
+    "rarity": "稜鏡",
+    "champion": "XinZhao",
+    "champion_name": "趙信",
+    "style": "",
+    "gap": 0.015,
+    "games": 7208
+   },
+   {
+    "augment": 1134,
+    "name": "拔劍吧",
+    "rarity": "稜鏡",
+    "champion": "Smolder",
+    "champion_name": "史矛德",
+    "style": "",
+    "gap": 0.017,
+    "games": 15407
+   },
+   {
+    "augment": 1134,
+    "name": "拔劍吧",
+    "rarity": "稜鏡",
+    "champion": "Jinx",
+    "champion_name": "吉茵珂絲",
+    "style": "",
+    "gap": 0.017,
+    "games": 17962
+   },
+   {
+    "augment": 3048,
+    "name": "彈跳蜜蜂",
+    "rarity": "稜鏡",
+    "champion": "JarvanIV",
+    "champion_name": "嘉文四世",
+    "style": "",
+    "gap": 0.019,
+    "games": 5629
+   },
+   {
+    "augment": 1134,
+    "name": "拔劍吧",
+    "rarity": "稜鏡",
+    "champion": "Senna",
+    "champion_name": "姍娜",
+    "style": "",
+    "gap": 0.019,
+    "games": 12884
+   },
+   {
+    "augment": 1134,
+    "name": "拔劍吧",
+    "rarity": "稜鏡",
+    "champion": "Vayne",
+    "champion_name": "汎",
+    "style": "",
+    "gap": 0.023,
+    "games": 22898
+   },
+   {
+    "augment": 1134,
+    "name": "拔劍吧",
+    "rarity": "稜鏡",
+    "champion": "Zeri",
+    "champion_name": "婕莉",
+    "style": "",
+    "gap": 0.033,
+    "games": 5688
+   },
+   {
+    "augment": 1134,
+    "name": "拔劍吧",
+    "rarity": "稜鏡",
+    "champion": "Quinn",
+    "champion_name": "葵恩",
+    "style": "",
+    "gap": 0.038,
+    "games": 5935
+   }
+  ]
+ },
+ "items": {
+  "patch": "16.22",
+  "popular": [
+   {
+    "champion_name": "弗拉迪米爾",
+    "item": "峽谷製造者",
+    "pick": 0.694,
+    "gap": -0.002,
+    "games": 279434
+   },
+   {
+    "champion_name": "弗力貝爾",
+    "item": "暮夜與黎明",
+    "pick": 0.586,
+    "gap": 0.016,
+    "games": 251967
+   },
+   {
+    "champion_name": "弗拉迪米爾",
+    "item": "死亡之帽",
+    "pick": 0.555,
+    "gap": 0.023,
+    "games": 223699
+   },
+   {
+    "champion_name": "犽凝",
+    "item": "死亡之舞",
+    "pick": 0.553,
+    "gap": 0.018,
+    "games": 362616
+   },
+   {
+    "champion_name": "弗力貝爾",
+    "item": "史提克彈簧刀",
+    "pick": 0.55,
+    "gap": 0.02,
+    "games": 236248
+   },
+   {
+    "champion_name": "索拉卡",
+    "item": "好戰者鎧甲",
+    "pick": 0.526,
+    "gap": -0.031,
+    "games": 121525
+   },
+   {
+    "champion_name": "易大師",
+    "item": "殞落王者之劍",
+    "pick": 0.515,
+    "gap": -0.003,
+    "games": 336936
+   },
+   {
+    "champion_name": "薩科",
+    "item": "蒐集者",
+    "pick": 0.498,
+    "gap": -0.051,
+    "games": 285272
+   },
+   {
+    "champion_name": "希瓦娜",
+    "item": "暮夜與黎明",
+    "pick": 0.493,
+    "gap": -0.002,
+    "games": 115604
+   },
+   {
+    "champion_name": "關",
+    "item": "黯影之炎",
+    "pick": 0.493,
+    "gap": 0.008,
+    "games": 139617
+   },
+   {
+    "champion_name": "蓋倫",
+    "item": "幻影之舞",
+    "pick": 0.49,
+    "gap": 0.007,
+    "games": 206155
+   },
+   {
+    "champion_name": "犽宿",
+    "item": "死亡之舞",
+    "pick": 0.477,
+    "gap": 0.023,
+    "games": 338364
+   },
+   {
+    "champion_name": "維爾戈",
+    "item": "死亡之舞",
+    "pick": 0.466,
+    "gap": 0.017,
+    "games": 155614
+   },
+   {
+    "champion_name": "斯溫",
+    "item": "峽谷製造者",
+    "pick": 0.456,
+    "gap": -0.015,
+    "games": 234095
+   },
+   {
+    "champion_name": "納瑟斯",
+    "item": "水星之靴",
+    "pick": 0.437,
+    "gap": 0.001,
+    "games": 106084
+   },
+   {
+    "champion_name": "賈克斯",
+    "item": "暮夜與黎明",
+    "pick": 0.43,
+    "gap": 0.015,
+    "games": 173092
+   },
+   {
+    "champion_name": "薩科",
+    "item": "無盡之刃",
+    "pick": 0.424,
+    "gap": -0.039,
+    "games": 243334
+   },
+   {
+    "champion_name": "姍娜",
+    "item": "史提克彈簧刀",
+    "pick": 0.424,
+    "gap": 0.02,
+    "games": 251044
+   },
+   {
+    "champion_name": "蓋倫",
+    "item": "無盡之刃",
+    "pick": 0.423,
+    "gap": 0.008,
+    "games": 177711
+   },
+   {
+    "champion_name": "路西恩",
+    "item": "公理弧刃",
+    "pick": 0.41,
+    "gap": 0.051,
+    "games": 360283
+   },
+   {
+    "champion_name": "維爾戈",
+    "item": "水星之靴",
+    "pick": 0.41,
+    "gap": -0.018,
+    "games": 79275
+   },
+   {
+    "champion_name": "弗拉迪米爾",
+    "item": "星河馳騁",
+    "pick": 0.398,
+    "gap": -0.005,
+    "games": 160422
+   },
+   {
+    "champion_name": "雷茲",
+    "item": "凜冬將至",
+    "pick": 0.392,
+    "gap": 0.018,
+    "games": 267585
+   },
+   {
+    "champion_name": "斯溫",
+    "item": "瑞萊的冰晶節杖",
+    "pick": 0.388,
+    "gap": -0.018,
+    "games": 199249
+   },
+   {
+    "champion_name": "斯溫",
+    "item": "時光之杖",
+    "pick": 0.383,
+    "gap": -0.02,
+    "games": 196480
+   },
+   {
+    "champion_name": "蓋倫",
+    "item": "狂戰士護脛",
+    "pick": 0.381,
+    "gap": 0.008,
+    "games": 113648
+   },
+   {
+    "champion_name": "弗拉迪米爾",
+    "item": "黯影之炎",
+    "pick": 0.372,
+    "gap": 0.015,
+    "games": 149847
+   },
+   {
+    "champion_name": "希瓦娜",
+    "item": "峽谷製造者",
+    "pick": 0.367,
+    "gap": 0.004,
+    "games": 85989
+   },
+   {
+    "champion_name": "埃可尚",
+    "item": "殞落王者之劍",
+    "pick": 0.364,
+    "gap": 0.008,
+    "games": 65316
+   },
+   {
+    "champion_name": "薩科",
+    "item": "傲慢",
+    "pick": 0.357,
+    "gap": -0.048,
+    "games": 204891
+   },
+   {
+    "champion_name": "夜曲",
+    "item": "水星之靴",
+    "pick": 0.342,
+    "gap": -0.022,
+    "games": 41592
+   },
+   {
+    "champion_name": "菲艾",
+    "item": "無盡之刃",
+    "pick": 0.328,
+    "gap": 0.011,
+    "games": 71311
+   },
+   {
+    "champion_name": "煞蜜拉",
+    "item": "水星之靴",
+    "pick": 0.324,
+    "gap": -0.018,
+    "games": 56605
+   },
+   {
+    "champion_name": "希瓦娜",
+    "item": "黎安卓的折磨",
+    "pick": 0.323,
+    "gap": -0.004,
+    "games": 75680
+   },
+   {
+    "champion_name": "夜曲",
+    "item": "實驗型海克斯板甲",
+    "pick": 0.319,
+    "gap": -0.003,
+    "games": 90626
+   },
+   {
+    "champion_name": "辛吉德",
+    "item": "水星之靴",
+    "pick": 0.318,
+    "gap": -0.01,
+    "games": 78216
+   },
+   {
+    "champion_name": "納瑟斯",
+    "item": "三相之力",
+    "pick": 0.318,
+    "gap": 0.01,
+    "games": 117924
+   },
+   {
+    "champion_name": "姍娜",
+    "item": "殞落王者之劍",
+    "pick": 0.316,
+    "gap": -0.002,
+    "games": 186816
+   },
+   {
+    "champion_name": "納瑟斯",
+    "item": "振奮盔甲",
+    "pick": 0.308,
+    "gap": -0.001,
+    "games": 114381
+   },
+   {
+    "champion_name": "艾希",
+    "item": "公理弧刃",
+    "pick": 0.306,
+    "gap": -0.013,
+    "games": 277347
+   },
+   {
+    "champion_name": "弗拉迪米爾",
+    "item": "法師之靴",
+    "pick": 0.303,
+    "gap": 0.006,
+    "games": 74273
+   },
+   {
+    "champion_name": "弗拉迪米爾",
+    "item": "愛歐尼亞之靴",
+    "pick": 0.299,
+    "gap": -0.008,
+    "games": 73437
+   },
+   {
+    "champion_name": "納瑟斯",
+    "item": "雄心之鋼",
+    "pick": 0.299,
+    "gap": -0.029,
+    "games": 110854
+   },
+   {
+    "champion_name": "薩科",
+    "item": "電流旋風劍",
+    "pick": 0.297,
+    "gap": -0.035,
+    "games": 170019
+   },
+   {
+    "champion_name": "貪啃奇",
+    "item": "峽谷製造者",
+    "pick": 0.296,
+    "gap": 0.031,
+    "games": 252266
+   },
+   {
+    "champion_name": "易大師",
+    "item": "死亡之舞",
+    "pick": 0.295,
+    "gap": 0.03,
+    "games": 193334
+   },
+   {
+    "champion_name": "賽勒斯",
+    "item": "水星之靴",
+    "pick": 0.289,
+    "gap": -0.018,
+    "games": 91264
+   },
+   {
+    "champion_name": "關",
+    "item": "水星之靴",
+    "pick": 0.275,
+    "gap": -0.018,
+    "games": 52304
+   },
+   {
+    "champion_name": "凱莎",
+    "item": "納什之牙",
+    "pick": 0.273,
+    "gap": -0.021,
+    "games": 239552
+   },
+   {
+    "champion_name": "辛吉德",
+    "item": "雄心之鋼",
+    "pick": 0.272,
+    "gap": -0.043,
+    "games": 87687
+   },
+   {
+    "champion_name": "埃爾文",
+    "item": "惡意",
+    "pick": 0.271,
+    "gap": -0.05,
+    "games": 12908
+   },
+   {
+    "champion_name": "提摩",
+    "item": "史提克彈簧刀",
+    "pick": 0.27,
+    "gap": 0.021,
+    "games": 234079
+   },
+   {
+    "champion_name": "葛雷夫",
+    "item": "水星之靴",
+    "pick": 0.267,
+    "gap": -0.018,
+    "games": 107237
+   },
+   {
+    "champion_name": "史加納",
+    "item": "黎安卓的折磨",
+    "pick": 0.266,
+    "gap": 0.015,
+    "games": 36193
+   },
+   {
+    "champion_name": "希瓦娜",
+    "item": "黯影之炎",
+    "pick": 0.266,
+    "gap": -0.015,
+    "games": 62304
+   },
+   {
+    "champion_name": "貪啃奇",
+    "item": "暮夜與黎明",
+    "pick": 0.263,
+    "gap": 0.026,
+    "games": 224204
+   },
+   {
+    "champion_name": "薩科",
+    "item": "多明尼克的問候",
+    "pick": 0.261,
+    "gap": -0.023,
+    "games": 149464
+   }
+  ],
+  "strong": [
+   {
+    "champion_name": "亞菲利歐",
+    "item": "死亡之舞",
+    "pick": 0.035,
+    "gap": 0.102,
+    "games": 9911
+   },
+   {
+    "champion_name": "露璐",
+    "item": "騎士誓願",
+    "pick": 0.042,
+    "gap": 0.092,
+    "games": 6294
+   },
+   {
+    "champion_name": "庫奇",
+    "item": "死亡之舞",
+    "pick": 0.067,
+    "gap": 0.091,
+    "games": 30408
+   },
+   {
+    "champion_name": "姍娜",
+    "item": "月之石再生裝置",
+    "pick": 0.032,
+    "gap": 0.087,
+    "games": 18631
+   },
+   {
+    "champion_name": "達瑞文",
+    "item": "死亡之舞",
+    "pick": 0.035,
+    "gap": 0.075,
+    "games": 14053
+   },
+   {
+    "champion_name": "厄薩斯",
+    "item": "無盡絕望",
+    "pick": 0.03,
+    "gap": 0.053,
+    "games": 12385
+   },
+   {
+    "champion_name": "納瑟斯",
+    "item": "千變萬化之賈克修",
+    "pick": 0.115,
+    "gap": 0.052,
+    "games": 42704
+   },
+   {
+    "champion_name": "極靈",
+    "item": "凜冬將至",
+    "pick": 0.045,
+    "gap": 0.05,
+    "games": 10855
+   },
+   {
+    "champion_name": "達瑞文",
+    "item": "公理弧刃",
+    "pick": 0.196,
+    "gap": 0.049,
+    "games": 79331
+   },
+   {
+    "champion_name": "厄薩斯",
+    "item": "荊棘之甲",
+    "pick": 0.037,
+    "gap": 0.043,
+    "games": 15311
+   },
+   {
+    "champion_name": "特朗德",
+    "item": "狂戰士護脛",
+    "pick": 0.035,
+    "gap": 0.036,
+    "games": 11773
+   },
+   {
+    "champion_name": "凱爾",
+    "item": "黯影之炎",
+    "pick": 0.233,
+    "gap": 0.035,
+    "games": 90901
+   }
+  ]
+ }
+}

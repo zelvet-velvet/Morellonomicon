@@ -27,7 +27,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # python3 -I does not add the script folder
 import vault_paths  # noqa: E402
-from augment_tiers import Champ, frontmatter, latest_cache  # noqa: E402
+from augment_tiers import Champ, frontmatter, latest_cache, save_questions  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "_data" / "item-builds.json"
@@ -684,6 +684,10 @@ def write_questions(questions, meta):
     for item, qs in sorted(by_item.items(), key=lambda kv: -len(kv[1])):
         out.append(f"- **[[{item}]]** ({len(qs)}): " + "、".join(f"{q[1]} {pct(q[5])}" for q in qs[:25]) + (" …" if len(qs) > 25 else ""))
     OUT_QUESTIONS.write_text("\n".join(out) + "\n", encoding="utf-8")
+
+    def row(q):
+        return {"champion_name": q[1], "item": q[3], "pick": round(q[7], 3), "gap": round(q[5], 3), "games": q[6]}
+    save_questions("items", {"patch": meta["version"], "popular": [row(q) for q in popular], "strong": [row(q) for q in strong]})
 
 
 if __name__ == "__main__":

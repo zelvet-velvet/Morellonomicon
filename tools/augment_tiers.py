@@ -29,6 +29,7 @@ CACHE = ROOT / ".cache" / "resg"
 OUT_TIERS = ROOT / "_data" / "augment-tiers.json"
 OUT_REVIEW = ROOT / "Review" / "Augment Tiers.md"
 OUT_QUESTIONS = ROOT / "Review" / "Augment Questions.md"
+OUT_QUESTIONS_JSON = ROOT / "_data" / "questions.json"   # the questions as data, for tools/reasoning_todo.py (shared with build_tiers.py)
 
 PRIOR_GAMES = 1500     # games the prior counts as: an augment seen in fewer games on a champion leans on its result everywhere
 FIT_PRIOR = 0.008      # each fit point moves the prior 0.8 percentage points
@@ -902,6 +903,21 @@ def ask(questions, augs, meta):
     for q in weak:
         out.append(f"- {q[1].label} · [[{q[2]['name']}]]: {q[4]} — {q[5] * 100:+.1f} in {q[6]} games")
     OUT_QUESTIONS.write_text("\n".join(out) + "\n", encoding="utf-8")
+
+    def row(q):
+        return {"augment": q[2]["id"], "name": q[2]["name"], "rarity": q[2]["rarity"], "champion": q[1].id, "champion_name": q[1].name,
+                "style": "" if q[1].style == "main" else q[1].style_name, "gap": round(q[5], 3), "games": q[6]}
+    save_questions("augments", {"patch": meta["version"], "strong": [row(q) for q in strong], "weak": [row(q) for q in weak]})
+
+
+def save_questions(part, data):
+    """One part (augments, items) of _data/questions.json; the other script writes the other part."""
+    try:
+        whole = json.loads(OUT_QUESTIONS_JSON.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        whole = {}
+    whole[part] = data
+    OUT_QUESTIONS_JSON.write_text(json.dumps(whole, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
