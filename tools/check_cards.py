@@ -17,8 +17,11 @@ TIP = re.compile(r"^([\s\S]*?)\*\*([^*\n]{1,8})[:：]\*\*\s*([\s\S]+)$")
 MARKUP = re.compile(r"\*\*|`|\[\[|\]\]")
 
 
+LINK = re.compile(r"\[\[(?:[^\]|]*\|)?([^\]]*)\]\]")   # a link shows its label: [[傷害類型#護甲和魔抗|護甲]] counts as 護甲
+
+
 def width(text: str) -> float:
-    plain = MARKUP.sub("", text).strip()
+    plain = MARKUP.sub("", LINK.sub(r"\1", text)).strip()
     return sum(0.5 if ord(ch) < 128 else 1 for ch in plain)
 
 

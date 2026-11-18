@@ -41,7 +41,7 @@ export function notePage(ctx: PageCtx): PageOut {
     const el = h(null, "div", "mn-page");
     if (!(file instanceof TFile)) { empty(el, { icon: "file-x", title: "Note not found" }); return { title: "", el }; }
     // a guide topic written as cards (`## ` sections) is a swipeable deck; others (the glossary) are read as a note
-    if (ctx.plugin.store.guideNotes().some((n) => n.file.path === path && n.layout === "deck")) return deckPage(ctx, file);
+    if (ctx.plugin.store.guideNotes().some((n) => n.file.path === path && n.layout === "deck")) return deckPage(ctx, file, ctx.frame.params?.card ? String(ctx.frame.params.card) : undefined);
     if (file.basename === GLOSSARY) return glossaryPage(ctx, file);   // the glossary: a grouped list with search
     h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
     const body = h(el, "div", "mn-note markdown-rendered");

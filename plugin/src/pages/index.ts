@@ -26,7 +26,7 @@ export interface PageCtx {
     openChampion(id: string, sub?: SubTab): void;
     openAugment(id: number, champ?: string): void;   // champ: opened from that champion (its page then says how it fits)
     openItem(id: number): void;
-    openNote(path: string): void;  // a note, drawn inside the app
+    openNote(path: string, card?: string): void;  // a note, drawn inside the app; card: a Handbook topic opens at the card with that title
 }
 export type PageRender = (ctx: PageCtx) => PageOut;
 

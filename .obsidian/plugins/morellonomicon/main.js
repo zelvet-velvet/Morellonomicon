@@ -3079,7 +3079,7 @@ var STEP_Y = 6;
 var SETTLE_MS = 280;
 function cardPile(pager, sec, o) {
   const count2 = sec.length;
-  let cur = 0;
+  let cur = Math.max(0, Math.min(count2 - 1, o.start ?? 0));
   const right = [];
   const pose = (el, u, toRight = false) => {
     const w = pager.clientWidth;
@@ -3250,6 +3250,22 @@ function cardPile(pager, sec, o) {
 }
 
 // src/pages/deck.ts
+function follow(ctx, box, from) {
+  box.addEventListener("click", (e) => {
+    const a = e.target.closest("a.internal-link");
+    if (!a) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const [path, card] = (a.dataset.href ?? a.getAttribute("href") ?? "").split("#");
+    const f = ctx.app.metadataCache.getFirstLinkpathDest(path, from);
+    if (!f) return;
+    const fm = ctx.app.metadataCache.getFileCache(f)?.frontmatter ?? {};
+    if (fm.type === "champion" && fm.id) ctx.openChampion(String(fm.id));
+    else if (fm.type === "item" && fm.id) ctx.openItem(Number(fm.id));
+    else if (fm.type === "augment" && fm.id) ctx.openAugment(Number(fm.id));
+    else ctx.openNote(f.path, card || void 0);
+  });
+}
 var GLOSSARY = "\u540D\u8A5E\u8868";
 var STRIP = 6;
 var WAIT_CARDS = 3;
@@ -3299,7 +3315,7 @@ var hashStr = (s) => {
   return x >>> 0;
 };
 var day = () => String(Math.floor(Date.now() / 864e5));
-function deckPage(ctx, file) {
+function deckPage(ctx, file, card) {
   const store = ctx.plugin.store;
   const el = h(null, "div", "mn-page mn-deckpage is-full");
   const wrap = h(el, "div", "mn-deckwrap");
@@ -3334,10 +3350,11 @@ function deckPage(ctx, file) {
     const at = guide.findIndex((n) => n.file.path === file.path);
     const next = guide[at + 1];
     const sec = [];
+    const start = card ? Math.max(0, slides.findIndex((s) => s.title === card)) : 0;
     slides.forEach((s, i) => {
       const section2 = h(pager, "section", "mn-slide");
-      const card = h(section2, "div", "mn-sl-card");
-      const face = h(card, "div", "mn-sl-face");
+      const card2 = h(section2, "div", "mn-sl-card");
+      const face = h(card2, "div", "mn-sl-face");
       visual(ctx, h(face, "div", "mn-sl-vis"), s);
       const words = h(face, "div", "mn-sl-words");
       const measure2 = () => face.style.setProperty("--mn-words-h", `${words.offsetHeight}px`);
@@ -3350,6 +3367,7 @@ function deckPage(ctx, file) {
       const main = tip2 ? tip2[1].trim() : s.text;
       const body = h(words, "div", "mn-sl-x markdown-rendered");
       if (main) void import_obsidian5.MarkdownRenderer.render(ctx.app, main, body, file.path, ctx.component);
+      follow(ctx, words, file.path);
       const box = h(words, "div", "mn-sl-tip" + (tip2 ? "" : " is-empty"));
       if (tip2) {
         h(box, "div", "mn-sl-tip-k", tip2[2]);
@@ -3376,6 +3394,7 @@ function deckPage(ctx, file) {
     };
     const pile = cardPile(pager, sec, {
       scroll: ".mn-sl-words",
+      start,
       // full screen: the pile leans less (its corners stay inside the room left around the card, styles.css), so the cards under
       // the top one show whole instead of as slivers cut flat by the screen edge
       fan: DECK_FAN,
@@ -3414,7 +3433,7 @@ function deckPage(ctx, file) {
     sec.forEach((c) => c.querySelectorAll("video").forEach((v) => {
       void v.play().catch(() => void 0);
     }));
-    const loaded = whenMediaLoaded(sec.slice(0, WAIT_CARDS), DECK_WAIT_MS);
+    const loaded = whenMediaLoaded(sec.slice(start, start + WAIT_CARDS), DECK_WAIT_MS);
     let ready = false;
     const slow = window.setTimeout(() => {
       if (ready) return;
@@ -4702,7 +4721,7 @@ function notePage(ctx) {
     empty(el, { icon: "file-x", title: "Note not found" });
     return { title: "", el };
   }
-  if (ctx.plugin.store.guideNotes().some((n) => n.file.path === path && n.layout === "deck")) return deckPage(ctx, file);
+  if (ctx.plugin.store.guideNotes().some((n) => n.file.path === path && n.layout === "deck")) return deckPage(ctx, file, ctx.frame.params?.card ? String(ctx.frame.params.card) : void 0);
   if (file.basename === GLOSSARY2) return glossaryPage(ctx, file);
   h(h(el, "div", "mn-title-row"), "h1", "mn-title", file.basename);
   const body = h(el, "div", "mn-note markdown-rendered");
@@ -8742,7 +8761,7 @@ var MnView = class extends import_obsidian15.ItemView {
         },
         openAugment: (id2, champ2) => this.push({ key: "augment", title: store.augment(id2)?.name ?? "Augment", params: champ2 ? { id: id2, champ: champ2 } : { id: id2 } }),
         openItem: (id2) => this.push({ key: "item", title: store.item(id2)?.name ?? "Item", params: { id: id2 } }),
-        openNote: (path) => this.push({ key: "note", title: path.split("/").pop()?.replace(/\.md$/, "") ?? "Note", params: { path } })
+        openNote: (path, card) => this.push({ key: "note", title: path.split("/").pop()?.replace(/\.md$/, "") ?? "Note", params: card ? { path, card } : { path } })
       });
     } catch (e) {
       const el = h(null, "div", "mn-page");
