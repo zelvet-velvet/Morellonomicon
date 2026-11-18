@@ -12,6 +12,7 @@ What changed and when, in short: **one note per day** in `Log/` (newest first), 
 ## 📆 Days
 
 ### 2026
+- [[2026-11-11]]: commit email privacy (noreply address, private address removed from history); patch data refreshed by the GitHub job
 - [[2026-11-10]]: every app page as a [[Vellum]] screen; [[Design Rules]] split into a core note and topic notes ([[Pages]], [[Pictures]], [[Champion Page]], [[Controls]], [[Search]], [[Motion]])
 - [[2026-11-08]]: the Vellum layout editor plugin and an empty [[Dev Tools/Vellum|Vellum]] note to start from
 - [[2026-11-03]]: augment tiers rebuilt from per-augment reasoning checked against resg.top games, [[Augment Questions]]; Handbook pile without corner slivers
