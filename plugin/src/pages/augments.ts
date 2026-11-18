@@ -13,8 +13,8 @@ let sortBy = "tier", sortDir: 1 | -1 = -1;   // kept while the app is open; 強�
 
 // ARAM Mayhem augments: search, a rarity filter, a sort (強度 by default, rarity, name, newest). 強度 (option C, chosen 2026-11-18) is the
 // augment model's rank across champions (store.augmentStrength): the list split under S / A / B / C headings with their counts, each row
-// showing the champions it suits best in place of the effect line; augments the model cannot rate come last under 未評級. The other
-// sorts are one list with the effect line. An augment added in the latest patch carries a 新 tag; one Riot changed in it, 改.
+// showing the champions it suits best (a stack at the row's end, the rarity under the name) in place of the effect line; augments the model cannot rate come last under 未評級. The other
+// sorts are one list with the effect line. An augment added in the latest patch carries a 新 badge on its icon; one Riot changed in it, 改.
 const TIERS = ["S", "A", "B", "C"];
 export function augmentsPage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
@@ -51,9 +51,12 @@ export function augmentsPage(ctx: PageCtx): PageOut {
         else if (sortBy === "rarity") hits.sort((a, b) => d * ((RARITY_RANK[b.rarity] ?? 9) - (RARITY_RANK[a.rarity] ?? 9)) || byName(a, b));
         else if (sortBy === "new") hits.sort((a, b) => d * (patchNo(addedIn.get(a.id) ?? "") - patchNo(addedIn.get(b.id) ?? "")) || byName(a, b));
         else hits.sort((a, b) => d * byName(a, b));
-        const tagOf = (a: typeof hits[number]) => (!!latest && addedIn.get(a.id) === latest ? " · 新" : changedNow.has(a.id) ? " · 改" : "");
-        const augRow = (g: HTMLElement, a: typeof hits[number], thumbs?: string[]) =>
-            row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: thumbs ? undefined : a.effect || undefined, thumbs, value: a.rarity + tagOf(a), chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
+        const tagOf = (a: typeof hits[number]) => (!!latest && addedIn.get(a.id) === latest ? "新" : changedNow.has(a.id) ? "改" : undefined);
+        // 強度: the name over its rarity in the rarity's colour, the champions it suits as a stack at the end; the other sorts: the
+        // effect line under the name, the rarity at the end. 新 / 改 is a badge on the icon either way
+        const augRow = (g: HTMLElement, a: typeof hits[number], stack?: string[]) =>
+            row(g, stack ? { image: a.icon, rarity: a.rarity, badge: tagOf(a), title: a.name, sub: a.rarity, subColor: RARITY_COLOR[a.rarity], stack, chevron: true, onTap: () => ctx.openAugment(a.id) }
+                : { image: a.icon, rarity: a.rarity, badge: tagOf(a), title: a.name, sub: a.effect || undefined, value: a.rarity, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
         if (sortBy === "tier") {
             // a heading per tier (the champion page's), then its rows; ↑ turns the tiers round (C first)
             const order = d === -1 ? [...TIERS, ""] : ["", ...TIERS.slice().reverse()];
@@ -65,8 +68,8 @@ export function augmentsPage(ctx: PageCtx): PageOut {
                 const g = group(list);
                 for (const a of part) {
                     const st = strength.get(a.id);
-                    const thumbs = st?.top.map((cid) => store.champion(cid)?.icon).filter((x): x is string => !!x);
-                    augRow(g, a, thumbs?.length ? thumbs : undefined);
+                    const faces = st?.top.map((cid) => store.champion(cid)?.icon).filter((x): x is string => !!x);
+                    augRow(g, a, faces?.length ? faces : []);
                 }
             }
         } else {

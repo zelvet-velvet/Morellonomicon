@@ -1216,22 +1216,28 @@ var centreBelow = (el, keep) => {
 };
 var row = (parent, r) => {
   const el = h(parent, "div", "mn-row" + (r.onTap ? " is-tap" : "") + (r.muted ? " is-muted" : ""));
-  if (r.image && r.rarity && AUG_CLASS[r.rarity]) augIcon(el, r.image, r.rarity, "mn-row-aug");
+  const lead = r.badge ? h(el, "span", "mn-row-lead") : el;
+  if (r.image && r.rarity && AUG_CLASS[r.rarity]) augIcon(lead, r.image, r.rarity, "mn-row-aug");
   else if (r.image) {
-    const im = h(el, "img", "mn-row-img");
+    const im = h(lead, "img", "mn-row-img");
     im.src = r.image;
     im.alt = "";
-  } else if (r.icon) icon(el, r.icon, "mn-row-ic");
+  } else if (r.icon) icon(lead, r.icon, "mn-row-ic");
+  if (r.badge) h(lead, "span", "mn-row-badge", r.badge);
   const main = h(el, "div", "mn-row-main");
   h(main, "div", "mn-row-t", r.title);
-  if (r.thumbs?.length) {
-    const f = h(main, "div", "mn-row-thumbs");
-    for (const src of r.thumbs) {
+  if (r.sub) {
+    const s = h(main, "div", "mn-row-s" + (r.clamp ? " is-clamp" : "") + (r.subColor ? " is-cap" : ""), r.sub);
+    if (r.subColor) s.style.color = r.subColor;
+  }
+  if (r.stack?.length) {
+    const f = h(el, "div", "mn-row-stack");
+    for (const src of r.stack) {
       const im = h(f, "img");
       im.src = src;
       im.alt = "";
     }
-  } else if (r.sub) h(main, "div", "mn-row-s" + (r.clamp ? " is-clamp" : ""), r.sub);
+  }
   if (r.value) h(el, "div", "mn-row-v", r.value);
   if (r.chevron) icon(el, "chevron-right", "mn-row-chev");
   if (r.onTap) {
@@ -1735,8 +1741,8 @@ function augmentsPage(ctx) {
     else if (sortBy === "rarity") hits.sort((a, b) => d * ((RARITY_RANK[b.rarity] ?? 9) - (RARITY_RANK[a.rarity] ?? 9)) || byName(a, b));
     else if (sortBy === "new") hits.sort((a, b) => d * (patchNo2(addedIn.get(a.id) ?? "") - patchNo2(addedIn.get(b.id) ?? "")) || byName(a, b));
     else hits.sort((a, b) => d * byName(a, b));
-    const tagOf = (a) => !!latest && addedIn.get(a.id) === latest ? " \xB7 \u65B0" : changedNow.has(a.id) ? " \xB7 \u6539" : "";
-    const augRow = (g, a, thumbs) => row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: thumbs ? void 0 : a.effect || void 0, thumbs, value: a.rarity + tagOf(a), chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
+    const tagOf = (a) => !!latest && addedIn.get(a.id) === latest ? "\u65B0" : changedNow.has(a.id) ? "\u6539" : void 0;
+    const augRow = (g, a, stack) => row(g, stack ? { image: a.icon, rarity: a.rarity, badge: tagOf(a), title: a.name, sub: a.rarity, subColor: RARITY_COLOR[a.rarity], stack, chevron: true, onTap: () => ctx.openAugment(a.id) } : { image: a.icon, rarity: a.rarity, badge: tagOf(a), title: a.name, sub: a.effect || void 0, value: a.rarity, chevron: true, clamp: true, onTap: () => ctx.openAugment(a.id) });
     if (sortBy === "tier") {
       const order = d === -1 ? [...TIERS, ""] : ["", ...TIERS.slice().reverse()];
       for (const t of order) {
@@ -1747,8 +1753,8 @@ function augmentsPage(ctx) {
         const g = group(list2);
         for (const a of part) {
           const st = strength.get(a.id);
-          const thumbs = st?.top.map((cid) => store.champion(cid)?.icon).filter((x) => !!x);
-          augRow(g, a, thumbs?.length ? thumbs : void 0);
+          const faces = st?.top.map((cid) => store.champion(cid)?.icon).filter((x) => !!x);
+          augRow(g, a, faces?.length ? faces : []);
         }
       }
     } else {

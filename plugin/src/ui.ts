@@ -441,7 +441,9 @@ export const augIcon = (parent: HTMLElement, src: string, rarity: string, cls = 
     return box;
 };
 
-export interface RowSpec { icon?: string; image?: string; rarity?: string; title: string; sub?: string; value?: string; thumbs?: string[]; chevron?: boolean; muted?: boolean; clamp?: boolean; onTap?: () => void }   // thumbs: small round pictures on the second line, in place of sub (the champions an augment suits)
+// badge: a tiny label on the picture's top-right corner (新, 改); subColor: the second line as a coloured caption (an augment's rarity);
+// stack: small pictures overlapping at the row's end, before the value (the champions an augment suits)
+export interface RowSpec { icon?: string; image?: string; rarity?: string; badge?: string; title: string; sub?: string; subColor?: string; value?: string; stack?: string[]; chevron?: boolean; muted?: boolean; clamp?: boolean; onTap?: () => void }
 // A page whose content is shorter than the screen: everything after its first `keep` children (its title row or banner) goes into one
 // body that is centred down the screen (Design Rules, balance); a longer page still starts at the top
 export const centreBelow = (el: HTMLElement, keep: number): HTMLElement => {
@@ -453,13 +455,18 @@ export const centreBelow = (el: HTMLElement, keep: number): HTMLElement => {
 };
 export const row = (parent: HTMLElement, r: RowSpec): HTMLElement => {
     const el = h(parent, "div", "mn-row" + (r.onTap ? " is-tap" : "") + (r.muted ? " is-muted" : ""));
-    if (r.image && r.rarity && AUG_CLASS[r.rarity]) augIcon(el, r.image, r.rarity, "mn-row-aug");
-    else if (r.image) { const im = h(el, "img", "mn-row-img"); im.src = r.image; im.alt = ""; }
-    else if (r.icon) icon(el, r.icon, "mn-row-ic");
+    const lead = r.badge ? h(el, "span", "mn-row-lead") : el;   // the badge sits outside the picture, which clips
+    if (r.image && r.rarity && AUG_CLASS[r.rarity]) augIcon(lead, r.image, r.rarity, "mn-row-aug");
+    else if (r.image) { const im = h(lead, "img", "mn-row-img"); im.src = r.image; im.alt = ""; }
+    else if (r.icon) icon(lead, r.icon, "mn-row-ic");
+    if (r.badge) h(lead, "span", "mn-row-badge", r.badge);
     const main = h(el, "div", "mn-row-main");
     h(main, "div", "mn-row-t", r.title);
-    if (r.thumbs?.length) { const f = h(main, "div", "mn-row-thumbs"); for (const src of r.thumbs) { const im = h(f, "img"); im.src = src; im.alt = ""; } }
-    else if (r.sub) h(main, "div", "mn-row-s" + (r.clamp ? " is-clamp" : ""), r.sub);
+    if (r.sub) {
+        const s = h(main, "div", "mn-row-s" + (r.clamp ? " is-clamp" : "") + (r.subColor ? " is-cap" : ""), r.sub);
+        if (r.subColor) s.style.color = r.subColor;
+    }
+    if (r.stack?.length) { const f = h(el, "div", "mn-row-stack"); for (const src of r.stack) { const im = h(f, "img"); im.src = src; im.alt = ""; } }
     if (r.value) h(el, "div", "mn-row-v", r.value);
     if (r.chevron) icon(el, "chevron-right", "mn-row-chev");
     if (r.onTap) { const fn = r.onTap; el.addEventListener("click", (e) => { e.preventDefault(); fn(); }); }

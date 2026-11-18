@@ -307,8 +307,15 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 /* one-line row text, detail pages, full lists, notes */
 .mn-row-s.is-clamp { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* the champions an augment suits, on the row's second line (Augments, 強度): small round faces, side by side */
-.mn-row-thumbs { display: flex; gap: 4px; margin-top: 4px; }
-.mn-row-thumbs img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 1px var(--background-modifier-border); }
+.mn-row-s.is-cap { font-size: 12px; font-weight: 600; margin-top: 2px; }   /* a short coloured caption (an augment's rarity) */
+/* a tiny label on the row's picture (新, 改), ringed in the card colour so it reads as cut out of the corner */
+.mn-row-lead { position: relative; flex: none; display: flex; }
+.mn-row-badge { position: absolute; top: -4px; right: -6px; min-width: 16px; height: 14px; padding: 0 3px; box-sizing: border-box; border-radius: 5px;
+    background: var(--mn-accent); color: var(--mn-bg); font-size: 10px; font-weight: 700; line-height: 14px; text-align: center; box-shadow: 0 0 0 2px var(--mn-card); }
+/* pictures overlapping at the row's end (the champions an augment suits), each ringed in the card colour */
+.mn-row-stack { flex: none; display: flex; }
+.mn-row-stack img { width: 26px; height: 26px; border-radius: 7px; object-fit: cover; background: var(--mn-card-hi); box-shadow: 0 0 0 2px var(--mn-card); }
+.mn-row-stack img + img { margin-left: -5px; }
 /* a tier heading's count (Augments, 強度): quiet, after the letter */
 .mn-tier-h .mn-tier-n { order: 0; font-size: 13px; font-weight: 600; color: var(--mn-muted); }
 .mn-blk > .mn-tier-h { margin: 6px 4px 8px; }
