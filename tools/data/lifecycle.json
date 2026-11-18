@@ -1,0 +1,5 @@
+{
+ "_comment": "Patch lifecycle (tools/datalib.py, mn.py status): a patch newer than the announced one is Ready once our LCU crawl holds ready_games games of it. decided: false while Zaviel has not set the numbers.",
+ "ready_games": 3000,
+ "decided": false
+}

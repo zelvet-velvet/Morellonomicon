@@ -1,0 +1,24 @@
+{
+ "16.21": {
+  "augment-tiers": {
+   "saved": "2026-11-04",
+   "source": "resg.top 16.21 (2026-11-03)",
+   "commit": "da32492"
+  },
+  "item-builds": {
+   "saved": "2026-11-04",
+   "source": "resg.top 16.21 (2026-11-03)",
+   "commit": "da32492"
+  }
+ },
+ "16.22": {
+  "augment-tiers": {
+   "saved": "2026-11-18",
+   "source": "resg.top 16.22 (2026-11-17)"
+  },
+  "item-builds": {
+   "saved": "2026-11-18",
+   "source": "resg.top 16.22 (2026-11-17)"
+  }
+ }
+}
