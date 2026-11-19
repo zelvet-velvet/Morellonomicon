@@ -4,24 +4,29 @@ import type { Champion } from "../data/store";
 import type { NeedCtx, PageCtx, PageOut } from "./index";
 import { ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, shopRoleIcon, h, holdTip, icon, page, warmPictures, centreBelow, empty, goes, group, row } from "../ui";
 import { MODES } from "../modes";
+import { crest, crestRatio } from "../data/crest";
 import { PROFILE_FRESH, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, profileSource, type Profile } from "../data/riot";
 import { art, coverUrl, type Need } from "../media";
 import { finder } from "./roster";
 
 // The servers a Riot ID can be on (Riot's platform ids), Taiwan first
 const SERVERS: [string, string][] = [["", "自動"], ["TW2", "台灣"], ["JP1", "日本"], ["KR", "韓國"], ["SG2", "新加坡"], ["VN2", "越南"], ["NA1", "北美"], ["EUW1", "西歐"], ["EUN1", "北歐東歐"], ["OC1", "大洋洲"]];
-const TOP = 5;   // mastery faces on Home
 
-// your profile from Riot (cached on this device) and your top mastery; the profile's mastery wins over the mastery file
+// One champion's mastery: level, points and when last played (ms; 0 when not known)
+interface Mine { id: string; level: number; points: number; last: number }
+// your profile from Riot (cached on this device) and your mastery of every champion, most points first; the profile's wins over
+// the mastery file (tools/fetch_mastery.py)
 function topMastery(app: App, plugin: MorellonomiconPlugin) {
     const s = plugin.settings, store = plugin.store;
     const all = store.champions();
     const byId = new Map(all.map((c) => [c.id, c]));
     const prof: Profile | null = s.riotId ? cachedProfile(app, s.riotId) : null;
     const byKey = new Map(all.map((c) => [c.key, c]));
-    let top = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).slice(0, TOP);
-    if (prof?.mastery.length) top = prof.mastery.filter((m) => byKey.has(m.championKey)).slice(0, TOP).map((m) => [byKey.get(m.championKey)!.id, { level: m.level, points: m.points, last: m.last ? new Date(m.last).toISOString() : "" }]);
-    return { all, byId, prof, top };
+    let mine: Mine[] = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id))
+        .map(([id, m]) => ({ id, level: m.level, points: m.points, last: Date.parse(m.last) || 0 }));
+    if (prof?.mastery.length) mine = prof.mastery.filter((m) => byKey.has(m.championKey)).map((m) => ({ id: byKey.get(m.championKey)!.id, level: m.level, points: m.points, last: m.last ?? 0 }));
+    mine.sort((a, b) => b.points - a.points);
+    return { all, byId, prof, mine };
 }
 // the wallpaper: the one you picked, else your top mastery champion's newest skin
 function wallpaper(plugin: MorellonomiconPlugin, best: Champion | undefined): string {
@@ -36,22 +41,16 @@ function nextTopic(plugin: MorellonomiconPlugin) {
     return { decks, next: decks.find((n) => !read.has(n.file.path)), done: decks.filter((n) => read.has(n.file.path)).length };
 }
 const POPULAR = ["Jinx", "Garen", "Lux", "Ahri", "Ezreal"];   // the faces until you pick champions in Picks
-// your champions as faces: linked, the top mastery; else your Picks, else a few easy ones
-function myChampions(plugin: MorellonomiconPlugin, top: [string, { level: number }][]): { c: Champion; level?: number }[] {
-    const store = plugin.store;
-    if (top.length) return top.slice(0, FACES).map(([id, m]) => ({ c: store.champion(id)!, level: m.level })).filter((x) => x.c);
-    const ids = plugin.settings.roster.filter((id) => store.champion(id));
-    return (ids.length ? ids : POPULAR).map((id) => store.champion(id)).filter((c): c is Champion => !!c).slice(0, FACES).map((c) => ({ c }));
-}
 const FACES = 5;
+const points = (p: number): string => p >= 10000 ? `${(p / 10000).toFixed(1).replace(/\.0$/, "")} 萬點` : `${p} 點`;
 
 // What Home shows from the network (its route in pages/index.ts): the card's picture, the avatar, the next topic's cover
 export function homeNeeds({ app, plugin }: NeedCtx): Need[] {
     const { next } = nextTopic(plugin);
     const cover = next?.cover ? [coverUrl(next.cover)] : [];
     if (!plugin.settings.riotId) return [art.aramScreen("habackground"), ...cover];
-    const { byId, prof, top } = topMastery(app, plugin);
-    const best = top[0] ? byId.get(top[0][0]) : undefined;
+    const { byId, prof, mine } = topMastery(app, plugin);
+    const best = mine[0] ? byId.get(mine[0].id) : undefined;
     return [wallpaper(plugin, best), ...(prof ? [art.profileIcon(plugin.store.champions()[0]?.patch ?? "", prof.icon)] : []), ...cover];
 }
 
@@ -62,13 +61,13 @@ export function homePage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const s = ctx.plugin.settings;
     const el = page("Home");
-    const { all, byId, prof, top } = topMastery(ctx.app, ctx.plugin);
+    const { all, byId, prof, mine } = topMastery(ctx.app, ctx.plugin);
     const patch = all[0]?.patch ?? "";
     const linked = !!s.riotId;
 
     // ---------- the card ----------
     const card = layoutBlock(h(el, "div", "mn-hc"));
-    const best = top[0] ? byId.get(top[0][0]) : undefined;
+    const best = mine[0] ? byId.get(mine[0].id) : undefined;
     const wall = linked ? wallpaper(ctx.plugin, best) : art.aramScreen("habackground");
     if (wall) { const bg = h(card, "img", "mn-hc-wall"); bg.src = wall; bg.alt = ""; }
     const foot = h(card, "div", "mn-hc-foot");
@@ -158,8 +157,7 @@ export function homePage(ctx: PageCtx): PageOut {
         // the wallpaper picker: your champions (top mastery first, else all), then the chosen one's skins, newest first
         const champsRow = layoutBlock(h(picker, "div", "mn-home-prow"));
         const skinsRow = layoutBlock(h(picker, "div", "mn-home-prow is-skins"));
-        const mine = Object.entries(store.mastery?.champions ?? {}).filter(([cid]) => byId.has(cid)).sort((a, b) => b[1].points - a[1].points).map(([cid]) => byId.get(cid)!);
-        const pool = mine.length ? mine.slice(0, 24) : all;
+        const pool = mine.length ? mine.slice(0, 24).map((m) => byId.get(m.id)!) : all;
         const showSkins = (cid: string) => {
             skinsRow.empty();
             const c = byId.get(cid);
@@ -209,23 +207,53 @@ export function homePage(ctx: PageCtx): PageOut {
     btn("book-open", "學習", "var(--color-cyan)", openNext);
     if (!linked) btn("scroll-text", "名詞表", "var(--color-green)", () => ctx.openNote(`${s.guideFolder}/名詞表.md`));
 
-    // your champions as faces: linked, the top mastery with its level; else your Picks (編輯 opens Picks)
-    const faces = myChampions(ctx.plugin, top);
-    if (faces.length) {
-        const lab = h(rest, "div", "mn-hc-lab");
-        h(lab, "span", undefined, top.length ? "熟練度" : "我的英雄");
-        if (!top.length) { const more = h(lab, "button", "mn-home-more", "編輯"); more.addEventListener("click", (e) => { e.preventDefault(); ctx.goTab("picks"); }); }
-        const row = h(rest, "div", "mn-hf");
-        for (const { c, level } of faces) {
-            const b = h(row, "button", "mn-hf-b");
-            const w = h(b, "span", "mn-hf-face");
-            const im = h(w, "img"); im.src = c.icon; im.alt = "";
-            if (level) h(w, "em", level >= 10 ? "is-high" : undefined, `M${level}`);
-            h(b, "span", "mn-hf-n", c.name);
+    // 你的英雄 (Screens: Home redesign): with mastery, cards with Riot's crest and level, 最近玩 (when last played, every mode, Mayhem
+    // too) or 最拿手 (points); without, 我的英雄: your Picks (編輯 opens Picks), else a few easy ones. A tap opens the champion.
+    const withLast = mine.some((m) => m.last > 0);
+    const sec = layoutBlock(h(rest, "div", "mn-hy"));
+    const lab = h(sec, "div", "mn-hc-lab");
+    h(lab, "span", undefined, mine.length ? "你的英雄" : "我的英雄");
+    const cards = h(sec, "div", "mn-hy-row");
+    const drawCards = () => {
+        cards.empty();
+        const recent = withLast && s.homeChamps !== "best";
+        const list: { c: Champion; level?: number; sub: string }[] = mine.length
+            ? (recent ? [...mine].sort((a, b) => b.last - a.last) : mine).slice(0, FACES).map((m) => ({ c: byId.get(m.id)!, level: m.level, sub: recent ? ago(m.last) : points(m.points) }))
+            : (s.roster.filter((id) => byId.has(id)).length ? s.roster.filter((id) => byId.has(id)) : POPULAR).map((id) => byId.get(id)).filter((c): c is Champion => !!c).slice(0, FACES).map((c) => ({ c, sub: c.title }));
+        for (const { c, level, sub } of list) {
+            const b = h(cards, "button", "mn-hy-b");
+            const im = h(b, "img", "mn-hy-face"); im.src = c.icon; im.alt = "";
+            if (level) {
+                const lv = h(b, "span", "mn-hy-lv");
+                const cr = h(lv, "img", "mn-hy-crest"); cr.alt = ""; cr.style.width = `${Math.round(20 * crestRatio(level))}px`;
+                void crest(level).then((u) => { if (u) cr.src = u; else cr.remove(); });
+                h(lv, "b", undefined, `${level}`);
+            }
+            h(b, "span", "mn-hy-n", c.name);
+            h(b, "span", "mn-hy-s", sub);
             b.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); });
             goes(b, { key: "champion", params: { id: c.id } });
         }
+    };
+    if (withLast) {
+        const seg = h(lab, "div", "mn-seg is-sm mn-hy-seg");
+        const opts: [string, string][] = [["recent", "最近玩"], ["best", "最拿手"]];
+        const btns = opts.map(([id, t]) => {
+            const b = h(seg, "button", "mn-seg-b" + ((s.homeChamps === "best") === (id === "best") ? " is-on" : ""), t);
+            b.addEventListener("click", (e) => {
+                e.preventDefault();
+                s.homeChamps = id as "recent" | "best";
+                btns.forEach((x, k) => x.toggleClass("is-on", opts[k][0] === id));
+                drawCards();
+                void ctx.plugin.saveData(s);
+            });
+            return b;
+        });
+    } else if (!mine.length) {
+        const more = h(lab, "button", "mn-home-more", "編輯");
+        more.addEventListener("click", (e) => { e.preventDefault(); ctx.goTab("picks"); });
     }
+    drawCards();
 
     // the next Handbook topic: a wide cover card
     if (decks.length) {

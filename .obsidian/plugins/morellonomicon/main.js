@@ -5908,7 +5908,7 @@ function handbookPage(ctx) {
     const loadArt = (u) => warm([u], "now");
     const stack = h(parent, "div", "mn-trv-stack");
     const arts = [];
-    const make = (i, z) => {
+    const make2 = (i, z) => {
       const c = h(stack, "div", "mn-trv");
       const art2 = pickArt();
       c.style.backgroundImage = `url("${art2}")`;
@@ -5917,7 +5917,7 @@ function handbookPage(ctx) {
       h(c, "div", "mn-trv-tip", tips2[order[i % order.length]].text);
       return c;
     };
-    let n = 0, top = make(0, 2), under = make(1, 1);
+    let n = 0, top = make2(0, 2), under = make2(1, 1);
     let busy = false, pid = -1, x0 = 0, y0 = 0, t0 = 0, dx = 0, lastY = 0, mode = "";
     const scroller = () => stack.closest(".mn-scroll");
     for (const ev of ["touchstart", "touchmove"]) stack.addEventListener(ev, (e) => e.stopPropagation(), { passive: true });
@@ -5971,7 +5971,7 @@ function handbookPage(ctx) {
         top = under;
         top.style.zIndex = "2";
         n += 1;
-        under = make(n + 1, 1);
+        under = make2(n + 1, 1);
         void loadArt(arts[arts.length - 1]);
         busy = false;
       }, TRIVIA_MS);
@@ -6086,6 +6086,71 @@ function marked(parent, text, q) {
 // src/pages/home.ts
 var import_obsidian9 = require("obsidian");
 
+// src/data/crest.ts
+var SRC = (n) => `https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-shared-components/global/default/mastery-${n}.png`;
+var CREST_BOX = {
+  1: [183, 373, 433, 273],
+  2: [129, 325, 541, 367],
+  3: [109, 295, 582, 428],
+  4: [54, 300, 692, 417],
+  5: [54, 301, 692, 417],
+  6: [9, 277, 782, 440],
+  7: [9, 277, 782, 462],
+  8: [17, 271, 766, 479],
+  9: [16, 271, 768, 496],
+  10: [16, 233, 768, 546]
+};
+var KEY2 = (n) => `mn-crest-${n}-v1`;
+var WIDTH = 160;
+var made = /* @__PURE__ */ new Map();
+var crestLevel = (level) => Math.min(10, Math.max(1, Math.round(level)));
+var crestRatio = (level) => {
+  const b = CREST_BOX[crestLevel(level)];
+  return b[2] / b[3];
+};
+function crest(level) {
+  const n = crestLevel(level);
+  let p = made.get(n);
+  if (!p) {
+    p = make(n);
+    made.set(n, p);
+  }
+  return p;
+}
+async function make(n) {
+  try {
+    const kept = window.localStorage.getItem(KEY2(n));
+    if (kept) return kept;
+  } catch {
+  }
+  const im = new Image();
+  im.crossOrigin = "anonymous";
+  im.src = SRC(n);
+  try {
+    await im.decode();
+  } catch {
+    made.delete(n);
+    return "";
+  }
+  const [l, t, w, h2] = CREST_BOX[n];
+  const cv = document.createElement("canvas");
+  cv.width = WIDTH;
+  cv.height = Math.round(WIDTH * h2 / w);
+  const x = cv.getContext("2d");
+  if (!x) return "";
+  x.drawImage(im, l, t, w, h2, 0, 0, cv.width, cv.height);
+  const px = x.getImageData(0, 0, cv.width, cv.height);
+  const d = px.data;
+  for (let i = 0; i < d.length; i += 4) if (d[i] < 40 && d[i + 2] > d[i] + 6 && d[i + 2] < 100 && d[i + 2] >= d[i + 1]) d[i + 3] = 0;
+  x.putImageData(px, 0, 0);
+  const url = cv.toDataURL("image/png");
+  try {
+    window.localStorage.setItem(KEY2(n), url);
+  } catch {
+  }
+  return url;
+}
+
 // src/data/riot.ts
 var import_obsidian8 = require("obsidian");
 
@@ -6172,7 +6237,7 @@ async function loadProfile(request, riotId, server) {
 }
 
 // src/data/riot.ts
-var KEY2 = "morellonomicon-profile";
+var KEY3 = "morellonomicon-profile";
 var PROFILE_FRESH = 10 * 60 * 1e3;
 var PROFILE_SERVER = "https://morellonomicon-profile.morellonomicon.workers.dev";
 var RiotError = class extends Error {
@@ -6186,7 +6251,7 @@ var SAY = {
 };
 function cachedProfile(app, riotId) {
   try {
-    const p = app.loadLocalStorage(KEY2);
+    const p = app.loadLocalStorage(KEY3);
     return p && p.riotId === riotId ? p : null;
   } catch {
     return null;
@@ -6218,7 +6283,7 @@ async function fetchProfile(app, riotId, server, s) {
     throw e;
   }
   try {
-    app.saveLocalStorage(KEY2, prof);
+    app.saveLocalStorage(KEY3, prof);
   } catch {
   }
   return prof;
@@ -6232,16 +6297,16 @@ var ago = (t) => {
 
 // src/pages/home.ts
 var SERVERS = [["", "\u81EA\u52D5"], ["TW2", "\u53F0\u7063"], ["JP1", "\u65E5\u672C"], ["KR", "\u97D3\u570B"], ["SG2", "\u65B0\u52A0\u5761"], ["VN2", "\u8D8A\u5357"], ["NA1", "\u5317\u7F8E"], ["EUW1", "\u897F\u6B50"], ["EUN1", "\u5317\u6B50\u6771\u6B50"], ["OC1", "\u5927\u6D0B\u6D32"]];
-var TOP = 5;
 function topMastery(app, plugin) {
   const s = plugin.settings, store = plugin.store;
   const all = store.champions();
   const byId = new Map(all.map((c) => [c.id, c]));
   const prof = s.riotId ? cachedProfile(app, s.riotId) : null;
   const byKey = new Map(all.map((c) => [c.key, c]));
-  let top = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).slice(0, TOP);
-  if (prof?.mastery.length) top = prof.mastery.filter((m) => byKey.has(m.championKey)).slice(0, TOP).map((m) => [byKey.get(m.championKey).id, { level: m.level, points: m.points, last: m.last ? new Date(m.last).toISOString() : "" }]);
-  return { all, byId, prof, top };
+  let mine = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).map(([id, m]) => ({ id, level: m.level, points: m.points, last: Date.parse(m.last) || 0 }));
+  if (prof?.mastery.length) mine = prof.mastery.filter((m) => byKey.has(m.championKey)).map((m) => ({ id: byKey.get(m.championKey).id, level: m.level, points: m.points, last: m.last ?? 0 }));
+  mine.sort((a, b) => b.points - a.points);
+  return { all, byId, prof, mine };
 }
 function wallpaper(plugin, best) {
   const s = plugin.settings;
@@ -6254,30 +6319,25 @@ function nextTopic(plugin) {
   return { decks, next: decks.find((n) => !read.has(n.file.path)), done: decks.filter((n) => read.has(n.file.path)).length };
 }
 var POPULAR = ["Jinx", "Garen", "Lux", "Ahri", "Ezreal"];
-function myChampions(plugin, top) {
-  const store = plugin.store;
-  if (top.length) return top.slice(0, FACES).map(([id, m]) => ({ c: store.champion(id), level: m.level })).filter((x) => x.c);
-  const ids = plugin.settings.roster.filter((id) => store.champion(id));
-  return (ids.length ? ids : POPULAR).map((id) => store.champion(id)).filter((c) => !!c).slice(0, FACES).map((c) => ({ c }));
-}
 var FACES = 5;
+var points = (p) => p >= 1e4 ? `${(p / 1e4).toFixed(1).replace(/\.0$/, "")} \u842C\u9EDE` : `${p} \u9EDE`;
 function homeNeeds({ app, plugin }) {
   const { next } = nextTopic(plugin);
   const cover = next?.cover ? [coverUrl(next.cover)] : [];
   if (!plugin.settings.riotId) return [art.aramScreen("habackground"), ...cover];
-  const { byId, prof, top } = topMastery(app, plugin);
-  const best = top[0] ? byId.get(top[0][0]) : void 0;
+  const { byId, prof, mine } = topMastery(app, plugin);
+  const best = mine[0] ? byId.get(mine[0].id) : void 0;
   return [wallpaper(plugin, best), ...prof ? [art.profileIcon(plugin.store.champions()[0]?.patch ?? "", prof.icon)] : [], ...cover];
 }
 function homePage(ctx) {
   const store = ctx.plugin.store;
   const s = ctx.plugin.settings;
   const el = page("Home");
-  const { all, byId, prof, top } = topMastery(ctx.app, ctx.plugin);
+  const { all, byId, prof, mine } = topMastery(ctx.app, ctx.plugin);
   const patch = all[0]?.patch ?? "";
   const linked = !!s.riotId;
   const card = layoutBlock(h(el, "div", "mn-hc"));
-  const best = top[0] ? byId.get(top[0][0]) : void 0;
+  const best = mine[0] ? byId.get(mine[0].id) : void 0;
   const wall = linked ? wallpaper(ctx.plugin, best) : art.aramScreen("habackground");
   if (wall) {
     const bg = h(card, "img", "mn-hc-wall");
@@ -6403,8 +6463,7 @@ function homePage(ctx) {
     });
     const champsRow = layoutBlock(h(picker2, "div", "mn-home-prow"));
     const skinsRow = layoutBlock(h(picker2, "div", "mn-home-prow is-skins"));
-    const mine = Object.entries(store.mastery?.champions ?? {}).filter(([cid]) => byId.has(cid)).sort((a, b) => b[1].points - a[1].points).map(([cid]) => byId.get(cid));
-    const pool = mine.length ? mine.slice(0, 24) : all;
+    const pool = mine.length ? mine.slice(0, 24).map((m) => byId.get(m.id)) : all;
     const showSkins = (cid) => {
       skinsRow.empty();
       const c = byId.get(cid);
@@ -6473,33 +6532,62 @@ function homePage(ctx) {
   btn("shopping-bag", "\u88DD\u5099", "var(--color-yellow)", () => ctx.push({ key: "itemlist", title: "Items" }));
   btn("book-open", "\u5B78\u7FD2", "var(--color-cyan)", openNext);
   if (!linked) btn("scroll-text", "\u540D\u8A5E\u8868", "var(--color-green)", () => ctx.openNote(`${s.guideFolder}/\u540D\u8A5E\u8868.md`));
-  const faces = myChampions(ctx.plugin, top);
-  if (faces.length) {
-    const lab = h(rest, "div", "mn-hc-lab");
-    h(lab, "span", void 0, top.length ? "\u719F\u7DF4\u5EA6" : "\u6211\u7684\u82F1\u96C4");
-    if (!top.length) {
-      const more = h(lab, "button", "mn-home-more", "\u7DE8\u8F2F");
-      more.addEventListener("click", (e) => {
-        e.preventDefault();
-        ctx.goTab("picks");
-      });
-    }
-    const row2 = h(rest, "div", "mn-hf");
-    for (const { c, level } of faces) {
-      const b = h(row2, "button", "mn-hf-b");
-      const w = h(b, "span", "mn-hf-face");
-      const im = h(w, "img");
+  const withLast = mine.some((m) => m.last > 0);
+  const sec = layoutBlock(h(rest, "div", "mn-hy"));
+  const lab = h(sec, "div", "mn-hc-lab");
+  h(lab, "span", void 0, mine.length ? "\u4F60\u7684\u82F1\u96C4" : "\u6211\u7684\u82F1\u96C4");
+  const cards = h(sec, "div", "mn-hy-row");
+  const drawCards = () => {
+    cards.empty();
+    const recent = withLast && s.homeChamps !== "best";
+    const list2 = mine.length ? (recent ? [...mine].sort((a, b) => b.last - a.last) : mine).slice(0, FACES).map((m) => ({ c: byId.get(m.id), level: m.level, sub: recent ? ago(m.last) : points(m.points) })) : (s.roster.filter((id) => byId.has(id)).length ? s.roster.filter((id) => byId.has(id)) : POPULAR).map((id) => byId.get(id)).filter((c) => !!c).slice(0, FACES).map((c) => ({ c, sub: c.title }));
+    for (const { c, level, sub } of list2) {
+      const b = h(cards, "button", "mn-hy-b");
+      const im = h(b, "img", "mn-hy-face");
       im.src = c.icon;
       im.alt = "";
-      if (level) h(w, "em", level >= 10 ? "is-high" : void 0, `M${level}`);
-      h(b, "span", "mn-hf-n", c.name);
+      if (level) {
+        const lv = h(b, "span", "mn-hy-lv");
+        const cr = h(lv, "img", "mn-hy-crest");
+        cr.alt = "";
+        cr.style.width = `${Math.round(20 * crestRatio(level))}px`;
+        void crest(level).then((u) => {
+          if (u) cr.src = u;
+          else cr.remove();
+        });
+        h(lv, "b", void 0, `${level}`);
+      }
+      h(b, "span", "mn-hy-n", c.name);
+      h(b, "span", "mn-hy-s", sub);
       b.addEventListener("click", (e) => {
         e.preventDefault();
         ctx.openChampion(c.id);
       });
       goes(b, { key: "champion", params: { id: c.id } });
     }
+  };
+  if (withLast) {
+    const seg = h(lab, "div", "mn-seg is-sm mn-hy-seg");
+    const opts = [["recent", "\u6700\u8FD1\u73A9"], ["best", "\u6700\u62FF\u624B"]];
+    const btns = opts.map(([id, t]) => {
+      const b = h(seg, "button", "mn-seg-b" + (s.homeChamps === "best" === (id === "best") ? " is-on" : ""), t);
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        s.homeChamps = id;
+        btns.forEach((x, k) => x.toggleClass("is-on", opts[k][0] === id));
+        drawCards();
+        void ctx.plugin.saveData(s);
+      });
+      return b;
+    });
+  } else if (!mine.length) {
+    const more = h(lab, "button", "mn-home-more", "\u7DE8\u8F2F");
+    more.addEventListener("click", (e) => {
+      e.preventDefault();
+      ctx.goTab("picks");
+    });
   }
+  drawCards();
   if (decks.length) {
     const learn = layoutBlock(h(rest, "button", "mn-hl is-wide"));
     if (next?.cover) {
@@ -8349,6 +8437,7 @@ var DEFAULTS = {
   profileServer: "",
   kbDebug: false,
   picDebug: false,
+  homeChamps: "recent",
   wallpaper: "",
   read: [],
   roster: []

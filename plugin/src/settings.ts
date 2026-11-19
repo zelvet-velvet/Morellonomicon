@@ -21,6 +21,7 @@ export interface MnSettings {
     profileServer: string;     // another profile server than the built-in one (server/profile), e.g. while testing a new deploy; empty: the built-in one
     kbDebug: boolean;          // show what the phone reports about the keyboard while typing in a search capsule
     picDebug: boolean;         // show the pictures a page showed still loading that were never fetched ahead (media.ts)
+    homeChamps: "recent" | "best";   // Home's 你的英雄: the champions played lately, or the most mastery points
     wallpaper: string;         // Home's background, "<champion id>_<skin number>"; empty: your top mastery champion's newest skin
 }
 
@@ -40,6 +41,7 @@ export const DEFAULTS: MnSettings = {
     profileServer: "",
     kbDebug: false,
     picDebug: false,
+    homeChamps: "recent",
     wallpaper: "",
     read: [],
     roster: [],

@@ -1299,13 +1299,17 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-hq-ic svg { width: 24px; height: 24px; }
 .mn-hq-l { font-size: 12px; font-weight: 600; color: var(--mn-muted); }
 .mn-hc-lab { display: flex; align-items: baseline; justify-content: space-between; margin: 20px 2px 8px; font-size: 15px; font-weight: 700; color: var(--mn-text); }
-.mn-hf { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-.mn-app .mn-hf-b { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; height: auto; padding: 0; border: 0; background: none; box-shadow: none; }
-.mn-hf-face { position: relative; width: 64px; height: 64px; }
-.mn-hf-face img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px var(--mn-line); }
-.mn-hf-face em { position: absolute; right: -4px; bottom: -2px; padding: 0 5px; border-radius: 7px; font-style: normal; font-size: 10px; font-weight: 800; line-height: 15px; background: rgba(10, 12, 18, 0.8); color: #eee; }
-.mn-hf-face em.is-high { background: #d9b15c; color: #1a1408; }
-.mn-hf-n { max-width: 100%; font-size: 12px; color: var(--mn-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mn-hy .mn-hc-lab { align-items: center; margin: 20px 2px 10px; }
+.mn-app .mn-hy-seg { width: 148px; margin: 0; padding: 3px; gap: 2px; border-radius: 12px; }
+.mn-app .mn-hy-seg .mn-seg-b { min-height: 28px; border-radius: 9px; font-size: 12.5px; }
+.mn-hy-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.mn-app .mn-hy-b { display: flex; flex-direction: column; align-items: center; gap: 0; min-width: 0; height: auto; padding: 12px 4px 10px; border-radius: 14px; background: var(--mn-card); border: 1px solid var(--mn-line); box-shadow: none; }
+.mn-hy-face { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px var(--mn-line); }
+.mn-hy-lv { display: flex; align-items: center; justify-content: center; gap: 3px; height: 22px; margin-top: 8px; }
+.mn-hy-crest { height: 20px; }
+.mn-hy-lv b { font-size: 12px; font-weight: 800; line-height: 1; color: #d9b15c; font-variant-numeric: tabular-nums; }
+.mn-hy-n { max-width: 100%; margin-top: 6px; font-size: 12.5px; font-weight: 600; color: var(--mn-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mn-hy-s { max-width: 100%; margin-top: 2px; font-size: 10.5px; color: var(--mn-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 .mn-app .mn-hl { position: relative; display: flex; height: 100px; margin-top: 20px; padding: 0; overflow: hidden; text-align: left; white-space: normal;
     border-radius: var(--mn-radius); background: var(--mn-card); border: 1px solid var(--mn-line); box-shadow: none; }
 .mn-hl-img { flex: none; width: 105px; height: 100%; object-fit: cover; }
