@@ -84,7 +84,7 @@ BIG_MODEL = {"Gragas", "Nasus", "Galio", "Darius", "Urgot", "Garen", "Olaf", "Nu
 # augments that give the same to everyone (gold, anvils, random rewards, snowball): no champion needs a reason for them
 GENERIC = {1053, 1062, 1243, 1329, 1337, 1389, 1392, 1402, 12317, 1002, 1238, 1384, 1403, 1237, 1404, 2032, 2034, 2043, 2080, 1358, 2088,
            1116, 1348, 1347, 3004, 3071, 1401, 1105, 1305, 1026, 1333, 1020, 1301, 1322, 2137, 3121, 1057, 1060, 1046, 1416, 1034,
-           1025, 1386, 1154, 3081}
+           1025, 1386, 1154, 3081, 3262}
 # how champions are built in Mayhem where the note's archetypes say otherwise
 BRUISER_PLAY = {"Hecarim", "XinZhao"}                                     # played as damage bruisers, not tanks
 TANK_PLAY = {"Poppy"}                                                     # played as a tank: AD augments miss
@@ -107,6 +107,7 @@ STYLES = {
     "MissFortune": [("ad", "物攻射手", {}), ("ap", "法術 E", {**_AP, "ult_key": True})],
     "Ashe": [("ad", "物攻射手", {}), ("ap", "法術 R", {**_AP, "spammer": False, "ult_key": True})],
 }
+MANA_STACK = {"Ryze", "Kassadin"}   # build max mana and their abilities scale with it (溢流 rewards it)
 # melee champions whose abilities buff their attacks: range augments make those attacks land (Zaviel)
 MELEE_RANGE = {"Irelia", "Tryndamere", "Trundle"}
 # damage or survival augments an assassin wants even when its kit has no special use for them (Zaviel)
@@ -558,6 +559,7 @@ RULES = {
     3079: lambda c: (2, "高輸出，5 秒不死內收頭") if c.marksman or "刺客" in c.roles else (-1, "輸出不夠，5 秒內收不到頭會死") if c.tank or c.enchanter else (0, None),
     3149: lambda c: fit_ally(c, "一次補三個人"),
     12317: lambda c: (0, None),
+    3159: lambda c: (2, "刺客大絕收頭，可再放兩次") if "刺客" in c.roles else fit_ult(c, "大絕收頭，可再放兩次"),
     # 金
     1002: lambda c: (0, None),
     1005: lambda c: fit_ally(c, "跑向受傷隊友補更多"),
@@ -595,7 +597,7 @@ RULES = {
     1211: lambda c: fit_ult(c, "大絕後全力輸出再引爆"),
     1238: lambda c: (0, None),
     1301: lambda c: (0, None),
-    1311: lambda c: (-1, "技能多，魔力會不夠") if c.mana and c.spammer else fit_mana(c, "多耗魔力換增傷") if c.mana else (-2, "不用魔力"),
+    1311: lambda c: (2, "技能吃最大魔力，魔力堆得高") if c.id in MANA_STACK else (-1, "技能多，魔力會不夠") if c.mana and c.spammer else fit_mana(c, "多耗魔力換增傷") if c.mana else (-2, "不用魔力"),
     1322: lambda c: (0, None),
     1326: lambda c: (1, "刺客收頭後隱形再切") if "刺客" in c.roles else (0, None),
     1328: lambda c: fit_crit(c, "暴擊疊攻速"),
@@ -640,7 +642,7 @@ RULES = {
     2143: lambda c: fit_melee_fighter(c, "突破天際回血更多"),
     3004: lambda c: (0, None),
     3036: lambda c: fit_mana(c, "兩招連打追加傷害"),
-    3039: lambda c: (0, None),
+    3039: lambda c: (1, "站前排常掉到半血，冷卻短常觸發") if c.tank or (c.melee and c.hp) else (0, None),
     3049: lambda c: (2, "坦克技能接普攻，吃護甲傷害") if c.tank or (c.resists and c.melee) else fit_spellblade(c, "技能後普攻範圍傷害"),
     3058: lambda c: (0, None),
     3071: lambda c: (0, None),
@@ -659,6 +661,8 @@ RULES = {
     3163: lambda c: fit_ally(c, "補人累積蝴蝶"),
     3170: lambda c: fit_key(c, "Q", "急速、補量一起加"), 3171: lambda c: fit_key(c, "W", "急速、補量一起加"),
     3172: lambda c: fit_key(c, "E", "急速、補量一起加"), 3173: lambda c: fit_ult(c, "大絕增強"),
+    3060: lambda c: (-1, "常放技能，那招不吃急速很虧") if c.spammer else fit_haste(c, "急速變成那招的傷害"),
+    3263: lambda c: fit_tank(c, "雙抗、韌性，殘血更硬"),
     # 銀
     1007: lambda c: fit_ad(c, "物攻 +20%"),
     1022: lambda c: fit_attack(c, "攻速 +60%"),
@@ -726,11 +730,14 @@ RULES = {
     3052: lambda c: (1, "遠程射手") if c.marksman else (-2, "近戰用不到"),
     3055: lambda c: fit_ult(c, "大絕急速", cd_matter=False),
     3059: lambda c: fit_mana(c, "魔力轉魔攻") if c.ap else (0, None),
-    3063: lambda c: (-1, "肉裝英雄，生命轉物理致命太虧") if c.tank else (0, None),
+    3063: lambda c: (-1, "肉裝英雄，生命轉物理致命太虧") if c.tank else (1, "物攻輸出，直接多物理致命") if c.ad and (c.marksman or "刺客" in c.roles) else (0, None),
     3085: lambda c: fit_attack(c, "放技能加攻速"),
     3094: lambda c: (2, "堆生命又吃魔攻") if c.ap and c.hp else fit_ap(c, "魔攻"),
     3121: lambda c: (0, None),
     3134: lambda c: (2, "近戰衝進人群") if c.melee and c.attacker else fit_melee_fighter(c, "被包圍加攻速雙抗"),
+    3262: lambda c: (0, None),
+    3264: lambda c: fit_tank(c, "魔抗越堆越多"),
+    3265: lambda c: fit_tank(c, "護甲越堆越多"),
 }
 
 

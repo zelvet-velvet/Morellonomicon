@@ -1,5 +1,135 @@
 {
  "_comment": "What the mn-reasoning skill handled, so tools/reasoning_todo.py stops listing it. rules: augment id -> the game patch its rule was checked on (after a patch-note change). candidates: a trick candidate's key (augment:<id>:<champion id> or item:<champion name>:<item name>) -> {patch, result: card | rule | skip, note}.",
- "rules": {},
- "candidates": {}
+ "rules": {
+  "3078": "16.23",
+  "3048": "16.23",
+  "3039": "16.23"
+ },
+ "candidates": {
+  "augment:3048:Gangplank": {
+   "patch": "16.22",
+   "result": "card",
+   "note": "Q 算普攻命中，觸發蜜蜂"
+  },
+  "augment:1001:Urgot": {
+   "patch": "16.22",
+   "result": "card",
+   "note": "W 每發疊層"
+  },
+  "augment:3039:Lulu": {
+   "patch": "16.22",
+   "result": "card",
+   "note": "被切時觸發救贖"
+  },
+  "augment:1311:Ryze": {
+   "patch": "16.22",
+   "result": "rule",
+   "note": "MANA_STACK：技能吃最大魔力"
+  },
+  "augment:2100:Shaco": {
+   "patch": "16.22",
+   "result": "card",
+   "note": "E 指定目標"
+  },
+  "augment:1061:Nidalee": {
+   "patch": "16.22",
+   "result": "skip",
+   "note": "自動回力鏢，看不出奈德麗的原因，可能是樣本"
+  },
+  "augment:1087:Volibear": {
+   "patch": "16.22",
+   "result": "card",
+   "note": "飛彈觸發被動閃電"
+  },
+  "augment:2100:MissFortune": {
+   "patch": "16.22",
+   "result": "card",
+   "note": "Q 指定目標又彈射"
+  },
+  "augment:1349:Rell": {
+   "patch": "16.22",
+   "result": "card",
+   "note": "R 後重置 W、E"
+  },
+  "augment:3063:Jhin": {
+   "patch": "16.22",
+   "result": "rule",
+   "note": "物攻射手直接吃物理致命"
+  },
+  "augment:3063:Graves": {
+   "patch": "16.22",
+   "result": "rule",
+   "note": "物攻射手直接吃物理致命"
+  },
+  "augment:3063:Lucian": {
+   "patch": "16.22",
+   "result": "rule",
+   "note": "物攻射手直接吃物理致命"
+  },
+  "augment:3063:Draven": {
+   "patch": "16.22",
+   "result": "rule",
+   "note": "物攻射手直接吃物理致命"
+  },
+  "item:庫奇:死亡之舞": {
+   "patch": "16.22",
+   "result": "card",
+   "note": "被切時流血化傷害"
+  },
+  "item:亞菲利歐:死亡之舞": {
+   "patch": "16.22",
+   "result": "skip",
+   "note": "同庫奇的卡片"
+  },
+  "item:達瑞文:死亡之舞": {
+   "patch": "16.22",
+   "result": "skip",
+   "note": "同庫奇的卡片"
+  },
+  "item:露璐:騎士誓願": {
+   "patch": "16.22",
+   "result": "card",
+   "note": "互許射手"
+  },
+  "item:姍娜:月之石再生裝置": {
+   "patch": "16.22",
+   "result": "card",
+   "note": "輔助姍娜"
+  },
+  "item:厄薩斯:無盡絕望": {
+   "patch": "16.22",
+   "result": "skip",
+   "note": "肉裝鬥士常見出法"
+  },
+  "item:納瑟斯:千變萬化之賈克修": {
+   "patch": "16.22",
+   "result": "skip",
+   "note": "坦克裝，納瑟斯常出肉"
+  },
+  "item:路西恩:公理弧刃": {
+   "patch": "16.22",
+   "result": "skip",
+   "note": "常見物理致命出法；build_tiers 還沒有致命玩法"
+  },
+  "item:極靈:凜冬將至": {
+   "patch": "16.22",
+   "result": "skip",
+   "note": "魔力裝，極靈常放技能"
+  },
+  "item:達瑞文:公理弧刃": {
+   "patch": "16.22",
+   "result": "skip",
+   "note": "常見物理致命出法"
+  },
+  "item:厄薩斯:荊棘之甲": {
+   "patch": "16.22",
+   "result": "skip",
+   "note": "肉裝鬥士常見出法"
+  },
+  "item:特朗德:狂戰士護脛": {
+   "patch": "16.22",
+   "result": "skip",
+   "note": "攻速鞋本來就合"
+  }
+ }
 }
