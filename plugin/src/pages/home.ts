@@ -132,16 +132,18 @@ export function homePage(ctx: PageCtx): PageOut {
         // arrives, and each drawing used to start its own fetch (a dozen Riot calls each), whose answers then redrew the page one after
         // another once it was on screen (the cold-open glitch). The page redraws in place only when what Riot sent differs from what
         // it shows; otherwise only the "updated" line changes.
+        // an answer can come before the page is on screen (the profile server's cache answers in a few ms): it waits for the page
+        // to show, up to 10 s (a timer, not animation frames, which stop while the window is hidden); a page that never shows was left
+        const onPage = (fn: () => void) => { let n = 0; const tick = () => { if (el.isConnected) fn(); else if (n++ < 100) window.setTimeout(tick, 100); }; tick(); };
         const refresh = () => {
             sub.textContent = "讀取中…";
             sub.removeClass("is-err");
             profileFetch(ctx)
-                .then((p) => {
-                    if (!el.isConnected) return;
+                .then((p) => onPage(() => {
                     if (sameProfile(p, prof)) sub.textContent = `${where} · ${ago(p.fetched)}更新`;
                     else ctx.redraw();   // in place: opening Home again would replay its arrival
-                })
-                .catch((err) => { if (!el.isConnected) return; sub.textContent = err instanceof RiotError ? err.message : "連不上 Riot,稍後再試"; sub.addClass("is-err"); });
+                }))
+                .catch((err) => onPage(() => { sub.textContent = err instanceof RiotError ? err.message : "連不上 Riot,稍後再試"; sub.addClass("is-err"); }));
         };
         if (source && (!prof || Date.now() - prof.fetched > PROFILE_FRESH)) refresh();
         // the avatar's menu, in place under the name: refresh, wallpaper, change or log out

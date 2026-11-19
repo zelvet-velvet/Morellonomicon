@@ -1307,7 +1307,7 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-hf-face em.is-high { background: #d9b15c; color: #1a1408; }
 .mn-hf-n { max-width: 100%; font-size: 12px; color: var(--mn-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mn-hg { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; }
-.mn-app .mn-hg-b { display: flex; flex-direction: column; gap: 4px; height: auto; padding: 0; border: 0; background: none; box-shadow: none; }
+.mn-app .mn-hg-b { display: flex; flex-direction: column; align-items: stretch; gap: 4px; height: auto; padding: 0; border: 0; background: none; box-shadow: none; }
 .mn-hg-b img { width: 100%; aspect-ratio: 1; border-radius: 9px; object-fit: cover; }
 .mn-hg-b::after { content: ""; height: 3px; border-radius: 2px; background: var(--color-green); }
 .mn-hg-b.is-loss::after { background: var(--color-red); }

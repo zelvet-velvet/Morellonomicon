@@ -533,6 +533,8 @@ var Router = class {
     this.app = app;
     this.tab = "home";
     this.stacks = {};
+    // a tab's first page is one object per tab, so "is this page still on top" holds for it too (a page's redraw checks it)
+    this.roots = {};
     try {
       const s = this.app.loadLocalStorage(KEY);
       if (s && Date.now() - s.t < STACK_TTL && s.run === RUN) {
@@ -555,8 +557,9 @@ var Router = class {
     return (_a = this.stacks)[tab] ?? (_a[tab] = []);
   }
   top(tab = this.tab) {
+    var _a;
     const s = this.stack(tab);
-    return s[s.length - 1] ?? { key: "root", title: "" };
+    return s[s.length - 1] ?? ((_a = this.roots)[tab] ?? (_a[tab] = { key: "root", title: "" }));
   }
   depth(tab = this.tab) {
     return this.stack(tab).length;
@@ -6129,19 +6132,31 @@ async function loadProfile(request, riotId, server) {
     `/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name ?? "")}/${encodeURIComponent(tag ?? "")}`
   );
   const id = encodeURIComponent(acc.puuid);
-  if (!server) {
+  const where = async () => {
+    let found = "";
     try {
       const r = await get(REGION[server]?.account ?? "asia", `/riot/account/v1/region/by-game/lol/by-puuid/${id}`);
-      server = (r.region ?? "").toUpperCase();
+      found = (r.region ?? "").toUpperCase();
     } catch (e) {
       if (e instanceof RiotFailure && e.code !== "notfound") throw e;
     }
-    if (!REGION[server]) throw new RiotFailure("server");
+    if (!REGION[found]) throw new RiotFailure("server");
+    return found;
+  };
+  if (!server) server = await where();
+  let sum;
+  try {
+    sum = await get(server.toLowerCase(), `/lol/summoner/v4/summoners/by-puuid/${id}`);
+  } catch (e) {
+    if (!(e instanceof RiotFailure && e.code === "notfound")) throw e;
+    const other = await where();
+    if (other === server) throw e;
+    server = other;
+    sum = await get(server.toLowerCase(), `/lol/summoner/v4/summoners/by-puuid/${id}`);
   }
   const reg = REGION[server] ?? REGION.TW2;
   const plat = server.toLowerCase();
-  const [sum, leagues, mastery, ids] = await Promise.all([
-    get(plat, `/lol/summoner/v4/summoners/by-puuid/${id}`),
+  const [leagues, mastery, ids] = await Promise.all([
     get(plat, `/lol/league/v4/entries/by-puuid/${id}`),
     get(plat, `/lol/champion-mastery/v4/champion-masteries/by-puuid/${id}/top?count=5`),
     get(reg.match, `/lol/match/v5/matches/by-puuid/${id}/ids?count=${GAMES}`)
@@ -6186,7 +6201,7 @@ async function loadProfile(request, riotId, server) {
 // src/data/riot.ts
 var KEY2 = "morellonomicon-profile";
 var PROFILE_FRESH = 10 * 60 * 1e3;
-var PROFILE_SERVER = "";
+var PROFILE_SERVER = "https://morellonomicon-profile.morellonomicon.workers.dev";
 var QUEUE = { 400: "\u4E00\u822C", 430: "\u4E00\u822C", 490: "\u5FEB\u901F\u5C0D\u6230", 420: "\u55AE/\u96D9\u6392", 440: "\u5F48\u6027\u7A4D\u5206", 450: "\u96A8\u6A5F\u55AE\u4E2D", 2400: "\u5927\u6DF7\u6230", 900: "\u963F\u798F\u5FEB\u6253", 1700: "\u7AF6\u6280\u5834", 1900: "\u963F\u798F\u5FEB\u6253", 830: "\u4EBA\u6A5F", 840: "\u4EBA\u6A5F", 850: "\u4EBA\u6A5F" };
 var RiotError = class extends Error {
 };
@@ -6373,18 +6388,24 @@ function homePage(ctx) {
       h(rk, "span", void 0, `${TIER[solo.tier] ?? solo.tier} ${["MASTER", "GRANDMASTER", "CHALLENGER"].includes(solo.tier) ? "" : solo.division}`.trim());
       holdTip(rk, `\u55AE/\u96D9\u6392 \xB7 ${solo.lp} LP \xB7 ${solo.wins} \u52DD ${solo.losses} \u6557`);
     }
+    const onPage = (fn) => {
+      let n = 0;
+      const tick = () => {
+        if (el.isConnected) fn();
+        else if (n++ < 100) window.setTimeout(tick, 100);
+      };
+      tick();
+    };
     const refresh = () => {
       sub.textContent = "\u8B80\u53D6\u4E2D\u2026";
       sub.removeClass("is-err");
-      profileFetch(ctx).then((p) => {
-        if (!el.isConnected) return;
+      profileFetch(ctx).then((p) => onPage(() => {
         if (sameProfile(p, prof)) sub.textContent = `${where} \xB7 ${ago(p.fetched)}\u66F4\u65B0`;
         else ctx.redraw();
-      }).catch((err) => {
-        if (!el.isConnected) return;
+      })).catch((err) => onPage(() => {
         sub.textContent = err instanceof RiotError ? err.message : "\u9023\u4E0D\u4E0A Riot,\u7A0D\u5F8C\u518D\u8A66";
         sub.addClass("is-err");
-      });
+      }));
     };
     if (source && (!prof || Date.now() - prof.fetched > PROFILE_FRESH)) refresh();
     const menu = h(foot, "div", "mn-home-menu is-hidden");

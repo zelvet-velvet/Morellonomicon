@@ -41,18 +41,31 @@ export async function loadProfile(request: RiotGet, riotId: string, server: stri
     const acc = await get<{ puuid: string; gameName: string; tagLine: string }>(REGION[server]?.account ?? "asia",
         `/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name ?? "")}/${encodeURIComponent(tag ?? "")}`);
     const id = encodeURIComponent(acc.puuid);
-    // no server given: Riot says where the account plays League
-    if (!server) {
+    // where the account plays League, as Riot says
+    const where = async (): Promise<string> => {
+        let found = "";
         try {
             const r = await get<{ region: string }>(REGION[server]?.account ?? "asia", `/riot/account/v1/region/by-game/lol/by-puuid/${id}`);
-            server = (r.region ?? "").toUpperCase();
+            found = (r.region ?? "").toUpperCase();
         } catch (e) { if (e instanceof RiotFailure && e.code !== "notfound") throw e; }
-        if (!REGION[server]) throw new RiotFailure("server");
+        if (!REGION[found]) throw new RiotFailure("server");
+        return found;
+    };
+    if (!server) server = await where();
+    // the summoner on that server; a server picked by hand that the account does not play on: the one Riot names
+    type Summoner = { profileIconId: number; summonerLevel: number };
+    let sum: Summoner;
+    try { sum = await get<Summoner>(server.toLowerCase(), `/lol/summoner/v4/summoners/by-puuid/${id}`); }
+    catch (e) {
+        if (!(e instanceof RiotFailure && e.code === "notfound")) throw e;
+        const other = await where();
+        if (other === server) throw e;
+        server = other;
+        sum = await get<Summoner>(server.toLowerCase(), `/lol/summoner/v4/summoners/by-puuid/${id}`);
     }
     const reg = REGION[server] ?? REGION.TW2;
     const plat = server.toLowerCase();
-    const [sum, leagues, mastery, ids] = await Promise.all([
-        get<{ profileIconId: number; summonerLevel: number }>(plat, `/lol/summoner/v4/summoners/by-puuid/${id}`),
+    const [leagues, mastery, ids] = await Promise.all([
         get<{ queueType: string; tier: string; rank: string; leaguePoints: number; wins: number; losses: number }[]>(plat, `/lol/league/v4/entries/by-puuid/${id}`),
         get<{ championId: number; championLevel: number; championPoints: number }[]>(plat, `/lol/champion-mastery/v4/champion-masteries/by-puuid/${id}/top?count=5`),
         get<string[]>(reg.match, `/lol/match/v5/matches/by-puuid/${id}/ids?count=${GAMES}`),

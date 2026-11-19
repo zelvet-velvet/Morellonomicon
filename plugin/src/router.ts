@@ -29,7 +29,9 @@ export class Router {
 
     reset(): void { this.stacks = {}; this.save(); }
     stack(tab: TabId = this.tab): Frame[] { return (this.stacks[tab] ??= []); }
-    top(tab: TabId = this.tab): Frame { const s = this.stack(tab); return s[s.length - 1] ?? { key: "root", title: "" }; }
+    // a tab's first page is one object per tab, so "is this page still on top" holds for it too (a page's redraw checks it)
+    private roots: Partial<Record<TabId, Frame>> = {};
+    top(tab: TabId = this.tab): Frame { const s = this.stack(tab); return s[s.length - 1] ?? (this.roots[tab] ??= { key: "root", title: "" }); }
     depth(tab: TabId = this.tab): number { return this.stack(tab).length; }
 
     setTab(tab: TabId): void { this.tab = tab; this.save(); }

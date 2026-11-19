@@ -13,9 +13,9 @@ export { GAMES };
 
 const KEY = "morellonomicon-profile";
 export const PROFILE_FRESH = 10 * 60 * 1000;   // Home fetches again when what it has is older than this
-// The profile server: empty until it is deployed (then its address, e.g. https://morellonomicon-profile.<account>.workers.dev);
+// The profile server (server/profile, deployed 2026-11-19 on the morellonomicon workers.dev subdomain);
 // the plugin's settings can name another one
-export const PROFILE_SERVER = "";
+export const PROFILE_SERVER = "https://morellonomicon-profile.morellonomicon.workers.dev";
 
 // The queues a game can be in, in Riot's zh_TW wording where it has one
 export const QUEUE: Record<number, string> = { 400: "一般", 430: "一般", 490: "快速對戰", 420: "單/雙排", 440: "彈性積分", 450: "隨機單中", 2400: "大混戰", 900: "阿福快打", 1700: "競技場", 1900: "阿福快打", 830: "人機", 840: "人機", 850: "人機" };
