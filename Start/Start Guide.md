@@ -17,7 +17,7 @@ The notes, the data and the built app are all in the repo, and a scheduled GitHu
 4. Close and reopen the vault; Settings → Community plugins → enable **Morellonomicon**. Tap the book icon (or run **Open Morellonomicon**).
 5. Updates: **Obsidian Git: Pull**, then reopen the vault. Use Pull only: a push gives `HTTP 403` (no write access), which is harmless.
 
-The other community plugins in the list (Dataview, Templater, Style Settings…) are only for editing on the PC and are not installed by a clone; Obsidian ignores the missing ones.
+The other community plugins in the list (Templater, Style Settings…) are only for editing on the PC and are not installed by a clone; Obsidian ignores the missing ones.
 
 ## 2. Work on it (only the owner, on the PC)
 

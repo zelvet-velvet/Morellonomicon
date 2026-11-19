@@ -1,8 +1,6 @@
 [
-  "dataview",
   "obsidian-hover-editor",
   "breadcrumbs",
-  "dataview-serializer",
   "note-refactor-obsidian",
   "templater-obsidian",
   "obsidian-html-tags-autocomplete",
