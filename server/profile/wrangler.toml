@@ -1,0 +1,6 @@
+# Morellonomicon's profile server: Home asks it for a reader's League profile by Riot ID, it asks Riot with the key it holds.
+# Deploy: cd server/profile && npx wrangler deploy ; the key: npx wrangler secret put RIOT_API_KEY (never in git)
+name = "morellonomicon-profile"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+workers_dev = true

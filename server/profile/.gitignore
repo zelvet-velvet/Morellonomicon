@@ -1,0 +1,4 @@
+# the key for `wrangler dev` on this computer
+.dev.vars
+.wrangler/
+node_modules/

@@ -10,16 +10,18 @@ sticker: lucide//text-cursor-input
 
 ## data/riot.ts
 
-> [!example]+ 9 texts
+> [!example]+ 11 texts
 > - `text` · 快速對戰
 > - `text` · 彈性積分
 > - `text` · 隨機單中
 > - `text` · 阿福快打
-> - `error` · 還沒設定 Riot API 金鑰(設定 → Riot API key)
-> - `error` · 金鑰無效或已過期(開發金鑰每 24 小時要換)
-> - `error` · 找不到這個 Riot ID,檢查名稱、標籤和伺服器
-> - `error` · 查太多次了,等一兩分鐘再試
-> - `error` · Riot 回應錯誤 ${r.status}
+> - `text` · 金鑰無效或已過期(開發金鑰每 24 小時要換)
+> - `text` · 找不到這個 Riot ID,檢查名稱和標籤
+> - `text` · 查太多次了,等一兩分鐘再試
+> - `text` · 找不到這個帳號玩的伺服器,請選伺服器
+> - `text` · Riot 暫時沒有回應,稍後再試
+> - `error` · 個人資料伺服器還沒設定
+> - `error` · 連不上個人資料伺服器,稍後再試
 
 ## data/store.ts
 
@@ -176,7 +178,7 @@ sticker: lucide//text-cursor-input
 > - `placeholder` · 遊戲名稱#標籤
 > - `text` · 格式是 名稱#標籤,例如 Zaviel#TW2
 > - `button name` · 帳號選單
-> - `text` · ${where} · 設定填 API 金鑰後顯示牌位
+> - `text` · 設定填 API 金鑰後顯示牌位
 > - `hold tip` · 單/雙排 · ${solo.lp} LP · ${solo.wins} 勝 ${solo.losses} 敗
 > - `error` · 連不上 Riot,稍後再試
 > - `text` · 重新整理
@@ -190,7 +192,7 @@ sticker: lucide//text-cursor-input
 > - `text` · 全部讀完了
 > - `empty page` · 換個名字,或用英雄的英文名、暱稱
 > - `empty page` · 還沒有對戰資料
-> - `empty page` · 在 Home 連結 Riot ID，並在設定填 Riot API 金鑰。
+> - `empty page` · 在 Home 連結你的 Riot ID。
 > - `text` · 最近 ${prof.games.length} 場 · ${wins} 勝 ${prof.games.length - wins} 敗 · ${ago(prof.fetched)}更新
 > - `text` · 法術強度
 > - `text` · 技能急速

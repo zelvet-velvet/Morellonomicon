@@ -4,12 +4,12 @@ import type { Champion } from "../data/store";
 import type { NeedCtx, PageCtx, PageOut } from "./index";
 import { ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, shopRoleIcon, h, holdTip, icon, page, warmPictures, centreBelow, empty, goes, group, row } from "../ui";
 import { MODES } from "../modes";
-import { PROFILE_FRESH, QUEUE, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, type Profile } from "../data/riot";
+import { PROFILE_FRESH, QUEUE, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, profileSource, type Profile } from "../data/riot";
 import { art, coverUrl, type Need } from "../media";
 import { finder } from "./roster";
 
 // The servers a Riot ID can be on (Riot's platform ids), Taiwan first
-const SERVERS: [string, string][] = [["TW2", "台灣"], ["JP1", "日本"], ["KR", "韓國"], ["SG2", "新加坡"], ["VN2", "越南"], ["NA1", "北美"], ["EUW1", "西歐"], ["EUN1", "北歐東歐"], ["OC1", "大洋洲"]];
+const SERVERS: [string, string][] = [["", "自動"], ["TW2", "台灣"], ["JP1", "日本"], ["KR", "韓國"], ["SG2", "新加坡"], ["VN2", "越南"], ["NA1", "北美"], ["EUW1", "西歐"], ["EUN1", "北歐東歐"], ["OC1", "大洋洲"]];
 const TOP = 5;   // mastery faces on Home
 
 // your profile from Riot (cached on this device) and your top mastery; the profile's mastery wins over the mastery file
@@ -84,8 +84,8 @@ export function homePage(ctx: PageCtx): PageOut {
         const id = h(line, "input", "mn-hc-in");
         id.type = "text"; id.placeholder = "遊戲名稱#標籤"; id.autocapitalize = "off"; id.spellcheck = false;
         const server = h(line, "select", "mn-hc-server");
-        for (const [v, name] of SERVERS) { const o = h(server, "option", undefined, v); o.value = v; o.title = name; }
-        server.value = s.riotServer || "TW2";
+        for (const [v, name] of SERVERS) { const o = h(server, "option", undefined, v || name); o.value = v; o.title = name; }
+        server.value = s.riotServer;
         const go = h(line, "button", "mn-hc-go", "連結");
         const err = h(form, "span", "mn-home-err");
         go.addEventListener("click", (e) => {
@@ -117,8 +117,10 @@ export function homePage(ctx: PageCtx): PageOut {
         if (prof) h(av, "em", undefined, String(prof.level));
         const tx = h(who, "div", "mn-hc-name");
         h(tx, "b", undefined, prof?.name ?? name ?? "").append(h(null, "small", undefined, `#${prof?.tag ?? tag ?? ""}`));
-        const where = SERVERS.find((x) => x[0] === s.riotServer)?.[1] ?? s.riotServer;
-        const sub = h(tx, "span", "mn-hc-sub", prof ? `${where} ${s.riotServer} · ${ago(prof.fetched)}更新` : s.riotKey ? `${where} · 讀取中…` : `${where} · 設定填 API 金鑰後顯示牌位`);
+        const srv = prof?.server || s.riotServer;   // the server Riot named, when it was left to Riot
+        const where = srv ? `${SERVERS.find((x) => x[0] === srv)?.[1] ?? ""} ${srv}`.trim() : "";
+        const source = profileSource(s);
+        const sub = h(tx, "span", "mn-hc-sub", prof ? `${where} · ${ago(prof.fetched)}更新` : source ? "讀取中…" : "設定填 API 金鑰後顯示牌位");
         const solo = prof?.ranks.find((x) => x.queue === "RANKED_SOLO_5x5");
         if (solo) {
             const rk = h(who, "div", "mn-hc-rank");
@@ -131,17 +133,17 @@ export function homePage(ctx: PageCtx): PageOut {
         // another once it was on screen (the cold-open glitch). The page redraws in place only when what Riot sent differs from what
         // it shows; otherwise only the "updated" line changes.
         const refresh = () => {
-            sub.textContent = `${where} · 讀取中…`;
+            sub.textContent = "讀取中…";
             sub.removeClass("is-err");
             profileFetch(ctx)
                 .then((p) => {
                     if (!el.isConnected) return;
-                    if (sameProfile(p, prof)) sub.textContent = `${where} ${s.riotServer} · ${ago(p.fetched)}更新`;
+                    if (sameProfile(p, prof)) sub.textContent = `${where} · ${ago(p.fetched)}更新`;
                     else ctx.redraw();   // in place: opening Home again would replay its arrival
                 })
                 .catch((err) => { if (!el.isConnected) return; sub.textContent = err instanceof RiotError ? err.message : "連不上 Riot,稍後再試"; sub.addClass("is-err"); });
         };
-        if (s.riotKey && (!prof || Date.now() - prof.fetched > PROFILE_FRESH)) refresh();
+        if (source && (!prof || Date.now() - prof.fetched > PROFILE_FRESH)) refresh();
         // the avatar's menu, in place under the name: refresh, wallpaper, change or log out
         const menu = h(foot, "div", "mn-home-menu is-hidden");
         const again = h(menu, "button", undefined, "重新整理");
@@ -283,7 +285,7 @@ export function homePage(ctx: PageCtx): PageOut {
 let inFlight: Promise<Profile> | null = null;
 function profileFetch(ctx: PageCtx): Promise<Profile> {
     const s = ctx.plugin.settings;
-    inFlight ??= fetchProfile(ctx.app, s.riotId, s.riotServer, s.riotKey).finally(() => { inFlight = null; });
+    inFlight ??= fetchProfile(ctx.app, s.riotId, s.riotServer, s).finally(() => { inFlight = null; });
     return inFlight;
 }
 // The same as what Home shows, apart from when it was fetched
@@ -312,7 +314,7 @@ export function gamesPage(ctx: PageCtx): PageOut {
     const el = page("最近對戰");
     const prof = cachedProfile(ctx.app, ctx.plugin.settings.riotId);
     if (!prof?.games.length) {
-        empty(el, { icon: "swords", title: "還沒有對戰資料", text: "在 Home 連結 Riot ID，並在設定填 Riot API 金鑰。" });
+        empty(el, { icon: "swords", title: "還沒有對戰資料", text: "在 Home 連結你的 Riot ID。" });
         centreBelow(el, 1);
         return { title: "最近對戰", el };
     }

@@ -6085,50 +6085,65 @@ var import_obsidian9 = require("obsidian");
 
 // src/data/riot.ts
 var import_obsidian8 = require("obsidian");
-var KEY2 = "morellonomicon-profile";
-var PROFILE_FRESH = 10 * 60 * 1e3;
+
+// src/data/riotcore.ts
 var GAMES = 10;
 var REGION = {
   TW2: { account: "asia", match: "sea" },
   SG2: { account: "asia", match: "sea" },
   VN2: { account: "asia", match: "sea" },
   OC1: { account: "americas", match: "sea" },
+  PH2: { account: "asia", match: "sea" },
+  TH2: { account: "asia", match: "sea" },
   JP1: { account: "asia", match: "asia" },
   KR: { account: "asia", match: "asia" },
   NA1: { account: "americas", match: "americas" },
+  BR1: { account: "americas", match: "americas" },
+  LA1: { account: "americas", match: "americas" },
+  LA2: { account: "americas", match: "americas" },
   EUW1: { account: "europe", match: "europe" },
-  EUN1: { account: "europe", match: "europe" }
+  EUN1: { account: "europe", match: "europe" },
+  TR1: { account: "europe", match: "europe" },
+  RU: { account: "europe", match: "europe" },
+  ME1: { account: "europe", match: "europe" }
 };
-var QUEUE = { 400: "\u4E00\u822C", 430: "\u4E00\u822C", 490: "\u5FEB\u901F\u5C0D\u6230", 420: "\u55AE/\u96D9\u6392", 440: "\u5F48\u6027\u7A4D\u5206", 450: "\u96A8\u6A5F\u55AE\u4E2D", 2400: "\u5927\u6DF7\u6230", 900: "\u963F\u798F\u5FEB\u6253", 1700: "\u7AF6\u6280\u5834", 1900: "\u963F\u798F\u5FEB\u6253", 830: "\u4EBA\u6A5F", 840: "\u4EBA\u6A5F", 850: "\u4EBA\u6A5F" };
-var RiotError = class extends Error {
-};
-function cachedProfile(app, riotId) {
-  try {
-    const p = app.loadLocalStorage(KEY2);
-    return p && p.riotId === riotId ? p : null;
-  } catch {
-    return null;
+var RiotFailure = class extends Error {
+  constructor(code, status = 0) {
+    super(code);
+    this.code = code;
+    this.status = status;
   }
-}
-async function fetchProfile(app, riotId, server, key) {
-  if (!key) throw new RiotError("\u9084\u6C92\u8A2D\u5B9A Riot API \u91D1\u9470(\u8A2D\u5B9A \u2192 Riot API key)");
+};
+async function loadProfile(request, riotId, server) {
   const [name, tag] = riotId.split("#");
+  const get = async (host, path) => {
+    const r = await request(`https://${host}.api.riotgames.com${path}`);
+    if (r.status === 200) return r.json;
+    if (r.status === 401 || r.status === 403) throw new RiotFailure("key", r.status);
+    if (r.status === 404) throw new RiotFailure("notfound", r.status);
+    if (r.status === 429) throw new RiotFailure("limit", r.status);
+    throw new RiotFailure("riot", r.status);
+  };
+  const acc = await get(
+    REGION[server]?.account ?? "asia",
+    `/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name ?? "")}/${encodeURIComponent(tag ?? "")}`
+  );
+  const id = encodeURIComponent(acc.puuid);
+  if (!server) {
+    try {
+      const r = await get(REGION[server]?.account ?? "asia", `/riot/account/v1/region/by-game/lol/by-puuid/${id}`);
+      server = (r.region ?? "").toUpperCase();
+    } catch (e) {
+      if (e instanceof RiotFailure && e.code !== "notfound") throw e;
+    }
+    if (!REGION[server]) throw new RiotFailure("server");
+  }
   const reg = REGION[server] ?? REGION.TW2;
   const plat = server.toLowerCase();
-  const get = async (host, path) => {
-    const r = await (0, import_obsidian8.requestUrl)({ url: `https://${host}.api.riotgames.com${path}`, headers: { "X-Riot-Token": key }, throw: false });
-    if (r.status === 200) return r.json;
-    if (r.status === 401 || r.status === 403) throw new RiotError("\u91D1\u9470\u7121\u6548\u6216\u5DF2\u904E\u671F(\u958B\u767C\u91D1\u9470\u6BCF 24 \u5C0F\u6642\u8981\u63DB)");
-    if (r.status === 404) throw new RiotError("\u627E\u4E0D\u5230\u9019\u500B Riot ID,\u6AA2\u67E5\u540D\u7A31\u3001\u6A19\u7C64\u548C\u4F3A\u670D\u5668");
-    if (r.status === 429) throw new RiotError("\u67E5\u592A\u591A\u6B21\u4E86,\u7B49\u4E00\u5169\u5206\u9418\u518D\u8A66");
-    throw new RiotError(`Riot \u56DE\u61C9\u932F\u8AA4 ${r.status}`);
-  };
-  const acc = await get(reg.account, `/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name ?? "")}/${encodeURIComponent(tag ?? "")}`);
-  const id = encodeURIComponent(acc.puuid);
   const [sum, leagues, mastery, ids] = await Promise.all([
     get(plat, `/lol/summoner/v4/summoners/by-puuid/${id}`),
     get(plat, `/lol/league/v4/entries/by-puuid/${id}`),
-    get(plat, `/lol/champion-mastery/v4/champion-masteries/by-puuid/${id}/top?count=3`),
+    get(plat, `/lol/champion-mastery/v4/champion-masteries/by-puuid/${id}/top?count=5`),
     get(reg.match, `/lol/match/v5/matches/by-puuid/${id}/ids?count=${GAMES}`)
   ]);
   const games = [];
@@ -6151,12 +6166,13 @@ async function fetchProfile(app, riotId, server, key) {
         items: [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5].filter((x) => x > 0)
       });
     } catch (e) {
-      if (e instanceof RiotError && /太多次/.test(e.message)) break;
+      if (e instanceof RiotFailure && e.code === "limit") break;
     }
   }
-  const prof = {
+  return {
     riotId,
     fetched: Date.now(),
+    server,
     name: acc.gameName,
     tag: acc.tagLine,
     icon: sum.profileIconId,
@@ -6165,6 +6181,55 @@ async function fetchProfile(app, riotId, server, key) {
     mastery: mastery.map((x) => ({ championKey: x.championId, level: x.championLevel, points: x.championPoints })),
     games
   };
+}
+
+// src/data/riot.ts
+var KEY2 = "morellonomicon-profile";
+var PROFILE_FRESH = 10 * 60 * 1e3;
+var PROFILE_SERVER = "";
+var QUEUE = { 400: "\u4E00\u822C", 430: "\u4E00\u822C", 490: "\u5FEB\u901F\u5C0D\u6230", 420: "\u55AE/\u96D9\u6392", 440: "\u5F48\u6027\u7A4D\u5206", 450: "\u96A8\u6A5F\u55AE\u4E2D", 2400: "\u5927\u6DF7\u6230", 900: "\u963F\u798F\u5FEB\u6253", 1700: "\u7AF6\u6280\u5834", 1900: "\u963F\u798F\u5FEB\u6253", 830: "\u4EBA\u6A5F", 840: "\u4EBA\u6A5F", 850: "\u4EBA\u6A5F" };
+var RiotError = class extends Error {
+};
+var SAY = {
+  key: "\u91D1\u9470\u7121\u6548\u6216\u5DF2\u904E\u671F(\u958B\u767C\u91D1\u9470\u6BCF 24 \u5C0F\u6642\u8981\u63DB)",
+  notfound: "\u627E\u4E0D\u5230\u9019\u500B Riot ID,\u6AA2\u67E5\u540D\u7A31\u548C\u6A19\u7C64",
+  limit: "\u67E5\u592A\u591A\u6B21\u4E86,\u7B49\u4E00\u5169\u5206\u9418\u518D\u8A66",
+  server: "\u627E\u4E0D\u5230\u9019\u500B\u5E33\u865F\u73A9\u7684\u4F3A\u670D\u5668,\u8ACB\u9078\u4F3A\u670D\u5668",
+  riot: "Riot \u66AB\u6642\u6C92\u6709\u56DE\u61C9,\u7A0D\u5F8C\u518D\u8A66"
+};
+function cachedProfile(app, riotId) {
+  try {
+    const p = app.loadLocalStorage(KEY2);
+    return p && p.riotId === riotId ? p : null;
+  } catch {
+    return null;
+  }
+}
+function profileSource(s) {
+  return s.riotKey ? "key" : s.profileServer || PROFILE_SERVER ? "server" : "";
+}
+async function fetchProfile(app, riotId, server, s) {
+  let prof;
+  try {
+    if (s.riotKey) {
+      prof = await loadProfile(async (url) => {
+        const r = await (0, import_obsidian8.requestUrl)({ url, headers: { "X-Riot-Token": s.riotKey }, throw: false });
+        return { status: r.status, json: r.status === 200 ? r.json : null };
+      }, riotId, server);
+    } else {
+      const base = (s.profileServer || PROFILE_SERVER).replace(/\/+$/, "");
+      if (!base) throw new RiotError("\u500B\u4EBA\u8CC7\u6599\u4F3A\u670D\u5668\u9084\u6C92\u8A2D\u5B9A");
+      const r = await (0, import_obsidian8.requestUrl)({ url: `${base}/profile?id=${encodeURIComponent(riotId)}${server ? `&server=${server}` : ""}`, throw: false });
+      if (r.status !== 200) {
+        const code = r.json?.error;
+        throw new RiotError(code && SAY[code] ? SAY[code] : "\u9023\u4E0D\u4E0A\u500B\u4EBA\u8CC7\u6599\u4F3A\u670D\u5668,\u7A0D\u5F8C\u518D\u8A66");
+      }
+      prof = { ...r.json, riotId, fetched: Date.now() };
+    }
+  } catch (e) {
+    if (e instanceof RiotFailure) throw new RiotError(SAY[e.code]);
+    throw e;
+  }
   try {
     app.saveLocalStorage(KEY2, prof);
   } catch {
@@ -6179,7 +6244,7 @@ var ago = (t) => {
 };
 
 // src/pages/home.ts
-var SERVERS = [["TW2", "\u53F0\u7063"], ["JP1", "\u65E5\u672C"], ["KR", "\u97D3\u570B"], ["SG2", "\u65B0\u52A0\u5761"], ["VN2", "\u8D8A\u5357"], ["NA1", "\u5317\u7F8E"], ["EUW1", "\u897F\u6B50"], ["EUN1", "\u5317\u6B50\u6771\u6B50"], ["OC1", "\u5927\u6D0B\u6D32"]];
+var SERVERS = [["", "\u81EA\u52D5"], ["TW2", "\u53F0\u7063"], ["JP1", "\u65E5\u672C"], ["KR", "\u97D3\u570B"], ["SG2", "\u65B0\u52A0\u5761"], ["VN2", "\u8D8A\u5357"], ["NA1", "\u5317\u7F8E"], ["EUW1", "\u897F\u6B50"], ["EUN1", "\u5317\u6B50\u6771\u6B50"], ["OC1", "\u5927\u6D0B\u6D32"]];
 var TOP = 5;
 function topMastery(app, plugin) {
   const s = plugin.settings, store = plugin.store;
@@ -6248,11 +6313,11 @@ function homePage(ctx) {
     id.spellcheck = false;
     const server = h(line, "select", "mn-hc-server");
     for (const [v, name] of SERVERS) {
-      const o = h(server, "option", void 0, v);
+      const o = h(server, "option", void 0, v || name);
       o.value = v;
       o.title = name;
     }
-    server.value = s.riotServer || "TW2";
+    server.value = s.riotServer;
     const go = h(line, "button", "mn-hc-go", "\u9023\u7D50");
     const err = h(form, "span", "mn-home-err");
     go.addEventListener("click", (e) => {
@@ -6295,8 +6360,10 @@ function homePage(ctx) {
     if (prof) h(av, "em", void 0, String(prof.level));
     const tx = h(who, "div", "mn-hc-name");
     h(tx, "b", void 0, prof?.name ?? name ?? "").append(h(null, "small", void 0, `#${prof?.tag ?? tag ?? ""}`));
-    const where = SERVERS.find((x) => x[0] === s.riotServer)?.[1] ?? s.riotServer;
-    const sub = h(tx, "span", "mn-hc-sub", prof ? `${where} ${s.riotServer} \xB7 ${ago(prof.fetched)}\u66F4\u65B0` : s.riotKey ? `${where} \xB7 \u8B80\u53D6\u4E2D\u2026` : `${where} \xB7 \u8A2D\u5B9A\u586B API \u91D1\u9470\u5F8C\u986F\u793A\u724C\u4F4D`);
+    const srv = prof?.server || s.riotServer;
+    const where = srv ? `${SERVERS.find((x) => x[0] === srv)?.[1] ?? ""} ${srv}`.trim() : "";
+    const source = profileSource(s);
+    const sub = h(tx, "span", "mn-hc-sub", prof ? `${where} \xB7 ${ago(prof.fetched)}\u66F4\u65B0` : source ? "\u8B80\u53D6\u4E2D\u2026" : "\u8A2D\u5B9A\u586B API \u91D1\u9470\u5F8C\u986F\u793A\u724C\u4F4D");
     const solo = prof?.ranks.find((x) => x.queue === "RANKED_SOLO_5x5");
     if (solo) {
       const rk = h(who, "div", "mn-hc-rank");
@@ -6307,11 +6374,11 @@ function homePage(ctx) {
       holdTip(rk, `\u55AE/\u96D9\u6392 \xB7 ${solo.lp} LP \xB7 ${solo.wins} \u52DD ${solo.losses} \u6557`);
     }
     const refresh = () => {
-      sub.textContent = `${where} \xB7 \u8B80\u53D6\u4E2D\u2026`;
+      sub.textContent = "\u8B80\u53D6\u4E2D\u2026";
       sub.removeClass("is-err");
       profileFetch(ctx).then((p) => {
         if (!el.isConnected) return;
-        if (sameProfile(p, prof)) sub.textContent = `${where} ${s.riotServer} \xB7 ${ago(p.fetched)}\u66F4\u65B0`;
+        if (sameProfile(p, prof)) sub.textContent = `${where} \xB7 ${ago(p.fetched)}\u66F4\u65B0`;
         else ctx.redraw();
       }).catch((err) => {
         if (!el.isConnected) return;
@@ -6319,7 +6386,7 @@ function homePage(ctx) {
         sub.addClass("is-err");
       });
     };
-    if (s.riotKey && (!prof || Date.now() - prof.fetched > PROFILE_FRESH)) refresh();
+    if (source && (!prof || Date.now() - prof.fetched > PROFILE_FRESH)) refresh();
     const menu = h(foot, "div", "mn-home-menu is-hidden");
     const again = h(menu, "button", void 0, "\u91CD\u65B0\u6574\u7406");
     again.addEventListener("click", (e) => {
@@ -6521,7 +6588,7 @@ function homePage(ctx) {
 var inFlight = null;
 function profileFetch(ctx) {
   const s = ctx.plugin.settings;
-  inFlight ?? (inFlight = fetchProfile(ctx.app, s.riotId, s.riotServer, s.riotKey).finally(() => {
+  inFlight ?? (inFlight = fetchProfile(ctx.app, s.riotId, s.riotServer, s).finally(() => {
     inFlight = null;
   }));
   return inFlight;
@@ -6559,7 +6626,7 @@ function gamesPage(ctx) {
   const el = page("\u6700\u8FD1\u5C0D\u6230");
   const prof = cachedProfile(ctx.app, ctx.plugin.settings.riotId);
   if (!prof?.games.length) {
-    empty(el, { icon: "swords", title: "\u9084\u6C92\u6709\u5C0D\u6230\u8CC7\u6599", text: "\u5728 Home \u9023\u7D50 Riot ID\uFF0C\u4E26\u5728\u8A2D\u5B9A\u586B Riot API \u91D1\u9470\u3002" });
+    empty(el, { icon: "swords", title: "\u9084\u6C92\u6709\u5C0D\u6230\u8CC7\u6599", text: "\u5728 Home \u9023\u7D50\u4F60\u7684 Riot ID\u3002" });
     centreBelow(el, 1);
     return { title: "\u6700\u8FD1\u5C0D\u6230", el };
   }
@@ -8353,8 +8420,10 @@ var DEFAULTS = {
   patchFolder: "\u7248\u672C\u66F4\u65B0",
   openOnStartup: import_obsidian15.Platform.isMobile,
   riotId: "",
-  riotServer: "TW2",
+  riotServer: "",
+  // empty: Riot says where the account plays
   riotKey: "",
+  profileServer: "",
   kbDebug: false,
   picDebug: false,
   wallpaper: "",
@@ -8394,13 +8463,17 @@ var MnSettingTab = class extends import_obsidian15.PluginSettingTab {
     folder("Augment folder", "Notes made by tools/fetch_augments.py", "augmentFolder");
     folder("Patch notes folder", "Our own patch notes (frontmatter: patch, date, title, summary)", "patchFolder");
     folder("Guide folder", "Beginner guide notes", "guideFolder");
-    new import_obsidian15.Setting(c).setName("Riot API key").setDesc("For Home: your avatar, rank, mastery and recent games. From developer.riotgames.com (a development key expires every 24 hours; a personal key does not). Stays on this device.").addText((x) => {
+    new import_obsidian15.Setting(c).setName("Riot API key").setDesc("Optional: Home asks Riot with your own key instead of the profile server. From developer.riotgames.com (a development key expires every 24 hours; a personal key does not). Stays on this device.").addText((x) => {
       x.inputEl.type = "password";
       x.setPlaceholder("RGAPI-\u2026").setValue(s.riotKey).onChange(async (v) => {
         s.riotKey = v.trim();
         await this.plugin.saveData(s);
       });
     });
+    new import_obsidian15.Setting(c).setName("Profile server").setDesc("Optional: another address for the server that reads Home's profile (server/profile). Empty: the built-in one.").addText((x) => x.setPlaceholder("https://\u2026workers.dev").setValue(s.profileServer).onChange(async (v) => {
+      s.profileServer = v.trim();
+      await this.plugin.saveData(s);
+    }));
     new import_obsidian15.Setting(c).setName("Keyboard readout").setDesc("While typing in a search box, show what the phone reports about the keyboard (for fixing the search bar position).").addToggle((x) => x.setValue(s.kbDebug).onChange(async (v) => {
       s.kbDebug = v;
       await this.plugin.saveData(s);

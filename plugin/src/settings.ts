@@ -17,7 +17,8 @@ export interface MnSettings {
     roster: string[];          // the champions picked in Quick Look (ids), at most 15
     riotId: string;            // your Riot ID (Name#TAG) for Home; kept in this device's settings only (data.json is git-ignored)
     riotServer: string;        // the platform, e.g. TW2
-    riotKey: string;           // your Riot API key (Home's profile); in data.json, which is git-ignored: never in the repo
+    riotKey: string;           // your own Riot API key (Home's profile, wins over the profile server); in data.json, which is git-ignored: never in the repo
+    profileServer: string;     // another profile server than the built-in one (server/profile), e.g. while testing a new deploy; empty: the built-in one
     kbDebug: boolean;          // show what the phone reports about the keyboard while typing in a search capsule
     picDebug: boolean;         // show the pictures a page showed still loading that were never fetched ahead (media.ts)
     wallpaper: string;         // Home's background, "<champion id>_<skin number>"; empty: your top mastery champion's newest skin
@@ -34,8 +35,9 @@ export const DEFAULTS: MnSettings = {
     patchFolder: "版本更新",
     openOnStartup: Platform.isMobile,
     riotId: "",
-    riotServer: "TW2",
+    riotServer: "",   // empty: Riot says where the account plays
     riotKey: "",
+    profileServer: "",
     kbDebug: false,
     picDebug: false,
     wallpaper: "",
@@ -70,8 +72,10 @@ export class MnSettingTab extends PluginSettingTab {
         folder("Patch notes folder", "Our own patch notes (frontmatter: patch, date, title, summary)", "patchFolder");
         folder("Guide folder", "Beginner guide notes", "guideFolder");
         // Home's profile: the key is kept on this device only (data.json is git-ignored) and shown as dots
-        new Setting(c).setName("Riot API key").setDesc("For Home: your avatar, rank, mastery and recent games. From developer.riotgames.com (a development key expires every 24 hours; a personal key does not). Stays on this device.")
+        new Setting(c).setName("Riot API key").setDesc("Optional: Home asks Riot with your own key instead of the profile server. From developer.riotgames.com (a development key expires every 24 hours; a personal key does not). Stays on this device.")
             .addText((x) => { x.inputEl.type = "password"; x.setPlaceholder("RGAPI-…").setValue(s.riotKey).onChange(async (v) => { s.riotKey = v.trim(); await this.plugin.saveData(s); }); });
+        new Setting(c).setName("Profile server").setDesc("Optional: another address for the server that reads Home's profile (server/profile). Empty: the built-in one.")
+            .addText((x) => x.setPlaceholder("https://…workers.dev").setValue(s.profileServer).onChange(async (v) => { s.profileServer = v.trim(); await this.plugin.saveData(s); }));
         new Setting(c).setName("Keyboard readout").setDesc("While typing in a search box, show what the phone reports about the keyboard (for fixing the search bar position).")
             .addToggle((x) => x.setValue(s.kbDebug).onChange(async (v) => { s.kbDebug = v; await this.plugin.saveData(s); }));
         new Setting(c).setName("Picture readout").setDesc("Count the pictures a page showed still loading that were never fetched ahead (tap the count for the list). A new page or tab should show none.")
