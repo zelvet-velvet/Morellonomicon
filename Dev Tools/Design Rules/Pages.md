@@ -31,5 +31,5 @@ sticker: lucide//layout-template
 ## ⚖️ Short pages and empty states
 
 > [!note]+ Centre what is short · Empty states
-> - **A page shorter than the screen** keeps its title row or banner at the top and centres the rest down the room under it with `centreBelow(el, n)` (`ui.ts`: Home, 最近對戰, the augment page; the item page and 全部概覽 do the same with `.is-centred`). A longer page still starts at the top.
+> - **A page shorter than the screen** keeps its title row or banner at the top and centres the rest down the room under it with `centreBelow(el, n)` (`ui.ts`: 最近對戰, the augment page; the item page and 全部概覽 do the same with `.is-centred`). A longer page still starts at the top.
 > - **An empty state** is `empty(parent, { icon, title, text })`, centred in the room it has; a page that fails to draw shows one too (`This page could not be drawn`).

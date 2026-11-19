@@ -1,15 +1,16 @@
-import type { App } from "obsidian";
+import { setIcon, type App } from "obsidian";
 import type MorellonomiconPlugin from "../main";
 import type { Champion } from "../data/store";
 import type { NeedCtx, PageCtx, PageOut } from "./index";
-import { ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, shopRoleIcon, h, holdTip, icon, page, warmPictures, centreBelow, empty, goes } from "../ui";
+import { ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, shopRoleIcon, h, holdTip, icon, page, warmPictures, centreBelow, empty, goes, group, row } from "../ui";
 import { MODES } from "../modes";
 import { PROFILE_FRESH, QUEUE, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, type Profile } from "../data/riot";
-import { art, type Need } from "../media";
+import { art, coverUrl, type Need } from "../media";
+import { finder } from "./roster";
 
 // The servers a Riot ID can be on (Riot's platform ids), Taiwan first
 const SERVERS: [string, string][] = [["TW2", "台灣"], ["JP1", "日本"], ["KR", "韓國"], ["SG2", "新加坡"], ["VN2", "越南"], ["NA1", "北美"], ["EUW1", "西歐"], ["EUN1", "北歐東歐"], ["OC1", "大洋洲"]];
-const TOP = 3;   // mastery cards on Home
+const TOP = 5;   // mastery faces on Home
 
 // your profile from Riot (cached on this device) and your top mastery; the profile's mastery wins over the mastery file
 function topMastery(app: App, plugin: MorellonomiconPlugin) {
@@ -28,39 +29,65 @@ function wallpaper(plugin: MorellonomiconPlugin, best: Champion | undefined): st
     const [wid, wn] = s.wallpaper ? s.wallpaper.split("_") : [best?.id ?? "", String(Math.max(0, ...(best?.skins ?? [0])))];
     return wid ? art.splash(wid, Number(wn) || 0) : "";
 }
-// What Home shows from the network (its route in pages/index.ts): the wallpaper and the mastery portraits
+// The next Handbook topic to read, and how many of the decks are read
+function nextTopic(plugin: MorellonomiconPlugin) {
+    const decks = plugin.store.guideNotes().filter((n) => n.layout === "deck");
+    const read = new Set(plugin.settings.read);
+    return { decks, next: decks.find((n) => !read.has(n.file.path)), done: decks.filter((n) => read.has(n.file.path)).length };
+}
+const POPULAR = ["Jinx", "Garen", "Lux", "Ahri", "Ezreal"];   // the faces until you pick champions in Picks
+// your champions as faces: linked, the top mastery; else your Picks, else a few easy ones
+function myChampions(plugin: MorellonomiconPlugin, top: [string, { level: number }][]): { c: Champion; level?: number }[] {
+    const store = plugin.store;
+    if (top.length) return top.slice(0, FACES).map(([id, m]) => ({ c: store.champion(id)!, level: m.level })).filter((x) => x.c);
+    const ids = plugin.settings.roster.filter((id) => store.champion(id));
+    return (ids.length ? ids : POPULAR).map((id) => store.champion(id)).filter((c): c is Champion => !!c).slice(0, FACES).map((c) => ({ c }));
+}
+const FACES = 5;
+
+// What Home shows from the network (its route in pages/index.ts): the card's picture, the avatar, the next topic's cover
 export function homeNeeds({ app, plugin }: NeedCtx): Need[] {
-    if (!plugin.settings.riotId) return [art.aramScreen("habackground")];
+    const { next } = nextTopic(plugin);
+    const cover = next?.cover ? [coverUrl(next.cover)] : [];
+    if (!plugin.settings.riotId) return [art.aramScreen("habackground"), ...cover];
     const { byId, prof, top } = topMastery(app, plugin);
     const best = top[0] ? byId.get(top[0][0]) : undefined;
-    return [wallpaper(plugin, best), ...(prof ? [art.profileIcon(plugin.store.champions()[0]?.patch ?? "", prof.icon)] : []), ...top.map(([id]) => art.loading(id))];
+    return [wallpaper(plugin, best), ...(prof ? [art.profileIcon(plugin.store.champions()[0]?.patch ?? "", prof.icon)] : []), ...cover];
 }
 
-// Home (Review: Home tab draft): your profile like the client's, the way into Champions and the Handbook, your top mastery.
-// Signed out it is a Riot ID box. The avatar, level, rank and recent games need Riot's API, which is not wired yet: until then the
-// hero shows your name on your best champion's art.
+// Home (Screens: Home options · E, chosen 2026-11-19): one card where everything starts (your profile, or the ARAM map with a greeting,
+// and the search for champions, items and augments at its foot), four round buttons for the ways in that are not tabs, your champions as
+// faces, the last games (linked) and the next Handbook topic. Typing in the search shows the results in place of everything under the card.
 export function homePage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const s = ctx.plugin.settings;
     const el = page("Home");
     const { all, byId, prof, top } = topMastery(ctx.app, ctx.plugin);
     const patch = all[0]?.patch ?? "";
-    
-    const hero = layoutBlock(h(el, "div", "mn-home-hero"));
-    if (!s.riotId) {
-        // not linked: an ARAM map behind, one line on why, the Riot ID and the server
-        hero.addClass("is-out");
-        const bg = h(hero, "img", "mn-home-wall"); bg.src = art.aramScreen("habackground"); bg.alt = "";
-        const box = h(hero, "div", "mn-home-cta");
-        h(box, "b", undefined, "連結你的召喚師");
-        h(box, "span", undefined, "輸入 Riot ID,看你的頭像、等級、牌位和最近對戰");
-        const id = h(box, "input", "mn-home-in");
+    const linked = !!s.riotId;
+
+    // ---------- the card ----------
+    const card = layoutBlock(h(el, "div", "mn-hc"));
+    const best = top[0] ? byId.get(top[0][0]) : undefined;
+    const wall = linked ? wallpaper(ctx.plugin, best) : art.aramScreen("habackground");
+    if (wall) { const bg = h(card, "img", "mn-hc-wall"); bg.src = wall; bg.alt = ""; }
+    const foot = h(card, "div", "mn-hc-foot");
+    const picker = h(null, "div", "mn-home-pick is-hidden");   // the wallpaper picker (linked), under the card
+    if (!linked) {
+        // not linked: a greeting with the patch, 連結 Riot ID as a pill in the corner; it opens the form in place of the greeting
+        const n = store.riotNotes[0];
+        const greet = h(foot, "div", "mn-hc-greet");
+        h(greet, "b", undefined, "今天想查什麼？");
+        if (n) h(greet, "span", undefined, `${n.patch} 版本 · ${(n.champions?.length ?? 0) + (n.mayhem_champions?.length ?? 0)} 位英雄調整 · ${n.augments_new?.length ?? 0} 個新強化`);
+        const form = h(foot, "div", "mn-hc-form is-hidden");
+        const line = h(form, "div", "mn-hc-idrow");
+        const id = h(line, "input", "mn-hc-in");
         id.type = "text"; id.placeholder = "遊戲名稱#標籤"; id.autocapitalize = "off"; id.spellcheck = false;
-        const server = h(box, "select", "mn-home-in");
-        for (const [v, name] of SERVERS) { const o = h(server, "option", undefined, `${name} ${v}`); o.value = v; }
+        const server = h(line, "select", "mn-hc-server");
+        for (const [v, name] of SERVERS) { const o = h(server, "option", undefined, v); o.value = v; o.title = name; }
         server.value = s.riotServer || "TW2";
-        const err = h(box, "span", "mn-home-err");
-        const go = h(box, "button", "mn-home-go", "連結");
+        const go = h(line, "button", "mn-hc-go", "連結");
+        const err = h(form, "span", "mn-home-err");
         go.addEventListener("click", (e) => {
             e.preventDefault();
             const v = id.value.trim().replace(/＃/g, "#");
@@ -68,20 +95,37 @@ export function homePage(ctx: PageCtx): PageOut {
             s.riotId = v; s.riotServer = server.value;
             void ctx.plugin.saveData(s).then(() => ctx.goTab("home"));
         });
+        const pill = h(card, "button", "mn-hc-pill");
+        const pic = icon(pill, "user-round-plus");
+        const label = h(pill, "span", undefined, "連結 Riot ID");
+        pill.addEventListener("click", (e) => {
+            e.preventDefault();
+            const open = form.hasClass("is-hidden");
+            form.toggleClass("is-hidden", !open); greet.toggleClass("is-hidden", open);
+            label.textContent = open ? "取消" : "連結 Riot ID";
+            setIcon(pic, open ? "x" : "user-round-plus");
+            if (open) id.focus();
+        });
     } else {
-        // linked: your best champion's art as the wallpaper, the avatar ring with your name; a tap on it changes or removes the ID
+        // linked: your avatar (a tap opens the menu), name, server and when it was fetched, your solo rank
         const [name, tag] = s.riotId.split("#");
-        const best = top[0] ? byId.get(top[0][0]) : undefined;
-        const wall = wallpaper(ctx.plugin, best);
-        if (wall) { const bg = h(hero, "img", "mn-home-wall"); bg.src = wall; bg.alt = ""; }
-        const av = h(hero, "button", "mn-home-av");
+        const who = h(foot, "div", "mn-hc-who");
+        const av = h(who, "button", "mn-hc-av");
         if (prof) { const im = h(av, "img"); im.src = art.profileIcon(patch, prof.icon); im.alt = ""; }
         else if (best) { const im = h(av, "img"); im.src = best.icon; im.alt = ""; } else h(av, "span", undefined, (name ?? "?").slice(0, 1));
-        av.setAttribute("aria-label", "更換 Riot ID");
-        if (prof) h(hero, "div", "mn-home-lvl", String(prof.level));
-        h(hero, "div", "mn-home-name").append(prof?.name ?? name ?? "", h(null, "small", undefined, `#${prof?.tag ?? tag ?? ""}`));
+        av.setAttribute("aria-label", "帳號選單");
+        if (prof) h(av, "em", undefined, String(prof.level));
+        const tx = h(who, "div", "mn-hc-name");
+        h(tx, "b", undefined, prof?.name ?? name ?? "").append(h(null, "small", undefined, `#${prof?.tag ?? tag ?? ""}`));
         const where = SERVERS.find((x) => x[0] === s.riotServer)?.[1] ?? s.riotServer;
-        const sub = h(hero, "div", "mn-home-sub", prof ? `${where} · ${ago(prof.fetched)}更新` : s.riotKey ? `${where} · 讀取中…` : `${where} · 設定裡填 Riot API 金鑰後顯示頭像、牌位、對戰`);
+        const sub = h(tx, "span", "mn-hc-sub", prof ? `${where} ${s.riotServer} · ${ago(prof.fetched)}更新` : s.riotKey ? `${where} · 讀取中…` : `${where} · 設定填 API 金鑰後顯示牌位`);
+        const solo = prof?.ranks.find((x) => x.queue === "RANKED_SOLO_5x5");
+        if (solo) {
+            const rk = h(who, "div", "mn-hc-rank");
+            const im = h(rk, "img"); im.src = emblem(solo.tier); im.alt = "";
+            h(rk, "span", undefined, `${TIER[solo.tier] ?? solo.tier} ${["MASTER", "GRANDMASTER", "CHALLENGER"].includes(solo.tier) ? "" : solo.division}`.trim());
+            holdTip(rk, `單/雙排 · ${solo.lp} LP · ${solo.wins} 勝 ${solo.losses} 敗`);
+        }
         // fetch when there is nothing yet or it is old. One fetch at a time: at start-up Home is drawn several times while the data
         // arrives, and each drawing used to start its own fetch (a dozen Riot calls each), whose answers then redrew the page one after
         // another once it was on screen (the cold-open glitch). The page redraws in place only when what Riot sent differs from what
@@ -92,23 +136,25 @@ export function homePage(ctx: PageCtx): PageOut {
             profileFetch(ctx)
                 .then((p) => {
                     if (!el.isConnected) return;
-                    if (sameProfile(p, prof)) sub.textContent = `${where} · ${ago(p.fetched)}更新`;
+                    if (sameProfile(p, prof)) sub.textContent = `${where} ${s.riotServer} · ${ago(p.fetched)}更新`;
                     else ctx.redraw();   // in place: opening Home again would replay its arrival
                 })
                 .catch((err) => { if (!el.isConnected) return; sub.textContent = err instanceof RiotError ? err.message : "連不上 Riot,稍後再試"; sub.addClass("is-err"); });
         };
         if (s.riotKey && (!prof || Date.now() - prof.fetched > PROFILE_FRESH)) refresh();
-        const menu = h(hero, "div", "mn-home-menu is-hidden");
+        // the avatar's menu, in place under the name: refresh, wallpaper, change or log out
+        const menu = h(foot, "div", "mn-home-menu is-hidden");
         const again = h(menu, "button", undefined, "重新整理");
         again.addEventListener("click", (e) => { e.preventDefault(); refresh(); });
         const wallBtn = h(menu, "button", undefined, "換背景");
         const out = h(menu, "button", undefined, "更換 / 登出");
-        // the wallpaper picker: your champions (top mastery first, else all), then the chosen one's skins, newest first
-        const picker = h(el, "div", "mn-home-pick is-hidden");
         wallBtn.addEventListener("click", (e) => { e.preventDefault(); picker.toggleClass("is-hidden", !picker.hasClass("is-hidden")); });
+        out.addEventListener("click", (e) => { e.preventDefault(); s.riotId = ""; void ctx.plugin.saveData(s).then(() => ctx.goTab("home")); });
+        av.addEventListener("click", (e) => { e.preventDefault(); menu.toggleClass("is-hidden", !menu.hasClass("is-hidden")); });
+        // the wallpaper picker: your champions (top mastery first, else all), then the chosen one's skins, newest first
         const champsRow = layoutBlock(h(picker, "div", "mn-home-prow"));
         const skinsRow = layoutBlock(h(picker, "div", "mn-home-prow is-skins"));
-        const mine = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).map(([id]) => byId.get(id)!);
+        const mine = Object.entries(store.mastery?.champions ?? {}).filter(([cid]) => byId.has(cid)).sort((a, b) => b[1].points - a[1].points).map(([cid]) => byId.get(cid)!);
         const pool = mine.length ? mine.slice(0, 24) : all;
         const showSkins = (cid: string) => {
             skinsRow.empty();
@@ -130,66 +176,106 @@ export function homePage(ctx: PageCtx): PageOut {
             reset.addEventListener("click", (e) => { e.preventDefault(); s.wallpaper = ""; void ctx.plugin.saveData(s).then(() => ctx.goTab("home")); });
         }
         showSkins((s.wallpaper ? s.wallpaper.split("_")[0] : best?.id) || pool[0]?.id || "");
-        out.addEventListener("click", (e) => { e.preventDefault(); s.riotId = ""; void ctx.plugin.saveData(s).then(() => ctx.goTab("home")); });
-        av.addEventListener("click", (e) => { e.preventDefault(); menu.toggleClass("is-hidden", !menu.hasClass("is-hidden")); });
     }
+    // the search at the card's foot: champions, items and augments
+    const box = h(foot, "div", "mn-search mn-hc-search");
+    icon(box, "search", "mn-search-ic");
+    const search = h(box, "input");
+    search.type = "search";
+    search.placeholder = "搜尋英雄、裝備、強化";
+    el.append(picker);
 
-    // rank: solo / duo and flex
-    if (prof?.ranks.length) {
-        const ranks = layoutBlock(h(el, "div", "mn-home-ranks"));
-        for (const q of ["RANKED_SOLO_5x5", "RANKED_FLEX_SR"]) {
-            const r = prof.ranks.find((x) => x.queue === q);
-            const t = h(ranks, "div", "mn-home-rank");
-            if (r) { const im = h(t, "img"); im.src = emblem(r.tier); im.alt = ""; }
-            const tx = h(t, "div");
-            h(tx, "b", undefined, r ? `${TIER[r.tier] ?? r.tier} ${["MASTER", "GRANDMASTER", "CHALLENGER"].includes(r.tier) ? "" : r.division} · ${r.lp} LP` : "未定級");
-            h(tx, "span", undefined, `${q === "RANKED_SOLO_5x5" ? "單/雙排" : "彈性"}${r ? ` · ${r.wins} 勝 ${r.losses} 敗` : ""}`);
-        }
-    }
+    // ---------- under the card: the ways in, your champions, games, learning (results take their place while typing) ----------
+    const rest = h(el, "div", "mn-hc-rest");
+    const results = h(el, "div", "mn-hc-results is-hidden");
 
-    // the ways in, 2 x 2 of the same size: Champions, Items, the next Handbook topic and the recent games
-    const entries = layoutBlock(h(el, "div", "mn-home-entries"));
-    const entry = (iconName: string, title: string, line: string, tint: string, go: () => void) => {
-        const b = h(entries, "button", "mn-home-entry");
+    const quick = h(rest, "div", "mn-hq");
+    const btn = (iconName: string, label: string, tint: string, go: () => void) => {
+        const b = h(quick, "button", "mn-hq-b");
         b.style.setProperty("--t", tint);
-        icon(b, iconName);
-        h(b, "b", undefined, title);
-        h(b, "span", undefined, line);
+        icon(h(b, "span", "mn-hq-ic"), iconName);
+        h(b, "span", "mn-hq-l", label);
         b.addEventListener("click", (e) => { e.preventDefault(); go(); });
+        return b;
     };
-    entry("users", "Champions", `${all.length} 位英雄 · 篩選`, "var(--mn-accent)", () => ctx.push({ key: "championlist", title: "Champions" }));
-    entry("shopping-bag", "Items", "裝備 · 價格 · 合成", "var(--color-yellow)", () => ctx.push({ key: "itemlist", title: "Items" }));
-    const read = new Set(s.read);
-    const next = store.guideNotes().find((n) => n.layout === "deck" && !read.has(n.file.path));
-    entry("book-open", "Handbook", next ? `繼續:${next.title}` : "全部讀完了", "var(--color-cyan)", () => { if (next) ctx.openNote(next.file.path); else ctx.goTab("handbook"); });
-    // the recent games only once a Riot ID is linked (not linked, Handbook takes the whole row)
-    if (!s.riotId) entries.lastElementChild?.addClass("is-wide");
-    else entry("swords", "最近對戰", prof?.games.length ? `${prof.games.length} 場 · ${prof.games.filter((g) => g.win).length} 勝` : "連結 Riot 後顯示", "var(--color-purple)", () => ctx.push({ key: "games", title: "最近對戰" }));
+    const { decks, next, done } = nextTopic(ctx.plugin);
+    const openNext = () => { if (next) ctx.openNote(next.file.path); else ctx.goTab("handbook"); };
+    btn("users", "英雄", "var(--mn-accent)", () => ctx.push({ key: "championlist", title: "Champions" }));
+    btn("shopping-bag", "裝備", "var(--color-yellow)", () => ctx.push({ key: "itemlist", title: "Items" }));
+    if (linked) btn("swords", "對戰", "var(--color-purple)", () => ctx.push({ key: "games", title: "最近對戰" }));
+    btn("book-open", "學習", "var(--color-cyan)", openNext);
+    if (!linked) btn("scroll-text", "名詞表", "var(--color-green)", () => ctx.openNote(`${s.guideFolder}/名詞表.md`));
 
-    // your top mastery (from _data/mastery.json on a device that has it)
-    if (top.length) {
-        h(el, "div", "mn-home-lab", "熟練度");
-        const row = layoutBlock(h(el, "div", "mn-home-mast"));
-        for (const [id, m] of top) {
-            const c = byId.get(id)!;
-            const card = h(row, "button", "mn-home-mc");
-            const im = h(card, "img"); im.src = art.loading(id); im.alt = "";
-            h(card, "em", m.level >= 10 ? "is-high" : undefined, `M${m.level}`);
-            h(card, "b", undefined, c.name);
-            card.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(id); });
-            goes(card, { key: "champion", params: { id: id } });
+    // your champions as faces: linked, the top mastery with its level; else your Picks (編輯 opens Picks)
+    const faces = myChampions(ctx.plugin, top);
+    if (faces.length) {
+        const lab = h(rest, "div", "mn-hc-lab");
+        h(lab, "span", undefined, top.length ? "熟練度" : "我的英雄");
+        if (!top.length) { const more = h(lab, "button", "mn-home-more", "編輯"); more.addEventListener("click", (e) => { e.preventDefault(); ctx.goTab("picks"); }); }
+        const row = h(rest, "div", "mn-hf");
+        for (const { c, level } of faces) {
+            const b = h(row, "button", "mn-hf-b");
+            const w = h(b, "span", "mn-hf-face");
+            const im = h(w, "img"); im.src = c.icon; im.alt = "";
+            if (level) h(w, "em", level >= 10 ? "is-high" : undefined, `M${level}`);
+            h(b, "span", "mn-hf-n", c.name);
+            b.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); });
+            goes(b, { key: "champion", params: { id: c.id } });
         }
     }
-    // the last games: a few rows here, all of them on the recent games page
+
+    // the last games as faces with a win / loss line (linked, once Riot has sent them); 更多 opens 最近對戰
     if (prof?.games.length) {
-        const lab = h(el, "div", "mn-home-lab mn-home-labrow");
-        h(lab, "span", undefined, "最近對戰");
+        const games = prof.games.slice(0, HOME_GAMES);
+        const wins = games.filter((g) => g.win).length;
+        const lab = h(rest, "div", "mn-hc-lab");
+        h(lab, "span", undefined, `最近對戰 · ${wins} 勝 ${games.length - wins} 敗`);
         const more = h(lab, "button", "mn-home-more", "更多");
         more.addEventListener("click", (e) => { e.preventDefault(); ctx.push({ key: "games", title: "最近對戰" }); });
-        const list = layoutBlock(h(el, "div", "mn-home-games"));
-        for (const g of prof.games.slice(0, HOME_GAMES)) gameRow(ctx, list, g, false);
+        const strip = h(rest, "div", "mn-hg");
+        for (const g of games) {
+            const c = all.find((x) => x.id.toLowerCase() === g.champion.toLowerCase());   // matches spell some ids differently (FiddleSticks)
+            const b = h(strip, "button", "mn-hg-b" + (g.win ? " is-win" : " is-loss"));
+            const im = h(b, "img"); im.src = c?.icon ?? ""; im.alt = "";
+            holdTip(b, `${c?.name ?? g.champion} · ${g.k}/${g.d}/${g.a} · ${g.win ? "勝" : "敗"}`);
+            if (c) b.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); });
+        }
     }
-    centreBelow(el, 1);   // the title row stays at the top; the profile and the ways in are centred in the room under it
+
+    // the next Handbook topic: a wide cover card (a row with the cover beside it when the games are there too)
+    if (decks.length) {
+        const wide = !prof?.games.length;
+        const learn = layoutBlock(h(rest, "button", "mn-hl" + (wide ? " is-wide" : "")));
+        if (next?.cover) { const im = h(learn, "img", "mn-hl-img"); im.src = coverUrl(next.cover); im.alt = ""; }
+        const tx = h(learn, "div", "mn-hl-t");
+        h(tx, "span", "mn-hl-k", wide ? `繼續學習 · ${done} / ${decks.length}` : "繼續學習");
+        h(tx, "b", undefined, next?.title ?? "全部讀完了");
+        const bar = h(tx, "div", "mn-hl-bar");
+        h(bar, "i").style.width = `${Math.round((done / decks.length) * 100)}%`;
+        if (!wide) h(tx, "span", "mn-hl-n", `${done} / ${decks.length}`);
+        learn.addEventListener("click", (e) => { e.preventDefault(); openNext(); });
+    }
+
+    // ---------- the search: results in place of what is under the card ----------
+    const { score } = finder(all, store.sounds);
+    const flag = MODES[s.mode].itemFlag;
+    const draw = () => {
+        const q = search.value.trim();
+        rest.toggleClass("is-hidden", !!q); picker.addClass("is-hidden");
+        results.toggleClass("is-hidden", !q);
+        results.empty();
+        if (!q) return;
+        const ql = q.toLowerCase();
+        const champs = all.map((c) => ({ c, v: score(c, q) })).filter((x) => x.v >= 50).sort((a, b) => b.v - a.v).slice(0, 6);
+        const seen = new Set<string>();
+        const items = store.items().filter((i) => i[flag] && i.goldTotal > 0 && !i.reward && i.name.toLowerCase().includes(ql) && !seen.has(i.name) && seen.add(i.name)).slice(0, 4);
+        const augs = store.augments().filter((a) => a.name.toLowerCase().includes(ql)).slice(0, 4);
+        if (!champs.length && !items.length && !augs.length) { empty(results, { icon: "search-x", title: "找不到", text: "換個名字,或用英雄的英文名、暱稱" }); return; }
+        if (champs.length) { const g = group(results, "英雄"); for (const { c } of champs) goes(row(g, { image: c.icon, title: c.name, sub: c.title, chevron: true, onTap: () => ctx.openChampion(c.id) }), { key: "champion", params: { id: c.id } }); }
+        if (items.length) { const g = group(results, "裝備"); for (const i of items) row(g, { image: i.icon, title: i.name, value: `${i.goldTotal}`, chevron: true, onTap: () => ctx.openItem(i.id) }); }
+        if (augs.length) { const g = group(results, "強化"); for (const a of augs) row(g, { image: a.icon, rarity: a.rarity, title: a.name, sub: a.rarity, chevron: true, onTap: () => ctx.openAugment(a.id) }); }
+    };
+    search.addEventListener("input", draw);
     return { title: "Home", el };
 }
 
@@ -203,7 +289,7 @@ function profileFetch(ctx: PageCtx): Promise<Profile> {
 // The same as what Home shows, apart from when it was fetched
 const sameProfile = (a: Profile, b: Profile | null): boolean => !!b && JSON.stringify({ ...a, fetched: 0 }) === JSON.stringify({ ...b, fetched: 0 });
 
-const HOME_GAMES = 4;   // rows on Home; the rest are on the recent games page
+const HOME_GAMES = 10;   // games on Home (faces); all of them are on the recent games page
 
 // One game: a win / loss stripe, the champion, K/D/A, the mode and when; `full` adds CS, length and the items
 function gameRow(ctx: PageCtx, parent: HTMLElement, g: Profile["games"][number], full: boolean): void {
