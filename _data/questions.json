@@ -6,7 +6,43 @@
  },
  "items": {
   "patch": "16.23",
-  "popular": [],
+  "popular": [
+   {
+    "champion_name": "易大師",
+    "item": "殞落王者之劍",
+    "pick": 0.564,
+    "gap": 0.001,
+    "games": 1024
+   },
+   {
+    "champion_name": "姍娜",
+    "item": "史提克彈簧刀",
+    "pick": 0.501,
+    "gap": 0.014,
+    "games": 1138
+   },
+   {
+    "champion_name": "斯溫",
+    "item": "時光之杖",
+    "pick": 0.48,
+    "gap": -0.013,
+    "games": 1094
+   },
+   {
+    "champion_name": "薩科",
+    "item": "無盡之刃",
+    "pick": 0.448,
+    "gap": -0.024,
+    "games": 1050
+   },
+   {
+    "champion_name": "薩科",
+    "item": "蒐集者",
+    "pick": 0.437,
+    "gap": -0.035,
+    "games": 1118
+   }
+  ],
   "strong": []
  }
 }

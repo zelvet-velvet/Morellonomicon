@@ -38,7 +38,7 @@ FIT_SCORE = 0.003      # and the score 0.3 points more, so the reasoning still c
 TIERS = [("S", 0.08), ("A", 0.20), ("B", 0.45)]   # share of a champion's augments of one rarity, best first; the rest is C
 TIER_FLOOR = {"S": 0.0, "A": 0.0, "B": -0.01}   # and the score a tier needs at least (S and A must beat the champion's own)
 SPECIFIC = 0.04        # a pair doing this much better than the augment does everywhere is the champion's own (asked when unexplained)
-SURE_GAMES = 3000      # resg's own 高 confidence: questions come only from pairs this well sampled
+SURE_GAMES = 3000      # resg's own 高 confidence: questions come only from pairs this well sampled (a cache's meta may set its own: our crawl)
 PENTAKILL = {3170, 3171, 3172, 3173}
 NOT_OFFERED = 50       # an augment resg's volume says a champion should have this many games of, at 0 games: the game never offers it
                        # to that champion (Riot's augment tags, e.g. 裝甲衝擊 only for tanks); it gets no tier on that champion
@@ -859,7 +859,7 @@ def main():
                 seen = (w / g - own) if g and own is not None else None
                 gap = ((g * seen + PRIOR_GAMES * prior) / (g + PRIOR_GAMES)) if seen is not None else prior
                 score = gap + FIT_SCORE * fit
-                if fit > 0 and seen is not None and g >= SURE_GAMES and seen - base_gap[i] <= -SPECIFIC:
+                if fit > 0 and seen is not None and g >= meta.get("sure_games", SURE_GAMES) and seen - base_gap[i] <= -SPECIFIC:
                     why_shown = None   # the games say the kit does not make it work: show what it does, not why it should
                 else:
                     why_shown = why if fit > 0 else None
@@ -869,7 +869,7 @@ def main():
                              "fit": fit, "why": why or "", "games": g, "seen": seen, "base": base_gap[i], "other": other})
             tier_rows(rows)
             for r in rows:
-                if r["games"] < SURE_GAMES or r["seen"] is None:
+                if r["games"] < meta.get("sure_games", SURE_GAMES) or r["seen"] is None:
                     continue
                 if r["id"] in GENERIC or r["other"]:
                     continue
@@ -923,7 +923,7 @@ def review(champs, augs, meta, n, unrated):
 
 def ask(questions, augs, meta):
     out = ["---", "title: Morellonomicon - Augment Questions", "tags:", "  - review", "  - augments", "sticker: lucide//circle-help", "---",
-           f"Written by `tools/augment_tiers.py` (do not edit). Pairs with at least {SURE_GAMES} games on {source(meta)} where the games "
+           f"Written by `tools/augment_tiers.py` (do not edit). Pairs with at least {meta.get('sure_games', SURE_GAMES)} games on {source(meta)} where the games "
            "and the reasoning disagree. Explain the mechanic and it becomes a rule (or a hand list entry) in the script.", ""]
     strong = sorted((q for q in questions if q[0] == "strong"), key=lambda q: -q[5])
     weak = sorted((q for q in questions if q[0] == "weak"), key=lambda q: q[5])

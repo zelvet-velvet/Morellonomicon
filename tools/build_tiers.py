@@ -452,7 +452,7 @@ def main():
         champ_out["styles"] = champ_out["styles"][:MAX_STYLES]
         out[note["id"]] = champ_out
         for i, (g, gap, pr) in seen.items():
-            if i not in pool or fits[i] > 0 or g < SURE_GAMES or (i in BOOTS and not BOOTS[i][0]):
+            if i not in pool or fits[i] > 0 or g < meta.get("sure_item_games", SURE_GAMES) or (i in BOOTS and not BOOTS[i][0]):
                 continue
             if pr >= 0.25:
                 questions.append(("popular", note.get("name"), "", pool[i]["name"], "", gap, g, pr))
@@ -669,7 +669,7 @@ def write_review(review, pool, meta):
 
 def write_questions(questions, meta):
     out = ["---", "title: Morellonomicon - Build Questions", "tags:", "  - review", "  - items", "sticker: lucide//circle-help", "---",
-           f"Written by `tools/build_tiers.py` (do not edit). Items with at least {SURE_GAMES} games on {source(meta)} where the games "
+           f"Written by `tools/build_tiers.py` (do not edit). Items with at least {meta.get('sure_item_games', SURE_GAMES)} games on {source(meta)} where the games "
            "and the reasoning disagree. Explain it and it becomes a play style (`STYLES`), an item kind or a condition in the script.", ""]
     popular = sorted((q for q in questions if q[0] == "popular"), key=lambda q: -q[7])
     by_champ = defaultdict(list)
