@@ -6361,6 +6361,7 @@ function homePage(ctx) {
   const store = ctx.plugin.store;
   const s = ctx.plugin.settings;
   const el = page("Home");
+  el.addClass("mn-homepage");
   const { all, byId, prof, mine } = topMastery(ctx.app, ctx.plugin);
   const patch = all[0]?.patch ?? "";
   const linked = !!s.riotId;
@@ -6569,6 +6570,7 @@ function homePage(ctx) {
     const q = search.value.trim();
     rest.toggleClass("is-hidden", !!q);
     picker2.addClass("is-hidden");
+    el.toggleClass("is-searching", !!q);
     results.toggleClass("is-hidden", !q);
     results.empty();
     if (!q) return;
@@ -6688,44 +6690,51 @@ function strongest(ctx, rest, all, tiers) {
     }
   }
 }
-var HAND = [["\u8DF3\u812B\u5B9A\u4F4D\u6846\u67B6", "\u58A8\u83F2\u7279\uFF1A\u5766\u514B\u4E5F\u80FD\u79D2\u4EBA", 1.5], ["\u8DF3\u812B\u5B9A\u4F4D\u6846\u67B6", "\u6D3E\u514B\uFF1A\u6703\u6BBA\u4EBA\u7684\u8F14\u52A9", 1], ["\u8DF3\u812B\u5B9A\u4F4D\u6846\u67B6", "\u65AF\u6EAB\uFF1A\u6CD5\u5E2B\u7AD9\u524D\u6392", 1]];
+var HAND = [["Malphite", "R", 1.5, 0.63], ["Pyke", "R", 1, 0.56], ["Swain", "R", 1, 0.8]];
 function learnCard(ctx, rest, decks, next, done, openNext) {
+  const store = ctx.plugin.store;
   const sec = layoutBlock(h(rest, "div", "mn-hl-sec"));
   sectionHead(sec, "\u7E7C\u7E8C\u5B78\u7FD2", () => ctx.goTab("handbook"));
   const card = h(sec, "button", "mn-hl");
   const hand = h(card, "div", "mn-hl-hand");
+  const slots = ["is-left", "is-mid", "is-right"];
+  HAND.forEach(([id, key, at2, x], k) => {
+    const c = store.champion(id);
+    const sk = c?.skills.find((q) => q.key === key);
+    if (!c || !sk) return;
+    const slot = h(hand, "div", `mn-hl-card ${slots[k]}`);
+    slot.dataset.still = String(at2);
+    const face = h(slot, "div", "mn-hl-face");
+    demo(face, c, { key }, () => {
+      const im = h(face, "img", "mn-hl-fail");
+      im.src = sk.icon;
+      im.alt = "";
+    });
+    face.style.setProperty("--x", `${Math.round(x * 100)}%`);
+    const chip2 = h(face, "div", "mn-hl-chip");
+    keyBadge(chip2, key, DAMAGE_COLOR[sk.damage[0] ?? ""] ?? "#6b7183");
+    h(chip2, "span", void 0, sk.name);
+  });
   const tx = h(card, "div", "mn-hl-t");
   const at = next ? decks.indexOf(next) : -1;
-  const kicker = h(tx, "span", "mn-hl-k", next ? `\u7B2C ${at + 1} \u8AB2` : "\u5168\u90E8\u8B80\u5B8C\u4E86");
-  h(tx, "b", "mn-hl-title", next?.title ?? "Handbook");
-  if (next?.summary) h(tx, "span", "mn-hl-s", next.summary);
+  const line = h(tx, "div", "mn-hl-line");
+  h(line, "span", "mn-hl-k", next ? `\u7B2C ${at + 1} \u8AB2` : "\u5168\u90E8\u8B80\u5B8C\u4E86");
+  h(line, "b", "mn-hl-title", next?.title ?? "Handbook");
+  const go = h(line, "span", "mn-hl-go", !next ? "\u56DE\u9867" : done ? "\u7E7C\u7E8C" : "\u958B\u59CB");
+  icon(go, "chevron-right");
   const foot = h(tx, "div", "mn-hl-foot");
   const marks = h(foot, "div", "mn-hl-marks");
   marks.style.gridTemplateColumns = `repeat(${decks.length}, 1fr)`;
   const read = new Set(ctx.plugin.settings.read);
   decks.forEach((d, k) => h(marks, "i", read.has(d.file.path) ? "is-read" : k === at ? "is-next" : void 0));
-  h(foot, "span", "mn-hl-n", `${done}/${decks.length}`);
-  const go = h(foot, "span", "mn-hl-go", !next ? "\u56DE\u9867" : done ? "\u7E7C\u7E8C" : "\u958B\u59CB");
-  icon(go, "chevron-right");
+  h(foot, "span", "mn-hl-n", `${done}/${decks.length} \u8AB2`);
   card.addEventListener("click", (e) => {
     e.preventDefault();
     openNext();
   });
-  void fillHand(ctx, hand, decks, next, kicker);
-}
-async function fillHand(ctx, hand, decks, next, kicker) {
-  if (next) kicker.textContent = `\u7B2C ${decks.indexOf(next) + 1} \u8AB2 \xB7 ${parseSlides(await ctx.app.vault.cachedRead(next.file)).length} \u5F35\u5361`;
-  const slots = ["is-back", "is-mid", "is-front"];
-  for (const [k, [topic, title, at]] of HAND.entries()) {
-    const d = decks.find((x) => x.title === topic);
-    if (!d) continue;
-    const slides = parseSlides(await ctx.app.vault.cachedRead(d.file));
-    const i = slides.findIndex((x) => x.title === title);
-    if (i < 0) continue;
-    const slot = h(hand, "div", `mn-hl-card ${slots[k]}`);
-    slot.dataset.still = String(at);
-    slideCard(ctx, h(slot, "div", "mn-hl-real"), d.file, slides[i], i, slides.length);
-  }
+  if (next) void ctx.app.vault.cachedRead(next.file).then((md) => {
+    h(foot, "span", "mn-hl-n is-cards", `${parseSlides(md).length} \u5F35\u5361`);
+  });
 }
 var inFlight = null;
 function profileFetch(ctx) {

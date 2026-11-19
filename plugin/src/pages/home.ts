@@ -2,12 +2,14 @@ import { setIcon, type App } from "obsidian";
 import type MorellonomiconPlugin from "../main";
 import type { Champion } from "../data/store";
 import type { NeedCtx, PageCtx, PageOut } from "./index";
-import { ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, shopRoleIcon, h, holdTip, icon, page, warmPictures, centreBelow, empty, goes, group, row } from "../ui";
+import { DAMAGE_COLOR, ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, shopRoleIcon, h, holdTip, icon, page, warmPictures, centreBelow, empty, goes, group, row } from "../ui";
 import { MODES } from "../modes";
 import { crest, crestRatio } from "../data/crest";
 import { PROFILE_FRESH, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, profileSource, type Profile } from "../data/riot";
 import { art, type Need } from "../media";
-import { parseSlides, slideCard } from "./deck";
+import { parseSlides } from "./deck";
+import { demo } from "./skills";
+import { keyBadge } from "./cardkit";
 import { finder } from "./roster";
 
 // The servers a Riot ID can be on (Riot's platform ids), Taiwan first
@@ -60,6 +62,7 @@ export function homePage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const s = ctx.plugin.settings;
     const el = page("Home");
+    el.addClass("mn-homepage");   // one screen, no scrolling: 繼續學習 takes the room that is left (Zaviel, 2026-11-19); a search scrolls its results
     const { all, byId, prof, mine } = topMastery(ctx.app, ctx.plugin);
     const patch = all[0]?.patch ?? "";
     const linked = !!s.riotId;
@@ -221,7 +224,7 @@ export function homePage(ctx: PageCtx): PageOut {
     const flag = MODES[s.mode].itemFlag;
     const draw = () => {
         const q = search.value.trim();
-        rest.toggleClass("is-hidden", !!q); picker.addClass("is-hidden");
+        rest.toggleClass("is-hidden", !!q); picker.addClass("is-hidden"); el.toggleClass("is-searching", !!q);
         results.toggleClass("is-hidden", !q);
         results.empty();
         if (!q) return;
@@ -317,47 +320,49 @@ function strongest(ctx: PageCtx, rest: HTMLElement, all: Champion[], tiers: Reco
     }
 }
 
-// 繼續學習 as a hand of three real Handbook cards (the card page's own card, drawn full size and scaled down, a still for a clip), picked
-// for a strong moment (each clip's frame chosen by eye: the impact, the execution burst, the demonflare): Malphite's 勢不可擋 behind,
-// Pyke's execution, Swain's R in front. Beside it the next topic, its card count, the
-// course as marks and 開始 / 繼續 ›; the whole card opens the next topic, 全部 the Handbook.
+// 繼續學習 (Screens: Home): a hero hand of three Handbook clip cards across the top, big enough to read: each the still of its clip at
+// its strongest moment (picked by eye), zoomed on the champion, the card's white collectible border, and on its foot the ability's key
+// and name. Under it the next topic: 第 n 課 · n 張卡, the title, the summary, the course as marks and 開始 / 繼續 ›. The whole card opens
+// the next topic, 全部 the Handbook.
 type Deck = ReturnType<typeof nextTopic>["decks"][number];
-const HAND: [string, string, number][] = [["跳脫定位框架", "墨菲特：坦克也能秒人", 1.5], ["跳脫定位框架", "派克：會殺人的輔助", 1], ["跳脫定位框架", "斯溫：法師站前排", 1]];
+// [champion, ability, second of its clip, where across the frame the champion is (0-1)]
+const HAND: [string, string, number, number][] = [["Malphite", "R", 1.5, 0.63], ["Pyke", "R", 1, 0.56], ["Swain", "R", 1, 0.8]];
 function learnCard(ctx: PageCtx, rest: HTMLElement, decks: Deck[], next: Deck | undefined, done: number, openNext: () => void): void {
+    const store = ctx.plugin.store;
     const sec = layoutBlock(h(rest, "div", "mn-hl-sec"));
     sectionHead(sec, "繼續學習", () => ctx.goTab("handbook"));
     const card = h(sec, "button", "mn-hl");
     const hand = h(card, "div", "mn-hl-hand");
+    const slots = ["is-left", "is-mid", "is-right"];
+    HAND.forEach(([id, key, at, x], k) => {
+        const c = store.champion(id);
+        const sk = c?.skills.find((q) => q.key === key);
+        if (!c || !sk) return;
+        const slot = h(hand, "div", `mn-hl-card ${slots[k]}`);
+        slot.dataset.still = String(at);
+        const face = h(slot, "div", "mn-hl-face");
+        demo(face, c, { key }, () => { const im = h(face, "img", "mn-hl-fail"); im.src = sk.icon; im.alt = ""; });
+        face.style.setProperty("--x", `${Math.round(x * 100)}%`);
+        const chip = h(face, "div", "mn-hl-chip");
+        keyBadge(chip, key, DAMAGE_COLOR[sk.damage[0] ?? ""] ?? "#6b7183");
+        h(chip, "span", undefined, sk.name);
+    });
+    // two lines: 第 n 課, the title and 開始 / 繼續 ›; then the course as marks and how many are read
     const tx = h(card, "div", "mn-hl-t");
     const at = next ? decks.indexOf(next) : -1;
-    const kicker = h(tx, "span", "mn-hl-k", next ? `第 ${at + 1} 課` : "全部讀完了");
-    h(tx, "b", "mn-hl-title", next?.title ?? "Handbook");
-    if (next?.summary) h(tx, "span", "mn-hl-s", next.summary);
+    const line = h(tx, "div", "mn-hl-line");
+    h(line, "span", "mn-hl-k", next ? `第 ${at + 1} 課` : "全部讀完了");
+    h(line, "b", "mn-hl-title", next?.title ?? "Handbook");
+    const go = h(line, "span", "mn-hl-go", !next ? "回顧" : done ? "繼續" : "開始");
+    icon(go, "chevron-right");
     const foot = h(tx, "div", "mn-hl-foot");
     const marks = h(foot, "div", "mn-hl-marks");
     marks.style.gridTemplateColumns = `repeat(${decks.length}, 1fr)`;
     const read = new Set(ctx.plugin.settings.read);
     decks.forEach((d, k) => h(marks, "i", read.has(d.file.path) ? "is-read" : k === at ? "is-next" : undefined));
-    h(foot, "span", "mn-hl-n", `${done}/${decks.length}`);
-    const go = h(foot, "span", "mn-hl-go", !next ? "回顧" : done ? "繼續" : "開始");
-    icon(go, "chevron-right");
+    h(foot, "span", "mn-hl-n", `${done}/${decks.length} 課`);
     card.addEventListener("click", (e) => { e.preventDefault(); openNext(); });
-    void fillHand(ctx, hand, decks, next, kicker);
-}
-
-async function fillHand(ctx: PageCtx, hand: HTMLElement, decks: Deck[], next: Deck | undefined, kicker: HTMLElement): Promise<void> {
-    if (next) kicker.textContent = `第 ${decks.indexOf(next) + 1} 課 · ${parseSlides(await ctx.app.vault.cachedRead(next.file)).length} 張卡`;
-    const slots = ["is-back", "is-mid", "is-front"];
-    for (const [k, [topic, title, at]] of HAND.entries()) {
-        const d = decks.find((x) => x.title === topic);
-        if (!d) continue;
-        const slides = parseSlides(await ctx.app.vault.cachedRead(d.file));
-        const i = slides.findIndex((x) => x.title === title);
-        if (i < 0) continue;
-        const slot = h(hand, "div", `mn-hl-card ${slots[k]}`);
-        slot.dataset.still = String(at);
-        slideCard(ctx, h(slot, "div", "mn-hl-real"), d.file, slides[i], i, slides.length);
-    }
+    if (next) void ctx.app.vault.cachedRead(next.file).then((md) => { h(foot, "span", "mn-hl-n is-cards", `${parseSlides(md).length} 張卡`); });
 }
 
 // The profile fetch in flight, shared by every drawing of Home (see refresh in homePage); a tap on 重新整理 while one runs waits for it

@@ -167,7 +167,7 @@ sticker: lucide//text-cursor-input
 
 ## pages/home.ts
 
-> [!example]+ 29 texts
+> [!example]+ 24 texts
 > - `text` · 北歐東歐
 > - `text` · 今天想查什麼？
 > - `text` · ${n.patch} 版本 · ${(n.champions?.length ?? 0) + (n.mayhem_champions?.length ?? 0)} 位英雄調整 · ${n.augments_new?.length ?? 0} 個新強化
@@ -184,13 +184,8 @@ sticker: lucide//text-cursor-input
 > - `empty page` · 換個名字,或用英雄的英文名、暱稱
 > - `text` · 你的英雄
 > - `title` · 本版強勢
-> - `text` · 跳脫定位框架
-> - `text` · 墨菲特：坦克也能秒人
-> - `text` · 派克：會殺人的輔助
-> - `text` · 斯溫：法師站前排
 > - `text` · 繼續學習
 > - `text` · 全部讀完了
-> - `text` · 第 ${decks.indexOf(next) + 1} 課 · ${parseSlides(await ctx.app.vault.cachedRead(next.file)).length} 張卡
 > - `text` · 法術強度
 > - `text` · 技能急速
 > - `placeholder` · 搜尋裝備
