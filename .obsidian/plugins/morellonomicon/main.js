@@ -2655,6 +2655,23 @@ function demo(parent, c, s, onFail) {
   if (!c.key) return;
   const url = clipAddress(c, s.key);
   const v = h(parent, "video", "mn-sd-video");
+  const still = parent.closest("[data-still]")?.dataset.still;
+  if (still) {
+    v.muted = true;
+    v.preload = "metadata";
+    v.setAttribute("playsinline", "");
+    const at = Number(still);
+    v.addEventListener("error", () => {
+      if (!v.src.includes(".webm")) v.src = `${url}.webm#t=${at}`;
+      else fail2();
+    });
+    const fail2 = () => {
+      v.remove();
+      onFail?.();
+    };
+    v.src = `${url}.mp4#t=${at}`;
+    return;
+  }
   v.muted = true;
   v.loop = true;
   v.autoplay = true;
@@ -3365,26 +3382,7 @@ function deckPage(ctx, file, card) {
     const start = card ? Math.max(0, slides.findIndex((s) => s.title === card)) : 0;
     slides.forEach((s, i) => {
       const section2 = h(pager, "section", "mn-slide");
-      const card2 = h(section2, "div", "mn-sl-card");
-      const face = h(card2, "div", "mn-sl-face");
-      visual(ctx, h(face, "div", "mn-sl-vis"), s);
-      const words = h(face, "div", "mn-sl-words");
-      const measure2 = () => face.style.setProperty("--mn-words-h", `${words.offsetHeight}px`);
-      const watch = new ResizeObserver(measure2);
-      watch.observe(words);
-      ctx.component.register(() => watch.disconnect());
-      h(words, "div", "mn-sl-kn", `${file.basename} \xB7 ${i + 1} / ${slides.length}`);
-      h(words, "h2", "mn-sl-t", s.title);
-      const tip2 = /^([\s\S]*?)\*\*([^*\n]{1,8})[:：]\*\*\s*([\s\S]+)$/.exec(s.text);
-      const main = tip2 ? tip2[1].trim() : s.text;
-      const body = h(words, "div", "mn-sl-x markdown-rendered");
-      if (main) void import_obsidian5.MarkdownRenderer.render(ctx.app, main, body, file.path, ctx.component);
-      follow(ctx, words, file.path);
-      const box = h(words, "div", "mn-sl-tip" + (tip2 ? "" : " is-empty"));
-      if (tip2) {
-        h(box, "div", "mn-sl-tip-k", tip2[2]);
-        void import_obsidian5.MarkdownRenderer.render(ctx.app, tip2[3].trim(), h(box, "div", "mn-sl-tip-x markdown-rendered"), file.path, ctx.component);
-      }
+      slideCard(ctx, section2, file, s, i, slides.length);
       sec.push(section2);
     });
     if (next) {
@@ -3523,6 +3521,29 @@ async function deckNeeds({ app, plugin }, file, cards = NEED_CARDS) {
     else if (c && kind === "skills") out.push(...c.skills.map((x) => x.icon));
   }
   return out;
+}
+function slideCard(ctx, parent, file, s, i, n) {
+  const card = h(parent, "div", "mn-sl-card");
+  const face = h(card, "div", "mn-sl-face");
+  visual(ctx, h(face, "div", "mn-sl-vis"), s);
+  const words = h(face, "div", "mn-sl-words");
+  const measure2 = () => face.style.setProperty("--mn-words-h", `${words.offsetHeight}px`);
+  const watch = new ResizeObserver(measure2);
+  watch.observe(words);
+  ctx.component.register(() => watch.disconnect());
+  h(words, "div", "mn-sl-kn", `${file.basename} \xB7 ${i + 1} / ${n}`);
+  h(words, "h2", "mn-sl-t", s.title);
+  const tip2 = /^([\s\S]*?)\*\*([^*\n]{1,8})[:：]\*\*\s*([\s\S]+)$/.exec(s.text);
+  const main = tip2 ? tip2[1].trim() : s.text;
+  const body = h(words, "div", "mn-sl-x markdown-rendered");
+  if (main) void import_obsidian5.MarkdownRenderer.render(ctx.app, main, body, file.path, ctx.component);
+  follow(ctx, words, file.path);
+  const box = h(words, "div", "mn-sl-tip" + (tip2 ? "" : " is-empty"));
+  if (tip2) {
+    h(box, "div", "mn-sl-tip-k", tip2[2]);
+    void import_obsidian5.MarkdownRenderer.render(ctx.app, tip2[3].trim(), h(box, "div", "mn-sl-tip-x markdown-rendered"), file.path, ctx.component);
+  }
+  return card;
 }
 function visual(ctx, box, s) {
   const store = ctx.plugin.store;
@@ -6667,7 +6688,7 @@ function strongest(ctx, rest, all, tiers) {
     }
   }
 }
-var CLIP_AT = 2.5;
+var HAND = [["\u8DF3\u812B\u5B9A\u4F4D\u6846\u67B6", "\u58A8\u83F2\u7279\uFF1A\u5766\u514B\u4E5F\u80FD\u79D2\u4EBA", 1.5], ["\u8DF3\u812B\u5B9A\u4F4D\u6846\u67B6", "\u6D3E\u514B\uFF1A\u6703\u6BBA\u4EBA\u7684\u8F14\u52A9", 1], ["\u8DF3\u812B\u5B9A\u4F4D\u6846\u67B6", "\u65AF\u6EAB\uFF1A\u6CD5\u5E2B\u7AD9\u524D\u6392", 1]];
 function learnCard(ctx, rest, decks, next, done, openNext) {
   const sec = layoutBlock(h(rest, "div", "mn-hl-sec"));
   sectionHead(sec, "\u7E7C\u7E8C\u5B78\u7FD2", () => ctx.goTab("handbook"));
@@ -6690,61 +6711,21 @@ function learnCard(ctx, rest, decks, next, done, openNext) {
     e.preventDefault();
     openNext();
   });
-  void fillHand(ctx, hand, decks, at, kicker);
+  void fillHand(ctx, hand, decks, next, kicker);
 }
-async function fillHand(ctx, hand, decks, at, kicker) {
-  const store = ctx.plugin.store;
-  const from = Math.max(0, at);
-  const slidesOf = async (d) => parseSlides(await ctx.app.vault.cachedRead(d.file));
-  const first = decks[from] ? await slidesOf(decks[from]) : [];
-  if (at >= 0) kicker.textContent = `\u7B2C ${at + 1} \u8AB2 \xB7 ${first.length} \u5F35\u5361`;
-  const clips = [];
-  for (let k = 0; k < decks.length && clips.length < 2; k++) {
-    const d = decks[(from + k) % decks.length];
-    for (const sl2 of k === 0 ? first.slice(1) : await slidesOf(d)) {
-      const [kind2, name, key] = sl2.visual.split(/\s+/);
-      const c = kind2 === "clip" && name ? store.champion(name) : void 0;
-      if (c && key) clips.push({ c, key: key.toUpperCase(), title: sl2.title });
-      if (clips.length >= 2) break;
-    }
+async function fillHand(ctx, hand, decks, next, kicker) {
+  if (next) kicker.textContent = `\u7B2C ${decks.indexOf(next) + 1} \u8AB2 \xB7 ${parseSlides(await ctx.app.vault.cachedRead(next.file)).length} \u5F35\u5361`;
+  const slots = ["is-back", "is-mid", "is-front"];
+  for (const [k, [topic, title, at]] of HAND.entries()) {
+    const d = decks.find((x) => x.title === topic);
+    if (!d) continue;
+    const slides = parseSlides(await ctx.app.vault.cachedRead(d.file));
+    const i = slides.findIndex((x) => x.title === title);
+    if (i < 0) continue;
+    const slot = h(hand, "div", `mn-hl-card ${slots[k]}`);
+    slot.dataset.still = String(at);
+    slideCard(ctx, h(slot, "div", "mn-hl-real"), d.file, slides[i], i, slides.length);
   }
-  hand.empty();
-  const face = (cls) => h(h(hand, "div", `mn-hl-card ${cls}`), "div", "mn-hl-face");
-  clips.slice(0, 2).reverse().forEach((cl, k) => {
-    const f = face(k ? "is-mid" : "is-back");
-    clipStill(f, cl.c, cl.key);
-  });
-  const front = face("is-front");
-  const sl = first[0];
-  const [kind, ...args] = (sl?.visual ?? "").split(/\s+/).filter(Boolean);
-  if (kind === "roles") {
-    const g = h(front, "div", "mn-hl-roles");
-    for (const r of ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u5C04\u624B", "\u8F14\u52A9"]) roleArt(g, r);
-  } else if (kind === "champs") {
-    const g = h(front, "div", "mn-hl-faces");
-    for (const id of args.slice(0, 6)) {
-      const c = store.champion(id);
-      if (c) {
-        const im = h(g, "img");
-        im.src = c.icon;
-        im.alt = "";
-      }
-    }
-  } else if (kind === "clip" && args[0] && store.champion(args[0])) clipStill(front, store.champion(args[0]), (args[1] ?? "Q").toUpperCase());
-  else icon(h(front, "div", "mn-hl-ic"), decks[from]?.icon ?? "book-open");
-  if (sl) h(front, "b", "mn-hl-ct", sl.title);
-}
-function clipStill(face, c, key) {
-  const v = h(face, "video", "mn-hl-clip");
-  v.muted = true;
-  v.playsInline = true;
-  v.preload = "metadata";
-  const base = clipAddress(c, key);
-  v.addEventListener("error", () => {
-    if (!v.src.includes(".webm")) v.src = `${base}.webm#t=${CLIP_AT}`;
-  });
-  v.src = `${base}.mp4#t=${CLIP_AT}`;
-  h(face, "i", "mn-hl-prog");
 }
 var inFlight = null;
 function profileFetch(ctx) {

@@ -2,12 +2,12 @@ import { setIcon, type App } from "obsidian";
 import type MorellonomiconPlugin from "../main";
 import type { Champion } from "../data/store";
 import type { NeedCtx, PageCtx, PageOut } from "./index";
-import { ITEM_CAT_COLOR, ITEM_CATS, roleArt, layoutBlock, shopIcon, shopRoleIcon, h, holdTip, icon, page, warmPictures, centreBelow, empty, goes, group, row } from "../ui";
+import { ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, shopRoleIcon, h, holdTip, icon, page, warmPictures, centreBelow, empty, goes, group, row } from "../ui";
 import { MODES } from "../modes";
 import { crest, crestRatio } from "../data/crest";
 import { PROFILE_FRESH, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, profileSource, type Profile } from "../data/riot";
-import { art, clipAddress, type Need } from "../media";
-import { parseSlides } from "./deck";
+import { art, type Need } from "../media";
+import { parseSlides, slideCard } from "./deck";
 import { finder } from "./roster";
 
 // The servers a Riot ID can be on (Riot's platform ids), Taiwan first
@@ -317,11 +317,12 @@ function strongest(ctx: PageCtx, rest: HTMLElement, all: Champion[], tiers: Reco
     }
 }
 
-// 繼續學習 as a hand of Handbook cards. The cards: in front the next topic's first card (its visual: role art, champion faces, a clip,
-// else the topic's icon; its title), behind it the next two clip cards of the Handbook from that topic on, each a still of its clip
-// (the clip's address with a time, so the phone fetches only that frame; WebM where Riot has no MP4) with a line as if it played.
+// 繼續學習 as a hand of three real Handbook cards (the card page's own card, drawn full size and scaled down, a still for a clip), picked
+// for a strong moment (each clip's frame chosen by eye: the impact, the execution burst, the demonflare): Malphite's 勢不可擋 behind,
+// Pyke's execution, Swain's R in front. Beside it the next topic, its card count, the
+// course as marks and 開始 / 繼續 ›; the whole card opens the next topic, 全部 the Handbook.
 type Deck = ReturnType<typeof nextTopic>["decks"][number];
-const CLIP_AT = 2.5;   // s into a clip: the ability is under way in most of Riot's demos
+const HAND: [string, string, number][] = [["跳脫定位框架", "墨菲特：坦克也能秒人", 1.5], ["跳脫定位框架", "派克：會殺人的輔助", 1], ["跳脫定位框架", "斯溫：法師站前排", 1]];
 function learnCard(ctx: PageCtx, rest: HTMLElement, decks: Deck[], next: Deck | undefined, done: number, openNext: () => void): void {
     const sec = layoutBlock(h(rest, "div", "mn-hl-sec"));
     sectionHead(sec, "繼續學習", () => ctx.goTab("handbook"));
@@ -341,46 +342,22 @@ function learnCard(ctx: PageCtx, rest: HTMLElement, decks: Deck[], next: Deck | 
     const go = h(foot, "span", "mn-hl-go", !next ? "回顧" : done ? "繼續" : "開始");
     icon(go, "chevron-right");
     card.addEventListener("click", (e) => { e.preventDefault(); openNext(); });
-    void fillHand(ctx, hand, decks, at, kicker);
+    void fillHand(ctx, hand, decks, next, kicker);
 }
 
-async function fillHand(ctx: PageCtx, hand: HTMLElement, decks: Deck[], at: number, kicker: HTMLElement): Promise<void> {
-    const store = ctx.plugin.store;
-    const from = Math.max(0, at);
-    const slidesOf = async (d: Deck) => parseSlides(await ctx.app.vault.cachedRead(d.file));
-    const first = decks[from] ? await slidesOf(decks[from]) : [];
-    if (at >= 0) kicker.textContent = `第 ${at + 1} 課 · ${first.length} 張卡`;
-    const clips: { c: Champion; key: string; title: string }[] = [];
-    for (let k = 0; k < decks.length && clips.length < 2; k++) {
-        const d = decks[(from + k) % decks.length];
-        for (const sl of k === 0 ? first.slice(1) : await slidesOf(d)) {
-            const [kind, name, key] = sl.visual.split(/\s+/);
-            const c = kind === "clip" && name ? store.champion(name) : undefined;
-            if (c && key) clips.push({ c, key: key.toUpperCase(), title: sl.title });
-            if (clips.length >= 2) break;
-        }
+async function fillHand(ctx: PageCtx, hand: HTMLElement, decks: Deck[], next: Deck | undefined, kicker: HTMLElement): Promise<void> {
+    if (next) kicker.textContent = `第 ${decks.indexOf(next) + 1} 課 · ${parseSlides(await ctx.app.vault.cachedRead(next.file)).length} 張卡`;
+    const slots = ["is-back", "is-mid", "is-front"];
+    for (const [k, [topic, title, at]] of HAND.entries()) {
+        const d = decks.find((x) => x.title === topic);
+        if (!d) continue;
+        const slides = parseSlides(await ctx.app.vault.cachedRead(d.file));
+        const i = slides.findIndex((x) => x.title === title);
+        if (i < 0) continue;
+        const slot = h(hand, "div", `mn-hl-card ${slots[k]}`);
+        slot.dataset.still = String(at);
+        slideCard(ctx, h(slot, "div", "mn-hl-real"), d.file, slides[i], i, slides.length);
     }
-    hand.empty();
-    const face = (cls: string) => h(h(hand, "div", `mn-hl-card ${cls}`), "div", "mn-hl-face");
-    clips.slice(0, 2).reverse().forEach((cl, k) => { const f = face(k ? "is-mid" : "is-back"); clipStill(f, cl.c, cl.key); });
-    const front = face("is-front");
-    const sl = first[0];
-    const [kind, ...args] = (sl?.visual ?? "").split(/\s+/).filter(Boolean);
-    if (kind === "roles") { const g = h(front, "div", "mn-hl-roles"); for (const r of ["戰士", "坦克", "法師", "刺客", "射手", "輔助"]) roleArt(g, r); }
-    else if (kind === "champs") { const g = h(front, "div", "mn-hl-faces"); for (const id of args.slice(0, 6)) { const c = store.champion(id); if (c) { const im = h(g, "img"); im.src = c.icon; im.alt = ""; } } }
-    else if (kind === "clip" && args[0] && store.champion(args[0])) clipStill(front, store.champion(args[0])!, (args[1] ?? "Q").toUpperCase());
-    else icon(h(front, "div", "mn-hl-ic"), decks[from]?.icon ?? "book-open");
-    if (sl) h(front, "b", "mn-hl-ct", sl.title);
-}
-
-// A clip's still: the video at CLIP_AT, paused, with a progress line as if it played
-function clipStill(face: HTMLElement, c: Champion, key: string): void {
-    const v = h(face, "video", "mn-hl-clip");
-    v.muted = true; v.playsInline = true; v.preload = "metadata";
-    const base = clipAddress(c, key);
-    v.addEventListener("error", () => { if (!v.src.includes(".webm")) v.src = `${base}.webm#t=${CLIP_AT}`; });
-    v.src = `${base}.mp4#t=${CLIP_AT}`;
-    h(face, "i", "mn-hl-prog");
 }
 
 // The profile fetch in flight, shared by every drawing of Home (see refresh in homePage); a tap on 重新整理 while one runs waits for it

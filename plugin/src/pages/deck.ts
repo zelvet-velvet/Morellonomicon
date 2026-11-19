@@ -140,29 +140,7 @@ export function deckPage(ctx: PageCtx, file: TFile, card?: string): PageOut {
 
         slides.forEach((s, i) => {
             const section = h(pager, "section", "mn-slide");
-            const card = h(section, "div", "mn-sl-card");   // the white collectible border
-            const face = h(card, "div", "mn-sl-face");      // the dark face inside it: picture, text on the lower part
-            visual(ctx, h(face, "div", "mn-sl-vis"), s);
-            // under the picture: where you are, the title, the line, and a closing "**label：** tip" as a strip on the lower edge
-            const words = h(face, "div", "mn-sl-words");
-            // the words' height, for the stage (Layouts note, Handbook card F2): the dock sits on it, the clip fades into it, templates keep above it
-            const measure = () => face.style.setProperty("--mn-words-h", `${words.offsetHeight}px`);
-            const watch = new ResizeObserver(measure);
-            watch.observe(words);
-            ctx.component.register(() => watch.disconnect());
-            h(words, "div", "mn-sl-kn", `${file.basename} · ${i + 1} / ${slides.length}`);
-            h(words, "h2", "mn-sl-t", s.title);
-            const tip = /^([\s\S]*?)\*\*([^*\n]{1,8})[:：]\*\*\s*([\s\S]+)$/.exec(s.text);
-            const main = tip ? tip[1].trim() : s.text;
-            // every row is there on every card, empty or not, so the words have the same height everywhere (Layouts note, Handbook card)
-            const body = h(words, "div", "mn-sl-x markdown-rendered");
-            if (main) void MarkdownRenderer.render(ctx.app, main, body, file.path, ctx.component);
-            follow(ctx, words, file.path);
-            const box = h(words, "div", "mn-sl-tip" + (tip ? "" : " is-empty"));
-            if (tip) {
-                h(box, "div", "mn-sl-tip-k", tip[2]);
-                void MarkdownRenderer.render(ctx.app, tip[3].trim(), h(box, "div", "mn-sl-tip-x markdown-rendered"), file.path, ctx.component);
-            }
+            slideCard(ctx, section, file, s, i, slides.length);
             sec.push(section);
         });
         // behind the last card: the next topic (or, after the last topic, the way back)
@@ -281,6 +259,35 @@ export async function deckNeeds({ app, plugin }: NeedCtx, file: TFile, cards = N
         else if (c && kind === "skills") out.push(...c.skills.map((x) => x.icon));
     }
     return out;
+}
+
+// One card as the card page draws it: the white collectible border, the dark face, the picture, and under it where you are, the
+// title, the line and the tip strip. Home draws three of them small in its 繼續學習 hand (the same card, never a copy).
+export function slideCard(ctx: PageCtx, parent: HTMLElement, file: TFile, s: Slide, i: number, n: number): HTMLElement {
+    const card = h(parent, "div", "mn-sl-card");   // the white collectible border
+    const face = h(card, "div", "mn-sl-face");      // the dark face inside it: picture, text on the lower part
+    visual(ctx, h(face, "div", "mn-sl-vis"), s);
+    // under the picture: where you are, the title, the line, and a closing "**label：** tip" as a strip on the lower edge
+    const words = h(face, "div", "mn-sl-words");
+    // the words' height, for the stage (Layouts note, Handbook card F2): the dock sits on it, the clip fades into it, templates keep above it
+    const measure = () => face.style.setProperty("--mn-words-h", `${words.offsetHeight}px`);
+    const watch = new ResizeObserver(measure);
+    watch.observe(words);
+    ctx.component.register(() => watch.disconnect());
+    h(words, "div", "mn-sl-kn", `${file.basename} · ${i + 1} / ${n}`);
+    h(words, "h2", "mn-sl-t", s.title);
+    const tip = /^([\s\S]*?)\*\*([^*\n]{1,8})[:：]\*\*\s*([\s\S]+)$/.exec(s.text);
+    const main = tip ? tip[1].trim() : s.text;
+    // every row is there on every card, empty or not, so the words have the same height everywhere (Layouts note, Handbook card)
+    const body = h(words, "div", "mn-sl-x markdown-rendered");
+    if (main) void MarkdownRenderer.render(ctx.app, main, body, file.path, ctx.component);
+    follow(ctx, words, file.path);
+    const box = h(words, "div", "mn-sl-tip" + (tip ? "" : " is-empty"));
+    if (tip) {
+        h(box, "div", "mn-sl-tip-k", tip[2]);
+        void MarkdownRenderer.render(ctx.app, tip[3].trim(), h(box, "div", "mn-sl-tip-x markdown-rendered"), file.path, ctx.component);
+    }
+    return card;
 }
 
 // ---- the picture of a card

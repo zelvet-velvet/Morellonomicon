@@ -166,6 +166,16 @@ export function demo(parent: HTMLElement, c: Champion, s: { key: string; seconds
     if (!c.key) return;
     const url = clipAddress(c, s.key);
     const v = h(parent, "video", "mn-sd-video");
+    // a still (Home's 繼續學習 hand, `data-still="<seconds>"` on a box around the card): one frame, paused, fetched by range, no download
+    const still = parent.closest<HTMLElement>("[data-still]")?.dataset.still;
+    if (still) {
+        v.muted = true; v.preload = "metadata"; v.setAttribute("playsinline", "");
+        const at = Number(still);   // the moment Home picked for this card (its own seconds are for playing)
+        v.addEventListener("error", () => { if (!v.src.includes(".webm")) v.src = `${url}.webm#t=${at}`; else fail(); });
+        const fail = () => { v.remove(); onFail?.(); };
+        v.src = `${url}.mp4#t=${at}`;
+        return;
+    }
     // a silent looping clip, no player controls (no play / pause, seek, full screen or picture-in-picture buttons)
     v.muted = true; v.loop = true; v.autoplay = true; v.controls = false; v.preload = "auto";
     v.setAttribute("playsinline", "");
