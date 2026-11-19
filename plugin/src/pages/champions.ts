@@ -428,7 +428,7 @@ function overviewAll(body: HTMLElement, c: Champion, ctx: PageCtx): void {
 const TIER_ORDER = ["S", "A", "B", "C"];
 const RARITY_ORDER = ["稜鏡", "金", "銀", "五殺"];   // inside a tier: prismatic first, then gold, silver, the Pentakill set
 const AUG_COLS = 4;   // icons per row in the champion page family's augment grid
-const MODEL_NOTE = "依英雄的技能機制推理合不合，再對照 resg.top 的大混戰對局校正，和同稀有度的其他強化比較。點強化看原因。";
+const MODEL_NOTE = "依英雄的技能機制推理合不合，再對照大混戰的實際對局校正，和同稀有度的其他強化比較。點強化看原因。";
 type TierPick = AugmentPick & { tier: string; group: string; value: number };
 const rarityRank = (g: string) => { const i = RARITY_ORDER.indexOf(g); return i < 0 ? RARITY_ORDER.length : i; };
 function tierPicks(store: Store, c: Champion, style: AugTierStyle): TierPick[] {

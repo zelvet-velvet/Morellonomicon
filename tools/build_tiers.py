@@ -27,7 +27,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # python3 -I does not add the script folder
 import vault_paths  # noqa: E402
-from augment_tiers import Champ, frontmatter, latest_cache, save_questions  # noqa: E402
+from augment_tiers import Champ, frontmatter, latest_cache, save_questions, source, older_than_published  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "_data" / "item-builds.json"
@@ -337,6 +337,8 @@ def items():
 def main():
     cache = latest_cache()
     meta = json.loads((cache / "meta.json").read_text(encoding="utf-8"))
+    if older_than_published(meta, OUT):
+        return
     pool, alias = items()
     data = {}
     for f in (cache / "champions").glob("*.json"):
@@ -457,7 +459,7 @@ def main():
             elif pr >= 0.03 and gap - base.get(i, 0.0) >= SPECIFIC:
                 questions.append(("strong", note.get("name"), "", pool[i]["name"], "", gap, g, pr))
 
-    OUT.write_text(json.dumps({"source": f"resg.top {meta['version']} ({meta['collectedAt'][:10]})", "patch": meta["version"],
+    OUT.write_text(json.dumps({"source": source(meta), "patch": meta["version"],
                                "champions": out}, ensure_ascii=False, indent=1), encoding="utf-8")
     write_review(review, pool, meta)
     write_questions(questions, meta)
@@ -651,7 +653,7 @@ def pct(x):
 def write_review(review, pool, meta):
     out = ["---", "title: Morellonomicon - Build Review", "tags:", "  - review", "  - items", "sticker: lucide//list-ordered", "---",
            f"Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit is the reasoning (−2 not this style's item … +2); "
-           f"games, pick rate and the gap come from resg.top {meta['version']} (collected {meta['collectedAt'][:10]}), shown here only for "
+           f"games, pick rate and the gap come from {source(meta)}, shown here only for "
            "review. [[Build Model]] explains the rules.", ""]
     for champ, style, rows, core, alts, from_games in review:
         pair = lambda ids: " + ".join(f"[[{pool[i]['name']}]]" for i in ids)
@@ -667,7 +669,7 @@ def write_review(review, pool, meta):
 
 def write_questions(questions, meta):
     out = ["---", "title: Morellonomicon - Build Questions", "tags:", "  - review", "  - items", "sticker: lucide//circle-help", "---",
-           f"Written by `tools/build_tiers.py` (do not edit). Items with at least {SURE_GAMES} games on resg.top {meta['version']} where the games "
+           f"Written by `tools/build_tiers.py` (do not edit). Items with at least {SURE_GAMES} games on {source(meta)} where the games "
            "and the reasoning disagree. Explain it and it becomes a play style (`STYLES`), an item kind or a condition in the script.", ""]
     popular = sorted((q for q in questions if q[0] == "popular"), key=lambda q: -q[7])
     by_champ = defaultdict(list)

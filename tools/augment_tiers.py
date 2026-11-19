@@ -26,6 +26,7 @@ import vault_paths  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 CACHE = ROOT / ".cache" / "resg"
+LCU_CACHE = ROOT / ".cache" / "lcu" / "cache"   # our crawl in the same format (tools/lcu_cache.py)
 OUT_TIERS = ROOT / "_data" / "augment-tiers.json"
 OUT_REVIEW = ROOT / "Review" / "Augment Tiers.md"
 OUT_QUESTIONS = ROOT / "Review" / "Augment Questions.md"
@@ -771,15 +772,43 @@ def tier_rows(rows):
 
 
 def latest_cache():
-    patches = sorted((p for p in CACHE.glob("*") if (p / "meta.json").exists()), key=lambda p: [int(x) for x in p.name.split(".")])
-    if not patches:
-        sys.exit("no resg data cached: run python3 -I tools/fetch_resg.py first")
-    return patches[-1]
+    """The newest patch cached from resg.top (tools/fetch_resg.py) or from our own crawl (tools/lcu_cache.py), in the same format;
+    resg.top when both have it, its sample is far larger. Its meta.json says which (`source`, absent for resg.top)."""
+    key = lambda p: [int(x) for x in p.name.split(".")]   # noqa: E731
+    found = {}
+    for base in (LCU_CACHE, CACHE):   # resg last: it wins a patch both have
+        for p in base.glob("*"):
+            if (p / "meta.json").exists():
+                found[p.name] = p
+    if not found:
+        sys.exit("no games cached: run python3 -I tools/fetch_resg.py (or tools/lcu_cache.py for our crawl) first")
+    return found[max(found, key=lambda n: key(Path(n)))]
+
+
+def older_than_published(meta, out):
+    """True when the pages already hold a newer patch than this cache (built from our crawl on Zaviel's PC, which the GitHub patch
+    job does not have): the job must not put an older patch back."""
+    try:
+        have = json.loads(out.read_text(encoding="utf-8")).get("patch", "")
+    except (OSError, ValueError):
+        return False
+    key = lambda v: [int(x) for x in v.split(".")] if v else []   # noqa: E731
+    if key(have) > key(meta["version"]):
+        print(f"{out.relative_to(ROOT)} holds {have}, newer than the cached {meta['version']}: left as it is")
+        return True
+    return False
+
+
+def source(meta):
+    """Where a cache's games come from, for the outputs: resg.top or our crawl, with the patch and date."""
+    return f"{meta.get('source', 'resg.top')} {meta['version']} ({meta['collectedAt'][:10]})"
 
 
 def main():
     cache = latest_cache()
     meta = json.loads((cache / "meta.json").read_text(encoding="utf-8"))
+    if older_than_published(meta, OUT_TIERS):
+        return
     overall = {a["id"]: a for a in json.loads((cache / "augments.json").read_text(encoding="utf-8"))["items"]}
 
     augs = {}
@@ -809,7 +838,7 @@ def main():
         own = data.get("champion", {}).get("wr")
         games = {r[0]: (r[2], r[3]) for r in data.get("ra", [])}
         played = data.get("champion", {}).get("tm", 0)
-        offered = [i for i in rated if games.get(i, (0, 0))[0] > 0 or played * overall[i].get("pr", 0) < NOT_OFFERED]
+        offered = [i for i in rated if games.get(i, (0, 0))[0] > 0 or played * overall[i].get("pr", 0) < meta.get("not_offered", NOT_OFFERED)]
         builds = [Champ(note, style) for style in STYLES.get(note["id"], [("main", "主流", {})])]
         for c in builds:
             champs[f"{c.id}/{c.style}"] = c
@@ -852,7 +881,7 @@ def main():
                                                  "none": []}
             c.rows = rows
 
-    OUT_TIERS.write_text(json.dumps({"source": f"resg.top {meta['version']} ({meta['collectedAt'][:10]})", "patch": meta["version"],
+    OUT_TIERS.write_text(json.dumps({"source": source(meta), "patch": meta["version"],
                                      "augments": len(rated), "unrated": unrated, "champions": out}, ensure_ascii=False, indent=1), encoding="utf-8")
     review(champs, augs, meta, len(rated), unrated)
     ask(questions, augs, meta)
@@ -869,8 +898,8 @@ def main():
 def review(champs, augs, meta, n, unrated):
     out = ["---", "title: Morellonomicon - Augment Tiers (review)", "tags:", "  - review", "  - augments", "sticker: lucide//list-ordered", "---",
            f"Written by `tools/augment_tiers.py` (do not edit): the test champions' tiers, {n} augments rated, {len(unrated)} not. "
-           f"Fit is the reasoning (−2 useless … +2 the kit is what the augment rewards); games and the gap come from resg.top {meta['version']} "
-           f"(collected {meta['collectedAt'][:10]}), shown here only for review; the score is the gap pulled toward the augment's result on "
+           f"Fit is the reasoning (−2 useless … +2 the kit is what the augment rewards); games and the gap come from {source(meta)}"
+           f", shown here only for review; the score is the gap pulled toward the augment's result on "
            f"every champion when games are few, plus the fit. Tiers by rank within each rarity (S top 8%, A to 20%, B to 45%), S and A above "
            f"the champion's own win rate.", ""]
     order = {"稜鏡": 0, "金": 1, "銀": 2, "五殺": 3}
@@ -887,7 +916,7 @@ def review(champs, augs, meta, n, unrated):
 
 def ask(questions, augs, meta):
     out = ["---", "title: Morellonomicon - Augment Questions", "tags:", "  - review", "  - augments", "sticker: lucide//circle-help", "---",
-           f"Written by `tools/augment_tiers.py` (do not edit). Pairs with at least {SURE_GAMES} games on resg.top {meta['version']} where the games "
+           f"Written by `tools/augment_tiers.py` (do not edit). Pairs with at least {SURE_GAMES} games on {source(meta)} where the games "
            "and the reasoning disagree. Explain the mechanic and it becomes a rule (or a hand list entry) in the script.", ""]
     strong = sorted((q for q in questions if q[0] == "strong"), key=lambda q: -q[5])
     weak = sorted((q for q in questions if q[0] == "weak"), key=lambda q: q[5])
