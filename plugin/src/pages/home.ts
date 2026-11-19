@@ -20,7 +20,7 @@ function topMastery(app: App, plugin: MorellonomiconPlugin) {
     const prof: Profile | null = s.riotId ? cachedProfile(app, s.riotId) : null;
     const byKey = new Map(all.map((c) => [c.key, c]));
     let top = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).slice(0, TOP);
-    if (prof?.mastery.length) top = prof.mastery.filter((m) => byKey.has(m.championKey)).map((m) => [byKey.get(m.championKey)!.id, { level: m.level, points: m.points, last: "" }]);
+    if (prof?.mastery.length) top = prof.mastery.filter((m) => byKey.has(m.championKey)).slice(0, TOP).map((m) => [byKey.get(m.championKey)!.id, { level: m.level, points: m.points, last: m.last ? new Date(m.last).toISOString() : "" }]);
     return { all, byId, prof, top };
 }
 // the wallpaper: the one you picked, else your top mastery champion's newest skin

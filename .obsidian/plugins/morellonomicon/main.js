@@ -6158,7 +6158,7 @@ async function loadProfile(request, riotId, server) {
   const plat = server.toLowerCase();
   const [leagues, mastery, ids] = await Promise.all([
     get(plat, `/lol/league/v4/entries/by-puuid/${id}`),
-    get(plat, `/lol/champion-mastery/v4/champion-masteries/by-puuid/${id}/top?count=5`),
+    get(plat, `/lol/champion-mastery/v4/champion-masteries/by-puuid/${id}`),
     get(reg.match, `/lol/match/v5/matches/by-puuid/${id}/ids?count=${GAMES}`)
   ]);
   const games = [];
@@ -6193,7 +6193,7 @@ async function loadProfile(request, riotId, server) {
     icon: sum.profileIconId,
     level: sum.summonerLevel,
     ranks: leagues.map((l) => ({ queue: l.queueType, tier: l.tier, division: l.rank, lp: l.leaguePoints, wins: l.wins, losses: l.losses })),
-    mastery: mastery.map((x) => ({ championKey: x.championId, level: x.championLevel, points: x.championPoints })),
+    mastery: mastery.map((x) => ({ championKey: x.championId, level: x.championLevel, points: x.championPoints, last: x.lastPlayTime })),
     games
   };
 }
@@ -6268,7 +6268,7 @@ function topMastery(app, plugin) {
   const prof = s.riotId ? cachedProfile(app, s.riotId) : null;
   const byKey = new Map(all.map((c) => [c.key, c]));
   let top = Object.entries(store.mastery?.champions ?? {}).filter(([id]) => byId.has(id)).sort((a, b) => b[1].points - a[1].points).slice(0, TOP);
-  if (prof?.mastery.length) top = prof.mastery.filter((m) => byKey.has(m.championKey)).map((m) => [byKey.get(m.championKey).id, { level: m.level, points: m.points, last: "" }]);
+  if (prof?.mastery.length) top = prof.mastery.filter((m) => byKey.has(m.championKey)).slice(0, TOP).map((m) => [byKey.get(m.championKey).id, { level: m.level, points: m.points, last: m.last ? new Date(m.last).toISOString() : "" }]);
   return { all, byId, prof, top };
 }
 function wallpaper(plugin, best) {

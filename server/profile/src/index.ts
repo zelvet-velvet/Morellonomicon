@@ -1,5 +1,5 @@
 // Morellonomicon's profile server (a Cloudflare Worker). GET /profile?id=Name%23TAG[&server=TW2] answers with the reader's League
-// profile: avatar, level, ranks, top mastery and the last games, read from Riot with the key this Worker holds (the secret
+// profile: avatar, level, ranks, mastery of every champion played (with when last played) and the last games, read from Riot with the key this Worker holds (the secret
 // RIOT_API_KEY). The plugin calls it from Home (plugin/src/data/riot.ts), so a reader links with just a Riot ID. The Riot calls are
 // the plugin's own (plugin/src/data/riotcore.ts). Each answer is kept 10 minutes per Riot ID and server, so many refreshes cost Riot
 // one read. Nothing is stored or logged beyond that cache: no names, no accounts.

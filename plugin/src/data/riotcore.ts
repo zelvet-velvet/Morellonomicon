@@ -17,7 +17,7 @@ export interface Rank { queue: string; tier: string; division: string; lp: numbe
 export interface Game { id: string; queue: number; end: number; duration: number; champion: string; win: boolean; k: number; d: number; a: number; cs: number; items: number[] }
 export interface Profile {
     riotId: string; fetched: number; server: string; name: string; tag: string; icon: number; level: number;
-    ranks: Rank[]; mastery: { championKey: number; level: number; points: number }[]; games: Game[];
+    ranks: Rank[]; mastery: { championKey: number; level: number; points: number; last: number }[]; games: Game[];   // mastery: every champion played, most points first; last = lastPlayTime (ms)
 }
 
 // What went wrong, as a code both callers turn into words: the key, a Riot ID that is not there, too many requests, Riot itself
@@ -67,7 +67,7 @@ export async function loadProfile(request: RiotGet, riotId: string, server: stri
     const plat = server.toLowerCase();
     const [leagues, mastery, ids] = await Promise.all([
         get<{ queueType: string; tier: string; rank: string; leaguePoints: number; wins: number; losses: number }[]>(plat, `/lol/league/v4/entries/by-puuid/${id}`),
-        get<{ championId: number; championLevel: number; championPoints: number }[]>(plat, `/lol/champion-mastery/v4/champion-masteries/by-puuid/${id}/top?count=5`),
+        get<{ championId: number; championLevel: number; championPoints: number; lastPlayTime: number }[]>(plat, `/lol/champion-mastery/v4/champion-masteries/by-puuid/${id}`),
         get<string[]>(reg.match, `/lol/match/v5/matches/by-puuid/${id}/ids?count=${GAMES}`),
     ]);
     type Part = { puuid: string; championName: string; win: boolean; kills: number; deaths: number; assists: number; totalMinionsKilled: number; neutralMinionsKilled: number;
@@ -85,7 +85,7 @@ export async function loadProfile(request: RiotGet, riotId: string, server: stri
     return {
         riotId, fetched: Date.now(), server, name: acc.gameName, tag: acc.tagLine, icon: sum.profileIconId, level: sum.summonerLevel,
         ranks: leagues.map((l) => ({ queue: l.queueType, tier: l.tier, division: l.rank, lp: l.leaguePoints, wins: l.wins, losses: l.losses })),
-        mastery: mastery.map((x) => ({ championKey: x.championId, level: x.championLevel, points: x.championPoints })),
+        mastery: mastery.map((x) => ({ championKey: x.championId, level: x.championLevel, points: x.championPoints, last: x.lastPlayTime })),
         games,
     };
 }
