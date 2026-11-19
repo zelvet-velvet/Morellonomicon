@@ -1,9 +1,8 @@
 import { App, requestUrl } from "obsidian";
 import { art } from "../media";
 
-import { GAMES, loadProfile, RiotFailure, type Game, type Profile, type Rank, type RiotFail } from "./riotcore";
-export type { Game, Profile, Rank };
-export { GAMES };
+import { loadProfile, RiotFailure, type Profile, type Rank, type RiotFail } from "./riotcore";
+export type { Profile, Rank };
 
 // Your League profile, for Home: account, avatar and level, rank, top mastery and the last games. Only fetched when Home asks
 // (opening it after a while, or 重新整理). Two ways: through the profile server (server/profile, a Cloudflare Worker that holds
@@ -16,9 +15,6 @@ export const PROFILE_FRESH = 10 * 60 * 1000;   // Home fetches again when what i
 // The profile server (server/profile, deployed 2026-11-19 on the morellonomicon workers.dev subdomain);
 // the plugin's settings can name another one
 export const PROFILE_SERVER = "https://morellonomicon-profile.morellonomicon.workers.dev";
-
-// The queues a game can be in, in Riot's zh_TW wording where it has one
-export const QUEUE: Record<number, string> = { 400: "一般", 430: "一般", 490: "快速對戰", 420: "單/雙排", 440: "彈性積分", 450: "隨機單中", 2400: "大混戰", 900: "阿福快打", 1700: "競技場", 1900: "阿福快打", 830: "人機", 840: "人機", 850: "人機" };
 
 export class RiotError extends Error {}
 const SAY: Record<RiotFail, string> = {

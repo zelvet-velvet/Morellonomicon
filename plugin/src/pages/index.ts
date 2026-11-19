@@ -7,7 +7,7 @@ import { augmentsPage } from "./augments";
 import { championCard, championNeeds, championPart, championsPage, type SubTab } from "./champions";
 import { augmentNeeds, augmentPage, itemNeeds, itemPage, noteNeeds, notePage } from "./detail";
 import { handbookNeeds, handbookNext, handbookPage } from "./handbook";
-import { gamesPage, homeNeeds, homePage, itemsPage } from "./home";
+import { homeNeeds, homePage, itemsPage } from "./home";
 import { patchPage } from "./patch";
 import { picksNeeds, rosterPage, swipeNeeds, swipePage } from "./roster";
 
@@ -40,7 +40,7 @@ export interface Route { render: PageRender; needs: Needs; next?: (n: NeedCtx, f
 const none: Needs = () => [];
 
 // The tabs' first pages, then the pages that can be opened from any tab (chosen by the frame's key before the tab's own page)
-type DetailKey = "champion" | "augment" | "item" | "note" | "roster" | "championlist" | "games" | "itemlist" | "rosterswipe" | "champpart";
+type DetailKey = "champion" | "augment" | "item" | "note" | "roster" | "championlist" | "itemlist" | "rosterswipe" | "champpart";
 export type PageKey = TabId | DetailKey;
 export const ROUTES: Record<PageKey, Route> = {
     home: { render: homePage, needs: homeNeeds },
@@ -56,7 +56,6 @@ export const ROUTES: Record<PageKey, Route> = {
     note: { render: notePage, needs: noteNeeds },
     roster: { render: rosterPage, needs: picksNeeds },
     championlist: { render: championsPage, needs: none },
-    games: { render: gamesPage, needs: none },
     itemlist: { render: itemsPage, needs: none },        // the Items page, opened from Home
     rosterswipe: { render: swipePage, needs: swipeNeeds },
 };

@@ -6090,7 +6090,6 @@ var import_obsidian9 = require("obsidian");
 var import_obsidian8 = require("obsidian");
 
 // src/data/riotcore.ts
-var GAMES = 10;
 var REGION = {
   TW2: { account: "asia", match: "sea" },
   SG2: { account: "asia", match: "sea" },
@@ -6154,36 +6153,11 @@ async function loadProfile(request, riotId, server) {
     server = other;
     sum = await get(server.toLowerCase(), `/lol/summoner/v4/summoners/by-puuid/${id}`);
   }
-  const reg = REGION[server] ?? REGION.TW2;
   const plat = server.toLowerCase();
-  const [leagues, mastery, ids] = await Promise.all([
+  const [leagues, mastery] = await Promise.all([
     get(plat, `/lol/league/v4/entries/by-puuid/${id}`),
-    get(plat, `/lol/champion-mastery/v4/champion-masteries/by-puuid/${id}`),
-    get(reg.match, `/lol/match/v5/matches/by-puuid/${id}/ids?count=${GAMES}`)
+    get(plat, `/lol/champion-mastery/v4/champion-masteries/by-puuid/${id}`)
   ]);
-  const games = [];
-  for (const m of ids) {
-    try {
-      const g = await get(reg.match, `/lol/match/v5/matches/${encodeURIComponent(m)}`);
-      const p = g.info.participants.find((x) => x.puuid === acc.puuid);
-      if (!p) continue;
-      games.push({
-        id: m,
-        queue: g.info.queueId,
-        end: g.info.gameEndTimestamp,
-        duration: g.info.gameDuration,
-        champion: p.championName,
-        win: p.win,
-        k: p.kills,
-        d: p.deaths,
-        a: p.assists,
-        cs: p.totalMinionsKilled + p.neutralMinionsKilled,
-        items: [p.item0, p.item1, p.item2, p.item3, p.item4, p.item5].filter((x) => x > 0)
-      });
-    } catch (e) {
-      if (e instanceof RiotFailure && e.code === "limit") break;
-    }
-  }
   return {
     riotId,
     fetched: Date.now(),
@@ -6193,8 +6167,7 @@ async function loadProfile(request, riotId, server) {
     icon: sum.profileIconId,
     level: sum.summonerLevel,
     ranks: leagues.map((l) => ({ queue: l.queueType, tier: l.tier, division: l.rank, lp: l.leaguePoints, wins: l.wins, losses: l.losses })),
-    mastery: mastery.map((x) => ({ championKey: x.championId, level: x.championLevel, points: x.championPoints, last: x.lastPlayTime })),
-    games
+    mastery: mastery.map((x) => ({ championKey: x.championId, level: x.championLevel, points: x.championPoints, last: x.lastPlayTime }))
   };
 }
 
@@ -6202,7 +6175,6 @@ async function loadProfile(request, riotId, server) {
 var KEY2 = "morellonomicon-profile";
 var PROFILE_FRESH = 10 * 60 * 1e3;
 var PROFILE_SERVER = "https://morellonomicon-profile.morellonomicon.workers.dev";
-var QUEUE = { 400: "\u4E00\u822C", 430: "\u4E00\u822C", 490: "\u5FEB\u901F\u5C0D\u6230", 420: "\u55AE/\u96D9\u6392", 440: "\u5F48\u6027\u7A4D\u5206", 450: "\u96A8\u6A5F\u55AE\u4E2D", 2400: "\u5927\u6DF7\u6230", 900: "\u963F\u798F\u5FEB\u6253", 1700: "\u7AF6\u6280\u5834", 1900: "\u963F\u798F\u5FEB\u6253", 830: "\u4EBA\u6A5F", 840: "\u4EBA\u6A5F", 850: "\u4EBA\u6A5F" };
 var RiotError = class extends Error {
 };
 var SAY = {
@@ -6499,7 +6471,6 @@ function homePage(ctx) {
   };
   btn("users", "\u82F1\u96C4", "var(--mn-accent)", () => ctx.push({ key: "championlist", title: "Champions" }));
   btn("shopping-bag", "\u88DD\u5099", "var(--color-yellow)", () => ctx.push({ key: "itemlist", title: "Items" }));
-  if (linked) btn("swords", "\u5C0D\u6230", "var(--color-purple)", () => ctx.push({ key: "games", title: "\u6700\u8FD1\u5C0D\u6230" }));
   btn("book-open", "\u5B78\u7FD2", "var(--color-cyan)", openNext);
   if (!linked) btn("scroll-text", "\u540D\u8A5E\u8868", "var(--color-green)", () => ctx.openNote(`${s.guideFolder}/\u540D\u8A5E\u8868.md`));
   const faces = myChampions(ctx.plugin, top);
@@ -6529,44 +6500,18 @@ function homePage(ctx) {
       goes(b, { key: "champion", params: { id: c.id } });
     }
   }
-  if (prof?.games.length) {
-    const games = prof.games.slice(0, HOME_GAMES);
-    const wins = games.filter((g) => g.win).length;
-    const lab = h(rest, "div", "mn-hc-lab");
-    h(lab, "span", void 0, `\u6700\u8FD1\u5C0D\u6230 \xB7 ${wins} \u52DD ${games.length - wins} \u6557`);
-    const more = h(lab, "button", "mn-home-more", "\u66F4\u591A");
-    more.addEventListener("click", (e) => {
-      e.preventDefault();
-      ctx.push({ key: "games", title: "\u6700\u8FD1\u5C0D\u6230" });
-    });
-    const strip2 = h(rest, "div", "mn-hg");
-    for (const g of games) {
-      const c = all.find((x) => x.id.toLowerCase() === g.champion.toLowerCase());
-      const b = h(strip2, "button", "mn-hg-b" + (g.win ? " is-win" : " is-loss"));
-      const im = h(b, "img");
-      im.src = c?.icon ?? "";
-      im.alt = "";
-      holdTip(b, `${c?.name ?? g.champion} \xB7 ${g.k}/${g.d}/${g.a} \xB7 ${g.win ? "\u52DD" : "\u6557"}`);
-      if (c) b.addEventListener("click", (e) => {
-        e.preventDefault();
-        ctx.openChampion(c.id);
-      });
-    }
-  }
   if (decks.length) {
-    const wide = !prof?.games.length;
-    const learn = layoutBlock(h(rest, "button", "mn-hl" + (wide ? " is-wide" : "")));
+    const learn = layoutBlock(h(rest, "button", "mn-hl is-wide"));
     if (next?.cover) {
       const im = h(learn, "img", "mn-hl-img");
       im.src = coverUrl(next.cover);
       im.alt = "";
     }
     const tx = h(learn, "div", "mn-hl-t");
-    h(tx, "span", "mn-hl-k", wide ? `\u7E7C\u7E8C\u5B78\u7FD2 \xB7 ${done} / ${decks.length}` : "\u7E7C\u7E8C\u5B78\u7FD2");
+    h(tx, "span", "mn-hl-k", `\u7E7C\u7E8C\u5B78\u7FD2 \xB7 ${done} / ${decks.length}`);
     h(tx, "b", void 0, next?.title ?? "\u5168\u90E8\u8B80\u5B8C\u4E86");
     const bar = h(tx, "div", "mn-hl-bar");
     h(bar, "i").style.width = `${Math.round(done / decks.length * 100)}%`;
-    if (!wide) h(tx, "span", "mn-hl-n", `${done} / ${decks.length}`);
     learn.addEventListener("click", (e) => {
       e.preventDefault();
       openNext();
@@ -6615,48 +6560,6 @@ function profileFetch(ctx) {
   return inFlight;
 }
 var sameProfile = (a, b) => !!b && JSON.stringify({ ...a, fetched: 0 }) === JSON.stringify({ ...b, fetched: 0 });
-var HOME_GAMES = 10;
-function gameRow(ctx, parent, g, full) {
-  const c = ctx.plugin.store.champions().find((x) => x.id.toLowerCase() === g.champion.toLowerCase());
-  const r = h(parent, "button", "mn-game" + (g.win ? " is-win" : " is-loss") + (full ? " is-full" : ""));
-  const im = h(r, "img");
-  im.src = c?.icon ?? "";
-  im.alt = "";
-  const tx = h(r, "div", "mn-game-t");
-  h(tx, "b", void 0, `${c?.name ?? g.champion} \xB7 ${g.k}/${g.d}/${g.a}`);
-  h(tx, "span", void 0, [QUEUE[g.queue] ?? "\u5176\u4ED6", ago(g.end), full ? `${Math.round(g.duration / 60)} \u5206 \xB7 ${g.cs} \u5175` : ""].filter(Boolean).join(" \xB7 "));
-  if (full && g.items.length) {
-    const items = h(tx, "div", "mn-game-items");
-    for (const id of g.items) {
-      const x = h(items, "img");
-      x.src = art.item(ctx.plugin.store.champions()[0]?.patch ?? "", id);
-      x.alt = "";
-      x.loading = "lazy";
-    }
-  }
-  h(r, "span", "mn-game-wl", g.win ? "\u52DD" : "\u6557");
-  if (c) {
-    r.addEventListener("click", (e) => {
-      e.preventDefault();
-      ctx.openChampion(c.id);
-    });
-    goes(r, { key: "champion", params: { id: c.id } });
-  }
-}
-function gamesPage(ctx) {
-  const el = page("\u6700\u8FD1\u5C0D\u6230");
-  const prof = cachedProfile(ctx.app, ctx.plugin.settings.riotId);
-  if (!prof?.games.length) {
-    empty(el, { icon: "swords", title: "\u9084\u6C92\u6709\u5C0D\u6230\u8CC7\u6599", text: "\u5728 Home \u9023\u7D50\u4F60\u7684 Riot ID\u3002" });
-    centreBelow(el, 1);
-    return { title: "\u6700\u8FD1\u5C0D\u6230", el };
-  }
-  const wins = prof.games.filter((g) => g.win).length;
-  h(el, "div", "mn-home-sub", `\u6700\u8FD1 ${prof.games.length} \u5834 \xB7 ${wins} \u52DD ${prof.games.length - wins} \u6557 \xB7 ${ago(prof.fetched)}\u66F4\u65B0`);
-  const list2 = layoutBlock(h(el, "div", "mn-home-games"));
-  for (const g of prof.games) gameRow(ctx, list2, g, true);
-  return { title: "\u6700\u8FD1\u5C0D\u6230", el };
-}
 var TIERS2 = ["\u8D77\u59CB", "\u978B\u5B50", "\u57FA\u672C", "\u53F2\u8A69", "\u50B3\u8AAA"];
 var tierOf = (i) => i.tags.includes("Boots") ? "\u978B\u5B50" : !i.from.length && !i.into.length ? "\u8D77\u59CB" : !i.from.length ? "\u57FA\u672C" : i.into.length ? "\u53F2\u8A69" : "\u50B3\u8AAA";
 var has2 = (i, ...tags2) => tags2.some((x) => i.tags.includes(x));
@@ -6970,7 +6873,6 @@ var ROUTES = {
   note: { render: notePage, needs: noteNeeds },
   roster: { render: rosterPage, needs: picksNeeds },
   championlist: { render: championsPage, needs: none },
-  games: { render: gamesPage, needs: none },
   itemlist: { render: itemsPage, needs: none },
   // the Items page, opened from Home
   rosterswipe: { render: swipePage, needs: swipeNeeds }

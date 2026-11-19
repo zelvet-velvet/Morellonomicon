@@ -4,7 +4,7 @@ import type { Champion } from "../data/store";
 import type { NeedCtx, PageCtx, PageOut } from "./index";
 import { ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, shopRoleIcon, h, holdTip, icon, page, warmPictures, centreBelow, empty, goes, group, row } from "../ui";
 import { MODES } from "../modes";
-import { PROFILE_FRESH, QUEUE, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, profileSource, type Profile } from "../data/riot";
+import { PROFILE_FRESH, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, profileSource, type Profile } from "../data/riot";
 import { art, coverUrl, type Need } from "../media";
 import { finder } from "./roster";
 
@@ -206,7 +206,6 @@ export function homePage(ctx: PageCtx): PageOut {
     const openNext = () => { if (next) ctx.openNote(next.file.path); else ctx.goTab("handbook"); };
     btn("users", "英雄", "var(--mn-accent)", () => ctx.push({ key: "championlist", title: "Champions" }));
     btn("shopping-bag", "裝備", "var(--color-yellow)", () => ctx.push({ key: "itemlist", title: "Items" }));
-    if (linked) btn("swords", "對戰", "var(--color-purple)", () => ctx.push({ key: "games", title: "最近對戰" }));
     btn("book-open", "學習", "var(--color-cyan)", openNext);
     if (!linked) btn("scroll-text", "名詞表", "var(--color-green)", () => ctx.openNote(`${s.guideFolder}/名詞表.md`));
 
@@ -228,35 +227,15 @@ export function homePage(ctx: PageCtx): PageOut {
         }
     }
 
-    // the last games as faces with a win / loss line (linked, once Riot has sent them); 更多 opens 最近對戰
-    if (prof?.games.length) {
-        const games = prof.games.slice(0, HOME_GAMES);
-        const wins = games.filter((g) => g.win).length;
-        const lab = h(rest, "div", "mn-hc-lab");
-        h(lab, "span", undefined, `最近對戰 · ${wins} 勝 ${games.length - wins} 敗`);
-        const more = h(lab, "button", "mn-home-more", "更多");
-        more.addEventListener("click", (e) => { e.preventDefault(); ctx.push({ key: "games", title: "最近對戰" }); });
-        const strip = h(rest, "div", "mn-hg");
-        for (const g of games) {
-            const c = all.find((x) => x.id.toLowerCase() === g.champion.toLowerCase());   // matches spell some ids differently (FiddleSticks)
-            const b = h(strip, "button", "mn-hg-b" + (g.win ? " is-win" : " is-loss"));
-            const im = h(b, "img"); im.src = c?.icon ?? ""; im.alt = "";
-            holdTip(b, `${c?.name ?? g.champion} · ${g.k}/${g.d}/${g.a} · ${g.win ? "勝" : "敗"}`);
-            if (c) b.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); });
-        }
-    }
-
-    // the next Handbook topic: a wide cover card (a row with the cover beside it when the games are there too)
+    // the next Handbook topic: a wide cover card
     if (decks.length) {
-        const wide = !prof?.games.length;
-        const learn = layoutBlock(h(rest, "button", "mn-hl" + (wide ? " is-wide" : "")));
+        const learn = layoutBlock(h(rest, "button", "mn-hl is-wide"));
         if (next?.cover) { const im = h(learn, "img", "mn-hl-img"); im.src = coverUrl(next.cover); im.alt = ""; }
         const tx = h(learn, "div", "mn-hl-t");
-        h(tx, "span", "mn-hl-k", wide ? `繼續學習 · ${done} / ${decks.length}` : "繼續學習");
+        h(tx, "span", "mn-hl-k", `繼續學習 · ${done} / ${decks.length}`);
         h(tx, "b", undefined, next?.title ?? "全部讀完了");
         const bar = h(tx, "div", "mn-hl-bar");
         h(bar, "i").style.width = `${Math.round((done / decks.length) * 100)}%`;
-        if (!wide) h(tx, "span", "mn-hl-n", `${done} / ${decks.length}`);
         learn.addEventListener("click", (e) => { e.preventDefault(); openNext(); });
     }
 
@@ -292,40 +271,6 @@ function profileFetch(ctx: PageCtx): Promise<Profile> {
 }
 // The same as what Home shows, apart from when it was fetched
 const sameProfile = (a: Profile, b: Profile | null): boolean => !!b && JSON.stringify({ ...a, fetched: 0 }) === JSON.stringify({ ...b, fetched: 0 });
-
-const HOME_GAMES = 10;   // games on Home (faces); all of them are on the recent games page
-
-// One game: a win / loss stripe, the champion, K/D/A, the mode and when; `full` adds CS, length and the items
-function gameRow(ctx: PageCtx, parent: HTMLElement, g: Profile["games"][number], full: boolean): void {
-    const c = ctx.plugin.store.champions().find((x) => x.id.toLowerCase() === g.champion.toLowerCase());   // matches spell some ids differently (FiddleSticks)
-    const r = h(parent, "button", "mn-game" + (g.win ? " is-win" : " is-loss") + (full ? " is-full" : ""));
-    const im = h(r, "img"); im.src = c?.icon ?? ""; im.alt = "";
-    const tx = h(r, "div", "mn-game-t");
-    h(tx, "b", undefined, `${c?.name ?? g.champion} · ${g.k}/${g.d}/${g.a}`);
-    h(tx, "span", undefined, [QUEUE[g.queue] ?? "其他", ago(g.end), full ? `${Math.round(g.duration / 60)} 分 · ${g.cs} 兵` : ""].filter(Boolean).join(" · "));
-    if (full && g.items.length) {
-        const items = h(tx, "div", "mn-game-items");
-        for (const id of g.items) { const x = h(items, "img"); x.src = art.item(ctx.plugin.store.champions()[0]?.patch ?? "", id); x.alt = ""; x.loading = "lazy"; }
-    }
-    h(r, "span", "mn-game-wl", g.win ? "勝" : "敗");
-    if (c) { r.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); }); goes(r, { key: "champion", params: { id: c.id } }); }
-}
-
-// The recent games page: every game Home has
-export function gamesPage(ctx: PageCtx): PageOut {
-    const el = page("最近對戰");
-    const prof = cachedProfile(ctx.app, ctx.plugin.settings.riotId);
-    if (!prof?.games.length) {
-        empty(el, { icon: "swords", title: "還沒有對戰資料", text: "在 Home 連結你的 Riot ID。" });
-        centreBelow(el, 1);
-        return { title: "最近對戰", el };
-    }
-    const wins = prof.games.filter((g) => g.win).length;
-    h(el, "div", "mn-home-sub", `最近 ${prof.games.length} 場 · ${wins} 勝 ${prof.games.length - wins} 敗 · ${ago(prof.fetched)}更新`);
-    const list = layoutBlock(h(el, "div", "mn-home-games"));
-    for (const g of prof.games) gameRow(ctx, list, g, true);
-    return { title: "最近對戰", el };
-}
 
 // Items: the current mode's shop like the game's: the stat filters as a row of icons, then the items by tier (起始, 鞋子, 基本, 史詩,
 // 傳說), or by price; a search on top. A tap opens the item.

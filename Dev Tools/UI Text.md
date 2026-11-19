@@ -10,11 +10,7 @@ sticker: lucide//text-cursor-input
 
 ## data/riot.ts
 
-> [!example]+ 11 texts
-> - `text` · 快速對戰
-> - `text` · 彈性積分
-> - `text` · 隨機單中
-> - `text` · 阿福快打
+> [!example]+ 7 texts
 > - `text` · 金鑰無效或已過期(開發金鑰每 24 小時要換)
 > - `text` · 找不到這個 Riot ID,檢查名稱和標籤
 > - `text` · 查太多次了,等一兩分鐘再試
@@ -171,7 +167,7 @@ sticker: lucide//text-cursor-input
 
 ## pages/home.ts
 
-> [!example]+ 28 texts
+> [!example]+ 23 texts
 > - `text` · 北歐東歐
 > - `text` · 今天想查什麼？
 > - `text` · ${n.patch} 版本 · ${(n.champions?.length ?? 0) + (n.mayhem_champions?.length ?? 0)} 位英雄調整 · ${n.augments_new?.length ?? 0} 個新強化
@@ -185,15 +181,10 @@ sticker: lucide//text-cursor-input
 > - `text` · 更換 / 登出
 > - `text` · 用預設(最熟練英雄的最新造型)
 > - `placeholder` · 搜尋英雄、裝備、強化
-> - `title` · 最近對戰
 > - `text` · 我的英雄
-> - `text` · 最近對戰 · ${wins} 勝 ${games.length - wins} 敗
-> - `text` · 繼續學習
+> - `text` · 繼續學習 · ${done} / ${decks.length}
 > - `text` · 全部讀完了
 > - `empty page` · 換個名字,或用英雄的英文名、暱稱
-> - `empty page` · 還沒有對戰資料
-> - `empty page` · 在 Home 連結你的 Riot ID。
-> - `text` · 最近 ${prof.games.length} 場 · ${wins} 勝 ${prof.games.length - wins} 敗 · ${ago(prof.fetched)}更新
 > - `text` · 法術強度
 > - `text` · 技能急速
 > - `placeholder` · 搜尋裝備
