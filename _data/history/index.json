@@ -20,5 +20,15 @@
    "saved": "2026-11-18",
    "source": "resg.top 16.22 (2026-11-17)"
   }
+ },
+ "16.23": {
+  "augment-tiers": {
+   "saved": "2026-11-19",
+   "source": "our crawl 16.23 (2026-11-18)"
+  },
+  "item-builds": {
+   "saved": "2026-11-19",
+   "source": "our crawl 16.23 (2026-11-18)"
+  }
  }
 }
