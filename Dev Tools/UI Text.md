@@ -181,7 +181,7 @@ sticker: lucide//text-cursor-input
 > - `text` · 更換 / 登出
 > - `text` · 用預設(最熟練英雄的最新造型)
 > - `placeholder` · 搜尋英雄、裝備、強化
-> - `text` · 我的英雄
+> - `text` · 新手推薦
 > - `text` · 繼續學習 · ${done} / ${decks.length}
 > - `text` · 全部讀完了
 > - `empty page` · 換個名字,或用英雄的英文名、暱稱

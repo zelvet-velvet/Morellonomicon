@@ -6533,14 +6533,15 @@ function homePage(ctx) {
   btn("book-open", "\u5B78\u7FD2", "var(--color-cyan)", openNext);
   if (!linked) btn("scroll-text", "\u540D\u8A5E\u8868", "var(--color-green)", () => ctx.openNote(`${s.guideFolder}/\u540D\u8A5E\u8868.md`));
   const withLast = mine.some((m) => m.last > 0);
+  const picked = s.roster.filter((id) => byId.has(id));
   const sec = layoutBlock(h(rest, "div", "mn-hy"));
   const lab = h(sec, "div", "mn-hc-lab");
-  h(lab, "span", void 0, mine.length ? "\u4F60\u7684\u82F1\u96C4" : "\u6211\u7684\u82F1\u96C4");
+  h(lab, "span", void 0, mine.length ? "\u4F60\u7684\u82F1\u96C4" : picked.length ? "\u6211\u7684\u82F1\u96C4" : "\u65B0\u624B\u63A8\u85A6");
   const cards = h(sec, "div", "mn-hy-row");
   const drawCards = () => {
     cards.empty();
     const recent = withLast && s.homeChamps !== "best";
-    const list2 = mine.length ? (recent ? [...mine].sort((a, b) => b.last - a.last) : mine).slice(0, FACES).map((m) => ({ c: byId.get(m.id), level: m.level, sub: recent ? ago(m.last) : points(m.points) })) : (s.roster.filter((id) => byId.has(id)).length ? s.roster.filter((id) => byId.has(id)) : POPULAR).map((id) => byId.get(id)).filter((c) => !!c).slice(0, FACES).map((c) => ({ c, sub: c.title }));
+    const list2 = mine.length ? (recent ? [...mine].sort((a, b) => b.last - a.last) : mine).slice(0, FACES).map((m) => ({ c: byId.get(m.id), level: m.level, sub: recent ? ago(m.last) : points(m.points) })) : (picked.length ? picked : POPULAR).map((id) => byId.get(id)).filter((c) => !!c).slice(0, FACES).map((c) => ({ c, sub: c.title }));
     for (const { c, level, sub } of list2) {
       const b = h(cards, "button", "mn-hy-b");
       const im = h(b, "img", "mn-hy-face");
@@ -6581,7 +6582,7 @@ function homePage(ctx) {
       return b;
     });
   } else if (!mine.length) {
-    const more = h(lab, "button", "mn-home-more", "\u7DE8\u8F2F");
+    const more = h(lab, "button", "mn-home-more", picked.length ? "\u7DE8\u8F2F" : "\u6311\u9078");
     more.addEventListener("click", (e) => {
       e.preventDefault();
       ctx.goTab("picks");
