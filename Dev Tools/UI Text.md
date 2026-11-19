@@ -167,7 +167,7 @@ sticker: lucide//text-cursor-input
 
 ## pages/home.ts
 
-> [!example]+ 23 texts
+> [!example]+ 25 texts
 > - `text` · 北歐東歐
 > - `text` · 今天想查什麼？
 > - `text` · ${n.patch} 版本 · ${(n.champions?.length ?? 0) + (n.mayhem_champions?.length ?? 0)} 位英雄調整 · ${n.augments_new?.length ?? 0} 個新強化
@@ -181,10 +181,12 @@ sticker: lucide//text-cursor-input
 > - `text` · 更換 / 登出
 > - `text` · 用預設(最熟練英雄的最新造型)
 > - `placeholder` · 搜尋英雄、裝備、強化
-> - `text` · 新手推薦
-> - `text` · 繼續學習 · ${done} / ${decks.length}
-> - `text` · 全部讀完了
 > - `empty page` · 換個名字,或用英雄的英文名、暱稱
+> - `text` · 你的英雄
+> - `title` · 本版強勢
+> - `text` · 繼續學習
+> - `text` · 全部讀完了
+> - `text` · 第 ${at + 1} 課 · ${first.length} 張卡
 > - `text` · 法術強度
 > - `text` · 技能急速
 > - `placeholder` · 搜尋裝備

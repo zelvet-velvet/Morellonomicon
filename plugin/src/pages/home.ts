@@ -2,11 +2,12 @@ import { setIcon, type App } from "obsidian";
 import type MorellonomiconPlugin from "../main";
 import type { Champion } from "../data/store";
 import type { NeedCtx, PageCtx, PageOut } from "./index";
-import { ITEM_CAT_COLOR, ITEM_CATS, layoutBlock, shopIcon, shopRoleIcon, h, holdTip, icon, page, warmPictures, centreBelow, empty, goes, group, row } from "../ui";
+import { ITEM_CAT_COLOR, ITEM_CATS, roleArt, layoutBlock, shopIcon, shopRoleIcon, h, holdTip, icon, page, warmPictures, centreBelow, empty, goes, group, row } from "../ui";
 import { MODES } from "../modes";
 import { crest, crestRatio } from "../data/crest";
 import { PROFILE_FRESH, RiotError, TIER, ago, cachedProfile, emblem, fetchProfile, profileSource, type Profile } from "../data/riot";
-import { art, coverUrl, type Need } from "../media";
+import { art, clipAddress, type Need } from "../media";
+import { parseSlides } from "./deck";
 import { finder } from "./roster";
 
 // The servers a Riot ID can be on (Riot's platform ids), Taiwan first
@@ -40,14 +41,12 @@ function nextTopic(plugin: MorellonomiconPlugin) {
     const read = new Set(plugin.settings.read);
     return { decks, next: decks.find((n) => !read.has(n.file.path)), done: decks.filter((n) => read.has(n.file.path)).length };
 }
-const POPULAR = ["Jinx", "Garen", "Lux", "Ahri", "Ezreal"];   // the faces until you pick champions in Picks
 const FACES = 5;
 const points = (p: number): string => p >= 10000 ? `${(p / 10000).toFixed(1).replace(/\.0$/, "")} 萬點` : `${p} 點`;
 
 // What Home shows from the network (its route in pages/index.ts): the card's picture, the avatar, the next topic's cover
 export function homeNeeds({ app, plugin }: NeedCtx): Need[] {
-    const { next } = nextTopic(plugin);
-    const cover = next?.cover ? [coverUrl(next.cover)] : [];
+    const cover: Need[] = [];   // the hand's pictures load in place (role art, faces, clip stills by range)
     if (!plugin.settings.riotId) return [art.aramScreen("habackground"), ...cover];
     const { byId, prof, mine } = topMastery(app, plugin);
     const best = mine[0] ? byId.get(mine[0].id) : undefined;
@@ -207,67 +206,15 @@ export function homePage(ctx: PageCtx): PageOut {
     btn("book-open", "學習", "var(--color-cyan)", openNext);
     if (!linked) btn("scroll-text", "名詞表", "var(--color-green)", () => ctx.openNote(`${s.guideFolder}/名詞表.md`));
 
-    // 你的英雄 (Screens: Home redesign): with mastery, cards with Riot's crest and level, 最近玩 (when last played, every mode, Mayhem
-    // too) or 最拿手 (points); without, 我的英雄: your Picks (編輯 opens Picks), else 新手推薦, a few easy ones (挑選 opens Picks).
-    // A tap opens the champion.
-    const withLast = mine.some((m) => m.last > 0);
-    const picked = s.roster.filter((id) => byId.has(id));
-    const sec = layoutBlock(h(rest, "div", "mn-hy"));
-    const lab = h(sec, "div", "mn-hc-lab");
-    h(lab, "span", undefined, mine.length ? "你的英雄" : picked.length ? "我的英雄" : "新手推薦");
-    const cards = h(sec, "div", "mn-hy-row");
-    const drawCards = () => {
-        cards.empty();
-        const recent = withLast && s.homeChamps !== "best";
-        const list: { c: Champion; level?: number; sub: string }[] = mine.length
-            ? (recent ? [...mine].sort((a, b) => b.last - a.last) : mine).slice(0, FACES).map((m) => ({ c: byId.get(m.id)!, level: m.level, sub: recent ? ago(m.last) : points(m.points) }))
-            : (picked.length ? picked : POPULAR).map((id) => byId.get(id)).filter((c): c is Champion => !!c).slice(0, FACES).map((c) => ({ c, sub: c.title }));
-        for (const { c, level, sub } of list) {
-            const b = h(cards, "button", "mn-hy-b");
-            const im = h(b, "img", "mn-hy-face"); im.src = c.icon; im.alt = "";
-            if (level) {
-                const lv = h(b, "span", "mn-hy-lv");
-                const cr = h(lv, "img", "mn-hy-crest"); cr.alt = ""; cr.style.width = `${Math.round(20 * crestRatio(level))}px`;
-                void crest(level).then((u) => { if (u) cr.src = u; else cr.remove(); });
-                h(lv, "b", undefined, `${level}`);
-            }
-            h(b, "span", "mn-hy-n", c.name);
-            h(b, "span", "mn-hy-s", sub);
-            b.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); });
-            goes(b, { key: "champion", params: { id: c.id } });
-        }
-    };
-    if (withLast) {
-        const seg = h(lab, "div", "mn-seg is-sm mn-hy-seg");
-        const opts: [string, string][] = [["recent", "最近玩"], ["best", "最拿手"]];
-        const btns = opts.map(([id, t]) => {
-            const b = h(seg, "button", "mn-seg-b" + ((s.homeChamps === "best") === (id === "best") ? " is-on" : ""), t);
-            b.addEventListener("click", (e) => {
-                e.preventDefault();
-                s.homeChamps = id as "recent" | "best";
-                btns.forEach((x, k) => x.toggleClass("is-on", opts[k][0] === id));
-                drawCards();
-                void ctx.plugin.saveData(s);
-            });
-            return b;
-        });
-    } else if (!mine.length) {
-        const more = h(lab, "button", "mn-home-more", picked.length ? "編輯" : "挑選");
-        more.addEventListener("click", (e) => { e.preventDefault(); ctx.goTab("picks"); });
-    }
-    drawCards();
+    // 你的英雄 (Screens: Home redesign) with mastery: cards with Riot's crest and level, 最近玩 (when last played, every mode, Mayhem too)
+    // or 最拿手 (points). Without mastery, 本版強勢 (Screens: Home options · 繼續學習 牌組): the T0 and T1 champions of this patch, a row
+    // each, scrolling sideways; nothing when there are no champion tiers yet. A tap opens the champion.
+    if (mine.length) yourChampions(ctx, rest, mine, byId);
+    else if (store.champTiers) strongest(ctx, rest, all, store.champTiers.champions);
 
-    // the next Handbook topic: a wide cover card
-    if (decks.length) {
-        const learn = layoutBlock(h(rest, "button", "mn-hl is-wide"));
-        if (next?.cover) { const im = h(learn, "img", "mn-hl-img"); im.src = coverUrl(next.cover); im.alt = ""; }
-        const tx = h(learn, "div", "mn-hl-t");
-        h(tx, "span", "mn-hl-k", `繼續學習 · ${done} / ${decks.length}`);
-        h(tx, "b", undefined, next?.title ?? "全部讀完了");
-        const bar = h(tx, "div", "mn-hl-bar");
-        h(bar, "i").style.width = `${Math.round((done / decks.length) * 100)}%`;
-        learn.addEventListener("click", (e) => { e.preventDefault(); openNext(); });
-    }
+    // 繼續學習: a hand of three Handbook cards (two clips playing, the next topic's first card in front) beside the topic, its card
+    // count, the course as marks and 開始 / 繼續 ›; the whole card opens the topic, 全部 the Handbook
+    if (decks.length) learnCard(ctx, rest, decks, next, done, openNext);
 
     // ---------- the search: results in place of what is under the card ----------
     const { score } = finder(all, store.sounds);
@@ -290,6 +237,150 @@ export function homePage(ctx: PageCtx): PageOut {
     };
     search.addEventListener("input", draw);
     return { title: "Home", el };
+}
+
+// A section's header: its title, and a 全部 › link when it opens more
+function sectionHead(parent: HTMLElement, title: string, more?: () => void): HTMLElement {
+    const lab = h(parent, "div", "mn-hc-lab");
+    h(lab, "span", undefined, title);
+    if (more) {
+        const b = h(lab, "button", "mn-home-more is-all", "全部");
+        icon(h(b, "span", "mn-home-more-ic"), "chevron-right");
+        b.addEventListener("click", (e) => { e.preventDefault(); more(); });
+    }
+    return lab;
+}
+
+// 你的英雄: five cards, 最近玩 or 最拿手 (the switch shows once mastery says when each was played; the choice is kept)
+function yourChampions(ctx: PageCtx, rest: HTMLElement, mine: Mine[], byId: Map<string, Champion>): void {
+    const s = ctx.plugin.settings;
+    const withLast = mine.some((m) => m.last > 0);
+    const sec = layoutBlock(h(rest, "div", "mn-hy"));
+    const lab = sectionHead(sec, "你的英雄");
+    const cards = h(sec, "div", "mn-hy-row");
+    const drawCards = () => {
+        cards.empty();
+        const recent = withLast && s.homeChamps !== "best";
+        for (const m of (recent ? [...mine].sort((a, b) => b.last - a.last) : mine).slice(0, FACES)) {
+            const c = byId.get(m.id);
+            if (!c) continue;
+            const b = h(cards, "button", "mn-hy-b");
+            const im = h(b, "img", "mn-hy-face"); im.src = c.icon; im.alt = "";
+            const lv = h(b, "span", "mn-hy-lv");
+            const cr = h(lv, "img", "mn-hy-crest"); cr.alt = ""; cr.style.width = `${Math.round(20 * crestRatio(m.level))}px`;
+            void crest(m.level).then((u) => { if (u) cr.src = u; else cr.remove(); });
+            h(lv, "b", undefined, `${m.level}`);
+            h(b, "span", "mn-hy-n", c.name);
+            h(b, "span", "mn-hy-s", recent ? ago(m.last) : points(m.points));
+            b.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); });
+            goes(b, { key: "champion", params: { id: c.id } });
+        }
+    };
+    if (withLast) {
+        const seg = h(lab, "div", "mn-seg is-sm mn-hy-seg");
+        const opts: [string, string][] = [["recent", "最近玩"], ["best", "最拿手"]];
+        const btns = opts.map(([id, t]) => {
+            const b = h(seg, "button", "mn-seg-b" + ((s.homeChamps === "best") === (id === "best") ? " is-on" : ""), t);
+            b.addEventListener("click", (e) => {
+                e.preventDefault();
+                s.homeChamps = id as "recent" | "best";
+                btns.forEach((x, k) => x.toggleClass("is-on", opts[k][0] === id));
+                drawCards();
+                void ctx.plugin.saveData(s);
+            });
+            return b;
+        });
+    }
+    drawCards();
+}
+
+// 本版強勢: the T0 and T1 champions (tools/augment_tiers.py ranks them, strongest first; only the labels are in the data), a tier tag
+// in its colour and a row of faces that scrolls sideways (the face cut at the edge says there is more); 全部 opens Champions
+const TIER_TAGS: [string, string][] = [["T0", "var(--color-orange)"], ["T1", "var(--color-yellow)"]];
+function strongest(ctx: PageCtx, rest: HTMLElement, all: Champion[], tiers: Record<string, string>): void {
+    const byId = new Map(all.map((c) => [c.id, c]));
+    const sec = layoutBlock(h(rest, "div", "mn-hs"));
+    sectionHead(sec, "本版強勢", () => ctx.push({ key: "championlist", title: "Champions" }));
+    for (const [t, color] of TIER_TAGS) {
+        const champs = Object.entries(tiers).filter(([, v]) => v === t).map(([id]) => byId.get(id)).filter((c): c is Champion => !!c);
+        if (!champs.length) continue;
+        const row = h(sec, "div", "mn-hs-row");
+        const tag = h(row, "span", "mn-hs-t", t); tag.style.setProperty("--t", color);
+        const strip = h(row, "div", "mn-hs-strip");
+        for (const c of champs) {
+            const b = h(strip, "button", "mn-hs-b");
+            const im = h(b, "img"); im.src = c.icon; im.alt = ""; im.loading = "lazy";
+            h(b, "span", undefined, c.name);
+            b.addEventListener("click", (e) => { e.preventDefault(); ctx.openChampion(c.id); });
+            goes(b, { key: "champion", params: { id: c.id } });
+        }
+    }
+}
+
+// 繼續學習 as a hand of Handbook cards. The cards: in front the next topic's first card (its visual: role art, champion faces, a clip,
+// else the topic's icon; its title), behind it the next two clip cards of the Handbook from that topic on, each a still of its clip
+// (the clip's address with a time, so the phone fetches only that frame; WebM where Riot has no MP4) with a line as if it played.
+type Deck = ReturnType<typeof nextTopic>["decks"][number];
+const CLIP_AT = 2.5;   // s into a clip: the ability is under way in most of Riot's demos
+function learnCard(ctx: PageCtx, rest: HTMLElement, decks: Deck[], next: Deck | undefined, done: number, openNext: () => void): void {
+    const sec = layoutBlock(h(rest, "div", "mn-hl-sec"));
+    sectionHead(sec, "繼續學習", () => ctx.goTab("handbook"));
+    const card = h(sec, "button", "mn-hl");
+    const hand = h(card, "div", "mn-hl-hand");
+    const tx = h(card, "div", "mn-hl-t");
+    const at = next ? decks.indexOf(next) : -1;
+    const kicker = h(tx, "span", "mn-hl-k", next ? `第 ${at + 1} 課` : "全部讀完了");
+    h(tx, "b", "mn-hl-title", next?.title ?? "Handbook");
+    if (next?.summary) h(tx, "span", "mn-hl-s", next.summary);
+    const foot = h(tx, "div", "mn-hl-foot");
+    const marks = h(foot, "div", "mn-hl-marks");
+    marks.style.gridTemplateColumns = `repeat(${decks.length}, 1fr)`;
+    const read = new Set(ctx.plugin.settings.read);
+    decks.forEach((d, k) => h(marks, "i", read.has(d.file.path) ? "is-read" : k === at ? "is-next" : undefined));
+    h(foot, "span", "mn-hl-n", `${done}/${decks.length}`);
+    const go = h(foot, "span", "mn-hl-go", !next ? "回顧" : done ? "繼續" : "開始");
+    icon(go, "chevron-right");
+    card.addEventListener("click", (e) => { e.preventDefault(); openNext(); });
+    void fillHand(ctx, hand, decks, at, kicker);
+}
+
+async function fillHand(ctx: PageCtx, hand: HTMLElement, decks: Deck[], at: number, kicker: HTMLElement): Promise<void> {
+    const store = ctx.plugin.store;
+    const from = Math.max(0, at);
+    const slidesOf = async (d: Deck) => parseSlides(await ctx.app.vault.cachedRead(d.file));
+    const first = decks[from] ? await slidesOf(decks[from]) : [];
+    if (at >= 0) kicker.textContent = `第 ${at + 1} 課 · ${first.length} 張卡`;
+    const clips: { c: Champion; key: string; title: string }[] = [];
+    for (let k = 0; k < decks.length && clips.length < 2; k++) {
+        const d = decks[(from + k) % decks.length];
+        for (const sl of k === 0 ? first.slice(1) : await slidesOf(d)) {
+            const [kind, name, key] = sl.visual.split(/\s+/);
+            const c = kind === "clip" && name ? store.champion(name) : undefined;
+            if (c && key) clips.push({ c, key: key.toUpperCase(), title: sl.title });
+            if (clips.length >= 2) break;
+        }
+    }
+    hand.empty();
+    const face = (cls: string) => h(h(hand, "div", `mn-hl-card ${cls}`), "div", "mn-hl-face");
+    clips.slice(0, 2).reverse().forEach((cl, k) => { const f = face(k ? "is-mid" : "is-back"); clipStill(f, cl.c, cl.key); });
+    const front = face("is-front");
+    const sl = first[0];
+    const [kind, ...args] = (sl?.visual ?? "").split(/\s+/).filter(Boolean);
+    if (kind === "roles") { const g = h(front, "div", "mn-hl-roles"); for (const r of ["戰士", "坦克", "法師", "刺客", "射手", "輔助"]) roleArt(g, r); }
+    else if (kind === "champs") { const g = h(front, "div", "mn-hl-faces"); for (const id of args.slice(0, 6)) { const c = store.champion(id); if (c) { const im = h(g, "img"); im.src = c.icon; im.alt = ""; } } }
+    else if (kind === "clip" && args[0] && store.champion(args[0])) clipStill(front, store.champion(args[0])!, (args[1] ?? "Q").toUpperCase());
+    else icon(h(front, "div", "mn-hl-ic"), decks[from]?.icon ?? "book-open");
+    if (sl) h(front, "b", "mn-hl-ct", sl.title);
+}
+
+// A clip's still: the video at CLIP_AT, paused, with a progress line as if it played
+function clipStill(face: HTMLElement, c: Champion, key: string): void {
+    const v = h(face, "video", "mn-hl-clip");
+    v.muted = true; v.playsInline = true; v.preload = "metadata";
+    const base = clipAddress(c, key);
+    v.addEventListener("error", () => { if (!v.src.includes(".webm")) v.src = `${base}.webm#t=${CLIP_AT}`; });
+    v.src = `${base}.mp4#t=${CLIP_AT}`;
+    h(face, "i", "mn-hl-prog");
 }
 
 // The profile fetch in flight, shared by every drawing of Home (see refresh in homePage); a tap on 重新整理 while one runs waits for it

@@ -175,6 +175,8 @@ var Store = class {
     // champion id -> its Mayhem builds (tools/build_tiers.py)
     this.augUnrated = {};
     // augment id -> why it has no tier (disabled, no games, no rule yet)
+    this.champTiers = null;
+    // champion id -> T0..T4 this patch (tools/augment_tiers.py), labels only
     this.itemRoles = null;
     // item id -> the shop's class tabs it is under (_data/item-roles.json, the League wiki)
     // false until the data files (_data/*.json) have been read once after start-up
@@ -235,6 +237,13 @@ var Store = class {
     } catch {
       this.augTiers = {};
       this.augUnrated = {};
+    }
+    try {
+      const path = (0, import_obsidian.normalizePath)("_data/champion-tiers.json");
+      const d = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)) : null;
+      this.champTiers = d?.champions && Object.keys(d.champions).length ? { patch: d.patch ?? "", champions: d.champions } : null;
+    } catch {
+      this.champTiers = null;
     }
     try {
       const path = (0, import_obsidian.normalizePath)("_data/item-builds.json");
@@ -6318,12 +6327,10 @@ function nextTopic(plugin) {
   const read = new Set(plugin.settings.read);
   return { decks, next: decks.find((n) => !read.has(n.file.path)), done: decks.filter((n) => read.has(n.file.path)).length };
 }
-var POPULAR = ["Jinx", "Garen", "Lux", "Ahri", "Ezreal"];
 var FACES = 5;
 var points = (p) => p >= 1e4 ? `${(p / 1e4).toFixed(1).replace(/\.0$/, "")} \u842C\u9EDE` : `${p} \u9EDE`;
 function homeNeeds({ app, plugin }) {
-  const { next } = nextTopic(plugin);
-  const cover = next?.cover ? [coverUrl(next.cover)] : [];
+  const cover = [];
   if (!plugin.settings.riotId) return [art.aramScreen("habackground"), ...cover];
   const { byId, prof, mine } = topMastery(app, plugin);
   const best = mine[0] ? byId.get(mine[0].id) : void 0;
@@ -6532,80 +6539,9 @@ function homePage(ctx) {
   btn("shopping-bag", "\u88DD\u5099", "var(--color-yellow)", () => ctx.push({ key: "itemlist", title: "Items" }));
   btn("book-open", "\u5B78\u7FD2", "var(--color-cyan)", openNext);
   if (!linked) btn("scroll-text", "\u540D\u8A5E\u8868", "var(--color-green)", () => ctx.openNote(`${s.guideFolder}/\u540D\u8A5E\u8868.md`));
-  const withLast = mine.some((m) => m.last > 0);
-  const picked = s.roster.filter((id) => byId.has(id));
-  const sec = layoutBlock(h(rest, "div", "mn-hy"));
-  const lab = h(sec, "div", "mn-hc-lab");
-  h(lab, "span", void 0, mine.length ? "\u4F60\u7684\u82F1\u96C4" : picked.length ? "\u6211\u7684\u82F1\u96C4" : "\u65B0\u624B\u63A8\u85A6");
-  const cards = h(sec, "div", "mn-hy-row");
-  const drawCards = () => {
-    cards.empty();
-    const recent = withLast && s.homeChamps !== "best";
-    const list2 = mine.length ? (recent ? [...mine].sort((a, b) => b.last - a.last) : mine).slice(0, FACES).map((m) => ({ c: byId.get(m.id), level: m.level, sub: recent ? ago(m.last) : points(m.points) })) : (picked.length ? picked : POPULAR).map((id) => byId.get(id)).filter((c) => !!c).slice(0, FACES).map((c) => ({ c, sub: c.title }));
-    for (const { c, level, sub } of list2) {
-      const b = h(cards, "button", "mn-hy-b");
-      const im = h(b, "img", "mn-hy-face");
-      im.src = c.icon;
-      im.alt = "";
-      if (level) {
-        const lv = h(b, "span", "mn-hy-lv");
-        const cr = h(lv, "img", "mn-hy-crest");
-        cr.alt = "";
-        cr.style.width = `${Math.round(20 * crestRatio(level))}px`;
-        void crest(level).then((u) => {
-          if (u) cr.src = u;
-          else cr.remove();
-        });
-        h(lv, "b", void 0, `${level}`);
-      }
-      h(b, "span", "mn-hy-n", c.name);
-      h(b, "span", "mn-hy-s", sub);
-      b.addEventListener("click", (e) => {
-        e.preventDefault();
-        ctx.openChampion(c.id);
-      });
-      goes(b, { key: "champion", params: { id: c.id } });
-    }
-  };
-  if (withLast) {
-    const seg = h(lab, "div", "mn-seg is-sm mn-hy-seg");
-    const opts = [["recent", "\u6700\u8FD1\u73A9"], ["best", "\u6700\u62FF\u624B"]];
-    const btns = opts.map(([id, t]) => {
-      const b = h(seg, "button", "mn-seg-b" + (s.homeChamps === "best" === (id === "best") ? " is-on" : ""), t);
-      b.addEventListener("click", (e) => {
-        e.preventDefault();
-        s.homeChamps = id;
-        btns.forEach((x, k) => x.toggleClass("is-on", opts[k][0] === id));
-        drawCards();
-        void ctx.plugin.saveData(s);
-      });
-      return b;
-    });
-  } else if (!mine.length) {
-    const more = h(lab, "button", "mn-home-more", picked.length ? "\u7DE8\u8F2F" : "\u6311\u9078");
-    more.addEventListener("click", (e) => {
-      e.preventDefault();
-      ctx.goTab("picks");
-    });
-  }
-  drawCards();
-  if (decks.length) {
-    const learn = layoutBlock(h(rest, "button", "mn-hl is-wide"));
-    if (next?.cover) {
-      const im = h(learn, "img", "mn-hl-img");
-      im.src = coverUrl(next.cover);
-      im.alt = "";
-    }
-    const tx = h(learn, "div", "mn-hl-t");
-    h(tx, "span", "mn-hl-k", `\u7E7C\u7E8C\u5B78\u7FD2 \xB7 ${done} / ${decks.length}`);
-    h(tx, "b", void 0, next?.title ?? "\u5168\u90E8\u8B80\u5B8C\u4E86");
-    const bar = h(tx, "div", "mn-hl-bar");
-    h(bar, "i").style.width = `${Math.round(done / decks.length * 100)}%`;
-    learn.addEventListener("click", (e) => {
-      e.preventDefault();
-      openNext();
-    });
-  }
+  if (mine.length) yourChampions(ctx, rest, mine, byId);
+  else if (store.champTiers) strongest(ctx, rest, all, store.champTiers.champions);
+  if (decks.length) learnCard(ctx, rest, decks, next, done, openNext);
   const { score: score2 } = finder(all, store.sounds);
   const flag = MODES[s.mode].itemFlag;
   const draw = () => {
@@ -6639,6 +6575,176 @@ function homePage(ctx) {
   };
   search.addEventListener("input", draw);
   return { title: "Home", el };
+}
+function sectionHead(parent, title, more) {
+  const lab = h(parent, "div", "mn-hc-lab");
+  h(lab, "span", void 0, title);
+  if (more) {
+    const b = h(lab, "button", "mn-home-more is-all", "\u5168\u90E8");
+    icon(h(b, "span", "mn-home-more-ic"), "chevron-right");
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      more();
+    });
+  }
+  return lab;
+}
+function yourChampions(ctx, rest, mine, byId) {
+  const s = ctx.plugin.settings;
+  const withLast = mine.some((m) => m.last > 0);
+  const sec = layoutBlock(h(rest, "div", "mn-hy"));
+  const lab = sectionHead(sec, "\u4F60\u7684\u82F1\u96C4");
+  const cards = h(sec, "div", "mn-hy-row");
+  const drawCards = () => {
+    cards.empty();
+    const recent = withLast && s.homeChamps !== "best";
+    for (const m of (recent ? [...mine].sort((a, b) => b.last - a.last) : mine).slice(0, FACES)) {
+      const c = byId.get(m.id);
+      if (!c) continue;
+      const b = h(cards, "button", "mn-hy-b");
+      const im = h(b, "img", "mn-hy-face");
+      im.src = c.icon;
+      im.alt = "";
+      const lv = h(b, "span", "mn-hy-lv");
+      const cr = h(lv, "img", "mn-hy-crest");
+      cr.alt = "";
+      cr.style.width = `${Math.round(20 * crestRatio(m.level))}px`;
+      void crest(m.level).then((u) => {
+        if (u) cr.src = u;
+        else cr.remove();
+      });
+      h(lv, "b", void 0, `${m.level}`);
+      h(b, "span", "mn-hy-n", c.name);
+      h(b, "span", "mn-hy-s", recent ? ago(m.last) : points(m.points));
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        ctx.openChampion(c.id);
+      });
+      goes(b, { key: "champion", params: { id: c.id } });
+    }
+  };
+  if (withLast) {
+    const seg = h(lab, "div", "mn-seg is-sm mn-hy-seg");
+    const opts = [["recent", "\u6700\u8FD1\u73A9"], ["best", "\u6700\u62FF\u624B"]];
+    const btns = opts.map(([id, t]) => {
+      const b = h(seg, "button", "mn-seg-b" + (s.homeChamps === "best" === (id === "best") ? " is-on" : ""), t);
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        s.homeChamps = id;
+        btns.forEach((x, k) => x.toggleClass("is-on", opts[k][0] === id));
+        drawCards();
+        void ctx.plugin.saveData(s);
+      });
+      return b;
+    });
+  }
+  drawCards();
+}
+var TIER_TAGS = [["T0", "var(--color-orange)"], ["T1", "var(--color-yellow)"]];
+function strongest(ctx, rest, all, tiers) {
+  const byId = new Map(all.map((c) => [c.id, c]));
+  const sec = layoutBlock(h(rest, "div", "mn-hs"));
+  sectionHead(sec, "\u672C\u7248\u5F37\u52E2", () => ctx.push({ key: "championlist", title: "Champions" }));
+  for (const [t, color] of TIER_TAGS) {
+    const champs = Object.entries(tiers).filter(([, v]) => v === t).map(([id]) => byId.get(id)).filter((c) => !!c);
+    if (!champs.length) continue;
+    const row2 = h(sec, "div", "mn-hs-row");
+    const tag = h(row2, "span", "mn-hs-t", t);
+    tag.style.setProperty("--t", color);
+    const strip2 = h(row2, "div", "mn-hs-strip");
+    for (const c of champs) {
+      const b = h(strip2, "button", "mn-hs-b");
+      const im = h(b, "img");
+      im.src = c.icon;
+      im.alt = "";
+      im.loading = "lazy";
+      h(b, "span", void 0, c.name);
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        ctx.openChampion(c.id);
+      });
+      goes(b, { key: "champion", params: { id: c.id } });
+    }
+  }
+}
+var CLIP_AT = 2.5;
+function learnCard(ctx, rest, decks, next, done, openNext) {
+  const sec = layoutBlock(h(rest, "div", "mn-hl-sec"));
+  sectionHead(sec, "\u7E7C\u7E8C\u5B78\u7FD2", () => ctx.goTab("handbook"));
+  const card = h(sec, "button", "mn-hl");
+  const hand = h(card, "div", "mn-hl-hand");
+  const tx = h(card, "div", "mn-hl-t");
+  const at = next ? decks.indexOf(next) : -1;
+  const kicker = h(tx, "span", "mn-hl-k", next ? `\u7B2C ${at + 1} \u8AB2` : "\u5168\u90E8\u8B80\u5B8C\u4E86");
+  h(tx, "b", "mn-hl-title", next?.title ?? "Handbook");
+  if (next?.summary) h(tx, "span", "mn-hl-s", next.summary);
+  const foot = h(tx, "div", "mn-hl-foot");
+  const marks = h(foot, "div", "mn-hl-marks");
+  marks.style.gridTemplateColumns = `repeat(${decks.length}, 1fr)`;
+  const read = new Set(ctx.plugin.settings.read);
+  decks.forEach((d, k) => h(marks, "i", read.has(d.file.path) ? "is-read" : k === at ? "is-next" : void 0));
+  h(foot, "span", "mn-hl-n", `${done}/${decks.length}`);
+  const go = h(foot, "span", "mn-hl-go", !next ? "\u56DE\u9867" : done ? "\u7E7C\u7E8C" : "\u958B\u59CB");
+  icon(go, "chevron-right");
+  card.addEventListener("click", (e) => {
+    e.preventDefault();
+    openNext();
+  });
+  void fillHand(ctx, hand, decks, at, kicker);
+}
+async function fillHand(ctx, hand, decks, at, kicker) {
+  const store = ctx.plugin.store;
+  const from = Math.max(0, at);
+  const slidesOf = async (d) => parseSlides(await ctx.app.vault.cachedRead(d.file));
+  const first = decks[from] ? await slidesOf(decks[from]) : [];
+  if (at >= 0) kicker.textContent = `\u7B2C ${at + 1} \u8AB2 \xB7 ${first.length} \u5F35\u5361`;
+  const clips = [];
+  for (let k = 0; k < decks.length && clips.length < 2; k++) {
+    const d = decks[(from + k) % decks.length];
+    for (const sl2 of k === 0 ? first.slice(1) : await slidesOf(d)) {
+      const [kind2, name, key] = sl2.visual.split(/\s+/);
+      const c = kind2 === "clip" && name ? store.champion(name) : void 0;
+      if (c && key) clips.push({ c, key: key.toUpperCase(), title: sl2.title });
+      if (clips.length >= 2) break;
+    }
+  }
+  hand.empty();
+  const face = (cls) => h(h(hand, "div", `mn-hl-card ${cls}`), "div", "mn-hl-face");
+  clips.slice(0, 2).reverse().forEach((cl, k) => {
+    const f = face(k ? "is-mid" : "is-back");
+    clipStill(f, cl.c, cl.key);
+  });
+  const front = face("is-front");
+  const sl = first[0];
+  const [kind, ...args] = (sl?.visual ?? "").split(/\s+/).filter(Boolean);
+  if (kind === "roles") {
+    const g = h(front, "div", "mn-hl-roles");
+    for (const r of ["\u6230\u58EB", "\u5766\u514B", "\u6CD5\u5E2B", "\u523A\u5BA2", "\u5C04\u624B", "\u8F14\u52A9"]) roleArt(g, r);
+  } else if (kind === "champs") {
+    const g = h(front, "div", "mn-hl-faces");
+    for (const id of args.slice(0, 6)) {
+      const c = store.champion(id);
+      if (c) {
+        const im = h(g, "img");
+        im.src = c.icon;
+        im.alt = "";
+      }
+    }
+  } else if (kind === "clip" && args[0] && store.champion(args[0])) clipStill(front, store.champion(args[0]), (args[1] ?? "Q").toUpperCase());
+  else icon(h(front, "div", "mn-hl-ic"), decks[from]?.icon ?? "book-open");
+  if (sl) h(front, "b", "mn-hl-ct", sl.title);
+}
+function clipStill(face, c, key) {
+  const v = h(face, "video", "mn-hl-clip");
+  v.muted = true;
+  v.playsInline = true;
+  v.preload = "metadata";
+  const base = clipAddress(c, key);
+  v.addEventListener("error", () => {
+    if (!v.src.includes(".webm")) v.src = `${base}.webm#t=${CLIP_AT}`;
+  });
+  v.src = `${base}.mp4#t=${CLIP_AT}`;
+  h(face, "i", "mn-hl-prog");
 }
 var inFlight = null;
 function profileFetch(ctx) {

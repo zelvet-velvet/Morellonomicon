@@ -137,6 +137,7 @@ export class Store {
     augTiers: Record<string, Record<string, AugTierStyle>> = {};   // champion id -> play style -> the augment tiers (tools/augment_tiers.py)
     itemBuilds: Record<string, ChampBuilds> = {};   // champion id -> its Mayhem builds (tools/build_tiers.py)
     augUnrated: Record<string, string> = {};   // augment id -> why it has no tier (disabled, no games, no rule yet)
+    champTiers: { patch: string; champions: Record<string, string> } | null = null;   // champion id -> T0..T4 this patch (tools/augment_tiers.py), labels only
     itemRoles: Record<string, string[]> | null = null;   // item id -> the shop's class tabs it is under (_data/item-roles.json, the League wiki)
 
     // false until the data files (_data/*.json) have been read once after start-up
@@ -172,6 +173,11 @@ export class Store {
             this.augUnrated = d.unrated ?? {};
             this.augRank = null;
         } catch { this.augTiers = {}; this.augUnrated = {}; }
+        try {
+            const path = normalizePath("_data/champion-tiers.json");
+            const d = (await this.app.vault.adapter.exists(path)) ? JSON.parse(await this.app.vault.adapter.read(path)) as { patch?: string; champions?: Record<string, string> } : null;
+            this.champTiers = d?.champions && Object.keys(d.champions).length ? { patch: d.patch ?? "", champions: d.champions } : null;
+        } catch { this.champTiers = null; }
         try {
             const path = normalizePath("_data/item-builds.json");
             this.itemBuilds = (await this.app.vault.adapter.exists(path)) ? ((JSON.parse(await this.app.vault.adapter.read(path)) as { champions?: Record<string, ChampBuilds> }).champions ?? {}) : {};
