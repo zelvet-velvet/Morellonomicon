@@ -462,6 +462,10 @@ mark.mn-hl { background: color-mix(in srgb, var(--color-yellow) 40%, transparent
 .mn-sl-x p, .mn-sl-x ul { margin: 0; }
 .mn-sl-x ul { padding-left: 1.2em; }
 .mn-sl-x strong { color: var(--mn-text); }
+/* a link to an earlier topic, one of its cards, a champion or an item (deck.ts follow()): accent words with a small arrow, no underline */
+.mn-sl-words a.internal-link { color: var(--mn-accent); text-decoration: none; font-weight: 600; cursor: pointer; transition: opacity 0.12s; }
+.mn-sl-words a.internal-link::after { content: " ›"; font-weight: 400; opacity: 0.7; }
+.mn-sl-words a.internal-link:active { opacity: 0.5; }
 /* the tip: a short accent line, the label and one line of text (T3); a card without a tip keeps the room empty */
 .mn-sl-tip { position: relative; display: flex; align-items: center; gap: 8px; height: 34px; margin: 12px 0 0; padding-left: 12px; }
 .mn-sl-tip::before { content: ""; position: absolute; left: 0; top: 50%; width: 3px; height: 14px; border-radius: 2px; transform: translateY(-50%); background: var(--mn-accent); }

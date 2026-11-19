@@ -28,6 +28,25 @@ import { ARAM_SCREENS, art, type Need } from "../media";
 //   itemtag Armor       items of that kind (Armor, SpellBlock, Health…)      item 3089            one item and what it is built from
 //   augs 稜鏡           Mayhem augments of that rarity (a few, changing daily)
 interface Slide { title: string; icon: string; visual: string; text: string }
+
+// A [[link]] in a card's text opens inside the app: another topic ([[傷害類型]]) or one card of it ([[傷害類型#護甲和魔抗]], the card's
+// title), a champion, an item or an augment note; so a card can point back to what an earlier topic taught. Links are drawn as chips (styles.css)
+function follow(ctx: PageCtx, box: HTMLElement, from: string): void {
+    box.addEventListener("click", (e) => {
+        const a = (e.target as HTMLElement).closest<HTMLAnchorElement>("a.internal-link");
+        if (!a) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const [path, card] = (a.dataset.href ?? a.getAttribute("href") ?? "").split("#");
+        const f = ctx.app.metadataCache.getFirstLinkpathDest(path, from);
+        if (!f) return;
+        const fm = ctx.app.metadataCache.getFileCache(f)?.frontmatter ?? {};
+        if (fm.type === "champion" && fm.id) ctx.openChampion(String(fm.id));
+        else if (fm.type === "item" && fm.id) ctx.openItem(Number(fm.id));
+        else if (fm.type === "augment" && fm.id) ctx.openAugment(Number(fm.id));
+        else ctx.openNote(f.path, card || undefined);
+    });
+}
 const GLOSSARY = "名詞表";   // the plain-list guide note the i button opens
 const STRIP = 6;   // icons in a strip
 const WAIT_CARDS = 3;      // the pile waits for this many cards' pictures and clips; the others keep loading behind them
@@ -77,7 +96,7 @@ const WARDS: Record<string, { obj?: [string, number, number][]; wards: [number, 
 const hashStr = (s: string): number => { let x = 2166136261; for (let i = 0; i < s.length; i++) x = Math.imul(x ^ s.charCodeAt(i), 16777619); return x >>> 0; };
 const day = () => String(Math.floor(Date.now() / 86_400_000));
 
-export function deckPage(ctx: PageCtx, file: TFile): PageOut {
+export function deckPage(ctx: PageCtx, file: TFile, card?: string): PageOut {
     const store = ctx.plugin.store;
     // full screen like the Picks swipe card (Layouts note, Handbook · card): no top bar, title or progress bars (the kicker says
     // n / N); Back floats on the card's upper left, the glossary's i on its upper right
@@ -117,6 +136,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         const at = guide.findIndex((n) => n.file.path === file.path);
         const next = guide[at + 1];
         const sec: HTMLElement[] = [];   // one per card; the pile is made by posing these
+        const start = card ? Math.max(0, slides.findIndex((s) => s.title === card)) : 0;   // opened from a link to one card
 
         slides.forEach((s, i) => {
             const section = h(pager, "section", "mn-slide");
@@ -137,6 +157,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
             // every row is there on every card, empty or not, so the words have the same height everywhere (Layouts note, Handbook card)
             const body = h(words, "div", "mn-sl-x markdown-rendered");
             if (main) void MarkdownRenderer.render(ctx.app, main, body, file.path, ctx.component);
+            follow(ctx, words, file.path);
             const box = h(words, "div", "mn-sl-tip" + (tip ? "" : " is-empty"));
             if (tip) {
                 h(box, "div", "mn-sl-tip-k", tip[2]);
@@ -159,6 +180,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         const resetPeek = () => { peek.style.opacity = ""; peek.removeClass("is-ready"); };
         const pile = cardPile(pager, sec, {
             scroll: ".mn-sl-words",
+            start,
             // full screen: the pile leans less (its corners stay inside the room left around the card, styles.css), so the cards under
             // the top one show whole instead of as slivers cut flat by the screen edge
             fan: DECK_FAN,
@@ -188,7 +210,7 @@ export function deckPage(ctx: PageCtx, file: TFile): PageOut {
         // The pile shows once every picture and clip of the topic has its first frame (or after DECK_WAIT_MS), so nothing pops in
         // while swiping. Clips under the top card are told to play meanwhile: a phone may not fetch a paused clip at all.
         sec.forEach((c) => c.querySelectorAll("video").forEach((v) => { void v.play().catch(() => undefined); }));
-        const loaded = whenMediaLoaded(sec.slice(0, WAIT_CARDS), DECK_WAIT_MS);
+        const loaded = whenMediaLoaded(sec.slice(start, start + WAIT_CARDS), DECK_WAIT_MS);
         let ready = false;
         const slow = window.setTimeout(() => {
             if (ready) return;

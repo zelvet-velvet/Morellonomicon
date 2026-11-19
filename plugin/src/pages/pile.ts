@@ -22,12 +22,13 @@ export interface PileHooks {
     onEnd?: () => void;                           // judge: the last card is gone
     last?: { move: (px: number) => boolean; reset: () => void; go: () => void };   // browse: pulling the last card (true = far enough)
     scroll?: string;                              // the part of a card scrolled by hand on a vertical move
+    start?: number;                               // the card on top at first (a link to one card of a topic)
 }
 export interface Pile { layout: (animate: boolean) => void; decide: (like: boolean) => void; readonly cur: number }
 
 export function cardPile(pager: HTMLElement, sec: HTMLElement[], o: PileHooks): Pile {
     const count = sec.length;
-    let cur = 0;   // the card on top
+    let cur = Math.max(0, Math.min(count - 1, o.start ?? 0));   // the card on top
     const right: boolean[] = [];   // judge: the cards that went right (liked)
     // `u` places a card: 0 = on top, 1 = first under it … , below 0 = dragged off by that many card widths (to the right if `toRight`)
     const pose = (el: HTMLElement, u: number, toRight = false) => {

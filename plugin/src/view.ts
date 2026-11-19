@@ -380,7 +380,7 @@ export class MnView extends ItemView {
                 },
                 openAugment: (id, champ) => this.push({ key: "augment", title: store.augment(id)?.name ?? "Augment", params: champ ? { id, champ } : { id } }),
                 openItem: (id) => this.push({ key: "item", title: store.item(id)?.name ?? "Item", params: { id } }),
-                openNote: (path) => this.push({ key: "note", title: path.split("/").pop()?.replace(/\.md$/, "") ?? "Note", params: { path } }),
+                openNote: (path, card) => this.push({ key: "note", title: path.split("/").pop()?.replace(/\.md$/, "") ?? "Note", params: card ? { path, card } : { path } }),
             });
         } catch (e) {
             const el = h(null, "div", "mn-page");
