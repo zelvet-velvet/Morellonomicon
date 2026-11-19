@@ -28,6 +28,14 @@ ROOT = Path(__file__).resolve().parent.parent
 CACHE = ROOT / ".cache" / "resg"
 LCU_CACHE = ROOT / ".cache" / "lcu" / "cache"   # our crawl in the same format (tools/lcu_cache.py)
 OUT_TIERS = ROOT / "_data" / "augment-tiers.json"
+OUT_CHAMPS = ROOT / "_data" / "champion-tiers.json"   # each champion's tier this patch, T0-T4 (Home's 本版強勢), labels only
+# Champion tiers: a champion's win rate pulled toward the patch's average by CHAMP_PRIOR games (a champion seldom played is not ranked
+# on a handful of games), then ranked: the top share of champions is T0, the next T1 ... (close to resg.top's spread on 16.21, 8 / 20 /
+# 68 / 61 / 16 of 173). Champions with fewer than CHAMP_MIN_GAMES games get no tier. Only the tier letters leave this script: the
+# games and win rates stay private (resg.top's have no licence; ours wait for Zaviel's word on showing LCU numbers).
+CHAMP_PRIOR = 200
+CHAMP_MIN_GAMES = 50
+CHAMP_SHARES = (("T0", 0.05), ("T1", 0.12), ("T2", 0.38), ("T3", 0.35), ("T4", 1.0))
 OUT_REVIEW = ROOT / "Review" / "Augment Tiers.md"
 OUT_QUESTIONS = ROOT / "Review" / "Augment Questions.md"
 OUT_QUESTIONS_JSON = ROOT / "_data" / "questions.json"   # the questions as data, for tools/reasoning_todo.py (shared with build_tiers.py)
@@ -834,7 +842,7 @@ def main():
     rated = [i for i in augs if str(i) not in unrated]
     base_gap = {i: overall[i]["wr"] - 0.5 for i in rated}
 
-    champs, out, questions = {}, {}, []
+    champs, out, questions, played_by = {}, {}, [], {}
     for path in sorted((ROOT / vault_paths.CHAMPIONS).glob("*.md")):
         note = frontmatter(path)
         if note.get("type") != "champion":
@@ -845,6 +853,7 @@ def main():
         own = data.get("champion", {}).get("wr")
         games = {r[0]: (r[2], r[3]) for r in data.get("ra", [])}
         played = data.get("champion", {}).get("tm", 0)
+        played_by[note["id"]] = (played, data.get("champion", {}).get("wm", 0))
         offered = [i for i in rated if games.get(i, (0, 0))[0] > 0 or played * overall[i].get("pr", 0) < meta.get("not_offered", NOT_OFFERED)]
         builds = [Champ(note, style) for style in STYLES.get(note["id"], [("main", "主流", {})])]
         for c in builds:
@@ -890,6 +899,9 @@ def main():
 
     OUT_TIERS.write_text(json.dumps({"source": source(meta), "patch": meta["version"],
                                      "augments": len(rated), "unrated": unrated, "champions": out}, ensure_ascii=False, indent=1), encoding="utf-8")
+    tiers = champion_tiers(played_by)
+    OUT_CHAMPS.write_text(json.dumps({"source": source(meta), "patch": meta["version"], "champions": tiers}, ensure_ascii=False, indent=1), encoding="utf-8")
+    print("champion tiers:", "  ".join(f"{t} {sum(1 for v in tiers.values() if v == t)}" for t, _ in CHAMP_SHARES))
     review(champs, augs, meta, len(rated), unrated)
     ask(questions, augs, meta)
     counts = {}
@@ -900,6 +912,22 @@ def main():
     for grp in ("稜鏡", "金", "銀", "五殺"):
         n = sum(v for (g, _), v in counts.items() if g == grp)
         print(grp, "  ".join(f"{t} {counts.get((grp, t), 0) / max(n, 1) * 100:.0f}%" for t in "SABC"))
+
+
+def champion_tiers(played_by):
+    """{champion id: "T0".."T4"} from (games, wins) per champion: the win rate pulled toward the average, then ranked by CHAMP_SHARES."""
+    ranked = {c: gw for c, gw in played_by.items() if gw[0] >= CHAMP_MIN_GAMES}
+    if not ranked:
+        return {}
+    mean = sum(w for _, w in ranked.values()) / sum(g for g, _ in ranked.values())
+    order = sorted(ranked, key=lambda c: -(ranked[c][1] + CHAMP_PRIOR * mean) / (ranked[c][0] + CHAMP_PRIOR))
+    out, start = {}, 0
+    for tier, share in CHAMP_SHARES:
+        end = len(order) if share >= 1 else min(len(order), start + max(1, round(len(order) * share)))
+        for c in order[start:end]:
+            out[c] = tier
+        start = end
+    return out
 
 
 def review(champs, augs, meta, n, unrated):
