@@ -99,21 +99,34 @@ def live_patch():
 
 # ---------- private game counts ----------
 
+def read_only(path):
+    """A read-only SQLite connection that sorts in memory: a temp B-tree on /mnt/c (WSL) is many times slower."""
+    db = sqlite3.connect(f"file:{Path(path).as_posix()}?mode=ro", uri=True, check_same_thread=False)
+    db.execute("PRAGMA temp_store=MEMORY")
+    db.execute("PRAGMA cache_size=-65536")   # 64 MB
+    return db
+
+
 def lcu_patches():
     """Per patch: games, full games (all ten players read), player samples, first / last game date, game versions."""
     if not LCU_DB.exists():
         return {}
-    db = sqlite3.connect(f"file:{LCU_DB.as_posix()}?mode=ro", uri=True)
+    db = read_only(LCU_DB)
     out = {}
     try:
+        # samples and champions per patch in one pass: games first (CROSS JOIN keeps that order), so SQLite walks each
+        # patch's games and their ten players instead of sorting every player row (17 s on /mnt/c, under 1 s this way)
+        per = {}
+        for patch, samples, champs in db.execute(
+                "SELECT g.patch, count(*), count(DISTINCT p.champ) FROM games g CROSS JOIN players p ON p.game_id = g.game_id "
+                "GROUP BY g.patch"):
+            per[patch] = (samples, champs)
         for patch, games, full, first, last, nodate in db.execute(
                 "SELECT patch, count(*), sum(full), min(nullif(created, 0)), max(nullif(created, 0)), sum(created = 0) "
                 "FROM games GROUP BY patch"):
             day = lambda t: datetime.date.fromtimestamp(t).isoformat() if t else None   # noqa: E731
             versions = [v for v, in db.execute("SELECT DISTINCT version FROM games WHERE patch=? ORDER BY version", (patch,))]
-            samples, = db.execute("SELECT count(*) FROM players JOIN games USING (game_id) WHERE patch=?", (patch,)).fetchone()
-            champs, = db.execute("SELECT count(DISTINCT champ) FROM players JOIN games USING (game_id) WHERE patch=?",
-                                 (patch,)).fetchone()
+            samples, champs = per.get(patch, (0, 0))
             out[patch] = {"games": games, "full": full or 0, "samples": samples, "champions": champs,
                           "first": day(first), "last": day(last), "undated": nodate or 0, "versions": versions}
     finally:

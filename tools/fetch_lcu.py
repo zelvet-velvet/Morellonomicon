@@ -17,9 +17,10 @@ ten samples and nine more players to read). The client answers history calls one
 Samples are keyed by game and participant, so one player is never counted twice in a game. The database holds no names and no
 player ids: players already read are kept only as a salted hash, to skip them for a while.
 
-In a terminal it is a full-screen app (tools/lcu_tui.py): a menu, then a live dashboard while crawling (progress toward the
-patch's Ready count, speed, queue, the thinnest champions, activity; p pause, q stop, r browser report). --plain, or output to
-a file, logs a progress line every few minutes instead.
+In a terminal it is a full-screen app (tools/lcu_tui.py): a menu (crawl; make and open the tiers page, or rebuild the tiers
+from the crawl first; the database; the client), then a live dashboard while crawling (progress toward the patch's Ready count,
+this run, speed, the crawl's queue, the client, samples per champion and the thinnest, an aligned activity log; p pause,
+q stop, r browser report). --plain, or output to a file, logs a progress line every few minutes instead.
 Standard library only.
 """
 import argparse
@@ -151,7 +152,7 @@ LOG_HOOK = None   # the dashboard's activity panel while it is on screen
 
 def log(msg, kind="warn"):
     if LOG_HOOK:
-        LOG_HOOK(msg, kind)
+        LOG_HOOK(msg, kind, "client")
     else:
         print(time.strftime("%H:%M:%S"), msg, flush=True)
 
@@ -168,6 +169,8 @@ def open_db():
     DB.parent.mkdir(parents=True, exist_ok=True)
     db = sqlite3.connect(DB)
     db.execute("PRAGMA journal_mode=WAL")
+    db.execute("PRAGMA temp_store=MEMORY")   # sorts in memory: a temp B-tree on /mnt/c (WSL) is many times slower
+    db.execute("PRAGMA cache_size=-65536")
     items = ", ".join(f"item{k} INTEGER" for k in range(7))
     augs = ", ".join(f"aug{k} INTEGER" for k in range(1, 7))
     db.executescript(f"""
@@ -211,13 +214,15 @@ class Crawl:
         self.reads = self.details = self.samples = self.skipped = self.new_games = self.new_full = 0
         self.account = None   # hash of the logged-in account the crawl started on
         self.status, self.mode, self.phase, self.now_doing = "starting", "running", "", ""
-        self.events = deque(maxlen=200)
+        self.events = deque(maxlen=300)   # (time, kind, tag, message) for the activity log
+        self.reseeds = 0
+        self.base = self.base_full = 0   # the patch's games when the run started (or the patch changed); + new_games
         self.per_minute = {}   # minute -> new games, for the speed sparkline
         self.snaps = deque()   # (time, patch games, samples) every 10 s, for the rates
-        self.cache = {}
 
-    def event(self, msg, kind=""):
-        self.events.append((time.strftime("%H:%M:%S"), kind, msg))
+    def event(self, msg, kind="", tag="info"):
+        """A line in the activity log: kind colours the message (good, warn, bad, dim), tag is its TYPE column."""
+        self.events.append((time.strftime("%H:%M:%S"), kind, tag, msg))
         if LOG_HOOK is None:
             log(msg)
 
@@ -239,9 +244,9 @@ class Crawl:
         p = patch_of(version)
         if p and (not self.patch or patch_key(p) > patch_key(self.patch)):
             if self.patch:
-                self.event(f"new patch {p}: now collecting it", "good")
+                self.event(f"new patch {p}: now collecting it", "good", "patch")
             self.patch = p
-            self.cache.clear()
+            self.recount()
         return p == self.patch
 
     # the calls (any thread) and what is saved from them (the main thread: SQLite stays on one thread)
@@ -322,19 +327,29 @@ class Crawl:
         for pi in d.get("participantIdentities", []):
             self.enqueue(pi.get("player", {}).get("puuid"))
 
-    def reseed(self):
-        """Out of players: reopen a recent full game of this patch for its players."""
-        rows = self.db.execute("SELECT game_id FROM games WHERE patch=? AND full=1 ORDER BY created DESC LIMIT 50",
-                               (self.patch,)).fetchall()
+    def reseed_ids(self):
+        """Out of players: some recent full games of this patch to reopen for their players (main thread: the database)."""
+        rows = [gid for gid, in self.db.execute("SELECT game_id FROM games WHERE patch=? AND full=1 ORDER BY created DESC "
+                                                "LIMIT 50", (self.patch,))]
         random.shuffle(rows)
-        for (gid,) in rows[:RESEED_GAMES]:
+        return rows[:RESEED_GAMES]
+
+    def fetch_players(self, game_ids):
+        """The worker's half of a refill: each game's players, until enough are found (no database here)."""
+        out = []
+        for gid in game_ids:
             d = self.c.get(f"/lol-match-history/v1/games/{gid}") or {}
-            for pi in d.get("participantIdentities", []):
-                self.enqueue(pi.get("player", {}).get("puuid"))
-            if len(self.frontier) >= RESEED_ENOUGH:
+            out += [pi.get("player", {}).get("puuid") for pi in d.get("participantIdentities", [])]
+            if len(out) >= RESEED_ENOUGH * 2:
                 break
+        return out
+
+    def reseed(self, puuids):
+        self.reseeds += 1
+        for puuid in puuids:
+            self.enqueue(puuid)
         if self.frontier:
-            self.event(f"queue refilled from recent games: {len(self.frontier)} players")
+            self.event(f"queue refilled from recent games: {len(self.frontier)} players", "", "queue")
         return bool(self.frontier)
 
     def same_account(self, response):
@@ -356,22 +371,37 @@ class Crawl:
         return self.phase if self.phase in BUSY_PHASES else None
 
     # ---------- figures for the dashboard and the log ----------
-    def patch_counts(self):
-        if time.time() - self.cache.get("counts_at", 0) > 1:
-            self.cache["counts"] = self.db.execute("SELECT count(*), coalesce(sum(full), 0) FROM games WHERE patch=?",
-                                                   (self.patch,)).fetchone()
-            self.cache["counts_at"] = time.time()
-        return self.cache["counts"]
+    def recount(self):
+        """The patch's games from the database: at the start and when the patch changes; after that new_games adds up."""
+        self.base, self.base_full = self.db.execute("SELECT count(*), coalesce(sum(full), 0) FROM games WHERE patch=?",
+                                                    (self.patch,)).fetchone()
+        self.base_new, self.base_new_full = self.new_games, self.new_full
 
-    def coverage(self):
-        if time.time() - self.cache.get("cover_at", 0) > 15:
-            names_ = self.cache.setdefault("names", names("CHAMPIONS", "key"))
-            seen = dict(self.db.execute("SELECT champ, count(*) FROM players JOIN games USING (game_id) WHERE patch=? GROUP BY champ",
-                                        (self.patch,)).fetchall())
-            per = sorted(((seen.get(k, 0), n) for k, n in names_.items()), key=lambda x: x[0])
-            self.cache["cover"] = (sum(1 for k in names_ if seen.get(k)), len(names_), [(n, c) for c, n in per[:8]])
-            self.cache["cover_at"] = time.time()
-        return self.cache["cover"]
+    def patch_counts(self):
+        """(games, full games) of the patch, without a query: the count at the start plus what this run added."""
+        return (self.base + self.new_games - getattr(self, "base_new", 0),
+                self.base_full + self.new_full - getattr(self, "base_new_full", 0))
+
+    def champion_figures(self):
+        """Samples per champion on the patch (the Live thread, its own read-only connection; about 1 s on /mnt/c)."""
+        import datalib
+        if not hasattr(self, "_ro"):
+            self._ro = datalib.read_only(DB)
+            self._names = names("CHAMPIONS", "key")
+            try:
+                self._sure = json.loads((EXPORT_DIR / "cache" / self.patch / "meta.json").read_text())["sure_games"]
+            except Exception:
+                self._sure = 600
+        seen = dict(self._ro.execute("SELECT p.champ, count(*) FROM games g CROSS JOIN players p ON p.game_id = g.game_id "
+                                     "WHERE g.patch=? GROUP BY p.champ", (self.patch,)).fetchall())
+        counts = sorted((seen.get(k, 0), n) for k, n in self._names.items())
+        sure = self._sure
+        cuts = [(f"under {sure // 6}", 0, sure // 6), (f"{sure // 6}–{sure // 2 - 1}", sure // 6, sure // 2),
+                (f"{sure // 2}–{sure - 1}", sure // 2, sure), (f"{sure}+ (sure)", sure, 10 ** 9)]
+        return {"seen": sum(1 for c, _ in counts if c), "total": len(counts), "sure": sure,
+                "median": counts[len(counts) // 2][0] if counts else 0,
+                "bands": [(name, sum(1 for c, _ in counts if lo <= c < hi)) for name, lo, hi in cuts],
+                "thin": [(n, c) for c, n in counts[:12]]}
 
     def rates(self):
         """games and samples per minute over the last 10 minutes of this run."""
@@ -388,29 +418,33 @@ class Crawl:
     def state(self):
         games, full = self.patch_counts()
         gpm, spm = self.rates()
-        seen, total, thin = self.coverage()
         el = time.time() - self.t0
         eta = (self.ready - games) / gpm * 60 if gpm > 0 and el >= 60 and games < self.ready else None
         minute = int(time.time() // 60)
+        champ = self.champs.value if getattr(self, "champs", None) else None
         return {"patch": self.patch or "?", "status": self.status, "mode": self.mode, "elapsed": el,
                 "budget": self.hours * 3600, "ends": time.strftime("%H:%M", time.localtime(self.t0 + self.hours * 3600)),
-                "patch_games": games, "ready": self.ready, "eta_ready": eta, "new_games": self.new_games,
-                "new_full": self.new_full, "new_samples": self.samples, "seen": seen, "champions": total, "thinnest": thin,
+                "until_ready": self.until_ready, "patch_games": games, "patch_full": full, "ready": self.ready,
+                "eta_ready": eta, "new_games": self.new_games, "new_full": self.new_full, "new_samples": self.samples,
+                "new_per_read": self.new_games / max(1, self.reads), "champ": champ,
                 "spark": [self.per_minute.get(m, 0) for m in range(minute - 29, minute + 1)], "games_per_min": gpm,
                 "samples_per_min": spm, "calls": self.c.calls,
                 "latency": sum(self.c.times) / len(self.c.times) if self.c.times else 0, "queued": len(self.frontier),
                 "opens": len(self.opens), "reads": self.reads, "opened": self.details, "skipped": self.skipped,
-                "errors": self.c.errors, "phase": self.phase, "events": self.events, "now_doing": self.now_doing}
+                "reseeds": self.reseeds, "errors": self.c.errors, "phase": self.phase, "events": self.events,
+                "now_doing": self.now_doing}
 
     # ---------- the crawl ----------
     def run(self, hours, samples=0, until_ready=False, screen=None):
         """Crawl until the time budget, the sample target or (until_ready) the patch's Ready count. With a screen: the live
-        dashboard (p pause, q stop, r browser report); without one: a progress line in the log every few minutes."""
+        dashboard (p pause, q stop, r browser report); without one: a progress line in the log every few minutes.
+        Every client call goes to the one worker thread (a history read, a game, the account / game-state check, a queue
+        refill), so the screen keeps answering keys; the database stays on this thread (one SQLite connection)."""
         global LOG_HOOK
         import lcu_tui as ui
         from concurrent.futures import ThreadPoolExecutor, wait
         self.t0 = time.time()
-        self.hours, self.target, self.opens = hours, samples, deque()
+        self.hours, self.target, self.opens, self.until_ready = hours, samples, deque(), until_ready
         try:
             import datalib
             self.ready = datalib.lifecycle()["ready_games"]
@@ -419,26 +453,32 @@ class Crawl:
         LOG_HOOK = self.event if screen else None
         draw = (lambda: screen.draw(ui.dashboard(self.state(), *screen.size()))) if screen else (lambda: None)
         self.status, self.now_doing = "connecting", "reading your newest Mayhem game"
-        self.event("connecting to the client")
+        self.event("connecting to the client", "", "start")
+        if self.patch:
+            self.recount()
         if screen:
             self.patch = self.patch or "?"
             draw()
         self.seed()
-        self.event(f"started on patch {self.patch}: {len(self.frontier)} players queued, up to {fmt_time(hours * 3600)}"
-                   + (" or until Ready" if until_ready else ""), "good")
+        self.recount()
+        if screen:
+            self.champs = ui.Live(self.champion_figures, 20)
+        self.event(f"patch {self.patch} · {len(self.frontier)} players queued · up to {fmt_time(hours * 3600)}"
+                   + (" or until Ready" if until_ready else ""), "good", "start")
         pool = ThreadPoolExecutor(max_workers=1)   # one call at a time: the client queues them anyway
         job, opening, stop, user_pause, busy = None, set(), None, False, None
         last_guard = last_log = last_draw = 0.0
         try:
             while True:
                 now = time.time()
-                key = screen.key(0.06) if screen else None
+                key = screen.key(0.05) if screen else None
                 if key == "p":
                     user_pause = not user_pause
-                    self.event("paused by you" if user_pause else "resumed", "warn" if user_pause else "good")
+                    self.event("paused by you" if user_pause else "resumed", "warn" if user_pause else "good",
+                               "pause" if user_pause else "resume")
                 elif key in ("q", "esc") and not stop:
                     stop = "stopped by you"
-                    self.event("stopping: finishing the current call", "warn")
+                    self.event("stopping: finishing the current call", "warn", "stop")
                 elif key == "r":
                     subprocess.Popen([sys.executable, "-I", str(ROOT / "tools" / "mn.py"), "report"],
                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -452,17 +492,17 @@ class Crawl:
                         stop = f"patch {self.patch} is Ready"
                 if stop and job is None:
                     break
-                if job is None and not stop and now - last_guard >= (PAUSE_CHECK if busy else GUARD_EVERY):
-                    last_guard = now
-                    was, busy = busy, self.busy_phase()
-                    if busy and not was:
-                        self.event(f"paused while you play ({busy})", "warn")
-                    elif was and not busy:
-                        self.event("your game is over: crawling again", "good")
-                self.mode = "stopping" if stop else "paused" if (busy or user_pause) else "running"
+                paused = busy or user_pause
+                self.mode = "stopping" if stop else "paused" if paused else "running"
                 self.status = ("stopping" if stop else f"paused · {busy}" if busy else "paused" if user_pause else "running")
-                if job is None and self.mode == "running":
-                    if self.opens:
+                if job is None and not stop:
+                    if now - last_guard >= (PAUSE_CHECK if busy else GUARD_EVERY):
+                        last_guard = now
+                        job = (pool.submit(self.busy_phase), "guard", None)
+                        self.now_doing = "checking the client"
+                    elif paused:
+                        pass
+                    elif self.opens:
                         gid = self.opens.popleft()
                         job = (pool.submit(self.fetch_game, gid), "open", gid)
                         self.now_doing = "opening a game"
@@ -474,13 +514,26 @@ class Crawl:
                             p = self.frontier.popleft()
                             job = (pool.submit(self.fetch_history, p), "read", p)
                             self.now_doing = "reading a player's history"
-                        elif not self.reseed():
+                        elif getattr(self, "refilled", False):
                             stop = "no more players to read"
+                        else:
+                            job = (pool.submit(self.fetch_players, self.reseed_ids()), "refill", None)
+                            self.now_doing = "refilling the queue from recent games"
                 if job and job[0].done():
                     fut, kind, arg = job
                     job = None
                     res = fut.result()   # a SystemExit from the call (account changed, client gone) ends the crawl here
-                    if kind == "read":
+                    if kind == "guard":
+                        was, busy = busy, res
+                        if busy and not was:
+                            self.event(f"paused while you play ({busy})", "warn", "pause")
+                        elif was and not busy:
+                            self.event("your game is over: crawling again", "good", "resume")
+                    elif kind == "refill":
+                        self.reseed(res)
+                        self.refilled = not self.frontier   # a refill that found nobody new ends the crawl next time
+                    elif kind == "read":
+                        self.refilled = False
                         before = self.new_games
                         games = self.save_history(arg, res)
                         todo = [g for g in self.unopened(games) if g not in opening][:OPEN_PER_READ]
@@ -488,22 +541,22 @@ class Crawl:
                         opening.update(todo)
                         new = self.new_games - before
                         ours = sum(1 for g in games if patch_of(g.get("gameVersion", "")) == self.patch)
-                        self.event(f"player {self.reads:,}: {ours} Mayhem games of {self.patch}, "
-                                   + (f"{new} new · opening {len(todo)}" if new or todo else "all known"),
-                                   "" if new or todo else "dim")
+                        self.event(f"player {num(self.reads):>7}  {ours:>2} Mayhem  {new:>2} new  {len(todo):>2} to open  "
+                                   f"queue {num(len(self.frontier)):>6}",
+                                   "" if new or todo else "dim", "read")
                     else:
                         opening.discard(arg)
                         self.save_game(arg, res)
-                    games_now = self.patch_counts()[0] if kind == "open" else 0
+                    games_now = self.patch_counts()[0]
                     if games_now // 100 > getattr(self, "milestone", games_now // 100):
-                        self.event(f"{games_now // 100 * 100:,} games of {self.patch}"
-                                   + (" · Ready ✓" if games_now >= self.ready else f" · {self.ready - games_now:,} to Ready"), "good")
-                    if games_now:
-                        self.milestone = games_now // 100
+                        self.event(f"{num(games_now // 100 * 100)} games of {self.patch}"
+                                   + (" · Ready ✓" if games_now >= self.ready else f" · {num(self.ready - games_now)} to Ready"),
+                                   "good", "games")
+                    self.milestone = games_now // 100
                     self.now_doing = ""
                 if not screen and job and not job[0].done():
                     wait([job[0]], timeout=0.5)
-                if screen and now - last_draw >= 0.12:
+                if screen and now - last_draw >= 0.1:
                     last_draw = now
                     draw()
                 elif not screen and now - last_log >= LOG_EVERY:
@@ -513,8 +566,10 @@ class Crawl:
                     time.sleep(1)
         finally:
             pool.shutdown(wait=False, cancel_futures=True)
+            if getattr(self, "champs", None):
+                self.champs.stop()
             self.mode, self.status, self.now_doing = "stopped", f"stopped · {stop or 'error'}", ""
-            self.event(f"stopped: {stop or 'error'}. Everything is saved.", "good" if stop else "bad")
+            self.event(f"stopped: {stop or 'error'}. Everything is saved.", "good" if stop else "bad", "stop" if stop else "error")
             LOG_HOOK = None
             if screen:
                 draw()
@@ -528,6 +583,10 @@ class Crawl:
         log(f"{word}: +{self.new_games} games, +{self.samples} samples this run ({self.samples / max(mins, 0.01):.0f}/min); "
             f"patch {self.patch} holds {games} games ({full} full) | {self.reads} players read, {self.details} games opened, "
             f"{len(self.frontier)} queued, {mins:.0f} min")
+
+
+def num(n):
+    return f"{n:,}"
 
 
 def fmt_time(s):
@@ -675,6 +734,15 @@ def side_panel():
                          ui.WARN("● in a game") + ui.DIM(f"  {phase}: the crawl waits"))
         except Exception:
             lines.append(ui.WARN("● starting") + ui.DIM("  not answering yet"))
+    lines += ["", ui.DIM("TIERS")]
+    try:
+        t = json.loads((ROOT / "_data" / "augment-tiers.json").read_text(encoding="utf-8"))
+        lines.append(ui.TEXT(f"patch {t.get('patch', '?')}") + ui.DIM(f"  from {t.get('source', '?')}"))
+    except Exception:
+        lines.append(ui.DIM("no _data/augment-tiers.json"))
+    page = ROOT / ".cache" / "reports" / "tiers.html"
+    lines.append(ui.DIM("page made ") + ui.TEXT(time.strftime("%m-%d %H:%M", time.localtime(page.stat().st_mtime)))
+                 if page.exists() else ui.DIM("page not made yet: 4"))
     lines += ["", ui.DIM("Read-only · one call at a time · no names or ids saved"),
               ui.DIM("Ctrl+C or q stops; everything is saved as it goes")]
     return lines
@@ -683,15 +751,21 @@ def side_panel():
 def menu():
     """The full-screen menu (python3 -I tools/fetch_lcu.py with no options, or tools/mayhem_crawler.bat)."""
     import lcu_tui as ui
-    items = [("1", "Crawl", "for a number of hours"), ("2", "Crawl until Ready", "stops at the Ready count"),
-             ("3", "Quick test", "5 minutes"), ("4", "Check the client", ""), ("5", "Patch summary", "newest patch"),
-             ("6", "Export to JSON", "newest patch"), ("7", "Dashboard", "charts in the browser"),
-             ("8", "Import test games", ".cache/lcu/<patch>/"), ("q", "Quit", "")]
+    py = [sys.executable, "-I"]
+    tool = lambda name, *args: py + [str(ROOT / "tools" / name), *args]   # noqa: E731
+    items = [(None, "Crawl", ""), ("1", "Crawl", "for a number of hours"), ("2", "Crawl until Ready", "stops at the Ready count"),
+             ("3", "Quick test", "5 minutes"),
+             (None, "Tiers", ""), ("4", "Tiers page", "make tiers.html and open it"),
+             ("5", "Rebuild tiers", "from the crawl, then the page"),
+             (None, "Database", ""), ("6", "Dashboard", "charts in the browser"), ("7", "Patch summary", "newest patch"),
+             ("8", "Export to JSON", "newest patch"), ("9", "Import test games", ".cache/lcu/<patch>/"),
+             (None, "Client", ""), ("0", "Check the client", "open, logged in, Mayhem games"), ("q", "Quit", "")]
     header = lambda w: [" " + ui.ACCENT(ui.BOLD("MAYHEM CRAWLER")), ui.rule(w)]   # noqa: E731
+    side = ui.Live(side_panel, 15)
     at = 0
     with ui.Screen() as scr:
         while True:
-            choice, at = ui.menu(scr, items, side_panel, "Mayhem crawler", "League client · read-only", at)
+            choice, at = ui.menu(scr, items, side, "Mayhem crawler", "League client · read-only", at)
             if choice == "q":
                 return
             try:
@@ -712,11 +786,9 @@ def menu():
                     try:
                         crawl.run(hours, 0, until, screen=scr)
                     except SystemExit as e:
-                        crawl.event(str(e), "bad")
+                        crawl.event(str(e), "bad", "error")
                         crawl.mode, crawl.status = "stopped", "stopped"
-                        if hasattr(crawl, "t0"):
-                            scr.draw(ui.dashboard(crawl.state(), *scr.size()))
-                        else:
+                        if not hasattr(crawl, "t0") or not hasattr(crawl, "ready"):
                             ui.pager(scr, "Could not start", str(e), header)
                             continue
                     w, h = scr.size()
@@ -726,20 +798,30 @@ def menu():
                     while scr.key(1) is None:
                         pass
                 elif choice == "4":
-                    ui.pager(scr, "Check the client", captured(check_client), header)
-                elif choice in ("5", "6"):
-                    ui.pager(scr, "Patch summary" if choice == "5" else "Export to JSON",
-                             captured(summary, open_db(), None, choice == "6"), header)
-                elif choice == "7":
-                    out = subprocess.run([sys.executable, "-I", str(ROOT / "tools" / "mn.py"), "report"],
-                                         capture_output=True, text=True)
-                    ui.pager(scr, "Dashboard", (out.stdout + out.stderr).strip() + "\n\nOpened in your browser.", header)
-                elif choice == "8":
-                    folders = sorted(p for p in EXPORT_DIR.glob("*") if p.is_dir()) if EXPORT_DIR.exists() else []
+                    ui.run_steps(scr, "Tiers page", [("tiers.html", tool("mn.py", "tiers"))], header,
+                                 "Opened in your browser.")
+                elif choice == "5":
+                    ui.run_steps(scr, "Rebuild tiers", [
+                        ("our crawl → cache", tool("lcu_cache.py")),
+                        ("augment tiers", tool("augment_tiers.py")),
+                        ("item builds", tool("build_tiers.py")),
+                        ("tiers.html", tool("mn.py", "tiers"))], header,
+                        "Opened in your browser. _data/ and Review/ changed: commit them when the tiers look right.")
+                elif choice == "6":
+                    ui.run_steps(scr, "Dashboard", [("report.html", tool("mn.py", "report"))], header,
+                                 "Opened in your browser.")
+                elif choice in ("7", "8"):
+                    ui.pager(scr, "Patch summary" if choice == "7" else "Export to JSON",
+                             captured(summary, open_db(), None, choice == "8"), header)
+                elif choice == "9":
+                    folders = sorted(p for p in EXPORT_DIR.glob("*") if p.is_dir() and p.name != "cache") if EXPORT_DIR.exists() else []
                     text = "".join(captured(import_json, open_db(), f) for f in folders) or "no test crawl folders in .cache/lcu/"
                     ui.pager(scr, "Import test games", text, header)
+                elif choice == "0":
+                    ui.pager(scr, "Check the client", captured(check_client), header)
             except KeyboardInterrupt:
                 continue
+            side.refresh()
 
 
 def main():
