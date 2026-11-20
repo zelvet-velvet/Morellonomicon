@@ -104,7 +104,7 @@ input[type=search] { flex: 1 1 180px; min-width: 0; }
 <main>
   <h1>Mayhem 強度表</h1>
   <p class="sub" id="sub"></p>
-  <p class="note">強化的「強度」S–C 是 app 的推理排名（多少英雄評為 S），「分級」T0–T4 和英雄一樣按勝率（向平均拉 200 場後排名）。勝率條以 50% 為中線，往右綠色高於、往左紅色低於（滿格 ±10%）；場次少於 100 的淡色顯示。私人資料，只在這台電腦。</p>
+  <p class="note">強化的「強度」S–C 是 app 的推理排名（多少英雄評為 S），「分級」T0–T4 和英雄一樣按勝率：勝率高於 55.5% 為 T0，其餘向平均拉 200 場後排名。勝率條以 50% 為中線，往右綠色高於、往左紅色低於（滿格 ±10%）；場次少於 100 的淡色顯示。私人資料，只在這台電腦。</p>
   <div class="bar tabs">
     <button class="seg" data-tab="champs" aria-pressed="true">英雄</button>
     <button class="seg" data-tab="augs" aria-pressed="false">強化</button>
@@ -224,17 +224,19 @@ rank.sort((x, y) => (y.s + y.a / 2) / y.offered - (x.s + x.a / 2) / x.offered ||
 const strength = {};
 rank.forEach((x, i) => { const at = i / rank.length; strength[x.id] = { ...x, rank: i + 1, tier: at < .15 ? "S" : at < .4 ? "A" : at < .75 ? "B" : "C" }; });
 // win-rate tier T0-T4, like the champions' (augment_tiers.champion_tiers): the win rate pulled toward the average by 200 games
-// (50 games at least), ranked 5 / 12 / 38 / 35 / 10 %
+// (50 games at least): T0 every augment above 55.5 % (Zaviel's cut, as CHAMP_T0_WR), the rest ranked 12 / 38 / 35 / 10 % of all
 const wrTier = {};
 {
-  const pool = Object.entries(DATA.augments).filter(([, a]) => a.games >= 50);
-  const mean = pool.reduce((s, [, a]) => s + a.wins, 0) / pool.reduce((s, [, a]) => s + a.games, 0);
+  const all = Object.entries(DATA.augments).filter(([, a]) => a.games >= 50);
+  const mean = all.reduce((s, [, a]) => s + a.wins, 0) / all.reduce((s, [, a]) => s + a.games, 0);
   const sh = ([, a]) => (a.wins + 200 * mean) / (a.games + 200);
-  pool.sort((x, y) => sh(y) - sh(x));
+  all.sort((x, y) => sh(y) - sh(x));
+  const t0 = all.filter(([, a]) => a.wins / a.games > .555), pool = all.filter(([, a]) => a.wins / a.games <= .555);
+  t0.forEach(([id], i) => wrTier[id] = { tier: "T0", rank: i + 1 });
   let start = 0;
-  for (const [t, share] of [["T0", .05], ["T1", .12], ["T2", .38], ["T3", .35], ["T4", 1]]) {
-    const end = share >= 1 ? pool.length : Math.min(pool.length, start + Math.max(1, Math.round(pool.length * share)));
-    pool.slice(start, end).forEach(([id], i) => wrTier[id] = { tier: t, rank: start + i + 1 });
+  for (const [t, share] of [["T1", .12], ["T2", .38], ["T3", .35], ["T4", 1]]) {
+    const end = share >= 1 ? pool.length : Math.min(pool.length, start + Math.max(1, Math.round(all.length * share)));
+    pool.slice(start, end).forEach(([id], i) => wrTier[id] = { tier: t, rank: t0.length + start + i + 1 });
     start = end;
   }
 }

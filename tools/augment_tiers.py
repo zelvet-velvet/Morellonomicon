@@ -30,11 +30,12 @@ LCU_CACHE = ROOT / ".cache" / "lcu" / "cache"   # our crawl in the same format (
 OUT_TIERS = ROOT / "_data" / "augment-tiers.json"
 OUT_CHAMPS = ROOT / "_data" / "champion-tiers.json"   # each champion's tier this patch, T0-T4 (Home's 本版強勢), labels only
 # Champion tiers: a champion's win rate pulled toward the patch's average by CHAMP_PRIOR games (a champion seldom played is not ranked
-# on a handful of games), then ranked: the top share of champions is T0, the next T1 ... (close to resg.top's spread on 16.21, 8 / 20 /
-# 68 / 61 / 16 of 173). Champions with fewer than CHAMP_MIN_GAMES games get no tier. Only the tier letters leave this script: the
+# on a handful of games), then ranked: T0 is every champion whose own win rate is above CHAMP_T0_WR (Zaviel's cut, 2026-11-20), the
+# next share of champions T1, then T2 ... (close to resg.top's spread on 16.21, 8 / 20 / 68 / 61 / 16 of 173). Champions with fewer than CHAMP_MIN_GAMES games get no tier. Only the tier letters leave this script: the
 # games and win rates stay private (resg.top's have no licence; ours wait for Zaviel's word on showing LCU numbers).
 CHAMP_PRIOR = 200
 CHAMP_MIN_GAMES = 50
+CHAMP_T0_WR = 0.555
 CHAMP_SHARES = (("T0", 0.05), ("T1", 0.12), ("T2", 0.38), ("T3", 0.35), ("T4", 1.0))
 OUT_REVIEW = ROOT / "Review" / "Augment Tiers.md"
 OUT_QUESTIONS = ROOT / "Review" / "Augment Questions.md"
@@ -915,15 +916,16 @@ def main():
 
 
 def champion_tiers(played_by):
-    """{champion id: "T0".."T4"} from (games, wins) per champion: the win rate pulled toward the average, then ranked by CHAMP_SHARES."""
+    """{champion id: "T0".."T4"} from (games, wins) per champion: T0 above CHAMP_T0_WR, the rest by the win rate pulled toward the average, ranked by CHAMP_SHARES."""
     ranked = {c: gw for c, gw in played_by.items() if gw[0] >= CHAMP_MIN_GAMES}
     if not ranked:
         return {}
     mean = sum(w for _, w in ranked.values()) / sum(g for g, _ in ranked.values())
     order = sorted(ranked, key=lambda c: -(ranked[c][1] + CHAMP_PRIOR * mean) / (ranked[c][0] + CHAMP_PRIOR))
-    out, start = {}, 0
-    for tier, share in CHAMP_SHARES:
-        end = len(order) if share >= 1 else min(len(order), start + max(1, round(len(order) * share)))
+    out = {c: "T0" for c in order if ranked[c][1] / ranked[c][0] > CHAMP_T0_WR}
+    n, order, start = len(order), [c for c in order if c not in out], 0
+    for tier, share in CHAMP_SHARES[1:]:
+        end = len(order) if share >= 1 else min(len(order), start + max(1, round(n * share)))
         for c in order[start:end]:
             out[c] = tier
         start = end
