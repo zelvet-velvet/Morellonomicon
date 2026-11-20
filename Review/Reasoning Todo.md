@@ -31,10 +31,9 @@ None.
 
 Built often or winning, and no play style explains it.
 
-- 弗力貝爾 · [[史提克彈簧刀]]: built in 54% of games, +3.6
-- 犽凝 · [[死亡之舞]]: built in 55% of games, +3.4
-- 弗拉迪米爾 · [[死亡之帽]]: built in 50% of games, +3.4
-- 犽宿 · [[死亡之舞]]: built in 59% of games, +3.1
-- 弗力貝爾 · [[暮夜與黎明]]: built in 54% of games, +3.1
-- 納瑟斯 · [[水星之靴]]: built in 55% of games, +2.3
-- 姍娜 · [[史提克彈簧刀]]: built in 50% of games, +2.3
+- 姍娜 · [[史提克彈簧刀]]: built in 48% of games, +3.6
+- 提摩 · [[史提克彈簧刀]]: built in 28% of games, +3.2
+- 弗拉迪米爾 · [[死亡之帽]]: built in 57% of games, +2.4
+- 貪啃奇 · [[峽谷製造者]]: built in 34% of games, +2.4
+- 犽宿 · [[死亡之舞]]: built in 51% of games, +2.3
+- 貪啃奇 · [[暮夜與黎明]]: built in 28% of games, +2.3
