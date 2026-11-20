@@ -127,7 +127,7 @@ class Screen:
     """The alternate screen in cbreak mode: draw(lines) repaints in place; key(timeout) reads one key or None."""
 
     def __enter__(self):
-        self.last = None
+        self.last, self.buf = None, b""
         self.fd = sys.stdin.fileno()
         self.saved = termios.tcgetattr(self.fd)
         tty.setcbreak(self.fd)
@@ -154,18 +154,56 @@ class Screen:
             sys.stdout.flush()
 
     def key(self, timeout=0.0):
-        r, _, _ = select.select([self.fd], [], [], timeout)
-        if not r:
-            return None
-        ch = os.read(self.fd, 1).decode("utf-8", "ignore")
-        if ch != "\x1b":
-            return {"\n": "enter", "\r": "enter", "\x7f": "backspace"}.get(ch, ch)
-        r, _, _ = select.select([self.fd], [], [], 0.02)
-        if not r:
+        """One key, or None. Escape sequences are read whole and one at a time: a mouse-wheel notch in Windows Terminal
+        sends several arrow codes in one burst (the alternate screen turns scrolling into arrows), and a click can send
+        codes too. Unknown codes are dropped, never read as Esc; only a lone Esc byte is "esc"."""
+        while True:
+            if not self.buf:
+                r, _, _ = select.select([self.fd], [], [], timeout)
+                if not r:
+                    return None
+                self.buf += os.read(self.fd, 1024)
+            k = self._next()
+            if k is not None:
+                return k
+            timeout = 0   # dropped an unknown code: return whatever else is already there, without waiting again
+
+    def _more(self, wait=0.03):
+        r, _, _ = select.select([self.fd], [], [], wait)
+        if r:
+            self.buf += os.read(self.fd, 1024)
+            return True
+        return False
+
+    def _next(self):
+        b = self.buf
+        if b[:1] != b"\x1b":
+            n = 1 if b[0] < 0x80 else 2 if b[0] >> 5 == 6 else 3 if b[0] >> 4 == 14 else 4
+            if len(b) < n:
+                self._more()
+                b = self.buf
+            ch, self.buf = b[:n].decode("utf-8", "ignore"), b[n:]
+            return {"\n": "enter", "\r": "enter", "\x7f": "backspace", "\x08": "backspace"}.get(ch, ch or None)
+        if len(b) == 1 and not self._more():
+            self.buf = b""
             return "esc"
-        seq = os.read(self.fd, 8).decode("utf-8", "ignore")
-        return {"[A": "up", "[B": "down", "[C": "right", "[D": "left", "[5~": "pgup", "[6~": "pgdn", "OA": "up",
-                "OB": "down"}.get(seq, "esc")
+        b = self.buf
+        if b[1:2] not in (b"[", b"O"):   # Alt+key or a doubled Esc: drop the Esc, keep the rest
+            self.buf = b[1:]
+            return "esc" if b[1:2] == b"\x1b" else None
+        i = 2
+        while True:   # parameters, then one final byte 0x40-0x7e
+            while i < len(self.buf) and not 0x40 <= self.buf[i] <= 0x7e:
+                i += 1
+            if i < len(self.buf) or not self._more():
+                break
+        seq, self.buf = self.buf[1:i + 1].decode("ascii", "ignore"), self.buf[i + 1:]
+        if seq.startswith("[<"):   # SGR mouse report (if a terminal sends one): the wheel scrolls, the rest is ignored
+            btn = seq[2:].split(";")[0]
+            return {"64": "up", "65": "down"}.get(btn) if seq.endswith("M") else None
+        return {"[A": "up", "[B": "down", "[C": "right", "[D": "left", "OA": "up", "OB": "down", "OC": "right",
+                "OD": "left", "[5~": "pgup", "[6~": "pgdn", "[H": "home", "[F": "end", "OH": "home", "OF": "end",
+                "[1~": "home", "[4~": "end"}.get(seq)
 
 
 class Live:
@@ -351,11 +389,13 @@ def pairs(title, rows, w):
     return out
 
 
-def event_lines(events, w, room):
-    """The newest log entries that fit in room lines, oldest first; each a fixed TIME  TYPE  message row."""
+def event_lines(events, w, room, back=0):
+    """The log entries that fit in room lines, oldest first, ending `back` entries before the newest; each a fixed
+    TIME  TYPE  message row."""
     msg_w = max(20, w - 11 - TAG_W - 3)
     out = []
-    for t, kind, tag, msg in reversed(list(events)):
+    events = list(events)
+    for t, kind, tag, msg in reversed(events[:len(events) - back] if back else events):
         colour = DIM if kind == "dim" else BAD if kind == "bad" else TEXT
         tagc = TAGS.get(tag, DIM)
         chunks = wrap(msg, msg_w)
@@ -475,12 +515,14 @@ def dashboard(st, w, h):
     lines.append("")
 
     # activity log
-    lines.append(rule(w, "ACTIVITY"))
+    back = st.get("log_back", 0)
+    lines.append(rule(w, "ACTIVITY" + (f"  ·  scrolled back {back} · End or ↓ for the newest" if back else "")))
     lines.append(" " + DIM(fit("TIME", 10)) + DIM(fit("TYPE", TAG_W + 2)) + DIM("WHAT HAPPENED"))
     room = max(3, h - len(lines) - 2)
-    log = event_lines(st["events"], w, room)
+    log = event_lines(st["events"], w, room, back)
     lines += log + [""] * (room - len(log))
-    keys = DIM(" p ") + TEXT("pause") + DIM("   q ") + TEXT("stop & save") + DIM("   r ") + TEXT("report")
+    keys = (DIM(" p ") + TEXT("pause") + DIM("   q ") + TEXT("stop & save") + DIM("   r ") + TEXT("report")
+            + DIM("   ↑↓ wheel ") + TEXT("scroll log"))
     now = st["now_doing"]
     lines += [rule(w), right(keys, (INFO(spinner() + " ") + DIM(now) if now else "") + "  " + GOOD("saved ✓ "), w)]
     return lines

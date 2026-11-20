@@ -216,6 +216,7 @@ class Crawl:
         self.status, self.mode, self.phase, self.now_doing = "starting", "running", "", ""
         self.events = deque(maxlen=300)   # (time, kind, tag, message) for the activity log
         self.reseeds = 0
+        self.log_back = 0   # how many log entries the activity log is scrolled back (0: following the newest)
         self.base = self.base_full = 0   # the patch's games when the run started (or the patch changed); + new_games
         self.per_minute = {}   # minute -> new games, for the speed sparkline
         self.snaps = deque()   # (time, patch games, samples) every 10 s, for the rates
@@ -223,6 +224,8 @@ class Crawl:
     def event(self, msg, kind="", tag="info"):
         """A line in the activity log: kind colours the message (good, warn, bad, dim), tag is its TYPE column."""
         self.events.append((time.strftime("%H:%M:%S"), kind, tag, msg))
+        if self.log_back:   # scrolled back: keep the same entries on screen while new ones arrive
+            self.log_back = min(self.log_back + 1, len(self.events) - 1)
         if LOG_HOOK is None:
             log(msg)
 
@@ -432,7 +435,7 @@ class Crawl:
                 "latency": sum(self.c.times) / len(self.c.times) if self.c.times else 0, "queued": len(self.frontier),
                 "opens": len(self.opens), "reads": self.reads, "opened": self.details, "skipped": self.skipped,
                 "reseeds": self.reseeds, "errors": self.c.errors, "phase": self.phase, "events": self.events,
-                "now_doing": self.now_doing}
+                "now_doing": self.now_doing, "log_back": self.log_back}
 
     # ---------- the crawl ----------
     def run(self, hours, samples=0, until_ready=False, screen=None):
@@ -476,7 +479,10 @@ class Crawl:
                     user_pause = not user_pause
                     self.event("paused by you" if user_pause else "resumed", "warn" if user_pause else "good",
                                "pause" if user_pause else "resume")
-                elif key in ("q", "esc") and not stop:
+                elif key in ("up", "down", "pgup", "pgdn", "home", "end"):   # arrows and the mouse wheel scroll the log
+                    step = {"up": 1, "down": -1, "pgup": 10, "pgdn": -10, "home": len(self.events), "end": -len(self.events)}[key]
+                    self.log_back = max(0, min(len(self.events) - 1, self.log_back + step))
+                elif key == "q" and not stop:   # only q: Esc is too easy to send by accident (a stray escape code)
                     stop = "stopped by you"
                     self.event("stopping: finishing the current call", "warn", "stop")
                 elif key == "r":
