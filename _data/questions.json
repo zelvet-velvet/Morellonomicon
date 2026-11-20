@@ -8,214 +8,130 @@
   "patch": "16.23",
   "popular": [
    {
-    "champion_name": "犽宿",
-    "item": "死亡之舞",
-    "pick": 0.587,
-    "gap": 0.031,
-    "games": 1177
-   },
-   {
-    "champion_name": "易大師",
-    "item": "殞落王者之劍",
-    "pick": 0.566,
-    "gap": -0.001,
-    "games": 2251
-   },
-   {
-    "champion_name": "希瓦娜",
-    "item": "暮夜與黎明",
-    "pick": 0.562,
-    "gap": 0.012,
-    "games": 1169
-   },
-   {
-    "champion_name": "犽凝",
-    "item": "死亡之舞",
-    "pick": 0.553,
-    "gap": 0.034,
-    "games": 1411
-   },
-   {
-    "champion_name": "納瑟斯",
-    "item": "水星之靴",
-    "pick": 0.549,
-    "gap": 0.023,
-    "games": 1100
-   },
-   {
-    "champion_name": "提摩",
-    "item": "史提克彈簧刀",
-    "pick": 0.545,
-    "gap": 0.016,
-    "games": 1616
-   },
-   {
-    "champion_name": "提摩",
-    "item": "納什之牙",
-    "pick": 0.542,
-    "gap": 0.014,
-    "games": 1256
-   },
-   {
-    "champion_name": "納瑟斯",
-    "item": "振奮盔甲",
-    "pick": 0.542,
-    "gap": 0.016,
-    "games": 1244
-   },
-   {
-    "champion_name": "弗力貝爾",
-    "item": "史提克彈簧刀",
-    "pick": 0.54,
-    "gap": 0.036,
-    "games": 1561
+    "champion_name": "弗拉迪米爾",
+    "item": "峽谷製造者",
+    "pick": 0.708,
+    "gap": 0.001,
+    "games": 6955
    },
    {
     "champion_name": "弗力貝爾",
     "item": "暮夜與黎明",
-    "pick": 0.535,
-    "gap": 0.031,
-    "games": 1553
+    "pick": 0.625,
+    "gap": 0.016,
+    "games": 5381
    },
    {
-    "champion_name": "納瑟斯",
-    "item": "三相之力",
-    "pick": 0.532,
-    "gap": 0.006,
-    "games": 1068
+    "champion_name": "弗力貝爾",
+    "item": "史提克彈簧刀",
+    "pick": 0.614,
+    "gap": 0.018,
+    "games": 5289
    },
    {
     "champion_name": "弗拉迪米爾",
     "item": "死亡之帽",
-    "pick": 0.505,
-    "gap": 0.034,
-    "games": 1027
+    "pick": 0.573,
+    "gap": 0.024,
+    "games": 5631
    },
    {
-    "champion_name": "斯溫",
-    "item": "瑞萊的冰晶節杖",
-    "pick": 0.505,
-    "gap": -0.001,
-    "games": 2060
-   },
-   {
-    "champion_name": "姍娜",
-    "item": "史提克彈簧刀",
-    "pick": 0.505,
+    "champion_name": "犽宿",
+    "item": "死亡之舞",
+    "pick": 0.508,
     "gap": 0.023,
-    "games": 2385
-   },
-   {
-    "champion_name": "斯溫",
-    "item": "峽谷製造者",
-    "pick": 0.501,
-    "gap": -0.004,
-    "games": 2119
-   },
-   {
-    "champion_name": "斯溫",
-    "item": "黎安卓的折磨",
-    "pick": 0.501,
-    "gap": -0.005,
-    "games": 1428
-   },
-   {
-    "champion_name": "逆命",
-    "item": "衝擊火炮",
-    "pick": 0.497,
-    "gap": -0.049,
-    "games": 1611
-   },
-   {
-    "champion_name": "斯溫",
-    "item": "時光之杖",
-    "pick": 0.495,
-    "gap": -0.011,
-    "games": 2395
-   },
-   {
-    "champion_name": "法洛士",
-    "item": "無盡之刃",
-    "pick": 0.492,
-    "gap": 0.002,
-    "games": 1086
-   },
-   {
-    "champion_name": "薩科",
-    "item": "傲慢",
-    "pick": 0.479,
-    "gap": 0.011,
-    "games": 1093
-   },
-   {
-    "champion_name": "弗拉迪米爾",
-    "item": "峽谷製造者",
-    "pick": 0.473,
-    "gap": 0.002,
-    "games": 1448
-   },
-   {
-    "champion_name": "路西恩",
-    "item": "殞落王者之劍",
-    "pick": 0.462,
-    "gap": -0.035,
-    "games": 1014
-   },
-   {
-    "champion_name": "姍娜",
-    "item": "殞落王者之劍",
-    "pick": 0.461,
-    "gap": -0.021,
-    "games": 1592
-   },
-   {
-    "champion_name": "凱莎",
-    "item": "納什之牙",
-    "pick": 0.459,
-    "gap": -0.008,
-    "games": 1870
-   },
-   {
-    "champion_name": "薩科",
-    "item": "無盡之刃",
-    "pick": 0.455,
-    "gap": -0.014,
-    "games": 2152
-   },
-   {
-    "champion_name": "蓋倫",
-    "item": "幻影之舞",
-    "pick": 0.454,
-    "gap": -0.002,
-    "games": 1401
-   },
-   {
-    "champion_name": "薩科",
-    "item": "電流旋風劍",
-    "pick": 0.452,
-    "gap": -0.017,
-    "games": 1677
+    "games": 8465
    },
    {
     "champion_name": "薩科",
     "item": "蒐集者",
-    "pick": 0.45,
-    "gap": -0.019,
-    "games": 2379
+    "pick": 0.501,
+    "gap": -0.059,
+    "games": 7120
    },
    {
-    "champion_name": "蓋倫",
+    "champion_name": "易大師",
+    "item": "殞落王者之劍",
+    "pick": 0.497,
+    "gap": -0.004,
+    "games": 7038
+   },
+   {
+    "champion_name": "姍娜",
+    "item": "史提克彈簧刀",
+    "pick": 0.479,
+    "gap": 0.036,
+    "games": 5491
+   },
+   {
+    "champion_name": "斯溫",
+    "item": "峽谷製造者",
+    "pick": 0.477,
+    "gap": -0.011,
+    "games": 5385
+   },
+   {
+    "champion_name": "路西恩",
+    "item": "公理弧刃",
+    "pick": 0.476,
+    "gap": 0.044,
+    "games": 9229
+   },
+   {
+    "champion_name": "薩科",
     "item": "無盡之刃",
-    "pick": 0.45,
-    "gap": -0.007,
-    "games": 1217
+    "pick": 0.429,
+    "gap": -0.048,
+    "games": 6085
    },
    {
-    "champion_name": "索拉卡",
-    "item": "好戰者鎧甲",
-    "pick": 0.443,
-    "gap": -0.032,
-    "games": 1521
+    "champion_name": "雷茲",
+    "item": "凜冬將至",
+    "pick": 0.416,
+    "gap": 0.018,
+    "games": 6084
+   },
+   {
+    "champion_name": "薩科",
+    "item": "傲慢",
+    "pick": 0.367,
+    "gap": -0.058,
+    "games": 5211
+   },
+   {
+    "champion_name": "貪啃奇",
+    "item": "峽谷製造者",
+    "pick": 0.345,
+    "gap": 0.024,
+    "games": 6594
+   },
+   {
+    "champion_name": "艾希",
+    "item": "公理弧刃",
+    "pick": 0.326,
+    "gap": -0.01,
+    "games": 6380
+   },
+   {
+    "champion_name": "貪啃奇",
+    "item": "暮夜與黎明",
+    "pick": 0.281,
+    "gap": 0.023,
+    "games": 5356
+   },
+   {
+    "champion_name": "提摩",
+    "item": "史提克彈簧刀",
+    "pick": 0.28,
+    "gap": 0.032,
+    "games": 5235
+   },
+   {
+    "champion_name": "凱莎",
+    "item": "納什之牙",
+    "pick": 0.269,
+    "gap": -0.025,
+    "games": 5085
    }
   ],
   "strong": []
