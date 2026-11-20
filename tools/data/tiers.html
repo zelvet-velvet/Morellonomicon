@@ -52,7 +52,7 @@ input[type=search] { flex: 1 1 180px; min-width: 0; }
 .list { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
 .head, .row { display: grid; grid-template-columns: 40px minmax(0,1fr) 44px minmax(120px, 210px) 72px; gap: 12px;
   align-items: center; padding: 8px 14px; }
-.augs .head, .augs .row { grid-template-columns: 40px minmax(0,1fr) 44px minmax(120px, 210px) 72px 60px; }
+.augs .head, .augs .row { grid-template-columns: 40px minmax(0,1fr) 44px 44px minmax(120px, 210px) 72px 60px; }
 .head { color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--border); position: sticky; top: 0;
   background: var(--surface-1); z-index: 1; }
 .head span[data-sort] { cursor: pointer; user-select: none; }
@@ -92,7 +92,7 @@ input[type=search] { flex: 1 1 180px; min-width: 0; }
 .empty { padding: 24px; text-align: center; color: var(--muted); }
 @media (max-width: 640px) {
   .head, .row { grid-template-columns: 36px minmax(0,1fr) 40px 104px; gap: 8px; padding: 8px 10px; }
-  .augs .head, .augs .row { grid-template-columns: 36px minmax(0,1fr) 40px 104px; }
+  .augs .head, .augs .row { grid-template-columns: 36px minmax(0,1fr) 40px 40px 104px; }
   .augs .num:not(.pr) { display: none; }
   .head .g, .row .g, .augs .pr { display: none; }
   .row img { width: 36px; height: 36px; }
@@ -104,7 +104,7 @@ input[type=search] { flex: 1 1 180px; min-width: 0; }
 <main>
   <h1>Mayhem 強度表</h1>
   <p class="sub" id="sub"></p>
-  <p class="note">勝率條以 50% 為中線，往右綠色高於、往左紅色低於（滿格 ±10%）；場次少於 100 的淡色顯示。私人資料，只在這台電腦。</p>
+  <p class="note">強化的「強度」S–C 是 app 的推理排名（多少英雄評為 S），「分級」T0–T4 和英雄一樣按勝率（向平均拉 200 場後排名）。勝率條以 50% 為中線，往右綠色高於、往左紅色低於（滿格 ±10%）；場次少於 100 的淡色顯示。私人資料，只在這台電腦。</p>
   <div class="bar tabs">
     <button class="seg" data-tab="champs" aria-pressed="true">英雄</button>
     <button class="seg" data-tab="augs" aria-pressed="false">強化</button>
@@ -223,24 +223,40 @@ const rank = Object.entries(best).filter(([id]) => !DATA.augments[id]?.unrated).
 rank.sort((x, y) => (y.s + y.a / 2) / y.offered - (x.s + x.a / 2) / x.offered || y.offered - x.offered);
 const strength = {};
 rank.forEach((x, i) => { const at = i / rank.length; strength[x.id] = { ...x, rank: i + 1, tier: at < .15 ? "S" : at < .4 ? "A" : at < .75 ? "B" : "C" }; });
-const as = { sort: "tier", rarity: "", tier: "", q: "", open: null };
+// win-rate tier T0-T4, like the champions' (augment_tiers.champion_tiers): the win rate pulled toward the average by 200 games
+// (50 games at least), ranked 5 / 12 / 38 / 35 / 10 %
+const wrTier = {};
+{
+  const pool = Object.entries(DATA.augments).filter(([, a]) => a.games >= 50);
+  const mean = pool.reduce((s, [, a]) => s + a.wins, 0) / pool.reduce((s, [, a]) => s + a.games, 0);
+  const sh = ([, a]) => (a.wins + 200 * mean) / (a.games + 200);
+  pool.sort((x, y) => sh(y) - sh(x));
+  let start = 0;
+  for (const [t, share] of [["T0", .05], ["T1", .12], ["T2", .38], ["T3", .35], ["T4", 1]]) {
+    const end = share >= 1 ? pool.length : Math.min(pool.length, start + Math.max(1, Math.round(pool.length * share)));
+    pool.slice(start, end).forEach(([id], i) => wrTier[id] = { tier: t, rank: start + i + 1 });
+    start = end;
+  }
+}
+const as = { sort: "tier", rarity: "", tier: "", wt: "", q: "", open: null };
 function drawAugs() {
   const q = as.q.trim();
   let list = Object.entries(DATA.augments).filter(([id, a]) => a.games && (!as.rarity || a.rarity === as.rarity)
-    && (!as.tier || (strength[id]?.tier || "未評級") === as.tier) && (!q || a.name.includes(q)));
-  const by = { tier: (a, b) => (strength[a[0]]?.rank ?? 9999) - (strength[b[0]]?.rank ?? 9999) || b[1].games - a[1].games, wr: (a, b) => pct(b[1].wins, b[1].games) - pct(a[1].wins, a[1].games), games: (a, b) => b[1].games - a[1].games,
+    && (!as.tier || (strength[id]?.tier || "未評級") === as.tier) && (!as.wt || wrTier[id]?.tier === as.wt) && (!q || a.name.includes(q)));
+  const by = { tier: (a, b) => (strength[a[0]]?.rank ?? 9999) - (strength[b[0]]?.rank ?? 9999) || b[1].games - a[1].games,
+               wt: (a, b) => (wrTier[a[0]]?.rank ?? 9999) - (wrTier[b[0]]?.rank ?? 9999), wr: (a, b) => pct(b[1].wins, b[1].games) - pct(a[1].wins, a[1].games), games: (a, b) => b[1].games - a[1].games,
                pr: (a, b) => b[1].pr - a[1].pr, name: (a, b) => a[1].name.localeCompare(b[1].name, "zh-Hant"),
                s: (a, b) => (sOf[b[0]]?.size || 0) - (sOf[a[0]]?.size || 0) };
   list.sort(by[as.sort]);
   const el = $("#alist"); el.innerHTML = "";
-  el.append(headRow([["", ""], ["強化", "name"], ["強度", "tier"], ["勝率", "wr"], ["場次", "games", "num"], ["選取率", "pr", "num pr"]], as, drawAugs));
+  el.append(headRow([["", ""], ["強化", "name"], ["強度", "tier"], ["分級", "wt"], ["勝率", "wr"], ["場次", "games", "num"], ["選取率", "pr", "num pr"]], as, drawAugs));
   for (const [id, a] of list) {
     const r = document.createElement("div"); r.className = "row";
     const n = sOf[id]?.size || 0, st = strength[id];
     const tierCell = st ? `<span class="tier ${st.tier}" title="第 ${st.rank} 名 · ${st.s} S / ${st.a} A / ${st.offered} 位英雄可選">${st.tier}</span>`
                         : `<span class="tier none" title="${esc(a.unrated || "沒有英雄評為 S 或 A")}">—</span>`;
     r.innerHTML = `<img loading="lazy" src="${esc(a.icon)}" alt=""><div class="nm"><b>${esc(a.name)}</b><small><span class="rar r-${esc(a.rarity)}">${esc(a.rarity)}</span>`
-      + ` · ${n ? `${n} 位英雄 S` : "沒有英雄 S"}${st ? ` / ${st.offered} 位可選` : ""}</small></div><span>${tierCell}</span>${wrBar(a.wins, a.games, 500)}<span class="num">${fmt(a.games)}</span><span class="num pr">${(a.pr * 100).toFixed(1)}%</span>`;
+      + ` · ${n ? `${n} 位英雄 S` : "沒有英雄 S"}${st ? ` / ${st.offered} 位可選` : ""}</small></div><span>${tierCell}</span><span>${wrTier[id] ? `<span class="tier ${wrTier[id].tier}" title="勝率第 ${wrTier[id].rank} 名">${wrTier[id].tier}</span>` : `<span class="tier none">—</span>`}</span>${wrBar(a.wins, a.games, 500)}<span class="num">${fmt(a.games)}</span><span class="num pr">${(a.pr * 100).toFixed(1)}%</span>`;
     r.onclick = () => { as.open = as.open === id ? null : id; drawAugs(); };
     el.append(r);
     if (as.open === id) {
@@ -258,6 +274,8 @@ function drawAugs() {
 filters($("#af"), RAR, as, "rarity", drawAugs);
 $("#af").insertAdjacentHTML("afterend", `<span id="at"></span>`);
 filters($("#at"), ["S", "A", "B", "C", "未評級"], as, "tier", drawAugs);
+$("#at").insertAdjacentHTML("afterend", `<span id="awt"></span>`);
+filters($("#awt"), TIERS, as, "wt", drawAugs);
 $("#aq").oninput = e => { as.q = e.target.value; drawAugs(); };
 document.querySelector(".tabs").onclick = e => { const b = e.target.closest("button"); if (!b) return;
   document.querySelectorAll(".tabs .seg").forEach(x => x.setAttribute("aria-pressed", x === b));

@@ -8,6 +8,7 @@
     python3 -I tools/mn.py report              # the dashboard: .cache/reports/status.html, opened in the browser (PC only)
     python3 -I tools/mn.py report --no-open    # write it only
     python3 -I tools/mn.py tiers               # champion and augment tiers with games and win rates: .cache/reports/tiers.html
+    python3 -I tools/mn.py tiers --folio       # also a copy in the private folio, ../morellonomicon-folio/Reports/tiers.html
 
 update_patch.py runs `snapshot` after the tiers and builds are rebuilt. Standard library only; see tools/datalib.py.
 """
@@ -173,6 +174,14 @@ def cmd_tiers(args):
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(page.replace("DATA_JSON", json.dumps(data, ensure_ascii=False).replace("</", "<\\/"), 1), encoding="utf-8")
     print(f"-> {out}  ({len(out_champs)} champions, {len(out_augs)} augments, {source})")
+    if args.folio:   # a copy in the private folio (Reports/), which Zaviel asked for to view it away from this PC
+        import shutil
+        dest = dl.ROOT.parent / "morellonomicon-folio" / "Reports" / "tiers.html"
+        if not dest.parent.parent.exists():
+            sys.exit(f"no folio at {dest.parent.parent}")
+        dest.parent.mkdir(exist_ok=True)
+        shutil.copyfile(out, dest)
+        print(f"-> {dest}")
     if not args.no_open:
         open_page(out)
 
@@ -191,6 +200,7 @@ def main():
     p.set_defaults(fn=cmd_report)
     p = sub.add_parser("tiers", help="champion and augment tiers with games and win rates, a private HTML page")
     p.add_argument("--no-open", action="store_true", help="write the page without opening it")
+    p.add_argument("--folio", action="store_true", help="also copy it into the private folio's Reports/")
     p.set_defaults(fn=cmd_tiers)
     args = ap.parse_args()
     args.fn(args)
