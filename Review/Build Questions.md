@@ -5,14 +5,27 @@ tags:
   - items
 sticker: lucide//circle-help
 ---
-Written by `tools/build_tiers.py` (do not edit). Items with at least 1000 games on our crawl 16.23 (2026-11-18) where the games and the reasoning disagree. Explain it and it becomes a play style (`STYLES`), an item kind or a condition in the script.
+Written by `tools/build_tiers.py` (do not edit). Items with at least 1000 games on our crawl 16.23 (2026-11-20) where the games and the reasoning disagree. Explain it and it becomes a play style (`STYLES`), an item kind or a condition in the script.
 
 ## Built often, no reason (another play style?)
 
-- **薩科**: [[無盡之刃]] 45% (-2.4)、[[蒐集者]] 44% (-3.5)
-- **易大師**: [[殞落王者之劍]] 56% (+0.1)
-- **姍娜**: [[史提克彈簧刀]] 50% (+1.4)
-- **斯溫**: [[時光之杖]] 48% (-1.3)
+- **斯溫**: [[瑞萊的冰晶節杖]] 50% (-0.1)、[[峽谷製造者]] 50% (-0.4)、[[黎安卓的折磨]] 50% (-0.5)、[[時光之杖]] 49% (-1.1)
+- **薩科**: [[傲慢]] 48% (+1.1)、[[無盡之刃]] 46% (-1.4)、[[電流旋風劍]] 45% (-1.7)、[[蒐集者]] 45% (-1.9)
+- **納瑟斯**: [[水星之靴]] 55% (+2.3)、[[振奮盔甲]] 54% (+1.6)、[[三相之力]] 53% (+0.6)
+- **提摩**: [[史提克彈簧刀]] 54% (+1.6)、[[納什之牙]] 54% (+1.4)
+- **弗力貝爾**: [[史提克彈簧刀]] 54% (+3.6)、[[暮夜與黎明]] 54% (+3.1)
+- **弗拉迪米爾**: [[死亡之帽]] 51% (+3.4)、[[峽谷製造者]] 47% (+0.2)
+- **姍娜**: [[史提克彈簧刀]] 50% (+2.3)、[[殞落王者之劍]] 46% (-2.1)
+- **蓋倫**: [[幻影之舞]] 45% (-0.2)、[[無盡之刃]] 45% (-0.7)
+- **犽宿**: [[死亡之舞]] 59% (+3.1)
+- **易大師**: [[殞落王者之劍]] 57% (-0.1)
+- **希瓦娜**: [[暮夜與黎明]] 56% (+1.2)
+- **犽凝**: [[死亡之舞]] 55% (+3.4)
+- **逆命**: [[衝擊火炮]] 50% (-4.9)
+- **法洛士**: [[無盡之刃]] 49% (+0.2)
+- **路西恩**: [[殞落王者之劍]] 46% (-3.5)
+- **凱莎**: [[納什之牙]] 46% (-0.8)
+- **索拉卡**: [[好戰者鎧甲]] 44% (-3.2)
 
 ## Strong in games, no reason yet
 
