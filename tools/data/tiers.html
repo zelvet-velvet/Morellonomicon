@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mayhem Tiers</title>
+<!-- Template for `python3 -I tools/mn.py tiers`: the script fills in the data constant below and writes .cache/reports/tiers.html.
+     Private: it shows win rates from our crawl or resg.top, so it stays on this PC (never committed or published). -->
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface-1: #fcfcfb; --surface-2: #f1f0ec;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --border: rgba(11,11,11,0.10);
+  --series-1: #2a78d6; --up: #1f8a3a; --down: #c8432f;
+  --t0: #d03b3b; --t1: #ec835a; --t2: #e0a412; --t3: #2a78d6; --t4: #898781;
+  --prism: #a35bd6; --gold: #c99a16; --silver: #7d8a96; --penta: #d03b3b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface-1: #1a1a19; --surface-2: #232322;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7; --muted: #8f8d86;
+    --grid: #2c2c2a; --border: rgba(255,255,255,0.10);
+    --series-1: #3987e5; --up: #4cc06a; --down: #ef6b57;
+    --t3: #3987e5; --prism: #c08bf0; --gold: #e6bb3a; --silver: #a9b4bf;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface-1: #1a1a19; --surface-2: #232322;
+  --text-primary: #f0efec; --text-secondary: #c3c2b7; --muted: #8f8d86;
+  --grid: #2c2c2a; --border: rgba(255,255,255,0.10);
+  --series-1: #3987e5; --up: #4cc06a; --down: #ef6b57;
+  --t3: #3987e5; --prism: #c08bf0; --gold: #e6bb3a; --silver: #a9b4bf;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--text-primary);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", "Microsoft JhengHei", sans-serif; }
+main { max-width: 1040px; margin: 0 auto; padding: 28px 16px 48px; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+.sub { color: var(--text-secondary); margin: 0; }
+.note { color: var(--muted); font-size: 13px; margin: 4px 0 0; }
+.bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 16px 0 12px; }
+.seg { border: 1px solid var(--border); background: var(--surface-1); color: var(--text-primary); border-radius: 999px;
+  padding: 5px 13px; font: inherit; font-size: 14px; cursor: pointer; }
+.seg[aria-pressed="true"] { border-color: var(--series-1); box-shadow: inset 0 0 0 1px var(--series-1); font-weight: 600; }
+.tabs .seg { font-size: 15px; padding: 7px 18px; }
+input[type=search], select { font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface-1); color: var(--text-primary); }
+input[type=search] { flex: 1 1 180px; min-width: 0; }
+.list { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.head, .row { display: grid; grid-template-columns: 40px minmax(0,1fr) 44px minmax(120px, 210px) 72px; gap: 12px;
+  align-items: center; padding: 8px 14px; }
+.augs .head, .augs .row { grid-template-columns: 40px minmax(0,1fr) minmax(120px, 210px) 72px 60px; }
+.head { color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--border); position: sticky; top: 0;
+  background: var(--surface-1); z-index: 1; }
+.head span[data-sort] { cursor: pointer; user-select: none; }
+.head span[data-sort].on { color: var(--text-primary); font-weight: 600; }
+.row { border-top: 1px solid var(--border); cursor: pointer; }
+.row:first-of-type { border-top: 0; }
+.row:hover { background: var(--surface-2); }
+.row img, .chip img { width: 40px; height: 40px; border-radius: 8px; display: block; background: var(--grid); }
+.nm b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nm small { color: var(--muted); font-size: 12px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.num { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-secondary); font-size: 14px; }
+.tier { display: inline-grid; place-items: center; min-width: 34px; height: 24px; padding: 0 6px; border-radius: 6px;
+  font-weight: 700; font-size: 13px; color: #fff; }
+.T0, .S { background: var(--t0); } .T1, .A { background: var(--t1); } .T2, .B { background: var(--t2); color: #0b0b0b; }
+.T3, .C { background: var(--t3); } .T4 { background: var(--t4); }
+/* win rate: a bar out from 50 %, right and green above it, left and red below (±10 points fills the half) */
+.wr { display: grid; grid-template-columns: 1fr 48px; gap: 8px; align-items: center; }
+.wr .track { position: relative; height: 8px; background: var(--grid); border-radius: 4px; }
+.wr .track::after { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--muted); }
+.wr .track i { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
+.wr .v { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; font-size: 14px; }
+.up { color: var(--up); } .down { color: var(--down); } .thin { opacity: .5; }
+.detail { border-top: 1px solid var(--border); background: var(--surface-2); padding: 14px 14px 18px; }
+.detail h3 { font-size: 14px; margin: 14px 0 8px; color: var(--text-secondary); font-weight: 600; }
+.detail h3:first-child { margin-top: 0; }
+.group { display: grid; grid-template-columns: 34px 1fr; gap: 10px; margin: 0 0 10px; align-items: start; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.chip { display: flex; gap: 8px; align-items: center; background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 10px; padding: 5px 10px 5px 5px; max-width: 100%; min-width: 0; }
+.chip img { width: 32px; height: 32px; border-radius: 6px; }
+.chip .t { min-width: 0; }
+.chip .t b { font-size: 13px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip .t small { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.chip[title] { cursor: help; }
+.rar { font-size: 12px; font-weight: 600; }
+.r-稜鏡 { color: var(--prism); } .r-金 { color: var(--gold); } .r-銀 { color: var(--silver); } .r-五殺 { color: var(--penta); }
+.empty { padding: 24px; text-align: center; color: var(--muted); }
+@media (max-width: 640px) {
+  .head, .row { grid-template-columns: 36px minmax(0,1fr) 40px 104px; gap: 8px; padding: 8px 10px; }
+  .augs .head, .augs .row { grid-template-columns: 36px minmax(0,1fr) 104px 52px; }
+  .head .g, .row .g, .augs .pr { display: none; }
+  .row img { width: 36px; height: 36px; }
+  .wr { grid-template-columns: 1fr 44px; }
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>Mayhem 強度表</h1>
+  <p class="sub" id="sub"></p>
+  <p class="note">勝率條以 50% 為中線，往右綠色高於、往左紅色低於（滿格 ±10%）；場次少於 100 的淡色顯示。私人資料，只在這台電腦。</p>
+  <div class="bar tabs">
+    <button class="seg" data-tab="champs" aria-pressed="true">英雄</button>
+    <button class="seg" data-tab="augs" aria-pressed="false">強化</button>
+  </div>
+  <section id="champs">
+    <div class="bar">
+      <input type="search" id="cq" placeholder="搜尋英雄（中文或英文）">
+      <span id="cf"></span>
+    </div>
+    <div class="list" id="clist"></div>
+  </section>
+  <section id="augs" class="augs" hidden>
+    <div class="bar">
+      <input type="search" id="aq" placeholder="搜尋強化">
+      <span id="af"></span>
+    </div>
+    <div class="list" id="alist"></div>
+  </section>
+</main>
+<script>
+const DATA = DATA_JSON;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pct = (w, g) => g ? w / g : null;
+const fmt = n => n.toLocaleString("en-US");
+const TIERS = ["T0","T1","T2","T3","T4"], RAR = ["稜鏡","金","銀","五殺"];
+const ddv = (DATA.champions.find(c => /cdn\/([\d.]+)\//.test(c.icon))?.icon.match(/cdn\/([\d.]+)\//) || [, "16.23.1"])[1];
+const itemIcon = id => `https://ddragon.leagueoflegends.com/cdn/${ddv}/img/item/${id}.png`;
+const totalGames = Math.round(DATA.champions.reduce((s, c) => s + c.games, 0) / 10);
+$("#sub").textContent = `版本 ${DATA.patch} · ${DATA.source} · 約 ${fmt(totalGames)} 場 · ${DATA.champions.length} 位英雄`;
+
+function wrBar(w, g, min = 100) {
+  const r = pct(w, g);
+  if (r == null) return `<div class="wr thin"><div class="track"></div><span class="v">—</span></div>`;
+  const d = Math.max(-1, Math.min(1, (r - .5) / .1)), cls = r >= .5 ? "up" : "down";
+  const style = d >= 0 ? `left:50%;width:${d * 50}%;background:var(--up)` : `right:50%;width:${-d * 50}%;background:var(--down)`;
+  return `<div class="wr${g < min ? " thin" : ""}" title="${fmt(w)} 勝 / ${fmt(g)} 場"><div class="track"><i style="${style}"></i></div>`
+       + `<span class="v ${cls}">${(r * 100).toFixed(1)}%</span></div>`;
+}
+function filters(el, opts, state, key, redraw) {
+  el.innerHTML = ["全部", ...opts].map(o => `<button class="seg" data-v="${o}" aria-pressed="${(state[key] || "全部") === o}">${o}</button>`).join(" ");
+  el.onclick = e => { const b = e.target.closest("button"); if (!b) return;
+    state[key] = b.dataset.v === "全部" ? "" : b.dataset.v; filters(el, opts, state, key, redraw); redraw(); };
+}
+function headRow(cols, state, redraw) {
+  const h = document.createElement("div"); h.className = "head";
+  h.innerHTML = cols.map(([label, sort, cls]) => `<span class="${cls || ""}${sort ? "" : ""}" ${sort ? `data-sort="${sort}"` : ""}>${label}</span>`).join("");
+  h.querySelectorAll("[data-sort]").forEach(s => { if (s.dataset.sort === state.sort) s.classList.add("on");
+    s.onclick = () => { state.sort = s.dataset.sort; redraw(); }; });
+  return h;
+}
+
+// ---- champions
+const cs = { sort: "tier", tier: "", q: "", open: null };
+function champDetail(c) {
+  let h = "";
+  for (const st of c.styles) {
+    h += `<h3>強化 · ${esc(st.name)}</h3>`;
+    for (const t of ["S","A","B","C"]) {
+      const rows = st.rows.filter(r => r[1] === t);
+      if (!rows.length) continue;
+      rows.sort((a, b) => (pct(b[4], b[3]) ?? 0) - (pct(a[4], a[3]) ?? 0));
+      h += `<div class="group"><span class="tier ${t}">${t}</span><div class="chips">` + rows.map(([id, , reason, g, w, when]) => {
+        const a = DATA.augments[id] || { name: id, rarity: "", icon: "" }, r = pct(w, g);
+        const wr = r == null ? "—" : `<span class="${r >= .5 ? "up" : "down"}">${(r * 100).toFixed(1)}%</span>`;
+        return `<div class="chip${g < 30 ? " thin" : ""}" title="${esc([reason, when].filter(Boolean).join(" · "))}"><img loading="lazy" src="${esc(a.icon)}" alt="">`
+             + `<div class="t"><b>${esc(a.name)} <span class="rar r-${esc(a.rarity)}">${esc(a.rarity)}</span></b><small>${wr} · ${fmt(g)} 場</small></div></div>`;
+      }).join("") + `</div></div>`;
+    }
+  }
+  if (c.items.length) {
+    h += `<h3>道具（出場次數最多，附勝率）</h3><div class="chips">` + c.items.map(([id, g, w]) => {
+      const r = pct(w, g);
+      return `<div class="chip${g < 100 ? " thin" : ""}"><img loading="lazy" src="${itemIcon(id)}" alt=""><div class="t"><b>${esc(DATA.items[id]?.name || id)}</b>`
+           + `<small><span class="${r >= .5 ? "up" : "down"}">${(r * 100).toFixed(1)}%</span> · ${fmt(g)} 場</small></div></div>`;
+    }).join("") + `</div>`;
+  }
+  return h || `<div class="empty">還沒有強化分級</div>`;
+}
+function drawChamps() {
+  const q = cs.q.trim().toLowerCase();
+  let list = DATA.champions.filter(c => (!cs.tier || c.tier === cs.tier) && (!q || c.name.includes(q) || c.en.toLowerCase().includes(q) || c.key.toLowerCase().includes(q)));
+  const by = { tier: (a, b) => (TIERS.indexOf(a.tier) + 1 || 9) - (TIERS.indexOf(b.tier) + 1 || 9) || pct(b.wins, b.games) - pct(a.wins, a.games),
+               wr: (a, b) => pct(b.wins, b.games) - pct(a.wins, a.games), games: (a, b) => b.games - a.games,
+               name: (a, b) => a.name.localeCompare(b.name, "zh-Hant") };
+  list.sort(by[cs.sort]);
+  const el = $("#clist"); el.innerHTML = "";
+  el.append(headRow([["", ""], ["英雄", "name"], ["分級", "tier"], ["勝率", "wr"], ["場次", "games", "num g"]], cs, drawChamps));
+  if (!list.length) el.insertAdjacentHTML("beforeend", `<div class="empty">沒有符合的英雄</div>`);
+  for (const c of list) {
+    const r = document.createElement("div"); r.className = "row";
+    r.innerHTML = `<img loading="lazy" src="${esc(c.icon)}" alt=""><div class="nm"><b>${esc(c.name)}</b><small>${esc(c.en)}</small></div>`
+      + `<span>${c.tier ? `<span class="tier ${c.tier}">${c.tier}</span>` : ""}</span>${wrBar(c.wins, c.games)}<span class="num g">${fmt(c.games)}</span>`;
+    r.onclick = () => { cs.open = cs.open === c.key ? null : c.key; drawChamps(); };
+    el.append(r);
+    if (cs.open === c.key) { const d = document.createElement("div"); d.className = "detail"; d.innerHTML = champDetail(c); el.append(d); }
+  }
+}
+filters($("#cf"), TIERS, cs, "tier", drawChamps);
+$("#cq").oninput = e => { cs.q = e.target.value; drawChamps(); };
+
+// ---- augments: games, win rate, pick rate, and which champions rate it S
+const sOf = {};
+for (const c of DATA.champions) for (const st of c.styles) for (const r of st.rows)
+  if (r[1] === "S") (sOf[r[0]] ||= new Map()).set(c.key, c);
+const as = { sort: "wr", rarity: "", q: "", open: null };
+function drawAugs() {
+  const q = as.q.trim();
+  let list = Object.entries(DATA.augments).filter(([, a]) => a.games && (!as.rarity || a.rarity === as.rarity) && (!q || a.name.includes(q)));
+  const by = { wr: (a, b) => pct(b[1].wins, b[1].games) - pct(a[1].wins, a[1].games), games: (a, b) => b[1].games - a[1].games,
+               pr: (a, b) => b[1].pr - a[1].pr, name: (a, b) => a[1].name.localeCompare(b[1].name, "zh-Hant"),
+               s: (a, b) => (sOf[b[0]]?.size || 0) - (sOf[a[0]]?.size || 0) };
+  list.sort(by[as.sort]);
+  const el = $("#alist"); el.innerHTML = "";
+  el.append(headRow([["", ""], ["強化", "name"], ["勝率", "wr"], ["場次", "games", "num"], ["選取率", "pr", "num pr"]], as, drawAugs));
+  for (const [id, a] of list) {
+    const r = document.createElement("div"); r.className = "row";
+    const n = sOf[id]?.size || 0;
+    r.innerHTML = `<img loading="lazy" src="${esc(a.icon)}" alt=""><div class="nm"><b>${esc(a.name)}</b><small><span class="rar r-${esc(a.rarity)}">${esc(a.rarity)}</span>`
+      + ` · ${n ? `${n} 位英雄 S` : "沒有英雄 S"}</small></div>${wrBar(a.wins, a.games, 500)}<span class="num">${fmt(a.games)}</span><span class="num pr">${(a.pr * 100).toFixed(1)}%</span>`;
+    r.onclick = () => { as.open = as.open === id ? null : id; drawAugs(); };
+    el.append(r);
+    if (as.open === id) {
+      const d = document.createElement("div"); d.className = "detail";
+      const champs = [...(sOf[id]?.values() || [])].sort((x, y) => pct(y.wins, y.games) - pct(x.wins, x.games));
+      d.innerHTML = champs.length ? `<h3>評為 S 的英雄</h3><div class="chips">` + champs.map(c => {
+          const row = c.styles.flatMap(s => s.rows).find(r => r[0] === id && r[1] === "S"), pr = pct(row[4], row[3]);
+          return `<div class="chip" title="${esc(row[2])}"><img loading="lazy" src="${esc(c.icon)}" alt=""><div class="t"><b>${esc(c.name)}</b>`
+               + `<small>${pr == null ? "—" : `<span class="${pr >= .5 ? "up" : "down"}">${(pr * 100).toFixed(1)}%</span>`} · ${fmt(row[3])} 場</small></div></div>`;
+        }).join("") + `</div>` : `<div class="empty">沒有英雄把它評為 S</div>`;
+      el.append(d);
+    }
+  }
+}
+filters($("#af"), RAR, as, "rarity", drawAugs);
+$("#aq").oninput = e => { as.q = e.target.value; drawAugs(); };
+document.querySelector(".tabs").onclick = e => { const b = e.target.closest("button"); if (!b) return;
+  document.querySelectorAll(".tabs .seg").forEach(x => x.setAttribute("aria-pressed", x === b));
+  $("#champs").hidden = b.dataset.tab !== "champs"; $("#augs").hidden = b.dataset.tab !== "augs"; };
+drawChamps(); drawAugs();
+</script>
+</body>
+</html>
