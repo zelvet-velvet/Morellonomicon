@@ -128,17 +128,18 @@ class Screen:
 
     def __enter__(self):
         self.last, self.buf = None, b""
+        self.out = sys.stdout   # kept: captured() swaps sys.stdout while a page's text is made on a worker thread
         self.fd = sys.stdin.fileno()
         self.saved = termios.tcgetattr(self.fd)
         tty.setcbreak(self.fd)
-        sys.stdout.write(f"{CSI}?1049h{CSI}?25l{CSI}2J")
-        sys.stdout.flush()
+        self.out.write(f"{CSI}?1049h{CSI}?25l{CSI}2J")
+        self.out.flush()
         return self
 
     def __exit__(self, *exc):
         termios.tcsetattr(self.fd, termios.TCSADRAIN, self.saved)
-        sys.stdout.write(f"{CSI}0m{CSI}?25h{CSI}?1049l")
-        sys.stdout.flush()
+        self.out.write(f"{CSI}0m{CSI}?25h{CSI}?1049l")
+        self.out.flush()
 
     @staticmethod
     def size():
@@ -150,8 +151,8 @@ class Screen:
         frame = f"{CSI}H" + "\n".join(f"{fit(l, w)}{CSI}K" for l in lines[:h]) + f"{CSI}J"
         if frame != self.last:   # an unchanged frame is not rewritten: the terminal (Windows Terminal over WSL) stays idle
             self.last = frame
-            sys.stdout.write(frame)
-            sys.stdout.flush()
+            self.out.write(frame)
+            self.out.flush()
 
     def key(self, timeout=0.0):
         """One key, or None. Escape sequences are read whole and one at a time: a mouse-wheel notch in Windows Terminal
@@ -278,31 +279,91 @@ def menu(scr, items, side, title, subtitle, at=0):
                     return key, n
 
 
-def ask(scr, title, prompt, default, header):
-    """A one-line input under a header; Esc cancels (None), Enter takes the default when empty."""
-    got = ""
+BACK_KEYS = ("q", "esc", "enter", "backspace")   # leave a page; never "any key": a mouse wheel sends keys too
+
+
+def ask(scr, title, prompt, default, header, hint="", low=None, high=None):
+    """A number typed on one line under a header; Esc cancels (None), Enter takes the default when empty.
+    Returns a float within [low, high]; anything else shows why and waits for a fix."""
+    got, err = "", ""
     while True:
         w, h = scr.size()
-        lines = header(w) + ["", " " + BOLD(title), "", f"  {prompt} " + ACCENT(got or DIM(str(default))) + ACCENT("▏"), "",
-                             DIM("  ⏎ start   Esc back")]
+        lines = header(w) + ["", " " + BOLD(title), ""]
+        lines += [f"  {prompt} " + ACCENT(got or DIM(str(default))) + ACCENT("▏"), ""]
+        lines += [f"  {DIM(l)}" for l in wrap(hint, w - 4)] if hint else []
+        lines += ["", "  " + BAD(err) if err else "", "", DIM("  ⏎ start   Esc back")]
         scr.draw(lines)
         k = scr.key(0.5)
         if k == "enter":
-            return got or str(default)
+            try:
+                v = float(got or default)
+            except ValueError:
+                err = f"not a number: {got}"
+                continue
+            if (low is not None and v < low) or (high is not None and v > high):
+                err = f"between {low:g} and {high:g}, please"
+                continue
+            return v
         if k == "esc":
             return None
         if k == "backspace":
-            got = got[:-1]
-        elif k and len(k) == 1 and (k.isdigit() or k == "."):
-            got += k
+            got, err = got[:-1], ""
+        elif k and len(k) == 1 and (k.isdigit() or (k == "." and "." not in got)):
+            got, err = got + k, ""
+
+
+def busy(scr, title, fn, header, hint=""):
+    """Run fn() on a thread behind a loading screen (spinner, elapsed time, what it is doing), so a slow step never
+    looks stuck. Returns fn's result; an exception from fn is raised here. Esc goes back and leaves it to finish."""
+    box, t0 = {}, time.time()
+
+    def work():
+        try:
+            box["value"] = fn()
+        except BaseException as e:   # SystemExit included: shown by the caller
+            box["error"] = e
+    th = threading.Thread(target=work, daemon=True)
+    th.start()
+    while th.is_alive():
+        w, h = scr.size()
+        el = time.time() - t0
+        lines = header(w) + ["", " " + BOLD(title), ""]
+        lines.append(f"   {INFO(spinner())} {TEXT('working')}{DIM(' · ' + dur(el))}")
+        lines += [f"   {DIM(l)}" for l in wrap(hint, w - 6)] if hint else []
+        if el > 20:
+            lines += ["", f"   {DIM('still going: the database is large and /mnt/c is slow; it has not stopped')}"]
+        lines += [""] * max(0, h - len(lines) - 2) + [rule(w), DIM(" Esc back (it finishes on its own)")]
+        scr.draw(lines)
+        if scr.key(0.1) == "esc":
+            return None
+    if "error" in box:
+        raise box["error"]
+    return box.get("value")
+
+
+def hold(scr, render):
+    """A finished screen that stays until q, Esc or Enter (a wheel notch, which sends arrows, does not leave it);
+    render(w, h, key) -> lines, called again on each key so the screen can scroll."""
+    k = None
+    while True:
+        scr.draw(render(*scr.size(), k))
+        k = scr.key(0.5)
+        if k in BACK_KEYS:
+            return
 
 
 def pager(scr, title, text, header):
     """Text in a scrolling page: ↑↓ PgUp PgDn, q / Esc / ⏎ back."""
-    raw = text.rstrip("\n").split("\n") or [""]
-    top = 0
+    top, made_for = 0, None
     while True:
         w, h = scr.size()
+        if made_for != w:   # long lines wrap with a hanging indent instead of being cut
+            raw = []
+            for l in text.rstrip("\n").split("\n") or [""]:
+                ind = len(l) - len(l.lstrip(" "))
+                parts = wrap(l.strip(" "), w - 3 - ind - 2) or [""]
+                raw += [" " * ind + parts[0]] + [" " * (ind + 2) + x for x in parts[1:]]
+            made_for = w
         room = h - 6
         lines = header(w) + [" " + BOLD(title), rule(w)]
         lines += [" " + TEXT(l) for l in raw[top:top + room]]
@@ -311,7 +372,7 @@ def pager(scr, title, text, header):
         lines += [rule(w), right(DIM(" ↑↓ scroll   q back"), DIM(more + " "), w)]
         scr.draw(lines)
         k = scr.key(0.5)
-        if k in ("q", "esc", "enter", "backspace"):
+        if k in BACK_KEYS:
             return
         if k in ("down", "j"):
             top = min(max(0, len(raw) - room), top + 1)
@@ -346,7 +407,7 @@ def run_steps(scr, title, steps, header, done_note=""):
     if done_note and ok:
         out += ["", done_note]
     _steps_screen(scr, title, steps, state, out, header, time.time() - t0, running=False)
-    while scr.key(1) is None:
+    while scr.key(1) not in BACK_KEYS:
         pass
     return ok
 
@@ -361,7 +422,7 @@ def _steps_screen(scr, title, steps, state, out, header, el, running):
     room = max(3, h - len(lines) - 2)
     lines += [" " + (BAD if l.startswith(("Traceback", "stop", "no ")) else TEXT)(l) for l in out[-room:]]
     lines += [""] * max(0, h - len(lines) - 2)
-    lines += [rule(w), DIM(" Esc stop") if running else DIM(" any key: back to the menu")]
+    lines += [rule(w), DIM(" Esc stop") if running else DIM(" ⏎ / q back to the menu")]
     scr.draw(lines)
 
 
@@ -369,11 +430,13 @@ def _steps_screen(scr, title, steps, state, out, header, el, running):
 
 
 # The live crawl screen, top to bottom:
-#   title line        patch · status · elapsed
-#   two progress bars the patch toward Ready (with ETA), this run's time budget (with the end time)
+#   title line        patch · status · elapsed, and when the run ends
+#   HOW SURE          the share of augment and item picks on pairs with sure numbers (what the tiers trust), champions
+#                     within ±2 points, the next goal with the games and time it needs, and the ladder of ± points
+#   this run          the time budget (or the goal it crawls to)
 #   four panels       THIS RUN (what was added) · SPEED · CRAWL (queue and work done) · CLIENT
-#   champions         how many champions have enough samples (bands up to `sure`), and the thinnest ones
-#   activity log      fixed columns: time, type, then the message; a long message wraps under its own column
+#   thinnest          the champions with the fewest samples
+#   activity log      fixed columns: time, type, then the message; a long one wraps under its own column; scrolls
 #   key line          the keys, and what the crawl is doing right now
 
 TAGS = {"read": INFO, "games": GOOD, "patch": GOOD, "start": GOOD, "queue": TEXT, "pause": WARN, "resume": GOOD,
@@ -430,49 +493,93 @@ def wrap(text, w):
     return out + [line] if line or not out else out
 
 
+def pct(x):
+    return f"{x * 100:.0f}%"
+
+
+def sure_rows(conf, w, gpm, compact=False):
+    """The HOW SURE section from fetch_lcu.confidence(): bars for the shares, the next goal, then the ladder."""
+    label, tail = 28, 44 if w >= 110 else 30
+    bw = max(8, w - label - tail - 10)
+    out = []
+    for key, what, sure in (("aug", "Augment picks on sure pairs", conf["sure_aug"]),
+                            ("item", "Item picks on sure pairs", conf["sure_item"])):
+        f = conf[key]
+        tone = GOOD if f["share"] >= 0.75 else WARN if f["share"] >= 0.25 else BAD
+        if f["goal"] is None:
+            nxt = GOOD("every goal reached")
+        elif f["more"] is None:
+            nxt = DIM(f"{f['goal']}%: too few games to guess")
+        else:
+            eta = f" · {dur(f['more'] / gpm * 60)}" if gpm > 0.5 and f["more"] else ""
+            nxt = DIM(f"{f['goal']}% at ") + TEXT("+" + num(f["more"])) + DIM(" games" + eta)
+        out.append(" " + fit(TEXT(what), label) + bar(f["share"], bw, tone) + " " + tone(BOLD(pct(f["share"]).rjust(4)))
+                   + "   " + fit(nxt, tail))
+    ch = conf["champ"]
+    two = dict(ch["ladder"])[2]
+    tone = GOOD if two >= ch["total"] * 0.9 else WARN
+    out.append(" " + fit(TEXT("Champions within ±2 points"), label) + bar(two / max(1, ch["total"]), bw, tone) + " "
+               + tone(BOLD(str(two).rjust(4))) + DIM(f" / {ch['total']}") + DIM(f"   thinnest ±{ch['worst']:.1f}"))
+    if compact:
+        return out
+    out.append("")
+    head = " " + fit(DIM("known to within"), label) + "".join(DIM(f"±{pts}".rjust(7)) for pts, _ in conf["aug"]["ladder"])
+    out.append(head + DIM("    sure means"))
+    for key, what, note in (("aug", "  augment picks", f"{num(conf['sure_aug'])}+ games, ±{98 / conf['sure_aug'] ** .5:.0f}"),
+                            ("item", "  item picks", f"{num(conf['sure_item'])}+ games, ±{98 / conf['sure_item'] ** .5:.0f}")):
+        cells_ = "".join((GOOD if v >= .75 else WARN if v >= .25 else DIM)(pct(v).rjust(7)) for _, v in conf[key]["ladder"])
+        out.append(" " + fit(TEXT(what), label) + cells_ + DIM("    " + note))
+    cells_ = "".join(TEXT(str(v).rjust(7)) for _, v in ch["ladder"])
+    out.append(" " + fit(TEXT("  champions"), label) + cells_ + DIM(f"    of {ch['total']}"))
+    return out
+
+
 def dashboard(st, w, h):
     """The live crawl screen from a state dict (fetch_lcu.Crawl.state())."""
-    colour = {"running": GOOD, "paused": WARN, "stopping": WARN, "stopped": TEXT}.get(st["mode"], DIM)
-    dot = spinner() if st["mode"] == "running" else "■" if st["mode"] in ("stopping", "stopped") else "‖"
+    colour = {"running": GOOD, "paused": WARN, "stopping": WARN, "stopped": TEXT, "starting": INFO}.get(st["mode"], DIM)
+    dot = spinner() if st["mode"] in ("running", "starting") else "■" if st["mode"] in ("stopping", "stopped") else "‖"
     head = (" " + ACCENT(BOLD("MAYHEM CRAWLER")) + DIM(f"  ·  patch {st['patch']}  ·  ") + colour(f"{dot} {st['status']}"))
-    lines = [right(head, DIM("elapsed ") + TEXT(dur(st["elapsed"])) + " ", w), rule(w)]
+    lines = [right(head, DIM("elapsed ") + TEXT(dur(st["elapsed"])) + DIM("  ·  ends ") + TEXT(st["ends"]) + " ", w), rule(w)]
+    games, rate = st["patch_games"], st["games_per_min"]
 
-    # progress toward Ready, and the time budget
-    label, tail = 22, 26
-    bw = max(10, w - label - tail - 4)
-    games, ready = st["patch_games"], st["ready"]
-    if games >= ready:
-        ready_txt = GOOD("Ready ✓")
-    elif st["eta_ready"] is not None:
-        ready_txt = DIM("Ready in ") + TEXT(dur(st["eta_ready"]))
+    # how sure the numbers are
+    conf = st["conf"]
+    note = "a win rate from n games is within ±98/√n points, 19 times in 20"
+    lines.append(right(" " + BOLD("HOW SURE ARE THE NUMBERS") + DIM(f"   patch {st['patch']} · {num(games)} games"),
+                       DIM(note + " ") if w >= 110 else "", w))
+    small = h < 38
+    if conf is None:
+        lines += [" " + INFO(spinner()) + DIM(" reading every player row of the patch (about 10 s)…")] + [""] * (3 if small else 8)
     else:
-        ready_txt = DIM("Ready in —")
-    lines.append(right(f" {fit(TEXT('Patch ' + st['patch']), label)}{bar(games / max(1, ready), bw)} "
-                       f"{BOLD(num(games))}{DIM(' / ' + num(ready))}", ready_txt + " ", w))
-    lines.append(right(f" {fit(TEXT('This run' + (' (until Ready)' if st['until_ready'] else '')), label)}"
-                       f"{bar(st['elapsed'] / max(1, st['budget']), bw, DIM)} {TEXT(dur(st['elapsed']))}{DIM(' / ' + dur(st['budget']))}",
-                       DIM("ends ") + TEXT(st["ends"]) + " ", w))
+        lines += sure_rows(conf, w, rate, compact=small)
+    lines.append("")
+
+    # this run: time budget, or the goal it crawls to
+    bw = max(10, w - 22 - 30)
+    if st["target"]:
+        share = conf["aug"]["share"] if conf else 0
+        lines.append(right(" " + fit(TEXT(f"Goal: {st['target']}% sure"), 22) + bar(share / (st["target"] / 100), bw, GOOD) + " "
+                           + TEXT(pct(share)) + DIM(f" / {st['target']}%"), DIM("at most ") + TEXT(dur(st["budget"])) + " ", w))
+    else:
+        lines.append(right(" " + fit(TEXT("This run"), 22) + bar(st["elapsed"] / max(1, st["budget"]), bw, DIM) + " "
+                           + TEXT(dur(st["elapsed"])) + DIM(" / " + dur(st["budget"])), DIM("ends ") + TEXT(st["ends"]) + " ", w))
     lines.append("")
 
     # four panels (two rows of two below 100 cells)
-    rate, per_read = st["games_per_min"], st["new_per_read"]
-    speed = [("games / min", BOLD(f"{rate:.1f}")), ("samples / min", TEXT(num(int(st["samples_per_min"])))),
-             ("new games / player", TEXT(f"{per_read:.2f}")), ("", "")]
-    crawl = [("players read", TEXT(num(st["reads"]))), ("games opened", TEXT(num(st["opened"]))),
-             ("players waiting", TEXT(num(st["queued"])) + DIM(f" (+{num(st['opens'])} games)")),
-             ("skipped · refills", TEXT(num(st["skipped"])) + DIM(" · ") + TEXT(str(st["reseeds"])))]
-    phase = st["phase"] or "—"
-    client = [("state", (GOOD("● ok") if not st["errors"] else WARN("● retrying")) + DIM(" · ") + TEXT(phase)),
-              ("calls", TEXT(num(st["calls"]))), ("s / call", TEXT(f"{st['latency']:.2f}")),
-              ("errors", (BAD if st["errors"] else DIM)(str(st["errors"])))]
     cols = 4 if w >= 100 else 2
     cw = (w - 1) // cols
     this_run = [("new games", GOOD("+" + num(st["new_games"]))), ("full games", TEXT("+" + num(st["new_full"]))),
                 ("player samples", TEXT("+" + num(st["new_samples"]))),
-                ("patch full games", TEXT(num(st["patch_full"])) + DIM(f"  {st['patch_full'] / max(1, games):.0%}"))]
-    panels = [pairs("THIS RUN", this_run, cw),
-              pairs("SPEED", speed, cw), pairs("CRAWL", crawl, cw), pairs("CLIENT", client, cw)]
-    # the sparkline goes in SPEED's empty last row
+                ("patch games", TEXT(num(games)) + DIM(f"  {st['patch_full'] / max(1, games):.0%} full"))]
+    speed = [("games / min", BOLD(f"{rate:.1f}")), ("samples / min", TEXT(num(int(st["samples_per_min"])))),
+             ("new games / player", TEXT(f"{st['new_per_read']:.2f}")), ("", "")]
+    crawl = [("players read", TEXT(num(st["reads"]))), ("games opened", TEXT(num(st["opened"]))),
+             ("players waiting", TEXT(num(st["queued"])) + DIM(f" +{num(st['opens'])} games")),
+             ("skipped · refills", TEXT(num(st["skipped"])) + DIM(" · ") + TEXT(str(st["reseeds"])))]
+    client = [("state", (GOOD("● ok") if not st["errors"] else WARN("● retrying")) + DIM(" · ") + TEXT(st["phase"] or "—")),
+              ("calls", TEXT(num(st["calls"]))), ("s / call", TEXT(f"{st['latency']:.2f}")),
+              ("errors", (BAD if st["errors"] else DIM)(str(st["errors"])))]
+    panels = [pairs("THIS RUN", this_run, cw), pairs("SPEED", speed, cw), pairs("CRAWL", crawl, cw), pairs("CLIENT", client, cw)]
     panels[1][-1] = " " + spark(st["spark"], cw - 14) + DIM(" last 30 min")
     for i in range(0, 4, cols):
         group = panels[i:i + cols]
@@ -480,39 +587,10 @@ def dashboard(st, w, h):
             lines.append(" " + "".join(fit(p[r] if r < len(p) else "", cw) for p in group))
     lines.append("")
 
-    # champions: bands by samples, and the thinnest
-    ch = st["champ"]
-    if ch is None:
-        lines += [rule(w, "CHAMPIONS"), " " + DIM(spinner() + " counting samples per champion…")]
-    else:
-        sure = ch["sure"]
-        lines.append(rule(w, f"CHAMPIONS  {ch['seen']} / {ch['total']} seen · median {num(ch['median'])} samples · "
-                             f"sure at {num(sure)}"))
-        left_w = 44 if w >= 100 else w - 2
-        band = []
-        for name, n in ch["bands"]:
-            band.append(f" {fit(DIM(name), 14)}{TEXT(str(n).rjust(4))}  {bar(n / max(1, ch['total']), left_w - 22, INFO)}")
-        thin = ch["thin"]
-        per_col = 4
-        tw = 18
-        thin_cols = max(1, min(3, (w - left_w - 4) // tw)) if w >= 100 else max(1, (w - 2) // tw)
-        tlines = []
-        for r in range(per_col):
-            row = ""
-            for c in range(thin_cols):
-                k = c * per_col + r
-                if k < len(thin):
-                    n, cnt = thin[k]
-                    tone = BAD if cnt < sure / 6 else WARN if cnt < sure else TEXT
-                    row += fit(TEXT(n), tw - 7) + tone(num(cnt).rjust(5)) + "  "
-            tlines.append(row)
-        if w >= 100:
-            lines.append(" " + fit(DIM("SAMPLES PER CHAMPION"), left_w) + FAINT("│ ") + DIM("THINNEST"))
-            for r in range(max(len(band), per_col)):
-                lines.append(fit(band[r] if r < len(band) else "", left_w + 1) + FAINT("│ ") + (tlines[r] if r < len(tlines) else ""))
-        else:
-            lines += band + [" " + DIM("THINNEST")] + [" " + t for t in tlines]
-    lines.append("")
+    # the thinnest champions, one line
+    if conf:
+        thin = "   ".join(TEXT(n) + " " + (BAD if c < 600 else WARN if c < 2401 else DIM)(num(c)) for n, c in conf["thin"])
+        lines += [rule(w, "THINNEST CHAMPIONS  samples"), " " + thin]
 
     # activity log
     back = st.get("log_back", 0)
@@ -521,8 +599,11 @@ def dashboard(st, w, h):
     room = max(3, h - len(lines) - 2)
     log = event_lines(st["events"], w, room, back)
     lines += log + [""] * (room - len(log))
-    keys = (DIM(" p ") + TEXT("pause") + DIM("   q ") + TEXT("stop & save") + DIM("   r ") + TEXT("report")
-            + DIM("   ↑↓ wheel ") + TEXT("scroll log"))
+    if st["mode"] == "stopped":
+        keys = DIM(" ⏎ / q ") + TEXT("back to the menu") + DIM("   ↑↓ wheel ") + TEXT("scroll log")
+    else:
+        keys = (DIM(" p ") + TEXT("pause") + DIM("   q ") + TEXT("stop & save") + DIM("   r ") + TEXT("report")
+                + (DIM("   ↑↓ wheel ") + TEXT("scroll log") if w >= 110 else DIM("   ↑↓ ") + TEXT("log")))
     now = st["now_doing"]
     lines += [rule(w), right(keys, (INFO(spinner() + " ") + DIM(now) if now else "") + "  " + GOOD("saved ✓ "), w)]
     return lines

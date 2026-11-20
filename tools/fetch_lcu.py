@@ -17,10 +17,12 @@ ten samples and nine more players to read). The client answers history calls one
 Samples are keyed by game and participant, so one player is never counted twice in a game. The database holds no names and no
 player ids: players already read are kept only as a salted hash, to skip them for a while.
 
-In a terminal it is a full-screen app (tools/lcu_tui.py): a menu (crawl; make and open the tiers page, or rebuild the tiers
-from the crawl first; the database; the client), then a live dashboard while crawling (progress toward the patch's Ready count,
-this run, speed, the crawl's queue, the client, samples per champion and the thinnest, an aligned activity log; p pause,
-q stop, r browser report). --plain, or output to a file, logs a progress line every few minutes instead.
+In a terminal it is a full-screen app (tools/lcu_tui.py): a menu (crawl for hours or until a share of the augment picks is
+sure; make and open the tiers page, or rebuild the tiers from the crawl first; the database; the client), then a live
+dashboard while crawling: how sure the numbers are (confidence(): the share of augment and item picks on pairs with enough
+games for the tiers to trust, champions within ±2 points, the next goal and the games it needs), this run, speed, the queue,
+the client, the thinnest champions and an aligned, scrollable activity log (p pause, q stop, r browser report, ↑↓ / wheel
+scroll). Anything slow shows a loading screen. --plain, or output to a file, logs a progress line every few minutes instead.
 Standard library only.
 """
 import argparse
@@ -167,7 +169,7 @@ def patch_key(patch):
 
 def open_db():
     DB.parent.mkdir(parents=True, exist_ok=True)
-    db = sqlite3.connect(DB)
+    db = sqlite3.connect(DB, check_same_thread=False)   # one thread at a time: the crawl starts on its worker, then moves
     db.execute("PRAGMA journal_mode=WAL")
     db.execute("PRAGMA temp_store=MEMORY")   # sorts in memory: a temp B-tree on /mnt/c (WSL) is many times slower
     db.execute("PRAGMA cache_size=-65536")
@@ -385,27 +387,6 @@ class Crawl:
         return (self.base + self.new_games - getattr(self, "base_new", 0),
                 self.base_full + self.new_full - getattr(self, "base_new_full", 0))
 
-    def champion_figures(self):
-        """Samples per champion on the patch (the Live thread, its own read-only connection; about 1 s on /mnt/c)."""
-        import datalib
-        if not hasattr(self, "_ro"):
-            self._ro = datalib.read_only(DB)
-            self._names = names("CHAMPIONS", "key")
-            try:
-                self._sure = json.loads((EXPORT_DIR / "cache" / self.patch / "meta.json").read_text())["sure_games"]
-            except Exception:
-                self._sure = 600
-        seen = dict(self._ro.execute("SELECT p.champ, count(*) FROM games g CROSS JOIN players p ON p.game_id = g.game_id "
-                                     "WHERE g.patch=? GROUP BY p.champ", (self.patch,)).fetchall())
-        counts = sorted((seen.get(k, 0), n) for k, n in self._names.items())
-        sure = self._sure
-        cuts = [(f"under {sure // 6}", 0, sure // 6), (f"{sure // 6}–{sure // 2 - 1}", sure // 6, sure // 2),
-                (f"{sure // 2}–{sure - 1}", sure // 2, sure), (f"{sure}+ (sure)", sure, 10 ** 9)]
-        return {"seen": sum(1 for c, _ in counts if c), "total": len(counts), "sure": sure,
-                "median": counts[len(counts) // 2][0] if counts else 0,
-                "bands": [(name, sum(1 for c, _ in counts if lo <= c < hi)) for name, lo, hi in cuts],
-                "thin": [(n, c) for c, n in counts[:12]]}
-
     def rates(self):
         """games and samples per minute over the last 10 minutes of this run."""
         now = time.time()
@@ -424,12 +405,13 @@ class Crawl:
         el = time.time() - self.t0
         eta = (self.ready - games) / gpm * 60 if gpm > 0 and el >= 60 and games < self.ready else None
         minute = int(time.time() // 60)
-        champ = self.champs.value if getattr(self, "champs", None) else None
+        conf = self.conf.value if getattr(self, "conf", None) else None
+        conf = conf if conf and conf["patch"] == self.patch else None
         return {"patch": self.patch or "?", "status": self.status, "mode": self.mode, "elapsed": el,
                 "budget": self.hours * 3600, "ends": time.strftime("%H:%M", time.localtime(self.t0 + self.hours * 3600)),
                 "until_ready": self.until_ready, "patch_games": games, "patch_full": full, "ready": self.ready,
                 "eta_ready": eta, "new_games": self.new_games, "new_full": self.new_full, "new_samples": self.samples,
-                "new_per_read": self.new_games / max(1, self.reads), "champ": champ,
+                "new_per_read": self.new_games / max(1, self.reads), "conf": conf, "target": self.until_sure,
                 "spark": [self.per_minute.get(m, 0) for m in range(minute - 29, minute + 1)], "games_per_min": gpm,
                 "samples_per_min": spm, "calls": self.c.calls,
                 "latency": sum(self.c.times) / len(self.c.times) if self.c.times else 0, "queued": len(self.frontier),
@@ -438,7 +420,7 @@ class Crawl:
                 "now_doing": self.now_doing, "log_back": self.log_back}
 
     # ---------- the crawl ----------
-    def run(self, hours, samples=0, until_ready=False, screen=None):
+    def run(self, hours, samples=0, until_ready=False, screen=None, until_sure=0):
         """Crawl until the time budget, the sample target or (until_ready) the patch's Ready count. With a screen: the live
         dashboard (p pause, q stop, r browser report); without one: a progress line in the log every few minutes.
         Every client call goes to the one worker thread (a history read, a game, the account / game-state check, a queue
@@ -448,6 +430,7 @@ class Crawl:
         from concurrent.futures import ThreadPoolExecutor, wait
         self.t0 = time.time()
         self.hours, self.target, self.opens, self.until_ready = hours, samples, deque(), until_ready
+        self.until_sure = until_sure   # stop once this % of the augment picks sit on sure pairs
         try:
             import datalib
             self.ready = datalib.lifecycle()["ready_games"]
@@ -455,20 +438,30 @@ class Crawl:
             self.ready = 3000
         LOG_HOOK = self.event if screen else None
         draw = (lambda: screen.draw(ui.dashboard(self.state(), *screen.size()))) if screen else (lambda: None)
-        self.status, self.now_doing = "connecting", "reading your newest Mayhem game"
+        self.mode, self.status, self.now_doing = "starting", "connecting", "reading your newest Mayhem game"
         self.event("connecting to the client", "", "start")
         if self.patch:
             self.recount()
-        if screen:
-            self.patch = self.patch or "?"
-            draw()
-        self.seed()
-        self.recount()
-        if screen:
-            self.champs = ui.Live(self.champion_figures, 20)
-        self.event(f"patch {self.patch} · {len(self.frontier)} players queued · up to {fmt_time(hours * 3600)}"
-                   + (" or until Ready" if until_ready else ""), "good", "start")
+        self.patch = self.patch or "?"
+        self.conf = ui.Live(lambda: confidence(self.patch, self.patch_counts()[0]) if self.patch != "?" else None, 30)
         pool = ThreadPoolExecutor(max_workers=1)   # one call at a time: the client queues them anyway
+        start = pool.submit(self.seed)   # on the worker: the screen keeps moving while the client answers (a few s)
+        while not start.done():
+            if screen:
+                draw()
+                if screen.key(0.1) == "q":
+                    self.event("stopped before the start", "warn", "stop")
+                    pool.shutdown(wait=False, cancel_futures=True)
+                    self.conf.stop()
+                    raise SystemExit("stopped by you before the crawl started")
+            else:
+                wait([start], timeout=0.5)
+        start.result()   # a SystemExit from the start (no client, no account, no games) ends here
+        self.recount()
+        self.conf.refresh()
+        self.event(f"patch {self.patch} · {len(self.frontier)} players queued · up to {fmt_time(hours * 3600)}"
+                   + (" or until Ready" if until_ready else "") + (f" or until {until_sure}% sure" if until_sure else ""),
+                   "good", "start")
         job, opening, stop, user_pause, busy = None, set(), None, False, None
         last_guard = last_log = last_draw = 0.0
         try:
@@ -496,6 +489,8 @@ class Crawl:
                         stop = f"{samples} samples collected"
                     elif until_ready and self.patch_counts()[0] >= self.ready:
                         stop = f"patch {self.patch} is Ready"
+                    elif until_sure and (c := self.conf.value) and c["patch"] == self.patch and c["aug"]["share"] * 100 >= until_sure:
+                        stop = f"{until_sure}% of augment picks are on sure pairs"
                 if stop and job is None:
                     break
                 paused = busy or user_pause
@@ -555,9 +550,10 @@ class Crawl:
                         self.save_game(arg, res)
                     games_now = self.patch_counts()[0]
                     if games_now // 100 > getattr(self, "milestone", games_now // 100):
+                        c = self.conf.value
                         self.event(f"{num(games_now // 100 * 100)} games of {self.patch}"
-                                   + (" · Ready ✓" if games_now >= self.ready else f" · {num(self.ready - games_now)} to Ready"),
-                                   "good", "games")
+                                   + (f" · augment picks {c['aug']['share']:.0%} sure · item picks {c['item']['share']:.0%}"
+                                      if c and c["patch"] == self.patch else ""), "good", "games")
                     self.milestone = games_now // 100
                     self.now_doing = ""
                 if not screen and job and not job[0].done():
@@ -572,9 +568,9 @@ class Crawl:
                     time.sleep(1)
         finally:
             pool.shutdown(wait=False, cancel_futures=True)
-            if getattr(self, "champs", None):
-                self.champs.stop()
-            self.mode, self.status, self.now_doing = "stopped", f"stopped · {stop or 'error'}", ""
+            if getattr(self, "conf", None):
+                self.conf.stop()
+            self.mode, self.status, self.now_doing = "stopped", "stopped" if stop else "stopped by an error", ""
             self.event(f"stopped: {stop or 'error'}. Everything is saved.", "good" if stop else "bad", "stop" if stop else "error")
             LOG_HOOK = None
             if screen:
@@ -640,18 +636,18 @@ def summary(db, patch, export):
     augs = db.execute(f"SELECT aug, count(*), sum(win) FROM ({aug_union}) GROUP BY aug ORDER BY 2 DESC", (patch,) * 6).fetchall()
     cn, an = names("CHAMPIONS", "key"), names("AUGMENTS", "id")
     counts = sorted(c[1] for c in champs)
-    print(f"patch {patch}: {n} samples in {games} games ({full} full) | {len(champs)} champions | {len(augs)} augments")
+    print(f"patch {patch}: {n:,} samples in {games:,} games ({full:,} full) · {len(champs)} champions · {len(augs)} augments")
     if counts:
-        print(f"champion samples: min {counts[0]}, median {counts[len(counts) // 2]}, max {counts[-1]}; "
+        print(f"champion samples: min {counts[0]:,}, median {counts[len(counts) // 2]:,}, max {counts[-1]:,}; "
               f"under {MIN_GAMES}: {sum(c < MIN_GAMES for c in counts)}")
-    print("most played: " + ", ".join(f"{cn.get(c, c)} {g}" for c, g, _ in champs[:8]))
+    print("most played: " + ", ".join(f"{cn.get(c, c)} {g:,}" for c, g, _ in champs[:8]))
     unknown = [(a, g, w) for a, g, w in augs if a not in an]
     print(f"augments without a note in 強化/: {len(unknown)}" + "".join(f"\n  {a}: {g} picks, {w / g:.0%} win" for a, g, w in unknown))
     rated = sorted(((w / g, a, g) for a, g, w in augs if g >= 100), reverse=True)
     if rated:
         print("augments with 100+ picks, best and worst win rate (raw, not adjusted for champion):")
         for wr, a, g in rated[:5] + rated[-5:]:
-            print(f"  {an.get(a, a)} {wr:.1%} ({g})")
+            print(f"  {wr:6.1%}  {g:>6,} picks  {an.get(a, a)}")
     if export:
         per = db.execute(f"SELECT champ, aug, count(*), sum(win) FROM ({aug_union}) GROUP BY champ, aug", (patch,) * 6).fetchall()
         item_union = " UNION ALL ".join(f"SELECT champ, item{k} AS item, win {base} AND item{k} > 0" for k in range(6))
@@ -668,6 +664,89 @@ def summary(db, patch, export):
         path = EXPORT_DIR / f"mayhem-stats-{patch}.json"
         path.write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
         print(f"wrote {path.relative_to(ROOT)} ([games, wins] per champion, augment and item)")
+
+
+# ---------- how sure the numbers are ----------
+# A win rate from n games is within about ±98/√n points of the true one, 19 times in 20 (95%, near a 50% win rate).
+# The tier scripts call a champion + augment pair sure at 600 games (±4 points) and an item pair at 1,000 (±3), from the
+# crawl cache's meta.json (tools/lcu_cache.py). The figures below say how much of what players pick has numbers that sure.
+
+LADDER = [(10, 100), (6, 267), (4, 600), (3, 1067), (2, 2401)]   # (± points, games needed)
+GOALS = (25, 50, 75, 90)                                        # % of picks on sure pairs to aim for, in turn
+
+
+def margin(n):
+    """± points a win rate from n games can be off, 19 times in 20."""
+    return 98 / n ** 0.5 if n else 100.0
+
+
+def covered(counts, need):
+    """Share of all picks whose pair has at least `need` games; counts: games per pair."""
+    total = sum(counts)
+    return sum(c for c in counts if c >= need) / total if total else 0.0
+
+
+def games_for(counts, need, goal, games):
+    """About how many more games the patch needs before `goal` (0–1) of the picks sit on pairs of `need` games,
+    if every pair keeps its share of the games; 0 when already there."""
+    total, run = sum(counts), 0
+    for c in sorted(counts, reverse=True):
+        run += c
+        if run >= goal * total:
+            return max(0, round(games * (need / c - 1))) if c else None
+    return None
+
+
+_conf_cache = {}
+
+
+def confidence(patch, games_now=None):
+    """How sure the patch's numbers are: champions, augment picks and item picks on the ladder of ± points, and the next
+    goals with the games they need. Reads every player row once (about 10 s on /mnt/c), so it runs on a background
+    thread and is kept until the patch has 1% more games."""
+    import datalib
+    hit = _conf_cache.get(patch)
+    if hit and games_now is not None and games_now < hit["games"] * 1.01 and time.time() - hit["at"] < 600:
+        return hit
+    try:
+        meta = json.loads((EXPORT_DIR / "cache" / patch / "meta.json").read_text())
+    except Exception:
+        meta = {}
+    sure_aug, sure_item = meta.get("sure_games", 600), meta.get("sure_item_games", 1000)
+    db = datalib.read_only(DB)
+    real_items = set(names("ITEMS", "id"))
+    champs, augs, items = {}, {}, {}
+    try:
+        games, = db.execute("SELECT count(*) FROM games WHERE patch=?", (patch,)).fetchone()
+        cols = ", ".join([f"p.aug{k}" for k in range(1, 7)] + [f"p.item{k}" for k in range(6)])
+        for row in db.execute(f"SELECT p.champ, {cols} FROM games g CROSS JOIN players p ON p.game_id = g.game_id "
+                              "WHERE g.patch=?", (patch,)):
+            c = row[0]
+            champs[c] = champs.get(c, 0) + 1
+            for a in row[1:7]:
+                if a:
+                    augs[(c, a)] = augs.get((c, a), 0) + 1
+            for i in set(row[7:]):
+                if i in real_items:
+                    items[(c, i)] = items.get((c, i), 0) + 1
+    finally:
+        db.close()
+    out = {"patch": patch, "games": games, "at": time.time(), "sure_aug": sure_aug, "sure_item": sure_item}
+    for name, counts, sure in (("aug", list(augs.values()), sure_aug), ("item", list(items.values()), sure_item)):
+        share = covered(counts, sure)
+        nxt = next((g for g in GOALS if g / 100 > share), None)
+        out[name] = {"share": share, "pairs": len(counts), "sure_pairs": sum(1 for c in counts if c >= sure),
+                     "ladder": [(pts, covered(counts, need)) for pts, need in LADDER], "goal": nxt,
+                     "more": games_for(counts, sure, nxt / 100, games) if nxt else 0}
+    cc = list(champs.values())
+    cn = names("CHAMPIONS", "key")
+    out["thin"] = [(n, champs.get(k, 0)) for n, k in sorted((n, k) for k, n in cn.items())]
+    out["thin"] = sorted(out["thin"], key=lambda x: x[1])[:10]
+    out["champ"] = {"total": len(cn), "seen": len(cc),
+                    "ladder": [(pts, sum(1 for c in cc if c >= need)) for pts, need in LADDER],
+                    "worst": margin(min(cc)) if cc else 100.0}
+    _conf_cache[patch] = out
+    return out
 
 
 def check_client():
@@ -703,8 +782,65 @@ def captured(fn, *args):
     return buf.getvalue() or "(nothing to show)"
 
 
+def newest_patch():
+    import datalib
+    db = datalib.read_only(DB)
+    try:
+        row = db.execute("SELECT patch FROM games WHERE patch != '' ORDER BY created DESC LIMIT 1").fetchone()
+    finally:
+        db.close()
+    return row[0] if row else None
+
+
+class SidePanel:
+    """The menu's right-hand panel from two background threads: the database, client and tiers (side_panel, every 15 s)
+    and how sure the newest patch's numbers are (confidence, every 60 s; about 10 s to work out). Each part shows a
+    spinner until it is there, so the menu itself never waits."""
+
+    def __init__(self):
+        import lcu_tui as ui
+        self.ui = ui
+        self.base = ui.Live(side_panel, 15)
+        self.conf = ui.Live(lambda: confidence(newest_patch()) if DB.exists() and newest_patch() else None, 60)
+
+    def refresh(self):
+        self.base.refresh()
+        self.conf.refresh()
+
+    @property
+    def value(self):
+        ui = self.ui
+        base = self.base.value or [ui.DIM("DATABASE"), ui.INFO(ui.spinner()) + ui.DIM(" reading the database…")]
+        c = self.conf.value
+        if isinstance(c, list):   # Live's error lines
+            sure = c
+        elif c is None:
+            sure = [ui.INFO(ui.spinner()) + ui.DIM(" working out how sure (about 10 s)…")]
+        else:
+            sure = []
+            for key, what in (("aug", "augment picks"), ("item", "item picks")):
+                f = c[key]
+                tone = ui.GOOD if f["share"] >= .75 else ui.WARN if f["share"] >= .25 else ui.BAD
+                sure.append(f"{ui.fit(ui.TEXT(what), 15)}{ui.bar(f['share'], 14, tone)} {tone(ui.BOLD(ui.pct(f['share']).rjust(4)))}"
+                            + ui.DIM(f"  on sure pairs"))
+            ch = c["champ"]
+            two = dict(ch["ladder"])[2]
+            sure.append(f"{ui.fit(ui.TEXT('champions'), 15)}{ui.bar(two / max(1, ch['total']), 14)} {ui.BOLD(str(two).rjust(4))}"
+                        + ui.DIM(f" / {ch['total']} within ±2"))
+            f = c["aug"]
+            if f["goal"] and f["more"]:
+                sure.append(ui.DIM(f"next: {f['goal']}% of augment picks at ") + ui.TEXT("+" + num(f["more"])) + ui.DIM(" games"))
+        return base[:1] + base[1:self._db_end(base)] + ["", ui.DIM("HOW SURE  ") + ui.FAINT(
+            f"patch {c['patch']}" if isinstance(c, dict) else "")] + sure + base[self._db_end(base):]
+
+    @staticmethod
+    def _db_end(lines):
+        """Where the DATABASE part of the base panel ends (the blank line before CLIENT)."""
+        return next((i for i, l in enumerate(lines) if i and not l), len(lines))
+
+
 def side_panel():
-    """The menu's right-hand panel: the database per patch (toward Ready) and the client."""
+    """The menu panel's database, client and tiers parts (SidePanel adds how sure the numbers are)."""
     import lcu_tui as ui
     lines = [ui.DIM("DATABASE  ") + ui.FAINT(str(DB.relative_to(ROOT)))]
     try:
@@ -712,17 +848,16 @@ def side_panel():
         st = datalib.status()
         pats = {r["patch"]: r["lcu"] for r in st["patches"] if r["lcu"]}
         states = {r["patch"]: r["state"] for r in st["patches"]}
-        ready = st["lifecycle"]["ready_games"]
     except Exception:
-        pats, states, ready = {}, {}, 3000
-    for patch in sorted(pats, key=patch_key, reverse=True)[:4]:
+        pats, states = {}, {}
+    for patch in sorted(pats, key=patch_key, reverse=True)[:3]:
         g = pats[patch]
         word = states.get(patch, "")
-        state = (ui.GOOD if word in ("Ready", "Announced") else ui.WARN if word == "Collecting" else ui.DIM)(word)
-        lines.append(f"{ui.TEXT(patch):<6} {ui.bar(g['games'] / ready, 14)} {ui.BOLD(ui.num(g['games']))}"
-                     f"{ui.DIM(' / ' + ui.num(ready))}  {state}")
-        lines.append(ui.DIM(f"       {g['full']:,} full · {g['champions']} champions · "
-                            + (f"{g['first']} → {g['last']}" if g["first"] else "no dates")))
+        state = (ui.GOOD if word == "Announced" else ui.WARN if word in ("Ready", "Collecting") else ui.DIM)(word)
+        lines.append(ui.right(f"{ui.TEXT(patch)}  {ui.BOLD(ui.num(g['games']).rjust(7))} {ui.DIM('games')}"
+                              f"{ui.DIM(f'  {g['full'] / max(1, g['games']):.0%} full')}", state, 50))
+        lines.append(ui.DIM(f"       {g['samples']:,} samples · {g['champions']} champions · "
+                            + (f"{g['first'][5:]} → {g['last'][5:]}" if g["first"] else "no dates")))
     if not pats:
         lines.append(ui.DIM("empty: start a crawl"))
     lines += ["", ui.DIM("CLIENT")]
@@ -749,26 +884,40 @@ def side_panel():
     page = ROOT / ".cache" / "reports" / "tiers.html"
     lines.append(ui.DIM("page made ") + ui.TEXT(time.strftime("%m-%d %H:%M", time.localtime(page.stat().st_mtime)))
                  if page.exists() else ui.DIM("page not made yet: 4"))
-    lines += ["", ui.DIM("Read-only · one call at a time · no names or ids saved"),
-              ui.DIM("Ctrl+C or q stops; everything is saved as it goes")]
+    lines += ["", ui.FAINT("Read-only · one call at a time · no names or ids saved")]
     return lines
 
 
 def menu():
-    """The full-screen menu (python3 -I tools/fetch_lcu.py with no options, or tools/mayhem_crawler.bat)."""
+    """The full-screen menu (python3 -I tools/fetch_lcu.py with no options, or tools/mayhem_crawler.bat).
+    Every item that takes more than a moment shows a loading screen (ui.busy) or its live output (ui.run_steps)."""
     import lcu_tui as ui
     py = [sys.executable, "-I"]
     tool = lambda name, *args: py + [str(ROOT / "tools" / name), *args]   # noqa: E731
-    items = [(None, "Crawl", ""), ("1", "Crawl", "for a number of hours"), ("2", "Crawl until Ready", "stops at the Ready count"),
+    items = [(None, "Crawl", ""),
+             ("1", "Crawl", "for a number of hours"),
+             ("2", "Crawl until sure", "to a % of sure augment picks"),
              ("3", "Quick test", "5 minutes"),
-             (None, "Tiers", ""), ("4", "Tiers page", "make tiers.html and open it"),
-             ("5", "Rebuild tiers", "from the crawl, then the page"),
-             (None, "Database", ""), ("6", "Dashboard", "charts in the browser"), ("7", "Patch summary", "newest patch"),
-             ("8", "Export to JSON", "newest patch"), ("9", "Import test games", ".cache/lcu/<patch>/"),
-             (None, "Client", ""), ("0", "Check the client", "open, logged in, Mayhem games"), ("q", "Quit", "")]
+             (None, "Tiers", ""),
+             ("4", "Tiers page", "make tiers.html, open it"),
+             ("5", "Rebuild tiers", "crawl → tiers → page"),
+             (None, "Database", ""),
+             ("6", "Dashboard", "charts in the browser"),
+             ("7", "Patch summary", "the newest patch in text"),
+             ("8", "Export to JSON", "the newest patch's counts"),
+             ("9", "Import test games", ".cache/lcu/<patch>/"),
+             (None, "Client", ""),
+             ("0", "Check the client", "logged in, Mayhem games"),
+             ("q", "Quit", "")]
     header = lambda w: [" " + ui.ACCENT(ui.BOLD("MAYHEM CRAWLER")), ui.rule(w)]   # noqa: E731
-    side = ui.Live(side_panel, 15)
+    side = SidePanel()
     at = 0
+
+    def page(title, fn, hint):
+        text = ui.busy(scr, title, lambda: captured(fn), header, hint)
+        if text is not None:
+            ui.pager(scr, title, text, header)
+
     with ui.Screen() as scr:
         while True:
             choice, at = ui.menu(scr, items, side, "Mayhem crawler", "League client · read-only", at)
@@ -776,33 +925,38 @@ def menu():
                 return
             try:
                 if choice in ("1", "2", "3"):
+                    hours, sure = 5 / 60, 0
                     if choice == "1":
-                        got = ui.ask(scr, "Crawl", "Hours:", 8, header)
-                        if got is None:
+                        hours = ui.ask(scr, "Crawl", "Hours:", 8, header, low=0.05, high=48,
+                                       hint="The crawl pauses by itself while you are in champion select or a game, "
+                                            "and stops on q; everything is saved as it goes.")
+                        if hours is None:
                             continue
-                        hours, until = float(got), False
                     elif choice == "2":
-                        got = ui.ask(scr, "Crawl until Ready", "Stop after at most (hours):", 12, header)
-                        if got is None:
+                        c = side.conf.value if isinstance(side.conf.value, dict) else None
+                        now = f" Now {c['aug']['share']:.0%}." if c else ""
+                        sure = ui.ask(scr, "Crawl until sure", "Stop at (% of augment picks on sure pairs):", 50, header,
+                                      low=1, high=99, hint=f"A pair is sure at 600 games: its win rate is then within "
+                                                           f"±4 points, 19 times in 20.{now}")
+                        if sure is None:
                             continue
-                        hours, until = float(got), True
-                    else:
-                        hours, until = 5 / 60, False
+                        hours = ui.ask(scr, "Crawl until sure", "Stop after at most (hours):", 12, header, low=0.05, high=48)
+                        if hours is None:
+                            continue
+                        sure = int(sure)
                     crawl = Crawl(open_db(), Client(DELAY), None)
                     try:
-                        crawl.run(hours, 0, until, screen=scr)
+                        crawl.run(hours, 0, False, screen=scr, until_sure=sure)
                     except SystemExit as e:
                         crawl.event(str(e), "bad", "error")
-                        crawl.mode, crawl.status = "stopped", "stopped"
-                        if not hasattr(crawl, "t0") or not hasattr(crawl, "ready"):
-                            ui.pager(scr, "Could not start", str(e), header)
-                            continue
-                    w, h = scr.size()
-                    lines = ui.dashboard(crawl.state(), w, h)
-                    lines[-1] = ui.right(ui.DIM(" any key: back to the menu"), ui.GOOD("saved ✓ "), w)
-                    scr.draw(lines)
-                    while scr.key(1) is None:
-                        pass
+                        crawl.mode, crawl.status, crawl.now_doing = "stopped", "could not start", ""
+
+                    def final(w, h, k):
+                        if k in ("up", "down", "pgup", "pgdn", "home", "end"):
+                            step = {"up": 1, "down": -1, "pgup": 10, "pgdn": -10, "home": 10 ** 6, "end": -10 ** 6}[k]
+                            crawl.log_back = max(0, min(len(crawl.events) - 1, crawl.log_back + step))
+                        return ui.dashboard(crawl.state(), w, h)
+                    ui.hold(scr, final)
                 elif choice == "4":
                     ui.run_steps(scr, "Tiers page", [("tiers.html", tool("mn.py", "tiers"))], header,
                                  "Opened in your browser.")
@@ -816,15 +970,24 @@ def menu():
                 elif choice == "6":
                     ui.run_steps(scr, "Dashboard", [("report.html", tool("mn.py", "report"))], header,
                                  "Opened in your browser.")
-                elif choice in ("7", "8"):
-                    ui.pager(scr, "Patch summary" if choice == "7" else "Export to JSON",
-                             captured(summary, open_db(), None, choice == "8"), header)
+                elif choice == "7":
+                    page("Patch summary", lambda: summary(open_db(), None, False),
+                         "Counting samples per champion and augment over the whole patch.")
+                elif choice == "8":
+                    page("Export to JSON", lambda: summary(open_db(), None, True),
+                         "Counting every champion, augment and item pair, then writing the JSON file.")
                 elif choice == "9":
-                    folders = sorted(p for p in EXPORT_DIR.glob("*") if p.is_dir() and p.name != "cache") if EXPORT_DIR.exists() else []
-                    text = "".join(captured(import_json, open_db(), f) for f in folders) or "no test crawl folders in .cache/lcu/"
-                    ui.pager(scr, "Import test games", text, header)
+                    def imp():
+                        folders = sorted(p for p in EXPORT_DIR.glob("*") if p.is_dir() and p.name != "cache") \
+                            if EXPORT_DIR.exists() else []
+                        for f in folders:
+                            import_json(open_db(), f)
+                        if not folders:
+                            print("no test crawl folders in .cache/lcu/")
+                    page("Import test games", imp, "Reading one JSON file per game.")
                 elif choice == "0":
-                    ui.pager(scr, "Check the client", captured(check_client), header)
+                    page("Check the client", check_client, "Asking the League client who is logged in and for "
+                                                           "their last 20 games (a few seconds).")
             except KeyboardInterrupt:
                 continue
             side.refresh()
@@ -841,6 +1004,8 @@ def main():
     ap.add_argument("--hours", type=float, default=8, help="stop after this long (default 8)")
     ap.add_argument("--samples", type=int, default=0, help="stop after this many new samples")
     ap.add_argument("--until-ready", action="store_true", help="stop once the patch has the Ready count of games")
+    ap.add_argument("--until-sure", type=int, default=0, metavar="PCT",
+                    help="stop once PCT%% of the augment picks are on sure pairs (600+ games)")
     ap.add_argument("--patch", help="collect this patch (default: the newest seen)")
     ap.add_argument("--delay", type=float, default=DELAY, help=f"seconds between calls (default {DELAY})")
     ap.add_argument("--summary", nargs="?", const="", metavar="PATCH", help="print what the database holds, then exit")
@@ -858,10 +1023,10 @@ def main():
         if sys.stdin.isatty() and sys.stdout.isatty() and not a.plain:
             import lcu_tui as ui
             with ui.Screen() as scr:
-                crawl.run(a.hours, a.samples, a.until_ready, screen=scr)
+                crawl.run(a.hours, a.samples, a.until_ready, screen=scr, until_sure=a.until_sure)
                 time.sleep(2)
         else:
-            crawl.run(a.hours, a.samples, a.until_ready)
+            crawl.run(a.hours, a.samples, a.until_ready, until_sure=a.until_sure)
     except KeyboardInterrupt:
         log("stopped by hand; everything so far is saved")
     except SystemExit as e:
