@@ -157,7 +157,7 @@ def cmd_tiers(args):
             rows = []
             for t in st.get("tiers", []):
                 g, w = pair.get(str(t["id"]), (0, 0))
-                rows.append([str(t["id"]), t["tier"], t.get("reason", ""), g, w, t.get("when", "")])
+                rows.append([str(t["id"]), t["tier"], t.get("reason", ""), g, w, t.get("when", ""), t.get("score", 0)])
             styles.append({"name": st.get("name", sname), "rows": rows})
         top = [[str(r[0]), r[1], r[2]] for r in c.get("ia", {}).get("items", [])
                if str(r[0]) in items and r[1] >= 30][:12]
