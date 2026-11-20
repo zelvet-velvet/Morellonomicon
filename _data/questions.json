@@ -29,6 +29,13 @@
     "games": 5289
    },
    {
+    "champion_name": "犽凝",
+    "item": "死亡之舞",
+    "pick": 0.584,
+    "gap": 0.031,
+    "games": 8555
+   },
+   {
     "champion_name": "弗拉迪米爾",
     "item": "死亡之帽",
     "pick": 0.573,
