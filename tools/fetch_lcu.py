@@ -961,7 +961,10 @@ def menu():
                     ui.run_steps(scr, "Tiers page", [("tiers.html", tool("mn.py", "tiers"))], header,
                                  "Opened in your browser.")
                 elif choice == "5":
-                    ui.run_steps(scr, "Rebuild tiers", [
+                    patch = newest_patch()
+                    resg = [] if patch and (ROOT / ".cache" / "resg" / patch / "meta.json").exists() else [
+                        ("resg.top games (~7 min)", tool("fetch_resg.py"))]   # without it the tiers fall back to our far smaller crawl
+                    ui.run_steps(scr, "Rebuild tiers", resg + [
                         ("our crawl → cache", tool("lcu_cache.py")),
                         ("augment tiers", tool("augment_tiers.py")),
                         ("item builds", tool("build_tiers.py")),
