@@ -125,6 +125,19 @@ def frontmatter(folder):
     return out
 
 
+# The tier viewer's augment tiers (decided with Zaviel 2026-11-21, after reading how resg.top tiers: raw win rate in 3-point
+# bands, a 高 / 中 / 观察 label by games): an augment's overall number is its average gap to each champion's own win rate,
+# weighted by picks and pulled toward 0 by GAP_PRIOR games, so strong champions taking it do not make it look strong. The
+# same 3-point bands as the champions', centred on 0. A second column, the model (tools/augment_model.py, our crawl only),
+# also holds the other augments fixed. Pick rate only orders ties and is shown for confidence.
+GAP_PRIOR = 200
+GAP_BANDS = ((4.5, "T0"), (1.5, "T1"), (-1.5, "T2"), (-4.5, "T3"))   # points at or above -> tier; below the last is T4
+
+
+def gap_tier(points):
+    return next((t for low, t in GAP_BANDS if points >= low), "T4")
+
+
 def cmd_tiers(args):
     """The tier viewer: every champion's tier, games and win rate, its augment tiers (with each pair's games and win
     rate) and most-won items, and every augment's games, win rate and pick rate, from the games the current
@@ -140,12 +153,35 @@ def cmd_tiers(args):
     augs = {fm["id"]: fm for fm in frontmatter(vault_paths.AUGMENTS) if fm.get("id")}
     items = {fm["id"]: fm for fm in frontmatter(vault_paths.ITEMS) if fm.get("id")}
     aug_games = {str(a["id"]): a for a in dl.read_json(cache / "augments.json")["items"]}
+    # each augment's gap to the champions' own win rates, over every champion that took it
+    gap_sum, gap_n = {}, {}
+    for f in (cache / "champions").glob("*.json"):
+        c = dl.read_json(f)
+        cg, cw = c["champion"]["tm"], c["champion"]["wm"]
+        if not cg:
+            continue
+        for r in c.get("ra", []):
+            a, g, w = str(r[0]), r[2], r[3]
+            gap_sum[a] = gap_sum.get(a, 0) + (w - g * cw / cg)
+            gap_n[a] = gap_n.get(a, 0) + g
+    model = None
+    if not args.no_model:
+        try:
+            import augment_model
+            model = augment_model.fit(patch, progress=lambda m: print(m, flush=True))
+        except Exception as e:   # no crawl of this patch on this PC, or no database: the page works without the column
+            print(f"model: skipped ({e})")
     out_augs = {}
     for aid, fm in augs.items():
         g = aug_games.get(aid, {})
+        n = gap_n.get(aid, 0)
+        gap = round(gap_sum.get(aid, 0) / (n + GAP_PRIOR) * 100, 2) if n else None
+        m = (model or {}).get("augments", {}).get(aid)
         out_augs[aid] = {"name": fm.get("name", aid), "rarity": fm.get("rarity", ""), "icon": fm.get("icon", ""),
                          "games": g.get("tm", 0), "wins": g.get("wm", 0), "pr": g.get("pr", 0),
-                         "unrated": tiers.get("unrated", {}).get(aid, "")}
+                         "unrated": tiers.get("unrated", {}).get(aid, ""),
+                         "gap": gap, "gap_tier": gap_tier(gap) if gap is not None and n >= 100 else "",
+                         "model": m and [m[0], m[1], m[2], gap_tier(m[0]) if m[2] >= 100 else ""]}
     out_champs = []
     for key, fm in champs.items():
         f = cache / "champions" / f"{fm['key']}.json"
@@ -167,6 +203,7 @@ def cmd_tiers(args):
                            "games": c["champion"]["tm"], "wins": c["champion"]["wm"], "styles": styles, "items": top})
     used = {i for c in out_champs for i, *_ in c["items"]}
     data = {"patch": patch, "source": source, "built": tiers.get("source", ""),
+            "model": model and {"samples": model["samples"], "games": model["games"], "made": model["made"]},
             "champions": out_champs, "augments": out_augs,
             "items": {i: {"name": items[i].get("name", i)} for i in used}}
     page = (Path(__file__).resolve().parent / "data" / "tiers.html").read_text(encoding="utf-8")
@@ -201,6 +238,7 @@ def main():
     p = sub.add_parser("tiers", help="champion and augment tiers with games and win rates, a private HTML page")
     p.add_argument("--no-open", action="store_true", help="write the page without opening it")
     p.add_argument("--folio", action="store_true", help="also copy it into the private folio's Reports/")
+    p.add_argument("--no-model", action="store_true", help="leave out the model column (it takes about a minute when the crawl changed)")
     p.set_defaults(fn=cmd_tiers)
     args = ap.parse_args()
     args.fn(args)

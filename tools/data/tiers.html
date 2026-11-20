@@ -52,7 +52,7 @@ input[type=search] { flex: 1 1 180px; min-width: 0; }
 .list { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
 .head, .row { display: grid; grid-template-columns: 40px minmax(0,1fr) 44px minmax(120px, 210px) 72px; gap: 12px;
   align-items: center; padding: 8px 14px; }
-.augs .head, .augs .row { grid-template-columns: 40px minmax(0,1fr) 44px 44px minmax(120px, 210px) 72px 60px; }
+.augs .head, .augs .row { grid-template-columns: 40px minmax(0,1fr) 44px 44px 64px minmax(120px, 200px) 72px 60px; }
 .head { color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--border); position: sticky; top: 0;
   background: var(--surface-1); z-index: 1; }
 .head span[data-sort] { cursor: pointer; user-select: none; }
@@ -90,9 +90,17 @@ input[type=search] { flex: 1 1 180px; min-width: 0; }
 .rar { font-size: 12px; font-weight: 600; }
 .r-稜鏡 { color: var(--prism); } .r-金 { color: var(--gold); } .r-銀 { color: var(--silver); } .r-五殺 { color: var(--penta); }
 .empty { padding: 24px; text-align: center; color: var(--muted); }
+.num small, .mdl small { display: block; font-size: 11px; color: var(--muted); }
+.mdl { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.conf { font-size: 11px; padding: 0 5px; border-radius: 4px; border: 1px solid var(--border); color: var(--muted); }
+.conf.hi { color: var(--up); border-color: currentColor; } .conf.mid { color: var(--text-secondary); }
+details.how { margin: 10px 0 0; font-size: 13px; color: var(--text-secondary); }
+details.how summary { cursor: pointer; color: var(--muted); }
+details.how ul { margin: 6px 0 0; padding-left: 18px; } details.how li { margin: 2px 0; }
 @media (max-width: 640px) {
   .head, .row { grid-template-columns: 36px minmax(0,1fr) 40px 104px; gap: 8px; padding: 8px 10px; }
   .augs .head, .augs .row { grid-template-columns: 36px minmax(0,1fr) 40px 40px 104px; }
+  .augs .mdl { display: none; }
   .augs .num:not(.pr) { display: none; }
   .head .g, .row .g, .augs .pr { display: none; }
   .row img { width: 36px; height: 36px; }
@@ -104,7 +112,15 @@ input[type=search] { flex: 1 1 180px; min-width: 0; }
 <main>
   <h1>Mayhem 強度表</h1>
   <p class="sub" id="sub"></p>
-  <p class="note">強化的「強度」S–C 是 app 的推理排名（多少英雄評為 S），「分級」T0–T4 和英雄一樣按勝率：勝率高於 55.5% 為 T0，其餘向平均拉 200 場後排名。勝率條以 50% 為中線，往右綠色高於、往左紅色低於（滿格 ±10%）；場次少於 100 的淡色顯示。私人資料，只在這台電腦。</p>
+  <p class="note">私人資料，只在這台電腦。分級是固定的勝率帶，每級 3 個百分點：同一個分級每個版本都代表同樣的勝率。</p>
+  <details class="how"><summary>分級怎麼算</summary><ul>
+    <li><b>英雄分級</b>：勝率高於 55.5% 為 T0；其餘先向平均拉 200 場，再每 3 點一級：52.5% 以上 T1、49.5% 以上 T2、46.5% 以上 T3，其下 T4。</li>
+    <li><b>強化「強度」S–C</b>：app 的推理排名：英雄的技能組合不合這個強化，再用對局核對；看多少英雄評為 S。</li>
+    <li><b>強化「分級」</b>：不是強化本身的勝率，而是每位英雄拿它時比自己平常的勝率高或低多少（勝率差），依選取次數平均，再向 0 拉 200 場。這樣強勢英雄常拿的強化不會沾光。+4.5 點以上 T0、+1.5 以上 T1、−1.5 以上 T2、−4.5 以上 T3，其下 T4。</li>
+    <li><b>模型</b>：只用我們自己的對局，把英雄和同一位玩家的其他五個強化一起算，看這個強化單獨帶來多少勝率（和平均強化相比）。常和強勢強化一起拿的強化，在這裡才看得出真正的效果。</li>
+    <li><b>選取率</b>：只代表多少人選，不代表強，所以不算進分級，只拿來排同分和判斷可信度。</li>
+    <li><b>可信度</b>：n 場的勝率大約在 ±98/√n 點內（20 次有 19 次）。<span class="conf hi">高</span> 600 場以上（±4 以內），<span class="conf mid">中</span> 100–599 場，<span class="conf">觀察</span> 不到 100 場，數字還會變。</li>
+  </ul></details>
   <div class="bar tabs">
     <button class="seg" data-tab="champs" aria-pressed="true">英雄</button>
     <button class="seg" data-tab="augs" aria-pressed="false">強化</button>
@@ -134,7 +150,8 @@ const TIERS = ["T0","T1","T2","T3","T4"], RAR = ["稜鏡","金","銀","五殺"];
 const ddv = (DATA.champions.find(c => /cdn\/([\d.]+)\//.test(c.icon))?.icon.match(/cdn\/([\d.]+)\//) || [, "16.23.1"])[1];
 const itemIcon = id => `https://ddragon.leagueoflegends.com/cdn/${ddv}/img/item/${id}.png`;
 const totalGames = Math.round(DATA.champions.reduce((s, c) => s + c.games, 0) / 10);
-$("#sub").textContent = `版本 ${DATA.patch} · ${DATA.source} · 約 ${fmt(totalGames)} 場 · ${DATA.champions.length} 位英雄`;
+$("#sub").textContent = `版本 ${DATA.patch} · ${DATA.source} · 約 ${fmt(totalGames)} 場 · ${DATA.champions.length} 位英雄`
+  + (DATA.model ? ` · 模型：我們的 ${fmt(DATA.model.games)} 場（${DATA.model.made}）` : " · 模型：這台電腦沒有這個版本的對局");
 
 function wrBar(w, g, min = 100) {
   const r = pct(w, g);
@@ -143,6 +160,19 @@ function wrBar(w, g, min = 100) {
   const style = d >= 0 ? `left:50%;width:${d * 50}%;background:var(--up)` : `right:50%;width:${-d * 50}%;background:var(--down)`;
   return `<div class="wr${g < min ? " thin" : ""}" title="${fmt(w)} 勝 / ${fmt(g)} 場"><div class="track"><i style="${style}"></i></div>`
        + `<span class="v ${cls}">${(r * 100).toFixed(1)}%</span></div>`;
+}
+const margin = n => n ? 98 / Math.sqrt(n) : 100;
+const conf = n => n >= 600 ? `<span class="conf hi" title="±${margin(n).toFixed(1)} 點">高</span>`
+                : n >= 100 ? `<span class="conf mid" title="±${margin(n).toFixed(1)} 點">中</span>`
+                : `<span class="conf" title="±${margin(n).toFixed(1)} 點：數字還會變">觀察</span>`;
+const sign = x => (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(1);
+// a gap in points: a bar out from 0, right and green above, left and red below (±6 points fills the half)
+function gapBar(points, n, min = 100) {
+  if (points == null) return `<div class="wr thin"><div class="track"></div><span class="v">—</span></div>`;
+  const d = Math.max(-1, Math.min(1, points / 6)), cls = points >= 0 ? "up" : "down";
+  const style = d >= 0 ? `left:50%;width:${d * 50}%;background:var(--up)` : `right:50%;width:${-d * 50}%;background:var(--down)`;
+  return `<div class="wr${n < min ? " thin" : ""}" title="比拿它的英雄平常勝率 ${sign(points)} 點 · ${fmt(n)} 場 · ±${margin(n).toFixed(1)}"><div class="track"><i style="${style}"></i></div>`
+       + `<span class="v ${cls}">${sign(points)}</span></div>`;
 }
 function filters(el, opts, state, key, redraw) {
   el.innerHTML = ["全部", ...opts].map(o => `<button class="seg" data-v="${o}" aria-pressed="${(state[key] || "全部") === o}">${o}</button>`).join(" ");
@@ -162,16 +192,17 @@ const cs = { sort: "tier", tier: "", q: "", open: null };
 function champDetail(c) {
   let h = "";
   for (const st of c.styles) {
-    h += `<h3>強化 · ${esc(st.name)}</h3>`;
+    h += `<h3>強化 · ${esc(st.name)} <small style="font-weight:400;color:var(--muted)">（勝率後的 ± 是比這位英雄平常的 ${(pct(c.wins, c.games) * 100).toFixed(1)}% 高或低幾點）</small></h3>`;
     for (const t of ["S","A","B","C"]) {
       const rows = st.rows.filter(r => r[1] === t);
       if (!rows.length) continue;
+      const own = pct(c.wins, c.games);
       rows.sort((a, b) => (pct(b[4], b[3]) ?? 0) - (pct(a[4], a[3]) ?? 0));
       h += `<div class="group"><span class="tier ${t}">${t}</span><div class="chips">` + rows.map(([id, , reason, g, w, when]) => {
         const a = DATA.augments[id] || { name: id, rarity: "", icon: "" }, r = pct(w, g);
-        const wr = r == null ? "—" : `<span class="${r >= .5 ? "up" : "down"}">${(r * 100).toFixed(1)}%</span>`;
-        return `<div class="chip${g < 30 ? " thin" : ""}" title="${esc([reason, when].filter(Boolean).join(" · "))}"><img loading="lazy" src="${esc(a.icon)}" alt="">`
-             + `<div class="t"><b>${esc(a.name)} <span class="rar r-${esc(a.rarity)}">${esc(a.rarity)}</span></b><small>${wr} · ${fmt(g)} 場</small></div></div>`;
+        const wr = r == null ? "—" : `<span class="${r >= own ? "up" : "down"}">${(r * 100).toFixed(1)}% ${sign((r - own) * 100)}</span>`;
+        return `<div class="chip${g < 100 ? " thin" : ""}" title="${esc([reason, when, g ? `±${margin(g).toFixed(1)} 點` : ""].filter(Boolean).join(" · "))}"><img loading="lazy" src="${esc(a.icon)}" alt="">`
+             + `<div class="t"><b>${esc(a.name)} <span class="rar r-${esc(a.rarity)}">${esc(a.rarity)}</span></b><small>${wr} · ${fmt(g)} 場 ${conf(g)}</small></div></div>`;
       }).join("") + `</div></div>`;
     }
   }
@@ -197,7 +228,7 @@ function drawChamps() {
   for (const c of list) {
     const r = document.createElement("div"); r.className = "row";
     r.innerHTML = `<img loading="lazy" src="${esc(c.icon)}" alt=""><div class="nm"><b>${esc(c.name)}</b><small>${esc(c.en)}</small></div>`
-      + `<span>${c.tier ? `<span class="tier ${c.tier}">${c.tier}</span>` : ""}</span>${wrBar(c.wins, c.games)}<span class="num g">${fmt(c.games)}</span>`;
+      + `<span>${c.tier ? `<span class="tier ${c.tier}">${c.tier}</span>` : ""}</span>${wrBar(c.wins, c.games)}<span class="num g">${fmt(c.games)}<small>±${margin(c.games).toFixed(1)}</small></span>`;
     r.onclick = () => { cs.open = cs.open === c.key ? null : c.key; drawChamps(); };
     el.append(r);
     if (cs.open === c.key) { const d = document.createElement("div"); d.className = "detail"; d.innerHTML = champDetail(c); el.append(d); }
@@ -223,51 +254,44 @@ const rank = Object.entries(best).filter(([id]) => !DATA.augments[id]?.unrated).
 rank.sort((x, y) => (y.s + y.a / 2) / y.offered - (x.s + x.a / 2) / x.offered || y.offered - x.offered);
 const strength = {};
 rank.forEach((x, i) => { const at = i / rank.length; strength[x.id] = { ...x, rank: i + 1, tier: at < .15 ? "S" : at < .4 ? "A" : at < .75 ? "B" : "C" }; });
-// win-rate tier T0-T4, like the champions' (augment_tiers.champion_tiers): the win rate pulled toward the average by 200 games
-// (50 games at least): T0 every augment above 55.5 % (Zaviel's cut, as CHAMP_T0_WR), the rest ranked 12 / 38 / 35 / 10 % of all
+// 分級 from the gap (tools/mn.py works it out: each champion's own win rate subtracted, pick-weighted, 3-point bands),
+// ranked by the gap and then the pick rate (ties only); the model column is our crawl's estimate with the other augments held fixed
 const wrTier = {};
-{
-  const all = Object.entries(DATA.augments).filter(([, a]) => a.games >= 50);
-  const mean = all.reduce((s, [, a]) => s + a.wins, 0) / all.reduce((s, [, a]) => s + a.games, 0);
-  const sh = ([, a]) => (a.wins + 200 * mean) / (a.games + 200);
-  all.sort((x, y) => sh(y) - sh(x));
-  const t0 = all.filter(([, a]) => a.wins / a.games > .555), pool = all.filter(([, a]) => a.wins / a.games <= .555);
-  t0.forEach(([id], i) => wrTier[id] = { tier: "T0", rank: i + 1 });
-  let start = 0;
-  for (const [t, share] of [["T1", .12], ["T2", .38], ["T3", .35], ["T4", 1]]) {
-    const end = share >= 1 ? pool.length : Math.min(pool.length, start + Math.max(1, Math.round(all.length * share)));
-    pool.slice(start, end).forEach(([id], i) => wrTier[id] = { tier: t, rank: t0.length + start + i + 1 });
-    start = end;
-  }
-}
+Object.entries(DATA.augments).filter(([, a]) => a.gap_tier)
+  .sort(([, x], [, y]) => y.gap - x.gap || y.pr - x.pr)
+  .forEach(([id, a], i) => wrTier[id] = { tier: a.gap_tier, rank: i + 1 });
 const as = { sort: "tier", rarity: "", tier: "", wt: "", q: "", open: null };
 function drawAugs() {
   const q = as.q.trim();
   let list = Object.entries(DATA.augments).filter(([id, a]) => a.games && (!as.rarity || a.rarity === as.rarity)
     && (!as.tier || (strength[id]?.tier || "未評級") === as.tier) && (!as.wt || wrTier[id]?.tier === as.wt) && (!q || a.name.includes(q)));
   const by = { tier: (a, b) => (strength[a[0]]?.rank ?? 9999) - (strength[b[0]]?.rank ?? 9999) || b[1].games - a[1].games,
-               wt: (a, b) => (wrTier[a[0]]?.rank ?? 9999) - (wrTier[b[0]]?.rank ?? 9999), wr: (a, b) => pct(b[1].wins, b[1].games) - pct(a[1].wins, a[1].games), games: (a, b) => b[1].games - a[1].games,
+               wt: (a, b) => (wrTier[a[0]]?.rank ?? 9999) - (wrTier[b[0]]?.rank ?? 9999),
+               gap: (a, b) => (b[1].gap ?? -99) - (a[1].gap ?? -99) || b[1].pr - a[1].pr,
+               mdl: (a, b) => (b[1].model?.[0] ?? -99) - (a[1].model?.[0] ?? -99), games: (a, b) => b[1].games - a[1].games,
                pr: (a, b) => b[1].pr - a[1].pr, name: (a, b) => a[1].name.localeCompare(b[1].name, "zh-Hant"),
                s: (a, b) => (sOf[b[0]]?.size || 0) - (sOf[a[0]]?.size || 0) };
   list.sort(by[as.sort]);
   const el = $("#alist"); el.innerHTML = "";
-  el.append(headRow([["", ""], ["強化", "name"], ["強度", "tier"], ["分級", "wt"], ["勝率", "wr"], ["場次", "games", "num"], ["選取率", "pr", "num pr"]], as, drawAugs));
+  el.append(headRow([["", ""], ["強化", "name"], ["強度", "tier"], ["分級", "wt"], ["模型", "mdl", "mdl"], ["勝率差", "gap"], ["場次", "games", "num"], ["選取率", "pr", "num pr"]], as, drawAugs));
   for (const [id, a] of list) {
     const r = document.createElement("div"); r.className = "row";
     const n = sOf[id]?.size || 0, st = strength[id];
     const tierCell = st ? `<span class="tier ${st.tier}" title="第 ${st.rank} 名 · ${st.s} S / ${st.a} A / ${st.offered} 位英雄可選">${st.tier}</span>`
                         : `<span class="tier none" title="${esc(a.unrated || "沒有英雄評為 S 或 A")}">—</span>`;
     r.innerHTML = `<img loading="lazy" src="${esc(a.icon)}" alt=""><div class="nm"><b>${esc(a.name)}</b><small><span class="rar r-${esc(a.rarity)}">${esc(a.rarity)}</span>`
-      + ` · ${n ? `${n} 位英雄 S` : "沒有英雄 S"}${st ? ` / ${st.offered} 位可選` : ""}</small></div><span>${tierCell}</span><span>${wrTier[id] ? `<span class="tier ${wrTier[id].tier}" title="勝率第 ${wrTier[id].rank} 名">${wrTier[id].tier}</span>` : `<span class="tier none">—</span>`}</span>${wrBar(a.wins, a.games, 500)}<span class="num">${fmt(a.games)}</span><span class="num pr">${(a.pr * 100).toFixed(1)}%</span>`;
+      + ` · ${n ? `${n} 位英雄 S` : "沒有英雄 S"}${st ? ` / ${st.offered} 位可選` : ""}</small></div><span>${tierCell}</span><span>${wrTier[id] ? `<span class="tier ${wrTier[id].tier}" title="勝率差第 ${wrTier[id].rank} 名 · 強化本身勝率 ${(pct(a.wins, a.games) * 100).toFixed(1)}%">${wrTier[id].tier}</span>` : `<span class="tier none">—</span>`}</span>`
+      + `<span class="mdl">${a.model ? `${a.model[3] ? `<span class="tier ${a.model[3]}" style="height:20px;min-width:30px;font-size:12px">${a.model[3]}</span>` : ""}<span class="${a.model[0] >= 0 ? "up" : "down"}" title="±${a.model[1].toFixed(1)} 點 · ${fmt(a.model[2])} 個玩家">${sign(a.model[0])}</span>` : `<span class="tier none">—</span>`}</span>`
+      + `${gapBar(a.gap, a.games)}<span class="num">${fmt(a.games)}<small>${conf(a.games)}</small></span><span class="num pr">${(a.pr * 100).toFixed(1)}%</span>`;
     r.onclick = () => { as.open = as.open === id ? null : id; drawAugs(); };
     el.append(r);
     if (as.open === id) {
       const d = document.createElement("div"); d.className = "detail";
       const champs = [...(sOf[id]?.values() || [])].sort((x, y) => pct(y.wins, y.games) - pct(x.wins, x.games));
       d.innerHTML = champs.length ? `<h3>評為 S 的英雄</h3><div class="chips">` + champs.map(c => {
-          const row = c.styles.flatMap(s => s.rows).find(r => r[0] === id && r[1] === "S"), pr = pct(row[4], row[3]);
+          const row = c.styles.flatMap(s => s.rows).find(r => r[0] === id && r[1] === "S"), pr = pct(row[4], row[3]), own = pct(c.wins, c.games);
           return `<div class="chip" title="${esc(row[2])}"><img loading="lazy" src="${esc(c.icon)}" alt=""><div class="t"><b>${esc(c.name)}</b>`
-               + `<small>${pr == null ? "—" : `<span class="${pr >= .5 ? "up" : "down"}">${(pr * 100).toFixed(1)}%</span>`} · ${fmt(row[3])} 場</small></div></div>`;
+               + `<small>${pr == null ? "—" : `<span class="${pr >= own ? "up" : "down"}">${(pr * 100).toFixed(1)}% ${sign((pr - own) * 100)}</span>`} · ${fmt(row[3])} 場 ${conf(row[3])}</small></div></div>`;
         }).join("") + `</div>` : `<div class="empty">沒有英雄把它評為 S</div>`;
       el.append(d);
     }
