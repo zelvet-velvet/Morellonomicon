@@ -2,7 +2,9 @@
 """Collect ARAM Mayhem games (champion, win, items, augments) through the League client running on this PC.
 
 Riot's Match-V5 API lists no Mayhem games (queue 2400, tested 2026-11-18), but the client's own local API (LCU) shows them
-in any player's match history. This script only reads (GET), waits between calls, and stops by itself on repeated errors.
+in any player's match history. This script reads (GET), waits between calls, and stops by itself on repeated errors. Its one
+write: the client keeps every history it is asked for, so when its UI passes UX_LIMIT_MB while nobody is in a game, the crawl
+restarts the client's UI (POST /riotclient/kill-and-restart-ux: the UI reloads, the login and the backend stay).
 Riot does not officially support the LCU: run it on a small account. The numbers stay in the git-ignored
 .cache/mayhem.sqlite (offline, one file) until Zaviel decides whether they may be shown.
 
@@ -27,6 +29,7 @@ Standard library only.
 """
 import argparse
 import base64
+import csv
 import hashlib
 import json
 import os
@@ -63,6 +66,11 @@ RESEED_ENOUGH = 20          # ... stopping once this many players are queued
 GUARD_EVERY = 60           # seconds between checks of the logged-in account and the game state
 PAUSE_CHECK = 60            # seconds between checks while paused
 BUSY_PHASES = ("ChampSelect", "GameStart", "InProgress", "Reconnect", "WaitingForStats")
+UX_LIMIT_MB = 3000          # the client's UI (LeagueClientUx + UxRender) above this is restarted, only in RESTART_PHASES
+UX_RESTART_GAP = 1800       # seconds, at least, between two UI restarts
+RESTART_PHASES = ("idle", "Lobby")   # never during queue, ready check, champion select, a game or its end screen
+MEM_LOG_EVERY = 1800        # seconds between memory lines in the activity log (to see which process grows)
+WIN_TASKLIST = "/mnt/c/Windows/system32/tasklist.exe"
 
 
 class ClientGone(Exception):
@@ -70,7 +78,7 @@ class ClientGone(Exception):
 
 
 class Client:
-    """GET-only access to the local client; rereads the lockfile when the client restarts."""
+    """GET access to the local client (and post() for the UI restart); rereads the lockfile when the client restarts."""
 
     def __init__(self, delay):
         self.delay, self.last = delay, 0.0
@@ -92,11 +100,11 @@ class Client:
             self.calls += 1
             self.times.append(time.time() - t)
 
-    def _call(self, path):
+    def _call(self, path, method="GET"):
         url = self.base + path
         if sys.platform != "win32" and Path(WIN_CURL).exists():
             try:
-                r = subprocess.run([WIN_CURL, "-s", "-k", "-w", "\n%{http_code}", "-u", f"riot:{self.pw}", url],
+                r = subprocess.run([WIN_CURL, "-s", "-k", "-X", method, "-w", "\n%{http_code}", "-u", f"riot:{self.pw}", url],
                                    capture_output=True, timeout=60)
             except subprocess.TimeoutExpired:   # a stalled call (the client busy, Riot's history server slow): wait and retry
                 raise ClientGone("no answer in 60 s") from None   # from None: the traceback would print the client's password
@@ -105,7 +113,8 @@ class Client:
             body, _, code = r.stdout.decode("utf-8", "replace").rpartition("\n")
             return int(code), body
         auth = base64.b64encode(f"riot:{self.pw}".encode()).decode()
-        req = urllib.request.Request(url, headers={"Authorization": f"Basic {auth}"})
+        req = urllib.request.Request(url, headers={"Authorization": f"Basic {auth}"}, method=method,
+                                     data=b"" if method == "POST" else None)
         try:
             with urllib.request.urlopen(req, timeout=60, context=ssl._create_unverified_context()) as r:
                 return r.status, r.read().decode("utf-8", "replace")
@@ -113,6 +122,13 @@ class Client:
             return e.code, e.read().decode("utf-8", "replace")
         except (urllib.error.URLError, ConnectionError, TimeoutError) as e:
             raise ClientGone(str(e))
+
+    def post(self, path):
+        """One POST, no retries: the HTTP code, or None when the client does not answer."""
+        try:
+            return self._call(path, "POST")[0]
+        except ClientGone:
+            return None
 
     def get(self, path):
         """The JSON at path, or None for 404. Retries throttling, waits for a restarted client, else stops."""
@@ -150,6 +166,25 @@ class Client:
 
 
 LOG_HOOK = None   # the dashboard's activity panel while it is on screen
+
+
+def client_memory():
+    """(backend MB, UI MB) of the League client from the Windows process list, or None (no client, no tasklist)."""
+    exe = "tasklist" if sys.platform == "win32" else WIN_TASKLIST
+    try:
+        r = subprocess.run([exe, "/FO", "CSV", "/NH", "/FI", "IMAGENAME eq LeagueClient*"], capture_output=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    backend = ui = 0
+    for row in csv.reader(r.stdout.decode("latin-1").splitlines()):
+        if len(row) < 5 or not row[0].lower().startswith("leagueclient"):
+            continue
+        mb = int("".join(ch for ch in row[4] if ch.isdigit()) or 0) // 1024   # "1,234,567 K", separators by locale
+        if row[0].lower() == "leagueclient.exe":
+            backend += mb
+        else:   # LeagueClientUx.exe and its LeagueClientUxRender.exe processes
+            ui += mb
+    return (backend, ui) if backend or ui else None
 
 
 def log(msg, kind="warn"):
@@ -216,6 +251,7 @@ class Crawl:
         self.reads = self.details = self.samples = self.skipped = self.new_games = self.new_full = 0
         self.account = None   # hash of the logged-in account the crawl started on
         self.status, self.mode, self.phase, self.now_doing = "starting", "running", "", ""
+        self.mem, self.ux_restart, self.last_restart = None, None, 0.0   # client memory, the guard's UI restart (HTTP code)
         self.events = deque(maxlen=300)   # (time, kind, tag, message) for the activity log
         self.reseeds = 0
         self.log_back = 0   # how many log entries the activity log is scrolled back (0: following the newest)
@@ -369,10 +405,16 @@ class Crawl:
                              "on the account it started on")
 
     def busy_phase(self):
-        """Stops if another account logged in; the client's phase when the player is in champion select or a game, else None."""
+        """Stops if another account logged in; the client's phase when the player is in champion select or a game, else None.
+        Also reads the client's memory and restarts its UI when that passes UX_LIMIT_MB while nobody is playing."""
         self.same_account(self.c._raw("/lol-summoner/v1/current-summoner"))
         self.phase = self.c.get("/lol-gameflow/v1/gameflow-phase") or ""
         self.phase = "idle" if self.phase == "None" else self.phase
+        self.mem, self.ux_restart = client_memory(), None
+        if (self.mem and self.mem[1] >= UX_LIMIT_MB and self.phase in RESTART_PHASES
+                and time.time() - self.last_restart >= UX_RESTART_GAP):
+            self.last_restart = time.time()
+            self.ux_restart = self.c.post("/riotclient/kill-and-restart-ux") or "no answer"
         return self.phase if self.phase in BUSY_PHASES else None
 
     # ---------- figures for the dashboard and the log ----------
@@ -416,7 +458,7 @@ class Crawl:
                 "samples_per_min": spm, "calls": self.c.calls,
                 "latency": sum(self.c.times) / len(self.c.times) if self.c.times else 0, "queued": len(self.frontier),
                 "opens": len(self.opens), "reads": self.reads, "opened": self.details, "skipped": self.skipped,
-                "reseeds": self.reseeds, "errors": self.c.errors, "phase": self.phase, "events": self.events,
+                "reseeds": self.reseeds, "errors": self.c.errors, "phase": self.phase, "mem": self.mem, "events": self.events,
                 "now_doing": self.now_doing, "log_back": self.log_back}
 
     # ---------- the crawl ----------
@@ -463,7 +505,8 @@ class Crawl:
                    + (" or until Ready" if until_ready else "") + (f" or until {until_sure}% sure" if until_sure else ""),
                    "good", "start")
         job, opening, stop, user_pause, busy = None, set(), None, False, None
-        last_guard = last_log = last_draw = 0.0
+        last_guard = last_log = last_draw = last_mem = 0.0
+        backend_warned = False
         try:
             while True:
                 now = time.time()
@@ -530,6 +573,17 @@ class Crawl:
                             self.event(f"paused while you play ({busy})", "warn", "pause")
                         elif was and not busy:
                             self.event("your game is over: crawling again", "good", "resume")
+                        if self.ux_restart:
+                            self.event(f"client UI at {num(self.mem[1])} MB: restarted it (HTTP {self.ux_restart})",
+                                       "warn", "client")
+                        elif self.mem and now - last_mem >= MEM_LOG_EVERY:
+                            last_mem = now
+                            self.event(f"client memory: backend {num(self.mem[0])} MB · UI {num(self.mem[1])} MB",
+                                       "dim", "memory")
+                        if self.mem and self.mem[0] >= UX_LIMIT_MB and not backend_warned:
+                            backend_warned = True   # a UI restart does not free the backend: only closing the client does
+                            self.event(f"client backend at {num(self.mem[0])} MB: restart the League client when you can",
+                                       "bad", "client")
                     elif kind == "refill":
                         self.reseed(res)
                         self.refilled = not self.frontier   # a refill that found nobody new ends the crawl next time

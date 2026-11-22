@@ -440,7 +440,7 @@ def _steps_screen(scr, title, steps, state, out, header, el, running):
 #   key line          the keys, and what the crawl is doing right now
 
 TAGS = {"read": INFO, "games": GOOD, "patch": GOOD, "start": GOOD, "queue": TEXT, "pause": WARN, "resume": GOOD,
-        "stop": WARN, "client": WARN, "error": BAD, "info": DIM}
+        "stop": WARN, "client": WARN, "error": BAD, "info": DIM, "memory": DIM}
 TAG_W = 7
 
 
@@ -577,8 +577,10 @@ def dashboard(st, w, h):
              ("players waiting", TEXT(num(st["queued"])) + DIM(f" +{num(st['opens'])} games")),
              ("skipped · refills", TEXT(num(st["skipped"])) + DIM(" · ") + TEXT(str(st["reseeds"])))]
     client = [("state", (GOOD("● ok") if not st["errors"] else WARN("● retrying")) + DIM(" · ") + TEXT(st["phase"] or "—")),
-              ("calls", TEXT(num(st["calls"]))), ("s / call", TEXT(f"{st['latency']:.2f}")),
-              ("errors", (BAD if st["errors"] else DIM)(str(st["errors"])))]
+              ("calls · errors", TEXT(num(st["calls"])) + DIM(" · ") + (BAD if st["errors"] else DIM)(str(st["errors"]))),
+              ("s / call", TEXT(f"{st['latency']:.2f}")),
+              ("MB back · UI", TEXT(num(st["mem"][0])) + DIM(" · ")
+               + (WARN if st["mem"][1] >= 2000 else TEXT)(num(st["mem"][1])) if st.get("mem") else DIM("—"))]
     panels = [pairs("THIS RUN", this_run, cw), pairs("SPEED", speed, cw), pairs("CRAWL", crawl, cw), pairs("CLIENT", client, cw)]
     panels[1][-1] = " " + spark(st["spark"], cw - 14) + DIM(" last 30 min")
     for i in range(0, 4, cols):
