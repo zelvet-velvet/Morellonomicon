@@ -611,25 +611,11 @@
     "games": 1062
    },
    {
-    "champion_name": "加里歐",
-    "item": "峽谷製造者",
-    "pick": 0.559,
-    "gap": 0.022,
-    "games": 1764
-   },
-   {
     "champion_name": "易大師",
     "item": "實驗型海克斯板甲",
     "pick": 0.557,
     "gap": 0.009,
     "games": 2393
-   },
-   {
-    "champion_name": "凱爾",
-    "item": "芮蘭颶風箭",
-    "pick": 0.555,
-    "gap": -0.004,
-    "games": 2258
    },
    {
     "champion_name": "姍娜",
@@ -639,46 +625,11 @@
     "games": 1140
    },
    {
-    "champion_name": "雷茲",
-    "item": "凜冬將至",
-    "pick": 0.546,
-    "gap": 0.021,
-    "games": 2166
-   },
-   {
     "champion_name": "煞蜜拉",
     "item": "死亡之舞",
     "pick": 0.523,
     "gap": 0.032,
     "games": 1656
-   },
-   {
-    "champion_name": "關",
-    "item": "振奮盔甲",
-    "pick": 0.521,
-    "gap": -0.021,
-    "games": 2412
-   },
-   {
-    "champion_name": "辛吉德",
-    "item": "水星之靴",
-    "pick": 0.52,
-    "gap": -0.008,
-    "games": 3247
-   },
-   {
-    "champion_name": "塔隆",
-    "item": "無盡之刃",
-    "pick": 0.518,
-    "gap": 0.016,
-    "games": 1109
-   },
-   {
-    "champion_name": "關",
-    "item": "水星之靴",
-    "pick": 0.516,
-    "gap": -0.026,
-    "games": 2847
    },
    {
     "champion_name": "史矛德",
@@ -695,48 +646,6 @@
     "games": 2683
    },
    {
-    "champion_name": "睿娜妲．格萊斯克",
-    "item": "日輪的加冕",
-    "pick": 0.514,
-    "gap": 0.008,
-    "games": 1499
-   },
-   {
-    "champion_name": "塔隆",
-    "item": "多明尼克的問候",
-    "pick": 0.514,
-    "gap": 0.012,
-    "games": 1142
-   },
-   {
-    "champion_name": "辛吉德",
-    "item": "自然之力",
-    "pick": 0.512,
-    "gap": -0.016,
-    "games": 2793
-   },
-   {
-    "champion_name": "辛吉德",
-    "item": "千變萬化之賈克修",
-    "pick": 0.512,
-    "gap": -0.016,
-    "games": 1729
-   },
-   {
-    "champion_name": "雷茲",
-    "item": "水星之靴",
-    "pick": 0.51,
-    "gap": -0.015,
-    "games": 1854
-   },
-   {
-    "champion_name": "夜曲",
-    "item": "無盡之刃",
-    "pick": 0.507,
-    "gap": 0.011,
-    "games": 1299
-   },
-   {
     "champion_name": "嘉文四世",
     "item": "多明尼克的問候",
     "pick": 0.502,
@@ -744,81 +653,11 @@
     "games": 1158
    },
    {
-    "champion_name": "賽勒斯",
-    "item": "雄心之鋼",
-    "pick": 0.501,
-    "gap": 0.011,
-    "games": 2142
-   },
-   {
-    "champion_name": "逆命",
-    "item": "衝擊火炮",
-    "pick": 0.5,
-    "gap": -0.052,
-    "games": 6182
-   },
-   {
-    "champion_name": "夜曲",
-    "item": "實驗型海克斯板甲",
-    "pick": 0.499,
-    "gap": 0.003,
-    "games": 3270
-   },
-   {
-    "champion_name": "雷茲",
-    "item": "冰霜之心",
-    "pick": 0.498,
-    "gap": -0.027,
-    "games": 3000
-   },
-   {
-    "champion_name": "弗力貝爾",
-    "item": "那歐閃刃",
-    "pick": 0.498,
-    "gap": -0.021,
-    "games": 2066
-   },
-   {
-    "champion_name": "辛吉德",
-    "item": "好戰者鎧甲",
-    "pick": 0.496,
-    "gap": -0.032,
-    "games": 1485
-   },
-   {
-    "champion_name": "辛吉德",
-    "item": "死者肩甲",
-    "pick": 0.496,
-    "gap": -0.032,
-    "games": 2006
-   },
-   {
-    "champion_name": "葛雷夫",
-    "item": "水星之靴",
-    "pick": 0.495,
-    "gap": -0.012,
-    "games": 3475
-   },
-   {
-    "champion_name": "賽勒斯",
-    "item": "振奮盔甲",
-    "pick": 0.492,
-    "gap": 0.003,
-    "games": 3846
-   },
-   {
     "champion_name": "瑟菈紛",
     "item": "月之石再生裝置",
     "pick": 0.49,
     "gap": -0.024,
     "games": 1924
-   },
-   {
-    "champion_name": "巴德",
-    "item": "納什之牙",
-    "pick": 0.489,
-    "gap": 0.006,
-    "games": 2556
    },
    {
     "champion_name": "煞蜜拉",
@@ -835,67 +674,11 @@
     "games": 1715
    },
    {
-    "champion_name": "賽勒斯",
-    "item": "水星之靴",
-    "pick": 0.486,
-    "gap": -0.003,
-    "games": 3448
-   },
-   {
-    "champion_name": "達瑞文",
-    "item": "殞落王者之劍",
-    "pick": 0.483,
-    "gap": -0.03,
-    "games": 1397
-   },
-   {
-    "champion_name": "夜曲",
-    "item": "水星之靴",
-    "pick": 0.482,
-    "gap": -0.014,
-    "games": 1599
-   },
-   {
-    "champion_name": "巴德",
-    "item": "史提克彈簧刀",
-    "pick": 0.481,
-    "gap": -0.001,
-    "games": 2628
-   },
-   {
-    "champion_name": "魔鬥凱薩",
-    "item": "納什之牙",
-    "pick": 0.481,
-    "gap": 0.014,
-    "games": 1282
-   },
-   {
     "champion_name": "寇格魔",
     "item": "納什之牙",
     "pick": 0.481,
     "gap": -0.006,
     "games": 1362
-   },
-   {
-    "champion_name": "費德提克",
-    "item": "振奮盔甲",
-    "pick": 0.478,
-    "gap": -0.002,
-    "games": 1164
-   },
-   {
-    "champion_name": "好運姐",
-    "item": "殞落王者之劍",
-    "pick": 0.476,
-    "gap": -0.03,
-    "games": 1013
-   },
-   {
-    "champion_name": "維迦",
-    "item": "好戰者鎧甲",
-    "pick": 0.475,
-    "gap": -0.016,
-    "games": 1324
    },
    {
     "champion_name": "法洛士",
@@ -905,48 +688,6 @@
     "games": 1368
    },
    {
-    "champion_name": "辛吉德",
-    "item": "雄心之鋼",
-    "pick": 0.473,
-    "gap": -0.055,
-    "games": 1950
-   },
-   {
-    "champion_name": "剛普朗克",
-    "item": "惡意",
-    "pick": 0.473,
-    "gap": -0.053,
-    "games": 2172
-   },
-   {
-    "champion_name": "飛斯",
-    "item": "雄心之鋼",
-    "pick": 0.472,
-    "gap": -0.038,
-    "games": 1452
-   },
-   {
-    "champion_name": "逆命",
-    "item": "史提克彈簧刀",
-    "pick": 0.471,
-    "gap": -0.081,
-    "games": 1415
-   },
-   {
-    "champion_name": "巴德",
-    "item": "衝擊火炮",
-    "pick": 0.47,
-    "gap": -0.012,
-    "games": 2171
-   },
-   {
-    "champion_name": "剛普朗克",
-    "item": "死亡之帽",
-    "pick": 0.467,
-    "gap": -0.059,
-    "games": 1069
-   },
-   {
     "champion_name": "法洛士",
     "item": "納什之牙",
     "pick": 0.467,
@@ -954,25 +695,11 @@
     "games": 1508
    },
    {
-    "champion_name": "索拉卡",
-    "item": "時光之杖",
-    "pick": 0.467,
-    "gap": -0.023,
-    "games": 1983
-   },
-   {
-    "champion_name": "巴德",
-    "item": "鬼索的狂暴之刃",
-    "pick": 0.463,
-    "gap": -0.019,
-    "games": 1223
-   },
-   {
-    "champion_name": "巴德",
-    "item": "狂戰士護脛",
-    "pick": 0.462,
-    "gap": -0.02,
-    "games": 1828
+    "champion_name": "弗拉迪米爾",
+    "item": "雄心之鋼",
+    "pick": 0.466,
+    "gap": -0.009,
+    "games": 1791
    },
    {
     "champion_name": "圖奇",
@@ -989,20 +716,6 @@
     "games": 1288
    },
    {
-    "champion_name": "索拉卡",
-    "item": "好戰者鎧甲",
-    "pick": 0.459,
-    "gap": -0.03,
-    "games": 5893
-   },
-   {
-    "champion_name": "逆命",
-    "item": "狂戰士護脛",
-    "pick": 0.459,
-    "gap": -0.093,
-    "games": 1193
-   },
-   {
     "champion_name": "圖奇",
     "item": "納什之牙",
     "pick": 0.451,
@@ -1017,39 +730,11 @@
     "games": 1205
    },
    {
-    "champion_name": "索拉卡",
-    "item": "振奮盔甲",
-    "pick": 0.444,
-    "gap": -0.045,
-    "games": 2609
-   },
-   {
     "champion_name": "圖奇",
     "item": "黯影之炎",
     "pick": 0.443,
     "gap": -0.044,
     "games": 1224
-   },
-   {
-    "champion_name": "魔鬥凱薩",
-    "item": "實驗型海克斯板甲",
-    "pick": 0.443,
-    "gap": -0.025,
-    "games": 2144
-   },
-   {
-    "champion_name": "辛吉德",
-    "item": "荊棘之甲",
-    "pick": 0.437,
-    "gap": -0.091,
-    "games": 1033
-   },
-   {
-    "champion_name": "巴德",
-    "item": "殞落王者之劍",
-    "pick": 0.434,
-    "gap": -0.048,
-    "games": 1295
    },
    {
     "champion_name": "艾希",
@@ -1064,23 +749,664 @@
     "pick": 0.428,
     "gap": -0.042,
     "games": 1655
-   },
-   {
-    "champion_name": "逆命",
-    "item": "殞落王者之劍",
-    "pick": 0.419,
-    "gap": -0.133,
-    "games": 1071
    }
   ],
   "strong": [],
   "unnamed": [
+   {
+    "champion_name": "伊澤瑞爾",
+    "family": "暴擊刺客",
+    "core": [
+     3078,
+     3036
+    ]
+   },
+   {
+    "champion_name": "伊羅旖",
+    "family": "戰士",
+    "core": [
+     6610,
+     3053
+    ]
+   },
+   {
+    "champion_name": "凱爾",
+    "family": "攻速特效",
+    "core": [
+     3302,
+     3115
+    ]
+   },
+   {
+    "champion_name": "凱特琳",
+    "family": "暴擊",
+    "core": [
+     3036,
+     3072
+    ]
+   },
+   {
+    "champion_name": "凱莎",
+    "family": "特效法師",
+    "core": [
+     3087,
+     4645
+    ]
+   },
+   {
+    "champion_name": "剛普朗克",
+    "family": "暴擊法師",
+    "core": [
+     3508,
+     3118
+    ]
+   },
+   {
+    "champion_name": "加里歐",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     4633
+    ]
+   },
+   {
+    "champion_name": "努努和威朗普",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     4646
+    ]
+   },
+   {
+    "champion_name": "卡薩丁",
+    "family": "法術坦克",
+    "core": [
+     6657,
+     3110
+    ]
+   },
+   {
+    "champion_name": "古拉格斯",
+    "family": "法術坦克",
+    "core": [
+     6657,
+     3065
+    ]
+   },
+   {
+    "champion_name": "史矛德",
+    "family": "暴擊刺客",
+    "core": [
+     3078,
+     3031
+    ]
+   },
+   {
+    "champion_name": "嘉文四世",
+    "family": "戰士",
+    "core": [
+     6610,
+     3053
+    ]
+   },
+   {
+    "champion_name": "墨菲特",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     3118
+    ]
+   },
+   {
+    "champion_name": "夜曲",
+    "family": "穿甲戰士（混搭）",
+    "core": [
+     6696,
+     3073
+    ]
+   },
+   {
+    "champion_name": "好運姐",
+    "family": "暴擊法師",
+    "core": [
+     6676,
+     6653
+    ]
+   },
    {
     "champion_name": "姍娜",
     "family": "攻速特效",
     "core": [
      3087,
      3071
+    ]
+   },
+   {
+    "champion_name": "姍娜",
+    "family": "特效輔助",
+    "core": [
+     3087,
+     6617
+    ]
+   },
+   {
+    "champion_name": "娜米",
+    "family": "輔助",
+    "core": [
+     6621,
+     3504
+    ]
+   },
+   {
+    "champion_name": "巴德",
+    "family": "攻速特效",
+    "core": [
+     3115,
+     3094
+    ]
+   },
+   {
+    "champion_name": "巴德",
+    "family": "暴擊法師",
+    "core": [
+     3100,
+     3094
+    ]
+   },
+   {
+    "champion_name": "布里茨",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     3118
+    ]
+   },
+   {
+    "champion_name": "希瓦娜",
+    "family": "攻速特效",
+    "core": [
+     2510,
+     3161
+    ]
+   },
+   {
+    "champion_name": "希瓦娜",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     4633
+    ]
+   },
+   {
+    "champion_name": "希維爾",
+    "family": "攻速特效",
+    "core": [
+     6672,
+     6675
+    ]
+   },
+   {
+    "champion_name": "庫奇",
+    "family": "暴擊刺客",
+    "core": [
+     3078,
+     3036
+    ]
+   },
+   {
+    "champion_name": "弗力貝爾",
+    "family": "特效坦克",
+    "core": [
+     3084,
+     3087
+    ]
+   },
+   {
+    "champion_name": "弗力貝爾",
+    "family": "特效法師",
+    "core": [
+     3087,
+     4645
+    ]
+   },
+   {
+    "champion_name": "弗拉迪米爾",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     4633
+    ]
+   },
+   {
+    "champion_name": "悠咪",
+    "family": "輔助",
+    "core": [
+     3222,
+     3504
+    ]
+   },
+   {
+    "champion_name": "提摩",
+    "family": "特效法師",
+    "core": [
+     3087,
+     3118
+    ]
+   },
+   {
+    "champion_name": "斯溫",
+    "family": "法術坦克",
+    "core": [
+     3118,
+     3065
+    ]
+   },
+   {
+    "champion_name": "易大師",
+    "family": "暴擊戰士",
+    "core": [
+     6675,
+     6333
+    ]
+   },
+   {
+    "champion_name": "歐拉夫",
+    "family": "戰士",
+    "core": [
+     3074,
+     3143
+    ]
+   },
+   {
+    "champion_name": "汎",
+    "family": "特效刺客",
+    "core": [
+     6672,
+     3073
+    ]
+   },
+   {
+    "champion_name": "汎",
+    "family": "暴擊刺客",
+    "core": [
+     3073,
+     3031
+    ]
+   },
+   {
+    "champion_name": "泰達米爾",
+    "family": "暴擊戰士",
+    "core": [
+     3074,
+     3046
+    ]
+   },
+   {
+    "champion_name": "泰達米爾",
+    "family": "暴擊坦克",
+    "core": [
+     3084,
+     6675
+    ]
+   },
+   {
+    "champion_name": "派克",
+    "family": "穿甲",
+    "core": [
+     3142,
+     6698
+    ]
+   },
+   {
+    "champion_name": "烏爾加特",
+    "family": "穿甲坦克",
+    "core": [
+     3084,
+     3074
+    ]
+   },
+   {
+    "champion_name": "烏迪爾",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     3118
+    ]
+   },
+   {
+    "champion_name": "燼",
+    "family": "暴擊",
+    "core": [
+     2523,
+     3094
+    ]
+   },
+   {
+    "champion_name": "燼",
+    "family": "暴擊刺客",
+    "core": [
+     6697,
+     3036
+    ]
+   },
+   {
+    "champion_name": "犽宿",
+    "family": "暴擊坦克",
+    "core": [
+     3031,
+     6665
+    ]
+   },
+   {
+    "champion_name": "珍娜",
+    "family": "輔助",
+    "core": [
+     6621,
+     3504
+    ]
+   },
+   {
+    "champion_name": "瑟菈紛",
+    "family": "輔助",
+    "core": [
+     6617,
+     6621
+    ]
+   },
+   {
+    "champion_name": "瑟菈紛",
+    "family": "法術輔助",
+    "core": [
+     6617,
+     6655
+    ]
+   },
+   {
+    "champion_name": "科加斯",
+    "family": "法術坦克",
+    "core": [
+     6657,
+     3084
+    ]
+   },
+   {
+    "champion_name": "米里歐",
+    "family": "輔助",
+    "core": [
+     6621,
+     3504
+    ]
+   },
+   {
+    "champion_name": "米里歐",
+    "family": "法術輔助",
+    "core": [
+     6655,
+     3504
+    ]
+   },
+   {
+    "champion_name": "索娜",
+    "family": "輔助",
+    "core": [
+     6621,
+     6616
+    ]
+   },
+   {
+    "champion_name": "索拉卡",
+    "family": "輔助",
+    "core": [
+     6621,
+     6616
+    ]
+   },
+   {
+    "champion_name": "索拉卡",
+    "family": "坦克輔助",
+    "core": [
+     6621,
+     3083
+    ]
+   },
+   {
+    "champion_name": "索拉卡",
+    "family": "法術輔助",
+    "core": [
+     6657,
+     6621
+    ]
+   },
+   {
+    "champion_name": "索拉卡",
+    "family": "法術坦克",
+    "core": [
+     6657,
+     3065
+    ]
+   },
+   {
+    "champion_name": "維迦",
+    "family": "法術坦克",
+    "core": [
+     6657,
+     3143
+    ]
+   },
+   {
+    "champion_name": "艾希",
+    "family": "穿甲法師",
+    "core": [
+     3118,
+     3073
+    ]
+   },
+   {
+    "champion_name": "茂凱",
+    "family": "法術坦克",
+    "core": [
+     6653,
+     3065
+    ]
+   },
+   {
+    "champion_name": "葛雷夫",
+    "family": "暴擊刺客",
+    "core": [
+     6697,
+     3036
+    ]
+   },
+   {
+    "champion_name": "蓋倫",
+    "family": "戰士",
+    "core": [
+     6631,
+     3142
+    ]
+   },
+   {
+    "champion_name": "蓋倫",
+    "family": "暴擊戰士",
+    "core": [
+     6631,
+     3046
+    ]
+   },
+   {
+    "champion_name": "蓋倫",
+    "family": "暴擊坦克",
+    "core": [
+     3084,
+     3046
+    ]
+   },
+   {
+    "champion_name": "貪啃奇",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     4633
+    ]
+   },
+   {
+    "champion_name": "費德提克",
+    "family": "法術坦克",
+    "core": [
+     3157,
+     3065
+    ]
+   },
+   {
+    "champion_name": "賈克斯",
+    "family": "攻速特效",
+    "core": [
+     2510,
+     6610
+    ]
+   },
+   {
+    "champion_name": "賈克斯",
+    "family": "法術戰士",
+    "core": [
+     3157,
+     6610
+    ]
+   },
+   {
+    "champion_name": "賽勒斯",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     4633
+    ]
+   },
+   {
+    "champion_name": "趙信",
+    "family": "攻速特效",
+    "core": [
+     3087,
+     3065
+    ]
+   },
+   {
+    "champion_name": "趙信",
+    "family": "特效坦克",
+    "core": [
+     3084,
+     3087
+    ]
+   },
+   {
+    "champion_name": "趙信",
+    "family": "特效戰士",
+    "core": [
+     6610,
+     3087
+    ]
+   },
+   {
+    "champion_name": "辛吉德",
+    "family": "法術坦克",
+    "core": [
+     6657,
+     4401
+    ]
+   },
+   {
+    "champion_name": "逆命",
+    "family": "暴擊法師",
+    "core": [
+     4645,
+     3094
+    ]
+   },
+   {
+    "champion_name": "達瑞文",
+    "family": "暴擊刺客",
+    "core": [
+     6697,
+     3036
+    ]
+   },
+   {
+    "champion_name": "達瑞斯",
+    "family": "戰士",
+    "core": [
+     6610,
+     3053
+    ]
+   },
+   {
+    "champion_name": "關",
+    "family": "法術坦克",
+    "core": [
+     4633,
+     3143
+    ]
+   },
+   {
+    "champion_name": "阿卡莉",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     4633
+    ]
+   },
+   {
+    "champion_name": "阿姆姆",
+    "family": "法術坦克",
+    "core": [
+     3068,
+     6653
+    ]
+   },
+   {
+    "champion_name": "雷茲",
+    "family": "法術坦克",
+    "core": [
+     6657,
+     3119
+    ]
+   },
+   {
+    "champion_name": "露璐",
+    "family": "輔助",
+    "core": [
+     3222,
+     3504
+    ]
+   },
+   {
+    "champion_name": "飛斯",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     4633
+    ]
+   },
+   {
+    "champion_name": "魔鬥凱薩",
+    "family": "法術坦克",
+    "core": [
+     4633,
+     2502
+    ]
+   },
+   {
+    "champion_name": "魔鬥凱薩",
+    "family": "法術戰士",
+    "core": [
+     3073,
+     3116
+    ]
+   },
+   {
+    "champion_name": "黛安娜",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     4633
     ]
    }
   ],

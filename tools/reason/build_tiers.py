@@ -42,7 +42,8 @@ FIT_SCORE = 0.03       # and the score 3 points more: the reasoning decides, the
 POP = 0.04             # how often the champion builds it (0-1) adds up to 4 points: the main build is also what people build
 UNSEEN = -0.03         # an item not in the champion's 50 most built: hardly anyone builds it (never in the main build)
 CORES = 5              # sets of the first three items shown
-CORE_MIN = 300         # games a set needs
+CORE_MIN = 300         # games a style needs, all its first-two pairs together
+SET_MIN = 30           # games one pair needs to stand for its style (core, other pair, broken or not)
 CORE_PRIOR = 1000      # games the champion's own win rate counts as in a set's result
 POP_CORE = 0.1         # how often the set is built (share of the champion's games) adds up to that many points
 LATE = 5               # items four to six per style
@@ -242,6 +243,23 @@ def set_family(ids, ranged=False):
     return fams[0] if fams else ""
 
 
+HYBRID_NOUN = {"輔助": "輔助", "坦克": "坦克", "戰士": "戰士", "法術": "法師", "穿甲": "刺客", "暴擊": "射手", "攻速特效": "特效"}   # noun first
+
+
+def hybrid_key(ids, ranged=False):
+    """The families of a pair no style takes, the noun's first (HYBRID_NOUN order): ("坦克", "法術") for 雄心之鋼 + 時光之杖."""
+    fams = {family(KINDS[i][0]) for i in ids if i in KINDS} - {""}
+    if ranged:
+        fams = {"穿甲" if f == "戰士" else f for f in fams}
+    return tuple(sorted(fams, key=list(HYBRID_NOUN).index))
+
+
+def hybrid_name(key, taken):
+    """法術坦克, 暴擊戰士, 特效法師: the second family as a word before the first's noun (one family: the family's word)."""
+    name = key[0] if len(key) == 1 else (key[1] if key[1] != "攻速特效" else "特效") + HYBRID_NOUN[key[0]]
+    return name if name not in taken else name + "（混搭）"
+
+
 def wants_of(c):
     """The item kinds a play style wants: the note's `stack` (the stats it builds) first, its archetypes after."""
     st = c.stack
@@ -419,14 +437,37 @@ def main():
                 if best is None or score > best[1]:
                     best = (n, score)
             st["style"], st["match"] = (best[0], best[1]) if best else (None, 0)
+        # pairs no style takes (the kit check turns down one of their items, mostly hybrids: 雄心之鋼 + 時光之杖, 盧登 + 衝擊火炮)
+        # make a style of their two families when they are played enough; it wants both families' kinds
+        loose = defaultdict(list)
+        for st in sets:
+            if st["style"] is None:
+                loose[hybrid_key(st["items"], c.ranged)].append(st)
+        for key, sts in loose.items():
+            if not key or sum(st["games"] for st in sts) < STYLE_MIN * total:
+                continue
+            same = next((n for n, x in enumerate(defs) if len(key) == 1 and x.get("family") == key[0]), None)
+            if same is not None:   # one family the kit turned down an item of: that family's style takes it
+                for st in sts:
+                    st["style"], st["match"] = same, 1
+                continue
+            sd ={"name": hybrid_name(key, {x["name"] for x in defs}), "family": "+".join(key), "side": "", "auto": True, "listed": False,
+                  "wants": {k: max(FAMILY_WANTS[f].get(k, 0) for f in key) for f in key for k in FAMILY_WANTS[f]}}
+            scored = score_items(c, sd, pool, seen, base)
+            sd["scored"] = scored
+            scoreds.append({r["id"]: r for r in scored})
+            defs.append(sd)
+            for st in sts:
+                st["style"], st["match"] = len(defs) - 1, 1
         kept = []   # (games behind the style or -1 from the reasoning, its place in the catalogue, the style)
         for n, sd in enumerate(defs):
             by_id = scoreds[n]
             # the pair holding most of the style's core items first, then the strongest
-            mine = sorted((st for st in sets if st["style"] == n and st["games"] >= CORE_MIN), key=lambda st: (-st["match"], -st["value"]))
+            # a style is judged by all its pairs together: its games often spread over many pairs, none of them big
+            mine = sorted((st for st in sets if st["style"] == n and st["games"] >= SET_MIN), key=lambda st: (-st["match"], -st["value"]))
             played = sum(st["games"] for st in sets if st["style"] == n)
             broken = bool(mine) and max(st["gap"] for st in mine) < STYLE_FLOOR
-            backed = bool(mine) and not broken and played >= STYLE_MIN * total
+            backed = bool(mine) and not broken and played >= max(STYLE_MIN * total, CORE_MIN)
             if broken and sd["listed"]:
                 dropped.append((note.get("name", note["id"]), sd["name"], mine[0]["items"], played / total))
             if not backed and not (sd["listed"] and not broken):
