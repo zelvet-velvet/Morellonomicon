@@ -617,18 +617,11 @@
     "games": 1503
    },
    {
-    "champion_name": "貪啃奇",
-    "item": "峽谷製造者",
-    "pick": 0.586,
-    "gap": 0.058,
-    "games": 2970
-   },
-   {
-    "champion_name": "貪啃奇",
-    "item": "暮夜與黎明",
-    "pick": 0.572,
-    "gap": 0.045,
-    "games": 3993
+    "champion_name": "路西恩",
+    "item": "公理弧刃",
+    "pick": 0.591,
+    "gap": 0.092,
+    "games": 4525
    },
    {
     "champion_name": "姍娜",
@@ -666,32 +659,11 @@
     "games": 1140
    },
    {
-    "champion_name": "弗力貝爾",
-    "item": "黯影之炎",
-    "pick": 0.548,
-    "gap": 0.03,
-    "games": 2361
-   },
-   {
-    "champion_name": "希瓦娜",
-    "item": "黯影之炎",
-    "pick": 0.547,
-    "gap": -0.008,
-    "games": 1412
-   },
-   {
     "champion_name": "雷茲",
     "item": "凜冬將至",
     "pick": 0.546,
     "gap": 0.021,
     "games": 2166
-   },
-   {
-    "champion_name": "關",
-    "item": "黯影之炎",
-    "pick": 0.545,
-    "gap": 0.003,
-    "games": 3678
    },
    {
     "champion_name": "煞蜜拉",
@@ -818,6 +790,13 @@
     "pick": 0.498,
     "gap": -0.027,
     "games": 3000
+   },
+   {
+    "champion_name": "弗力貝爾",
+    "item": "那歐閃刃",
+    "pick": 0.498,
+    "gap": -0.021,
+    "games": 2066
    },
    {
     "champion_name": "辛吉德",
@@ -1044,6 +1023,13 @@
     "games": 1193
    },
    {
+    "champion_name": "圖奇",
+    "item": "納什之牙",
+    "pick": 0.451,
+    "gap": -0.036,
+    "games": 1530
+   },
+   {
     "champion_name": "凱莎",
     "item": "無盡之刃",
     "pick": 0.45,
@@ -1072,25 +1058,11 @@
     "games": 2144
    },
    {
-    "champion_name": "阿卡莉",
-    "item": "雄心之鋼",
-    "pick": 0.442,
-    "gap": -0.018,
-    "games": 1011
-   },
-   {
     "champion_name": "辛吉德",
     "item": "荊棘之甲",
     "pick": 0.437,
     "gap": -0.091,
     "games": 1033
-   },
-   {
-    "champion_name": "阿卡莉",
-    "item": "水星之靴",
-    "pick": 0.435,
-    "gap": -0.025,
-    "games": 1074
    },
    {
     "champion_name": "巴德",
@@ -1124,395 +1096,11 @@
   "strong": [],
   "unnamed": [
    {
-    "champion_name": "伊羅旖",
-    "family": "戰士",
-    "core": [
-     6610,
-     3065
-    ]
-   },
-   {
-    "champion_name": "凱爾",
-    "family": "攻速特效",
-    "core": [
-     3115,
-     3153
-    ]
-   },
-   {
-    "champion_name": "凱特琳",
-    "family": "暴擊",
-    "core": [
-     6676,
-     3153
-    ]
-   },
-   {
-    "champion_name": "凱能",
-    "family": "法術",
-    "core": [
-     3152,
-     3157
-    ]
-   },
-   {
-    "champion_name": "凱莎",
-    "family": "法術",
-    "core": [
-     6655,
-     3115
-    ]
-   },
-   {
-    "champion_name": "厄薩斯",
-    "family": "穿甲",
-    "core": [
-     6692,
-     6610
-    ]
-   },
-   {
-    "champion_name": "嘉文四世",
-    "family": "戰士",
-    "core": [
-     6610,
-     6692
-    ]
-   },
-   {
-    "champion_name": "圖奇",
-    "family": "攻速特效",
-    "core": [
-     3153,
-     6676
-    ]
-   },
-   {
-    "champion_name": "埃可尚",
-    "family": "暴擊",
-    "core": [
-     6676,
-     3153
-    ]
-   },
-   {
-    "champion_name": "妮可",
-    "family": "法術",
-    "core": [
-     3152,
-     3157
-    ]
-   },
-   {
     "champion_name": "姍娜",
     "family": "攻速特效",
     "core": [
      3087,
      3071
-    ]
-   },
-   {
-    "champion_name": "姍娜",
-    "family": "暴擊",
-    "core": [
-     6676,
-     3153
-    ]
-   },
-   {
-    "champion_name": "安比薩",
-    "family": "穿甲",
-    "core": [
-     6692,
-     2517
-    ]
-   },
-   {
-    "champion_name": "弗力貝爾",
-    "family": "攻速特效",
-    "core": [
-     3087,
-     3146
-    ]
-   },
-   {
-    "champion_name": "弗力貝爾",
-    "family": "法術",
-    "core": [
-     3146,
-     2510
-    ]
-   },
-   {
-    "champion_name": "弗拉迪米爾",
-    "family": "法術",
-    "core": [
-     4633,
-     4629
-    ]
-   },
-   {
-    "champion_name": "悠咪",
-    "family": "輔助",
-    "core": [
-     3222,
-     3107
-    ]
-   },
-   {
-    "champion_name": "拉姆斯",
-    "family": "坦克",
-    "core": [
-     3075,
-     6665
-    ]
-   },
-   {
-    "champion_name": "提摩",
-    "family": "法術",
-    "core": [
-     3118,
-     3115
-    ]
-   },
-   {
-    "champion_name": "易大師",
-    "family": "暴擊",
-    "core": [
-     6676,
-     3153
-    ]
-   },
-   {
-    "champion_name": "李星",
-    "family": "穿甲",
-    "core": [
-     6692,
-     6610
-    ]
-   },
-   {
-    "champion_name": "歐拉夫",
-    "family": "戰士",
-    "core": [
-     6631,
-     3073
-    ]
-   },
-   {
-    "champion_name": "法洛士",
-    "family": "暴擊",
-    "core": [
-     6676,
-     3153
-    ]
-   },
-   {
-    "champion_name": "泰達米爾",
-    "family": "攻速特效",
-    "core": [
-     3153,
-     3046
-    ]
-   },
-   {
-    "champion_name": "潘森",
-    "family": "穿甲",
-    "core": [
-     6692,
-     6610
-    ]
-   },
-   {
-    "champion_name": "犽凝",
-    "family": "攻速特效",
-    "core": [
-     3153,
-     6673
-    ]
-   },
-   {
-    "champion_name": "犽宿",
-    "family": "攻速特效",
-    "core": [
-     3153,
-     6673
-    ]
-   },
-   {
-    "champion_name": "納瑟斯",
-    "family": "坦克",
-    "core": [
-     6662,
-     3065
-    ]
-   },
-   {
-    "champion_name": "納瑟斯",
-    "family": "戰士",
-    "core": [
-     3078,
-     3110
-    ]
-   },
-   {
-    "champion_name": "維爾戈",
-    "family": "攻速特效",
-    "core": [
-     6672,
-     6676
-    ]
-   },
-   {
-    "champion_name": "艾克",
-    "family": "法術",
-    "core": [
-     3152,
-     3157
-    ]
-   },
-   {
-    "champion_name": "菲艾",
-    "family": "戰士",
-    "core": [
-     6610,
-     6692
-    ]
-   },
-   {
-    "champion_name": "蓋倫",
-    "family": "戰士",
-    "core": [
-     6631,
-     3071
-    ]
-   },
-   {
-    "champion_name": "賈克斯",
-    "family": "攻速特效",
-    "core": [
-     2510,
-     3146
-    ]
-   },
-   {
-    "champion_name": "賽勒斯",
-    "family": "法術",
-    "core": [
-     3157,
-     4633
-    ]
-   },
-   {
-    "champion_name": "賽特",
-    "family": "戰士",
-    "core": [
-     6631,
-     2501
-    ]
-   },
-   {
-    "champion_name": "赫克林",
-    "family": "戰士",
-    "core": [
-     3161,
-     2517
-    ]
-   },
-   {
-    "champion_name": "赫克林",
-    "family": "穿甲",
-    "core": [
-     6692,
-     3161
-    ]
-   },
-   {
-    "champion_name": "趙信",
-    "family": "戰士",
-    "core": [
-     6610,
-     6692
-    ]
-   },
-   {
-    "champion_name": "路西恩",
-    "family": "暴擊",
-    "core": [
-     3508,
-     3153
-    ]
-   },
-   {
-    "champion_name": "達瑞斯",
-    "family": "戰士",
-    "core": [
-     3078,
-     3742
-    ]
-   },
-   {
-    "champion_name": "鏡爪",
-    "family": "暴擊",
-    "core": [
-     6676,
-     3153
-    ]
-   },
-   {
-    "champion_name": "阿卡莉",
-    "family": "法術",
-    "core": [
-     3152,
-     3157
-    ]
-   },
-   {
-    "champion_name": "阿姆姆",
-    "family": "坦克",
-    "core": [
-     3068,
-     8020
-    ]
-   },
-   {
-    "champion_name": "阿祈爾",
-    "family": "法術",
-    "core": [
-     6655,
-     3115
-    ]
-   },
-   {
-    "champion_name": "雷尼克頓",
-    "family": "戰士",
-    "core": [
-     6610,
-     6692
-    ]
-   },
-   {
-    "champion_name": "雷玟",
-    "family": "穿甲",
-    "core": [
-     6692,
-     6610
-    ]
-   },
-   {
-    "champion_name": "雷茲",
-    "family": "法術",
-    "core": [
-     2522,
-     3089
-    ]
-   },
-   {
-    "champion_name": "露璐",
-    "family": "輔助",
-    "core": [
-     3107,
-     3190
     ]
    }
   ],
