@@ -73,12 +73,12 @@ export function decodeAugTiers(d: AugTiersFile): Record<string, Record<string, A
     }
     return out;
 }
-// A champion's Mayhem builds (Dev Tools/Build Model.md, tools/reason/build_tiers.py): one per play style (Zaviel's in Inbox/玩法出裝.md, else
-// found in the games): how it plays, the first two items (`games` false: from the reasoning alone), choices for the third, items
-// other pairs have in place of one of the two, items four to six with what each adds, boots and the item to take with 命定武器; and hand builds the games cannot show
+// A champion's Mayhem builds (Dev Tools/Build Model.md, tools/reason/build_tiers.py): one per play style, a role and damage (AD 戰士, AP 刺客)
+// found in the games: the three core items in buying order (`games` false: from the reasoning alone), another core, items four to six with
+// what each adds, boots and the item to take with 命定武器; and hand builds the games cannot show
 export interface BuildPick { id: number; reason: string; need?: string; when?: string; grows?: string[] }
-// alts: other first-two pairs of the style
-export interface BuildStyle { name: string; why: string; games: boolean; status: string; core: BuildPick[]; alts?: BuildPick[][]; third: BuildPick[]; late: BuildPick[]; boots: BuildPick | null; destiny: BuildPick }
+// alts: another core of the style; third: empty since the core holds three; warn: few (少見) or weak (偏弱); share: of the champion's games
+export interface BuildStyle { name: string; why: string; games: boolean; status: string; core: BuildPick[]; alts?: BuildPick[][]; third: BuildPick[]; late: BuildPick[]; boots: BuildPick | null; destiny: BuildPick; warn?: string; share?: number }
 export interface ChampBuilds { styles: BuildStyle[]; special: { name: string; items: number[]; note: string }[] }
 
 export interface Augment {

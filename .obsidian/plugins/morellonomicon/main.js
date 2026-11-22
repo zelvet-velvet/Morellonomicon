@@ -2261,25 +2261,21 @@ function mayhemBuilds(page2, c, ctx, b) {
     how.setText(st.why || (st.games ? "" : "\u4F9D\u6280\u80FD\u7D44\u63A8\u7B97\u7684\u51FA\u88DD"));
     grid.empty();
     lit = null;
-    const alt = st.alts?.[0];
-    head2("\u524D\u5169\u4EF6", 2);
-    head2("", 1);
-    head2(alt ? "\u6216\u9019\u5169\u4EF6" : "", 2);
+    head2("\u6838\u5FC3 (\u4F9D\u5E8F)", 3);
+    head2("\u978B\u5B50 \xB7 \u547D\u5B9A", 2);
     const first = cell(st.core[0]);
     cell(st.core[1]);
-    h(grid, "div", "mn-mbp-or", alt ? "\u6216" : "");
-    cell(alt?.[0]);
-    cell(alt?.[1]);
-    head2("\u7B2C\u4E09\u4EF6 (\u9078\u4E00)", 3);
-    head2("\u978B\u5B50 \xB7 \u547D\u5B9A", 2);
-    for (let i = 0; i < 3; i++) cell(st.third[i]);
+    cell(st.core[2]);
     cell(st.boots ?? void 0);
     const grows = (st.destiny.grows ?? []).slice(0, 3);
     cell(st.destiny, "\u547D\u5B9A", {
       destiny: true,
       text: `\u62FF\u5230\u547D\u5B9A\u6B66\u5668\u6642\u7B2C\u4E00\u4EF6\u51FA\u5B83\uFF0C\u6BCF\u6B21\u53C3\u8207\u64CA\u6BBA${grows.length ? grows.join("\u3001") : "\u5C6C\u6027"}\u6C38\u4E45\u63D0\u5347\u3002${st.destiny.reason}`
     });
-    head2("4\u20136 \u4EF6 (\u6311\u4E09\u4EF6)", COLS);
+    const alt = st.alts?.[0];
+    head2(alt ? "\u6216\u9019\u4E09\u4EF6" : "", COLS);
+    for (let i = 0; i < COLS; i++) cell(i < 3 ? alt?.[i] : void 0);
+    head2("4\u20136 \u4EF6 (\u4F9D\u9700\u8981\u6311\u4E09\u4EF6)", COLS);
     const rank = (p) => p.when ? 99 : POOL_ORDER.indexOf(p.need ?? "\u8F38\u51FA");
     const late = [...st.late].sort((x, y) => rank(x) - rank(y));
     for (let i = 0; i < COLS; i++) cell(late[i]);

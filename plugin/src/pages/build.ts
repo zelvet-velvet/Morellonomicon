@@ -64,9 +64,9 @@ function section(body: HTMLElement, title: string): void { h(body, "div", "mn-gh
 const DESTINY_FRAME = "https://raw.communitydragon.org/latest/game/assets/items/itemmodifiers/strawberry_weapon_evolve_border.png";
 
 // The Mayhem builds (tools/reason/build_tiers.py), in buying order on a fixed five-column grid (Layouts, 出裝, Zaviel 2026-11-03): the play
-// style words, how it plays and the tapped item (name, what it is for, why) on top, each in a box of fixed height; then three rows of
-// item cells, every cell alike (icon, name, what it is for): 前兩件 and 或這兩件 (another pair of the style), 第三件 and 鞋子 · 命定,
-// 4–6 件. Empty cells keep their place, so switching the style (its words or a tap on a side) moves nothing.
+// style words (a role and damage: AD 戰士, AP 刺客), how it plays and the tapped item (name, what it is for, why) on top, each in a box of
+// fixed height; then three rows of item cells, every cell alike (icon, name, what it is for): 核心 (three, in buying order) and 鞋子 · 命定,
+// 或這三件 (another core of the style), 4–6 件 by need. Empty cells keep their place, so switching the style moves nothing.
 const COLS = 5;
 const POOL_ORDER = ["輸出", "生存", "穿透", "功能", "機動", "重創"];
 function mayhemBuilds(page: HTMLElement, c: Champion, ctx: PageCtx, b: ChampBuilds): void {
@@ -107,22 +107,20 @@ function mayhemBuilds(page: HTMLElement, c: Champion, ctx: PageCtx, b: ChampBuil
         how.setText(st.why || (st.games ? "" : "依技能組推算的出裝"));
         grid.empty();
         lit = null;
-        // row 1: the core pair, then another pair of the style
-        const alt = st.alts?.[0];
-        head("前兩件", 2); head("", 1); head(alt ? "或這兩件" : "", 2);
+        // row 1: the three core items in buying order, boots and 命定武器
+        head("核心 (依序)", 3); head("鞋子 · 命定", 2);
         const first = cell(st.core[0]);
-        cell(st.core[1]);
-        h(grid, "div", "mn-mbp-or", alt ? "或" : "");
-        cell(alt?.[0]); cell(alt?.[1]);
-        // row 2: the third item's choices, boots and 命定武器
-        head("第三件 (選一)", 3); head("鞋子 · 命定", 2);
-        for (let i = 0; i < 3; i++) cell(st.third[i]);
+        cell(st.core[1]); cell(st.core[2]);
         cell(st.boots ?? undefined);
         const grows = (st.destiny.grows ?? []).slice(0, 3);
         cell(st.destiny, "命定", { destiny: true,
             text: `拿到命定武器時第一件出它，每次參與擊殺${grows.length ? grows.join("、") : "屬性"}永久提升。${st.destiny.reason}` });
+        // row 2: another core of the style
+        const alt = st.alts?.[0];
+        head(alt ? "或這三件" : "", COLS);
+        for (let i = 0; i < COLS; i++) cell(i < 3 ? alt?.[i] : undefined);
         // row 3: items four to six, like with like (看情況 last)
-        head("4–6 件 (挑三件)", COLS);
+        head("4–6 件 (依需要挑三件)", COLS);
         const rank = (p: BuildPick) => (p.when ? 99 : POOL_ORDER.indexOf(p.need ?? "輸出"));
         const late = [...st.late].sort((x, y) => rank(x) - rank(y));
         for (let i = 0; i < COLS; i++) cell(late[i]);
