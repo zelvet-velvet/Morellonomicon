@@ -361,8 +361,9 @@ def item_note(item_id, it, version, names, keep, everything=(), shop_list=()):
     if base:
         fm["aram"] = True
         fm["variant_of"] = names[base]
-    if len(item_id) > 4 and item_id not in shop_list:
-        fm["reward"] = True   # an augment's reward (烏莉特的法帽, 黃金鍋鏟...): never sold, so not on the Items page
+    if len(item_id) > 4 and item_id not in shop_list and not fm["from"]:
+        fm["reward"] = True   # an augment's reward (烏莉特的法帽, 黃金鍋鏟...): never sold, so not on the Items page; an item with a
+                              # recipe is sold even off the Rift's shop list (破曉綻放之劍, Mayhem's own)
 
     link = lambda ids: [f"[[{names[i]}]]" for i in ids if i in names]
     lines = [f"![{it['name']}|48]({fm['icon']})", ""]
