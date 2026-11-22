@@ -877,8 +877,8 @@ def main():
         played_by[note["id"]] = (played, data.get("champion", {}).get("wm", 0))
         offered = [i for i in rated if games.get(i, (0, 0))[0] > 0 or played * overall[i].get("pr", 0) < meta.get("not_offered", NOT_OFFERED)]
         builds = [Champ(note, style) for style in STYLES.get(note["id"], [("main", "主流", {})])]
-        for c in builds:
-            champs[f"{c.id}/{c.style}"] = c
+        def reason_rows(c, builds=builds, offered=offered, games=games, own=own):
+            """The champion's games read through one build's reasoning: a row per offered augment, not yet tiered."""
             rows = []
             for i in offered:
                 fit, why = reasoning(i, c)
@@ -897,6 +897,11 @@ def main():
                 group = "五殺" if i in PENTAKILL else augs[i]["rarity"]
                 rows.append({"id": i, "group": group, "tier": "", "value": round(score, 4), "score": 0.0, "when": "", "reason": reason,
                              "fit": fit, "why": why or "", "games": g, "seen": seen, "base": base_gap[i], "other": other, "gap": gap})
+            return rows
+
+        for c in builds:
+            champs[f"{c.id}/{c.style}"] = c
+            rows = reason_rows(c)
             tier_rows(rows)
             for r in rows:
                 if r["games"] < meta.get("sure_games", SURE_GAMES) or r["seen"] is None:
@@ -912,7 +917,7 @@ def main():
                                                  "none": []}
             c.rows = rows
         if by_style.get(str(key)):   # one list per play style instead (the app's styles), from that style's own games
-            out[c.id] = style_lists(by_style[str(key)], builds)
+            out[c.id] = style_lists(by_style[str(key)], builds, note, reason_rows)
 
     OUT_TIERS.write_text(tiers_json({"source": source(meta), "patch": meta["version"], "augments": len(rated), "unrated": unrated,
                                      "champions": out}), encoding="utf-8")
@@ -965,14 +970,78 @@ def order_rows(rows):
     rows.sort(key=lambda r: -r["value"])
 
 
-def style_lists(styles, builds):
+def style_role(name):
+    """A play style's role from its name, the way the overlay reads it (oblivion-orb tools/build_data.py): a hybrid's noun is its last
+    word, so 坦克輔助 is a support and 法術戰士 a fighter."""
+    for words, role in ((("坦克輸出", "法術戰士"), "fighter"), (("坦克輔助",), "support"), (("坦克",), "tank"), (("刺客",), "assassin"),
+                        (("射手",), "marksman"), (("輔助", "補師"), "support"), (("法師", "法術"), "mage"),
+                        (("戰士", "輸出", "斬殺", "連招", "消耗", "穿甲"), "fighter")):
+        if any(w in name for w in words):
+            return role
+    return ""
+
+
+def kit_ratio(note, kind):
+    """The kit's biggest ability ratio of one kind on a damage row of Q, W, E or R: "ap" reads 魔法攻擊, "ad" 物理攻擊 and 額外物理攻擊;
+    Bel'Veth's W (+150% 魔法攻擊) gives 1.5. A ratio that grows by rank (+50/60/70%) counts at its last rank."""
+    words = "魔法攻擊" if kind == "ap" else "(?:額外)?物理攻擊"
+    best = 0.0
+    for sk in note.get("skills", []):
+        if sk.get("key") not in ("Q", "W", "E", "R"):
+            continue
+        for row in sk.get("rows", []):
+            if "傷害" not in row.get("label", ""):
+                continue
+            for m in re.finditer(r"\+([\d./]+)%\s*" + words, row.get("note", "")):
+                try:
+                    best = max(best, float(m.group(1).split("/")[-1]) / 100)
+                except ValueError:
+                    pass
+    return best
+
+
+KIT_RATIO = 0.6   # an ability ratio this big makes an off-damage build a real one: the reasoning treats it as that damage
+
+
+def off_damage_build(note, s):
+    """A build for a rare play style whose damage none of the champion's builds has (Bel'Veth's AP 刺客): the style's damage and role
+    put over the note. With a big ratio of that damage in the kit (KIT_RATIO) it is that damage outright; with a small one only the
+    stat is something the kit uses (fit_ap / fit_ad give 1)."""
+    ap = s["damage"] == "ap"
+    role = style_role(s["name"])
+    big = kit_ratio(note, s["damage"]) >= KIT_RATIO
+    over = dict(_AP if ap else _AD)
+    if not big:
+        over.update({"ap": False, "ad": False})
+    over.update({"tank": role == "tank", "marksman": role == "marksman" and not ap, "enchanter": role == "support" and ap})
+    return Champ(note, (s["damage"], s["name"], over))
+
+
+def style_lists(styles, builds, note=None, reason_rows=None):
     """A tier list per play style (decided with Zaviel 2026-11-22): each augment's gap within the style's own games, against the
     style's own win rate, pulled toward the champion's gap (the list above) by STYLE_PRIOR games; the reasoning and its reason
-    stay those of the champion's build with the style's damage (STYLES), or its only build."""
+    stay those of the champion's build with the style's damage (STYLES), or its only build.
+
+    A rare style (under STYLE_LIST_MIN games) is ranked by the overlay with the most played list of its role and damage; when no big
+    style has its role and damage, the most played rare one of them gets a list of its own (decided with Zaviel 2026-11-23: Bel'Veth's
+    AP 刺客 was ranked by an AD list), reasoned as that damage when no build has it (off_damage_build, from the kit's ratios)."""
     lists = {}
     big = [s for s in styles if s["tm"] >= STYLE_LIST_MIN] or sorted(styles, key=lambda s: -s["tm"])[:1]
-    for s in big:
+    covered = {(s["damage"], style_role(s["name"])) for s in big}
+    rare = []
+    for s in sorted(styles, key=lambda s: -s["tm"]):
+        pair = (s["damage"], style_role(s["name"]))
+        if s not in big and pair not in covered and s["tm"] > 0:
+            rare.append(s)
+            covered.add(pair)
+    for s in big + rare:
         c = next((b for b in builds if (s["damage"] == "ap") == (b.style == "ap")), builds[0]) if len(builds) > 1 else builds[0]
+        # a rare damage style (not a tank or support: their damage label says little) the note's build does not deal
+        off = (s in rare and len(builds) == 1 and s["damage"] in ("ap", "ad") and style_role(s["name"]) not in ("tank", "support")
+               and (s["damage"] == "ap") != (c.ap and not c.ad) and note is not None and reason_rows is not None)
+        if off:
+            c = off_damage_build(note, s)
+            c.rows = reason_rows(c)
         own = s["wm"] / s["tm"] if s["tm"] else None
         games = {a: (g, w) for a, g, w in s["ra"]}
         rows = []
