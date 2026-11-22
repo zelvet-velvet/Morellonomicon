@@ -424,7 +424,7 @@ export const AUG_CLASS: Record<string, string> = { 銀: "aug-silver", 金: "aug-
 
 // An augment icon the way the game shows it: its large icon (the rarity's tint is already in the picture) in the rarity's frame, see .aug-icon in
 // styles.css. The large file sits in the game's own folder; a few augments only have the small one, which is the fallback.
-// The data points each augment at its best file (tools/fetch_augments.py): a large icon or a generic rarity icon is already tinted; a small one is
+// The data points each augment at its best file (tools/fetch/fetch_augments.py): a large icon or a generic rarity icon is already tinted; a small one is
 // a plain grey shape the game tints at runtime, so it is drawn as a mask filled with the rarity's colours (sampled from the game's tinted icons).
 const TINTED = /_large\.png$|genericabilityaugmenticon/;
 export const augIcon = (parent: HTMLElement, src: string, rarity: string, cls = ""): HTMLElement => {

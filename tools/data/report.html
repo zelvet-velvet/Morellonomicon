@@ -189,7 +189,7 @@ function hideTip() { $("tip").style.display = "none"; }
 const BUCKETS = [[0, 0, "0"], [1, 4, "1–4"], [5, 9, "5–9"], [10, 19, "10–19"], [20, 49, "20–49"], [50, 99, "50–99"], [100, 1e9, "100+"]];
 function draw() {
   const p = withGames.find((x) => x.patch === current);
-  if (!p) { $("tiles").innerHTML = `<div class="card empty">No games crawled yet: run tools/fetch_lcu.py.</div>`; return; }
+  if (!p) { $("tiles").innerHTML = `<div class="card empty">No games crawled yet: run tools/crawl/fetch_lcu.py.</div>`; return; }
   tiles(p);
   const d = DATA.detail[p.patch];
   const daily = d.daily.map(([k, v]) => ({ k: k.slice(5), v, tip: `${fmt(v)} games` }));

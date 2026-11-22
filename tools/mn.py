@@ -19,6 +19,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # python3 -I does not add the script folder
+import toolpath  # noqa: E402,F401  (the job folders: crawl/, fetch/, reason/, vault/)
 import datalib as dl   # noqa: E402
 
 
@@ -128,7 +129,7 @@ def frontmatter(folder):
 # The tier viewer's augment tiers (decided with Zaviel 2026-11-21, after reading how resg.top tiers: raw win rate in 3-point
 # bands, a 高 / 中 / 观察 label by games): an augment's overall number is its average gap to each champion's own win rate,
 # weighted by picks and pulled toward 0 by GAP_PRIOR games, so strong champions taking it do not make it look strong. The
-# same 3-point bands as the champions', centred on 0. A second column, the model (tools/augment_model.py, our crawl only),
+# same 3-point bands as the champions', centred on 0. A second column, the model (tools/crawl/augment_model.py, our crawl only),
 # also holds the other augments fixed. Pick rate only orders ties and is shown for confidence.
 GAP_PRIOR = 200
 GAP_BANDS = ((4.5, "T0"), (1.5, "T1"), (-1.5, "T2"), (-4.5, "T3"))   # points at or above -> tier; below the last is T4

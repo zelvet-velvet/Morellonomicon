@@ -21,7 +21,7 @@ The other community plugins in the list (Templater, Style Settings…) are only 
 
 ## 2. Work on it (only the owner, on the PC)
 
-1. Clone the repo and open **the repo folder itself** as a vault (`plugin/` and `tools/` are hidden through Excluded files); `python3 tools/install_plugins.py` downloads the editing plugins.
+1. Clone the repo and open **the repo folder itself** as a vault (`plugin/` and `tools/` are hidden through Excluded files); `python3 tools/vault/install_plugins.py` downloads the editing plugins.
 2. Generated data: `python3 -I tools/update_patch.py --commit` (also runs by itself on GitHub, Wednesday to Friday).
 3. Plugin changes: `cd plugin && npm install && npm run build && npm run install-vault`, then commit the rebuilt files in `.obsidian/plugins/morellonomicon/`.
 

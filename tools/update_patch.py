@@ -18,10 +18,10 @@ from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parent
 ROOT = TOOLS.parent
-STEPS = [("champions and items", "fetch_data.py"), ("Mayhem augments", "fetch_augments.py"),
-         ("changes since the last patch", "fetch_changes.py"), ("Riot's patch notes", "fetch_patch_notes.py"),
-         ("augment effect text", "fetch_augment_text.py"), ("augment numbers and tags", "fetch_augment_data.py"), ("augment text on the League wiki", "fetch_wiki_augments.py"), ("item shop classes (League wiki)", "fetch_item_roles.py"), ("lanes (Meraki)", "fetch_positions.py"), ("loading screen tips", "fetch_loading_tips.py"),
-         ("resg.top games (cache)", "fetch_resg.py"), ("our crawl (cache)", "lcu_cache.py"), ("augment tiers", "augment_tiers.py"), ("item builds", "build_tiers.py"), ("what the reasoning still needs", "reasoning_todo.py"), ("patch history (snapshot)", "mn.py", "snapshot"), ("ability tag audit", "audit_tags.py")]
+STEPS = [("champions and items", "fetch/fetch_data.py"), ("Mayhem augments", "fetch/fetch_augments.py"),
+         ("changes since the last patch", "fetch/fetch_changes.py"), ("Riot's patch notes", "fetch/fetch_patch_notes.py"),
+         ("augment effect text", "fetch/fetch_augment_text.py"), ("augment numbers and tags", "fetch/fetch_augment_data.py"), ("augment text on the League wiki", "fetch/fetch_wiki_augments.py"), ("item shop classes (League wiki)", "fetch/fetch_item_roles.py"), ("lanes (Meraki)", "fetch/fetch_positions.py"), ("loading screen tips", "fetch/fetch_loading_tips.py"),
+         ("resg.top games (cache)", "crawl/fetch_resg.py"), ("our crawl (cache)", "crawl/lcu_cache.py"), ("augment tiers", "reason/augment_tiers.py"), ("item builds", "reason/build_tiers.py"), ("what the reasoning still needs", "reason/reasoning_todo.py"), ("patch history (snapshot)", "mn.py", "snapshot"), ("ability tag audit", "vault/audit_tags.py")]
 ATTRIBUTION = "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 
 

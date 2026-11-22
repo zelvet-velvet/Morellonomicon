@@ -22,7 +22,7 @@ export function patchPage(ctx: PageCtx): PageOut {
         const hero = h(el, "div", "mn-patch");
         h(hero, "div", "mn-patch-k", "Data from patch");
         h(hero, "div", "mn-patch-v", store.riotPatch() || "—");
-        h(hero, "div", "mn-patch-s", "Run tools/fetch_patch_notes.py to show Riot's patch notes here.");
+        h(hero, "div", "mn-patch-s", "Run tools/fetch/fetch_patch_notes.py to show Riot's patch notes here.");
     }
 
     if (latest?.champions?.length) {

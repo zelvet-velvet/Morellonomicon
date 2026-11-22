@@ -6,7 +6,7 @@ tags:
 sticker: lucide//text-cursor-input
 ---
 > [!abstract]+ The app's hint and tip texts
-> By the file they are in (made by `tools/list_ui_text.py`). Edit a text after its `·`; keep one text per line. Then tell Claude **apply the UI Text note**: each changed line is changed in the code. `${…}` parts are filled in by the app (a number, a name): keep them.
+> By the file they are in (made by `tools/vault/list_ui_text.py`). Edit a text after its `·`; keep one text per line. Then tell Claude **apply the UI Text note**: each changed line is changed in the code. `${…}` parts are filled in by the app (a number, a name): keep them.
 
 ## data/riot.ts
 

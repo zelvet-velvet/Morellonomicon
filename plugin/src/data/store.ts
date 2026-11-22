@@ -5,7 +5,7 @@ import { MODES, ModeId } from "../modes";
 
 type FM = Record<string, unknown>;
 
-// What tools/fetch_data.py writes into a champion note's frontmatter (plus the hand-written pinned / avoid / video)
+// What tools/fetch/fetch_data.py writes into a champion note's frontmatter (plus the hand-written pinned / avoid / video)
 export interface Champion {
     id: string; key: number; name: string; nameEn: string; title: string; blurb: string; tier: string; roles: string[]; damageType: string; skillDamage: string[];
     archetypes: string[]; features: string[]; resource: string; attack: number; magic: number; defense: number; difficulty: number;
@@ -22,15 +22,15 @@ export interface SkillRow { label: string; vals: string[]; note: string }   // o
 export interface Meta { patch: string; date: string; source: string; sourceName: string; status: string }
 export interface Build extends Meta { kind: "meta" | "alt" | "synergy"; mode: string; name: string; items: number[]; note: string; with: string[] }
 export interface Tip extends Meta { title: string; text: string; video: string }
-// What tools/fetch_builds.py counts from real matches (_data/builds.<mode>.json)
+// What tools/fetch/fetch_builds.py counts from real matches (_data/builds.<mode>.json)
 export interface Count { id: number; games: number; wins: number }
 export interface ChampStats { games: number; wins: number; items: Count[]; sets: { items: number[]; games: number; wins: number }[]; augments: Count[] }
 export interface BuildStats { mode: string; queue: number; date: string; matches: number; champions: Record<string, ChampStats> }
-// What tools/fetch_changes.py found between patches (_data/changes.json); dir is from the player's point of view
+// What tools/fetch/fetch_changes.py found between patches (_data/changes.json); dir is from the player's point of view
 export interface Change { scope: string; field: string; old: string; new: string; dir: "buff" | "nerf" | "mixed" | "change" | "text" }
 export interface PatchChange { patch: string; from: string; items: Change[] }
 export interface ChangeData { current: string; patches: string[]; date: string; champions: Record<string, PatchChange[]> }
-// Riot's own patch notes in short (_data/patches.json, from tools/fetch_patch_notes.py)
+// Riot's own patch notes in short (_data/patches.json, from tools/fetch/fetch_patch_notes.py)
 export interface NoteChange { label: string; old: string; new: string }
 export interface NoteEntry { name: string; changes: NoteChange[]; more: number }
 export interface PatchNote {
@@ -48,11 +48,11 @@ function withOnHit(skills: Skill[], keys: string[]): Skill[] {
 }
 
 export interface Skill { key: string; name: string; damage: string[]; tags: string[]; icon: string; desc: string; upgrade: string; range: string; rows: SkillRow[]; levels: number[] }   // levels: a passive's numbers are by champion level (Lv 1, 6, 11 ...), not by rank
-// One play style's augment tiers (Dev Tools/Augment Model.md, tools/augment_tiers.py): per rarity (`group`; 五殺 is the Pentakill
+// One play style's augment tiers (Dev Tools/Augment Model.md, tools/reason/augment_tiers.py): per rarity (`group`; 五殺 is the Pentakill
 // band's set), S / A / B / C and the reason (why the champion's kit makes it work); `when` (前期強 / 後期強) is empty for now
 export interface AugTier { id: number; group: string; tier: string; value: number; score: number; when: string; reason: string }
 export interface AugTierStyle { name: string; tiers: AugTier[]; none: { id: number; value: number }[] }
-// A champion's Mayhem builds (Dev Tools/Build Model.md, tools/build_tiers.py): one per play style (Zaviel's in Inbox/玩法出裝.md, else
+// A champion's Mayhem builds (Dev Tools/Build Model.md, tools/reason/build_tiers.py): one per play style (Zaviel's in Inbox/玩法出裝.md, else
 // found in the games): how it plays, the first two items (`games` false: from the reasoning alone), choices for the third, items
 // other pairs have in place of one of the two, items four to six with what each adds, boots and the item to take with 命定武器; and hand builds the games cannot show
 export interface BuildPick { id: number; reason: string; need?: string; when?: string; grows?: string[] }
@@ -65,7 +65,7 @@ export interface Augment {
     hand: boolean;   // `effect` is hand-written on the note (it wins over the game data's numbers)
     effectSource: string; effectStatus: string; effectPatch: string;   // who the hand-written `effect` comes from (e.g. the League wiki), 待驗證 / 已驗證, its patch
 }
-// An augment's numbers from the game data (tools/fetch_augment_data.py): per level its text as runs [text, the game's markup kind]
+// An augment's numbers from the game data (tools/fetch/fetch_augment_data.py): per level its text as runs [text, the game's markup kind]
 // and its stat chips; Riot's augment tags and, when a tag rules some champions out, the champions it is offered to (lower-case ids)
 export interface AugmentData {
     levels: number[]; runs: [string, string][][]; chips: { stat: string; text: string }[][]; partial: boolean; tags: string[]; fits?: string[];
@@ -124,20 +124,20 @@ export class Store {
     private augs: Augment[] | null = null;
     stats: BuildStats | null = null;
     changes: ChangeData | null = null;
-    // your own champion mastery (_data/mastery.json from tools/fetch_mastery.py; git-ignored, so only on the device that has the file)
+    // your own champion mastery (_data/mastery.json from tools/fetch/fetch_mastery.py; git-ignored, so only on the device that has the file)
     mastery: { fetched: string; total: number; champions: Record<string, { level: number; points: number; last: string }> } | null = null;
     masteryOf(id: string): { level: number; points: number; last: string } | undefined { return this.mastery?.champions[id]; }
     positions: { patch: string; date: string; matches: number; champions: Record<string, Record<string, number>> } | null = null;   // _data/positions.json
     riotNotes: PatchNote[] = [];
     sounds: Sounds | null = null;   // _data/sounds.json: how characters are said, for finding names from speech to text
     loadingTips: { group: string; text: string }[] = [];   // _data/loading-tips.json: the game's loading screen tips (zh_TW)
-    gameText: Record<string, { text: string; partial: boolean }> = {};   // augment id -> the game's own description (tools/fetch_augment_text.py)
-    augData: Record<string, AugmentData> = {};   // augment id -> numbers, levels, tags (tools/fetch_augment_data.py)
+    gameText: Record<string, { text: string; partial: boolean }> = {};   // augment id -> the game's own description (tools/fetch/fetch_augment_text.py)
+    augData: Record<string, AugmentData> = {};   // augment id -> numbers, levels, tags (tools/fetch/fetch_augment_data.py)
     augmentData(id: number): AugmentData | undefined { return this.augData[String(id)]; }
-    augTiers: Record<string, Record<string, AugTierStyle>> = {};   // champion id -> play style -> the augment tiers (tools/augment_tiers.py)
-    itemBuilds: Record<string, ChampBuilds> = {};   // champion id -> its Mayhem builds (tools/build_tiers.py)
+    augTiers: Record<string, Record<string, AugTierStyle>> = {};   // champion id -> play style -> the augment tiers (tools/reason/augment_tiers.py)
+    itemBuilds: Record<string, ChampBuilds> = {};   // champion id -> its Mayhem builds (tools/reason/build_tiers.py)
     augUnrated: Record<string, string> = {};   // augment id -> why it has no tier (disabled, no games, no rule yet)
-    champTiers: { patch: string; champions: Record<string, string> } | null = null;   // champion id -> T0..T4 this patch (tools/augment_tiers.py), labels only
+    champTiers: { patch: string; champions: Record<string, string> } | null = null;   // champion id -> T0..T4 this patch (tools/reason/augment_tiers.py), labels only
     itemRoles: Record<string, string[]> | null = null;   // item id -> the shop's class tabs it is under (_data/item-roles.json, the League wiki)
 
     // false until the data files (_data/*.json) have been read once after start-up
@@ -146,7 +146,7 @@ export class Store {
     private get app() { return this.plugin.app; }
     private get s() { return this.plugin.settings; }
 
-    // The counted builds for the current mode, if tools/fetch_builds.py has made them (read from the vault's _data folder)
+    // The counted builds for the current mode, if tools/fetch/fetch_builds.py has made them (read from the vault's _data folder)
     async loadStats(mode: ModeId = this.s.mode): Promise<void> {
         try {
             const path = normalizePath(`_data/builds.${mode}.json`);
@@ -214,7 +214,7 @@ export class Store {
     }
 
     // The lanes a champion is played in: a hand-written `positions` list in its note, else the lanes with at least LANE_MIN_SHARE
-    // of its ranked games in _data/positions.json (tools/fetch_builds.py --mode ranked), most played first
+    // of its ranked games in _data/positions.json (tools/fetch/fetch_builds.py --mode ranked), most played first
     lanes(c: Champion): string[] {
         if (c.positions.length) return c.positions;
         const counts = this.positions?.champions[c.id];
@@ -304,7 +304,7 @@ export class Store {
         return out;
     }
 
-    // How strong each augment is across champions, from the augment model (tools/augment_tiers.py): per champion its best play
+    // How strong each augment is across champions, from the augment model (tools/reason/augment_tiers.py): per champion its best play
     // style's tier, only for the champions the game offers it to (an augment Riot keeps for tanks is judged on tanks). Augments are
     // ranked by the share of those champions taking it at S (A counts half), then by how many are offered it. `tier` is the overall
     // letter by that rank (top 15% S, next 25% A, next 35% B, the rest C); `top` the five champions it suits best. Unrated augments are left out.

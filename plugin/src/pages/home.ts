@@ -18,7 +18,7 @@ const SERVERS: [string, string][] = [["", "自動"], ["TW2", "台灣"], ["JP1", 
 // One champion's mastery: level, points and when last played (ms; 0 when not known)
 interface Mine { id: string; level: number; points: number; last: number }
 // your profile from Riot (cached on this device) and your mastery of every champion, most points first; the profile's wins over
-// the mastery file (tools/fetch_mastery.py)
+// the mastery file (tools/fetch/fetch_mastery.py)
 function topMastery(app: App, plugin: MorellonomiconPlugin) {
     const s = plugin.settings, store = plugin.store;
     const all = store.champions();
@@ -297,7 +297,7 @@ function yourChampions(ctx: PageCtx, rest: HTMLElement, mine: Mine[], byId: Map<
     drawCards();
 }
 
-// 本版強勢: the T0 and T1 champions (tools/augment_tiers.py ranks them, strongest first; only the labels are in the data), a tier tag
+// 本版強勢: the T0 and T1 champions (tools/reason/augment_tiers.py ranks them, strongest first; only the labels are in the data), a tier tag
 // in its colour and a row of faces that scrolls sideways (the face cut at the edge says there is more); 全部 opens Champions
 const TIER_TAGS: [string, string][] = [["T0", "var(--color-orange)"], ["T1", "var(--color-yellow)"]];
 function strongest(ctx: PageCtx, rest: HTMLElement, all: Champion[], tiers: Record<string, string>): void {
@@ -381,7 +381,7 @@ const TIERS = ["起始", "鞋子", "基本", "史詩", "傳說"];
 const tierOf = (i: { tags: string[]; from: number[]; into: number[]; goldTotal: number }): string =>
     i.tags.includes("Boots") ? "鞋子" : !i.from.length && !i.into.length ? "起始" : !i.from.length ? "基本" : i.into.length ? "史詩" : "傳說";
 // The shop's class tabs, in its order. Which items each lists comes from _data/item-roles.json (the League wiki's copy of the shop's
-// menus, tools/fetch_item_roles.py); without that file, a guess from the item's stats stands in
+// menus, tools/fetch/fetch_item_roles.py); without that file, a guess from the item's stats stands in
 type ItemLike = { tags: string[] };
 const has = (i: ItemLike, ...tags: string[]) => tags.some((x) => i.tags.includes(x));
 const ITEM_ROLES: [string, (i: ItemLike) => boolean][] = [

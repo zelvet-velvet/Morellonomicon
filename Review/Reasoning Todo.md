@@ -5,7 +5,7 @@ tags:
   - augments
 sticker: lucide//brain
 ---
-Written by `tools/reasoning_todo.py` (do not edit). What the augment and build reasoning still needs; the skill `mn-reasoning` says how to work it. Handled items are kept in `tools/data/reasoning-done.json` and drop off the list.
+Written by `tools/reason/reasoning_todo.py` (do not edit). What the augment and build reasoning still needs; the skill `mn-reasoning` says how to work it. Handled items are kept in `tools/data/reasoning-done.json` and drop off the list.
 
 Newest patch notes: 16.23 · games behind the candidates: resg.top 16.23
 

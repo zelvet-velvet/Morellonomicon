@@ -5,7 +5,7 @@ tags:
   - items
 sticker: lucide//circle-help
 ---
-Written by `tools/build_tiers.py` (do not edit). Items with at least 5000 games on resg.top 16.23 (2026-11-19) where the games and the reasoning disagree. Explain it and it becomes a play style (`STYLES`), an item kind or a condition in the script.
+Written by `tools/reason/build_tiers.py` (do not edit). Items with at least 5000 games on resg.top 16.23 (2026-11-19) where the games and the reasoning disagree. Explain it and it becomes a play style (`STYLES`), an item kind or a condition in the script.
 
 ## Built often, no reason (another play style?)
 

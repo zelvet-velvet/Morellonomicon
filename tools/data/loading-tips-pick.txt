@@ -1,6 +1,6 @@
 # The loading screen tips to show in the Handbook, in English as the League wiki lists them (Loading Screen page):
 # "Loading tips 2017 / Miscellaneous" first, then "Loading tips 2025 / Default / Did You Know" by region.
-# tools/fetch_loading_tips.py finds each line in the game's English text and takes Riot's zh_TW text of the same key.
+# tools/fetch/fetch_loading_tips.py finds each line in the game's English text and takes Riot's zh_TW text of the same key.
 # A line without a full stop or question mark that names a group starts that group.
 Miscellaneous
 Jinx's classic splash background is a demolished version of Vi's.

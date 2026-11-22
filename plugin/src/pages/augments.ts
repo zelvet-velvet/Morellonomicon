@@ -20,7 +20,7 @@ export function augmentsPage(ctx: PageCtx): PageOut {
     const store = ctx.plugin.store;
     const el = page("Augments");
     const all = store.augments();
-    if (!all.length) { empty(el, { icon: "database", title: "No augment notes yet", text: "Run python3 tools/fetch_augments.py" }); return { title: "Augments", el }; }
+    if (!all.length) { empty(el, { icon: "database", title: "No augment notes yet", text: "Run python3 tools/fetch/fetch_augments.py" }); return { title: "Augments", el }; }
     let query = "", rarity = "";
     const latest = store.riotNotes[0]?.patch ?? "";
     const history = new Map(all.map((a) => [a.id, store.augmentHistory(a.name)]));

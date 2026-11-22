@@ -5,7 +5,7 @@ tags:
   - items
 sticker: lucide//list-ordered
 ---
-Written by `tools/build_tiers.py` (do not edit): the test champions' builds. Fit is the reasoning (−2 not this style's item … +2); games, pick rate and the gap come from resg.top 16.23 (2026-11-19), shown here only for review. [[Build Model]] explains the rules.
+Written by `tools/reason/build_tiers.py` (do not edit): the test champions' builds. Fit is the reasoning (−2 not this style's item … +2); games, pick rate and the gap come from resg.top 16.23 (2026-11-19), shown here only for review. [[Build Model]] explains the rules.
 
 ## 伊澤瑞爾 · 魔法彎刀法師
 

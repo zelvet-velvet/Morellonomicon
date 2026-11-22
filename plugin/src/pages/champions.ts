@@ -43,7 +43,7 @@ function sorted(list: Champion[]): Champion[] {
 function championPicker(parent: HTMLElement, ctx: PageCtx): void {
     const store = ctx.plugin.store;
     const all = store.champions();
-    if (!all.length) { empty(parent, { icon: "database", title: "No champion notes yet", text: "Run python3 tools/fetch_data.py" }); return; }
+    if (!all.length) { empty(parent, { icon: "database", title: "No champion notes yet", text: "Run python3 tools/fetch/fetch_data.py" }); return; }
     let query = "";
     // champions changed in the latest patch notes get a ▲ / ▼ / ◆ / ● mark on their icon
     const recent = new Map((store.riotNotes[0]?.champions ?? []).map((e) => [e.name, entryDir(e)] as const));

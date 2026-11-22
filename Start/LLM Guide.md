@@ -62,7 +62,7 @@ plugin/       the Morellonomicon Obsidian plugin (TypeScript, esbuild)
 - **Nothing private in the repo.** No keys, personal paths or summoner names/IDs of real players. Progress, decisions, unreleased numbers (the Mayhem crawler's) and app screens go to the private folio, not here.
 - **No dependencies in the data scripts.** `tools/` is Python standard library only; no pip installs. The plugin in `plugin/` is TypeScript with npm dev dependencies (esbuild, typescript) for the build only.
 - **Plugin.** Source in `plugin/src/`; `cd plugin && npm install && npm run check && npm run build && npm run install-vault` puts `main.js`, `manifest.json`, `styles.css` into `.obsidian/plugins/morellonomicon/`, which **is committed** (the phone cannot build). Rebuild and commit it after every plugin change. Modes live in `plugin/src/modes.ts` (Mayhem now, Rift reserved). UI labels are English, content is zh_TW.
-- **Plugins are not in git** (`.obsidian/plugins/` is ignored), except Morellonomicon and **Obsidian Git** (committed so a fresh clone, e.g. on a phone, has it; its `data.json` settings stay per device; update it by replacing its three files with a newer release). `tools/install_plugins.py` downloads the others from each plugin's GitHub release; the list is `community-plugins.json`.
+- **Plugins are not in git** (`.obsidian/plugins/` is ignored), except Morellonomicon and **Obsidian Git** (committed so a fresh clone, e.g. on a phone, has it; its `data.json` settings stay per device; update it by replacing its three files with a newer release). `tools/vault/install_plugins.py` downloads the others from each plugin's GitHub release; the list is `community-plugins.json`.
 - **Design Rules.** After a new page or a page change, its picture loading is reviewed (the picture check in Design Rules) before committing. How every page looks and behaves (layout, the loading look, the search capsule on the keyboard, controls, words and colour) is in [[Design Rules]] (`Dev Tools/Design Rules/`: the core note for every page plus topic notes); read the core before any UI change, then the topic notes its index lists for what you build, reuse the shared helper it names instead of building a page's own version, and write a new shared behaviour there first. Icons: one idea has one icon everywhere, from the maps in [[Icons]]; a new idea gets its icon in the map and in [[Icons]] first.
 - **Layouts first.** A new or changed page layout is proposed in `Dev Tools/Layouts.md` and picked by Zaviel before it is built (skill `mn-layouts`).
 - **Testing needs the user's eyes** for Obsidian on a phone and on PC. Say in the chat what could not be tested; do not mark items in notes as "to check on the phone" (Zaviel is the only developer and tests everything).
@@ -90,7 +90,7 @@ The work-log commands (`/cmd-sync`, `/cmd-rollover`, `/cmd-notes-sync`, `/cmd-fe
 ## 🗂️ Vault note format (callouts)
 
 
-For the workflow notes (`Start/`, `Review/`, `Dev Tools/`) and the inbox templates (`Inbox/`). Not for generated notes (英雄, 道具, 強化), the Handbook decks (`新手入門/`: the app reads their `## ` cards), or the long table `tools/audit_tags.py` writes (`Review/Tag Audit.md`). `Dev Tools/UI Text.md` is written by `tools/list_ui_text.py` as one callout per file.
+For the workflow notes (`Start/`, `Review/`, `Dev Tools/`) and the inbox templates (`Inbox/`). Not for generated notes (英雄, 道具, 強化), the Handbook decks (`新手入門/`: the app reads their `## ` cards), or the long table `tools/vault/audit_tags.py` writes (`Review/Tag Audit.md`). `Dev Tools/UI Text.md` is written by `tools/vault/list_ui_text.py` as one callout per file.
 
 - **Callout before table.** Items that each carry a status or a short detail (tasks, findings, open points, per-area summaries) go in callouts, one per group. A table is only for a real grid read across columns (the Handbook card text limits and stage templates in [[Layouts]], the folder map on [[Home]], the state table below).
 - **Callout type = the block's state** (Zaviel, 2026-10-30). A block with a state shows it in its callout type, and the type changes in the same edit as its boxes. The states use the checkbox symbols Minimal draws (its checkbox styles), so a box and its block use the same words:
@@ -106,7 +106,7 @@ For the workflow notes (`Start/`, `Review/`, `Dev Tools/`) and the inbox templat
 
 - **Block from its boxes.** Every box `[x]` (or `[x]` and `[-]`) → `[!done]`; every box `[-]` → `[!failure]`; otherwise any `[!]` → `[!warning]`, else any `[?]` → `[!question]`, else `[!todo]`.
 - **Keep it in sync.** Ticking the last open box turns `[!todo]` into `[!done]`; adding an open item to a `[!done]` block turns it back to `[!todo]`. Keep the fold sign (`-` / `+`) and the title.
-- **Set by the script:** callout types are set by `python3 -I tools/callouts.py <note>…`, not by hand. An inbox entry is a `[!todo]` callout until it is processed (then it is removed).
+- **Set by the script:** callout types are set by `python3 -I tools/vault/callouts.py <note>…`, not by hand. An inbox entry is a `[!todo]` callout until it is processed (then it is removed).
 
 ---
 ## 🗣️ Conventions

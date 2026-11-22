@@ -1,5 +1,5 @@
 // Matching by how a name is said, for 🎤 speech to text: it usually gets the sounds right and the characters wrong
-// (阿狸 for 阿璃, 卡特琳娜 for 卡特蓮娜). _data/sounds.json (tools/build_sounds.py, from Unicode's Unihan) lists the
+// (阿狸 for 阿璃, 卡特琳娜 for 卡特蓮娜). _data/sounds.json (tools/vault/build_sounds.py, from Unicode's Unihan) lists the
 // characters for each Mandarin sound, tones dropped; a character with several readings is under each of them.
 
 export type Said = Set<string>[];   // per character: the sounds it can be read as

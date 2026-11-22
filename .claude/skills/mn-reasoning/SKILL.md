@@ -1,14 +1,14 @@
 ---
 name: mn-reasoning
-description: Morellonomicon reasoning todo after a patch or a new resg.top crawl: write rules for new augments, recheck rules of changed augments, drop rules of removed ones, and turn trick candidates (an augment or item that wins on a champion with no reason known) into 待驗證 tip cards in Inbox/技巧.md for Zaviel to try. Use when the session start says "Reasoning todo", when Zaviel asks to run it, or before writing or changing a rule in tools/augment_tiers.py or a play style in tools/build_tiers.py.
+description: Morellonomicon reasoning todo after a patch or a new resg.top crawl: write rules for new augments, recheck rules of changed augments, drop rules of removed ones, and turn trick candidates (an augment or item that wins on a champion with no reason known) into 待驗證 tip cards in Inbox/技巧.md for Zaviel to try. Use when the session start says "Reasoning todo", when Zaviel asks to run it, or before writing or changing a rule in tools/reason/augment_tiers.py or a play style in tools/reason/build_tiers.py.
 ---
 # Reasoning todo (Morellonomicon)
 
-The tiers and builds come from rules in Python (`tools/augment_tiers.py` `RULES`, one per augment; `tools/build_tiers.py` play styles and item kinds), checked against resg.top's games: [[Augment Model]] and [[Build Model]] in `Dev Tools/`. A rerun costs nothing; only the list below needs thinking. Keep the work small: one item at a time, read only what it needs.
+The tiers and builds come from rules in Python (`tools/reason/augment_tiers.py` `RULES`, one per augment; `tools/reason/build_tiers.py` play styles and item kinds), checked against resg.top's games: [[Augment Model]] and [[Build Model]] in `Dev Tools/`. A rerun costs nothing; only the list below needs thinking. Keep the work small: one item at a time, read only what it needs.
 
 ## Start
-1. `git pull`, then `python3 -I tools/reasoning_todo.py`; read `Review/Reasoning Todo.md` (short). If a session-start hook announced it, first tell Zaviel the counts and ask whether to run it now; Zaviel decides.
-2. Work the sections in this order. After each one, rerun `python3 -I tools/augment_tiers.py` (and `build_tiers.py` for items), then `reasoning_todo.py`.
+1. `git pull`, then `python3 -I tools/reason/reasoning_todo.py`; read `Review/Reasoning Todo.md` (short). If a session-start hook announced it, first tell Zaviel the counts and ask whether to run it now; Zaviel decides.
+2. Work the sections in this order. After each one, rerun `python3 -I tools/reason/augment_tiers.py` (and `build_tiers.py` for items), then `reasoning_todo.py`.
 
 ## Augments with no rule
 - Read the augment's note in `強化/` (`effect`), its text in `_data/augment-text.json` / `_data/augment-wiki.json` and its tags in `_data/augment-data.json` (grep by id; never read these files whole).

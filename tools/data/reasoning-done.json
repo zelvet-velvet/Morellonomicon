@@ -1,5 +1,5 @@
 {
- "_comment": "What the mn-reasoning skill handled, so tools/reasoning_todo.py stops listing it. rules: augment id -> the game patch its rule was checked on (after a patch-note change). candidates: a trick candidate's key (augment:<id>:<champion id> or item:<champion name>:<item name>) -> {patch, result: card | rule | skip, note}.",
+ "_comment": "What the mn-reasoning skill handled, so tools/reason/reasoning_todo.py stops listing it. rules: augment id -> the game patch its rule was checked on (after a patch-note change). candidates: a trick candidate's key (augment:<id>:<champion id> or item:<champion name>:<item name>) -> {patch, result: card | rule | skip, note}.",
  "rules": {
   "3078": "16.23",
   "3048": "16.23",

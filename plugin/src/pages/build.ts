@@ -63,7 +63,7 @@ function section(body: HTMLElement, title: string): void { h(body, "div", "mn-gh
 // the border the game puts on the item 命定武器 grows (CommunityDragon, shown by address)
 const DESTINY_FRAME = "https://raw.communitydragon.org/latest/game/assets/items/itemmodifiers/strawberry_weapon_evolve_border.png";
 
-// The Mayhem builds (tools/build_tiers.py), in buying order on a fixed five-column grid (Layouts, 出裝, Zaviel 2026-11-03): the play
+// The Mayhem builds (tools/reason/build_tiers.py), in buying order on a fixed five-column grid (Layouts, 出裝, Zaviel 2026-11-03): the play
 // style words, how it plays and the tapped item (name, what it is for, why) on top, each in a box of fixed height; then three rows of
 // item cells, every cell alike (icon, name, what it is for): 前兩件 and 或這兩件 (another pair of the style), 第三件 and 鞋子 · 命定,
 // 4–6 件. Empty cells keep their place, so switching the style (its words or a tap on a side) moves nothing.

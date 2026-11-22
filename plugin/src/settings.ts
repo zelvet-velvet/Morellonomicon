@@ -7,7 +7,7 @@ import { haptic } from "./ui";
 export interface MnSettings {
     mode: ModeId;
     theme: string;             // colour theme id (themes.ts)
-    championFolder: string;   // vault-relative folders holding the generated notes (tools/fetch_data.py)
+    championFolder: string;   // vault-relative folders holding the generated notes (tools/fetch/fetch_data.py)
     itemFolder: string;
     guideFolder: string;
     augmentFolder: string;
@@ -68,9 +68,9 @@ export class MnSettingTab extends PluginSettingTab {
         const folder = (name: string, desc: string, key: "championFolder" | "itemFolder" | "guideFolder" | "augmentFolder" | "patchFolder") =>
             new Setting(c).setName(name).setDesc(desc)
                 .addText((x) => x.setValue(s[key]).onChange(async (v) => { s[key] = v.trim() || DEFAULTS[key]; await save(); }));
-        folder("Champion folder", "Notes made by tools/fetch_data.py", "championFolder");
-        folder("Item folder", "Notes made by tools/fetch_data.py", "itemFolder");
-        folder("Augment folder", "Notes made by tools/fetch_augments.py", "augmentFolder");
+        folder("Champion folder", "Notes made by tools/fetch/fetch_data.py", "championFolder");
+        folder("Item folder", "Notes made by tools/fetch/fetch_data.py", "itemFolder");
+        folder("Augment folder", "Notes made by tools/fetch/fetch_augments.py", "augmentFolder");
         folder("Patch notes folder", "Our own patch notes (frontmatter: patch, date, title, summary)", "patchFolder");
         folder("Guide folder", "Beginner guide notes", "guideFolder");
         // Home's profile: the key is kept on this device only (data.json is git-ignored) and shown as dots

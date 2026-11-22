@@ -5,7 +5,7 @@ tags:
   - augments
 sticker: lucide//list-ordered
 ---
-Written by `tools/augment_tiers.py` (do not edit): the test champions' tiers, 238 augments rated, 17 not. Fit is the reasoning (−2 useless … +2 the kit is what the augment rewards); games and the gap come from resg.top 16.23 (2026-11-19), shown here only for review; the score is the gap pulled toward the augment's result on every champion when games are few, plus the fit. Tiers by rank within each rarity (S top 8%, A to 20%, B to 45%), S and A above the champion's own win rate.
+Written by `tools/reason/augment_tiers.py` (do not edit): the test champions' tiers, 238 augments rated, 17 not. Fit is the reasoning (−2 useless … +2 the kit is what the augment rewards); games and the gap come from resg.top 16.23 (2026-11-19), shown here only for review; the score is the gap pulled toward the augment's result on every champion when games are few, plus the fit. Tiers by rank within each rarity (S top 8%, A to 20%, B to 45%), S and A above the champion's own win rate.
 
 ## 卡特蓮娜
 

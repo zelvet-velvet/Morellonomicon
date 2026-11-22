@@ -157,7 +157,7 @@ var Store = class {
     this.augs = null;
     this.stats = null;
     this.changes = null;
-    // your own champion mastery (_data/mastery.json from tools/fetch_mastery.py; git-ignored, so only on the device that has the file)
+    // your own champion mastery (_data/mastery.json from tools/fetch/fetch_mastery.py; git-ignored, so only on the device that has the file)
     this.mastery = null;
     this.positions = null;
     // _data/positions.json
@@ -167,21 +167,21 @@ var Store = class {
     this.loadingTips = [];
     // _data/loading-tips.json: the game's loading screen tips (zh_TW)
     this.gameText = {};
-    // augment id -> the game's own description (tools/fetch_augment_text.py)
+    // augment id -> the game's own description (tools/fetch/fetch_augment_text.py)
     this.augData = {};
     this.augTiers = {};
-    // champion id -> play style -> the augment tiers (tools/augment_tiers.py)
+    // champion id -> play style -> the augment tiers (tools/reason/augment_tiers.py)
     this.itemBuilds = {};
-    // champion id -> its Mayhem builds (tools/build_tiers.py)
+    // champion id -> its Mayhem builds (tools/reason/build_tiers.py)
     this.augUnrated = {};
     // augment id -> why it has no tier (disabled, no games, no rule yet)
     this.champTiers = null;
-    // champion id -> T0..T4 this patch (tools/augment_tiers.py), labels only
+    // champion id -> T0..T4 this patch (tools/reason/augment_tiers.py), labels only
     this.itemRoles = null;
     // item id -> the shop's class tabs it is under (_data/item-roles.json, the League wiki)
     // false until the data files (_data/*.json) have been read once after start-up
     this.ready = false;
-    // How strong each augment is across champions, from the augment model (tools/augment_tiers.py): per champion its best play
+    // How strong each augment is across champions, from the augment model (tools/reason/augment_tiers.py): per champion its best play
     // style's tier, only for the champions the game offers it to (an augment Riot keeps for tanks is judged on tanks). Augments are
     // ranked by the share of those champions taking it at S (A counts half), then by how many are offered it. `tier` is the overall
     // letter by that rank (top 15% S, next 25% A, next 35% B, the rest C); `top` the five champions it suits best. Unrated augments are left out.
@@ -190,7 +190,7 @@ var Store = class {
   masteryOf(id) {
     return this.mastery?.champions[id];
   }
-  // augment id -> numbers, levels, tags (tools/fetch_augment_data.py)
+  // augment id -> numbers, levels, tags (tools/fetch/fetch_augment_data.py)
   augmentData(id) {
     return this.augData[String(id)];
   }
@@ -200,7 +200,7 @@ var Store = class {
   get s() {
     return this.plugin.settings;
   }
-  // The counted builds for the current mode, if tools/fetch_builds.py has made them (read from the vault's _data folder)
+  // The counted builds for the current mode, if tools/fetch/fetch_builds.py has made them (read from the vault's _data folder)
   async loadStats(mode = this.s.mode) {
     try {
       const path = (0, import_obsidian.normalizePath)(`_data/builds.${mode}.json`);
@@ -294,7 +294,7 @@ var Store = class {
     this.ready = true;
   }
   // The lanes a champion is played in: a hand-written `positions` list in its note, else the lanes with at least LANE_MIN_SHARE
-  // of its ranked games in _data/positions.json (tools/fetch_builds.py --mode ranked), most played first
+  // of its ranked games in _data/positions.json (tools/fetch/fetch_builds.py --mode ranked), most played first
   lanes(c) {
     if (c.positions.length) return c.positions;
     const counts = this.positions?.champions[c.id];
@@ -1722,7 +1722,7 @@ function augmentsPage(ctx) {
   const el = page("Augments");
   const all = store.augments();
   if (!all.length) {
-    empty(el, { icon: "database", title: "No augment notes yet", text: "Run python3 tools/fetch_augments.py" });
+    empty(el, { icon: "database", title: "No augment notes yet", text: "Run python3 tools/fetch/fetch_augments.py" });
     return { title: "Augments", el };
   }
   let query = "", rarity = "";
@@ -5310,7 +5310,7 @@ function championPicker(parent, ctx) {
   const store = ctx.plugin.store;
   const all = store.champions();
   if (!all.length) {
-    empty(parent, { icon: "database", title: "No champion notes yet", text: "Run python3 tools/fetch_data.py" });
+    empty(parent, { icon: "database", title: "No champion notes yet", text: "Run python3 tools/fetch/fetch_data.py" });
     return;
   }
   let query = "";
@@ -6892,7 +6892,7 @@ function patchPage(ctx) {
     const hero = h(el, "div", "mn-patch");
     h(hero, "div", "mn-patch-k", "Data from patch");
     h(hero, "div", "mn-patch-v", store.riotPatch() || "\u2014");
-    h(hero, "div", "mn-patch-s", "Run tools/fetch_patch_notes.py to show Riot's patch notes here.");
+    h(hero, "div", "mn-patch-s", "Run tools/fetch/fetch_patch_notes.py to show Riot's patch notes here.");
   }
   if (latest?.champions?.length) {
     h(el, "div", "mn-gh", `Champions \xB7 ${latest.champions.length}`);
@@ -8567,9 +8567,9 @@ var MnSettingTab = class extends import_obsidian15.PluginSettingTab {
       s[key] = v.trim() || DEFAULTS[key];
       await save();
     }));
-    folder("Champion folder", "Notes made by tools/fetch_data.py", "championFolder");
-    folder("Item folder", "Notes made by tools/fetch_data.py", "itemFolder");
-    folder("Augment folder", "Notes made by tools/fetch_augments.py", "augmentFolder");
+    folder("Champion folder", "Notes made by tools/fetch/fetch_data.py", "championFolder");
+    folder("Item folder", "Notes made by tools/fetch/fetch_data.py", "itemFolder");
+    folder("Augment folder", "Notes made by tools/fetch/fetch_augments.py", "augmentFolder");
     folder("Patch notes folder", "Our own patch notes (frontmatter: patch, date, title, summary)", "patchFolder");
     folder("Guide folder", "Beginner guide notes", "guideFolder");
     new import_obsidian15.Setting(c).setName("Riot API key").setDesc("Optional: Home asks Riot with your own key instead of the profile server. From developer.riotgames.com (a development key expires every 24 hours; a personal key does not). Stays on this device.").addText((x) => {

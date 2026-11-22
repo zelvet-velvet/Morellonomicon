@@ -3,7 +3,7 @@ __pycache__/
 .venv/
 .env
 
-# Obsidian: per-device state and downloaded plugins (python3 tools/install_plugins.py)
+# Obsidian: per-device state and downloaded plugins (python3 tools/vault/install_plugins.py)
 .obsidian/plugins/*
 !.obsidian/plugins/morellonomicon/
 .obsidian/plugins/morellonomicon/data.json
@@ -20,5 +20,5 @@ Tags/
 # fetched data cache
 .cache/
 
-# your own numbers (tools/fetch_mastery.py): stay on this computer unless you decide to publish them
+# your own numbers (tools/fetch/fetch_mastery.py): stay on this computer unless you decide to publish them
 _data/mastery.json

@@ -49,7 +49,7 @@ const parse = (source: string): Box | null => {
         return { kind: v.kind === "build" ? "build" : "tip", entries: Array.isArray(v.entries) ? v.entries : [] };
     } catch { return null; }
 };
-// one entry per line, so a change shows as one changed line in git (Inbox/玩法出裝.md is read as it is by tools/build_tiers.py: each
+// one entry per line, so a change shows as one changed line in git (Inbox/玩法出裝.md is read as it is by tools/reason/build_tiers.py: each
 // entry is a play style, a build on 出裝 for every champion it lists)
 const serialise = (b: Box): string =>
     `{"kind": "${b.kind}", "entries": [` + (b.entries.length ? "\n" + b.entries.map((e) => "  " + JSON.stringify(e)).join(",\n") + "\n" : "") + "]}";
