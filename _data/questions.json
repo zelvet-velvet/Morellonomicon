@@ -588,177 +588,103 @@
  },
  "items": {
   "patch": "16.23",
-  "popular": [
-   {
-    "champion_name": "凱爾",
-    "item": "黯影之炎",
-    "pick": 0.629,
-    "gap": 0.07,
-    "games": 1503
-   },
-   {
-    "champion_name": "路西恩",
-    "item": "公理弧刃",
-    "pick": 0.591,
-    "gap": 0.092,
-    "games": 4525
-   },
-   {
-    "champion_name": "姍娜",
-    "item": "破曉之核",
-    "pick": 0.561,
-    "gap": 0.076,
-    "games": 1062
-   },
-   {
-    "champion_name": "易大師",
-    "item": "實驗型海克斯板甲",
-    "pick": 0.557,
-    "gap": 0.009,
-    "games": 2393
-   },
-   {
-    "champion_name": "姍娜",
-    "item": "月之石再生裝置",
-    "pick": 0.551,
-    "gap": 0.065,
-    "games": 1140
-   },
-   {
-    "champion_name": "煞蜜拉",
-    "item": "死亡之舞",
-    "pick": 0.523,
-    "gap": 0.032,
-    "games": 1656
-   },
-   {
-    "champion_name": "史矛德",
-    "item": "黎安卓的折磨",
-    "pick": 0.515,
-    "gap": 0.017,
-    "games": 1172
-   },
-   {
-    "champion_name": "汎",
-    "item": "實驗型海克斯板甲",
-    "pick": 0.515,
-    "gap": 0.008,
-    "games": 2683
-   },
-   {
-    "champion_name": "嘉文四世",
-    "item": "多明尼克的問候",
-    "pick": 0.502,
-    "gap": 0.038,
-    "games": 1158
-   },
-   {
-    "champion_name": "瑟菈紛",
-    "item": "月之石再生裝置",
-    "pick": 0.49,
-    "gap": -0.024,
-    "games": 1924
-   },
-   {
-    "champion_name": "煞蜜拉",
-    "item": "水星之靴",
-    "pick": 0.487,
-    "gap": -0.004,
-    "games": 2103
-   },
-   {
-    "champion_name": "嘉文四世",
-    "item": "無盡之刃",
-    "pick": 0.487,
-    "gap": 0.023,
-    "games": 1715
-   },
-   {
-    "champion_name": "寇格魔",
-    "item": "納什之牙",
-    "pick": 0.481,
-    "gap": -0.006,
-    "games": 1362
-   },
-   {
-    "champion_name": "法洛士",
-    "item": "死亡之帽",
-    "pick": 0.474,
-    "gap": -0.017,
-    "games": 1368
-   },
-   {
-    "champion_name": "法洛士",
-    "item": "納什之牙",
-    "pick": 0.467,
-    "gap": -0.025,
-    "games": 1508
-   },
-   {
-    "champion_name": "弗拉迪米爾",
-    "item": "雄心之鋼",
-    "pick": 0.466,
-    "gap": -0.009,
-    "games": 1791
-   },
-   {
-    "champion_name": "圖奇",
-    "item": "死亡之帽",
-    "pick": 0.461,
-    "gap": -0.026,
-    "games": 1009
-   },
-   {
-    "champion_name": "法洛士",
-    "item": "黯影之炎",
-    "pick": 0.46,
-    "gap": -0.032,
-    "games": 1288
-   },
-   {
-    "champion_name": "圖奇",
-    "item": "納什之牙",
-    "pick": 0.451,
-    "gap": -0.036,
-    "games": 1530
-   },
-   {
-    "champion_name": "凱莎",
-    "item": "無盡之刃",
-    "pick": 0.45,
-    "gap": -0.02,
-    "games": 1205
-   },
-   {
-    "champion_name": "圖奇",
-    "item": "黯影之炎",
-    "pick": 0.443,
-    "gap": -0.044,
-    "games": 1224
-   },
-   {
-    "champion_name": "艾希",
-    "item": "公理弧刃",
-    "pick": 0.429,
-    "gap": -0.021,
-    "games": 4079
-   },
-   {
-    "champion_name": "凱莎",
-    "item": "蒐集者",
-    "pick": 0.428,
-    "gap": -0.042,
-    "games": 1655
-   }
-  ],
+  "popular": [],
   "strong": [],
   "unnamed": [
+   {
+    "champion_name": "亞歷斯塔",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     4633
+    ]
+   },
+   {
+    "champion_name": "亞歷斯塔",
+    "family": "坦克輔助",
+    "core": [
+     3084,
+     4005
+    ]
+   },
+   {
+    "champion_name": "亞菲利歐",
+    "family": "暴擊",
+    "core": [
+     3036,
+     3072
+    ]
+   },
+   {
+    "champion_name": "伊澤瑞爾",
+    "family": "暴擊",
+    "core": [
+     3508,
+     3087
+    ]
+   },
+   {
+    "champion_name": "伊澤瑞爾",
+    "family": "攻速特效",
+    "core": [
+     2510,
+     3161
+    ]
+   },
    {
     "champion_name": "伊澤瑞爾",
     "family": "暴擊刺客",
     "core": [
      3078,
      3036
+    ]
+   },
+   {
+    "champion_name": "伊澤瑞爾",
+    "family": "暴擊坦克",
+    "core": [
+     6662,
+     6676
+    ]
+   },
+   {
+    "champion_name": "伊澤瑞爾",
+    "family": "穿甲法師",
+    "core": [
+     3078,
+     3157
+    ]
+   },
+   {
+    "champion_name": "伊澤瑞爾",
+    "family": "暴擊法師",
+    "core": [
+     3100,
+     3031
+    ]
+   },
+   {
+    "champion_name": "伊瑞莉雅",
+    "family": "戰士",
+    "core": [
+     3074,
+     3143
+    ]
+   },
+   {
+    "champion_name": "伊瑞莉雅",
+    "family": "特效坦克",
+    "core": [
+     3153,
+     3143
+    ]
+   },
+   {
+    "champion_name": "伊瑞莉雅",
+    "family": "特效戰士",
+    "core": [
+     6610,
+     3091
     ]
    },
    {
@@ -770,11 +696,43 @@
     ]
    },
    {
+    "champion_name": "克黎思妲",
+    "family": "攻速特效",
+    "core": [
+     3087,
+     3302
+    ]
+   },
+   {
+    "champion_name": "克黎思妲",
+    "family": "特效坦克",
+    "core": [
+     3153,
+     3143
+    ]
+   },
+   {
     "champion_name": "凱爾",
     "family": "攻速特效",
     "core": [
      3302,
      3115
+    ]
+   },
+   {
+    "champion_name": "凱爾",
+    "family": "法術",
+    "core": [
+     3089,
+     3124
+    ]
+   },
+   {
+    "champion_name": "凱爾",
+    "family": "特效射手",
+    "core": [
+     3115,
+     3085
     ]
    },
    {
@@ -786,6 +744,54 @@
     ]
    },
    {
+    "champion_name": "凱特琳",
+    "family": "攻速特效",
+    "core": [
+     6672,
+     2523
+    ]
+   },
+   {
+    "champion_name": "凱特琳",
+    "family": "暴擊刺客",
+    "core": [
+     3031,
+     6696
+    ]
+   },
+   {
+    "champion_name": "凱特琳",
+    "family": "暴擊坦克",
+    "core": [
+     3031,
+     3143
+    ]
+   },
+   {
+    "champion_name": "凱能",
+    "family": "法術",
+    "core": [
+     3157,
+     3165
+    ]
+   },
+   {
+    "champion_name": "凱莎",
+    "family": "法術",
+    "core": [
+     3157,
+     4628
+    ]
+   },
+   {
+    "champion_name": "凱莎",
+    "family": "攻速特效",
+    "core": [
+     6672,
+     2510
+    ]
+   },
+   {
     "champion_name": "凱莎",
     "family": "特效法師",
     "core": [
@@ -794,11 +800,91 @@
     ]
    },
    {
+    "champion_name": "凱莎",
+    "family": "暴擊法師",
+    "core": [
+     4645,
+     6676
+    ]
+   },
+   {
+    "champion_name": "凱莎",
+    "family": "穿甲法師",
+    "core": [
+     6655,
+     3004
+    ]
+   },
+   {
+    "champion_name": "凱莎",
+    "family": "特效射手",
+    "core": [
+     6676,
+     3115
+    ]
+   },
+   {
+    "champion_name": "剎雅",
+    "family": "暴擊",
+    "core": [
+     3036,
+     6675
+    ]
+   },
+   {
+    "champion_name": "剎雅",
+    "family": "攻速特效",
+    "core": [
+     6672,
+     3036
+    ]
+   },
+   {
+    "champion_name": "剎雅",
+    "family": "暴擊刺客",
+    "core": [
+     3139,
+     6675
+    ]
+   },
+   {
+    "champion_name": "剎雅",
+    "family": "暴擊坦克",
+    "core": [
+     3032,
+     3143
+    ]
+   },
+   {
+    "champion_name": "剛普朗克",
+    "family": "暴擊戰士",
+    "core": [
+     3078,
+     3036
+    ]
+   },
+   {
+    "champion_name": "剛普朗克",
+    "family": "穿甲法師",
+    "core": [
+     6696,
+     3118
+    ]
+   },
+   {
     "champion_name": "剛普朗克",
     "family": "暴擊法師",
     "core": [
      3508,
-     3118
+     6653
+    ]
+   },
+   {
+    "champion_name": "剛普朗克",
+    "family": "暴擊刺客",
+    "core": [
+     6697,
+     3036
     ]
    },
    {
@@ -810,11 +896,171 @@
     ]
    },
    {
+    "champion_name": "加里歐",
+    "family": "坦克輔助",
+    "core": [
+     3084,
+     4005
+    ]
+   },
+   {
     "champion_name": "努努和威朗普",
     "family": "法術坦克",
     "core": [
      3084,
-     4646
+     3118
+    ]
+   },
+   {
+    "champion_name": "劫",
+    "family": "穿甲",
+    "core": [
+     6695,
+     6698
+    ]
+   },
+   {
+    "champion_name": "劫",
+    "family": "暴擊刺客",
+    "core": [
+     6697,
+     3036
+    ]
+   },
+   {
+    "champion_name": "劫",
+    "family": "穿甲戰士（混搭）",
+    "core": [
+     3074,
+     6696
+    ]
+   },
+   {
+    "champion_name": "勒布朗",
+    "family": "法術",
+    "core": [
+     3157,
+     3135
+    ]
+   },
+   {
+    "champion_name": "卡力斯",
+    "family": "穿甲",
+    "core": [
+     6695,
+     6698
+    ]
+   },
+   {
+    "champion_name": "卡力斯",
+    "family": "戰士",
+    "core": [
+     6698,
+     3142
+    ]
+   },
+   {
+    "champion_name": "卡力斯",
+    "family": "暴擊刺客",
+    "core": [
+     6697,
+     3036
+    ]
+   },
+   {
+    "champion_name": "卡爾瑟斯",
+    "family": "法術",
+    "core": [
+     3135,
+     3157
+    ]
+   },
+   {
+    "champion_name": "卡爾瑟斯",
+    "family": "穿甲法師",
+    "core": [
+     6696,
+     3089
+    ]
+   },
+   {
+    "champion_name": "卡特蓮娜",
+    "family": "法術",
+    "core": [
+     3146,
+     3302
+    ]
+   },
+   {
+    "champion_name": "卡特蓮娜",
+    "family": "特效戰士",
+    "core": [
+     3748,
+     3302
+    ]
+   },
+   {
+    "champion_name": "卡特蓮娜",
+    "family": "特效刺客",
+    "core": [
+     6697,
+     6672
+    ]
+   },
+   {
+    "champion_name": "卡特蓮娜",
+    "family": "特效法師",
+    "core": [
+     4645,
+     3153
+    ]
+   },
+   {
+    "champion_name": "卡特蓮娜",
+    "family": "特效坦克",
+    "core": [
+     6672,
+     3143
+    ]
+   },
+   {
+    "champion_name": "卡特蓮娜",
+    "family": "法術戰士",
+    "core": [
+     3748,
+     3157
+    ]
+   },
+   {
+    "champion_name": "卡特蓮娜",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     4633
+    ]
+   },
+   {
+    "champion_name": "卡瑪",
+    "family": "輔助",
+    "core": [
+     6621,
+     6616
+    ]
+   },
+   {
+    "champion_name": "卡瑪",
+    "family": "法術輔助",
+    "core": [
+     6655,
+     6617
+    ]
+   },
+   {
+    "champion_name": "卡瑪",
+    "family": "法術坦克",
+    "core": [
+     3118,
+     3065
     ]
    },
    {
@@ -826,6 +1072,30 @@
     ]
    },
    {
+    "champion_name": "卡薩丁",
+    "family": "穿甲法師",
+    "core": [
+     6657,
+     3004
+    ]
+   },
+   {
+    "champion_name": "厄薩斯",
+    "family": "戰士",
+    "core": [
+     6610,
+     3143
+    ]
+   },
+   {
+    "champion_name": "厄薩斯",
+    "family": "穿甲坦克",
+    "core": [
+     6697,
+     3143
+    ]
+   },
+   {
     "champion_name": "古拉格斯",
     "family": "法術坦克",
     "core": [
@@ -834,11 +1104,115 @@
     ]
    },
    {
+    "champion_name": "史加納",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     6653
+    ]
+   },
+   {
+    "champion_name": "史瓦妮",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     4633
+    ]
+   },
+   {
+    "champion_name": "史矛德",
+    "family": "暴擊",
+    "core": [
+     3094,
+     3036
+    ]
+   },
+   {
     "champion_name": "史矛德",
     "family": "暴擊刺客",
     "core": [
+     2517,
+     3036
+    ]
+   },
+   {
+    "champion_name": "史矛德",
+    "family": "暴擊法師",
+    "core": [
+     3508,
+     6653
+    ]
+   },
+   {
+    "champion_name": "史矛德",
+    "family": "暴擊坦克",
+    "core": [
+     3508,
+     3143
+    ]
+   },
+   {
+    "champion_name": "史矛德",
+    "family": "穿甲法師",
+    "core": [
      3078,
-     3031
+     6653
+    ]
+   },
+   {
+    "champion_name": "吉茵珂絲",
+    "family": "暴擊",
+    "core": [
+     2523,
+     3046
+    ]
+   },
+   {
+    "champion_name": "吉茵珂絲",
+    "family": "攻速特效",
+    "core": [
+     6672,
+     2523
+    ]
+   },
+   {
+    "champion_name": "吉茵珂絲",
+    "family": "暴擊刺客",
+    "core": [
+     3031,
+     6696
+    ]
+   },
+   {
+    "champion_name": "吉茵珂絲",
+    "family": "暴擊坦克",
+    "core": [
+     3032,
+     3143
+    ]
+   },
+   {
+    "champion_name": "吶兒",
+    "family": "戰士",
+    "core": [
+     3071,
+     3143
+    ]
+   },
+   {
+    "champion_name": "吶兒",
+    "family": "特效坦克",
+    "core": [
+     3084,
+     3091
+    ]
+   },
+   {
+    "champion_name": "吶兒",
+    "family": "特效戰士",
+    "core": [
+     3071,
+     3091
     ]
    },
    {
@@ -850,11 +1224,131 @@
     ]
    },
    {
+    "champion_name": "嘉文四世",
+    "family": "穿甲坦克",
+    "core": [
+     3084,
+     6696
+    ]
+   },
+   {
+    "champion_name": "嘉文四世",
+    "family": "穿甲法師",
+    "core": [
+     6696,
+     3118
+    ]
+   },
+   {
+    "champion_name": "圖奇",
+    "family": "暴擊",
+    "core": [
+     2512,
+     3036
+    ]
+   },
+   {
+    "champion_name": "圖奇",
+    "family": "攻速特效",
+    "core": [
+     6672,
+     2512
+    ]
+   },
+   {
+    "champion_name": "圖奇",
+    "family": "暴擊刺客",
+    "core": [
+     6695,
+     3085
+    ]
+   },
+   {
+    "champion_name": "圖奇",
+    "family": "特效射手",
+    "core": [
+     3032,
+     3115
+    ]
+   },
+   {
+    "champion_name": "埃可尚",
+    "family": "攻速特效",
+    "core": [
+     6672,
+     3036
+    ]
+   },
+   {
+    "champion_name": "埃爾文",
+    "family": "輔助",
+    "core": [
+     6617,
+     3116
+    ]
+   },
+   {
+    "champion_name": "塔里克",
+    "family": "坦克輔助",
+    "core": [
+     3084,
+     6617
+    ]
+   },
+   {
+    "champion_name": "塔隆",
+    "family": "戰士",
+    "core": [
+     6698,
+     3142
+    ]
+   },
+   {
+    "champion_name": "塔隆",
+    "family": "暴擊刺客",
+    "core": [
+     6697,
+     3036
+    ]
+   },
+   {
+    "champion_name": "墨菲特",
+    "family": "法術",
+    "core": [
+     3157,
+     3135
+    ]
+   },
+   {
     "champion_name": "墨菲特",
     "family": "法術坦克",
     "core": [
      3084,
      3118
+    ]
+   },
+   {
+    "champion_name": "墨菲特",
+    "family": "穿甲法師",
+    "core": [
+     3118,
+     6696
+    ]
+   },
+   {
+    "champion_name": "夜曲",
+    "family": "戰士",
+    "core": [
+     6698,
+     3073
+    ]
+   },
+   {
+    "champion_name": "夜曲",
+    "family": "暴擊戰士",
+    "core": [
+     6676,
+     3073
     ]
    },
    {
@@ -866,11 +1360,91 @@
     ]
    },
    {
+    "champion_name": "夜曲",
+    "family": "暴擊刺客",
+    "core": [
+     6697,
+     3036
+    ]
+   },
+   {
+    "champion_name": "奈德麗",
+    "family": "法術",
+    "core": [
+     3135,
+     4628
+    ]
+   },
+   {
+    "champion_name": "奈德麗",
+    "family": "法術輔助",
+    "core": [
+     6655,
+     123430
+    ]
+   },
+   {
+    "champion_name": "奧莉安娜",
+    "family": "法術",
+    "core": [
+     3157,
+     3135
+    ]
+   },
+   {
+    "champion_name": "好運姐",
+    "family": "暴擊",
+    "core": [
+     3036,
+     3072
+    ]
+   },
+   {
     "champion_name": "好運姐",
     "family": "暴擊法師",
     "core": [
      6676,
      6653
+    ]
+   },
+   {
+    "champion_name": "好運姐",
+    "family": "穿甲法師",
+    "core": [
+     2503,
+     6696
+    ]
+   },
+   {
+    "champion_name": "好運姐",
+    "family": "法術輔助",
+    "core": [
+     2503,
+     123430
+    ]
+   },
+   {
+    "champion_name": "好運姐",
+    "family": "暴擊坦克",
+    "core": [
+     6676,
+     3143
+    ]
+   },
+   {
+    "champion_name": "好運姐",
+    "family": "暴擊刺客",
+    "core": [
+     3036,
+     6696
+    ]
+   },
+   {
+    "champion_name": "妮可",
+    "family": "法術",
+    "core": [
+     3157,
+     3165
     ]
    },
    {
@@ -883,6 +1457,22 @@
    },
    {
     "champion_name": "姍娜",
+    "family": "暴擊",
+    "core": [
+     2523,
+     3094
+    ]
+   },
+   {
+    "champion_name": "姍娜",
+    "family": "輔助",
+    "core": [
+     6620,
+     6621
+    ]
+   },
+   {
+    "champion_name": "姍娜",
     "family": "特效輔助",
     "core": [
      3087,
@@ -890,11 +1480,211 @@
     ]
    },
    {
+    "champion_name": "姍娜",
+    "family": "特效射手",
+    "core": [
+     3087,
+     3508
+    ]
+   },
+   {
+    "champion_name": "姍娜",
+    "family": "特效刺客",
+    "core": [
+     6695,
+     3087
+    ]
+   },
+   {
+    "champion_name": "姍娜",
+    "family": "暴擊刺客",
+    "core": [
+     3031,
+     3071
+    ]
+   },
+   {
+    "champion_name": "姍娜",
+    "family": "特效坦克",
+    "core": [
+     3087,
+     3143
+    ]
+   },
+   {
+    "champion_name": "姍娜",
+    "family": "暴擊輔助",
+    "core": [
+     3085,
+     6617
+    ]
+   },
+   {
+    "champion_name": "姬亞娜",
+    "family": "暴擊刺客",
+    "core": [
+     6697,
+     3036
+    ]
+   },
+   {
+    "champion_name": "威寇茲",
+    "family": "法術",
+    "core": [
+     3157,
+     3165
+    ]
+   },
+   {
     "champion_name": "娜米",
     "family": "輔助",
     "core": [
-     6621,
-     3504
+     3504,
+     6616
+    ]
+   },
+   {
+    "champion_name": "婕莉",
+    "family": "攻速特效",
+    "core": [
+     3087,
+     3036
+    ]
+   },
+   {
+    "champion_name": "婕莉",
+    "family": "特效射手",
+    "core": [
+     3087,
+     2512
+    ]
+   },
+   {
+    "champion_name": "安妮",
+    "family": "法術",
+    "core": [
+     3157,
+     3135
+    ]
+   },
+   {
+    "champion_name": "安比薩",
+    "family": "穿甲坦克",
+    "core": [
+     2517,
+     3143
+    ]
+   },
+   {
+    "champion_name": "寇格魔",
+    "family": "攻速特效",
+    "core": [
+     3124,
+     6675
+    ]
+   },
+   {
+    "champion_name": "寇格魔",
+    "family": "法術",
+    "core": [
+     3118,
+     3124
+    ]
+   },
+   {
+    "champion_name": "寇格魔",
+    "family": "特效坦克",
+    "core": [
+     3143,
+     3124
+    ]
+   },
+   {
+    "champion_name": "寇格魔",
+    "family": "特效法師",
+    "core": [
+     3124,
+     3157
+    ]
+   },
+   {
+    "champion_name": "寇格魔",
+    "family": "暴擊法師",
+    "core": [
+     3118,
+     3085
+    ]
+   },
+   {
+    "champion_name": "尤娜拉",
+    "family": "暴擊",
+    "core": [
+     2523,
+     2512
+    ]
+   },
+   {
+    "champion_name": "尤娜拉",
+    "family": "攻速特效",
+    "core": [
+     6672,
+     2523
+    ]
+   },
+   {
+    "champion_name": "尤娜拉",
+    "family": "特效射手",
+    "core": [
+     3087,
+     2512
+    ]
+   },
+   {
+    "champion_name": "尤娜拉",
+    "family": "暴擊坦克",
+    "core": [
+     3032,
+     3143
+    ]
+   },
+   {
+    "champion_name": "尤娜拉",
+    "family": "暴擊刺客",
+    "core": [
+     6695,
+     3032
+    ]
+   },
+   {
+    "champion_name": "崔絲塔娜",
+    "family": "暴擊",
+    "core": [
+     6675,
+     3033
+    ]
+   },
+   {
+    "champion_name": "崔絲塔娜",
+    "family": "攻速特效",
+    "core": [
+     6672,
+     6675
+    ]
+   },
+   {
+    "champion_name": "崔絲塔娜",
+    "family": "暴擊坦克",
+    "core": [
+     3032,
+     3143
+    ]
+   },
+   {
+    "champion_name": "崔絲塔娜",
+    "family": "暴擊刺客",
+    "core": [
+     3032,
+     6695
     ]
    },
    {
@@ -914,11 +1704,59 @@
     ]
    },
    {
+    "champion_name": "巴德",
+    "family": "特效法師",
+    "core": [
+     3087,
+     3100
+    ]
+   },
+   {
+    "champion_name": "巴德",
+    "family": "特效輔助",
+    "core": [
+     3087,
+     6617
+    ]
+   },
+   {
+    "champion_name": "巴德",
+    "family": "特效坦克",
+    "core": [
+     3084,
+     3087
+    ]
+   },
+   {
+    "champion_name": "布蘭德",
+    "family": "法術",
+    "core": [
+     3165,
+     3135
+    ]
+   },
+   {
+    "champion_name": "布蘭德",
+    "family": "特效法師",
+    "core": [
+     2503,
+     3153
+    ]
+   },
+   {
     "champion_name": "布里茨",
     "family": "法術坦克",
     "core": [
      3084,
      3118
+    ]
+   },
+   {
+    "champion_name": "希格斯",
+    "family": "法術",
+    "core": [
+     3157,
+     3165
     ]
    },
    {
@@ -938,6 +1776,30 @@
     ]
    },
    {
+    "champion_name": "希瓦娜",
+    "family": "特效戰士",
+    "core": [
+     2510,
+     3073
+    ]
+   },
+   {
+    "champion_name": "希瓦娜",
+    "family": "特效坦克",
+    "core": [
+     2510,
+     3075
+    ]
+   },
+   {
+    "champion_name": "希維爾",
+    "family": "暴擊",
+    "core": [
+     3036,
+     3087
+    ]
+   },
+   {
     "champion_name": "希維爾",
     "family": "攻速特效",
     "core": [
@@ -946,11 +1808,51 @@
     ]
    },
    {
+    "champion_name": "希維爾",
+    "family": "暴擊刺客",
+    "core": [
+     3032,
+     6695
+    ]
+   },
+   {
+    "champion_name": "希維爾",
+    "family": "暴擊坦克",
+    "core": [
+     3032,
+     3143
+    ]
+   },
+   {
     "champion_name": "庫奇",
     "family": "暴擊刺客",
     "core": [
      3078,
      3036
+    ]
+   },
+   {
+    "champion_name": "庫奇",
+    "family": "暴擊坦克",
+    "core": [
+     3508,
+     3143
+    ]
+   },
+   {
+    "champion_name": "弗力貝爾",
+    "family": "攻速特效",
+    "core": [
+     3087,
+     3065
+    ]
+   },
+   {
+    "champion_name": "弗力貝爾",
+    "family": "法術",
+    "core": [
+     6657,
+     3087
     ]
    },
    {
@@ -970,6 +1872,38 @@
     ]
    },
    {
+    "champion_name": "弗力貝爾",
+    "family": "暴擊坦克",
+    "core": [
+     3084,
+     6675
+    ]
+   },
+   {
+    "champion_name": "弗力貝爾",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     4633
+    ]
+   },
+   {
+    "champion_name": "弗力貝爾",
+    "family": "暴擊法師",
+    "core": [
+     3146,
+     6675
+    ]
+   },
+   {
+    "champion_name": "弗拉迪米爾",
+    "family": "法術",
+    "core": [
+     3157,
+     4629
+    ]
+   },
+   {
     "champion_name": "弗拉迪米爾",
     "family": "法術坦克",
     "core": [
@@ -978,11 +1912,83 @@
     ]
    },
    {
+    "champion_name": "弗拉迪米爾",
+    "family": "穿甲法師",
+    "core": [
+     4633,
+     2501
+    ]
+   },
+   {
+    "champion_name": "悟空",
+    "family": "戰士",
+    "core": [
+     6610,
+     3156
+    ]
+   },
+   {
     "champion_name": "悠咪",
     "family": "輔助",
     "core": [
      3222,
      3504
+    ]
+   },
+   {
+    "champion_name": "悠咪",
+    "family": "法術輔助",
+    "core": [
+     6655,
+     3504
+    ]
+   },
+   {
+    "champion_name": "悠咪",
+    "family": "坦克輔助",
+    "core": [
+     6617,
+     3083
+    ]
+   },
+   {
+    "champion_name": "慎",
+    "family": "特效戰士",
+    "core": [
+     3748,
+     2510
+    ]
+   },
+   {
+    "champion_name": "慨影",
+    "family": "暴擊刺客",
+    "core": [
+     6697,
+     3036
+    ]
+   },
+   {
+    "champion_name": "拉克絲",
+    "family": "法術",
+    "core": [
+     3165,
+     3135
+    ]
+   },
+   {
+    "champion_name": "拉克絲",
+    "family": "法術輔助",
+    "core": [
+     6655,
+     123430
+    ]
+   },
+   {
+    "champion_name": "提摩",
+    "family": "法術",
+    "core": [
+     2503,
+     3087
     ]
    },
    {
@@ -1003,6 +2009,22 @@
    },
    {
     "champion_name": "易大師",
+    "family": "暴擊",
+    "core": [
+     6675,
+     3036
+    ]
+   },
+   {
+    "champion_name": "易大師",
+    "family": "攻速特效",
+    "core": [
+     6672,
+     6675
+    ]
+   },
+   {
+    "champion_name": "易大師",
     "family": "暴擊戰士",
     "core": [
      6675,
@@ -1010,11 +2032,155 @@
     ]
    },
    {
+    "champion_name": "易大師",
+    "family": "特效戰士",
+    "core": [
+     3153,
+     3073
+    ]
+   },
+   {
+    "champion_name": "易大師",
+    "family": "暴擊刺客",
+    "core": [
+     2517,
+     6675
+    ]
+   },
+   {
+    "champion_name": "易大師",
+    "family": "暴擊坦克",
+    "core": [
+     3084,
+     6675
+    ]
+   },
+   {
+    "champion_name": "星朵拉",
+    "family": "法術",
+    "core": [
+     3157,
+     3135
+    ]
+   },
+   {
+    "champion_name": "札克",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     4633
+    ]
+   },
+   {
+    "champion_name": "李星",
+    "family": "戰士",
+    "core": [
+     6610,
+     3053
+    ]
+   },
+   {
+    "champion_name": "李星",
+    "family": "穿甲坦克",
+    "core": [
+     6692,
+     3143
+    ]
+   },
+   {
+    "champion_name": "杰西",
+    "family": "穿甲",
+    "core": [
+     3142,
+     6694
+    ]
+   },
+   {
+    "champion_name": "杰西",
+    "family": "暴擊刺客",
+    "core": [
+     6697,
+     3036
+    ]
+   },
+   {
+    "champion_name": "枷蘿",
+    "family": "法術",
+    "core": [
+     3157,
+     3165
+    ]
+   },
+   {
+    "champion_name": "梅爾",
+    "family": "法術",
+    "core": [
+     3157,
+     3135
+    ]
+   },
+   {
+    "champion_name": "梅爾",
+    "family": "法術輔助",
+    "core": [
+     6655,
+     123430
+    ]
+   },
+   {
+    "champion_name": "極靈",
+    "family": "法術",
+    "core": [
+     4628,
+     4629
+    ]
+   },
+   {
+    "champion_name": "極靈",
+    "family": "法術坦克",
+    "core": [
+     6655,
+     3083
+    ]
+   },
+   {
     "champion_name": "歐拉夫",
     "family": "戰士",
     "core": [
-     3074,
-     3143
+     3073,
+     3053
+    ]
+   },
+   {
+    "champion_name": "歐拉夫",
+    "family": "暴擊戰士",
+    "core": [
+     3073,
+     2512
+    ]
+   },
+   {
+    "champion_name": "歐羅拉",
+    "family": "法術",
+    "core": [
+     3157,
+     3135
+    ]
+   },
+   {
+    "champion_name": "汎",
+    "family": "攻速特效",
+    "core": [
+     6672,
+     3046
+    ]
+   },
+   {
+    "champion_name": "汎",
+    "family": "暴擊",
+    "core": [
+     2512,
+     3124
     ]
    },
    {
@@ -1034,6 +2200,126 @@
     ]
    },
    {
+    "champion_name": "汎",
+    "family": "特效射手",
+    "core": [
+     6672,
+     2512
+    ]
+   },
+   {
+    "champion_name": "汎",
+    "family": "特效坦克",
+    "core": [
+     6672,
+     3084
+    ]
+   },
+   {
+    "champion_name": "汎",
+    "family": "暴擊坦克",
+    "core": [
+     3143,
+     2512
+    ]
+   },
+   {
+    "champion_name": "沃維克",
+    "family": "戰士",
+    "core": [
+     3074,
+     3143
+    ]
+   },
+   {
+    "champion_name": "沃維克",
+    "family": "特效坦克",
+    "core": [
+     3084,
+     3091
+    ]
+   },
+   {
+    "champion_name": "法洛士",
+    "family": "穿甲 Q",
+    "core": [
+     3142,
+     6694
+    ]
+   },
+   {
+    "champion_name": "法洛士",
+    "family": "攻速特效 W",
+    "core": [
+     3087,
+     3091
+    ]
+   },
+   {
+    "champion_name": "法洛士",
+    "family": "暴擊刺客",
+    "core": [
+     6697,
+     3036
+    ]
+   },
+   {
+    "champion_name": "法洛士",
+    "family": "特效刺客",
+    "core": [
+     6697,
+     3087
+    ]
+   },
+   {
+    "champion_name": "法洛士",
+    "family": "特效射手",
+    "core": [
+     6676,
+     3115
+    ]
+   },
+   {
+    "champion_name": "法洛士",
+    "family": "暴擊法師",
+    "core": [
+     6676,
+     3157
+    ]
+   },
+   {
+    "champion_name": "法洛士",
+    "family": "特效法師",
+    "core": [
+     3087,
+     4645
+    ]
+   },
+   {
+    "champion_name": "法洛士",
+    "family": "穿甲法師",
+    "core": [
+     6697,
+     3157
+    ]
+   },
+   {
+    "champion_name": "泰達米爾",
+    "family": "暴擊",
+    "core": [
+     6675,
+     2512
+    ]
+   },
+   {
+    "champion_name": "泰達米爾",
+    "family": "攻速特效",
+    "core": [
+     6672,
+     3046
+    ]
+   },
+   {
     "champion_name": "泰達米爾",
     "family": "暴擊戰士",
     "core": [
@@ -1050,11 +2336,51 @@
     ]
    },
    {
+    "champion_name": "洛克",
+    "family": "法術",
+    "core": [
+     3157,
+     3135
+    ]
+   },
+   {
     "champion_name": "派克",
     "family": "穿甲",
     "core": [
      3142,
      6698
+    ]
+   },
+   {
+    "champion_name": "淣菈",
+    "family": "暴擊戰士",
+    "core": [
+     3074,
+     3031
+    ]
+   },
+   {
+    "champion_name": "漢默丁格",
+    "family": "法術",
+    "core": [
+     3135,
+     3157
+    ]
+   },
+   {
+    "champion_name": "潘森",
+    "family": "戰士",
+    "core": [
+     6610,
+     3053
+    ]
+   },
+   {
+    "champion_name": "潘森",
+    "family": "暴擊刺客",
+    "core": [
+     6697,
+     3036
     ]
    },
    {
@@ -1066,6 +2392,14 @@
     ]
    },
    {
+    "champion_name": "烏爾加特",
+    "family": "暴擊坦克",
+    "core": [
+     3084,
+     3085
+    ]
+   },
+   {
     "champion_name": "烏迪爾",
     "family": "法術坦克",
     "core": [
@@ -1074,11 +2408,35 @@
     ]
    },
    {
+    "champion_name": "烏迪爾",
+    "family": "特效刺客",
+    "core": [
+     6697,
+     2510
+    ]
+   },
+   {
+    "champion_name": "煞蜜拉",
+    "family": "暴擊刺客",
+    "core": [
+     3031,
+     6333
+    ]
+   },
+   {
+    "champion_name": "煞蜜拉",
+    "family": "暴擊坦克",
+    "core": [
+     6676,
+     3143
+    ]
+   },
+   {
     "champion_name": "燼",
     "family": "暴擊",
     "core": [
-     2523,
-     3094
+     3046,
+     3036
     ]
    },
    {
@@ -1090,6 +2448,118 @@
     ]
    },
    {
+    "champion_name": "燼",
+    "family": "暴擊法師",
+    "core": [
+     6676,
+     3157
+    ]
+   },
+   {
+    "champion_name": "燼",
+    "family": "暴擊坦克",
+    "core": [
+     3031,
+     3143
+    ]
+   },
+   {
+    "champion_name": "特朗德",
+    "family": "戰士",
+    "core": [
+     3074,
+     3143
+    ]
+   },
+   {
+    "champion_name": "特朗德",
+    "family": "坦克輔助",
+    "core": [
+     3084,
+     4005
+    ]
+   },
+   {
+    "champion_name": "特朗德",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     6653
+    ]
+   },
+   {
+    "champion_name": "特朗德",
+    "family": "特效坦克",
+    "core": [
+     3084,
+     3091
+    ]
+   },
+   {
+    "champion_name": "特朗德",
+    "family": "戰士輔助",
+    "core": [
+     4005,
+     6610
+    ]
+   },
+   {
+    "champion_name": "犽凝",
+    "family": "暴擊戰士",
+    "core": [
+     3074,
+     3031
+    ]
+   },
+   {
+    "champion_name": "犽凝",
+    "family": "特效坦克",
+    "core": [
+     3153,
+     3143
+    ]
+   },
+   {
+    "champion_name": "犽凝",
+    "family": "暴擊坦克",
+    "core": [
+     3032,
+     3143
+    ]
+   },
+   {
+    "champion_name": "犽凝",
+    "family": "暴擊刺客",
+    "core": [
+     2517,
+     3032
+    ]
+   },
+   {
+    "champion_name": "犽宿",
+    "family": "暴擊",
+    "core": [
+     3046,
+     3036
+    ]
+   },
+   {
+    "champion_name": "犽宿",
+    "family": "戰士輔助",
+    "core": [
+     123430,
+     6333
+    ]
+   },
+   {
+    "champion_name": "犽宿",
+    "family": "暴擊戰士",
+    "core": [
+     3031,
+     6333
+    ]
+   },
+   {
     "champion_name": "犽宿",
     "family": "暴擊坦克",
     "core": [
@@ -1098,11 +2568,43 @@
     ]
    },
    {
+    "champion_name": "犽宿",
+    "family": "坦克輔助",
+    "core": [
+     123430,
+     3065
+    ]
+   },
+   {
+    "champion_name": "犽宿",
+    "family": "暴擊刺客",
+    "core": [
+     2517,
+     3032
+    ]
+   },
+   {
     "champion_name": "珍娜",
     "family": "輔助",
     "core": [
      6621,
      3504
+    ]
+   },
+   {
+    "champion_name": "珍娜",
+    "family": "法術輔助",
+    "core": [
+     6655,
+     3504
+    ]
+   },
+   {
+    "champion_name": "珍娜",
+    "family": "坦克輔助",
+    "core": [
+     6617,
+     6665
     ]
    },
    {
@@ -1122,19 +2624,67 @@
     ]
    },
    {
+    "champion_name": "瑟雷西",
+    "family": "特效坦克",
+    "core": [
+     3084,
+     3091
+    ]
+   },
+   {
+    "champion_name": "瑟雷西",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     4633
+    ]
+   },
+   {
+    "champion_name": "瑟雷西",
+    "family": "暴擊坦克",
+    "core": [
+     3084,
+     3085
+    ]
+   },
+   {
+    "champion_name": "睿娜妲．格萊斯克",
+    "family": "輔助",
+    "core": [
+     6621,
+     3504
+    ]
+   },
+   {
+    "champion_name": "睿娜妲．格萊斯克",
+    "family": "法術坦克",
+    "core": [
+     3118,
+     3190
+    ]
+   },
+   {
+    "champion_name": "睿娜妲．格萊斯克",
+    "family": "穿甲法師",
+    "core": [
+     3118,
+     3073
+    ]
+   },
+   {
     "champion_name": "科加斯",
     "family": "法術坦克",
     "core": [
-     6657,
-     3084
+     3084,
+     3089
     ]
    },
    {
     "champion_name": "米里歐",
     "family": "輔助",
     "core": [
-     6621,
-     3504
+     6620,
+     6621
     ]
    },
    {
@@ -1146,11 +2696,67 @@
     ]
    },
    {
+    "champion_name": "米里歐",
+    "family": "坦克輔助",
+    "core": [
+     6617,
+     6665
+    ]
+   },
+   {
+    "champion_name": "納帝魯斯",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     4633
+    ]
+   },
+   {
+    "champion_name": "納瑟斯",
+    "family": "暴擊坦克",
+    "core": [
+     3508,
+     3065
+    ]
+   },
+   {
+    "champion_name": "納瑟斯",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     6653
+    ]
+   },
+   {
+    "champion_name": "納瑟斯",
+    "family": "法術戰士",
+    "core": [
+     3078,
+     2503
+    ]
+   },
+   {
     "champion_name": "索娜",
     "family": "輔助",
     "core": [
      6621,
      6616
+    ]
+   },
+   {
+    "champion_name": "索娜",
+    "family": "坦克輔助",
+    "core": [
+     6617,
+     6665
+    ]
+   },
+   {
+    "champion_name": "索娜",
+    "family": "法術輔助",
+    "core": [
+     6655,
+     3504
     ]
    },
    {
@@ -1186,6 +2792,22 @@
     ]
    },
    {
+    "champion_name": "維克特",
+    "family": "法術",
+    "core": [
+     3135,
+     3157
+    ]
+   },
+   {
+    "champion_name": "維迦",
+    "family": "法術",
+    "core": [
+     3157,
+     3102
+    ]
+   },
+   {
     "champion_name": "維迦",
     "family": "法術坦克",
     "core": [
@@ -1194,11 +2816,107 @@
     ]
    },
    {
+    "champion_name": "翱銳龍獸",
+    "family": "法術坦克",
+    "core": [
+     3116,
+     3083
+    ]
+   },
+   {
+    "champion_name": "艾克",
+    "family": "法術",
+    "core": [
+     3157,
+     3135
+    ]
+   },
+   {
+    "champion_name": "艾妮維亞",
+    "family": "法術坦克",
+    "core": [
+     6657,
+     3083
+    ]
+   },
+   {
+    "champion_name": "艾希",
+    "family": "暴擊",
+    "core": [
+     2523,
+     3046
+    ]
+   },
+   {
+    "champion_name": "艾希",
+    "family": "法術",
+    "core": [
+     3137,
+     4628
+    ]
+   },
+   {
+    "champion_name": "艾希",
+    "family": "攻速特效",
+    "core": [
+     6672,
+     3046
+    ]
+   },
+   {
     "champion_name": "艾希",
     "family": "穿甲法師",
     "core": [
+     3089,
+     6696
+    ]
+   },
+   {
+    "champion_name": "艾希",
+    "family": "穿甲輔助",
+    "core": [
+     6696,
+     4005
+    ]
+   },
+   {
+    "champion_name": "艾希",
+    "family": "暴擊法師",
+    "core": [
      3118,
-     3073
+     2512
+    ]
+   },
+   {
+    "champion_name": "艾希",
+    "family": "暴擊坦克",
+    "core": [
+     3032,
+     3143
+    ]
+   },
+   {
+    "champion_name": "艾希",
+    "family": "暴擊輔助",
+    "core": [
+     3032,
+     4005
+    ]
+   },
+   {
+    "champion_name": "艾希",
+    "family": "暴擊刺客",
+    "core": [
+     3032,
+     6695
+    ]
+   },
+   {
+    "champion_name": "艾希",
+    "family": "特效法師",
+    "core": [
+     3118,
+     3153
     ]
    },
    {
@@ -1210,10 +2928,66 @@
     ]
    },
    {
+    "champion_name": "莉莉亞",
+    "family": "法術",
+    "core": [
+     3157,
+     4629
+    ]
+   },
+   {
+    "champion_name": "莉莉亞",
+    "family": "法術坦克",
+    "core": [
+     2503,
+     3143
+    ]
+   },
+   {
+    "champion_name": "菲歐拉",
+    "family": "戰士",
+    "core": [
+     3074,
+     3143
+    ]
+   },
+   {
+    "champion_name": "菲艾",
+    "family": "戰士",
+    "core": [
+     6610,
+     3053
+    ]
+   },
+   {
+    "champion_name": "葛雷夫",
+    "family": "暴擊",
+    "core": [
+     3036,
+     3072
+    ]
+   },
+   {
     "champion_name": "葛雷夫",
     "family": "暴擊刺客",
     "core": [
-     6697,
+     2517,
+     3036
+    ]
+   },
+   {
+    "champion_name": "葛雷夫",
+    "family": "暴擊坦克",
+    "core": [
+     6676,
+     3143
+    ]
+   },
+   {
+    "champion_name": "葵恩",
+    "family": "攻速特效",
+    "core": [
+     6672,
      3036
     ]
    },
@@ -1223,6 +2997,14 @@
     "core": [
      6631,
      3142
+    ]
+   },
+   {
+    "champion_name": "蓋倫",
+    "family": "暴擊",
+    "core": [
+     3046,
+     3036
     ]
    },
    {
@@ -1242,11 +3024,99 @@
     ]
    },
    {
+    "champion_name": "蓋倫",
+    "family": "暴擊刺客",
+    "core": [
+     2517,
+     3046
+    ]
+   },
+   {
+    "champion_name": "薇可絲",
+    "family": "法術",
+    "core": [
+     3157,
+     3135
+    ]
+   },
+   {
+    "champion_name": "薩亨",
+    "family": "戰士",
+    "core": [
+     6610,
+     3143
+    ]
+   },
+   {
+    "champion_name": "薩科",
+    "family": "穿甲",
+    "core": [
+     3142,
+     6698
+    ]
+   },
+   {
+    "champion_name": "薩科",
+    "family": "暴擊法師",
+    "core": [
+     6676,
+     6653
+    ]
+   },
+   {
+    "champion_name": "薩科",
+    "family": "暴擊刺客",
+    "core": [
+     3142,
+     3036
+    ]
+   },
+   {
+    "champion_name": "藍寶",
+    "family": "法術",
+    "core": [
+     3157,
+     8010
+    ]
+   },
+   {
+    "champion_name": "藍寶",
+    "family": "法術坦克",
+    "core": [
+     6653,
+     3084
+    ]
+   },
+   {
+    "champion_name": "貝爾薇斯",
+    "family": "特效坦克",
+    "core": [
+     6672,
+     3143
+    ]
+   },
+   {
     "champion_name": "貪啃奇",
     "family": "法術坦克",
     "core": [
      3084,
      4633
+    ]
+   },
+   {
+    "champion_name": "貪啃奇",
+    "family": "特效坦克",
+    "core": [
+     2510,
+     3083
+    ]
+   },
+   {
+    "champion_name": "費德提克",
+    "family": "法術",
+    "core": [
+     3157,
+     3165
     ]
    },
    {
@@ -1269,8 +3139,32 @@
     "champion_name": "賈克斯",
     "family": "法術戰士",
     "core": [
-     3157,
+     3146,
      6610
+    ]
+   },
+   {
+    "champion_name": "賈克斯",
+    "family": "特效坦克",
+    "core": [
+     3084,
+     3091
+    ]
+   },
+   {
+    "champion_name": "賈克斯",
+    "family": "特效戰士",
+    "core": [
+     6610,
+     3091
+    ]
+   },
+   {
+    "champion_name": "賽勒斯",
+    "family": "法術",
+    "core": [
+     3157,
+     4629
     ]
    },
    {
@@ -1282,11 +3176,59 @@
     ]
    },
    {
+    "champion_name": "賽勒斯",
+    "family": "法術輔助",
+    "core": [
+     3146,
+     123430
+    ]
+   },
+   {
+    "champion_name": "賽恩",
+    "family": "戰士",
+    "core": [
+     3748,
+     3142
+    ]
+   },
+   {
+    "champion_name": "賽恩",
+    "family": "穿甲坦克",
+    "core": [
+     3084,
+     3142
+    ]
+   },
+   {
+    "champion_name": "賽特",
+    "family": "戰士",
+    "core": [
+     2501,
+     3053
+    ]
+   },
+   {
+    "champion_name": "赫克林",
+    "family": "穿甲坦克",
+    "core": [
+     2517,
+     3143
+    ]
+   },
+   {
     "champion_name": "趙信",
     "family": "攻速特效",
     "core": [
      3087,
      3065
+    ]
+   },
+   {
+    "champion_name": "趙信",
+    "family": "戰士",
+    "core": [
+     6610,
+     3053
     ]
    },
    {
@@ -1306,11 +3248,83 @@
     ]
    },
    {
+    "champion_name": "趙信",
+    "family": "特效刺客",
+    "core": [
+     2517,
+     3087
+    ]
+   },
+   {
+    "champion_name": "趙信",
+    "family": "特效法師",
+    "core": [
+     3087,
+     4633
+    ]
+   },
+   {
+    "champion_name": "趙信",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     4633
+    ]
+   },
+   {
+    "champion_name": "路西恩",
+    "family": "暴擊",
+    "core": [
+     3036,
+     6675
+    ]
+   },
+   {
+    "champion_name": "路西恩",
+    "family": "攻速特效",
+    "core": [
+     6672,
+     6675
+    ]
+   },
+   {
+    "champion_name": "路西恩",
+    "family": "暴擊刺客",
+    "core": [
+     3031,
+     6696
+    ]
+   },
+   {
+    "champion_name": "路西恩",
+    "family": "暴擊坦克",
+    "core": [
+     6676,
+     3143
+    ]
+   },
+   {
     "champion_name": "辛吉德",
     "family": "法術坦克",
     "core": [
      6657,
      4401
+    ]
+   },
+   {
+    "champion_name": "逆命",
+    "family": "法術",
+    "core": [
+     3100,
+     3087
+    ]
+   },
+   {
+    "champion_name": "逆命",
+    "family": "攻速特效",
+    "core": [
+     6672,
+     3094
     ]
    },
    {
@@ -1322,11 +3336,43 @@
     ]
    },
    {
+    "champion_name": "逆命",
+    "family": "法術輔助",
+    "core": [
+     6655,
+     123430
+    ]
+   },
+   {
+    "champion_name": "逆命",
+    "family": "特效法師",
+    "core": [
+     6655,
+     3153
+    ]
+   },
+   {
+    "champion_name": "達瑞文",
+    "family": "暴擊",
+    "core": [
+     3036,
+     3072
+    ]
+   },
+   {
     "champion_name": "達瑞文",
     "family": "暴擊刺客",
     "core": [
      6697,
      3036
+    ]
+   },
+   {
+    "champion_name": "達瑞文",
+    "family": "暴擊坦克",
+    "core": [
+     6676,
+     3143
     ]
    },
    {
@@ -1338,11 +3384,43 @@
     ]
    },
    {
+    "champion_name": "鄂爾",
+    "family": "法術坦克",
+    "core": [
+     3084,
+     3118
+    ]
+   },
+   {
+    "champion_name": "鏡爪",
+    "family": "暴擊",
+    "core": [
+     3036,
+     6672
+    ]
+   },
+   {
     "champion_name": "關",
     "family": "法術坦克",
     "core": [
-     4633,
+     4645,
+     3065
+    ]
+   },
+   {
+    "champion_name": "關",
+    "family": "特效坦克",
+    "core": [
+     2510,
      3143
+    ]
+   },
+   {
+    "champion_name": "阿卡莉",
+    "family": "法術",
+    "core": [
+     3135,
+     3157
     ]
    },
    {
@@ -1362,11 +3440,67 @@
     ]
    },
    {
+    "champion_name": "阿璃",
+    "family": "法術",
+    "core": [
+     3157,
+     3165
+    ]
+   },
+   {
+    "champion_name": "阿祈爾",
+    "family": "法術",
+    "core": [
+     3157,
+     3135
+    ]
+   },
+   {
+    "champion_name": "雷尼克頓",
+    "family": "戰士",
+    "core": [
+     6610,
+     3053
+    ]
+   },
+   {
     "champion_name": "雷茲",
     "family": "法術坦克",
     "core": [
      6657,
      3119
+    ]
+   },
+   {
+    "champion_name": "雷茲",
+    "family": "穿甲法師",
+    "core": [
+     6657,
+     3004
+    ]
+   },
+   {
+    "champion_name": "雷茲",
+    "family": "法術輔助",
+    "core": [
+     6657,
+     123430
+    ]
+   },
+   {
+    "champion_name": "雷葛爾",
+    "family": "暴擊刺客",
+    "core": [
+     6699,
+     3036
+    ]
+   },
+   {
+    "champion_name": "雷葛爾",
+    "family": "暴擊戰士",
+    "core": [
+     3074,
+     3031
     ]
    },
    {
@@ -1378,11 +3512,75 @@
     ]
    },
    {
+    "champion_name": "露璐",
+    "family": "暴擊輔助",
+    "core": [
+     6617,
+     3085
+    ]
+   },
+   {
+    "champion_name": "露璐",
+    "family": "法術輔助",
+    "core": [
+     6655,
+     2065
+    ]
+   },
+   {
+    "champion_name": "露璐",
+    "family": "坦克輔助",
+    "core": [
+     6617,
+     6665
+    ]
+   },
+   {
+    "champion_name": "露璐",
+    "family": "特效輔助",
+    "core": [
+     6617,
+     3087
+    ]
+   },
+   {
+    "champion_name": "飛斯",
+    "family": "法術",
+    "core": [
+     3157,
+     3135
+    ]
+   },
+   {
     "champion_name": "飛斯",
     "family": "法術坦克",
     "core": [
      3084,
      4633
+    ]
+   },
+   {
+    "champion_name": "馬爾札哈",
+    "family": "法術",
+    "core": [
+     3165,
+     3135
+    ]
+   },
+   {
+    "champion_name": "魔甘娜",
+    "family": "法術",
+    "core": [
+     3157,
+     8010
+    ]
+   },
+   {
+    "champion_name": "魔鬥凱薩",
+    "family": "戰士",
+    "core": [
+     3073,
+     3143
     ]
    },
    {
@@ -1402,14 +3600,79 @@
     ]
    },
    {
+    "champion_name": "魔鬥凱薩",
+    "family": "特效戰士",
+    "core": [
+     2510,
+     3073
+    ]
+   },
+   {
+    "champion_name": "魔鬥凱薩",
+    "family": "特效坦克",
+    "core": [
+     3143,
+     3115
+    ]
+   },
+   {
+    "champion_name": "麗珊卓",
+    "family": "法術",
+    "core": [
+     3137,
+     3157
+    ]
+   },
+   {
     "champion_name": "黛安娜",
     "family": "法術坦克",
     "core": [
      3084,
      4633
     ]
+   },
+   {
+    "champion_name": "齊勒斯",
+    "family": "法術",
+    "core": [
+     3135,
+     4628
+    ]
+   },
+   {
+    "champion_name": "齊勒斯",
+    "family": "法術輔助",
+    "core": [
+     6655,
+     123430
+    ]
    }
   ],
-  "dropped": []
+  "dropped": [
+   {
+    "champion_name": "卡瑪",
+    "style": "AP 刺客",
+    "core": [
+     4646,
+     4645
+    ]
+   },
+   {
+    "champion_name": "悠咪",
+    "style": "爆發法師",
+    "core": [
+     6655,
+     4645
+    ]
+   },
+   {
+    "champion_name": "莉莉亞",
+    "style": "緩速法師",
+    "core": [
+     6653,
+     3116
+    ]
+   }
+  ]
  }
 }

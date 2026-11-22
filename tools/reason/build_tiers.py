@@ -42,8 +42,8 @@ FIT_SCORE = 0.03       # and the score 3 points more: the reasoning decides, the
 POP = 0.04             # how often the champion builds it (0-1) adds up to 4 points: the main build is also what people build
 UNSEEN = -0.03         # an item not in the champion's 50 most built: hardly anyone builds it (never in the main build)
 CORES = 5              # sets of the first three items shown
-CORE_MIN = 300         # games a style needs, all its first-two pairs together
-SET_MIN = 30           # games one pair needs to stand for its style (core, other pair, broken or not)
+CORE_MIN = 50          # games a style needs, all its first-two pairs together
+SET_MIN = 20           # games one pair needs to stand for its style (core, other pair, broken or not)
 CORE_PRIOR = 1000      # games the champion's own win rate counts as in a set's result
 POP_CORE = 0.1         # how often the set is built (share of the champion's games) adds up to that many points
 LATE = 5               # items four to six per style
@@ -209,21 +209,24 @@ ALLY_HEAL = {6617, 2526, 6621, 3504, 6616, 6620, 2524}
 # ---- play styles ----------------------------------------------------------------------------------------------------------------
 # The games pick a champion's styles (decided with Zaviel 2026-11-22): Inbox/玩法出裝.md is the catalogue that names them (core
 # items, 怎麼玩), and any of its styles is a candidate for any champion, beside one style per item family (below). Each first-two
-# set of the champion's games goes to the candidate holding its items; a style is kept when its sets reach STYLE_MIN of the
+# set of the champion's games goes to the candidate holding its items; a style is kept when its sets reach CORE_MIN games (see SURE_STYLE) of the
 # champion's games (and CORE_MIN) without losing by STYLE_FLOOR, most played first. A catalogue style that lists the champion
 # but has too few games stays after those, from the reasoning; one the games call broken is left out (Build Questions).
 # A family style the catalogue has no name for is kept the same way and listed in Build Questions to be named.
 # A play style is a family of items (an item's family is its first kind). A champion's styles are the families players start with
-# (the first item, STYLE_MIN of its games or more) or build a strong first-three set of, plus the style its note reads as; each
+# (the first item, CORE_MIN games or more) or build a strong first-three set of, plus the style its note reads as; each
 # style wants its own kinds (2) and some others (1).
 FAMILIES = {"法術": ("MAGE", "MHP"), "攻速特效": ("OHAD", "OHAP"), "暴擊": ("CRIT",), "穿甲": ("LETH",), "戰士": ("BRU",),
             "坦克": ("TANK", "SUP"), "輔助": ("ENCH",)}
 FAMILY_WANTS = {"法術": {"MAGE": 2, "MHP": 2, "OHAP": 1}, "攻速特效": {"OHAD": 2, "OHAP": 2, "BRU": 1, "CRIT": 1},
                 "暴擊": {"CRIT": 2, "OHAD": 1}, "穿甲": {"LETH": 2, "BRU": 1}, "戰士": {"BRU": 2, "TANK": 1, "LETH": 1},
                 "坦克": {"TANK": 2, "SUP": 1, "BRU": 1}, "輔助": {"ENCH": 2, "SUP": 1, "MAGE": 1}}
-STYLE_MIN = 0.03
-STYLE_FLOOR = -0.05    # a style whose best set does this much worse than the champion is not shown (only broken ones)
-MAX_STYLES = 4
+# Every style the games have is shown (decided with Zaviel 2026-11-23), warned when its result is not sure: "few" under
+# SURE_STYLE games, "weak" when it does STYLE_FLOOR worse than the champion; the app shows four and lists the rest under 更多玩法
+SURE_STYLE = 300
+STYLE_FLOOR = -0.05    # a style that does this much worse than the champion over all its games is marked weak
+STYLE_PRIOR = 100      # games of the champion's own result a style's result is pulled toward (a 100-game style is noisy)
+MAX_STYLES = 20
 STYLE_NAMES = {"Varus": {"穿甲": "穿甲 Q", "攻速特效": "攻速特效 W", "法術": "法術 W"}}   # the style's word when the kit names it better
 
 
@@ -412,6 +415,10 @@ def main():
         listed = {sd["name"] for sd in hand.get(note.get("name", ""), [])}
         defs = ([dict(sd, listed=sd["name"] in listed) for sd in catalogue]
                 + [dict(sd, listed=False) for sd in auto_styles(c, d, sets, alias, pool)])
+        named = {sd["name"]: n for n, sd in enumerate(defs) if not sd.get("auto")}
+        for sd in defs:   # a family style named like a catalogue one (坦克): its pairs go to the catalogue style
+            if sd.get("auto") and sd["name"] in named:
+                sd["same"] = named[sd["name"]]
         champ_out, fits = {"styles": [], "special": SPECIAL.get(note["id"], [])}, defaultdict(lambda: -2)
         scoreds = []
         for sd in defs:
@@ -435,7 +442,7 @@ def main():
                         continue
                     score = 1
                 if best is None or score > best[1]:
-                    best = (n, score)
+                    best = (sd.get("same", n), score)
             st["style"], st["match"] = (best[0], best[1]) if best else (None, 0)
         # pairs no style takes (the kit check turns down one of their items, mostly hybrids: 雄心之鋼 + 時光之杖, 盧登 + 衝擊火炮)
         # make a style of their two families when they are played enough; it wants both families' kinds
@@ -444,9 +451,9 @@ def main():
             if st["style"] is None:
                 loose[hybrid_key(st["items"], c.ranged)].append(st)
         for key, sts in loose.items():
-            if not key or sum(st["games"] for st in sts) < STYLE_MIN * total:
+            if not key or sum(st["games"] for st in sts) < CORE_MIN:
                 continue
-            same = next((n for n, x in enumerate(defs) if len(key) == 1 and x.get("family") == key[0]), None)
+            same = next((x.get("same", n) for n, x in enumerate(defs) if len(key) == 1 and x.get("family") == key[0]), None)
             if same is not None:   # one family the kit turned down an item of: that family's style takes it
                 for st in sts:
                     st["style"], st["match"] = same, 1
@@ -466,12 +473,14 @@ def main():
             # a style is judged by all its pairs together: its games often spread over many pairs, none of them big
             mine = sorted((st for st in sets if st["style"] == n and st["games"] >= SET_MIN), key=lambda st: (-st["match"], -st["value"]))
             played = sum(st["games"] for st in sets if st["style"] == n)
-            broken = bool(mine) and max(st["gap"] for st in mine) < STYLE_FLOOR
-            backed = bool(mine) and not broken and played >= max(STYLE_MIN * total, CORE_MIN)
+            won = sum(st["wins"] for st in sets if st["style"] == n)
+            broken = bool(mine) and own_wr is not None and (won - own_wr * played) / (played + STYLE_PRIOR) < STYLE_FLOOR
+            backed = bool(mine) and played >= CORE_MIN
             if broken and sd["listed"]:
                 dropped.append((note.get("name", note["id"]), sd["name"], mine[0]["items"], played / total))
-            if not backed and not (sd["listed"] and not broken):
-                continue   # not played enough, or losing: only a style that lists the champion stays from the reasoning
+            if not backed and not sd["listed"]:
+                continue   # hardly played: only a style that lists the champion stays, from the reasoning
+            warn = "weak" if broken else "few" if played < SURE_STYLE else ""
             if backed and sd.get("auto"):
                 unnamed.append((note.get("name", note["id"]), sd["name"], mine[0]["items"], played / total))
             if mine:
@@ -497,7 +506,7 @@ def main():
             boots = max((r for r in sd["scored"] if r["boots"] and r["fit"] >= 0), key=lambda r: (r["fit"], r["value"]), default=None)
             first = core[0]
             kept.append((played if backed else -1, n, {
-                "name": sd["name"], "why": sd.get("why", ""), "games": from_games, "status": sd.get("status", ""),
+                "name": sd["name"], "why": sd.get("why", ""), "games": from_games, "status": sd.get("status", ""), "warn": warn,
                 "core": [{"id": i, "reason": by_id[i]["why"], "need": need_of(i)} for i in core],
                 "alts": [[{"id": i, "reason": by_id[i]["why"], "need": need_of(i)} for i in a] for a in alts],
                 "third": [{"id": i, "reason": by_id[i]["why"], "need": need_of(i)} for i in thirds],
@@ -650,7 +659,7 @@ def auto_styles(c, d, sets, alias, pool):
             share[max(starts, key=starts.get) if starts else set_family([i], c.ranged)] += row[2] / total
     w = wants_of(c)
     own = family(max(w, key=w.get))
-    fams = [f for f in sorted(share, key=lambda f: -share[f]) if share[f] >= STYLE_MIN or any(x["family"] == f and x["games"] >= CORE_MIN for x in sets)]
+    fams = [f for f in sorted(share, key=lambda f: -share[f]) if share[f] * total >= CORE_MIN or any(x["family"] == f and x["games"] >= CORE_MIN for x in sets)]
     if own not in fams:
         fams.append(own)
     return [{"name": STYLE_NAMES.get(c.id, {}).get(f, f), "family": f, "wants": FAMILY_WANTS[f], "side": "", "auto": True} for f in fams if f]

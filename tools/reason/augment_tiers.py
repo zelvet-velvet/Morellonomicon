@@ -50,6 +50,8 @@ FIT_SCORE = 0.003      # and the score 0.3 points more, so the reasoning still c
 TIERS = [("S", 0.08), ("A", 0.20), ("B", 0.45)]   # share of a champion's augments of one rarity, best first; the rest is C
 TIER_FLOOR = {"S": 0.0, "A": 0.0, "B": -0.01}   # and the score a tier needs at least (S and A must beat the champion's own)
 SPECIFIC = 0.04        # a pair doing this much better than the augment does everywhere is the champion's own (asked when unexplained)
+STYLE_LIST_MIN = 300   # games a play style needs for a list of its own; a smaller one (少見) would be the champion's list
+                       # again, so the app ranks it with the closest style's list (keeps augment-tiers.json small for the phone)
 STYLE_PRIOR = 600      # games a play style's own result needs before it outweighs the champion's (our crawl split by style)
 SURE_GAMES = 3000      # resg's own 高 confidence: questions come only from pairs this well sampled (a cache's meta may set its own: our crawl)
 PENTAKILL = {3170, 3171, 3172, 3173}
@@ -968,7 +970,8 @@ def style_lists(styles, builds):
     style's own win rate, pulled toward the champion's gap (the list above) by STYLE_PRIOR games; the reasoning and its reason
     stay those of the champion's build with the style's damage (STYLES), or its only build."""
     lists = {}
-    for s in styles:
+    big = [s for s in styles if s["tm"] >= STYLE_LIST_MIN] or sorted(styles, key=lambda s: -s["tm"])[:1]
+    for s in big:
         c = next((b for b in builds if (s["damage"] == "ap") == (b.style == "ap")), builds[0]) if len(builds) > 1 else builds[0]
         own = s["wm"] / s["tm"] if s["tm"] else None
         games = {a: (g, w) for a, g, w in s["ra"]}
