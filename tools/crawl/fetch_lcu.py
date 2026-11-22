@@ -1023,7 +1023,7 @@ def menu():
                         ("item builds", tool("reason/build_tiers.py")),   # first: the augment tiers are per play style
                         ("augment tiers", tool("reason/augment_tiers.py")),
                         ("tiers.html", tool("mn.py", "tiers"))], header,
-                        "Opened in your browser. _data/ and Review/ changed: commit them when the tiers look right.")
+                        "Opened in your browser. _data/ and Review/ changed: commit them once a day or at a new patch, when the tiers look right.")
                 elif choice == "6":
                     ui.run_steps(scr, "Dashboard", [("report.html", tool("mn.py", "report"))], header,
                                  "Opened in your browser.")

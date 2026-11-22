@@ -928,16 +928,27 @@ def main():
 
 
 def tiers_json(d):
-    """augment-tiers.json with one tier row per line (a list per play style makes it big; the plugin loads it on the phone)."""
-    head = json.dumps({k: v for k, v in d.items() if k != "champions"}, ensure_ascii=False, indent=1)[:-2]
+    """augment-tiers.json, compact (format 2; a list per play style made it 10 MB and the plugin loads it on the phone): each
+    reason once in `reasons`, each augment's group (rarity, 五殺) once in `groups`, a tier row as a short array, one per line
+    (so a rebuild's git diff stays small). tools/datalib.py tier_rows() (and the plugin's loader) turn the rows back into dicts."""
+    reasons, at, groups = [], {}, {}
+    def row(r):
+        if r["reason"] not in at:
+            at[r["reason"]] = len(reasons)
+            reasons.append(r["reason"])
+        groups[str(r["id"])] = r["group"]
+        out = [r["id"], r["tier"], round(r["value"], 3), round(r["score"], 2), at[r["reason"]]]
+        return out + [r["when"]] if r.get("when") else out
     champs = []
     for cid, styles in d["champions"].items():
         sts = []
         for key, st in styles.items():
-            rows = ",\n".join("    " + json.dumps(r, ensure_ascii=False) for r in st["tiers"])
+            rows = ",\n".join("    " + json.dumps(row(r), ensure_ascii=False) for r in st["tiers"])
             sts.append(f'  {json.dumps(key, ensure_ascii=False)}: {{"name": {json.dumps(st["name"], ensure_ascii=False)}, "none": {json.dumps(st["none"])}, "tiers": [\n{rows}\n  ]}}')
         champs.append(f" {json.dumps(cid)}: {{\n" + ",\n".join(sts) + "\n }")
-    return head + ',\n "champions": {\n' + ",\n".join(champs) + "\n }\n}\n"
+    head = {"format": 2, "rows": "[id, tier, value, score, reason (index into reasons), when (only when set)]; the group is groups[id]",
+            **{k: v for k, v in d.items() if k != "champions"}, "groups": groups, "reasons": reasons}
+    return (json.dumps(head, ensure_ascii=False, indent=1)[:-2] + ',\n "champions": {\n' + ",\n".join(champs) + "\n }\n}\n")
 
 
 def order_rows(rows):

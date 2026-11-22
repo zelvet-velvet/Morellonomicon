@@ -113,6 +113,19 @@ var TIER_ORDER = { S: 0, A: 1, B: 2, C: 3 };
 function withOnHit(skills, keys) {
   return keys.length ? skills.map((s) => keys.includes(s.key) && !s.tags.includes("\u653B\u64CA\u7279\u6548") ? { ...s, tags: [...s.tags, "\u653B\u64CA\u7279\u6548"] } : s) : skills;
 }
+function decodeAugTiers(d) {
+  const champs = d.champions ?? {};
+  if ((d.format ?? 1) < 2) return champs;
+  const reasons = d.reasons ?? [], groups = d.groups ?? {};
+  const out = {};
+  for (const [cid, styles] of Object.entries(champs)) {
+    out[cid] = {};
+    for (const [key, st] of Object.entries(styles)) {
+      out[cid][key] = { name: st.name, none: st.none, tiers: st.tiers.map(([id, tier, value, score2, r, when]) => ({ id, group: groups[String(id)] ?? "", tier, value, score: score2, when: when ?? "", reason: reasons[r] ?? "" })) };
+    }
+  }
+  return out;
+}
 var patchNo = (p) => {
   const m = /^(\d+)\.(\d+)/.exec(p.trim());
   if (!m) return null;
@@ -231,7 +244,7 @@ var Store = class {
     try {
       const path = (0, import_obsidian.normalizePath)("_data/augment-tiers.json");
       const d = await this.app.vault.adapter.exists(path) ? JSON.parse(await this.app.vault.adapter.read(path)) : {};
-      this.augTiers = d.champions ?? {};
+      this.augTiers = decodeAugTiers(d);
       this.augUnrated = d.unrated ?? {};
       this.augRank = null;
     } catch {

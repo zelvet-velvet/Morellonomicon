@@ -81,6 +81,17 @@ def save_snapshot(name, raw, saved=None, commit=None):
     return patch
 
 
+def tier_rows(doc, champion, style):
+    """One play style's tier rows of an augment-tiers.json document as dicts (id, group, tier, value, score, when, reason), from
+    the compact format 2 (tools/reason/augment_tiers.py tiers_json) or the older list of dicts (history snapshots)."""
+    rows = doc["champions"].get(champion, {}).get(style, {}).get("tiers", [])
+    if doc.get("format", 1) < 2:
+        return rows
+    reasons, groups = doc["reasons"], doc["groups"]
+    return [{"id": r[0], "group": groups.get(str(r[0]), ""), "tier": r[1], "value": r[2], "score": r[3],
+             "reason": reasons[r[4]], "when": r[5] if len(r) > 5 else ""} for r in rows]
+
+
 def announced_patch():
     """The patch the public tiers and builds are built from."""
     try:

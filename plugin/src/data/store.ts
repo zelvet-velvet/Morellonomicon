@@ -52,6 +52,27 @@ export interface Skill { key: string; name: string; damage: string[]; tags: stri
 // band's set), S / A / B / C and the reason (why the champion's kit makes it work); `when` (前期強 / 後期強) is empty for now
 export interface AugTier { id: number; group: string; tier: string; value: number; score: number; when: string; reason: string }
 export interface AugTierStyle { name: string; tiers: AugTier[]; none: { id: number; value: number }[] }
+// _data/augment-tiers.json as written (tools/reason/augment_tiers.py tiers_json): format 2 keeps each reason once (`reasons`), each
+// augment's group once (`groups`) and a row as [id, tier, value, score, reason index, when?]; format 1 (older) has AugTier objects
+type AugTierRow = [number, string, number, number, number, string?];
+interface AugTiersFile {
+    format?: number; reasons?: string[]; groups?: Record<string, string>; unrated?: Record<string, string>;
+    champions?: Record<string, Record<string, { name: string; none: { id: number; value: number }[]; tiers: (AugTier | AugTierRow)[] }>>;
+}
+export function decodeAugTiers(d: AugTiersFile): Record<string, Record<string, AugTierStyle>> {
+    const champs = d.champions ?? {};
+    if ((d.format ?? 1) < 2) return champs as Record<string, Record<string, AugTierStyle>>;
+    const reasons = d.reasons ?? [], groups = d.groups ?? {};
+    const out: Record<string, Record<string, AugTierStyle>> = {};
+    for (const [cid, styles] of Object.entries(champs)) {
+        out[cid] = {};
+        for (const [key, st] of Object.entries(styles)) {
+            out[cid][key] = { name: st.name, none: st.none, tiers: (st.tiers as AugTierRow[]).map(([id, tier, value, score, r, when]) =>
+                ({ id, group: groups[String(id)] ?? "", tier, value, score, when: when ?? "", reason: reasons[r] ?? "" })) };
+        }
+    }
+    return out;
+}
 // A champion's Mayhem builds (Dev Tools/Build Model.md, tools/reason/build_tiers.py): one per play style (Zaviel's in Inbox/玩法出裝.md, else
 // found in the games): how it plays, the first two items (`games` false: from the reasoning alone), choices for the third, items
 // other pairs have in place of one of the two, items four to six with what each adds, boots and the item to take with 命定武器; and hand builds the games cannot show
@@ -168,8 +189,8 @@ export class Store {
         } catch { this.augData = {}; }
         try {
             const path = normalizePath("_data/augment-tiers.json");
-            const d = (await this.app.vault.adapter.exists(path)) ? JSON.parse(await this.app.vault.adapter.read(path)) as { champions?: Record<string, Record<string, AugTierStyle>>; unrated?: Record<string, string> } : {};
-            this.augTiers = d.champions ?? {};
+            const d = (await this.app.vault.adapter.exists(path)) ? JSON.parse(await this.app.vault.adapter.read(path)) as AugTiersFile : {};
+            this.augTiers = decodeAugTiers(d);
             this.augUnrated = d.unrated ?? {};
             this.augRank = null;
         } catch { this.augTiers = {}; this.augUnrated = {}; }

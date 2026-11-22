@@ -48,7 +48,7 @@ How the app tiers ARAM Mayhem augments for each champion: **why the champion's k
 
 > [!example]+ Files
 > - `tools/crawl/fetch_resg.py` caches resg.top's numbers for the newest patch (games and wins per champion and per augment on each champion) in the git-ignored `.cache/resg/<patch>/`. resg.top publishes no licence, so **no resg number is committed or shown**: the app shows tiers and reasons only.
-> - `tools/reason/augment_tiers.py` writes `_data/augment-tiers.json` (read by the plugin), [[Augment Tiers]] (the test champions with fit, games, gap and score, for review) and [[Augment Questions]].
+> - `tools/reason/augment_tiers.py` writes `_data/augment-tiers.json` (read by the plugin and oblivion-orb; compact since 2026-11-22, format 2: each reason once in `reasons`, each augment's group once in `groups`, a row as `[id, tier, value, score, reason index, when?]`, one per line; `tools/datalib.py` `tier_rows()` and the plugin's `decodeAugTiers` read it back; 2.9 MB instead of 10.5), [[Augment Tiers]] (the test champions with fit, games, gap and score, for review) and [[Augment Questions]].
 > - Both run in `tools/update_patch.py`. By hand: `python3 -I tools/crawl/fetch_resg.py && python3 -I tools/reason/augment_tiers.py`.
 > - Source: **our own crawl** first (`tools/crawl/fetch_lcu.py` through the League client on Zaviel's PC, `tools/crawl/lcu_cache.py` into `.cache/lcu/cache/<patch>/`): every player's champion, win, items and augments in pick order; 16.23 from 172,432 games. It wins a patch once it holds `ready_games` (tools/data/lifecycle.json); before that, or on the GitHub patch job that has no crawl, [resg.top](https://www.resg.top/) totals (decided with Zaviel 2026-11-22). The job never replaces a patch built from our crawl.
 

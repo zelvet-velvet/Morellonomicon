@@ -202,7 +202,7 @@ def cmd_tiers(args):
             rows = []
             sty = own_style.get(sname)
             spair = {str(a): (g, w) for a, g, w in sty["ra"]} if sty else pair
-            for t in st.get("tiers", []):
+            for t in dl.tier_rows(tiers, key, sname):
                 g, w = spair.get(str(t["id"]), (0, 0))
                 rows.append([str(t["id"]), t["tier"], t.get("reason", ""), g, w, t.get("when", ""), t.get("score", 0)])
             styles.append({"key": sname, "name": st.get("name", sname), "rows": rows,
