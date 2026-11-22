@@ -14,7 +14,8 @@ as points of win rate at a 50 % game (log-odds × 25): +3.0 means taking it over
 game into about 53 %.
 
 Pick rate is not in it: picks show what players chose, not what they were offered, so it is used for confidence only.
-Standard library only; about a minute for 660k samples on /mnt/c, cached per patch and game count in .cache/reports/.
+Standard library only; cached per patch and game count in .cache/reports/. A cold fit takes ~30 rounds (~2.5 min for 1.7M
+samples); a refit after more games starts from the cached fit and takes a few.
 
     python3 -I tools/crawl/augment_model.py 16.23     # print the strongest and weakest effects
 """
@@ -63,6 +64,7 @@ def fit(patch, progress=print):
     finally:
         db.close()
     out_file = CACHE / f"augment-model-{patch}.json"
+    old = None
     if out_file.exists():
         old = json.loads(out_file.read_text(encoding="utf-8"))
         if old.get("games") == games:
@@ -76,6 +78,17 @@ def fit(patch, progress=print):
     base = math.log(wins / (len(rows) - wins))   # fixed: every sample has one champion, so a moving base would fight them
     ch = [0.0] * len(champ_ix)
     au = [0.0] * len(aug_ix)
+    if old and old.get("ridge") == RIDGE and "offset" in old:
+        # start from the last fit of the patch (a few hundred games fewer while the crawl runs): 2 rounds instead of ~30, within
+        # 0.1 points of a cold fit. It keeps points against the average pick; "offset" (the average, log-odds) puts that back:
+        # without it every augment starts a point off, and the fit drifts back too slowly (33 rounds, still 0.7 points off)
+        off = old["offset"]
+        for k, i in champ_ix.items():
+            ch[i] = old["champions"].get(str(k), 0.0) / 25
+        for k, i in aug_ix.items():
+            if str(k) in old["augments"]:
+                au[i] = old["augments"][str(k)][0] / 25 + off
+        progress(f"model: started from the fit of {old['games']:,} games")
     for rnd in range(1, ROUNDS + 1):
         # block 1: champions (each sample has exactly one, so these are exact Newton steps for the block)
         g_c, h_c = [0.0] * len(ch), [0.0] * len(ch)
@@ -106,9 +119,10 @@ def fit(patch, progress=print):
     inv_c = {i: k for k, i in champ_ix.items()}
     inv_a = {i: k for k, i in aug_ix.items()}
     out = {"patch": patch, "games": games, "samples": len(rows), "made": time.strftime("%Y-%m-%d %H:%M"),
-           "ridge": RIDGE, "augments": {}, "champions": {}}
+           "ridge": RIDGE, "rounds": rnd, "augments": {}, "champions": {}}
     # every sample has several augments, so only their differences are known: report each against the average pick
     mean = sum(v * h for v, h in zip(au, h_a)) / max(1e-9, sum(h_a))
+    out["offset"] = round(mean, 6)
     for x, v in enumerate(au):
         v -= mean
         n = h_a[x] / 0.25   # the information, as games at 50 %
@@ -117,7 +131,8 @@ def fit(patch, progress=print):
         out["champions"][str(inv_c[c])] = round(v * 25, 2)
     CACHE.mkdir(parents=True, exist_ok=True)
     out_file.write_text(json.dumps(out), encoding="utf-8")
-    progress(f"model: done in {time.time() - t0:.0f} s -> {out_file.relative_to(datalib.ROOT)}")
+    shown = out_file.relative_to(datalib.ROOT) if out_file.is_relative_to(datalib.ROOT) else out_file
+    progress(f"model: done in {time.time() - t0:.0f} s, {rnd} rounds -> {shown}")
     return out
 
 
