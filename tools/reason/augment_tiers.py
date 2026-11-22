@@ -978,6 +978,10 @@ def style_role(name):
                         (("戰士", "輸出", "斬殺", "連招", "消耗", "穿甲"), "fighter")):
         if any(w in name for w in words):
             return role
+    if "特效" in name:   # AP 特效 (Gwen) fights like a mage, AD 特效 (Master Yi) like a marksman; AD 暴擊 is Yasuo's
+        return "mage" if "AP" in name else "marksman"
+    if "暴擊" in name:
+        return "marksman"
     return ""
 
 
