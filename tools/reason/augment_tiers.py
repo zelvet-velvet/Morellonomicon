@@ -791,29 +791,39 @@ def tier_rows(rows):
 
 
 def latest_cache():
-    """The newest patch cached from resg.top (tools/crawl/fetch_resg.py) or from our own crawl (tools/crawl/lcu_cache.py), in the same format;
-    resg.top when both have it, its sample is far larger. Its meta.json says which (`source`, absent for resg.top)."""
+    """The newest patch cached from our own crawl (tools/crawl/lcu_cache.py) or resg.top (tools/crawl/fetch_resg.py), in the same format.
+    Our crawl wins a patch both have once it holds READY games of it (tools/data/lifecycle.json `ready_games`): it has every
+    player's items and augments, resg.top only totals (decided with Zaviel 2026-11-22). Its meta.json says which (`source`,
+    absent for resg.top)."""
     key = lambda p: [int(x) for x in p.name.split(".")]   # noqa: E731
+    ready = json.loads((ROOT / "tools" / "data" / "lifecycle.json").read_text(encoding="utf-8")).get("ready_games", 3000)
     found = {}
-    for base in (LCU_CACHE, CACHE):   # resg last: it wins a patch both have
-        for p in base.glob("*"):
-            if (p / "meta.json").exists():
-                found[p.name] = p
+    for p in CACHE.glob("*"):
+        if (p / "meta.json").exists():
+            found[p.name] = p
+    for p in LCU_CACHE.glob("*"):   # ours last: it wins a patch both have, when it has enough games (or resg.top has none)
+        meta = p / "meta.json"
+        if meta.exists() and (p.name not in found or json.loads(meta.read_text(encoding="utf-8")).get("games", 0) >= ready):
+            found[p.name] = p
     if not found:
-        sys.exit("no games cached: run python3 -I tools/crawl/fetch_resg.py (or tools/crawl/lcu_cache.py for our crawl) first")
+        sys.exit("no games cached: run python3 -I tools/crawl/lcu_cache.py (our crawl) or tools/crawl/fetch_resg.py first")
     return found[max(found, key=lambda n: key(Path(n)))]
 
 
 def older_than_published(meta, out):
-    """True when the pages already hold a newer patch than this cache (built from our crawl on Zaviel's PC, which the GitHub patch
-    job does not have): the job must not put an older patch back."""
+    """True when the pages already hold a newer patch than this cache, or the same patch from our crawl while this cache is
+    resg.top's (our crawl lives on Zaviel's PC, which the GitHub patch job does not have): the job must not put either back."""
     try:
-        have = json.loads(out.read_text(encoding="utf-8")).get("patch", "")
+        have = json.loads(out.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return False
     key = lambda v: [int(x) for x in v.split(".")] if v else []   # noqa: E731
-    if key(have) > key(meta["version"]):
-        print(f"{out.relative_to(ROOT)} holds {have}, newer than the cached {meta['version']}: left as it is")
+    if key(have.get("patch", "")) > key(meta["version"]):
+        print(f"{out.relative_to(ROOT)} holds {have['patch']}, newer than the cached {meta['version']}: left as it is")
+        return True
+    if (have.get("patch") == meta["version"] and str(have.get("source", "")).startswith("our crawl")
+            and meta.get("source", "resg.top") != "our crawl"):
+        print(f"{out.relative_to(ROOT)} holds {have['patch']} from our crawl; this cache is resg.top's: left as it is")
         return True
     return False
 

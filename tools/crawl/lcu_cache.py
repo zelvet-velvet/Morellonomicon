@@ -4,7 +4,7 @@
 tools/reason/augment_tiers.py and tools/reason/build_tiers.py read games per champion, augment and item from a cache folder laid out like
 resg.top's (tools/crawl/fetch_resg.py). This writes the same files from our crawl into the git-ignored .cache/lcu/cache/<patch>/, so a
 patch resg.top has not published yet can still be built from our games; the tier scripts take the newest patch of either source
-(resg.top when both have it, its sample is far larger). Like resg's, no number from here is written into the repo or a note,
+(ours when both have it and it holds tools/data/lifecycle.json's ready_games: every player's items and augments, not totals). Like resg's, no number from here is written into the repo or a note,
 only the tiers and builds worked out from them.
 
     python3 -I tools/crawl/lcu_cache.py            # the newest patch in the crawl

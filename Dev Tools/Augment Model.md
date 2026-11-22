@@ -14,7 +14,7 @@ How the app tiers ARAM Mayhem augments for each champion: **why the champion's k
 
 > [!abstract]+ Reasoning first, games as the check
 > - **Reasoning.** Every augment has a rule (`RULES` in `tools/reason/augment_tiers.py`) that reads the champion's kit and gives a **fit** from −2 (does nothing for this champion: 一轉就贏 without a spinning ability) to +2 (the kit is what the augment rewards: 衝鋒 on a champion with two dashes), with the reason the page shows (`2 個位移技能，位移冷卻大減`).
-> - **Games.** resg.top's Mayhem games for the patch: the augment's win rate on the champion against the champion's own. Few games are pulled toward the augment's result on every champion, nudged by the fit (`PRIOR_GAMES` = 1500), so a small sample cannot make an S.
+> - **Games.** The patch's Mayhem games (our crawl, else resg.top; see Source): the augment's win rate on the champion against the champion's own. Few games are pulled toward the augment's result on every champion, nudged by the fit (`PRIOR_GAMES` = 1500), so a small sample cannot make an S.
 > - **Score** = that gap + a small share of the fit (`FIT_SCORE`), so the reasoning still counts when the games are many.
 > - **Questions.** Where the two disagree on a well-sampled pair, it is listed in [[Augment Questions]] for Zaviel to explain; the answer becomes a rule or a hand list entry.
 
@@ -49,7 +49,7 @@ How the app tiers ARAM Mayhem augments for each champion: **why the champion's k
 > - `tools/crawl/fetch_resg.py` caches resg.top's numbers for the newest patch (games and wins per champion and per augment on each champion) in the git-ignored `.cache/resg/<patch>/`. resg.top publishes no licence, so **no resg number is committed or shown**: the app shows tiers and reasons only.
 > - `tools/reason/augment_tiers.py` writes `_data/augment-tiers.json` (read by the plugin), [[Augment Tiers]] (the test champions with fit, games, gap and score, for review) and [[Augment Questions]].
 > - Both run in `tools/update_patch.py`. By hand: `python3 -I tools/crawl/fetch_resg.py && python3 -I tools/reason/augment_tiers.py`.
-> - Source: [resg.top](https://www.resg.top/) (海克斯大乱斗数据站), patch 16.21, collected 2026-11-02, about 10 million games; it does not say which servers.
+> - Source: **our own crawl** first (`tools/crawl/fetch_lcu.py` through the League client on Zaviel's PC, `tools/crawl/lcu_cache.py` into `.cache/lcu/cache/<patch>/`): every player's champion, win, items and augments in pick order; 16.23 from 172,432 games. It wins a patch once it holds `ready_games` (tools/data/lifecycle.json); before that, or on the GitHub patch job that has no crawl, [resg.top](https://www.resg.top/) totals (decided with Zaviel 2026-11-22). The job never replaces a patch built from our crawl.
 
 ---
 ## ✅ Checks (known answers)
