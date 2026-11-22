@@ -24,17 +24,19 @@ first free slot); the first-items orders (combos) assume that. Standard library.
 import datetime
 import functools
 import json
-import sqlite3
+import multiprocessing
+import os
 import sys
 from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))   # python3 -I adds no script folder: tools/ here,
 import toolpath  # noqa: E402,F401  (...and toolpath adds the job folders, so the scripts import each other by name)
+import datalib  # noqa: E402
 from build_tiers import items as item_pool  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
-DB = ROOT / ".cache" / "mayhem.sqlite"
+DB = datalib.LCU_DB   # the crawl, or the rebuild's copy of it on the Linux disk (MN_LCU_DB)
 OUT = ROOT / ".cache" / "lcu" / "cache"
 SLOTS = [f"item{i}" for i in range(7)]
 AUGS = [f"aug{i}" for i in range(1, 7)]
@@ -44,6 +46,7 @@ SURE_ITEM_GAMES = 1000 # the same for an item on a champion
 CHANGES = ROOT / "_data" / "changes.json"
 PATCH_NOTES = ROOT / "_data" / "patches.json"
 ALIASES = ROOT / "tools" / "data" / "augment-aliases.json"
+SHARES = 8             # the players are counted in this many shares, one process each (fixed: the same output anywhere)
 
 
 @functools.lru_cache(maxsize=None)
@@ -89,18 +92,83 @@ def changed_in(patch):
     return c, a, i
 
 
+def count_share(job):
+    """One share of one patch's players (game_id % SHARES), counted in its own process: (rows, players counted, champion,
+    augment, champion+augment, champion+item, champion+k+first k items), each {key: [games, wins]}. The loop runs over every
+    slot of ~2M rows, so it tests set membership only and counts in flat dicts: ~40 s in one process, ~6 s in eight."""
+    q, share, ch_c, ch_a, changed, fin, fin_nb = job
+    db = datalib.read_only(DB)
+    try:
+        rows = db.execute(f"SELECT champ, win, {', '.join(SLOTS + AUGS)} FROM players JOIN games USING (game_id) "
+                          "WHERE patch=? AND game_id % ? = ?", (q, SHARES, share)).fetchall()
+    finally:
+        db.close()
+    fin_ok = fin - changed
+    champ, aug, ra, ia, co = {}, {}, {}, {}, {}
+    n = 0
+    for r in rows:
+        c, win = r[0], r[1]
+        augs = {a for a in r[9:] if a and a not in ch_a}
+        for a in augs:   # an augment's result everywhere: any champion's game counts while the augment is unchanged
+            v = aug.get(a)
+            if v is None:
+                aug[a] = [1, win]
+            else:
+                v[0] += 1
+                v[1] += win
+        if c in ch_c:
+            continue     # the champion changed since: its own numbers start again
+        n += 1
+        v = champ.get(c)
+        if v is None:
+            champ[c] = [1, win]
+        else:
+            v[0] += 1
+            v[1] += win
+        for a in augs:
+            k = (c, a)
+            v = ra.get(k)
+            if v is None:
+                ra[k] = [1, win]
+            else:
+                v[0] += 1
+                v[1] += win
+        slots = r[2:9]
+        for i in {i for i in slots if i in fin_ok}:
+            k = (c, i)
+            v = ia.get(k)
+            if v is None:
+                ia[k] = [1, win]
+            else:
+                v[0] += 1
+                v[1] += win
+        order = [i for i in slots if i in fin_nb]
+        if changed and any(i in changed for i in order):
+            continue
+        for kk in (1, 2, 3, 5):
+            if len(order) < kk:
+                break
+            k = (c, kk, tuple(order[:kk]))
+            v = co.get(k)
+            if v is None:
+                co[k] = [1, win]
+            else:
+                v[0] += 1
+                v[1] += win
+    return len(rows), n, champ, aug, ra, ia, co
+
+
 def main():
     if not DB.exists():
         print("no crawl on this machine (tools/crawl/fetch_lcu.py): skipped")   # the GitHub patch job has none
         return
-    db = sqlite3.connect(f"file:{DB}?mode=ro", uri=True)
+    db = datalib.read_only(DB)
     patches = [r[0] for r in db.execute("SELECT DISTINCT patch FROM games WHERE patch IS NOT NULL")]
     patch = sys.argv[1] if len(sys.argv) > 1 else max(patches, key=lambda p: [int(x) for x in p.split(".")], default=None)
     if patch not in patches:
         sys.exit(f"the crawl has no patch {patch} (has {', '.join(sorted(patches))})")
     key = lambda v: [int(x) for x in v.split(".")]   # noqa: E731
-    sql = f"SELECT champ, win, {', '.join(SLOTS + AUGS)} FROM players JOIN games USING (game_id) WHERE patch=?"
-    parts = [(patch, db.execute(sql, (patch,)).fetchall(), (set(), set(), set()))]   # (patch, rows, what changed since)
+    parts = [(patch, (set(), set(), set()))]   # (patch, what changed since)
     since = (set(), set(), set())
     older = sorted((p for p in patches if key(p) < key(patch)), key=key, reverse=True)
     try:   # every patch that came out, crawled or not, so a gap in the crawl still counts its changes
@@ -119,48 +187,43 @@ def main():
             since = tuple(x | y for x, y in zip(since, ch))
         if since is None:
             break
-        parts.append((q, db.execute(sql, (q,)).fetchall(), since))
+        parts.append((q, since))
         newer = q
     last = db.execute("SELECT max(created), count(*) FROM games WHERE patch=?", (patch,)).fetchone()
+    db.close()
     pool, alias = item_pool()
-    finished = lambda i: alias.get(i, i) in pool   # noqa: E731
-    is_boots = lambda i: pool.get(alias.get(i, i), {}).get("boots", False)   # noqa: E731
-
-    champ = defaultdict(lambda: [0, 0])                        # champion -> games, wins
-    aug = defaultdict(lambda: [0, 0])                          # augment -> picks, wins
-    ra = defaultdict(lambda: defaultdict(lambda: [0, 0]))      # champion -> augment -> games, wins
-    ia = defaultdict(lambda: defaultdict(lambda: [0, 0]))      # champion -> item -> games, wins
-    combos = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: [0, 0])))   # champion -> k -> first k items -> games, wins
+    fin = {i for i in set(pool) | set(alias) if alias.get(i, i) in pool}            # finished items (any id the game uses)
+    fin_nb = {i for i in fin if not pool[alias.get(i, i)].get("boots", False)}     # ...boots aside, for the first-items orders
+    jobs = [(q, share, ch_c, ch_a, {i for i in fin if alias.get(i, i) in ch_i}, fin, fin_nb)
+            for q, (ch_c, ch_a, ch_i) in parts for share in range(SHARES)]
+    with multiprocessing.get_context("fork").Pool(min(SHARES, os.cpu_count() or 1)) as workers:
+        counted = workers.map(count_share, jobs)   # in the jobs' order: the same output on any machine
+    champ, aug, ra, ia, co = {}, {}, {}, {}, {}
     used = {}
     samples = 0
-    for q, rows, (ch_c, ch_a, ch_i) in parts:
-        n = 0
-        for r in rows:
-            c, win, slots, augs = r[0], r[1], r[2:9], r[9:]
-            augs = {a for a in augs if a and a not in ch_a}
-            for a in augs:   # an augment's result everywhere: any champion's game counts while the augment is unchanged
-                aug[a][0] += 1
-                aug[a][1] += win
-            if c in ch_c:
-                continue     # the champion changed since: its own numbers start again
-            n += 1
-            champ[c][0] += 1
-            champ[c][1] += win
-            for a in augs:
-                ra[c][a][0] += 1
-                ra[c][a][1] += win
-            for i in {i for i in slots if i and finished(i) and alias.get(i, i) not in ch_i}:
-                ia[c][i][0] += 1
-                ia[c][i][1] += win
-            order = [i for i in slots if i and finished(i) and not is_boots(i)]
-            if any(alias.get(i, i) in ch_i for i in order):
-                continue
-            for k in (1, 2, 3, 5):
-                if len(order) >= k:
-                    combos[c][str(k)][tuple(order[:k])][0] += 1
-                    combos[c][str(k)][tuple(order[:k])][1] += win
-        used[q] = n
-        samples += len(rows)
+    for (q, *_), (rows, n, *dicts) in zip(jobs, counted):
+        used[q] = used.get(q, 0) + n
+        samples += rows
+        for total, part in zip((champ, aug, ra, ia, co), dicts):
+            for k, (g, w) in part.items():
+                gw = total.setdefault(k, [0, 0])
+                gw[0] += g
+                gw[1] += w
+
+    def nest(flat, depth):
+        """{(a, b, ..., key): [games, wins]} -> {a: {b: {...: {key: [games, wins]}}}}, first seen first."""
+        out = defaultdict(dict)
+        for k, gw in flat.items():
+            d = out
+            for part in k[:depth - 1]:
+                d = d.setdefault(part, {})
+            d[k[depth - 1]] = gw
+        return out
+    ra = nest(ra, 2)                                     # champion -> augment -> games, wins
+    ia = nest(ia, 2)                                     # champion -> item -> games, wins
+    combos = defaultdict(dict)                           # champion -> k -> first k items -> games, wins
+    for c, ks in nest(co, 3).items():
+        combos[c] = {str(k): v for k, v in ks.items()}
 
     out = OUT / patch
     (out / "champions").mkdir(parents=True, exist_ok=True)
@@ -171,10 +234,10 @@ def main():
     for c, (g, w) in champ.items():
         data = {
             "champion": {"id": c, "tm": g, "wm": w, "wr": wr(g, w)},
-            "ra": [[a, 0, ag, aw, bp(ag, aw)] for a, (ag, aw) in sorted(ra[c].items(), key=lambda kv: -kv[1][0])],
-            "ia": {"items": [[i, ig, iw, 0, bp(ig, iw)] for i, (ig, iw) in sorted(ia[c].items(), key=lambda kv: -kv[1][0])],
+            "ra": [[a, 0, ag, aw, bp(ag, aw)] for a, (ag, aw) in sorted(ra[c].items(), key=lambda kv: (-kv[1][0], kv[0]))],
+            "ia": {"items": [[i, ig, iw, 0, bp(ig, iw)] for i, (ig, iw) in sorted(ia[c].items(), key=lambda kv: (-kv[1][0], kv[0]))],
                    "combos": {k: [[n + 1, list(ids), cg, cw, bp(cg, cw)] for n, (ids, (cg, cw)) in
-                                  enumerate(sorted(v.items(), key=lambda kv: -kv[1][0]))] for k, v in combos[c].items()}},
+                                  enumerate(sorted(v.items(), key=lambda kv: (-kv[1][0], kv[0])))] for k, v in combos[c].items()}},
             "b": {},
         }
         (out / "champions" / f"{c}.json").write_text(json.dumps(data), encoding="utf-8")
@@ -200,7 +263,7 @@ def style_games(patch, styles):
     finished = lambda i: alias.get(i, i) in pool   # noqa: E731
     is_boots = lambda i: pool.get(alias.get(i, i), {}).get("boots", False)   # noqa: E731
     out = {c: [{"tm": 0, "wm": 0, "ra": defaultdict(lambda: [0, 0])} for _ in sets] for c, sets in styles.items()}
-    db = sqlite3.connect(f"file:{DB}?mode=ro", uri=True)
+    db = datalib.read_only(DB)
     sql = f"SELECT champ, win, {', '.join(SLOTS + AUGS)} FROM players JOIN games USING (game_id) WHERE patch=?"
     for r in db.execute(sql, (patch,)):
         c, win, slots, augs = r[0], r[1], r[2:9], r[9:]
