@@ -91,6 +91,18 @@ input[type=search] { flex: 1 1 180px; min-width: 0; }
 .chip .t b { font-size: 13px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chip .t small { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .chip[title] { cursor: help; }
+.builds { display: grid; gap: 6px; }
+.build { display: grid; grid-template-columns: 120px auto 1fr; gap: 4px 14px; align-items: center; background: var(--surface-1);
+  border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; }
+.build.thin { opacity: .7; }
+.build .bn b { font-size: 13px; display: block; } .build .bn small { font-size: 12px; color: var(--muted); display: block; }
+.build .core { align-items: center; } .build .core i { font-style: normal; color: var(--muted); font-size: 12px; padding: 0 1px; }
+.build .core img { width: 32px !important; height: 32px !important; }
+.build .needs { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.build .needs > span, .build .alt { display: inline-flex; gap: 4px; align-items: center; }
+.build .needs small, .build .alt small { font-size: 11px; color: var(--muted); }
+.build .alt { grid-column: 2 / -1; }
+.detail details > summary { cursor: pointer; list-style-position: outside; }
 .rar { font-size: 12px; font-weight: 600; }
 .r-稜鏡 { color: var(--prism); } .r-金 { color: var(--gold); } .r-銀 { color: var(--silver); } .r-五殺 { color: var(--penta); }
 .empty { padding: 24px; text-align: center; color: var(--muted); }
@@ -239,12 +251,22 @@ function verdicts(f) {   // the tiers the flagged augment got, one per tier list
 const cs = { sort: "tier", tier: "", q: "", open: null };
 function champDetail(c) {
   let h = "";
-  if (c.orb?.length) {
-    h += `<h3>遺忘寶珠的玩法（app 依右邊那份分級給卡片評語）</h3><div class="chips">` + c.orb.map(o => {
-      const st = c.styles.find(s => s.key === o.tierKey);
-      return `<div class="chip"><div class="icons">${o.core.map(i => `<img loading="lazy" src="${itemIcon(i)}" alt="" title="${esc(DATA.items[i]?.name || i)}">`).join("")}</div>`
-           + `<div class="t"><b>${esc(o.name)}</b><small>強化看「${esc(st?.name || o.tierKey)}」</small></div></div>`;
-    }).join("") + `</div>`;
+  // the play styles, one short row each (OP.GG's shape): three core items in buying order, another core, boots, items four to six by need
+  const WARN = { few: "少見", weak: "偏弱" };
+  const ico = (i, extra = "") => `<img loading="lazy" src="${itemIcon(i)}" alt="" title="${esc((DATA.items[i]?.name || i) + extra)}">`;
+  if (c.builds?.length) {
+    h += `<h3>玩法（${c.builds.length}）<small style="font-weight:400;color:var(--muted)">　核心三件依購買順序 · 第四到六件依需要挑</small></h3><div class="builds">`
+      + c.builds.map(b => {
+        const needs = {};
+        for (const [i, need, when] of b.late) (needs[need] = needs[need] || []).push(ico(i, when ? `（${when}）` : ""));
+        const orb = (c.orb || []).find(o => o.name === b.name);
+        const via = orb && orb.tierKey !== b.name ? `<small>強化看「${esc(orb.tierKey)}」</small>` : "";
+        return `<div class="build${b.warn ? " thin" : ""}"><div class="bn"><b>${esc(b.name)}</b><small>${(b.share * 100).toFixed(0)}%${b.warn ? ` · ${WARN[b.warn]}` : ""}</small>${via}</div>`
+          + `<div class="icons core">${b.core.map(i => ico(i)).join("<i>›</i>")}${b.boots ? `<i>＋</i>${ico(b.boots)}` : ""}</div>`
+          + `<div class="needs">${Object.entries(needs).map(([n, im]) => `<span><small>${esc(n)}</small><span class="icons">${im.join("")}</span></span>`).join("")}</div>`
+          + (b.alt.length ? `<div class="alt"><small>或</small><span class="icons">${b.alt.map(i => ico(i)).join("")}</span></div>` : "")
+          + `</div>`;
+      }).join("") + `</div>`;
   }
   const fl = flagsOf(c);
   if (fl.length) {
@@ -260,8 +282,8 @@ function champDetail(c) {
       }).join("") + `</div></div>`;
     }
   }
-  for (const st of c.styles) {
-    h += `<h3>強化 · ${esc(st.name)} <small style="font-weight:400;color:var(--muted)">（${st.games ? `這個玩法 ${fmt(st.games)} 場、平常 ${(ownOf(c, st) * 100).toFixed(1)}%` : `這位英雄平常 ${(pct(c.wins, c.games) * 100).toFixed(1)}%`}；勝率後的 ± 是比它高或低幾點）</small></h3>`;
+  c.styles.forEach((st, n) => {
+    h += `<details${n ? "" : " open"}><summary><h3 style="display:inline">強化 · ${esc(st.name)} <small style="font-weight:400;color:var(--muted)">（${st.games ? `這個玩法 ${fmt(st.games)} 場、平常 ${(ownOf(c, st) * 100).toFixed(1)}%` : `這位英雄平常 ${(pct(c.wins, c.games) * 100).toFixed(1)}%`}；勝率後的 ± 是比它高或低幾點）</small></h3></summary>`;
     for (const t of ["S","A","B","C"]) {
       const rows = st.rows.filter(r => r[1] === t);
       if (!rows.length) continue;
@@ -274,7 +296,8 @@ function champDetail(c) {
              + `<div class="t"><b>${esc(a.name)} <span class="rar r-${esc(a.rarity)}">${esc(a.rarity)}</span></b><small>${wr} · ${fmt(g)} 場 ${conf(g)}</small></div></div>`;
       }).join("") + `</div></div>`;
     }
-  }
+    h += `</details>`;
+  });
   if (c.items.length) {
     h += `<h3>道具（出場次數最多，附勝率）</h3><div class="chips">` + c.items.map(([id, g, w]) => {
       const r = pct(w, g);

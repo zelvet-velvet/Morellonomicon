@@ -188,6 +188,9 @@ def cmd_tiers(args):
     by_style = dl.read_json(cache / "styles.json") if (cache / "styles.json").exists() else {}
     orb_file = dl.ROOT.parent / "oblivion-orb" / "src" / "data" / "game-data.json"
     orb = dl.read_json(orb_file)["champions"] if orb_file.exists() else {}
+    # each play style's short build (tools/reason/build_tiers.py): three core items, another core, boots, items four to six by need
+    builds = dl.read_json(dl.DATA / "item-builds.json").get("champions", {})
+    ids = lambda rows: [str(r["id"]) for r in rows or []]   # noqa: E731
     out_champs = []
     for key, fm in champs.items():
         f = cache / "champions" / f"{fm['key']}.json"
@@ -213,8 +216,14 @@ def cmd_tiers(args):
                            "roles": fm.get("roles", ""), "tier": ctiers.get("champions", {}).get(key, ""),
                            "games": c["champion"]["tm"], "wins": c["champion"]["wm"], "styles": styles, "items": top,
                            "orb": [{"name": s["name"], "tierKey": s["tierKey"], "core": [str(i["id"]) for i in s.get("core", [])]}
-                                   for s in orb.get(key, {}).get("styles", [])]})
+                                   for s in orb.get(key, {}).get("styles", [])],
+                           "builds": [{"name": b["name"], "warn": b.get("warn", ""), "share": b.get("share", 0),
+                                       "core": ids(b.get("core")), "alt": ids((b.get("alts") or [[]])[0]),
+                                       "boots": str(b["boots"]["id"]) if b.get("boots") else "",
+                                       "late": [[str(o["id"]), o.get("need", ""), o.get("when", "")] for o in b.get("late") or []]}
+                                      for b in (builds.get(key) or {}).get("styles", [])]})
     used = {i for c in out_champs for i, *_ in c["items"]} | {i for c in out_champs for s in c["orb"] for i in s["core"] if i in items}
+    used |= {i for c in out_champs for b in c["builds"] for i in b["core"] + b["alt"] + [b["boots"]] + [o[0] for o in b["late"]] if i in items}
     data = {"patch": patch, "source": source, "built": tiers.get("source", ""),
             "model": model and {"samples": model["samples"], "games": model["games"], "made": model["made"]},
             "orb": orb_file.exists() and orb_file.stat().st_mtime,
