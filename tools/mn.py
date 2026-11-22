@@ -183,6 +183,10 @@ def cmd_tiers(args):
                          "unrated": tiers.get("unrated", {}).get(aid, ""),
                          "gap": gap, "gap_tier": gap_tier(gap) if gap is not None and n >= 100 else "",
                          "model": m and [m[0], m[1], m[2], gap_tier(m[0]) if m[2] >= 100 else ""]}
+    # the overlay's play styles (oblivion-orb's game-data.json, when it is cloned next to this repo): which tier list each
+    # one ranks the cards by, so the page can say which of the app's styles an augment's tier reaches
+    orb_file = dl.ROOT.parent / "oblivion-orb" / "src" / "data" / "game-data.json"
+    orb = dl.read_json(orb_file)["champions"] if orb_file.exists() else {}
     out_champs = []
     for key, fm in champs.items():
         f = cache / "champions" / f"{fm['key']}.json"
@@ -196,15 +200,18 @@ def cmd_tiers(args):
             for t in st.get("tiers", []):
                 g, w = pair.get(str(t["id"]), (0, 0))
                 rows.append([str(t["id"]), t["tier"], t.get("reason", ""), g, w, t.get("when", ""), t.get("score", 0)])
-            styles.append({"name": st.get("name", sname), "rows": rows})
+            styles.append({"key": sname, "name": st.get("name", sname), "rows": rows})
         top = [[str(r[0]), r[1], r[2]] for r in c.get("ia", {}).get("items", [])
                if str(r[0]) in items and r[1] >= 30][:12]
         out_champs.append({"key": key, "name": fm.get("name", key), "en": fm.get("name_en", key), "icon": fm.get("icon", ""),
                            "roles": fm.get("roles", ""), "tier": ctiers.get("champions", {}).get(key, ""),
-                           "games": c["champion"]["tm"], "wins": c["champion"]["wm"], "styles": styles, "items": top})
-    used = {i for c in out_champs for i, *_ in c["items"]}
+                           "games": c["champion"]["tm"], "wins": c["champion"]["wm"], "styles": styles, "items": top,
+                           "orb": [{"name": s["name"], "tierKey": s["tierKey"], "core": [str(i["id"]) for i in s.get("core", [])]}
+                                   for s in orb.get(key, {}).get("styles", [])]})
+    used = {i for c in out_champs for i, *_ in c["items"]} | {i for c in out_champs for s in c["orb"] for i in s["core"] if i in items}
     data = {"patch": patch, "source": source, "built": tiers.get("source", ""),
             "model": model and {"samples": model["samples"], "games": model["games"], "made": model["made"]},
+            "orb": orb_file.exists() and orb_file.stat().st_mtime,
             "champions": out_champs, "augments": out_augs,
             "items": {i: {"name": items[i].get("name", i)} for i in used}}
     page = (Path(__file__).resolve().parent / "data" / "tiers.html").read_text(encoding="utf-8")
