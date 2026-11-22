@@ -8,7 +8,7 @@ The tiers and builds come from rules in Python (`tools/reason/augment_tiers.py` 
 
 ## Start
 1. `git pull`, then `python3 -I tools/reason/reasoning_todo.py`; read `Review/Reasoning Todo.md` (short). If a session-start hook announced it, first tell Zaviel the counts and ask whether to run it now; Zaviel decides.
-2. Work the sections in this order. After each one, rerun `python3 -I tools/reason/augment_tiers.py` (and `build_tiers.py` for items), then `reasoning_todo.py`.
+2. Work the sections in this order. After each one, rerun `python3 -I tools/reason/build_tiers.py` when items or play styles changed, then `python3 -I tools/reason/augment_tiers.py` (its tiers are per play style, from the styles build_tiers wrote), then `reasoning_todo.py`.
 
 ## Augments with no rule
 - Read the augment's note in `強化/` (`effect`), its text in `_data/augment-text.json` / `_data/augment-wiki.json` and its tags in `_data/augment-data.json` (grep by id; never read these files whole).

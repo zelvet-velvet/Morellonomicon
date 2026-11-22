@@ -185,6 +185,7 @@ def cmd_tiers(args):
                          "model": m and [m[0], m[1], m[2], gap_tier(m[0]) if m[2] >= 100 else ""]}
     # the overlay's play styles (oblivion-orb's game-data.json, when it is cloned next to this repo): which tier list each
     # one ranks the cards by, so the page can say which of the app's styles an augment's tier reaches
+    by_style = dl.read_json(cache / "styles.json") if (cache / "styles.json").exists() else {}
     orb_file = dl.ROOT.parent / "oblivion-orb" / "src" / "data" / "game-data.json"
     orb = dl.read_json(orb_file)["champions"] if orb_file.exists() else {}
     out_champs = []
@@ -194,13 +195,18 @@ def cmd_tiers(args):
             continue
         c = dl.read_json(f)
         pair = {str(r[0]): (r[2], r[3]) for r in c.get("ra", [])}
+        # a list per play style (our crawl): each pair's games and wins within that style, and the style's own win rate
+        own_style = {s["name"]: s for s in by_style.get(str(fm["key"]), [])}
         styles = []
         for sname, st in tiers["champions"].get(key, {}).items():
             rows = []
+            sty = own_style.get(sname)
+            spair = {str(a): (g, w) for a, g, w in sty["ra"]} if sty else pair
             for t in st.get("tiers", []):
-                g, w = pair.get(str(t["id"]), (0, 0))
+                g, w = spair.get(str(t["id"]), (0, 0))
                 rows.append([str(t["id"]), t["tier"], t.get("reason", ""), g, w, t.get("when", ""), t.get("score", 0)])
-            styles.append({"key": sname, "name": st.get("name", sname), "rows": rows})
+            styles.append({"key": sname, "name": st.get("name", sname), "rows": rows,
+                           **({"games": sty["tm"], "wins": sty["wm"]} if sty else {})})
         top = [[str(r[0]), r[1], r[2]] for r in c.get("ia", {}).get("items", [])
                if str(r[0]) in items and r[1] >= 30][:12]
         out_champs.append({"key": key, "name": fm.get("name", key), "en": fm.get("name_en", key), "icon": fm.get("icon", ""),

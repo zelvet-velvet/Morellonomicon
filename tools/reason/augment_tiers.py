@@ -50,6 +50,7 @@ FIT_SCORE = 0.003      # and the score 0.3 points more, so the reasoning still c
 TIERS = [("S", 0.08), ("A", 0.20), ("B", 0.45)]   # share of a champion's augments of one rarity, best first; the rest is C
 TIER_FLOOR = {"S": 0.0, "A": 0.0, "B": -0.01}   # and the score a tier needs at least (S and A must beat the champion's own)
 SPECIFIC = 0.04        # a pair doing this much better than the augment does everywhere is the champion's own (asked when unexplained)
+STYLE_PRIOR = 600      # games a play style's own result needs before it outweighs the champion's (our crawl split by style)
 SURE_GAMES = 3000      # resg's own 高 confidence: questions come only from pairs this well sampled (a cache's meta may set its own: our crawl)
 PENTAKILL = {3170, 3171, 3172, 3173}
 NOT_OFFERED = 50       # an augment resg's volume says a champion should have this many games of, at 0 games: the game never offers it
@@ -857,6 +858,8 @@ def main():
     base_gap = {i: overall[i]["wr"] - 0.5 for i in rated}
 
     champs, out, questions, played_by = {}, {}, [], {}
+    # our crawl split by the champion's play styles (tools/reason/build_tiers.py writes it; absent for resg.top's totals)
+    by_style = json.loads((cache / "styles.json").read_text(encoding="utf-8")) if (cache / "styles.json").exists() else {}
     for path in sorted((ROOT / vault_paths.CHAMPIONS).glob("*.md")):
         note = frontmatter(path)
         if note.get("type") != "champion":
@@ -889,7 +892,7 @@ def main():
                 reason = why_shown or GEN.get(i, "")
                 group = "五殺" if i in PENTAKILL else augs[i]["rarity"]
                 rows.append({"id": i, "group": group, "tier": "", "value": round(score, 4), "score": 0.0, "when": "", "reason": reason,
-                             "fit": fit, "why": why or "", "games": g, "seen": seen, "base": base_gap[i], "other": other})
+                             "fit": fit, "why": why or "", "games": g, "seen": seen, "base": base_gap[i], "other": other, "gap": gap})
             tier_rows(rows)
             for r in rows:
                 if r["games"] < meta.get("sure_games", SURE_GAMES) or r["seen"] is None:
@@ -900,19 +903,15 @@ def main():
                     questions.append(("strong", c, augs[r["id"]], r["fit"], r["why"], r["seen"], r["games"]))
                 elif r["fit"] >= 2 and r["seen"] - r["base"] <= -SPECIFIC:
                     questions.append(("weak", c, augs[r["id"]], r["fit"], r["why"], r["seen"], r["games"]))
-            # score: 0-1 within the rarity, for the plugin's order inside a tier
-            for grp in {r["group"] for r in rows}:
-                part = [r for r in rows if r["group"] == grp]
-                lo, hi = min(r["value"] for r in part), max(r["value"] for r in part)
-                for r in part:
-                    r["score"] = round((r["value"] - lo) / (hi - lo), 3) if hi > lo else 0.5
-            rows.sort(key=lambda r: -r["value"])
+            order_rows(rows)
             out.setdefault(c.id, {})[c.style] = {"name": c.style_name, "tiers": [{k: r[k] for k in ("id", "group", "tier", "value", "score", "when", "reason")} for r in rows],
                                                  "none": []}
             c.rows = rows
+        if by_style.get(str(key)):   # one list per play style instead (the app's styles), from that style's own games
+            out[c.id] = style_lists(by_style[str(key)], builds)
 
-    OUT_TIERS.write_text(json.dumps({"source": source(meta), "patch": meta["version"],
-                                     "augments": len(rated), "unrated": unrated, "champions": out}, ensure_ascii=False, indent=1), encoding="utf-8")
+    OUT_TIERS.write_text(tiers_json({"source": source(meta), "patch": meta["version"], "augments": len(rated), "unrated": unrated,
+                                     "champions": out}), encoding="utf-8")
     tiers = champion_tiers(played_by)
     OUT_CHAMPS.write_text(json.dumps({"source": source(meta), "patch": meta["version"], "champions": tiers}, ensure_ascii=False, indent=1), encoding="utf-8")
     print("champion tiers:", "  ".join(f"{t} {sum(1 for v in tiers.values() if v == t)}" for t in CHAMP_TIERS))
@@ -926,6 +925,51 @@ def main():
     for grp in ("稜鏡", "金", "銀", "五殺"):
         n = sum(v for (g, _), v in counts.items() if g == grp)
         print(grp, "  ".join(f"{t} {counts.get((grp, t), 0) / max(n, 1) * 100:.0f}%" for t in "SABC"))
+
+
+def tiers_json(d):
+    """augment-tiers.json with one tier row per line (a list per play style makes it big; the plugin loads it on the phone)."""
+    head = json.dumps({k: v for k, v in d.items() if k != "champions"}, ensure_ascii=False, indent=1)[:-2]
+    champs = []
+    for cid, styles in d["champions"].items():
+        sts = []
+        for key, st in styles.items():
+            rows = ",\n".join("    " + json.dumps(r, ensure_ascii=False) for r in st["tiers"])
+            sts.append(f'  {json.dumps(key, ensure_ascii=False)}: {{"name": {json.dumps(st["name"], ensure_ascii=False)}, "none": {json.dumps(st["none"])}, "tiers": [\n{rows}\n  ]}}')
+        champs.append(f" {json.dumps(cid)}: {{\n" + ",\n".join(sts) + "\n }")
+    return head + ',\n "champions": {\n' + ",\n".join(champs) + "\n }\n}\n"
+
+
+def order_rows(rows):
+    """Score each row 0-1 within its rarity (the plugin's order inside a tier), then sort the list best first."""
+    for grp in {r["group"] for r in rows}:
+        part = [r for r in rows if r["group"] == grp]
+        lo, hi = min(r["value"] for r in part), max(r["value"] for r in part)
+        for r in part:
+            r["score"] = round((r["value"] - lo) / (hi - lo), 3) if hi > lo else 0.5
+    rows.sort(key=lambda r: -r["value"])
+
+
+def style_lists(styles, builds):
+    """A tier list per play style (decided with Zaviel 2026-11-22): each augment's gap within the style's own games, against the
+    style's own win rate, pulled toward the champion's gap (the list above) by STYLE_PRIOR games; the reasoning and its reason
+    stay those of the champion's build with the style's damage (STYLES), or its only build."""
+    lists = {}
+    for s in styles:
+        c = next((b for b in builds if (s["damage"] == "ap") == (b.style == "ap")), builds[0]) if len(builds) > 1 else builds[0]
+        own = s["wm"] / s["tm"] if s["tm"] else None
+        games = {a: (g, w) for a, g, w in s["ra"]}
+        rows = []
+        for r in c.rows:
+            g, w = games.get(r["id"], (0, 0))
+            seen = (w / g - own) if g and own is not None else None
+            gap = (g * seen + STYLE_PRIOR * r["gap"]) / (g + STYLE_PRIOR) if seen is not None else r["gap"]
+            rows.append({**r, "tier": "", "value": round(gap + FIT_SCORE * r["fit"], 4), "score": 0.0})
+        tier_rows(rows)
+        order_rows(rows)
+        lists[s["name"]] = {"name": s["name"], "tiers": [{k: r[k] for k in ("id", "group", "tier", "value", "score", "when", "reason")}
+                                                         for r in rows], "none": []}
+    return lists
 
 
 def champion_tiers(played_by):

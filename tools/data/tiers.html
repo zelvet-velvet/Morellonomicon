@@ -126,7 +126,7 @@ details.how ul { margin: 6px 0 0; padding-left: 18px; } details.how li { margin:
     <li><b>強化「分級」</b>：不是強化本身的勝率，而是每位英雄拿它時比自己平常的勝率高或低多少（勝率差），依選取次數平均，再向 0 拉 200 場。這樣強勢英雄常拿的強化不會沾光。+4.5 點以上 T0、+1.5 以上 T1、−1.5 以上 T2、−4.5 以上 T3，其下 T4。</li>
     <li><b>模型</b>：只用我們自己的對局，把英雄和同一位玩家的其他五個強化一起算，看這個強化單獨帶來多少勝率（和平均強化相比）。常和強勢強化一起拿的強化，在這裡才看得出真正的效果。</li>
     <li><b>選取率</b>：只代表多少人選，不代表強，所以不算進分級，只拿來排同分和判斷可信度。</li>
-    <li><b>檢查</b>：遺忘寶珠的建議和對局不合的地方。app 給卡片的評語就是分級：S 最合、A 很合、B 還行、C 不合。評 S / A 卻比這位英雄平常的勝率低 3 點以上，是「評太高？」；評 B / C 卻高 3 點以上，是「評太低？」。只看 100 場以上。差距也超出 ±98/√n 的是<b>明確</b>，其餘是<b>可能</b>（數字還會變）。對局不分玩法，所以同一個強化在每份分級的場次都一樣。</li>
+    <li><b>檢查</b>：遺忘寶珠的建議和對局不合的地方。app 給卡片的評語就是分級：S 最合、A 很合、B 還行、C 不合。評 S / A 卻比這位英雄平常的勝率低 3 點以上，是「評太高？」；評 B / C 卻高 3 點以上，是「評太低？」。只看 100 場以上。差距也超出 ±98/√n 的是<b>明確</b>，其餘是<b>可能</b>（數字還會變）。用我們的對局時，每個玩法有自己的分級，只算出這套裝的玩家，和這個玩法平常的勝率比；resg.top 的對局不分玩法。</li>
     <li><b>可信度</b>：n 場的勝率大約在 ±98/√n 點內（20 次有 19 次）。<span class="conf hi">高</span> 600 場以上（±4 以內），<span class="conf mid">中</span> 100–599 場，<span class="conf">觀察</span> 不到 100 場，數字還會變。</li>
   </ul></details>
   <div class="bar tabs">
@@ -209,17 +209,20 @@ function headRow(cols, state, redraw) {
 // champion's own win rate, or a B / C that plays as much over, on FLAG_MIN games or more; 明確 when also past the margin.
 const FLAG_PTS = 3, FLAG_MIN = 100, VERDICT = { S: "最合", A: "很合", B: "還行", C: "不合" };
 const orbUses = (c, key) => !DATA.orb || (c.orb || []).some(o => o.tierKey === key);
+const ownOf = (c, st) => st.games ? st.wins / st.games : pct(c.wins, c.games);   // a play style's own win rate (our crawl), else the champion's
 function flagsOf(c) {
-  const own = pct(c.wins, c.games), by = new Map();
+  const by = new Map();
   for (const st of c.styles) for (const [id, tier, reason, g, w, when] of st.rows) {
+    const own = ownOf(c, st);
     if (g < FLAG_MIN) continue;
     const gap = (w / g - own) * 100;
     const dir = gap <= -FLAG_PTS && (tier === "S" || tier === "A") ? "high" : gap >= FLAG_PTS && (tier === "B" || tier === "C") ? "low" : "";
     if (!dir) continue;
-    const f = by.get(id + dir) || { c, id, dir, gap, g, sure: Math.abs(gap) > margin(g), lists: [] };
+    const k = st.games ? `${st.key}/${id}/${dir}` : `${id}/${dir}`;   // style lists have their own games: one flag each
+    const f = by.get(k) || { c, id, dir, gap, g, own, sure: Math.abs(gap) > margin(g), lists: [] };
     f.lists.push({ key: st.key, name: st.name, tier, reason, when, used: orbUses(c, st.key),
                    orb: (c.orb || []).filter(o => o.tierKey === st.key).map(o => o.name) });
-    by.set(id + dir, f);
+    by.set(k, f);
   }
   return [...by.values()].map(f => ({ ...f, used: f.lists.some(l => l.used), z: Math.abs(f.gap) / margin(f.g) }))
     .sort((a, b) => b.z - a.z);
@@ -245,7 +248,7 @@ function champDetail(c) {
   }
   const fl = flagsOf(c);
   if (fl.length) {
-    h += `<h3>建議和對局不合（${fl.length}）<small style="font-weight:400;color:var(--muted)">　分級後是比平常 ${(pct(c.wins, c.games) * 100).toFixed(1)}% 高或低幾點</small></h3>`;
+    h += `<h3>建議和對局不合（${fl.length}）<small style="font-weight:400;color:var(--muted)">　分級後是比這個玩法平常的勝率高或低幾點</small></h3>`;
     for (const d of ["high", "low"]) {
       const rows = fl.filter(f => f.dir === d);
       if (!rows.length) continue;
@@ -258,11 +261,11 @@ function champDetail(c) {
     }
   }
   for (const st of c.styles) {
-    h += `<h3>強化 · ${esc(st.name)} <small style="font-weight:400;color:var(--muted)">（勝率後的 ± 是比這位英雄平常的 ${(pct(c.wins, c.games) * 100).toFixed(1)}% 高或低幾點）</small></h3>`;
+    h += `<h3>強化 · ${esc(st.name)} <small style="font-weight:400;color:var(--muted)">（${st.games ? `這個玩法 ${fmt(st.games)} 場、平常 ${(ownOf(c, st) * 100).toFixed(1)}%` : `這位英雄平常 ${(pct(c.wins, c.games) * 100).toFixed(1)}%`}；勝率後的 ± 是比它高或低幾點）</small></h3>`;
     for (const t of ["S","A","B","C"]) {
       const rows = st.rows.filter(r => r[1] === t);
       if (!rows.length) continue;
-      const own = pct(c.wins, c.games);
+      const own = ownOf(c, st);
       rows.sort((a, b) => (pct(b[4], b[3]) ?? 0) - (pct(a[4], a[3]) ?? 0));
       h += `<div class="group"><span class="tier ${t}">${t}</span><div class="chips">` + rows.map(([id, , reason, g, w, when]) => {
         const a = DATA.augments[id] || { name: id, rarity: "", icon: "" }, r = pct(w, g);
@@ -355,7 +358,7 @@ function drawAugs() {
       const d = document.createElement("div"); d.className = "detail";
       const champs = [...(sOf[id]?.values() || [])].sort((x, y) => pct(y.wins, y.games) - pct(x.wins, x.games));
       d.innerHTML = champs.length ? `<h3>評為 S 的英雄</h3><div class="chips">` + champs.map(c => {
-          const row = c.styles.flatMap(s => s.rows).find(r => r[0] === id && r[1] === "S"), pr = pct(row[4], row[3]), own = pct(c.wins, c.games);
+          const st = c.styles.find(s => s.rows.some(r => r[0] === id && r[1] === "S")), row = st.rows.find(r => r[0] === id && r[1] === "S"), pr = pct(row[4], row[3]), own = ownOf(c, st);
           return `<div class="chip" title="${esc(row[2])}"><img loading="lazy" src="${esc(c.icon)}" alt=""><div class="t"><b>${esc(c.name)}</b>`
                + `<small>${pr == null ? "—" : `<span class="${pr >= own ? "up" : "down"}">${(pr * 100).toFixed(1)}% ${sign((pr - own) * 100)}</span>`} · ${fmt(row[3])} 場 ${conf(row[3])}</small></div></div>`;
         }).join("") + `</div>` : `<div class="empty">沒有英雄把它評為 S</div>`;
@@ -392,7 +395,7 @@ function drawReview() {
     r.innerHTML = `<img loading="lazy" src="${esc(f.c.icon)}" alt=""><div class="nm"><b>${esc(f.c.name)}</b><small>${dirLabel(f.dir)} · ${f.sure ? "明確" : "可能"}</small></div>`
       + `<img loading="lazy" src="${esc(a.icon)}" alt=""><div class="nm"><b>${esc(a.name)} <span class="rar r-${esc(a.rarity)}">${esc(a.rarity)}</span></b><small class="why">${esc(why) || "（沒有理由）"}</small></div>`
       + `<div class="vd">${verdicts(f)}</div>`
-      + `<span class="v ${f.gap >= 0 ? "up" : "down"}" style="font-weight:600;font-variant-numeric:tabular-nums" title="比 ${esc(f.c.name)} 平常的 ${(pct(f.c.wins, f.c.games) * 100).toFixed(1)}% · ±${margin(f.g).toFixed(1)} 點">${sign(f.gap)}</span>`
+      + `<span class="v ${f.gap >= 0 ? "up" : "down"}" style="font-weight:600;font-variant-numeric:tabular-nums" title="比平常的 ${(f.own * 100).toFixed(1)}% · ±${margin(f.g).toFixed(1)} 點">${sign(f.gap)}</span>`
       + `<span class="num">${fmt(f.g)}<small>${conf(f.g)}</small></span>`;
     r.onclick = () => { cs.open = f.c.key; cs.q = ""; $("#cq").value = ""; showTab("champs"); drawChamps();
       document.querySelector("#clist .detail")?.previousElementSibling?.scrollIntoView({ block: "start" }); };

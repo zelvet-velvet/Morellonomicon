@@ -6,7 +6,7 @@
 
 Steps, in order: champions and items (fetch_data), Mayhem augments (fetch_augments), what changed since the last patch
 (fetch_changes), Riot's patch notes in short (fetch_patch_notes), augment effect text (fetch_augment_text), augment numbers and tags (fetch_augment_data), the League wiki's augment text (fetch_wiki_augments), the item shop's class tabs from the League wiki (fetch_item_roles),
-resg.top's Mayhem games into the git-ignored cache (fetch_resg) and our own crawl in the same format when this PC has it (lcu_cache) and the augment tiers and item builds from the champions' kits checked against them (augment_tiers, build_tiers), what that reasoning still needs from an agent (reasoning_todo, Review/Reasoning Todo.md), their copy per patch in _data/history (mn.py snapshot), the ability tag audit (audit_tags, Review/Tag Audit.md). Your own notes in the generated files are kept (see
+resg.top's Mayhem games into the git-ignored cache (fetch_resg) and our own crawl in the same format when this PC has it (lcu_cache) and the item builds and play styles, then the augment tiers per play style, from the champions' kits checked against them (build_tiers, augment_tiers), what that reasoning still needs from an agent (reasoning_todo, Review/Reasoning Todo.md), their copy per patch in _data/history (mn.py snapshot), the ability tag audit (audit_tags, Review/Tag Audit.md). Your own notes in the generated files are kept (see
 HAND_KEYS in fetch_data.py). If a step fails the rest still run and the failures are listed at the end. Standard library only.
 """
 import argparse
@@ -21,7 +21,7 @@ ROOT = TOOLS.parent
 STEPS = [("champions and items", "fetch/fetch_data.py"), ("Mayhem augments", "fetch/fetch_augments.py"),
          ("changes since the last patch", "fetch/fetch_changes.py"), ("Riot's patch notes", "fetch/fetch_patch_notes.py"),
          ("augment effect text", "fetch/fetch_augment_text.py"), ("augment numbers and tags", "fetch/fetch_augment_data.py"), ("augment text on the League wiki", "fetch/fetch_wiki_augments.py"), ("item shop classes (League wiki)", "fetch/fetch_item_roles.py"), ("lanes (Meraki)", "fetch/fetch_positions.py"), ("loading screen tips", "fetch/fetch_loading_tips.py"),
-         ("resg.top games (cache)", "crawl/fetch_resg.py"), ("our crawl (cache)", "crawl/lcu_cache.py"), ("augment tiers", "reason/augment_tiers.py"), ("item builds", "reason/build_tiers.py"), ("what the reasoning still needs", "reason/reasoning_todo.py"), ("patch history (snapshot)", "mn.py", "snapshot"), ("ability tag audit", "vault/audit_tags.py")]
+         ("resg.top games (cache)", "crawl/fetch_resg.py"), ("our crawl (cache)", "crawl/lcu_cache.py"), ("item builds and play styles", "reason/build_tiers.py"), ("augment tiers (per play style)", "reason/augment_tiers.py"), ("what the reasoning still needs", "reason/reasoning_todo.py"), ("patch history (snapshot)", "mn.py", "snapshot"), ("ability tag audit", "vault/audit_tags.py")]
 ATTRIBUTION = "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 
 

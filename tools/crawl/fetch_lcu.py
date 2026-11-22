@@ -1020,8 +1020,8 @@ def menu():
                         ("resg.top games (~7 min)", tool("crawl/fetch_resg.py"))]   # without it the tiers fall back to our far smaller crawl
                     ui.run_steps(scr, "Rebuild tiers", resg + [
                         ("our crawl → cache", tool("crawl/lcu_cache.py")),
+                        ("item builds", tool("reason/build_tiers.py")),   # first: the augment tiers are per play style
                         ("augment tiers", tool("reason/augment_tiers.py")),
-                        ("item builds", tool("reason/build_tiers.py")),
                         ("tiers.html", tool("mn.py", "tiers"))], header,
                         "Opened in your browser. _data/ and Review/ changed: commit them when the tiers look right.")
                 elif choice == "6":

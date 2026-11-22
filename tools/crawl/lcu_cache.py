@@ -190,5 +190,37 @@ def main():
           + f", {len(champ)} champions -> {out.relative_to(ROOT)}")
 
 
+
+def style_games(patch, styles):
+    """Each play style's own games, for the augment tiers per style (tools/reason/build_tiers.py calls it, then augment_tiers.py
+    reads the result): a player is in the style whose first-two sets hold their first two finished items (boots aside, by slot,
+    as the combos above). styles: {champion key: [set of frozensets of item ids, one per style]} -> {champion key: [{"tm", "wm",
+    "ra": [[augment, games, wins]]}, one per style]}. Only the patch itself: our volume splits well enough without pooling."""
+    pool, alias = item_pool()
+    finished = lambda i: alias.get(i, i) in pool   # noqa: E731
+    is_boots = lambda i: pool.get(alias.get(i, i), {}).get("boots", False)   # noqa: E731
+    out = {c: [{"tm": 0, "wm": 0, "ra": defaultdict(lambda: [0, 0])} for _ in sets] for c, sets in styles.items()}
+    db = sqlite3.connect(f"file:{DB}?mode=ro", uri=True)
+    sql = f"SELECT champ, win, {', '.join(SLOTS + AUGS)} FROM players JOIN games USING (game_id) WHERE patch=?"
+    for r in db.execute(sql, (patch,)):
+        c, win, slots, augs = r[0], r[1], r[2:9], r[9:]
+        if c not in out:
+            continue
+        order = [alias.get(i, i) for i in slots if i and finished(i) and not is_boots(i)]
+        first = frozenset(order[:2])
+        if len(first) < 2:
+            continue
+        for n, sets in enumerate(styles[c]):
+            if first in sets:
+                st = out[c][n]
+                st["tm"] += 1
+                st["wm"] += win
+                for a in {a for a in augs if a}:
+                    st["ra"][a][0] += 1
+                    st["ra"][a][1] += win
+                break
+    return {c: [{"tm": s["tm"], "wm": s["wm"], "ra": [[a, g, w] for a, (g, w) in sorted(s["ra"].items(), key=lambda kv: -kv[1][0])]}
+                for s in v] for c, v in out.items()}
+
 if __name__ == "__main__":
     main()

@@ -370,6 +370,7 @@ def main():
     out, review, questions = {}, [], []
     hand, catalogue = hand_styles(pool)
     unnamed, dropped = [], []
+    style_sets = {}   # champion key -> the kept styles' names, damage and first-two sets (for the augment tiers per style)
     for path in sorted((ROOT / vault_paths.CHAMPIONS).glob("*.md")):
         note = frontmatter(path)
         if note.get("type") != "champion":
@@ -467,6 +468,9 @@ def main():
                 review.append((note.get("name", note["id"]), sd["name"], sd["scored"], core, alts, from_games))
         kept = sorted(kept, key=lambda k: (-k[0], k[1]))[:MAX_STYLES]
         champ_out["styles"] = [s for _, _, s in kept]
+        if kept:
+            style_sets[int(note["key"])] = [(s["name"], style_damage([x["id"] for x in s["core"]], pool),
+                                             {frozenset(st["items"]) for st in sets if st["style"] == n}) for _, n, s in kept]
         for _, n, _ in kept:   # an item has a reason when a style the champion keeps has one (for the questions below)
             for i, r in scoreds[n].items():
                 fits[i] = max(fits[i], r["fit"])
@@ -496,12 +500,34 @@ def main():
 
     OUT.write_text(json.dumps({"source": source(meta), "patch": meta["version"],
                                "champions": out}, ensure_ascii=False, indent=1), encoding="utf-8")
+    write_style_games(cache, meta, style_sets)
     write_review(review, pool, meta)
     write_questions(questions, meta, unnamed, dropped, pool)
     kinds = defaultdict(int)
     for q in questions:
         kinds[q[0]] += 1
     print(f"{len(out)} champions, {sum(len(v['styles']) for v in out.values())} builds; questions: " + ", ".join(f"{k} {v}" for k, v in kinds.items()))
+
+
+def style_damage(core, pool):
+    """A style's damage from its core items: ap, ad or "" (neither, e.g. tank items)."""
+    dmg = [damage(pool[i]["desc"]) for i in core if i in pool]
+    return "ap" if dmg.count("ap") > dmg.count("ad") else "ad" if dmg.count("ad") > dmg.count("ap") else ""
+
+
+def write_style_games(cache, meta, style_sets):
+    """Our crawl split by play style into the cache's styles.json (git-ignored), for tools/reason/augment_tiers.py: each kept
+    style's games, wins and augment pairs. resg.top's totals cannot be split, so a resg cache gets none (one list per build)."""
+    path = cache / "styles.json"
+    if meta.get("source") != "our crawl":
+        path.unlink(missing_ok=True)
+        return
+    import lcu_cache
+    games = lcu_cache.style_games(meta["version"], {c: [s for _, _, s in v] for c, v in style_sets.items()})
+    path.write_text(json.dumps({str(c): [{"name": name, "damage": dmg, **g} for (name, dmg, _), g in zip(style_sets[c], games[c])]
+                                for c in style_sets}), encoding="utf-8")
+    n = sum(s["tm"] for v in games.values() for s in v)
+    print(f"styles.json: {n} of our players matched to a play style")
 
 
 def merged_sets(d, alias, pool, ranged=False, k="2"):
