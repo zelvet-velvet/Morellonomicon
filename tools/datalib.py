@@ -4,7 +4,7 @@ counts in .cache/. Used by tools/mn.py; standard library only.
     _data/<name>.json                       the newest data (what the plugin reads)
     _data/history/<patch>/<name>.json.gz    the same file as it was for that patch (committed, gzip: ~8x smaller)
     _data/history/index.json                the patches kept, with the date and source of each file
-    .cache/mayhem.sqlite                    our LCU crawl (fetch_lcu.py), private
+    .cache/mayhem.sqlite                    our LCU crawl (fetch_lcu.py), private; MN_LCU_DB names a copy to read instead
     .cache/resg/<patch>/                    resg.top's numbers (fetch_resg.py), private
 
 Only counts and dates leave the private sources here; their numbers are never written to _data/.
@@ -12,14 +12,21 @@ Only counts and dates leave the private sources here; their numbers are never wr
 import datetime
 import gzip
 import json
+import os
+import shutil
 import sqlite3
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "_data"
 HISTORY = DATA / "history"
 INDEX = HISTORY / "index.json"
-LCU_DB = ROOT / ".cache" / "mayhem.sqlite"
+CRAWL_DB = ROOT / ".cache" / "mayhem.sqlite"   # the crawl writes here
+# A rebuild of the tiers reads the whole crawl three times; on /mnt/c (WSL's bridge to the Windows disk) one read takes ~50 s,
+# on the Linux disk ~6 s. So the rebuild copies it there once (fast_copy) and names the copy in MN_LCU_DB for its steps.
+LCU_DB = Path(os.environ["MN_LCU_DB"]) if os.environ.get("MN_LCU_DB") else CRAWL_DB
+FAST_DB = Path.home() / ".cache" / "morellonomicon" / "mayhem.sqlite"
 RESG = ROOT / ".cache" / "resg"
 LIFECYCLE = Path(__file__).resolve().parent / "data" / "lifecycle.json"
 SNAPSHOT_FILES = ("augment-tiers", "item-builds")   # the files that are ours and change with each patch's games
@@ -116,6 +123,38 @@ def read_only(path):
     db.execute("PRAGMA temp_store=MEMORY")
     db.execute("PRAGMA cache_size=-65536")   # 64 MB
     return db
+
+
+def fast_copy():
+    """Copy the crawl to the Linux disk (FAST_DB) and return its path, or None when the repo is not on a Windows disk under
+    WSL. The database and its -wal file are copied whole (~2 s; SQLite's backup API reads page by page, ~13 s over the bridge)
+    inside a read transaction: while it is open the crawl can still write, but it cannot restart the -wal file, and a checkpoint
+    only moves pages the -wal copy also holds. Opening the copy replays its -wal (a frame half written is dropped)."""
+    if not str(ROOT).startswith("/mnt/") or not CRAWL_DB.exists():
+        return None
+    FAST_DB.parent.mkdir(parents=True, exist_ok=True)
+    tmp = FAST_DB.with_suffix(".tmp")
+    for f in (tmp, Path(f"{tmp}-wal"), Path(f"{tmp}-shm")):
+        f.unlink(missing_ok=True)
+    src = read_only(CRAWL_DB)
+    try:
+        src.execute("BEGIN")
+        src.execute("SELECT count(*) FROM sqlite_master").fetchone()   # the read transaction starts here
+        shutil.copyfile(CRAWL_DB, tmp)
+        wal = Path(f"{CRAWL_DB}-wal")
+        if wal.exists():
+            shutil.copyfile(wal, f"{tmp}-wal")
+    finally:
+        src.close()
+    db = sqlite3.connect(tmp)
+    try:
+        db.execute("PRAGMA journal_mode=DELETE")   # folds the -wal into the copy; the copy is then one plain file
+        if db.execute("PRAGMA quick_check").fetchone()[0] != "ok":
+            raise RuntimeError(f"the copy of {CRAWL_DB} is damaged")
+    finally:
+        db.close()
+    tmp.replace(FAST_DB)
+    return FAST_DB
 
 
 def lcu_patches():
@@ -219,3 +258,13 @@ def status():
                      "history": sorted(hist.get(p, {}))})
     return {"announced": ann, "live": live, "lifecycle": cfg, "patches": rows,
             "made": datetime.datetime.now().isoformat(timespec="minutes")}
+
+
+if __name__ == "__main__":
+    if sys.argv[1:] == ["fast-copy"]:   # the first step of fetch_lcu.py's rebuild
+        import time
+        t0 = time.time()
+        path = fast_copy()
+        print(f"crawl copied to {path} ({time.time() - t0:.1f} s)" if path else "not on a Windows disk: read in place")
+    else:
+        sys.exit("usage: python3 -I tools/datalib.py fast-copy")

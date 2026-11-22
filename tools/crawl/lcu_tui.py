@@ -384,14 +384,15 @@ def pager(scr, title, text, header):
             top = max(0, top - room)
 
 
-def run_steps(scr, title, steps, header, done_note=""):
-    """Run commands one after another, their output live on screen; steps [(label, argv)]. Esc stops the running one.
-    Returns True when every step ended well. The last screen stays until a key."""
+def run_steps(scr, title, steps, header, done_note="", env=None):
+    """Run commands one after another, their output live on screen; steps [(label, argv)], env: variables added for them.
+    Esc stops the running one. Returns True when every step ended well. The last screen stays until a key."""
     out, state = [], ["…"] * len(steps)
     ok, t0 = True, time.time()
     for n, (label, argv) in enumerate(steps):
         state[n] = "run"
-        proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+        proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1,
+                                env={**os.environ, **env} if env else None)
         reader = threading.Thread(target=lambda: [out.append(l.rstrip("\n")) for l in proc.stdout], daemon=True)
         reader.start()
         while proc.poll() is None or reader.is_alive():

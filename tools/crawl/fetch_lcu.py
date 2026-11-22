@@ -1018,12 +1018,16 @@ def menu():
                     patch = newest_patch()
                     resg = [] if patch and (ROOT / ".cache" / "resg" / patch / "meta.json").exists() else [
                         ("resg.top games (~7 min)", tool("crawl/fetch_resg.py"))]   # without it the tiers fall back to our far smaller crawl
-                    ui.run_steps(scr, "Rebuild tiers", resg + [
+                    import datalib
+                    fast = str(ROOT).startswith("/mnt/")   # on WSL's Windows disk: read a copy on the Linux disk, ~8x faster
+                    copy = [("crawl → Linux disk", tool("datalib.py", "fast-copy"))] if fast else []
+                    ui.run_steps(scr, "Rebuild tiers", resg + copy + [
                         ("our crawl → cache", tool("crawl/lcu_cache.py")),
                         ("item builds", tool("reason/build_tiers.py")),   # first: the augment tiers are per play style
                         ("augment tiers", tool("reason/augment_tiers.py")),
                         ("tiers.html", tool("mn.py", "tiers"))], header,
-                        "Opened in your browser. _data/ and Review/ changed: commit them once a day or at a new patch, when the tiers look right.")
+                        "Opened in your browser. _data/ and Review/ changed: commit them once a day or at a new patch, when the tiers look right.",
+                        env={"MN_LCU_DB": str(datalib.FAST_DB)} if fast else None)
                 elif choice == "6":
                     ui.run_steps(scr, "Dashboard", [("report.html", tool("mn.py", "report"))], header,
                                  "Opened in your browser.")
