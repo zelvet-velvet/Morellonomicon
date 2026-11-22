@@ -206,6 +206,12 @@ ULT_ITEMS = {3118, 2512, 3073, 6696, 3050}
 ALLY_HEAL = {6617, 2526, 6621, 3504, 6616, 6620, 2524}
 
 # ---- play styles ----------------------------------------------------------------------------------------------------------------
+# The games pick a champion's styles (decided with Zaviel 2026-11-22): Inbox/玩法出裝.md is the catalogue that names them (core
+# items, 怎麼玩), and any of its styles is a candidate for any champion, beside one style per item family (below). Each first-two
+# set of the champion's games goes to the candidate holding its items; a style is kept when its sets reach STYLE_MIN of the
+# champion's games (and CORE_MIN) without losing by STYLE_FLOOR, most played first. A catalogue style that lists the champion
+# but has too few games stays after those, from the reasoning; one the games call broken is left out (Build Questions).
+# A family style the catalogue has no name for is kept the same way and listed in Build Questions to be named.
 # A play style is a family of items (an item's family is its first kind). A champion's styles are the families players start with
 # (the first item, STYLE_MIN of its games or more) or build a strong first-three set of, plus the style its note reads as; each
 # style wants its own kinds (2) and some others (1).
@@ -362,7 +368,8 @@ def main():
     base = {i: v[1] / v[0] for i, v in tot.items() if v[0]}
 
     out, review, questions = {}, [], []
-    hand = hand_styles(pool)
+    hand, catalogue = hand_styles(pool)
+    unnamed, dropped = [], []
     for path in sorted((ROOT / vault_paths.CHAMPIONS).glob("*.md")):
         note = frontmatter(path)
         if note.get("type") != "champion":
@@ -383,13 +390,13 @@ def main():
         for st in sets:   # strength: the set's win rate against the champion's own, pulled toward it when the games are few
             st["gap"] = (st["wins"] - own_wr * st["games"]) / (st["games"] + CORE_PRIOR) if own_wr is not None else 0.0
             st["value"] = st["gap"] + POP_CORE * st["games"] / total
-        defs = hand.get(note.get("name", ""), []) or auto_styles(c, d, sets, alias, pool)
+        listed = {sd["name"] for sd in hand.get(note.get("name", ""), [])}
+        defs = ([dict(sd, listed=sd["name"] in listed) for sd in catalogue]
+                + [dict(sd, listed=False) for sd in auto_styles(c, d, sets, alias, pool)])
         champ_out, fits = {"styles": [], "special": SPECIAL.get(note["id"], [])}, defaultdict(lambda: -2)
         scoreds = []
         for sd in defs:
             scored = score_items(c, sd, pool, seen, base)
-            for r in scored:
-                fits[r["id"]] = max(fits[r["id"]], r["fit"])
             scoreds.append({r["id"]: r for r in scored})
             sd["scored"] = scored
         # each resg set goes to the style it fits best: a hand style needs one of its core items in it (the first counts most)
@@ -411,12 +418,20 @@ def main():
                 if best is None or score > best[1]:
                     best = (n, score)
             st["style"], st["match"] = (best[0], best[1]) if best else (None, 0)
+        kept = []   # (games behind the style or -1 from the reasoning, its place in the catalogue, the style)
         for n, sd in enumerate(defs):
             by_id = scoreds[n]
             # the pair holding most of the style's core items first, then the strongest
             mine = sorted((st for st in sets if st["style"] == n and st["games"] >= CORE_MIN), key=lambda st: (-st["match"], -st["value"]))
-            if sd.get("auto") and mine and max(st["gap"] for st in mine) < STYLE_FLOOR and n > 0:   # noqa: E501
-                continue   # a style the games call broken (not the champion's first)
+            played = sum(st["games"] for st in sets if st["style"] == n)
+            broken = bool(mine) and max(st["gap"] for st in mine) < STYLE_FLOOR
+            backed = bool(mine) and not broken and played >= STYLE_MIN * total
+            if broken and sd["listed"]:
+                dropped.append((note.get("name", note["id"]), sd["name"], mine[0]["items"], played / total))
+            if not backed and not (sd["listed"] and not broken):
+                continue   # not played enough, or losing: only a style that lists the champion stays from the reasoning
+            if backed and sd.get("auto"):
+                unnamed.append((note.get("name", note["id"]), sd["name"], mine[0]["items"], played / total))
             if mine:
                 core, from_games = mine[0]["items"], True
             else:
@@ -439,7 +454,7 @@ def main():
             shown = set(core) | set(thirds) | {i for a in alts for i in a}
             boots = max((r for r in sd["scored"] if r["boots"] and r["fit"] >= 0), key=lambda r: (r["fit"], r["value"]), default=None)
             first = core[0]
-            champ_out["styles"].append({
+            kept.append((played if backed else -1, n, {
                 "name": sd["name"], "why": sd.get("why", ""), "games": from_games, "status": sd.get("status", ""),
                 "core": [{"id": i, "reason": by_id[i]["why"], "need": need_of(i)} for i in core],
                 "alts": [[{"id": i, "reason": by_id[i]["why"], "need": need_of(i)} for i in a] for a in alts],
@@ -447,10 +462,29 @@ def main():
                 "late": [o for o in late_items(sd["scored"]) if o["id"] not in shown][:LATE],
                 "boots": {"id": boots["id"], "reason": BOOT_WHY.get(boots["id"], boots["why"]), "need": boots["why"]} if boots else None,
                 "destiny": {"id": first, "reason": by_id[first]["why"], "grows": grows(pool[first]["desc"])},
-            })
+            }))
             if note["id"] in TEST:
                 review.append((note.get("name", note["id"]), sd["name"], sd["scored"], core, alts, from_games))
-        champ_out["styles"] = champ_out["styles"][:MAX_STYLES]
+        kept = sorted(kept, key=lambda k: (-k[0], k[1]))[:MAX_STYLES]
+        champ_out["styles"] = [s for _, _, s in kept]
+        for _, n, _ in kept:   # an item has a reason when a style the champion keeps has one (for the questions below)
+            for i, r in scoreds[n].items():
+                fits[i] = max(fits[i], r["fit"])
+        if not champ_out["styles"]:   # nothing played enough and no style lists it: the style its note reads as, from the reasoning
+            own = auto_styles(c, d, [], alias, pool)[-1:]
+            if own:
+                sd = own[0]
+                sd["scored"] = score_items(c, sd, pool, seen, base)
+                core = fill_core([], sd["scored"])
+                if len(core) >= 2:
+                    by_id = {r["id"]: r for r in sd["scored"]}
+                    champ_out["styles"] = [{"name": sd["name"], "why": "", "games": False, "status": "",
+                                            "core": [{"id": i, "reason": by_id[i]["why"], "need": need_of(i)} for i in core],
+                                            "alts": [], "third": [{"id": i, "reason": by_id[i]["why"], "need": need_of(i)}
+                                                                   for i in fill_core(core, sd["scored"], 3)[2:]],
+                                            "late": [o for o in late_items(sd["scored"]) if o["id"] not in core][:LATE],
+                                            "boots": None, "destiny": {"id": core[0], "reason": by_id[core[0]]["why"],
+                                                                       "grows": grows(pool[core[0]]["desc"])}}]
         out[note["id"]] = champ_out
         for i, (g, gap, pr) in seen.items():
             if i not in pool or fits[i] > 0 or g < meta.get("sure_item_games", SURE_GAMES) or (i in BOOTS and not BOOTS[i][0]):
@@ -463,7 +497,7 @@ def main():
     OUT.write_text(json.dumps({"source": source(meta), "patch": meta["version"],
                                "champions": out}, ensure_ascii=False, indent=1), encoding="utf-8")
     write_review(review, pool, meta)
-    write_questions(questions, meta)
+    write_questions(questions, meta, unnamed, dropped, pool)
     kinds = defaultdict(int)
     for q in questions:
         kinds[q[0]] += 1
@@ -489,26 +523,28 @@ def merged_sets(d, alias, pool, ranged=False, k="2"):
 
 
 def hand_styles(pool):
-    """The play styles in Inbox/玩法出裝.md (Mayhem), each for the champions it lists: champion name -> [{name, why, sig, status}]."""
+    """The play styles in Inbox/玩法出裝.md (Mayhem): champion name -> the styles that list it, and every style (the catalogue)."""
     path = ROOT / "Inbox" / "玩法出裝.md"
     if not path.exists():
-        return {}
+        return {}, []
     text = path.read_text(encoding="utf-8")
     m = re.search(r"```mn-inbox\n(.*?)\n```", text, re.S)
     if not m:
-        return {}
+        return {}, []
     by_name = {}
     for i, it in pool.items():
         by_name.setdefault(it["name"], i)
-    out = defaultdict(list)
+    out, catalogue = defaultdict(list), []
     split = lambda v: [n.strip() for n in re.split(r"[、,，]", v or "") if n.strip()]
     for e in json.loads(m.group(1)).get("entries", []):
         if e.get("mode", "大混戰") != "大混戰" or not e.get("style"):
             continue
         sig = [by_name[n] for n in split(e.get("items")) if n in by_name]
-        for hero in split(e.get("champs")) + split(e.get("hero")):   # a play style for every champion it lists
-            out[hero].append({"name": e["style"], "why": e.get("why", ""), "sig": sig, "status": e.get("status", "")})
-    return out
+        style = {"name": e["style"], "why": e.get("why", ""), "sig": sig, "status": e.get("status", "")}
+        catalogue.append(style)
+        for hero in split(e.get("champs")) + split(e.get("hero")):   # the champions it lists: kept from the reasoning when games are few
+            out[hero].append(style)
+    return out, catalogue
 
 
 def style_wants(sig, pool):
@@ -668,7 +704,7 @@ def write_review(review, pool, meta):
     OUT_REVIEW.write_text("\n".join(out) + "\n", encoding="utf-8")
 
 
-def write_questions(questions, meta):
+def write_questions(questions, meta, unnamed=(), dropped=(), pool=None):
     out = ["---", "title: Morellonomicon - Build Questions", "tags:", "  - review", "  - items", "sticker: lucide//circle-help", "---",
            f"Written by `tools/reason/build_tiers.py` (do not edit). Items with at least {meta.get('sure_item_games', SURE_GAMES)} games on {source(meta)} where the games "
            "and the reasoning disagree. Explain it and it becomes a play style (`STYLES`), an item kind or a condition in the script.", ""]
@@ -676,7 +712,16 @@ def write_questions(questions, meta):
     by_champ = defaultdict(list)
     for q in popular:
         by_champ[q[1]].append(q)
-    out += ["## Built often, no reason (another play style?)", ""]
+    pair = lambda ids: " + ".join(f"[[{pool[i]['name']}]]" for i in ids)
+    out += ["## Played, but no name in the catalogue", "",
+            "A style the games keep that no entry of `Inbox/玩法出裝.md` holds the items of: add an entry with these core items "
+            "(and 怎麼玩) and the next run uses its name.", ""]
+    for champ, fam, core, share in sorted(unnamed, key=lambda u: -u[3]):
+        out.append(f"- **{champ}** ({fam}): {pair(core)} · {share * 100:.0f}% of its games")
+    out += ["", "## Listed in the catalogue, but the games call it broken", ""]
+    for champ, name, core, share in sorted(dropped, key=lambda u: -u[3]):
+        out.append(f"- **{champ}** · {name}: best set {pair(core)} · {share * 100:.0f}% of its games")
+    out += ["", "## Built often, no reason (another play style?)", ""]
     for champ, qs in sorted(by_champ.items(), key=lambda kv: -len(kv[1])):
         out.append(f"- **{champ}**: " + "、".join(f"[[{q[3]}]] {q[7] * 100:.0f}% ({pct(q[5])})" for q in qs))
     strong = sorted((q for q in questions if q[0] == "strong"), key=lambda q: -q[5])
@@ -690,7 +735,9 @@ def write_questions(questions, meta):
 
     def row(q):
         return {"champion_name": q[1], "item": q[3], "pick": round(q[7], 3), "gap": round(q[5], 3), "games": q[6]}
-    save_questions("items", {"patch": meta["version"], "popular": [row(q) for q in popular], "strong": [row(q) for q in strong]})
+    save_questions("items", {"patch": meta["version"], "popular": [row(q) for q in popular], "strong": [row(q) for q in strong],
+                             "unnamed": [{"champion_name": u[0], "family": u[1], "core": u[2]} for u in unnamed],
+                             "dropped": [{"champion_name": u[0], "style": u[1], "core": u[2]} for u in dropped]})
 
 
 if __name__ == "__main__":
