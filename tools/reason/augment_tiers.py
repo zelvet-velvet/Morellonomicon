@@ -167,7 +167,7 @@ PAIR = {
     (1113, "MissFortune/ap"): (2, "遠距離丟 E，命中就減冷卻"),
 }
 # AP champions whose basic attacks carry the damage
-AP_ATTACKER = {"Kayle", "KogMaw", "Teemo", "Kaisa", "Varus", "Nilah", "Azir", "Gwen", "Diana", "Shyvana", "Katarina", "Ekko", "Lillia",
+AP_ATTACKER = {"Sylas", "Kayle", "KogMaw", "Teemo", "Kaisa", "Varus", "Nilah", "Azir", "Gwen", "Diana", "Shyvana", "Katarina", "Ekko", "Lillia",
                "Corki", "Ezreal", "Kennen", "Twitch", "Bard"}
 
 
@@ -634,7 +634,8 @@ RULES = {
     2077: lambda c: fit_cc(c, "禁錮附加傷害回血"),
     2078: lambda c: only(c.knockback, "有擊退技能，把人撞向隊友或牆", "沒有擊退技能"),
     2080: lambda c: (0, None),
-    2083: lambda c: (1, "爆發高，常打出牙齒") if "刺客" in c.roles or (c.ap and c.spammer) else (0, None),
+    2083: lambda c: (1, "爆發高，常打出牙齒") if "刺客" in c.roles or (c.ap and c.spammer)
+        else (1, "物攻爆發，牙齒給物理致命") if c.ad and c.marksman else (0, None),
     2091: lambda c: fit_melee_fighter(c, "前排自動斧擊回血"),
     2096: lambda c: fit_duration(c, "持續期間加射程攻速"),
     2097: lambda c: fit_dash(c, "位移終點留虛空區域"),
@@ -667,7 +668,8 @@ RULES = {
     3116: lambda c: (2, "近戰連段快，五層很快打滿") if c.melee and not c.tank else (1, "近戰，五層打得滿") if c.melee else (0, None),
     3118: lambda c: fit_ult(c, "擊殺返還大絕冷卻", cd_matter=False),
     3123: lambda c: fit_crit(c, "一個技能可暴擊") if c.crit else (0, None),
-    3129: lambda c: fit_hp(c, "下一次普攻吃生命加傷回血") if c.melee else (0, None),
+    3129: lambda c: (fit_hp(c, "下一次普攻吃生命加傷回血") if c.hp
+                     else (1, "技能冷卻短，常放技能縮短冷卻") if c.spammer or c.short_cds >= 2 else (0, None)) if c.melee else (0, None),
     3131: lambda c: (2, "靠普攻輸出，低血攻速吸血反打") if c.attacker else (1, "近戰鬥士，低血吸血反打") if c.melee and not c.tank else (0, None),
     3132: lambda c: (1, "輸出英雄，加攻擊換一點跑速") if not c.tank else (-1, "坦克不靠攻擊"),
     3150: lambda c: fit_ap(c, "雷霆風暴本來就要出") if c.ap else (-2, "不出雷霆風暴"),

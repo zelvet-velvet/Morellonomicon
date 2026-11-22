@@ -130,6 +130,66 @@
    "patch": "16.22",
    "result": "skip",
    "note": "攻速鞋本來就合"
+  },
+  "augment:2083:Draven": {
+   "patch": "16.23",
+   "result": "rule",
+   "note": "牙仙：物攻射手爆發，牙齒給物理致命"
+  },
+  "augment:1129:Sylas": {
+   "patch": "16.23",
+   "result": "rule",
+   "note": "AP_ATTACKER：被動放技能後普攻"
+  },
+  "augment:3129:Pantheon": {
+   "patch": "16.23",
+   "result": "card",
+   "note": "Q 冷卻短，連放縮短冷卻"
+  },
+  "augment:1029:Aurora": {
+   "patch": "16.23",
+   "result": "card",
+   "note": "Q 收回打兩次命中"
+  },
+  "augment:2083:Gangplank": {
+   "patch": "16.23",
+   "result": "card",
+   "note": "炸桶連鎖爆發掉牙"
+  },
+  "item:姍娜:破曉之核": {
+   "patch": "16.23",
+   "result": "skip",
+   "note": "輔助姍娜，同 16.22 月之石卡片"
+  },
+  "item:凱爾:黯影之炎": {
+   "patch": "16.23",
+   "result": "skip",
+   "note": "AP 凱爾常見出法"
+  },
+  "item:嘉文四世:多明尼克的問候": {
+   "patch": "16.23",
+   "result": "card",
+   "note": "暴擊嘉文"
+  },
+  "item:嘉文四世:無盡之刃": {
+   "patch": "16.23",
+   "result": "skip",
+   "note": "同暴擊嘉文卡片"
+  },
+  "item:煞蜜拉:死亡之舞": {
+   "patch": "16.23",
+   "result": "skip",
+   "note": "同庫奇的卡片"
+  },
+  "item:加里歐:峽谷製造者": {
+   "patch": "16.23",
+   "result": "skip",
+   "note": "AP 坦克常見出法"
+  },
+  "item:雷茲:凜冬將至": {
+   "patch": "16.23",
+   "result": "skip",
+   "note": "魔力裝，雷茲靠最大魔力"
   }
  }
 }

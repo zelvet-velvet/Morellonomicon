@@ -31,26 +31,6 @@
     "style": "",
     "gap": 0.053,
     "games": 1041
-   },
-   {
-    "augment": 2083,
-    "name": "牙仙",
-    "rarity": "金",
-    "champion": "Draven",
-    "champion_name": "達瑞文",
-    "style": "",
-    "gap": 0.048,
-    "games": 999
-   },
-   {
-    "augment": 1129,
-    "name": "射手法師",
-    "rarity": "金",
-    "champion": "Sylas",
-    "champion_name": "賽勒斯",
-    "style": "",
-    "gap": 0.043,
-    "games": 1774
    }
   ],
   "weak": [

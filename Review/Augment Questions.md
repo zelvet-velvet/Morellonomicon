@@ -11,10 +11,9 @@ Written by `tools/reason/augment_tiers.py` (do not edit). Pairs with at least 60
 
 Grouped by augment, the champions it wins most for first.
 
-- **[[牙仙]]** (金, 2): 剛普朗克 +5.3、達瑞文 +4.8
 - **[[魔法樹液]]** (金, 1): 潘森 +6.7
 - **[[幻影武器]]** (金, 1): 歐羅拉 +5.6
-- **[[射手法師]]** (金, 1): 賽勒斯 +4.3
+- **[[牙仙]]** (金, 1): 剛普朗克 +5.3
 
 ## The reasoning says yes, the games say no
 
