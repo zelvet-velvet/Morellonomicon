@@ -9,7 +9,6 @@ Written by `tools/reason/build_tiers.py` (do not edit). Items with at least 1000
 
 ## Built often, no reason (another play style?)
 
-- **汎**: [[多明尼克的問候]] 54% (+3.7)、[[無盡之刃]] 51% (-0.1)
 - **路西恩**: [[海妖殺手]] 48% (-2.0)
 - **凱莎**: [[無盡之刃]] 45% (-2.1)
 

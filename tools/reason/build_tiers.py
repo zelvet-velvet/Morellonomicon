@@ -488,6 +488,9 @@ def main():
         for _, _, scored, _ in kept:   # an item has a reason when a style the champion keeps has one (for the questions below)
             for r in scored:
                 fits[r["id"]] = max(fits[r["id"]], r["fit"])
+        for _, _, _, s in kept:   # a core or alternative core the games chose explains its items too (汎's crit set)
+            for x in s["core"] + [x for a in s["alts"] for x in a]:
+                fits[x["id"]] = max(fits[x["id"]], 1)
         if not champ_out["styles"]:   # nothing played enough: the style its note reads as, from the reasoning
             sd = {"wants": wants_of(c), "side": ""}
             sd["scored"] = score_items(c, sd, pool, seen, base)

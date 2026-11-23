@@ -810,20 +810,6 @@
   "patch": "16.23",
   "popular": [
    {
-    "champion_name": "汎",
-    "item": "多明尼克的問候",
-    "pick": 0.543,
-    "gap": 0.037,
-    "games": 2048
-   },
-   {
-    "champion_name": "汎",
-    "item": "無盡之刃",
-    "pick": 0.506,
-    "gap": -0.001,
-    "games": 8660
-   },
-   {
     "champion_name": "路西恩",
     "item": "海妖殺手",
     "pick": 0.478,
