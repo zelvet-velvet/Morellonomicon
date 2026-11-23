@@ -487,7 +487,7 @@ def main():
                                              {frozenset(st["items"]) for st in groups[key]["sets"]}) for _, key, _, s in kept]
         for _, _, scored, _ in kept:   # an item has a reason when a style the champion keeps has one (for the questions below)
             for r in scored:
-                fits[i] = max(fits[i], r["fit"])
+                fits[r["id"]] = max(fits[r["id"]], r["fit"])
         if not champ_out["styles"]:   # nothing played enough: the style its note reads as, from the reasoning
             sd = {"wants": wants_of(c), "side": ""}
             sd["scored"] = score_items(c, sd, pool, seen, base)
