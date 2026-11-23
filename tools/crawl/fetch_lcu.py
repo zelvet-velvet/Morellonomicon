@@ -4,7 +4,9 @@
 Riot's Match-V5 API lists no Mayhem games (queue 2400, tested 2026-11-18), but the client's own local API (LCU) shows them
 in any player's match history. This script reads (GET), waits between calls, and stops by itself on repeated errors. Its one
 write: the client keeps every history it is asked for, so when its UI passes UX_LIMIT_MB while nobody is in a game, the crawl
-restarts the client's UI (POST /riotclient/kill-and-restart-ux: the UI reloads, the login and the backend stay).
+restarts the client's UI (POST /riotclient/kill-and-restart-ux: the UI reloads, the login and the backend stay); when its
+backend passes BACKEND_LIMIT_MB (a UI restart does not free it), the crawl quits the League client
+(POST /process-control/v1/process/quit) and relaunches it through the Riot Client, which logs back in to the same account.
 Riot does not officially support the LCU: run it on a small account. The numbers stay in the git-ignored
 .cache/mayhem.sqlite (offline, one file) until Zaviel decides whether they may be shown.
 
@@ -70,6 +72,10 @@ BUSY_PHASES = ("ChampSelect", "GameStart", "InProgress", "Reconnect", "WaitingFo
 UX_LIMIT_MB = 3000          # the client's UI (LeagueClientUx + UxRender) above this is restarted, only in RESTART_PHASES
 UX_RESTART_GAP = 1800       # seconds, at least, between two UI restarts
 RESTART_PHASES = ("idle", "Lobby")   # never during queue, ready check, champion select, a game or its end screen
+BACKEND_LIMIT_MB = 2500     # the client's backend (LeagueClient.exe) above this: quit and relaunch the client, same phases
+BACKEND_RESTART_GAP = 3600  # seconds, at least, between two client restarts
+RELAUNCH_WAIT = 300         # seconds to wait for the relaunched client to log in before giving up (the crawl then stops)
+RIOT_CLIENT = "/mnt/c/Riot Games/Riot Client/RiotClientServices.exe"
 MEM_LOG_EVERY = 1800        # seconds between memory lines in the activity log (to see which process grows)
 WIN_TASKLIST = "/mnt/c/Windows/system32/tasklist.exe"
 
@@ -253,6 +259,7 @@ class Crawl:
         self.account = None   # hash of the logged-in account the crawl started on
         self.status, self.mode, self.phase, self.now_doing = "starting", "running", "", ""
         self.mem, self.ux_restart, self.last_restart = None, None, 0.0   # client memory, the guard's UI restart (HTTP code)
+        self.client_restart, self.last_client_restart = None, 0.0        # the guard's full client restart (what happened)
         self.events = deque(maxlen=300)   # (time, kind, tag, message) for the activity log
         self.reseeds = 0
         self.log_back = 0   # how many log entries the activity log is scrolled back (0: following the newest)
@@ -408,15 +415,49 @@ class Crawl:
     def busy_phase(self):
         """Stops if another account logged in; the client's phase when the player is in champion select or a game, else None.
         Also reads the client's memory and restarts its UI when that passes UX_LIMIT_MB while nobody is playing."""
-        self.same_account(self.c._raw("/lol-summoner/v1/current-summoner"))
+        try:
+            self.same_account(self.c._raw("/lol-summoner/v1/current-summoner"))
+        except ClientGone:   # the client is restarting: get() below waits for it and checks the account when it reconnects
+            pass
         self.phase = self.c.get("/lol-gameflow/v1/gameflow-phase") or ""
         self.phase = "idle" if self.phase == "None" else self.phase
-        self.mem, self.ux_restart = client_memory(), None
-        if (self.mem and self.mem[1] >= UX_LIMIT_MB and self.phase in RESTART_PHASES
+        self.mem, self.ux_restart, self.client_restart = client_memory(), None, None
+        if (self.mem and self.mem[0] >= BACKEND_LIMIT_MB and self.phase in RESTART_PHASES
+                and time.time() - self.last_client_restart >= BACKEND_RESTART_GAP):
+            self.last_client_restart = self.last_restart = time.time()
+            self.client_restart = self.restart_client()
+        elif (self.mem and self.mem[1] >= UX_LIMIT_MB and self.phase in RESTART_PHASES
                 and time.time() - self.last_restart >= UX_RESTART_GAP):
             self.last_restart = time.time()
             self.ux_restart = self.c.post("/riotclient/kill-and-restart-ux") or "no answer"
         return self.phase if self.phase in BUSY_PHASES else None
+
+    def restart_client(self):
+        """Quits the League client and relaunches it through the Riot Client (still logged in, so League logs in by itself);
+        returns once the same account answers again, or after RELAUNCH_WAIT. What happened, for the activity log."""
+        exe = RIOT_CLIENT if sys.platform != "win32" else RIOT_CLIENT.replace("/mnt/c/", "C:/")
+        if not Path(exe).exists():
+            return "no Riot Client found: restart the League client yourself"
+        if self.c.post("/process-control/v1/process/quit") is None:
+            return "the client did not answer the quit"
+        t = time.time()
+        while time.time() - t < 60 and any(Path(p).exists() for p in LOCKFILES):   # the lockfile goes when it has closed
+            time.sleep(2)
+        time.sleep(5)
+        subprocess.Popen([exe, "--launch-product=league_of_legends", "--launch-patchline=live"],
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        t = time.time()
+        while time.time() - t < RELAUNCH_WAIT:
+            time.sleep(10)
+            try:
+                self.c.connect()
+                code, body = self.c._raw("/lol-summoner/v1/current-summoner")
+            except ClientGone:
+                continue
+            if code == 200:   # logged in: same_account() stops the crawl if it is someone else
+                self.same_account((code, body))
+                return f"relaunched in {int(time.time() - t)} s"
+        return f"relaunched, but not logged in after {RELAUNCH_WAIT // 60} min"
 
     # ---------- figures for the dashboard and the log ----------
     def recount(self):
@@ -574,16 +615,20 @@ class Crawl:
                             self.event(f"paused while you play ({busy})", "warn", "pause")
                         elif was and not busy:
                             self.event("your game is over: crawling again", "good", "resume")
-                        if self.ux_restart:
+                        if self.client_restart:
+                            self.event(f"client backend at {num(self.mem[0])} MB: restarted the client "
+                                       f"({self.client_restart})", "warn", "client")
+                        elif self.ux_restart:
                             self.event(f"client UI at {num(self.mem[1])} MB: restarted it (HTTP {self.ux_restart})",
                                        "warn", "client")
                         elif self.mem and now - last_mem >= MEM_LOG_EVERY:
                             last_mem = now
                             self.event(f"client memory: backend {num(self.mem[0])} MB · UI {num(self.mem[1])} MB",
                                        "dim", "memory")
-                        if self.mem and self.mem[0] >= UX_LIMIT_MB and not backend_warned:
-                            backend_warned = True   # a UI restart does not free the backend: only closing the client does
-                            self.event(f"client backend at {num(self.mem[0])} MB: restart the League client when you can",
+                        if (self.mem and self.mem[0] >= BACKEND_LIMIT_MB and not backend_warned and not self.client_restart
+                                and self.phase not in RESTART_PHASES):
+                            backend_warned = True   # in a game or queue it waits; this says why memory stays high meanwhile
+                            self.event(f"client backend at {num(self.mem[0])} MB: the crawl restarts the client after this game",
                                        "bad", "client")
                     elif kind == "refill":
                         self.reseed(res)
