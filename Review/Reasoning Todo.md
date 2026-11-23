@@ -25,10 +25,10 @@ None.
 
 Much stronger on this champion than anywhere else, and no rule says why. Gap is the win rate over the augment's result on every champion.
 
-None.
+- 枷蘿 · [[大師鑄造]]: +5.3 in 749 games
 
 ## Trick candidates: items
 
 Built often or winning, and no play style explains it.
 
-None.
+- 汎 · [[多明尼克的問候]]: built in 54% of games, +3.7
