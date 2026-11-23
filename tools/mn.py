@@ -191,6 +191,28 @@ def cmd_tiers(args):
     # each play style's short build (tools/reason/build_tiers.py): three core items, another core, boots, items four to six by need
     builds = dl.read_json(dl.DATA / "item-builds.json").get("champions", {})
     ids = lambda rows: [str(r["id"]) for r in rows or []]   # noqa: E731
+    # a second look at the 檢查 flags (decided with Zaviel 2026-11-23): resg.top's games of the same patch, champion and
+    # augment, not split by play style. Only a direction goes in the page, never its numbers: D / U at 3 points or more
+    # under / over the champion's own win rate, d / u at 1 to 3, nothing when level or under 100 games.
+    second = dl.RESG / patch if source.startswith("our crawl") else None
+    second = second if second and (second / "champions").exists() else None
+
+    def second_look(cid):
+        f = second and second / "champions" / f"{cid}.json"
+        if not f or not f.exists():
+            return {}
+        r = dl.read_json(f)
+        cg, cw = r["champion"]["tm"], r["champion"]["wm"]
+        out = {}
+        for a in r.get("ra", []) if cg else []:
+            if a[2] < 100:
+                continue
+            gap = (a[3] / a[2] - cw / cg) * 100
+            code = "U" if gap >= 3 else "u" if gap >= 1 else "D" if gap <= -3 else "d" if gap <= -1 else ""
+            if code:
+                out[str(a[0])] = code
+        return out
+
     out_champs = []
     for key, fm in champs.items():
         f = cache / "champions" / f"{fm['key']}.json"
@@ -215,6 +237,7 @@ def cmd_tiers(args):
         out_champs.append({"key": key, "name": fm.get("name", key), "en": fm.get("name_en", key), "icon": fm.get("icon", ""),
                            "roles": fm.get("roles", ""), "tier": ctiers.get("champions", {}).get(key, ""),
                            "games": c["champion"]["tm"], "wins": c["champion"]["wm"], "styles": styles, "items": top,
+                           "second": second_look(fm["key"]),
                            "orb": [{"name": s["name"], "tierKey": s["tierKey"], "core": [str(i["id"]) for i in s.get("core", [])]}
                                    for s in orb.get(key, {}).get("styles", [])],
                            "builds": [{"name": b["name"], "warn": b.get("warn", ""), "share": b.get("share", 0),

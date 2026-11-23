@@ -79,6 +79,7 @@ input[type=search] { flex: 1 1 180px; min-width: 0; }
 .wr .track i { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
 .wr .v { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; font-size: 14px; }
 .up { color: var(--up); } .down { color: var(--down); } .thin { opacity: .5; }
+.done { color: var(--muted); font-weight: 600; white-space: nowrap; } .done.fix { color: var(--down); }
 .detail { border-top: 1px solid var(--border); background: var(--surface-2); padding: 14px 14px 18px; }
 .detail h3 { font-size: 14px; margin: 14px 0 8px; color: var(--text-secondary); font-weight: 600; }
 .detail h3:first-child { margin-top: 0; }
@@ -138,7 +139,7 @@ details.how ul { margin: 6px 0 0; padding-left: 18px; } details.how li { margin:
     <li><b>強化「分級」</b>：不是強化本身的勝率，而是每位英雄拿它時比自己平常的勝率高或低多少（勝率差），依選取次數平均，再向 0 拉 200 場。這樣強勢英雄常拿的強化不會沾光。+4.5 點以上 T0、+1.5 以上 T1、−1.5 以上 T2、−4.5 以上 T3，其下 T4。</li>
     <li><b>模型</b>：只用我們自己的對局，把英雄和同一位玩家的其他五個強化一起算，看這個強化單獨帶來多少勝率（和平均強化相比）。常和強勢強化一起拿的強化，在這裡才看得出真正的效果。</li>
     <li><b>選取率</b>：只代表多少人選，不代表強，所以不算進分級，只拿來排同分和判斷可信度。</li>
-    <li><b>檢查</b>：遺忘寶珠的建議和對局不合的地方。app 給卡片的評語就是分級：S 最合、A 很合、B 還行、C 不合。評 S / A 卻比這位英雄平常的勝率低 3 點以上，是「評太高？」；評 B / C 卻高 3 點以上，是「評太低？」。只看 100 場以上。差距也超出 ±98/√n 的是<b>明確</b>，其餘是<b>可能</b>（數字還會變）。用我們的對局時，每個玩法有自己的分級，只算出這套裝的玩家，和這個玩法平常的勝率比；resg.top 的對局不分玩法。</li>
+    <li><b>檢查</b>：遺忘寶珠的建議和對局不合的地方。app 給卡片的評語就是分級：S 最合、A 很合、B 還行、C 不合。評 S / A 卻比這位英雄平常的勝率低 3 點以上，是「評太高？」；評 B / C 卻高 3 點以上，是「評太低？」。只看 100 場以上。差距也超出 ±98/√n 的是<b>明確</b>，其餘是<b>可能</b>（數字還會變）。用我們的對局時，每個玩法有自己的分級，只算出這套裝的玩家，和這個玩法平常的勝率比；resg.top 的對局不分玩法。已用同一版本的另一份對局核對過的打勾：同方向也差 3 點以上是<b>✓ 要改</b>，反方向 1 點以上是<b>✓ 不改</b>，其餘仍是<b>待查</b>；英雄旁的「N 項待查」只算還沒定的。</li>
     <li><b>可信度</b>：n 場的勝率大約在 ±98/√n 點內（20 次有 19 次）。<span class="conf hi">高</span> 600 場以上（±4 以內），<span class="conf mid">中</span> 100–599 場，<span class="conf">觀察</span> 不到 100 場，數字還會變。</li>
   </ul></details>
   <div class="bar tabs">
@@ -163,7 +164,7 @@ details.how ul { margin: 6px 0 0; padding-left: 18px; } details.how li { margin:
   <section id="review" class="rev" hidden>
     <div class="bar">
       <input type="search" id="rq" placeholder="搜尋英雄或強化">
-      <span id="rd"></span><span id="rs"></span><span id="ru"></span>
+      <span id="rk"></span><span id="rd"></span><span id="rs"></span><span id="ru"></span>
     </div>
     <p class="note" id="rsum"></p>
     <div class="list" id="rlist"></div>
@@ -236,13 +237,19 @@ function flagsOf(c) {
                    orb: (c.orb || []).filter(o => o.tierKey === st.key).map(o => o.name) });
     by.set(k, f);
   }
-  return [...by.values()].map(f => ({ ...f, used: f.lists.some(l => l.used), z: Math.abs(f.gap) / margin(f.g) }))
+  // decided by a second look at other games of the patch (mn.py: c.second, a direction only): the same way 3+ points is 要改,
+  // the other way 1+ point is 不改, else it stays 待查
+  const done = f => { const s = (c.second || {})[f.id] || "";
+    return f.dir === "high" ? (s === "D" ? "要改" : "uU".includes(s) && s ? "不改" : "")
+                            : (s === "U" ? "要改" : "dD".includes(s) && s ? "不改" : ""); };
+  return [...by.values()].map(f => ({ ...f, used: f.lists.some(l => l.used), z: Math.abs(f.gap) / margin(f.g), done: done(f) }))
     .sort((a, b) => b.z - a.z);
 }
 const FLAGS = DATA.champions.flatMap(flagsOf);
 const flagCount = {};
-for (const f of FLAGS) if (f.used) flagCount[f.c.key] = (flagCount[f.c.key] || 0) + 1;
+for (const f of FLAGS) if (f.used && !f.done) flagCount[f.c.key] = (flagCount[f.c.key] || 0) + 1;
 const dirLabel = d => d === "high" ? "評太高？" : "評太低？";
+const doneTag = f => f.done ? `<span class="done ${f.done === "要改" ? "fix" : ""}">✓ ${f.done}</span>` : "";
 function verdicts(f) {   // the tiers the flagged augment got, one per tier list, with the app's styles that use each
   return f.lists.map(l => `<span class="tier ${l.tier}" style="height:20px;min-width:28px;font-size:12px">${l.tier}</span> ${VERDICT[l.tier]}`
     + `<small>${f.c.styles.length > 1 || l.orb.length ? `（${esc(l.orb.length ? l.orb.join("、") : l.name + "，app 沒用")}）` : ""}</small>`).join("<br>");
@@ -278,7 +285,7 @@ function champDetail(c) {
         const a = DATA.augments[f.id] || { name: f.id, icon: "" };
         return `<div class="chip${f.used ? "" : " thin"}" title="${esc(f.lists.map(l => `${l.name} ${l.tier}：${l.reason}${l.when ? `（${l.when}）` : ""}`).join("\n"))}">`
              + `<img loading="lazy" src="${esc(a.icon)}" alt=""><div class="t"><b>${esc(a.name)}</b>`
-             + `<small>${f.lists.map(l => l.tier).join("/")} ${VERDICT[f.lists[0].tier]} · <span class="${f.gap >= 0 ? "up" : "down"}">${sign(f.gap)}</span> · ${fmt(f.g)} 場 ${f.sure ? "明確" : "可能"}</small></div></div>`;
+             + `<small>${f.lists.map(l => l.tier).join("/")} ${VERDICT[f.lists[0].tier]} · <span class="${f.gap >= 0 ? "up" : "down"}">${sign(f.gap)}</span> · ${fmt(f.g)} 場 ${f.sure ? "明確" : "可能"} ${doneTag(f)}</small></div></div>`;
       }).join("") + `</div></div>`;
     }
   }
@@ -396,17 +403,19 @@ $("#at").insertAdjacentHTML("afterend", `<span id="awt"></span>`);
 filters($("#awt"), TIERS, as, "wt", drawAugs);
 $("#aq").oninput = e => { as.q = e.target.value; drawAugs(); };
 // ---- 檢查: every flag, the surest first; a row opens its champion in the 英雄 tab
-const rs = { sort: "z", dir: "", sure: "", used: DATA.orb ? "app 用的分級" : "", q: "" };
+const rs = { sort: "z", dir: "", sure: "", done: "待查", used: DATA.orb ? "app 用的分級" : "", q: "" };
 function drawReview() {
   const q = rs.q.trim().toLowerCase();
   let list = FLAGS.filter(f => (!rs.dir || dirLabel(f.dir) === rs.dir) && (!rs.sure || (f.sure ? "明確" : "可能") === rs.sure)
+    && (!rs.done || (f.done || "待查") === rs.done)
     && (!rs.used || f.used)
     && (!q || f.c.name.includes(q) || f.c.en.toLowerCase().includes(q) || (DATA.augments[f.id]?.name || "").includes(q)));
   const by = { z: (a, b) => b.z - a.z, gap: (a, b) => Math.abs(b.gap) - Math.abs(a.gap), games: (a, b) => b.g - a.g,
                name: (a, b) => a.c.name.localeCompare(b.c.name, "zh-Hant") || b.z - a.z };
   list.sort(by[rs.sort]);
   const n = d => list.filter(f => f.dir === d).length;
-  $("#rsum").textContent = `${list.length} 項：${n("high")} 項評太高？、${n("low")} 項評太低？，${list.filter(f => f.sure).length} 項明確。`
+  const all = FLAGS.filter(f => !rs.used || f.used), nd = d => all.filter(f => f.done === d).length;
+  $("#rsum").textContent = `共 ${all.length} 項：${all.length - nd("要改") - nd("不改")} 項待查、${nd("要改")} 項確定要改、${nd("不改")} 項不改。這裡 ${list.length} 項：${n("high")} 項評太高？、${n("low")} 項評太低？，${list.filter(f => f.sure).length} 項明確。`
     + (DATA.orb ? "" : "這台電腦沒有 oblivion-orb，不知道 app 用哪份分級。");
   const el = $("#rlist"); el.innerHTML = "";
   el.append(headRow([["", ""], ["英雄", "name"], ["", ""], ["強化 · 為什麼這樣評", ""], ["app 評語", ""], ["對局", "gap"], ["場次", "games", "num"]], rs, drawReview));
@@ -415,7 +424,7 @@ function drawReview() {
     const a = DATA.augments[f.id] || { name: f.id, rarity: "", icon: "" }, r = document.createElement("div");
     r.className = "row" + (f.used ? "" : " thin");
     const why = [...new Set(f.lists.map(l => l.reason + (l.when ? `（${l.when}）` : "")))].join("；");
-    r.innerHTML = `<img loading="lazy" src="${esc(f.c.icon)}" alt=""><div class="nm"><b>${esc(f.c.name)}</b><small>${dirLabel(f.dir)} · ${f.sure ? "明確" : "可能"}</small></div>`
+    r.innerHTML = `<img loading="lazy" src="${esc(f.c.icon)}" alt=""><div class="nm"><b>${esc(f.c.name)}</b><small>${dirLabel(f.dir)} · ${f.sure ? "明確" : "可能"} ${doneTag(f)}</small></div>`
       + `<img loading="lazy" src="${esc(a.icon)}" alt=""><div class="nm"><b>${esc(a.name)} <span class="rar r-${esc(a.rarity)}">${esc(a.rarity)}</span></b><small class="why">${esc(why) || "（沒有理由）"}</small></div>`
       + `<div class="vd">${verdicts(f)}</div>`
       + `<span class="v ${f.gap >= 0 ? "up" : "down"}" style="font-weight:600;font-variant-numeric:tabular-nums" title="比平常的 ${(f.own * 100).toFixed(1)}% · ±${margin(f.g).toFixed(1)} 點">${sign(f.gap)}</span>`
@@ -428,6 +437,7 @@ function drawReview() {
 }
 filters($("#rd"), ["評太高？", "評太低？"], rs, "dir", drawReview);
 filters($("#rs"), ["明確", "可能"], rs, "sure", drawReview);
+filters($("#rk"), ["待查", "要改", "不改"], rs, "done", drawReview);
 if (DATA.orb) filters($("#ru"), ["app 用的分級"], rs, "used", drawReview);
 $("#rq").oninput = e => { rs.q = e.target.value; drawReview(); };
 function showTab(tab) {
