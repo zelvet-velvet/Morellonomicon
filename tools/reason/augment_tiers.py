@@ -735,7 +735,8 @@ RULES = {
     2088: lambda c: (0, None),
     2108: lambda c: (0, None),
     2125: lambda c: fit_duration(c, "持續期間加跑速"),
-    2127: lambda c: (2, "坦克靠道具效果輸出") if c.tank else (1, "命中效果裝的傷害也加") if c.onhit and c.melee else (0, None),
+    2127: lambda c: (2, "坦克靠道具效果輸出") if c.tank else (1, "命中效果裝的傷害也加") if c.onhit and c.melee \
+        else (1, "持續傷害配燃燒裝，燃燒也加") if c.dot else (0, None),
     2131: lambda c: only(c.channel, "有引導技能，引導時上盾", "沒有引導技能"),
     2136: lambda c: fit_spells(c, "技能疊增傷"),
     2138: lambda c: (1, "前排技能打人加雙抗") if c.melee else (0, None),

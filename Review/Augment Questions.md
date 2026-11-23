@@ -13,7 +13,6 @@ Grouped by augment, the champions it wins most for first.
 
 - **[[牙仙]]** (金, 1): 剛普朗克 +6.6
 - **[[幻影武器]]** (金, 1): 歐羅拉 +5.7
-- **[[大師鑄造]]** (銀, 1): 枷蘿 +5.3
 
 ## The reasoning says yes, the games say no
 
