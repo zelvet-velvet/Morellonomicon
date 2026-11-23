@@ -19,6 +19,7 @@ Writes _data/item-builds.json (read by the plugin), Review/Build Review.md and R
 
     python3 -I tools/reason/build_tiers.py
 """
+import functools
 import json
 import re
 import sys
@@ -435,16 +436,23 @@ def main():
         # a play style is a role and damage (AP 刺客, AD 戰士, 坦克): each first-two set of the games goes to the one its items make
         # (group_of), so every way the champion is played is there once, however its players spell the build
         groups = defaultdict(lambda: {"sets": [], "triples": [], "games": 0, "wins": 0})
+        memo = {}   # the same item lists come back thousands of times per champion
+
+        def style_of(ids):
+            key = tuple(ids)
+            if key not in memo:
+                memo[key] = group_of(ids, c, pool)
+            return memo[key]
         for st in sets:
-            g = groups[group_of(st["items"], c, pool)]
+            g = groups[style_of(st["items"])]
             g["sets"].append(st)
             g["games"] += st["games"]
             g["wins"] += st["wins"]
         for st in triples:
             st["gap"] = (st["wins"] - own_wr * st["games"]) / (st["games"] + CORE_PRIOR) if own_wr is not None else 0.0
             st["value"] = st["gap"] + POP_CORE * st["games"] / total
-            if group_of(st["items"], c, pool) in groups:
-                groups[group_of(st["items"], c, pool)]["triples"].append(st)
+            if style_of(st["items"]) in groups:
+                groups[style_of(st["items"])]["triples"].append(st)
         kept = []
         for key, g in groups.items():
             played, won = g["games"], g["wins"]
@@ -576,6 +584,7 @@ def style_wants(sig, pool):
     return w, side
 
 
+@functools.lru_cache(maxsize=None)
 def damage(desc, i=None):
     if i in ANY_DAMAGE:
         return ""

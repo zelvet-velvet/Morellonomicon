@@ -260,30 +260,78 @@ def style_games(patch, styles):
     as the combos above). styles: {champion key: [set of frozensets of item ids, one per style]} -> {champion key: [{"tm", "wm",
     "ra": [[augment, games, wins]]}, one per style]}. Only the patch itself: our volume splits well enough without pooling."""
     pool, alias = item_pool()
-    finished = lambda i: alias.get(i, i) in pool   # noqa: E731
-    is_boots = lambda i: pool.get(alias.get(i, i), {}).get("boots", False)   # noqa: E731
-    out = {c: [{"tm": 0, "wm": 0, "ra": defaultdict(lambda: [0, 0])} for _ in sets] for c, sets in styles.items()}
+    # any id the game uses -> its finished item, boots aside (the only items a first two counts)
+    canon = {i: alias.get(i, i) for i in set(pool) | set(alias)
+             if alias.get(i, i) in pool and not pool[alias.get(i, i)].get("boots", False)}
+    index = {}   # {champion: {first-two set: style number}}, the first style holding a set wins
+    for c, sets in styles.items():
+        index[c] = {}
+        for n, s in enumerate(sets):
+            for first in s:
+                index[c].setdefault(first, n)
+    jobs = [(patch, share, canon, index) for share in range(SHARES)]
+    with multiprocessing.get_context("fork").Pool(min(SHARES, os.cpu_count() or 1)) as workers:
+        counted = workers.map(style_share, jobs)
+    tm, ra = {}, {}
+    for part_tm, part_ra in counted:
+        for total, part in ((tm, part_tm), (ra, part_ra)):
+            for k, (g, w) in part.items():
+                gw = total.setdefault(k, [0, 0])
+                gw[0] += g
+                gw[1] += w
+    per = defaultdict(list)
+    for (c, n, a), (g, w) in ra.items():
+        per[c, n].append([a, g, w])
+    return {c: [{"tm": tm.get((c, n), (0, 0))[0], "wm": tm.get((c, n), (0, 0))[1],
+                 "ra": sorted(per.get((c, n), []), key=lambda r: (-r[1], r[0]))} for n in range(len(sets))]
+            for c, sets in styles.items()}
+
+
+def style_share(job):
+    """One share of a patch's players (game_id % SHARES) split by play style, in its own process, as count_share:
+    ({(champion, style): [games, wins]}, {(champion, style, augment): [games, wins]}). ~60 s in one process, a few in eight."""
+    patch, share, canon, index = job
     db = datalib.read_only(DB)
-    sql = f"SELECT champ, win, {', '.join(SLOTS + AUGS)} FROM players JOIN games USING (game_id) WHERE patch=?"
-    for r in db.execute(sql, (patch,)):
-        c, win, slots, augs = r[0], r[1], r[2:9], r[9:]
-        if c not in out:
+    try:
+        rows = db.execute(f"SELECT champ, win, {', '.join(SLOTS + AUGS)} FROM players JOIN games USING (game_id) "
+                          "WHERE patch=? AND game_id % ? = ?", (patch, SHARES, share)).fetchall()
+    finally:
+        db.close()
+    tm, ra = {}, {}
+    for r in rows:
+        sets = index.get(r[0])
+        if sets is None:
             continue
-        order = [alias.get(i, i) for i in slots if i and finished(i) and not is_boots(i)]
-        first = frozenset(order[:2])
-        if len(first) < 2:
+        one = two = None
+        for i in r[2:9]:   # the first two finished items, by slot
+            j = canon.get(i)
+            if j is not None:
+                if one is None:
+                    one = j
+                else:
+                    two = j
+                    break
+        if two is None or two == one:
             continue
-        for n, sets in enumerate(styles[c]):
-            if first in sets:
-                st = out[c][n]
-                st["tm"] += 1
-                st["wm"] += win
-                for a in {a for a in augs if a}:
-                    st["ra"][a][0] += 1
-                    st["ra"][a][1] += win
-                break
-    return {c: [{"tm": s["tm"], "wm": s["wm"], "ra": [[a, g, w] for a, (g, w) in sorted(s["ra"].items(), key=lambda kv: -kv[1][0])]}
-                for s in v] for c, v in out.items()}
+        n = sets.get(frozenset((one, two)))
+        if n is None:
+            continue
+        c, win = r[0], r[1]
+        v = tm.get((c, n))
+        if v is None:
+            tm[c, n] = [1, win]
+        else:
+            v[0] += 1
+            v[1] += win
+        for a in {a for a in r[9:] if a}:
+            k = (c, n, a)
+            v = ra.get(k)
+            if v is None:
+                ra[k] = [1, win]
+            else:
+                v[0] += 1
+                v[1] += win
+    return tm, ra
 
 if __name__ == "__main__":
     main()
