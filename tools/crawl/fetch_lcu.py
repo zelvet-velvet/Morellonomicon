@@ -76,6 +76,8 @@ BACKEND_LIMIT_MB = 2500     # the client's backend (LeagueClient.exe) above this
 BACKEND_RESTART_GAP = 3600  # seconds, at least, between two client restarts
 RELAUNCH_WAIT = 300         # seconds to wait for the relaunched client to log in before giving up (the crawl then stops)
 RIOT_CLIENT = "/mnt/c/Riot Games/Riot Client/RiotClientServices.exe"
+RIOT_LOCKFILE = "AppData/Local/Riot Games/Riot Client/Config/lockfile"   # under the Windows user folder: the Riot Client's API
+LAUNCH_LEAGUE = "/product-launcher/v1/products/league_of_legends/patchlines/live"   # POST: the Riot Client starts League
 MEM_LOG_EVERY = 1800        # seconds between memory lines in the activity log (to see which process grows)
 WIN_TASKLIST = "/mnt/c/Windows/system32/tasklist.exe"
 
@@ -87,13 +89,14 @@ class ClientGone(Exception):
 class Client:
     """GET access to the local client (and post() for the UI restart); rereads the lockfile when the client restarts."""
 
-    def __init__(self, delay):
-        self.delay, self.last = delay, 0.0
+    def __init__(self, delay, lockfiles=None):
+        self.delay, self.last, self.lockfiles = delay, 0.0, lockfiles   # lockfiles: a function, for the Riot Client
         self.check = None   # set by the crawl: called after every reconnect, before any other call goes out
         self.calls, self.errors, self.times = 0, 0, deque(maxlen=20)   # for the dashboard
 
     def connect(self):
-        path = os.environ.get("LOL_LOCKFILE") or next((p for p in LOCKFILES if Path(p).exists()), None)
+        files = self.lockfiles() if self.lockfiles else LOCKFILES
+        path = (not self.lockfiles and os.environ.get("LOL_LOCKFILE")) or next((p for p in files if Path(p).exists()), None)
         if not path or not Path(path).exists():
             raise ClientGone("no lockfile: the client is not running")
         _, _, port, pw, proto = Path(path).read_text(encoding="utf-8").strip().split(":")
@@ -170,6 +173,13 @@ class Client:
             pause = 30 * 2 ** errors
             log(f"HTTP {code}, pausing {pause} s")
             time.sleep(pause)
+
+
+def riot_lockfiles():
+    """Where the Riot Client's lockfile may be (it names the port and password of the Riot Client's own local API)."""
+    if sys.platform == "win32":
+        return [str(Path(os.environ.get("LOCALAPPDATA", "")) / "Riot Games/Riot Client/Config/lockfile")]
+    return [str(p / RIOT_LOCKFILE) for p in Path("/mnt/c/Users").glob("*") if (p / RIOT_LOCKFILE).exists()]
 
 
 LOG_HOOK = None   # the dashboard's activity panel while it is on screen
@@ -444,8 +454,23 @@ class Crawl:
         while time.time() - t < 60 and any(Path(p).exists() for p in LOCKFILES):   # the lockfile goes when it has closed
             time.sleep(2)
         time.sleep(5)
-        subprocess.Popen([exe, "--launch-product=league_of_legends", "--launch-patchline=live"],
-                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        # A running Riot Client ignores --launch-product (seen 2026-11-24: League never came back), so League is started
+        # through the Riot Client's own API; the exe is run once only to start the Riot Client when that does not answer.
+        riot, started, t = Client(0, riot_lockfiles), False, time.time()
+        while True:
+            try:
+                riot.connect()
+                if riot.post(LAUNCH_LEAGUE) == 200:
+                    break
+            except ClientGone:
+                pass
+            if time.time() - t > 120:
+                return "the Riot Client did not start League: start it yourself"
+            if not started:
+                started = True
+                subprocess.Popen([exe], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                 start_new_session=True)
+            time.sleep(10)
         t = time.time()
         while time.time() - t < RELAUNCH_WAIT:
             time.sleep(10)
